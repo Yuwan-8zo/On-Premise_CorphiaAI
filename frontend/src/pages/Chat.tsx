@@ -9,6 +9,7 @@ import { useChatStore } from '../store/chatStore'
 import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
+import { MessageBubble } from '../components/chat'
 import type { Message } from '../types/chat'
 
 // Icons
@@ -292,8 +293,8 @@ export default function Chat() {
                                 key={conv.id}
                                 onClick={() => selectConversation(conv)}
                                 className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${currentConversation?.id === conv.id
-                                        ? 'bg-slate-700 text-white'
-                                        : 'text-slate-300 hover:bg-slate-700/50'
+                                    ? 'bg-slate-700 text-white'
+                                    : 'text-slate-300 hover:bg-slate-700/50'
                                     }`}
                             >
                                 {conv.title}
@@ -359,21 +360,12 @@ export default function Chat() {
                         </div>
                     ) : (
                         <div className="max-w-3xl mx-auto space-y-6">
-                            {messages.map((message) => (
-                                <div
+                            {messages.map((message, index) => (
+                                <MessageBubble
                                     key={message.id}
-                                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'
-                                        }`}
-                                >
-                                    <div
-                                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                                                ? 'bg-primary-600 text-white'
-                                                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
-                                            }`}
-                                    >
-                                        <div className="whitespace-pre-wrap">{message.content || (isStreaming && message.role === 'assistant' ? '▍' : '')}</div>
-                                    </div>
-                                </div>
+                                    message={message}
+                                    isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+                                />
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
