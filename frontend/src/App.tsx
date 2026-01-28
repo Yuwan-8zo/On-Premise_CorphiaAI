@@ -13,6 +13,7 @@ import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Documents from './pages/Documents'
 import Settings from './pages/Settings'
+import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
 // Protected Route Component
@@ -81,6 +82,14 @@ export default function App() {
                 element={
                     <ProtectedRoute>
                         <Settings />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin"
+                element={
+                    <ProtectedRoute>
+                        <Admin />
                     </ProtectedRoute>
                 }
             />
