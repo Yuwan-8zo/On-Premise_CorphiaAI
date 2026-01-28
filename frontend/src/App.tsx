@@ -9,8 +9,10 @@ import { useUIStore } from './store/uiStore'
 
 // Pages
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Documents from './pages/Documents'
+import Settings from './pages/Settings'
 import NotFound from './pages/NotFound'
 
 // Protected Route Component
@@ -35,6 +37,10 @@ export default function App() {
             <Route
                 path="/login"
                 element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+            />
+            <Route
+                path="/register"
+                element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
             />
 
             {/* 受保護路由 */}
@@ -70,9 +76,18 @@ export default function App() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute>
+                        <Settings />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
         </Routes>
     )
 }
+
