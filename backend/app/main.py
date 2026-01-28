@@ -14,7 +14,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
-from app.api import auth_router, conversations_router, health_router
+from app.api import auth_router, conversations_router, documents_router, health_router
 
 
 # 設定日誌
@@ -105,6 +105,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(conversations_router, prefix="/api/v1")
+app.include_router(documents_router, prefix="/api/v1")
 
 
 # 根路徑
