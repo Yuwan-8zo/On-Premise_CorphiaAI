@@ -1,11 +1,11 @@
 """
-健康檢查 API
+?�康檢查 API
 """
 
 from fastapi import APIRouter
 
 from app.core.config import settings
-from app.schemas.common import HealthResponse
+from database.schemas.common import HealthResponse
 
 router = APIRouter(tags=["系統"])
 
@@ -13,9 +13,9 @@ router = APIRouter(tags=["系統"])
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     """
-    健康檢查端點
+    ?�康檢查端�?
     
-    回傳系統運行狀態
+    ?�傳系統?��??�??
     """
     return HealthResponse(
         status="ok",
@@ -27,7 +27,7 @@ async def health_check():
 
 @router.get("/")
 async def root():
-    """API 根路徑"""
+    """API ?�路�?""
     return {
         "name": settings.app_name,
         "version": "2.2.0",

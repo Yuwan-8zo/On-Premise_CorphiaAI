@@ -6,11 +6,11 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from database.connection import get_db
 from app.api.deps import CurrentUser, DbSession
-from app.models.conversation import Conversation
-from app.models.message import Message
-from app.schemas.conversation import MessageCreate, MessageResponse
+from database.models.conversation import Conversation
+from database.models.message import Message
+from database.schemas.conversation import MessageCreate, MessageResponse
 from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/messages", tags=["訊息"])
@@ -24,11 +24,11 @@ async def send_message(
     db: DbSession,
 ):
     """
-    發送訊息（非串流）
+    ?�送�??��??�串流�?
     
-    注意：建議使用 WebSocket 進行串流對話
+    注�?：建議使??WebSocket ?��?串�?對話
     """
-    # 驗證對話存在
+    # 驗�?對話存在
     result = await db.execute(
         select(Conversation).where(
             Conversation.id == conversation_id,
@@ -40,10 +40,10 @@ async def send_message(
     if conversation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
+            detail="對話不�???
         )
     
-    # 發送訊息
+    # ?�送�???
     chat_service = ChatService(db)
     message = await chat_service.send_message(
         conversation_id=conversation_id,
@@ -62,17 +62,17 @@ async def rate_message(
     db: DbSession,
 ):
     """
-    評分訊息
+    評�?訊息
     
     - rating: 1-5
     """
     if rating < 1 or rating > 5:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="評分必須在 1-5 之間"
+            detail="評�?必�???1-5 之�?"
         )
     
-    # 取得訊息
+    # ?��?訊息
     result = await db.execute(
         select(Message)
         .join(Conversation, Message.conversation_id == Conversation.id)
@@ -86,10 +86,10 @@ async def rate_message(
     if message is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="訊息不存在"
+            detail="訊息不�???
         )
     
     message.rating = rating
     await db.commit()
     
-    return {"message": "評分成功", "rating": rating}
+    return {"message": "評�??��?", "rating": rating}

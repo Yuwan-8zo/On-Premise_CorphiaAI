@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
-from app.core.database import init_db, close_db
+from database.connection import init_db, close_db
 from app.api import (
     auth_router,
     conversations_router,

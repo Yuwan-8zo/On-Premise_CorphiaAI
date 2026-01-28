@@ -1,5 +1,5 @@
 """
-使用者 API
+使用??API
 """
 
 from typing import List, Optional
@@ -8,8 +8,8 @@ from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession
-from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate, UserListResponse
+from database.models.user import User
+from database.schemas.user import UserResponse, UserUpdate, UserListResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -25,16 +25,16 @@ async def list_users(
     is_active: Optional[bool] = None,
 ):
     """
-    列出使用者（僅 admin/engineer 可用）
+    ?�出使用?��???admin/engineer ?�用�?
     """
-    # 權限檢查
+    # 權�?檢查
     if current_user.role not in ["admin", "engineer"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
+            detail="權�?不足"
         )
     
-    # 建立查詢
+    # 建�??�詢
     query = select(User).where(User.tenant_id == current_user.tenant_id)
     count_query = select(func.count(User.id)).where(User.tenant_id == current_user.tenant_id)
     
@@ -56,11 +56,11 @@ async def list_users(
         query = query.where(User.is_active == is_active)
         count_query = count_query.where(User.is_active == is_active)
     
-    # 取得總數
+    # ?��?總數
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
     
-    # 分頁
+    # ?��?
     offset = (page - 1) * page_size
     query = query.order_by(User.created_at.desc()).offset(offset).limit(page_size)
     
@@ -79,7 +79,7 @@ async def list_users(
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(current_user: CurrentUser):
     """
-    取得當前使用者資訊
+    ?��??��?使用?��?�?
     """
     return UserResponse.model_validate(current_user)
 
@@ -91,9 +91,9 @@ async def get_user(
     db: DbSession,
 ):
     """
-    取得指定使用者資訊
+    ?��??��?使用?��?�?
     """
-    # 只能查看同租戶的使用者
+    # ?�能?��??��??��?使用??
     result = await db.execute(
         select(User).where(
             User.id == user_id,
@@ -105,7 +105,7 @@ async def get_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
+            detail="使用?��?存在"
         )
     
     return UserResponse.model_validate(user)
@@ -118,14 +118,14 @@ async def update_current_user(
     db: DbSession,
 ):
     """
-    更新當前使用者資訊
+    ?�新?��?使用?��?�?
     """
     update_data = data.model_dump(exclude_unset=True)
     
     if not update_data:
         return UserResponse.model_validate(current_user)
     
-    # 更新資料
+    # ?�新資�?
     for key, value in update_data.items():
         setattr(current_user, key, value)
     
@@ -143,16 +143,16 @@ async def update_user(
     db: DbSession,
 ):
     """
-    更新指定使用者資訊（僅 admin 可用）
+    ?�新?��?使用?��?訊�???admin ?�用�?
     """
-    # 權限檢查
+    # 權�?檢查
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
+            detail="權�?不足"
         )
     
-    # 取得使用者
+    # ?��?使用??
     result = await db.execute(
         select(User).where(
             User.id == user_id,
@@ -164,10 +164,10 @@ async def update_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
+            detail="使用?��?存在"
         )
     
-    # 更新資料
+    # ?�新資�?
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(user, key, value)
@@ -185,23 +185,23 @@ async def delete_user(
     db: DbSession,
 ):
     """
-    刪除使用者（僅 admin 可用）
+    ?�除使用?��???admin ?�用�?
     """
-    # 權限檢查
+    # 權�?檢查
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
+            detail="權�?不足"
         )
     
-    # 不能刪除自己
+    # 不能?�除?�己
     if user_id == str(current_user.id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="無法刪除自己的帳號"
+            detail="?��??�除?�己?�帳??
         )
     
-    # 取得使用者
+    # ?��?使用??
     result = await db.execute(
         select(User).where(
             User.id == user_id,
@@ -213,14 +213,14 @@ async def delete_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
+            detail="使用?��?存在"
         )
     
-    # 軟刪除（停用帳號）
+    # 軟刪?��??�用帳�?�?
     user.is_active = False
     await db.commit()
     
-    return {"message": "使用者已停用"}
+    return {"message": "使用?�已?�用"}
 
 
 @router.post("/{user_id}/activate")
@@ -230,12 +230,12 @@ async def activate_user(
     db: DbSession,
 ):
     """
-    啟用使用者（僅 admin 可用）
+    ?�用使用?��???admin ?�用�?
     """
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
+            detail="權�?不足"
         )
     
     result = await db.execute(
@@ -249,10 +249,10 @@ async def activate_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
+            detail="使用?��?存在"
         )
     
     user.is_active = True
     await db.commit()
     
-    return {"message": "使用者已啟用"}
+    return {"message": "使用?�已?�用"}
