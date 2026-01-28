@@ -21,6 +21,7 @@ from app.api import (
     documents_router,
     messages_router,
     websocket_router,
+    users_router,
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
@@ -123,6 +124,7 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
 app.include_router(messages_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 
