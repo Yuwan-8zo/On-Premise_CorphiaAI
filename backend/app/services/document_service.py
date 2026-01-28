@@ -1,200 +1,366 @@
 """
-文件處理服務
+文件服務模組
 
-負責文件上傳、文字提取與分塊
+處理文件上傳、解析、分塊和向量化
 """
 
+import logging
 import os
-import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional, BinaryIO
 
-import chardet
-from fastapi import UploadFile, HTTPException, status
-from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.config import settings
-from app.models.document import Document
+from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
+from app.services.rag_service import get_rag_service
 
-
-class Chunk(BaseModel):
-    """文件分塊資料結構"""
-    content: str
-    metadata: dict
+logger = logging.getLogger(__name__)
 
 
 class DocumentService:
-    """文件服務"""
+    """文件處理服務"""
     
-    def __init__(self):
-        # 確保上傳目錄存在
-        os.makedirs(settings.upload_directory, exist_ok=True)
+    # 支援的檔案類型
+    SUPPORTED_TYPES = {
+        ".pdf": "application/pdf",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".doc": "application/msword",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".xls": "application/vnd.ms-excel",
+        ".txt": "text/plain",
+        ".md": "text/markdown",
+    }
     
-    async def save_upload_file(self, file: UploadFile, tenant_id: str) -> str:
+    # 分塊設定
+    CHUNK_SIZE = 500  # 字元數
+    CHUNK_OVERLAP = 50  # 重疊字元數
+    
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.upload_dir = Path(settings.upload_directory)
+        self.upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    async def upload_document(
+        self,
+        file: BinaryIO,
+        filename: str,
+        tenant_id: str,
+        user_id: str,
+    ) -> Document:
         """
-        儲存上傳的檔案
+        上傳並儲存文件
         
         Args:
-            file: 上傳檔案物件
-            tenant_id: 租戶 ID (用於目錄隔離)
+            file: 檔案物件
+            filename: 原始檔名
+            tenant_id: 租戶 ID
+            user_id: 上傳者 ID
             
         Returns:
-            str: 檔案儲存路徑
+            Document: 文件記錄
         """
-        # 檢查檔案大小 (簡易檢查，實際應在中間件或 Nginx 處理)
-        # file.file.seek(0, 2)
-        # size = file.file.tell()
-        # file.file.seek(0)
+        # 檢查檔案類型
+        ext = Path(filename).suffix.lower()
+        if ext not in self.SUPPORTED_TYPES:
+            raise ValueError(f"不支援的檔案類型: {ext}")
         
-        # 建立租戶目錄
-        tenant_dir = Path(settings.upload_directory) / tenant_id
-        tenant_dir.mkdir(parents=True, exist_ok=True)
+        # 生成唯一檔名
+        unique_filename = f"{uuid.uuid4()}{ext}"
+        file_path = self.upload_dir / tenant_id / unique_filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # 產生安全檔名
-        safe_filename = f"{uuid.uuid4()}_{file.filename}"
-        file_path = tenant_dir / safe_filename
+        # 儲存檔案
+        content = file.read()
+        file_size = len(content)
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        # 建立資料庫記錄
+        document = Document(
+            tenant_id=tenant_id,
+            uploaded_by=user_id,
+            filename=unique_filename,
+            original_filename=filename,
+            file_type=ext[1:],  # 移除點號
+            file_size=file_size,
+            file_path=str(file_path),
+            status=DocumentStatus.PENDING.value,
+        )
+        
+        self.db.add(document)
+        await self.db.commit()
+        await self.db.refresh(document)
+        
+        logger.info(f"已上傳文件: {filename} -> {unique_filename}")
+        
+        return document
+    
+    async def process_document(self, document_id: str) -> bool:
+        """
+        處理文件：解析、分塊、向量化
+        
+        Args:
+            document_id: 文件 ID
+            
+        Returns:
+            bool: 是否成功
+        """
+        # 取得文件記錄
+        result = await self.db.execute(
+            select(Document).where(Document.id == document_id)
+        )
+        document = result.scalar_one_or_none()
+        
+        if document is None:
+            logger.error(f"文件不存在: {document_id}")
+            return False
+        
+        # 更新狀態
+        document.status = DocumentStatus.PROCESSING.value
+        await self.db.commit()
         
         try:
-            with file_path.open("wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            return str(file_path)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"檔案儲存失敗: {str(e)}"
+            # 解析文件內容
+            content = await self._parse_document(document)
+            
+            if not content:
+                raise ValueError("無法解析文件內容")
+            
+            # 分塊
+            chunks = self._chunk_text(content)
+            
+            # 儲存分塊到資料庫
+            for i, chunk_content in enumerate(chunks):
+                chunk = DocumentChunk(
+                    document_id=document.id,
+                    chunk_index=i,
+                    content=chunk_content,
+                    chunk_metadata={
+                        "filename": document.original_filename,
+                        "tenant_id": document.tenant_id,
+                    }
+                )
+                self.db.add(chunk)
+            
+            # 新增到向量儲存
+            rag_service = get_rag_service()
+            await rag_service.add_document(
+                doc_id=document.id,
+                chunks=chunks,
+                metadatas=[{
+                    "filename": document.original_filename,
+                    "tenant_id": document.tenant_id,
+                    "chunk_index": i,
+                } for i in range(len(chunks))]
             )
-    
-    async def extract_text(self, file_path: str, file_type: str) -> str:
-        """
-        從檔案提取文字
-        
-        Args:
-            file_path: 檔案路徑
-            file_type: 檔案類型 (MIME type or extension)
             
-        Returns:
-            str: 提取的文字內容
-        """
-        path = Path(file_path)
-        if not path.exists():
-            raise FileNotFoundError(f"檔案不存在: {file_path}")
+            # 更新文件狀態
+            document.status = DocumentStatus.COMPLETED.value
+            document.chunk_count = len(chunks)
+            document.processed_at = datetime.utcnow()
             
-        ext = path.suffix.lower()
-        
-        try:
-            if ext == ".txt" or ext == ".md":
-                return self._read_text_file(path)
-            elif ext == ".pdf":
-                # 需要安裝 pypdf
-                from pypdf import PdfReader
-                reader = PdfReader(str(path))
-                text = ""
-                for page in reader.pages:
-                    text += page.extract_text() + "\n"
-                return text
-            elif ext == ".docx":
-                # 需要安裝 python-docx
-                from docx import Document as DocxDocument
-                doc = DocxDocument(str(path))
-                return "\n".join([para.text for para in doc.paragraphs])
-            else:
-                raise ValueError(f"不支援的檔案格式: {ext}")
+            await self.db.commit()
+            
+            logger.info(f"文件處理完成: {document.original_filename}，共 {len(chunks)} 個分塊")
+            return True
+            
         except Exception as e:
-            raise RuntimeError(f"文字提取失敗: {str(e)}")
+            logger.error(f"文件處理失敗: {e}")
+            document.status = DocumentStatus.FAILED.value
+            document.error_message = str(e)
+            await self.db.commit()
+            return False
     
-    def _read_text_file(self, path: Path) -> str:
-        """讀取純文字檔案，自動偵測編碼"""
-        # 讀取部分內容偵測編碼
-        with path.open("rb") as f:
-            raw = f.read(10000)
+    async def _parse_document(self, document: Document) -> str:
+        """解析文件內容"""
+        file_path = Path(document.file_path)
         
-        result = chardet.detect(raw)
-        encoding = result["encoding"] or "utf-8"
+        if not file_path.exists():
+            raise FileNotFoundError(f"檔案不存在: {file_path}")
         
+        ext = document.file_type.lower()
+        
+        if ext in ["txt", "md"]:
+            return await self._parse_text_file(file_path)
+        elif ext == "pdf":
+            return await self._parse_pdf(file_path)
+        elif ext in ["docx", "doc"]:
+            return await self._parse_word(file_path)
+        elif ext in ["xlsx", "xls"]:
+            return await self._parse_excel(file_path)
+        else:
+            raise ValueError(f"不支援的檔案類型: {ext}")
+    
+    async def _parse_text_file(self, file_path: Path) -> str:
+        """解析純文字檔案"""
+        import chardet
+        
+        with open(file_path, "rb") as f:
+            raw_data = f.read()
+        
+        # 偵測編碼
+        detected = chardet.detect(raw_data)
+        encoding = detected.get("encoding", "utf-8")
+        
+        return raw_data.decode(encoding, errors="ignore")
+    
+    async def _parse_pdf(self, file_path: Path) -> str:
+        """解析 PDF 檔案"""
         try:
-            with path.open("r", encoding=encoding) as f:
-                return f.read()
-        except UnicodeDecodeError:
-            # 失敗時嘗試常見編碼
-            for enc in ["utf-8", "big5", "cp950", "gbk", "latin-1"]:
-                if enc == encoding:
-                    continue
-                try:
-                    with path.open("r", encoding=enc) as f:
-                        return f.read()
-                except UnicodeDecodeError:
-                    continue
-            raise
+            from PyPDF2 import PdfReader
             
-    def chunk_text(self, text: str, chunk_size: int = 500, overlap: int = 50) -> List[Chunk]:
+            reader = PdfReader(str(file_path))
+            text_parts = []
+            
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_parts.append(text)
+            
+            return "\n\n".join(text_parts)
+            
+        except ImportError:
+            logger.warning("PyPDF2 未安裝，無法解析 PDF")
+            raise
+    
+    async def _parse_word(self, file_path: Path) -> str:
+        """解析 Word 檔案"""
+        try:
+            from docx import Document as DocxDocument
+            
+            doc = DocxDocument(str(file_path))
+            text_parts = []
+            
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    text_parts.append(para.text)
+            
+            return "\n\n".join(text_parts)
+            
+        except ImportError:
+            logger.warning("python-docx 未安裝，無法解析 Word")
+            raise
+    
+    async def _parse_excel(self, file_path: Path) -> str:
+        """解析 Excel 檔案"""
+        try:
+            from openpyxl import load_workbook
+            
+            wb = load_workbook(str(file_path), data_only=True)
+            text_parts = []
+            
+            for sheet in wb.worksheets:
+                sheet_text = f"### {sheet.title}\n"
+                for row in sheet.iter_rows(values_only=True):
+                    row_text = " | ".join(str(cell) if cell else "" for cell in row)
+                    if row_text.strip():
+                        sheet_text += row_text + "\n"
+                text_parts.append(sheet_text)
+            
+            return "\n\n".join(text_parts)
+            
+        except ImportError:
+            logger.warning("openpyxl 未安裝，無法解析 Excel")
+            raise
+    
+    def _chunk_text(self, text: str) -> list[str]:
         """
         將文字分塊
         
         Args:
             text: 原始文字
-            chunk_size: 分塊大小 (字元數)
-            overlap: 重疊大小
             
         Returns:
-            List[Chunk]: 分塊列表
+            list[str]: 分塊列表
         """
-        if not text:
-            return []
-            
         chunks = []
-        start = 0
-        text_len = len(text)
         
-        while start < text_len:
-            end = start + chunk_size
+        # 先按段落分割
+        paragraphs = text.split("\n\n")
+        
+        current_chunk = ""
+        
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                continue
             
-            # 如果不是最後一塊，嘗試在句點或換行處斷開
-            if end < text_len:
-                # 在 end 附近尋找可斷開的符號
-                search_end = min(end + 50, text_len)
-                found_split = False
+            # 如果段落本身超過 chunk size，需要進一步分割
+            if len(para) > self.CHUNK_SIZE:
+                # 先保存當前累積的 chunk
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = ""
                 
-                for split_char in ["\n\n", "\n", "。", "！", "？", ". ", "! ", "? "]:
-                    # 從預定結束點往前找
-                    pos = text.rfind(split_char, start, search_end)
-                    if pos != -1 and pos > start + chunk_size // 2:
-                        end = pos + len(split_char)
-                        found_split = True
-                        break
+                # 分割長段落
+                words = para.split()
+                temp_chunk = ""
+                for word in words:
+                    if len(temp_chunk) + len(word) + 1 > self.CHUNK_SIZE:
+                        if temp_chunk:
+                            chunks.append(temp_chunk)
+                        temp_chunk = word
+                    else:
+                        temp_chunk = temp_chunk + " " + word if temp_chunk else word
                 
-                if not found_split:
-                    # 強制斷開
-                    pass
-            
-            chunk_content = text[start:end].strip()
-            if chunk_content:
-                chunks.append(Chunk(
-                    content=chunk_content,
-                    metadata={
-                        "start_char": start,
-                        "end_char": start + len(chunk_content),
-                        "length": len(chunk_content)
-                    }
-                ))
-            
-            start = end - overlap
-            
+                if temp_chunk:
+                    current_chunk = temp_chunk
+            else:
+                # 嘗試合併段落
+                if len(current_chunk) + len(para) + 2 > self.CHUNK_SIZE:
+                    if current_chunk:
+                        chunks.append(current_chunk)
+                    current_chunk = para
+                else:
+                    current_chunk = current_chunk + "\n\n" + para if current_chunk else para
+        
+        # 加入最後一個 chunk
+        if current_chunk:
+            chunks.append(current_chunk)
+        
         return chunks
     
-    def delete_file(self, file_path: str) -> bool:
-        """刪除實體檔案"""
+    async def delete_document(self, document_id: str) -> bool:
+        """
+        刪除文件
+        
+        Args:
+            document_id: 文件 ID
+            
+        Returns:
+            bool: 是否成功
+        """
+        result = await self.db.execute(
+            select(Document).where(Document.id == document_id)
+        )
+        document = result.scalar_one_or_none()
+        
+        if document is None:
+            return False
+        
         try:
-            path = Path(file_path)
-            if path.exists():
-                path.unlink()
-                return True
+            # 刪除檔案
+            file_path = Path(document.file_path)
+            if file_path.exists():
+                os.remove(file_path)
+            
+            # 刪除向量儲存
+            rag_service = get_rag_service()
+            await rag_service.delete_document(document_id)
+            
+            # 刪除資料庫記錄
+            await self.db.delete(document)
+            await self.db.commit()
+            
+            logger.info(f"已刪除文件: {document.original_filename}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"刪除文件失敗: {e}")
             return False
-        except Exception:
-            return False
-
-
-# 單例
-document_service = DocumentService()

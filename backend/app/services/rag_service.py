@@ -1,162 +1,300 @@
 """
-RAG 服務
+RAG 服務模組
 
-負責向量嵌入、儲存與檢索
-整合 ChromaDB
+實作向量儲存與檢索功能
 """
 
-import os
-from typing import List, Optional, Tuple
-import uuid
-
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from chromadb.utils import embedding_functions
+import logging
+from typing import Optional
 
 from app.core.config import settings
-from app.models.document_chunk import DocumentChunk
+
+logger = logging.getLogger(__name__)
+
+# 全域 ChromaDB 客戶端
+_chroma_client = None
+_embedding_model = None
 
 
 class RAGService:
-    """RAG 檢索增強生成服務"""
+    """RAG 檢索服務"""
+    
+    COLLECTION_NAME = "corphia_documents"
     
     def __init__(self):
-        # 初始化 ChromaDB Client
-        os.makedirs(settings.chroma_persist_directory, exist_ok=True)
+        self.client = None
+        self.collection = None
+        self.embed_model = None
+        self._initialized = False
+    
+    async def initialize(self) -> bool:
+        """
+        初始化 RAG 服務
         
-        self.client = chromadb.PersistentClient(
-            path=settings.chroma_persist_directory,
-            settings=ChromaSettings(
+        Returns:
+            bool: 是否初始化成功
+        """
+        if self._initialized:
+            return True
+        
+        try:
+            import chromadb
+            from chromadb.config import Settings as ChromaSettings
+            
+            # 初始化 ChromaDB
+            logger.info("正在初始化 ChromaDB...")
+            
+            self.client = chromadb.Client(ChromaSettings(
+                persist_directory=settings.chroma_persist_directory,
                 anonymized_telemetry=False,
-                allow_reset=True
+            ))
+            
+            # 取得或建立 Collection
+            self.collection = self.client.get_or_create_collection(
+                name=self.COLLECTION_NAME,
+                metadata={"description": "Corphia AI 文件向量儲存"}
             )
-        )
-        
-        # 使用 Sentence Transformers 產生嵌入
-        # 預設使用 all-MiniLM-L6-v2，支援中文較好的模型可換成 'paraphrase-multilingual-MiniLM-L12-v2'
-        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
-        
-        # 獲取或建立集合
-        self.collection = self.client.get_or_create_collection(
-            name="corphia_knowledge_base",
-            embedding_function=self.embedding_fn,
-            metadata={"hnsw:space": "cosine"}
-        )
+            
+            logger.info(f"✅ ChromaDB 初始化完成，Collection: {self.COLLECTION_NAME}")
+            
+            # 初始化 Embedding 模型
+            await self._init_embedding_model()
+            
+            self._initialized = True
+            return True
+            
+        except ImportError:
+            logger.warning("chromadb 未安裝，RAG 功能將被停用")
+            self._initialized = True
+            return False
+        except Exception as e:
+            logger.error(f"RAG 服務初始化失敗: {e}")
+            self._initialized = True
+            return False
     
-    async def add_chunks(self, tenant_id: str, document_id: str, chunks: List[DocumentChunk]) -> None:
+    async def _init_embedding_model(self):
+        """初始化 Embedding 模型"""
+        try:
+            from sentence_transformers import SentenceTransformer
+            
+            logger.info("正在載入 Embedding 模型...")
+            
+            # 使用多語言模型
+            self.embed_model = SentenceTransformer(
+                "paraphrase-multilingual-MiniLM-L12-v2"
+            )
+            
+            logger.info("✅ Embedding 模型載入完成")
+            
+        except ImportError:
+            logger.warning("sentence-transformers 未安裝，將使用簡單的文字匹配")
+        except Exception as e:
+            logger.warning(f"Embedding 模型載入失敗: {e}")
+    
+    def get_embedding(self, text: str) -> list[float]:
         """
-        將文件分塊加入向量資料庫
+        取得文字的向量表示
         
         Args:
-            tenant_id: 租戶 ID
-            document_id: 文件 ID
-            chunks: 分塊列表
-        """
-        if not chunks:
-            return
-            
-        ids = []
-        documents = []
-        metadatas = []
-        
-        for chunk in chunks:
-            # 確保有 Vector ID
-            if not chunk.vector_id:
-                chunk.vector_id = str(uuid.uuid4())
-                
-            ids.append(chunk.vector_id)
-            documents.append(chunk.content)
-            
-            # 準備元資料
-            meta = {
-                "tenant_id": tenant_id,
-                "document_id": document_id,
-                "chunk_index": chunk.chunk_index,
-            }
-            # 合併分塊自帶的元資料
-            if chunk.chunk_metadata:
-                for k, v in chunk.chunk_metadata.items():
-                    # Chroma metadata 只能是 str, int, float, bool
-                    if isinstance(v, (str, int, float, bool)):
-                        meta[k] = v
-                    else:
-                        meta[k] = str(v)
-                        
-            metadatas.append(meta)
-            
-        # 寫入 ChromaDB
-        self.collection.add(
-            ids=ids,
-            documents=documents,
-            metadatas=metadatas
-        )
-    
-    async def delete_document(self, document_id: str) -> None:
-        """從向量資料庫刪除文件的所有分塊"""
-        self.collection.delete(
-            where={"document_id": document_id}
-        )
-    
-    async def search(
-        self, 
-        query: str, 
-        tenant_id: str, 
-        n_results: int = 5,
-        threshold: float = 0.3
-    ) -> List[dict]:
-        """
-        向量搜尋
-        
-        Args:
-            query: 查詢字串
-            tenant_id: 租戶 ID (用於資料隔離)
-            n_results: 返回結果數量
-            threshold: 相似度門檻 (距離越小越相似，cosine distance)
+            text: 輸入文字
             
         Returns:
-            List[dict]: 搜尋結果列表
+            list[float]: 向量
         """
-        results = self.collection.query(
-            query_texts=[query],
-            n_results=n_results,
-            where={"tenant_id": tenant_id}  # 租戶隔離
-        )
+        if self.embed_model is None:
+            # 使用簡單的雜湊作為回退
+            import hashlib
+            hash_obj = hashlib.md5(text.encode())
+            return [float(b) / 255.0 for b in hash_obj.digest()]
         
-        # 解析結果
-        parsed_results = []
+        embedding = self.embed_model.encode(text)
+        return embedding.tolist()
+    
+    async def add_document(
+        self,
+        doc_id: str,
+        chunks: list[str],
+        metadatas: Optional[list[dict]] = None,
+    ) -> int:
+        """
+        新增文件到向量儲存
         
-        if not results["ids"]:
+        Args:
+            doc_id: 文件 ID
+            chunks: 文件分塊列表
+            metadatas: 每個分塊的元資料
+            
+        Returns:
+            int: 新增的分塊數量
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        if self.collection is None:
+            logger.warning("ChromaDB 未初始化，無法新增文件")
+            return 0
+        
+        try:
+            # 生成 Chunk IDs
+            chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
+            
+            # 生成向量
+            embeddings = [self.get_embedding(chunk) for chunk in chunks]
+            
+            # 準備元資料
+            if metadatas is None:
+                metadatas = [{"document_id": doc_id, "chunk_index": i} for i in range(len(chunks))]
+            else:
+                for i, meta in enumerate(metadatas):
+                    meta["document_id"] = doc_id
+                    meta["chunk_index"] = i
+            
+            # 新增到 Collection
+            self.collection.add(
+                ids=chunk_ids,
+                embeddings=embeddings,
+                documents=chunks,
+                metadatas=metadatas,
+            )
+            
+            logger.info(f"已新增文件 {doc_id}，共 {len(chunks)} 個分塊")
+            return len(chunks)
+            
+        except Exception as e:
+            logger.error(f"新增文件失敗: {e}")
+            raise
+    
+    async def search(
+        self,
+        query: str,
+        tenant_id: Optional[str] = None,
+        n_results: int = 5,
+    ) -> list[dict]:
+        """
+        搜尋相關文件
+        
+        Args:
+            query: 查詢文字
+            tenant_id: 租戶 ID（用於過濾）
+            n_results: 回傳結果數量
+            
+        Returns:
+            list[dict]: 搜尋結果
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        if self.collection is None:
             return []
-            
-        ids = results["ids"][0]
-        distances = results["distances"][0] if results["distances"] else [0] * len(ids)
-        metadatas = results["metadatas"][0] if results["metadatas"] else [{}] * len(ids)
-        documents = results["documents"][0] if results["documents"] else [""] * len(ids)
         
-        for i, doc_id in enumerate(ids):
-            distance = distances[i]
+        try:
+            # 生成查詢向量
+            query_embedding = self.get_embedding(query)
             
-            # 過濾相似度太低的結果 (cosine distance: 0=完全相同, 2=完全相反)
-            # 這裡簡單設 distance > threshold 則過濾，視 threshold 定義而定
-            # 一般來說 0.3~0.5 是不錯的範圍
-            if distance > (1 - 0.7): # 假設相似度要 > 0.7，則 distance < 0.3
-                 pass
-                 
-            parsed_results.append({
-                "id": doc_id,
-                "content": documents[i],
-                "metadata": metadatas[i],
-                "score": 1 - distance, # 轉換為相似度分數 (0-1)
-                "distance": distance
-            })
+            # 建立過濾條件
+            where_filter = None
+            if tenant_id:
+                where_filter = {"tenant_id": tenant_id}
             
-        # 按相似度排序
-        parsed_results.sort(key=lambda x: x["score"], reverse=True)
+            # 執行搜尋
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=n_results,
+                where=where_filter,
+                include=["documents", "metadatas", "distances"],
+            )
+            
+            # 整理結果
+            search_results = []
+            if results and results["ids"]:
+                for i, chunk_id in enumerate(results["ids"][0]):
+                    search_results.append({
+                        "chunk_id": chunk_id,
+                        "content": results["documents"][0][i] if results["documents"] else "",
+                        "metadata": results["metadatas"][0][i] if results["metadatas"] else {},
+                        "score": 1 - results["distances"][0][i] if results["distances"] else 0,
+                    })
+            
+            return search_results
+            
+        except Exception as e:
+            logger.error(f"搜尋失敗: {e}")
+            return []
+    
+    async def delete_document(self, doc_id: str) -> bool:
+        """
+        刪除文件
         
-        return parsed_results
+        Args:
+            doc_id: 文件 ID
+            
+        Returns:
+            bool: 是否成功
+        """
+        if self.collection is None:
+            return False
+        
+        try:
+            # 刪除該文件的所有分塊
+            self.collection.delete(
+                where={"document_id": doc_id}
+            )
+            
+            logger.info(f"已刪除文件: {doc_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"刪除文件失敗: {e}")
+            return False
+    
+    def build_context(
+        self,
+        search_results: list[dict],
+        max_length: int = 2000,
+    ) -> str:
+        """
+        建構 RAG 上下文
+        
+        Args:
+            search_results: 搜尋結果
+            max_length: 最大長度
+            
+        Returns:
+            str: 格式化的上下文
+        """
+        if not search_results:
+            return ""
+        
+        context_parts = []
+        current_length = 0
+        
+        for i, result in enumerate(search_results, 1):
+            content = result.get("content", "")
+            metadata = result.get("metadata", {})
+            
+            # 格式化引用
+            source_info = f"[來源 {i}]"
+            if "filename" in metadata:
+                source_info += f" {metadata['filename']}"
+            
+            chunk_text = f"{source_info}\n{content}\n"
+            
+            if current_length + len(chunk_text) > max_length:
+                break
+            
+            context_parts.append(chunk_text)
+            current_length += len(chunk_text)
+        
+        return "\n---\n".join(context_parts)
 
 
-# 單例
-rag_service = RAGService()
+# 全域 RAG 服務實例
+_rag_instance = None
+
+
+def get_rag_service() -> RAGService:
+    """取得 RAG 服務單例"""
+    global _rag_instance
+    if _rag_instance is None:
+        _rag_instance = RAGService()
+    return _rag_instance

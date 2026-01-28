@@ -14,7 +14,16 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
-from app.api import auth_router, conversations_router, documents_router, health_router
+from app.api import (
+    auth_router,
+    conversations_router,
+    health_router,
+    documents_router,
+    messages_router,
+    websocket_router,
+)
+from app.services.llm_service import get_llm_service
+from app.services.rag_service import get_rag_service
 
 
 # 設定日誌
@@ -32,6 +41,13 @@ async def lifespan(app: FastAPI):
     logger.info(f"🚀 啟動 {settings.app_name} v2.2.0")
     await init_db()
     logger.info("✅ 資料庫初始化完成")
+    
+    # 初始化 LLM 和 RAG 服務
+    llm_service = get_llm_service()
+    await llm_service.initialize()
+    
+    rag_service = get_rag_service()
+    await rag_service.initialize()
     
     yield
     
@@ -106,6 +122,8 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
+app.include_router(messages_router, prefix="/api/v1")
+app.include_router(websocket_router)
 
 
 # 根路徑
