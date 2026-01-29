@@ -21,3 +21,4 @@ __all__ = [
 ]
 
 
+from app.api.models import router as models_router
