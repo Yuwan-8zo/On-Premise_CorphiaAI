@@ -5,7 +5,7 @@
 from fastapi import APIRouter
 
 from app.core.config import settings
-from database.schemas.common import HealthResponse
+from app.schemas.common import HealthResponse
 
 router = APIRouter(tags=["系統"])
 

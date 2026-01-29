@@ -10,8 +10,8 @@ from fastapi import APIRouter, HTTPException, status, UploadFile, File, Backgrou
 from sqlalchemy import select, func
 
 from app.api.deps import CurrentUser, DbSession
-from database.models.document import Document
-from database.schemas.document import (
+from app.models.document import Document
+from app.schemas.document import (
     DocumentResponse,
     DocumentListResponse,
     DocumentUploadResponse,
@@ -116,7 +116,7 @@ async def upload_document(
 
 async def process_document_task(document_id: str):
     """?Œæ™¯ä»»å?ï¼šè??†æ?ä»?""
-    from database.connection import async_session_maker
+    from app.core.database import async_session_maker
     
     async with async_session_maker() as db:
         doc_service = DocumentService(db)

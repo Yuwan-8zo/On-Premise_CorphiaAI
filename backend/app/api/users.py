@@ -8,8 +8,8 @@ from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession
-from database.models.user import User
-from database.schemas.user import UserResponse, UserUpdate, UserListResponse
+from app.models.user import User
+from app.schemas.user import UserResponse, UserUpdate, UserListResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 

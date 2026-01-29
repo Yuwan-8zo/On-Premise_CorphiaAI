@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
-from database.connection import init_db, close_db
+from app.core.database import init_db, close_db
 from app.api import (
     auth_router,
     conversations_router,
@@ -22,6 +22,7 @@ from app.api import (
     messages_router,
     websocket_router,
     users_router,
+    models_router,
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
@@ -125,6 +126,7 @@ app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
 app.include_router(messages_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
+app.include_router(models_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 

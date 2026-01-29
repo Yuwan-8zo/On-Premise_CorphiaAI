@@ -6,11 +6,11 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.connection import get_db
+from app.core.database import get_db
 from app.api.deps import CurrentUser, DbSession
-from database.models.conversation import Conversation
-from database.models.message import Message
-from database.schemas.conversation import MessageCreate, MessageResponse
+from app.models.conversation import Conversation
+from app.models.message import Message
+from app.schemas.conversation import MessageCreate, MessageResponse
 from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/messages", tags=["訊息"])

@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
-from database.models.document import Document, DocumentStatus
-from database.models.document_chunk import DocumentChunk
+from app.models.document import Document, DocumentStatus
+from app.models.document_chunk import DocumentChunk
 from app.services.rag_service import get_rag_service
 
 logger = logging.getLogger(__name__)

@@ -9,9 +9,9 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DbSession
-from database.models.conversation import Conversation
-from database.models.message import Message, MessageRole
-from database.schemas.conversation import (
+from app.models.conversation import Conversation
+from app.models.message import Message, MessageRole
+from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
     ConversationResponse,

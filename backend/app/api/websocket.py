@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.connection import get_db
+from app.core.database import get_db
 from app.core.security import decode_token
 from app.services.chat_service import ChatService
 

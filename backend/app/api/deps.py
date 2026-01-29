@@ -9,9 +9,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from database.connection import get_db
+from app.core.database import get_db
 from app.core.security import decode_token
-from database.models.user import User, UserRole
+from app.models.user import User, UserRole
 
 
 # HTTP Bearer и™Ни?

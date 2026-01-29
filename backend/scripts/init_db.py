@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 
 # 添加專案根目錄到 Python 路徑
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from database.connection import engine, Base, async_session_maker
+from app.core.database import engine, Base, async_session_maker
 from app.core.security import get_password_hash
-from database.models import Tenant, User, UserRole
+from app.models import Tenant, User, UserRole
 
 
 async def init_database():

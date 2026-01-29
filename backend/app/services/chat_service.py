@@ -11,9 +11,9 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 
-from database.models.conversation import Conversation
-from database.models.message import Message, MessageRole
-from database.models.user import User
+from app.models.conversation import Conversation
+from app.models.message import Message, MessageRole
+from app.models.user import User
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
 
