@@ -1,7 +1,7 @@
 """
-RAG ?��?模�?
+RAG 服務模組
 
-實�??��??��??�檢索�???
+實作向量儲存與檢索功能
 """
 
 import logging
@@ -11,13 +11,13 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ?��? ChromaDB 客戶�?
+# 全域 ChromaDB 客戶端
 _chroma_client = None
 _embedding_model = None
 
 
 class RAGService:
-    """RAG 檢索?��?"""
+    """RAG 檢索服務"""
     
     COLLECTION_NAME = "corphia_documents"
     
@@ -29,10 +29,10 @@ class RAGService:
     
     async def initialize(self) -> bool:
         """
-        ?��???RAG ?��?
+        初始化 RAG 服務
         
         Returns:
-            bool: ?�否?��??��???
+            bool: 是否初始化成功
         """
         if self._initialized:
             return True
@@ -41,68 +41,68 @@ class RAGService:
             import chromadb
             from chromadb.config import Settings as ChromaSettings
             
-            # ?��???ChromaDB
-            logger.info("�?��?��???ChromaDB...")
+            # 初始化 ChromaDB
+            logger.info("正在初始化 ChromaDB...")
             
             self.client = chromadb.Client(ChromaSettings(
                 persist_directory=settings.chroma_persist_directory,
                 anonymized_telemetry=False,
             ))
             
-            # ?��??�建�?Collection
+            # 取得或建立 Collection
             self.collection = self.client.get_or_create_collection(
                 name=self.COLLECTION_NAME,
-                metadata={"description": "Corphia AI ?�件?��??��?"}
+                metadata={"description": "Corphia AI 文件向量儲存"}
             )
             
-            logger.info(f"??ChromaDB ?��??��??��?Collection: {self.COLLECTION_NAME}")
+            logger.info(f"✅ ChromaDB 初始化完成，Collection: {self.COLLECTION_NAME}")
             
-            # ?��???Embedding 模�?
+            # 初始化 Embedding 模型
             await self._init_embedding_model()
             
             self._initialized = True
             return True
             
         except ImportError:
-            logger.warning("chromadb ?��?裝�?RAG ?�能將被?�用")
+            logger.warning("chromadb 未安裝，RAG 功能將被停用")
             self._initialized = True
             return False
         except Exception as e:
-            logger.error(f"RAG ?��??��??�失?? {e}")
+            logger.error(f"RAG 服務初始化失敗: {e}")
             self._initialized = True
             return False
     
     async def _init_embedding_model(self):
-        """?��???Embedding 模�?"""
+        """初始化 Embedding 模型"""
         try:
             from sentence_transformers import SentenceTransformer
             
-            logger.info("�?��載入 Embedding 模�?...")
+            logger.info("正在載入 Embedding 模型...")
             
-            # 使用多�?言模�?
+            # 使用多語言模型
             self.embed_model = SentenceTransformer(
                 "paraphrase-multilingual-MiniLM-L12-v2"
             )
             
-            logger.info("??Embedding 模�?載入完�?")
+            logger.info("✅ Embedding 模型載入完成")
             
         except ImportError:
-            logger.warning("sentence-transformers ?��?裝�?將使?�簡?��??��??��?")
+            logger.warning("sentence-transformers 未安裝，將使用簡單的文字匹配")
         except Exception as e:
-            logger.warning(f"Embedding 模�?載入失�?: {e}")
+            logger.warning(f"Embedding 模型載入失敗: {e}")
     
     def get_embedding(self, text: str) -> list[float]:
         """
-        ?��??��??��??�表�?
+        取得文字的向量表示
         
         Args:
-            text: 輸入?��?
+            text: 輸入文字
             
         Returns:
-            list[float]: ?��?
+            list[float]: 向量
         """
         if self.embed_model is None:
-            # 使用簡單?��?湊�??��??�
+            # 使用簡單的雜湊作為回退
             import hashlib
             hash_obj = hashlib.md5(text.encode())
             return [float(b) / 255.0 for b in hash_obj.digest()]
@@ -117,31 +117,31 @@ class RAGService:
         metadatas: Optional[list[dict]] = None,
     ) -> int:
         """
-        ?��??�件?��??�儲�?
+        新增文件到向量儲存
         
         Args:
-            doc_id: ?�件 ID
-            chunks: ?�件?��??�表
-            metadatas: 每個�?塊�??��???
+            doc_id: 文件 ID
+            chunks: 文件分塊列表
+            metadatas: 每個分塊的元資料
             
         Returns:
-            int: ?��??��?塊數??
+            int: 新增的分塊數量
         """
         if not self._initialized:
             await self.initialize()
         
         if self.collection is None:
-            logger.warning("ChromaDB ?��?始�?，無法新增�?�?)
+            logger.warning("ChromaDB 未初始化，無法新增文件")
             return 0
         
         try:
-            # ?��? Chunk IDs
+            # 生成 Chunk IDs
             chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
             
-            # ?��??��?
+            # 生成向量
             embeddings = [self.get_embedding(chunk) for chunk in chunks]
             
-            # 準�??��???
+            # 準備元資料
             if metadatas is None:
                 metadatas = [{"document_id": doc_id, "chunk_index": i} for i in range(len(chunks))]
             else:
@@ -149,7 +149,7 @@ class RAGService:
                     meta["document_id"] = doc_id
                     meta["chunk_index"] = i
             
-            # ?��???Collection
+            # 新增到 Collection
             self.collection.add(
                 ids=chunk_ids,
                 embeddings=embeddings,
@@ -157,11 +157,11 @@ class RAGService:
                 metadatas=metadatas,
             )
             
-            logger.info(f"已新增�?�?{doc_id}，共 {len(chunks)} ?��?�?)
+            logger.info(f"已新增文件 {doc_id}，共 {len(chunks)} 個分塊")
             return len(chunks)
             
         except Exception as e:
-            logger.error(f"?��??�件失�?: {e}")
+            logger.error(f"新增文件失敗: {e}")
             raise
     
     async def search(
@@ -171,15 +171,15 @@ class RAGService:
         n_results: int = 5,
     ) -> list[dict]:
         """
-        ?��??��??�件
+        搜尋相關文件
         
         Args:
-            query: ?�詢?��?
-            tenant_id: 租戶 ID（用?��?濾�?
-            n_results: ?�傳結�??��?
+            query: 查詢文字
+            tenant_id: 租戶 ID（用於過濾）
+            n_results: 回傳結果數量
             
         Returns:
-            list[dict]: ?��?結�?
+            list[dict]: 搜尋結果
         """
         if not self._initialized:
             await self.initialize()
@@ -188,15 +188,15 @@ class RAGService:
             return []
         
         try:
-            # ?��??�詢?��?
+            # 生成查詢向量
             query_embedding = self.get_embedding(query)
             
-            # 建�??�濾條件
+            # 建立過濾條件
             where_filter = None
             if tenant_id:
                 where_filter = {"tenant_id": tenant_id}
             
-            # ?��??��?
+            # 執行搜尋
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=n_results,
@@ -204,7 +204,7 @@ class RAGService:
                 include=["documents", "metadatas", "distances"],
             )
             
-            # ?��?結�?
+            # 整理結果
             search_results = []
             if results and results["ids"]:
                 for i, chunk_id in enumerate(results["ids"][0]):
@@ -218,33 +218,33 @@ class RAGService:
             return search_results
             
         except Exception as e:
-            logger.error(f"?��?失�?: {e}")
+            logger.error(f"搜尋失敗: {e}")
             return []
     
     async def delete_document(self, doc_id: str) -> bool:
         """
-        ?�除?�件
+        刪除文件
         
         Args:
-            doc_id: ?�件 ID
+            doc_id: 文件 ID
             
         Returns:
-            bool: ?�否?��?
+            bool: 是否成功
         """
         if self.collection is None:
             return False
         
         try:
-            # ?�除該�?件�??�?��?�?
+            # 刪除該文件的所有分塊
             self.collection.delete(
                 where={"document_id": doc_id}
             )
             
-            logger.info(f"已刪?��?�? {doc_id}")
+            logger.info(f"已刪除文件: {doc_id}")
             return True
             
         except Exception as e:
-            logger.error(f"?�除?�件失�?: {e}")
+            logger.error(f"刪除文件失敗: {e}")
             return False
     
     def build_context(
@@ -253,14 +253,14 @@ class RAGService:
         max_length: int = 2000,
     ) -> str:
         """
-        建�? RAG 上�???
+        建構 RAG 上下文
         
         Args:
-            search_results: ?��?結�?
-            max_length: ?�大長�?
+            search_results: 搜尋結果
+            max_length: 最大長度
             
         Returns:
-            str: ?��??��?上�???
+            str: 格式化的上下文
         """
         if not search_results:
             return ""
@@ -272,8 +272,8 @@ class RAGService:
             content = result.get("content", "")
             metadata = result.get("metadata", {})
             
-            # ?��??��???
-            source_info = f"[來�? {i}]"
+            # 格式化引用
+            source_info = f"[來源 {i}]"
             if "filename" in metadata:
                 source_info += f" {metadata['filename']}"
             
@@ -288,12 +288,12 @@ class RAGService:
         return "\n---\n".join(context_parts)
 
 
-# ?��? RAG ?��?實�?
+# 全域 RAG 服務實例
 _rag_instance = None
 
 
 def get_rag_service() -> RAGService:
-    """?��? RAG ?��??��?"""
+    """取得 RAG 服務單例"""
     global _rag_instance
     if _rag_instance is None:
         _rag_instance = RAGService()

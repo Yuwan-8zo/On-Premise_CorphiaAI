@@ -1,5 +1,5 @@
 """
-API 模�?
+API 模組
 """
 
 from app.api.auth import router as auth_router
@@ -21,4 +21,3 @@ __all__ = [
 ]
 
 
-from app.api.models import router as models_router

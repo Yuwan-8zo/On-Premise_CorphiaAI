@@ -70,7 +70,7 @@ class Document(Base):
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
     
     # 元資料
-    metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    doc_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(

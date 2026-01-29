@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+  File "D:\Cursor\on-premise_CorphiaAI\backend\app\models\__init__.py", line 9, in <module>
+    from app.models.document import Document, DocumentStatus
+  File "D:\Cursor\on-premise_CorphiaAI\backend\app\models\document.py", line 30, in <module>
+    class Document(Base):
+  File "C:\Users\ngu94\AppData\Roaming\Python\Python312\site-packages\sqlalchemy\orm\decl_api.py", line 846, in __init_subclass__
+    _as_declarative(cls._sa_registry, cls, cls.__dict__)
+  File "C:\Users\ngu94\AppData\Roaming\Python\Python312\site-packages\sqlalchemy\orm\decl_base.py", line 245, in _as_declarative
+    return _MapperConfig.setup_mapping(registry, cls, dict_, None, {})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ngu94\AppData\Roaming\Python\Python312\site-packages\sqlalchemy\orm\decl_base.py", line 326, in setup_mapping
+    return _ClassScanMapperConfig(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ngu94\AppData\Roaming\Python\Python312\site-packages\sqlalchemy\orm\decl_base.py", line 573, in __init__
+    self._extract_mappable_attributes()
+  File "C:\Users\ngu94\AppData\Roaming\Python\Python312\site-packages\sqlalchemy\orm\decl_base.py", line 1530, in _extract_mappable_attributes
+    raise exc.InvalidRequestError(
+sqlalchemy.exc.InvalidRequestError: Attribute name 'metadata' is reserved when using the Declarative API.

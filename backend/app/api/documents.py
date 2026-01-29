@@ -1,5 +1,5 @@
 """
-?�件 API
+文件 API
 """
 
 import logging
@@ -20,7 +20,7 @@ from app.services.document_service import DocumentService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/documents", tags=["?�件"])
+router = APIRouter(prefix="/documents", tags=["文件"])
 
 
 @router.get("", response_model=DocumentListResponse)
@@ -31,8 +31,8 @@ async def list_documents(
     page_size: int = 20,
     status: Optional[str] = None,
 ):
-    """?��??�件?�表"""
-    # 建�??�詢
+    """取得文件列表"""
+    # 建立查詢
     query = select(Document).where(
         Document.tenant_id == (current_user.tenant_id or "default")
     )
@@ -40,12 +40,12 @@ async def list_documents(
     if status:
         query = query.where(Document.status == status)
     
-    # 計�?總數
+    # 計算總數
     count_query = select(func.count()).select_from(query.subquery())
     result = await db.execute(count_query)
     total = result.scalar()
     
-    # ?��?
+    # 分頁
     query = query.order_by(Document.created_at.desc())
     query = query.offset((page - 1) * page_size).limit(page_size)
     
@@ -66,15 +66,15 @@ async def upload_document(
     file: UploadFile = File(...),
 ):
     """
-    上傳?�件
+    上傳文件
     
-    ?�援?��?: PDF, Word, Excel, TXT, Markdown
+    支援格式: PDF, Word, Excel, TXT, Markdown
     """
-    # 檢查檔�?
+    # 檢查檔案
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="缺�?檔�??�稱"
+            detail="缺少檔案名稱"
         )
     
     # 上傳
@@ -88,7 +88,7 @@ async def upload_document(
             user_id=current_user.id,
         )
         
-        # ?�景?��??�件
+        # 背景處理文件
         background_tasks.add_task(
             process_document_task,
             document.id,
@@ -98,7 +98,7 @@ async def upload_document(
             id=document.id,
             filename=document.original_filename,
             status=document.status,
-            message="?�件已�??��?�?��?��?�?
+            message="文件已上傳，正在處理中"
         )
         
     except ValueError as e:
@@ -107,15 +107,15 @@ async def upload_document(
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"?�件上傳失�?: {e}")
+        logger.error(f"文件上傳失敗: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="?�件上傳失�?"
+            detail="文件上傳失敗"
         )
 
 
 async def process_document_task(document_id: str):
-    """?�景任�?：�??��?�?""
+    """背景任務：處理文件"""
     from app.core.database import async_session_maker
     
     async with async_session_maker() as db:
@@ -129,7 +129,7 @@ async def get_document(
     current_user: CurrentUser,
     db: DbSession,
 ):
-    """?��??�件詳�?"""
+    """取得文件詳情"""
     result = await db.execute(
         select(Document).where(
             Document.id == document_id,
@@ -141,7 +141,7 @@ async def get_document(
     if document is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="?�件不�???
+            detail="文件不存在"
         )
     
     return DocumentResponse.model_validate(document)
@@ -153,8 +153,8 @@ async def delete_document(
     current_user: CurrentUser,
     db: DbSession,
 ):
-    """?�除?�件"""
-    # 檢查權�?
+    """刪除文件"""
+    # 檢查權限
     result = await db.execute(
         select(Document).where(
             Document.id == document_id,
@@ -166,14 +166,14 @@ async def delete_document(
     if document is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="?�件不�???
+            detail="文件不存在"
         )
     
-    # ?��?上傳?��?管�??�可以刪??
+    # 只有上傳者或管理員可以刪除
     if document.uploaded_by != current_user.id and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="?��??�除此�?�?
+            detail="無權刪除此文件"
         )
     
     doc_service = DocumentService(db)
@@ -182,5 +182,5 @@ async def delete_document(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="?�除?�件失�?"
+            detail="刪除文件失敗"
         )
