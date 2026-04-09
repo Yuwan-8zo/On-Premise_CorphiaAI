@@ -88,11 +88,11 @@ export default function Login() {
                 {/* 後端狀態指示器 */}
                 <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-md w-fit">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
-                            backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                        backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
                     <span className="text-sm text-gray-400">Backend:</span>
                     <span className={`text-sm ${backendStatus === 'online' ? 'text-green-400' :
-                            backendStatus === 'offline' ? 'text-red-400' : 'text-yellow-400'
+                        backendStatus === 'offline' ? 'text-red-400' : 'text-yellow-400'
                         }`}>
                         {backendStatus === 'online' ? 'Online' :
                             backendStatus === 'offline' ? 'Offline' : 'Checking...'}
@@ -156,8 +156,8 @@ export default function Login() {
                             <button
                                 onClick={() => setActiveTab('login')}
                                 className={`flex-1 py-3 text-center rounded-full text-sm font-medium transition-all ${activeTab === 'login'
-                                        ? 'bg-[#2a2a2a] text-white'
-                                        : 'text-gray-500 hover:text-gray-300'
+                                    ? 'bg-[#2a2a2a] text-white'
+                                    : 'text-gray-500 hover:text-gray-300'
                                     }`}
                             >
                                 {t('auth.login')}
@@ -165,8 +165,8 @@ export default function Login() {
                             <button
                                 onClick={() => setActiveTab('register')}
                                 className={`flex-1 py-3 text-center rounded-full text-sm font-medium transition-all ${activeTab === 'register'
-                                        ? 'bg-[#2a2a2a] text-white'
-                                        : 'text-gray-500 hover:text-gray-300'
+                                    ? 'bg-[#2a2a2a] text-white'
+                                    : 'text-gray-500 hover:text-gray-300'
                                     }`}
                             >
                                 {t('auth.register')}
@@ -264,12 +264,7 @@ export default function Login() {
                                 )}
                             </button>
 
-                            {/* 底部連結 */}
-                            <div className="flex justify-center gap-6 mt-6 text-xs text-gray-500">
-                                <a href="#" className="hover:text-gray-300 transition-colors">{t('auth.privacy')}</a>
-                                <a href="#" className="hover:text-gray-300 transition-colors">{t('auth.terms')}</a>
-                                <a href="#" className="hover:text-gray-300 transition-colors">{t('auth.help')}</a>
-                            </div>
+
                         </form>
                     </div>
                 </div>
