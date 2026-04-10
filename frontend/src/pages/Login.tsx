@@ -146,8 +146,8 @@ export default function Login() {
                     </span>
                 </div>
 
-                {/* 品牌內容 - 垂直定位於 2/3 處 */}
-                <div className="flex-1 flex flex-col max-w-md">
+                {/* 品牌內容 - 垂直定位於 2/3 處，水平置中於左半部 */}
+                <div className="flex-1 flex flex-col w-full max-w-md mx-auto">
                     <div className="flex-[2]"></div>
                     <div>
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 italic transition-colors">
