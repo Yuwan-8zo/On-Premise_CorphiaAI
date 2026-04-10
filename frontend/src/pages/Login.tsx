@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/auth'
 
-
 export default function Login() {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
@@ -153,7 +152,7 @@ export default function Login() {
                 <div className="flex-1 flex items-center justify-center px-8 pb-12">
                     {/* 1:1 正方形卡片 */}
                     <div
-                        className="w-full max-w-[420px] bg-[#1f1f1f] rounded-[36px] p-8 flex flex-col"
+                        className="w-full max-w-[420px] bg-[#1c1c1c] rounded-[40px] p-8 flex flex-col"
                         style={{ aspectRatio: '1 / 1' }}
                     >
                         {/* ── Pill Tab 切換（滑動黑色背景） ── */}
@@ -210,29 +209,29 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {/* 帳號 — flex 直接子元素，justify-between 自動分配 */}
+                            {/* 帳號 */}
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 placeholder={t('auth.account')}
-                                className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                                className="w-full px-6 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
                             />
 
-                            {/* 密碼 — flex 直接子元素 */}
+                            {/* 密碼 */}
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 placeholder={t('auth.password')}
-                                className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                                className="w-full px-6 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
                             />
 
-                            {/* 確認密碼 — height 動畫，0 → 56px
+                            {/* 確認密碼 — height 動畫，0 → 60px
                                  height=0 時 justify-between 將其視為不占位的元素，自動展開 3 個空白
-                                 height=56px 時 justify-between 重新平均分配 4 個元素 */}
+                                 height=60px 時 justify-between 重新平均分配 4 個元素 */}
                             <div
                                 style={{
                                     height: activeTab === 'register' ? '56px' : '0px',
@@ -248,7 +247,7 @@ export default function Login() {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required={activeTab === 'register'}
                                     placeholder={t('auth.confirmPassword')}
-                                    className="w-full h-full px-5 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                                    className="w-full h-full px-6 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
                                 />
                             </div>
 
