@@ -199,9 +199,23 @@ export default function Login() {
 
             {/* ── 右側：登入表單 (桌面 50%，手機 100%) ── */}
             <div className="w-full lg:w-1/2 flex flex-col">
-                {/* 右上角區塊 */}
-                <div className="flex justify-end p-6 gap-2">
-                    <button
+                {/* 頂部區塊 (手機版顯示左側狀態與右側按鈕，桌面版只顯示右側按鈕) */}
+                <div className="flex justify-between items-center p-6 w-full">
+                    <div className="lg:hidden flex items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
+                        <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
+                            backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                            }`}></span>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Backend:</span>
+                        <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
+                            backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+                            }`}>
+                            {backendStatus === 'online' ? 'Online' :
+                                backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+                        </span>
+                    </div>
+
+                    <div className="flex gap-2 ml-auto">
+                        <button
                         onClick={toggleTheme}
                         className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
                         title={t('settings.theme')}
@@ -226,6 +240,7 @@ export default function Login() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                         </svg>
                     </button>
+                    </div>
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
