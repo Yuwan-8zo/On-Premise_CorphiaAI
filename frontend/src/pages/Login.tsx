@@ -356,12 +356,6 @@ export default function Login() {
                         </form>
                     </div>
                 </div>
-
-                {/* 手機版品牌顯示 */}
-                <div className="lg:hidden px-8 pb-8 text-center mt-auto">
-                    <h1 className="text-2xl font-light text-gray-900 dark:text-white transition-colors">Corphia AI</h1>
-                    <p className="text-sm text-gray-500 tracking-wide mt-1 transition-colors">{t('auth.engineDesc')}</p>
-                </div>
             </div>
 
         </div>
