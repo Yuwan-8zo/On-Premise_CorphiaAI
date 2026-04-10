@@ -256,7 +256,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景
-        <div className="flex h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300 relative">
+        <div className="flex h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300 relative">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
@@ -269,7 +269,7 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } overflow-hidden bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
+                    } overflow-hidden bg-white dark:bg-[#111111] rounded-r-[28px] md:rounded-r-none transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-gray-200 dark:border-[#222] md:border-r`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className="p-4 space-y-4 pt-6 w-[280px]">
@@ -277,7 +277,7 @@ export default function Chat() {
                     <button
                         onClick={createNewConversation}
                         className="w-full flex items-center justify-start gap-3 px-4 py-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] 
-                                   text-gray-800 dark:text-white rounded-[14px] transition-colors font-medium"
+                                   text-gray-800 dark:text-white rounded-full transition-colors font-medium"
                     >
                         <PlusIcon />
                         <span className="text-[15px]">新對話</span>
