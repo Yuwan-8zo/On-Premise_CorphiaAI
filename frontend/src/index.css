@@ -15,18 +15,24 @@
 
 html {
   font-size: 16px;
+  background-color: #f0f2f5;
+  color-scheme: light;
 }
 
 body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
+  background-color: #f0f2f5;
   color: #111827;
 }
 
-.dark body {
-  background-color: #131314;
+.dark {
+  color-scheme: dark;
+}
+
+.dark html, .dark body {
+  background-color: #1a1a1a;
   color: #f3f4f6;
 }
 
