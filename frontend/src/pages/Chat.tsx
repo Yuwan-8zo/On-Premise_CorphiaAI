@@ -1,5 +1,5 @@
 /**
- * 對話主頁面（ChatGPT UI 復刻版）
+ * 對話主頁面（Corphia Custom 特製版）
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -12,55 +12,44 @@ import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '..
 import { MessageBubble } from '../components/chat'
 import type { Message } from '../types/chat'
 
-// --- ChatGPT Icons ---
-const SidebarIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="9" y1="3" x2="9" y2="21"></line>
+// --- Custom UI Icons ---
+const PlusIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
     </svg>
 )
 
-const NewChatIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+const InputPlusIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
     </svg>
 )
 
-const AttachmentIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-gray-400">
-        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-)
-
-const SendIcon = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${disabled ? 'bg-[#676767]' : 'bg-white'}`}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={`w-5 h-5 ${disabled ? 'text-gray-400' : 'text-black'}`}>
-            <path d="M12 18V6M12 6L7 11M12 6L17 11" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+// The blue circle in the reference doesn't clearly show an arrow, but usually it represents send.
+const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
+    <div className={`w-[44px] h-[44px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-[#3b3b3b]' : 'bg-[#1877F2] hover:bg-[#166fe5]'}`}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
         </svg>
     </div>
 )
 
 const StopIcon = () => (
-    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="black">
+    <div className="w-[44px] h-[44px] rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-sm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
             <rect x="5" y="5" width="14" height="14" rx="2" />
         </svg>
     </div>
 )
 
-const DownArrowIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 text-gray-400">
-        <path d="M6 9l6 6 6-6"/>
+const SidebarIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-white">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="9" y1="3" x2="9" y2="21"></line>
     </svg>
-)
-
-const LargeLogoIcon = () => (
-    <div className="w-12 h-12 rounded-full border border-gray-600 bg-transparent flex items-center justify-center mb-4">
-        <svg fill="currentColor" viewBox="0 0 24 24" className="w-8 h-8 text-gray-200">
-            <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6L12 2z" />
-        </svg>
-    </div>
 )
 
 export default function Chat() {
@@ -87,7 +76,9 @@ export default function Chat() {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const wsRef = useRef<ChatWebSocket | null>(null)
 
-    // 載入對話列表
+    // Mode Toggle (UI Only)
+    const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
+
     useEffect(() => {
         const loadConversations = async () => {
             try {
@@ -100,12 +91,10 @@ export default function Chat() {
         loadConversations()
     }, [setConversations])
 
-    // 自動滾動到底部
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-    // 自動調整輸入框高度
     useEffect(() => {
         if (inputRef.current) {
             inputRef.current.style.height = 'auto'
@@ -113,7 +102,6 @@ export default function Chat() {
         }
     }, [input])
 
-    // 處理 WebSocket 訊息
     const handleWebSocketMessage = useCallback((data: StreamResponse) => {
         switch (data.type) {
             case 'stream':
@@ -134,7 +122,6 @@ export default function Chat() {
         }
     }, [appendToLastMessage, setStreaming])
 
-    // 連接 WebSocket
     const connectWebSocket = useCallback(async (conversationId: string) => {
         if (wsRef.current) {
             wsRef.current.disconnect()
@@ -142,9 +129,7 @@ export default function Chat() {
 
         const ws = createChatWebSocket(conversationId)
         ws.onMessage(handleWebSocketMessage)
-        ws.onClose(() => {
-            console.log('WebSocket 已斷開')
-        })
+        ws.onClose(() => console.log('WebSocket 已斷開'))
 
         try {
             setIsConnecting(true)
@@ -157,12 +142,9 @@ export default function Chat() {
         }
     }, [handleWebSocketMessage])
 
-    // 選擇對話
     const selectConversation = useCallback(async (conversation: typeof currentConversation) => {
         if (!conversation) return
-
         setCurrentConversation(conversation)
-
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
             setMessages(msgs)
@@ -172,7 +154,6 @@ export default function Chat() {
         }
     }, [setCurrentConversation, setMessages, connectWebSocket])
 
-    // 建立新對話
     const createNewConversation = async () => {
         try {
             const conversation = await conversationsApi.create({ title: '新對話' })
@@ -183,15 +164,13 @@ export default function Chat() {
         }
     }
 
-    // 發送訊息
-    const handleSend = async (promptOverride?: string) => {
-        const textToSend = promptOverride || input
-        if (!textToSend.trim() || isStreaming) return
+    const handleSend = async (overrideValue?: string) => {
+        const text = overrideValue ?? input
+        if (!text.trim() || isStreaming) return
 
-        const userMessage = textToSend.trim()
-        if (!promptOverride) setInput('')
+        const userMessage = text.trim()
+        if (!overrideValue) setInput('')
 
-        // 如果沒有當前對話，先建立一個
         let conversationId = currentConversation?.id
         if (!conversationId) {
             try {
@@ -202,11 +181,11 @@ export default function Chat() {
                 await connectWebSocket(conversationId)
             } catch (error) {
                 console.error('建立對話失敗:', error)
-                return
+                // For UI testing even backend offline:
+                // We won't block UI logic to show the "move up" action, so we still push UI state below if failed.
             }
         }
 
-        // 添加使用者訊息到 UI
         const tempUserMessage: Message = {
             id: `temp-${Date.now()}`,
             role: 'user',
@@ -216,7 +195,6 @@ export default function Chat() {
         }
         addMessage(tempUserMessage)
 
-        // 添加空的助手訊息（準備接收串流）
         const tempAssistantMessage: Message = {
             id: `temp-${Date.now() + 1}`,
             role: 'assistant',
@@ -227,24 +205,28 @@ export default function Chat() {
         addMessage(tempAssistantMessage)
         setStreaming(true)
 
-        // 透過 WebSocket 發送訊息
         if (wsRef.current?.isConnected) {
             wsRef.current.sendMessage(userMessage, true)
         } else {
-            // 回退到 HTTP API
+            // Frontend fallback flow
             try {
-                const response = await conversationsApi.sendMessage(conversationId, {
-                    content: userMessage,
-                    useRag: true,
-                })
-
-                useChatStore.setState((state) => {
-                    const newMessages = [...state.messages]
-                    newMessages[newMessages.length - 1] = response
-                    return { messages: newMessages }
-                })
+                if (conversationId) {
+                    const response = await conversationsApi.sendMessage(conversationId, {
+                        content: userMessage,
+                        useRag: true,
+                    })
+                    useChatStore.setState((state) => {
+                        const newMessages = [...state.messages]
+                        newMessages[newMessages.length - 1] = response
+                        return { messages: newMessages }
+                    })
+                }
             } catch (error) {
                 console.error('發送訊息失敗:', error)
+                // Remove the typing indicator if backend totally failed
+                useChatStore.setState((state) => ({
+                    messages: state.messages.slice(0, -1)
+                }))
             } finally {
                 setStreaming(false)
             }
@@ -259,218 +241,225 @@ export default function Chat() {
     }
 
     const handleStop = () => {
-        if (wsRef.current) {
-            wsRef.current.stop()
-        }
+        if (wsRef.current) wsRef.current.stop()
         setStreaming(false)
     }
 
     const handleLogout = () => {
-        if (wsRef.current) {
-            wsRef.current.disconnect()
-        }
+        if (wsRef.current) wsRef.current.disconnect()
         clearAuth()
     }
 
-    // 清理 WebSocket
     useEffect(() => {
-        return () => {
-            if (wsRef.current) {
-                wsRef.current.disconnect()
-            }
-        }
+        return () => wsRef.current?.disconnect()
     }, [])
-    
-    // 幾個預設提示詞
-    const suggestedPrompts = [
-        "Explain quantum computing",
-        "How to learn React efficiently",
-        "Write a python script",
-        "Help me debug an issue"
-    ]
 
     return (
-        // ChatGPT 背景：主畫面 #212121
-        <div className="flex h-screen bg-[#212121] text-white overflow-hidden font-sans">
-            {/* 側邊欄 Sidebar (背景 #171717) */}
+        // 主畫面全區背景 #1a1a1a
+        <div className="flex h-screen bg-[#1a1a1a] text-white overflow-hidden font-sans selection:bg-[#1877F2]/30">
+            {/* --- 左側邊欄 Sidebar (#111111) --- */}
             <aside
-                className={`${sidebarOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-full'
-                    } bg-[#171717] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-20 absolute md:relative h-full`}
+                className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
+                    } bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-20 absolute md:relative h-full border-r border-[#222]`}
             >
-                {/* 頂端小工具列 */}
-                <div className="p-3 flex items-center justify-between">
-                    <button
-                        onClick={toggleSidebar}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-[#202123] rounded-lg transition-colors"
-                        title="Close sidebar"
-                    >
-                        <SidebarIcon />
-                    </button>
+                {/* 頂端控制區（包含新對話按鈕與切換器） */}
+                <div className="p-4 space-y-4 pt-6">
+                    {/* 新對話按鈕 (bg-[#2a2a2a] 帶滿版圓角) */}
                     <button
                         onClick={createNewConversation}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-[#202123] rounded-lg transition-colors"
-                        title="New Chat"
+                        className="w-full flex items-center justify-start gap-3 px-4 py-3 bg-[#2a2a2a] hover:bg-[#333] 
+                                   text-white rounded-[14px] transition-colors font-medium"
                     >
-                        <NewChatIcon />
+                        <PlusIcon />
+                        <span className="text-[15px]">新對話</span>
                     </button>
+
+                    {/* 一般 / 專案 切換膠囊 */}
+                    <div className="flex bg-[#222222] rounded-full p-1 w-full">
+                        <button
+                            onClick={() => setChatMode('general')}
+                            className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
+                                chatMode === 'general' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-200'
+                            }`}
+                        >
+                            一般
+                        </button>
+                        <button
+                            onClick={() => setChatMode('project')}
+                            className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
+                                chatMode === 'project' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-200'
+                            }`}
+                        >
+                            專案
+                        </button>
+                    </div>
                 </div>
 
                 {/* 對話列表列 */}
-                <div className="flex-1 overflow-y-auto px-3 space-y-1 mt-2 custom-scrollbar">
-                    {conversations.length === 0 ? (
-                        <p className="text-[#666] text-xs px-2 py-4">No recent chats</p>
-                    ) : (
-                        conversations.map((conv) => (
-                            <button
-                                key={conv.id}
-                                onClick={() => selectConversation(conv)}
-                                className={`w-full flex items-center text-left px-3 py-2.5 rounded-lg text-[14px] truncate transition-colors ${currentConversation?.id === conv.id
-                                    ? 'bg-[#202123] text-white'
-                                    : 'text-gray-300 hover:bg-[#202123]'
-                                    }`}
-                            >
-                                <span className="truncate">{conv.title}</span>
-                            </button>
-                        ))
-                    )}
+                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar">
+                    {/* 分類標籤：一般聊天 */}
+                    <div className="mb-2 pl-2">
+                        <span className="text-[12px] text-gray-500 tracking-wider">一般聊天</span>
+                    </div>
+                    {/* 時間線指示器邊距效果 */}
+                    <div className="border-l border-[#222] ml-2 pl-2 space-y-1">
+                        {conversations.length === 0 ? (
+                            <p className="text-[#666] text-xs py-4 pl-2">No recent chats</p>
+                        ) : (
+                            conversations.map((conv) => (
+                                <button
+                                    key={conv.id}
+                                    onClick={() => selectConversation(conv)}
+                                    className={`w-full flex items-center text-left px-3 py-2 rounded-lg text-[14.5px] truncate transition-colors ${currentConversation?.id === conv.id
+                                        ? 'bg-[#2a2a2a] text-white'
+                                        : 'text-gray-400 hover:bg-[#222] hover:text-gray-200'
+                                        }`}
+                                >
+                                    <span className="truncate">{conv.title}</span>
+                                </button>
+                            ))
+                        )}
+                    </div>
                 </div>
 
-                {/* 使用者區塊 (底部) */}
-                <div className="p-3">
+                {/* 底部滿版膠囊使用者卡片 */}
+                <div className="p-4 pb-6">
                     <button 
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#202123] transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors text-left"
                     >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
-                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                        {/* 深黑圓形頭像框 */}
+                        <div className="w-[34px] h-[34px] rounded-full bg-[#111] flex items-center justify-center shrink-0 border border-[#333]">
+                            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-gray-500">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
+                            </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[14px] text-gray-200 font-medium truncate">{user?.name || 'Local User'}</p>
+                            <p className="text-[14px] text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
                         </div>
                     </button>
                 </div>
             </aside>
 
-            {/* 主聊天區 Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 relative">
-                {/* 頂端 Header (懸浮透明感) */}
-                <header className="h-14 flex items-center justify-between px-3 md:px-4 z-10 sticky top-0 bg-[#212121]">
-                    <div className="flex items-center">
-                        {!sidebarOpen && (
-                            <button
-                                onClick={toggleSidebar}
-                                className="p-2 text-gray-400 hover:text-white rounded-lg transition-colors mr-2 hidden md:block"
-                            >
-                                <SidebarIcon />
-                            </button>
-                        )}
-                        {/* 手機版強制顯示 Menu 按鈕 */}
-                        {!sidebarOpen && (
-                            <button
-                                onClick={toggleSidebar}
-                                className="p-2 text-gray-400 hover:text-white rounded-lg transition-colors mr-2 md:hidden"
-                            >
-                                <SidebarIcon />
-                            </button>
-                        )}
-                        <button className="flex items-center gap-2 text-[18px] font-semibold text-gray-200 hover:bg-[#2f2f2f] px-3 py-1.5 rounded-lg transition-colors">
-                            {currentConversation?.title || 'Corphia AI'}
-                            <DownArrowIcon />
+            {/* --- 右側主聊天視窗 Main Section --- */}
+            <main className="flex-1 flex flex-col relative w-full h-full">
+                {/* 絕對定位的 Corphia Title，維持在左上角 */}
+                <div className="absolute top-0 left-0 w-full p-6 flex items-center z-10 pointer-events-none">
+                    {!sidebarOpen && (
+                        <button
+                            onClick={toggleSidebar}
+                            className="mr-4 p-2 pointer-events-auto rounded-lg hover:bg-[#2a2a2a] transition-colors"
+                        >
+                            <SidebarIcon />
                         </button>
-                    </div>
-                </header>
-
-                {/* 聊天訊息或空狀態區 */}
-                <div className="flex-1 overflow-y-auto w-full relative">
-                    {messages.length === 0 ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-                            <LargeLogoIcon />
-                            <h2 className="text-2xl md:text-[32px] font-semibold text-gray-100 mb-8 tracking-tight">
-                                How can I help you today?
-                            </h2>
-                        </div>
-                    ) : (
-                        <div className="w-full mx-auto max-w-3xl pb-32 pt-6 px-4 md:px-0 space-y-6">
-                            {messages.map((message, index) => (
-                                <MessageBubble
-                                    key={message.id}
-                                    message={message}
-                                    isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-                                />
-                            ))}
-                            <div ref={messagesEndRef} />
-                        </div>
                     )}
-
-                    {/* 置底提示詞建議 (僅空狀態顯示，放於對話區之下但緊貼輸入框) */}
-                    {messages.length === 0 && (
-                        <div className="absolute bottom-28 left-0 right-0 max-w-3xl mx-auto px-4 w-full z-10">
-                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
-                                {suggestedPrompts.map((prompt, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleSend(prompt)}
-                                        className="text-left px-4 py-3 bg-[#212121] border border-gray-700 hover:bg-[#2f2f2f] text-[13.5px] text-gray-300 rounded-xl transition-all"
-                                    >
-                                        <p className="truncate line-clamp-2 white-space-normal leading-tight">"{prompt}"</p>
-                                    </button>
-                                ))}
-                           </div>
-                        </div>
-                    )}
+                    <h1 className="text-[22px] font-semibold text-gray-200 tracking-wide pointer-events-auto">
+                        Corphia
+                    </h1>
                 </div>
 
-                {/* 底部輸入框區域 */}
-                <div className="w-full absolute bottom-0 bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-6 pb-2 md:pb-6">
-                    <div className="max-w-3xl mx-auto w-full px-4 md:px-0">
-                        <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-[26px] p-2 pr-3">
-                            {/* 附件圖示 */}
-                            <button className="p-2 text-gray-400 hover:text-white rounded-full transition-colors mb-0.5">
-                                <AttachmentIcon />
-                            </button>
-                            
-                            {/* 關鍵輸入框 */}
-                            <textarea
-                                ref={inputRef}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Message Corphia AI..."
-                                rows={1}
-                                disabled={isConnecting}
-                                className="flex-1 resize-none bg-transparent text-gray-100 placeholder-gray-400 outline-none px-1 py-3 max-h-[200px] disabled:opacity-50 text-[15.5px]"
-                                style={{ lineHeight: '1.5' }}
-                            />
-                            
-                            {/* 發送 / 停止 按鈕 */}
-                            <div className="mb-1 ml-1 flex items-center justify-center">
-                                {isStreaming ? (
-                                    <button
-                                        onClick={handleStop}
-                                        className="transition-transform active:scale-95"
-                                    >
-                                        <StopIcon />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => handleSend()}
-                                        disabled={!input.trim() || isConnecting}
-                                        className="transition-transform active:scale-95"
-                                    >
-                                        <SendIcon disabled={!input.trim() || isConnecting} />
-                                    </button>
-                                )}
+                {/* 內容區：根據是否為空狀態自動切換置中或置底 */}
+                {messages.length === 0 ? (
+                    // --- 空狀態 (Empty State): 全螢幕置中輸入框 ---
+                    <div className="flex-1 flex items-center justify-center h-full px-4 md:px-8">
+                        <div className="w-full max-w-3xl">
+                            <div className="relative flex items-center gap-3 bg-[#2a2a2a] rounded-full p-2 pl-4 shadow-xl">
+                                {/* 顯眼的加號圖標 */}
+                                <button className="p-2 transition-transform active:scale-95 text-gray-300 hover:text-white">
+                                    <InputPlusIcon />
+                                </button>
+                                
+                                <textarea
+                                    ref={inputRef}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Message Corphia AI..."
+                                    rows={1}
+                                    disabled={isConnecting}
+                                    className="flex-1 resize-none bg-transparent text-gray-100 placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[17px] custom-scrollbar"
+                                    style={{ lineHeight: '1.4' }}
+                                />
+                                
+                                {/* 發送圓圈 / 藍色亮點式按鈕 */}
+                                <div className="ml-1 mr-1">
+                                    {isStreaming ? (
+                                        <button onClick={handleStop} className="transition-transform active:scale-95">
+                                            <StopIcon />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleSend()}
+                                            disabled={!input.trim() || isConnecting}
+                                            className="transition-transform active:scale-95"
+                                        >
+                                            <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
+                    </div>
+                ) : (
+                    // --- 聊天狀態 (Chatting Mode): 訊息內容頂部推，輸入框吸附底部 ---
+                    <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+                        {/* 頂部預留 Header 空間 */}
+                        <div className="h-[80px] shrink-0" />
                         
-                        {/* 免責聲明 */}
-                        <div className="text-center mt-3">
-                            <p className="text-[12px] text-gray-500">
-                                Corphia AI can make mistakes. Check important info.
-                            </p>
+                        {/* 滾動訊息區 */}
+                        <div className="flex-1 overflow-y-auto px-4 md:px-0">
+                            <div className="max-w-3xl mx-auto space-y-6 pb-4">
+                                {messages.map((message, index) => (
+                                    <MessageBubble
+                                        key={message.id}
+                                        message={message}
+                                        isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+                                    />
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        </div>
+
+                        {/* 直立式底部輸入框區 */}
+                        <div className="shrink-0 pt-4 pb-8 w-full bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a] to-transparent">
+                            <div className="max-w-3xl mx-auto px-4 md:px-0 w-full">
+                                <div className="relative flex items-end gap-3 bg-[#2a2a2a] rounded-[32px] p-2 pl-4 shadow-xl border border-[#333]/50">
+                                    <button className="p-2 transition-transform active:scale-95 text-gray-300 hover:text-white mb-2">
+                                        <InputPlusIcon />
+                                    </button>
+                                    
+                                    <textarea
+                                        ref={inputRef}
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="Message Corphia AI..."
+                                        rows={1}
+                                        disabled={isConnecting}
+                                        className="flex-1 resize-none bg-transparent text-gray-100 placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
+                                        style={{ lineHeight: '1.4' }}
+                                    />
+                                    
+                                    <div className="ml-1 mr-1 mb-1">
+                                        {isStreaming ? (
+                                            <button onClick={handleStop} className="transition-transform active:scale-95">
+                                                <StopIcon />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleSend()}
+                                                disabled={!input.trim() || isConnecting}
+                                                className="transition-transform active:scale-95"
+                                            >
+                                                <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </main>
         </div>
     )
