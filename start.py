@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import signal
+import socket
 
 # 修正 Windows 終端機編碼問題
 if sys.platform == "win32":
@@ -17,6 +18,19 @@ if sys.platform == "win32":
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 BACKEND_DIR = os.path.join(BASE_DIR, "backend")
+
+
+def get_local_ip() -> str:
+    """取得本機區網 IP"""
+    try:
+        # 連線到外部 DNS 位址（不會真的送封包），藉此取得對外的本機 IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "無法取得 IP"
 
 # 儲存所有已啟動的子程序
 processes: list[subprocess.Popen] = []
@@ -92,10 +106,15 @@ def main():
     else:
         print("  [SKIP] 找不到 frontend 資料夾，跳過")
 
+    local_ip = get_local_ip()
     print("\n" + "=" * 50)
-    print("  前端: http://localhost:5173")
-    print("  後端: http://localhost:8000")
-    print("  API 文件: http://localhost:8000/docs")
+    print("  本機存取")
+    print(f"    前端: http://localhost:5173")
+    print(f"    後端: http://localhost:8000")
+    print("  區域網路存取 (手機/其他裝置)")
+    print(f"    前端: http://{local_ip}:5173")
+    print(f"    後端: http://{local_ip}:8000")
+    print(f"  API 文件: http://localhost:8000/docs")
     print("=" * 50)
     print("\n  服務運行中... 按 Ctrl+C 可關閉所有服務\n")
 
