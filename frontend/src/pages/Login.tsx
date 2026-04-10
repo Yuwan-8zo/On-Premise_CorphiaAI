@@ -149,7 +149,7 @@ export default function Login() {
                 {/* 品牌內容 - 垂直水平絕對置中 */}
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
-                        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 italic transition-colors">
+                        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
                         <h1 className="text-5xl font-light text-gray-900 dark:text-white mb-4 transition-colors">
