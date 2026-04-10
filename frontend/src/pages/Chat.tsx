@@ -351,7 +351,7 @@ export default function Chat() {
             </aside>
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col relative w-full h-full">
+            <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-[#f0f2f5] dark:bg-[#1a1a1a]">
                     <div className="flex items-center">
@@ -370,7 +370,7 @@ export default function Chat() {
                 </header>
 
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
-                <div className="flex-1 flex flex-col h-full overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4">
+                <div className="flex-1 flex flex-col overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4 min-h-0">
                     
                     {messages.length === 0 ? (
                         // 空狀態：置中顯示歡迎詞與提示詞
