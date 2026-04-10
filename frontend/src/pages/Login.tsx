@@ -53,14 +53,10 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     
-    // 登入狀態
-    const [loginEmail, setLoginEmail] = useState('')
-    const [loginPassword, setLoginPassword] = useState('')
-    
-    // 註冊狀態
-    const [registerEmail, setRegisterEmail] = useState('')
-    const [registerPassword, setRegisterPassword] = useState('')
-    const [registerConfirmPassword, setRegisterConfirmPassword] = useState('')
+    // 表單狀態
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
 
     const [error, setError] = useState('')
     const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
@@ -101,19 +97,19 @@ export default function Login() {
 
         try {
             if (activeTab === 'register') {
-                if (registerPassword !== registerConfirmPassword) {
+                if (password !== confirmPassword) {
                     setError(t('auth.passwordMismatch'))
                     setLoading(false)
                     return
                 }
-                await authApi.register({ email: registerEmail, password: registerPassword })
-                const tokens = await authApi.login({ email: registerEmail, password: registerPassword })
+                await authApi.register({ email, password })
+                const tokens = await authApi.login({ email, password })
                 useAuthStore.setState({ accessToken: tokens.accessToken })
                 const user = await authApi.me()
                 setAuth(user, tokens.accessToken, tokens.refreshToken)
                 navigate(from, { replace: true })
             } else {
-                const tokens = await authApi.login({ email: loginEmail, password: loginPassword })
+                const tokens = await authApi.login({ email, password })
                 useAuthStore.setState({ accessToken: tokens.accessToken })
                 const user = await authApi.me()
                 setAuth(user, tokens.accessToken, tokens.refreshToken)
@@ -128,7 +124,7 @@ export default function Login() {
     }
 
     return (
-        <div className="fixed inset-0 overflow-y-auto lg:overflow-hidden overscroll-none flex bg-gray-50 dark:bg-[#131314] transition-colors duration-300">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-[#131314] transition-colors duration-300">
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
@@ -268,68 +264,55 @@ export default function Login() {
 
 
                         {/* ── 表單區域 ── */}
-                        <form onSubmit={handleSubmit} className="contents">
+                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between pt-6 lg:pt-8 w-full relative">
                             {/* 錯誤訊息 (改為浮動，不影響均分排版) */}
                             {error && (
-                                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-4rem)] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
                                     {error}
                                 </div>
                             )}
 
-                            {activeTab === 'login' ? (
-                                    <>
-                                        {/* 登入表單 - 獨立2個 */}
+                            {/* ── 輸入框群組 ── */}
+                            <div className="flex flex-col gap-5 lg:gap-6 w-full">
+                                <FloatingInput
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    label={t('auth.account')}
+                                    delayClass=""
+                                />
+                                <FloatingInput
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    label={t('auth.password')}
+                                    delayClass=""
+                                />
+                                
+                                {/* ── 動態摺疊確認密碼框 ── */}
+                                <div 
+                                    className={`transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden flex flex-col ${
+                                        activeTab === 'register' ? 'max-h-[100px] opacity-100' : 'max-h-0 opacity-0'
+                                    }`}
+                                >
+                                    {/* 內部留白以抵消 gap 帶來的小落差，讓動畫過程不吃字 */}
+                                    <div className="pt-5 lg:pt-6">
                                         <FloatingInput
-                                            id="login-email"
-                                            type="email"
-                                            value={loginEmail}
-                                            onChange={(e) => setLoginEmail(e.target.value)}
-                                            required
-                                            label={t('auth.account')}
-                                            delayClass=""
-                                        />
-                                        <FloatingInput
-                                            id="login-password"
+                                            id="confirm-password"
                                             type="password"
-                                            value={loginPassword}
-                                            onChange={(e) => setLoginPassword(e.target.value)}
-                                            required
-                                            label={t('auth.password')}
-                                            delayClass="delay-75"
-                                        />
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* 註冊表單 - 獨立3個 */}
-                                        <FloatingInput
-                                            id="reg-email"
-                                            type="email"
-                                            value={registerEmail}
-                                            onChange={(e) => setRegisterEmail(e.target.value)}
-                                            required
-                                            label={t('auth.account')}
-                                            delayClass=""
-                                        />
-                                        <FloatingInput
-                                            id="reg-password"
-                                            type="password"
-                                            value={registerPassword}
-                                            onChange={(e) => setRegisterPassword(e.target.value)}
-                                            required
-                                            label={t('auth.password')}
-                                            delayClass="delay-75"
-                                        />
-                                        <FloatingInput
-                                            id="reg-confirm"
-                                            type="password"
-                                            value={registerConfirmPassword}
-                                            onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                                            required
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required={activeTab === 'register'}
                                             label={t('auth.confirmPassword')}
-                                            delayClass="delay-150"
+                                            delayClass=""
                                         />
-                                    </>
-                                )}
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* 提交按鈕 — flex 直接子元素 */}
                             <button
@@ -339,7 +322,7 @@ export default function Login() {
                                        text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
                                        focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                        disabled:opacity-50 disabled:cursor-not-allowed
-                                       transition-all"
+                                       transition-all mt-4 lg:mt-0"
                             >
                                 {isLoading ? (
                                     <span className="flex items-center justify-center">
