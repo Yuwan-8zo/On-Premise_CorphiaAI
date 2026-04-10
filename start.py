@@ -33,10 +33,16 @@ def main():
     # 啟動後端
     print("\n[1] 啟動後端 (FastAPI)...")
     if os.path.exists(BACKEND_DIR):
+        venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
+        # 優先使用 venv 內的 python，避免 Windows launcher 路徑問題
+        if os.path.exists(venv_python):
+            backend_cmd = f'"{venv_python}" -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000'
+        else:
+            backend_cmd = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
         start_service(
             title="Backend (FastAPI :8000)",
             cwd=BACKEND_DIR,
-            command="uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+            command=backend_cmd
         )
     else:
         print("  [SKIP] 找不到 backend 資料夾，跳過")
