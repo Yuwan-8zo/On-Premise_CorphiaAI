@@ -255,8 +255,8 @@ export default function Chat() {
     }, [])
 
     return (
-        // 主畫面全區背景
-        <div className="flex h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300 relative">
+        // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
@@ -373,8 +373,8 @@ export default function Chat() {
                 <div className="flex-1 flex flex-col overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4 min-h-0">
                     
                     {messages.length === 0 ? (
-                        // 空狀態：置中顯示歡迎詞與提示詞
-                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-3xl mx-auto pb-8 mt-[-40px] md:mt-[-10vh]">
+                        // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
+                        <div className="w-full max-w-3xl mx-auto pb-8 pt-[15vh]">
                             {/* Greeting */}
                             <h2 className="text-[28px] md:text-3xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
                                 {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}

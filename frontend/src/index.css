@@ -25,6 +25,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #f0f2f5;
   color: #111827;
+  overscroll-behavior-y: none; /* 防止 iOS 橡皮筋回彈效應拖動整頁 */
 }
 
 .dark {
