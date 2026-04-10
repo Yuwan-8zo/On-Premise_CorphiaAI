@@ -4,7 +4,7 @@
  * 精確復刻用戶設計：1:1 正方形卡片
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
@@ -96,6 +96,8 @@ export default function Login() {
     const { theme, toggleTheme, language, setLanguage } = useUIStore()
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
+    const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
+    const langMenuRef = useRef<HTMLDivElement>(null)
     
     // 共用的輸入狀態
     const [email, setEmail] = useState('')
@@ -127,11 +129,22 @@ export default function Login() {
         return () => clearInterval(interval)
     }, [])
 
-    // 語言切換
-    const toggleLanguage = () => {
-        const nextLang = language === 'zh-TW' ? 'en-US' : 'zh-TW'
-        setLanguage(nextLang)
-        i18n.changeLanguage(nextLang)
+    // 點擊外部關閉選單
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+                setIsLangMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    // 語言選擇處理
+    const handleLanguageSelect = (lang: 'zh-TW' | 'en-US') => {
+        setLanguage(lang)
+        i18n.changeLanguage(lang)
+        setIsLangMenuOpen(false)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -248,15 +261,52 @@ export default function Login() {
                         )}
                     </button>
 
-                    <button
-                        onClick={toggleLanguage}
-                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
-                        title={t('settings.language')}
-                    >
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                        </svg>
-                    </button>
+                    <div className="relative" ref={langMenuRef}>
+                        <button
+                            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-[#333]' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                            title={t('settings.language')}
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                        </button>
+                        
+                        <AnimatePresence>
+                            {isLangMenuOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                                    className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-2xl overflow-hidden z-50 flex flex-col p-1"
+                                >
+                                    <button 
+                                        onClick={() => handleLanguageSelect('zh-TW')}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                    >
+                                        繁體中文
+                                        {language === 'zh-TW' && (
+                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    <button 
+                                        onClick={() => handleLanguageSelect('en-US')}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                    >
+                                        English
+                                        {language === 'en-US' && (
+                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                     </div>
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
