@@ -37,8 +37,9 @@ class RegisterRequest(BaseModel):
     """註冊請求"""
     email: EmailStr
     password: str = Field(..., min_length=6)
-    name: str = Field(..., min_length=1, max_length=100)
+    name: Optional[str] = Field(None, min_length=1, max_length=100)  # 可選，預設使用 email 前綴
     tenant_slug: Optional[str] = None  # 租戶識別碼
+
 
 
 class PasswordChangeRequest(BaseModel):

@@ -120,11 +120,12 @@ async def register(
         if tenant:
             tenant_id = tenant.id
     
-    # 建立使用者
+    # 建立使用者（name 未提供時使用 email 前綴作為預設名稱）
+    display_name = request.name or request.email.split("@")[0]
     user = User(
         email=request.email,
         password_hash=get_password_hash(request.password),
-        name=request.name,
+        name=display_name,
         tenant_id=tenant_id,
         role="user"
     )

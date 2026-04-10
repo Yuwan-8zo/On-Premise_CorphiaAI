@@ -19,7 +19,6 @@ export default function Login() {
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [name, setName] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
     const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
@@ -65,7 +64,7 @@ export default function Login() {
                     setLoading(false)
                     return
                 }
-                await authApi.register({ email, password, name })
+                await authApi.register({ email, password })
             }
 
             const tokens = await authApi.login({ email, password })
@@ -189,21 +188,6 @@ export default function Login() {
 
                             {/* 輸入欄位區 */}
                             <div className="flex-1 flex flex-col justify-center space-y-4">
-                                {/* 名稱 (註冊時) */}
-                                {activeTab === 'register' && (
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        required
-                                        className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]
-                                               text-white placeholder-gray-500
-                                               focus:ring-1 focus:ring-gray-500 focus:border-gray-500
-                                               transition-all outline-none"
-                                        placeholder={t('auth.name')}
-                                    />
-                                )}
-
                                 {/* 帳號 */}
                                 <input
                                     type="email"

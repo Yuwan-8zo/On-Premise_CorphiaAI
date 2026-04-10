@@ -27,7 +27,6 @@ export const authApi = {
         const response = await apiClient.post('/auth/register', {
             email: data.email,
             password: data.password,
-            name: data.name,
             tenant_slug: data.tenantSlug,
         })
         return response.data
