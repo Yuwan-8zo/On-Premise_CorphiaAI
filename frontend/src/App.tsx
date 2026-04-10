@@ -34,10 +34,15 @@ export default function App() {
 
         if (theme === 'dark') {
             document.documentElement.classList.add('dark')
-            metaThemeColor.setAttribute('content', '#1a1a1a') // 對應深色背景
+            // 直接在 html 元素上設定背景色，確保 Safari safe area 顯示正確顏色
+            document.documentElement.style.backgroundColor = '#1a1a1a'
+            document.body.style.backgroundColor = '#1a1a1a'
+            metaThemeColor.setAttribute('content', '#1a1a1a')
         } else {
             document.documentElement.classList.remove('dark')
-            metaThemeColor.setAttribute('content', '#f0f2f5') // 對應淺色背景
+            document.documentElement.style.backgroundColor = '#f0f2f5'
+            document.body.style.backgroundColor = '#f0f2f5'
+            metaThemeColor.setAttribute('content', '#f0f2f5')
         }
     }, [theme])
 

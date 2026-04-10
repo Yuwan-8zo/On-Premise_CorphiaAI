@@ -17,6 +17,9 @@ html {
   font-size: 16px;
   background-color: #f0f2f5;
   color-scheme: light;
+  height: 100%;
+  /* iOS Safari safe-area 安全區域背景色填充 */
+  background-attachment: fixed;
 }
 
 body {
@@ -25,14 +28,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #f0f2f5;
   color: #111827;
-  overscroll-behavior-y: none; /* 防止 iOS 橡皮筋回彈效應拖動整頁 */
+  overscroll-behavior-y: none;
+  height: 100%;
+}
+
+/* React root 填滿全高 */
+#root {
+  height: 100%;
 }
 
 .dark {
   color-scheme: dark;
 }
 
-html.dark, .dark body {
+html.dark {
+  color-scheme: dark;
+  background-color: #1a1a1a;
+  color: #f3f4f6;
+}
+
+html.dark body {
   background-color: #1a1a1a;
   color: #f3f4f6;
 }
