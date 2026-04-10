@@ -279,60 +279,53 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {activeTab === 'login' ? (
-                                    <>
-                                        {/* 登入表單 - 獨立2個 */}
-                                        <FloatingInput
-                                            id="login-email"
-                                            type="email"
-                                            value={loginEmail}
-                                            onChange={(e) => setLoginEmail(e.target.value)}
-                                            required
-                                            label={t('auth.account')}
-                                            delayClass=""
-                                        />
-                                        <FloatingInput
-                                            id="login-password"
-                                            type="password"
-                                            value={loginPassword}
-                                            onChange={(e) => setLoginPassword(e.target.value)}
-                                            required
-                                            label={t('auth.password')}
-                                            delayClass="delay-75"
-                                        />
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* 註冊表單 - 獨立3個 */}
-                                        <FloatingInput
-                                            id="reg-email"
-                                            type="email"
-                                            value={registerEmail}
-                                            onChange={(e) => setRegisterEmail(e.target.value)}
-                                            required
-                                            label={t('auth.account')}
-                                            delayClass=""
-                                        />
-                                        <FloatingInput
-                                            id="reg-password"
-                                            type="password"
-                                            value={registerPassword}
-                                            onChange={(e) => setRegisterPassword(e.target.value)}
-                                            required
-                                            label={t('auth.password')}
-                                            delayClass="delay-75"
-                                        />
-                                        <FloatingInput
-                                            id="reg-confirm"
-                                            type="password"
-                                            value={registerConfirmPassword}
-                                            onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                                            required
-                                            label={t('auth.confirmPassword')}
-                                            delayClass="delay-150"
-                                        />
-                                    </>
-                                )}
+                            {/* 輸入框群組：共用 DOM 節點以確保平移而不會重新渲染（瞬間移動） */}
+                            <div className="flex-1 flex flex-col justify-start gap-4 lg:gap-6 pt-4 lg:pt-8">
+                                {/* Email 欄位 (共用) */}
+                                <div className="transition-transform duration-500 ease-out-expo will-change-transform z-20">
+                                    <FloatingInput
+                                        id="email"
+                                        type="email"
+                                        value={activeTab === 'login' ? loginEmail : registerEmail}
+                                        onChange={(e) => activeTab === 'login' ? setLoginEmail(e.target.value) : setRegisterEmail(e.target.value)}
+                                        required
+                                        label={t('auth.account')}
+                                        delayClass=""
+                                    />
+                                </div>
+                                
+                                {/* Password 欄位 (共用) */}
+                                <div className="transition-transform duration-500 ease-out-expo will-change-transform z-10">
+                                    <FloatingInput
+                                        id="password"
+                                        type="password"
+                                        value={activeTab === 'login' ? loginPassword : registerPassword}
+                                        onChange={(e) => activeTab === 'login' ? setLoginPassword(e.target.value) : setRegisterPassword(e.target.value)}
+                                        required
+                                        label={t('auth.password')}
+                                        delayClass=""
+                                    />
+                                </div>
+
+                                {/* Confirm Password 欄位 (僅註冊模式) - 使用 Grid 高度動畫平滑展開 */}
+                                <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                    activeTab === 'register' ? 'grid-rows-[1fr] opacity-100 mt-0' : 'grid-rows-[0fr] opacity-0 -mt-6 pointer-events-none'
+                                }`}>
+                                    <div className="overflow-hidden">
+                                        <div className="pt-0"> {/* 依靠外層 gap 或者自身的 padding 展開空間 */}
+                                            <FloatingInput
+                                                id="confirm-password"
+                                                type="password"
+                                                value={registerConfirmPassword}
+                                                onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                                                required={activeTab === 'register'}
+                                                label={t('auth.confirmPassword')}
+                                                delayClass=""
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* 提交按鈕 — flex 直接子元素 */}
                             <button
