@@ -146,10 +146,9 @@ export default function Login() {
                     </span>
                 </div>
 
-                {/* 品牌內容 - 垂直定位於 2/3 處，水平置中於左半部 */}
-                <div className="flex-1 flex flex-col w-full max-w-md mx-auto">
-                    <div className="flex-[2]"></div>
-                    <div>
+                {/* 品牌內容 - 垂直水平絕對置中 */}
+                <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
+                    <div className="w-full">
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 italic transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
@@ -176,7 +175,6 @@ export default function Login() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex-[1]"></div>
                 </div>
             </div>
 
