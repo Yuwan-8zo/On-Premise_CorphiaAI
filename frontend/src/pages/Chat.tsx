@@ -261,7 +261,7 @@ export default function Chat() {
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden transition-opacity"
+                    className="fixed inset-0 bg-transparent backdrop-blur-md z-30 md:hidden transition-opacity"
                     onClick={toggleSidebar}
                 />
             )}
