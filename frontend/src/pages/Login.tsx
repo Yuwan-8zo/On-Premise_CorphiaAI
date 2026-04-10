@@ -25,13 +25,13 @@ const FloatingInput = ({ label, delayClass, id, value, className, ...props }: Fl
             <input
                 id={id}
                 value={value}
-                className={`peer w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder-transparent ${className || ''}`}
+                className={`peer w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
             <label
                 htmlFor={id}
-                className={`absolute left-5 top-1/2 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left
+                className={`absolute left-5 top-1/2 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
                         ? 'top-0 scale-[0.85] bg-black dark:bg-[#e0e0e0] text-white dark:text-black font-semibold py-0.5' 
                         : 'scale-100 bg-transparent text-gray-400 dark:text-[#777] py-0'}
