@@ -208,13 +208,19 @@ export default function Login() {
                         </svg>
                     </button>
                 </div>
+                {/* 手機版品牌標題 (僅在行動裝置顯示) */}
+                <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
+                    <h1 className="text-4xl font-light text-gray-900 dark:text-white mb-2 transition-colors">
+                        Corphia AI
+                    </h1>
+                    <p className="text-gray-500 text-sm">{t('auth.engineDesc')}</p>
+                </div>
 
                 {/* 登入卡片容器 - 居中 */}
-                <div className="flex-1 flex items-center justify-center px-8 pb-12">
-                    {/* 1:1 正方形卡片 */}
+                <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
+                    {/* 卡片本體：桌面版為 1:1 正方形，手機版為自適應高度加固定間距 */}
                     <div
-                        className="w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] p-8 flex flex-col justify-between transition-colors"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[32px] lg:rounded-[40px] p-6 lg:p-8 flex flex-col justify-between transition-colors aspect-auto lg:aspect-square min-h-[400px] lg:min-h-0 gap-6 lg:gap-0"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
