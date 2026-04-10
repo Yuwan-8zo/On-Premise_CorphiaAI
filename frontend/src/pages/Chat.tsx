@@ -256,11 +256,20 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景
-        <div className="flex h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300">
+        <div className="flex h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300 relative">
+            
+            {/* --- Mobile Sidebar Overlay --- */}
+            {sidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden transition-opacity"
+                    onClick={toggleSidebar}
+                />
+            )}
+
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-20 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
+                    } bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-30 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className="p-4 space-y-4 pt-6">
@@ -362,42 +371,67 @@ export default function Chat() {
 
                 {/* 內容區：根據是否為空狀態自動切換置中或置底 */}
                 {messages.length === 0 ? (
-                    // --- 空狀態 (Empty State): 全螢幕置中輸入框 ---
-                    <div className="flex-1 flex items-center justify-center h-full px-4 md:px-8">
-                        <div className="w-full max-w-3xl">
-                            <div className="relative flex items-center gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent rounded-full p-2 pl-4 shadow-xl transition-colors">
-                                {/* 顯眼的加號圖標 */}
-                                <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white">
-                                    <InputPlusIcon />
-                                </button>
-                                
-                                <textarea
-                                    ref={inputRef}
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder="Message Corphia AI..."
-                                    rows={1}
-                                    disabled={isConnecting}
-                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[17px] custom-scrollbar"
-                                    style={{ lineHeight: '1.4' }}
-                                />
-                                
-                                {/* 發送圓圈 / 藍色亮點式按鈕 */}
-                                <div className="ml-1 mr-1">
-                                    {isStreaming ? (
-                                        <button onClick={handleStop} className="transition-transform active:scale-95">
-                                            <StopIcon />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleSend()}
-                                            disabled={!input.trim() || isConnecting}
-                                            className="transition-transform active:scale-95"
-                                        >
-                                            <SendDotBtn disabled={!input.trim() || isConnecting} />
-                                        </button>
-                                    )}
+                    // --- 空狀態 (Empty State): 全螢幕置中輸入框與歡迎詞 ---
+                    <div className="flex-1 flex flex-col items-center justify-center h-full px-4 md:px-8 w-full">
+                        <div className="w-full max-w-3xl flex flex-col items-center mt-[-5vh] md:mt-[-10vh]">
+                            {/* Greeting */}
+                            <h2 className="text-[28px] md:text-4xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
+                                {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
+                            </h2>
+
+                            {/* Suggested Prompts */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mb-8 px-2 md:px-0">
+                                {[
+                                    { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
+                                    { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
+                                    { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
+                                    { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
+                                ].map((item, index) => (
+                                    <button 
+                                        key={index}
+                                        onClick={() => setInput(item.desc)}
+                                        className="text-left p-4 rounded-[18px] border border-gray-200 dark:border-[#333] bg-white/60 dark:bg-[#222]/60 hover:bg-white dark:hover:bg-[#2a2a2a] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                    >
+                                        <div className="font-semibold text-[15px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[#1877F2] transition-colors">{item.title}</div>
+                                        <div className="text-[13.5px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Center Input Box */}
+                            <div className="w-full px-2 md:px-0">
+                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                                    <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-2">
+                                        <InputPlusIcon />
+                                    </button>
+                                    
+                                    <textarea
+                                        ref={inputRef}
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="Message Corphia AI..."
+                                        rows={1}
+                                        disabled={isConnecting}
+                                        className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
+                                        style={{ lineHeight: '1.4' }}
+                                    />
+                                    
+                                    <div className="ml-1 mr-1 mb-1">
+                                        {isStreaming ? (
+                                            <button onClick={handleStop} className="transition-transform active:scale-95">
+                                                <StopIcon />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleSend()}
+                                                disabled={!input.trim() || isConnecting}
+                                                className="transition-transform active:scale-95"
+                                            >
+                                                <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -425,7 +459,7 @@ export default function Chat() {
                         {/* 直立式底部輸入框區 */}
                         <div className="shrink-0 pt-4 pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent">
                             <div className="max-w-3xl mx-auto px-4 md:px-0 w-full">
-                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-xl transition-colors">
+                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                                     <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-2">
                                         <InputPlusIcon />
                                     </button>
