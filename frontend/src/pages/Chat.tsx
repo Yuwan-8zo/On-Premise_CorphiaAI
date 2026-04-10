@@ -352,27 +352,25 @@ export default function Chat() {
 
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col relative w-full h-full">
-                {/* 絕對定位的 Corphia Title，維持在左上角 */}
-                <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-20 pointer-events-none">
+                {/* 固定的頂部 Header (Top Bar) */}
+                <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-[#f0f2f5] dark:bg-[#1a1a1a]">
                     <div className="flex items-center">
                         {!sidebarOpen && (
                             <button
                                 onClick={toggleSidebar}
-                                className="mr-4 p-2 pointer-events-auto rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors"
+                                className="mr-4 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors"
                             >
                                 <SidebarIcon />
                             </button>
                         )}
-                        <h1 className="text-[22px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide pointer-events-auto">
+                        <h1 className="text-[22px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
                             Corphia
                         </h1>
                     </div>
-                </div>
+                </header>
 
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
                 <div className="flex-1 flex flex-col h-full overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4">
-                    {/* 頂部預留 Header 空間 */}
-                    <div className="h-[80px] shrink-0" />
                     
                     {messages.length === 0 ? (
                         // 空狀態：置中顯示歡迎詞與提示詞
