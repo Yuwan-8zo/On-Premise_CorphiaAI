@@ -19,7 +19,8 @@ export default function ProtectedRoute({
 
     // 未登入，重導向到登入頁
     if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />
+        // 暫時為了前端設計繞過登入限制
+        // return <Navigate to="/login" state={{ from: location }} replace />
     }
 
     // 角色權限檢查

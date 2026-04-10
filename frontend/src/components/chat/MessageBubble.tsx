@@ -1,5 +1,5 @@
 /**
- * 訊息氣泡元件
+ * 訊息氣泡元件 (ChatGPT UI 復刻版)
  */
 
 import { memo } from 'react'
@@ -12,17 +12,13 @@ interface MessageBubbleProps {
     isStreaming?: boolean
 }
 
-// 使用者頭像
-const UserAvatar = () => (
-    <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm">
-        👤
-    </div>
-)
-
-// AI 頭像
+// AI 簡約頭像 (ChatGPT 樣式：空心或簡潔的圖標)
 const AIAvatar = () => (
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-sm">
-        🤖
+    <div className="w-8 h-8 rounded-full border border-gray-600 bg-transparent flex items-center justify-center flex-shrink-0">
+        <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-gray-200">
+            {/* 簡單的 AI / Star 圖示代表模型 */}
+            <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6L12 2z" />
+        </svg>
     </div>
 )
 
@@ -30,48 +26,37 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
     const isUser = message.role === 'user'
 
     return (
-        <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-            {/* 頭像 */}
-            <div className="flex-shrink-0 mt-1">
-                {isUser ? <UserAvatar /> : <AIAvatar />}
-            </div>
-
-            {/* 訊息內容 */}
-            <div className={`max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
-                <div
-                    className={`rounded-2xl px-4 py-3 ${isUser
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm'
-                        }`}
-                >
-                    {isUser ? (
-                        // 使用者訊息直接顯示
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                    ) : (
-                        // AI 訊息使用 Markdown 渲染
-                        <>
-                            {message.content ? (
+        <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}>
+            {isUser ? (
+                // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
+                <div className="max-w-[75%] bg-[#2f2f2f] text-gray-100 rounded-[24px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
+                    {message.content}
+                </div>
+            ) : (
+                // AI 訊息：無背景框，流暢文字排版，包含頭像，靠左
+                <div className="w-full flex gap-4">
+                    {/* 頭像固定靠左，不隨內容拉伸 */}
+                    <AIAvatar />
+                    
+                    {/* 內容區塊 */}
+                    <div className="flex-1 min-w-0 pt-0.5 text-gray-100 text-[15.5px] leading-relaxed pb-4">
+                        {message.content ? (
+                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl prose-pre:border prose-pre:border-gray-800 max-w-none">
                                 <MarkdownRenderer content={message.content} />
-                            ) : isStreaming ? (
-                                <span className="inline-block w-2 h-5 bg-primary-500 animate-pulse" />
-                            ) : null}
-                        </>
-                    )}
-                </div>
+                            </div>
+                        ) : isStreaming ? (
+                            <span className="inline-block w-3 h-3 rounded-full bg-gray-400 animate-pulse mt-1" />
+                        ) : null}
 
-                {/* 來源引用 */}
-                {!isUser && message.sources && message.sources.length > 0 && (
-                    <SourceCitations sources={message.sources} />
-                )}
-
-                {/* 時間戳記 */}
-                <div className={`mt-1 text-xs text-slate-400 ${isUser ? 'text-right' : ''}`}>
-                    {new Date(message.createdAt).toLocaleTimeString('zh-TW', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })}
+                        {/* 來源引用 */}
+                        {message.sources && message.sources.length > 0 && (
+                            <div className="mt-4">
+                                <SourceCitations sources={message.sources} />
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 })
