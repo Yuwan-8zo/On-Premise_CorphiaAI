@@ -269,10 +269,10 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-30 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
+                    } overflow-hidden bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-30 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className="p-4 space-y-4 pt-6">
+                <div className="p-4 space-y-4 pt-6 w-[280px]">
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
@@ -305,7 +305,7 @@ export default function Chat() {
                 </div>
 
                 {/* 對話列表列 */}
-                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-[280px]">
                     {/* 分類標籤：一般聊天 */}
                     <div className="mb-2 pl-2">
                         <span className="text-[12px] text-gray-500 tracking-wider">一般聊天</span>
@@ -332,7 +332,7 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className="p-4 pb-6">
+                <div className="p-4 pb-6 w-[280px]">
                     <button 
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
@@ -372,8 +372,8 @@ export default function Chat() {
                 {/* 內容區：根據是否為空狀態自動切換置中或置底 */}
                 {messages.length === 0 ? (
                     // --- 空狀態 (Empty State): 全螢幕置中輸入框與歡迎詞 ---
-                    <div className="flex-1 flex flex-col items-center justify-center h-full px-4 md:px-8 w-full">
-                        <div className="w-full max-w-3xl flex flex-col items-center mt-[-5vh] md:mt-[-10vh]">
+                    <div className="flex-1 flex flex-col items-center justify-center h-full px-4 md:px-8 w-full relative z-10">
+                        <div className="w-full max-w-3xl flex flex-col items-center mt-0 md:mt-[-10vh]">
                             {/* Greeting */}
                             <h2 className="text-[28px] md:text-4xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
                                 {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
