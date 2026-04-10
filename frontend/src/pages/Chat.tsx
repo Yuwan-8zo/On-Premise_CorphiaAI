@@ -369,18 +369,21 @@ export default function Chat() {
                     </div>
                 </div>
 
-                {/* 內容區：根據是否為空狀態自動切換置中或置底 */}
-                {messages.length === 0 ? (
-                    // --- 空狀態 (Empty State): 全螢幕置中輸入框與歡迎詞 ---
-                    <div className="flex-1 flex flex-col items-center justify-center h-full px-4 md:px-8 w-full relative z-10">
-                        <div className="w-full max-w-3xl flex flex-col items-center mt-0 md:mt-[-10vh]">
+                {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
+                <div className="flex-1 flex flex-col h-full overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4">
+                    {/* 頂部預留 Header 空間 */}
+                    <div className="h-[80px] shrink-0" />
+                    
+                    {messages.length === 0 ? (
+                        // 空狀態：置中顯示歡迎詞與提示詞
+                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-3xl mx-auto pb-8 mt-[-40px] md:mt-[-10vh]">
                             {/* Greeting */}
-                            <h2 className="text-[28px] md:text-4xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
+                            <h2 className="text-[28px] md:text-3xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
                                 {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
                             </h2>
 
                             {/* Suggested Prompts */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mb-8 px-2 md:px-0">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
                                 {[
                                     { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
                                     { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
@@ -397,105 +400,61 @@ export default function Chat() {
                                     </button>
                                 ))}
                             </div>
+                        </div>
+                    ) : (
+                        // 聊天紀錄
+                        <div className="max-w-3xl mx-auto space-y-6 pb-4 w-full">
+                            {messages.map((message, index) => (
+                                <MessageBubble
+                                    key={message.id}
+                                    message={message}
+                                    isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+                                />
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    )}
+                </div>
 
-                            {/* Center Input Box */}
-                            <div className="w-full px-2 md:px-0">
-                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
-                                    <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-2">
-                                        <InputPlusIcon />
+                {/* 固定的底部輸入框區（不管有沒有訊息都在最底下） */}
+                <div className="shrink-0 pt-2 pb-6 md:pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent z-20">
+                    <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
+                        {/* 這裡的 rounded-[28px] 近似 56px 高度的 1/2 */}
+                        <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[28px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                            <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-1">
+                                <InputPlusIcon />
+                            </button>
+                            
+                            <textarea
+                                ref={inputRef}
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Message Corphia AI..."
+                                rows={1}
+                                disabled={isConnecting}
+                                className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-3.5 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
+                                style={{ lineHeight: '1.4' }}
+                            />
+                            
+                            <div className="ml-1 mr-1 mb-1">
+                                {isStreaming ? (
+                                    <button onClick={handleStop} className="transition-transform active:scale-95">
+                                        <StopIcon />
                                     </button>
-                                    
-                                    <textarea
-                                        ref={inputRef}
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder="Message Corphia AI..."
-                                        rows={1}
-                                        disabled={isConnecting}
-                                        className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
-                                        style={{ lineHeight: '1.4' }}
-                                    />
-                                    
-                                    <div className="ml-1 mr-1 mb-1">
-                                        {isStreaming ? (
-                                            <button onClick={handleStop} className="transition-transform active:scale-95">
-                                                <StopIcon />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleSend()}
-                                                disabled={!input.trim() || isConnecting}
-                                                className="transition-transform active:scale-95"
-                                            >
-                                                <SendDotBtn disabled={!input.trim() || isConnecting} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                                ) : (
+                                    <button
+                                        onClick={() => handleSend()}
+                                        disabled={!input.trim() || isConnecting}
+                                        className="transition-transform active:scale-95"
+                                    >
+                                        <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
-                ) : (
-                    // --- 聊天狀態 (Chatting Mode): 訊息內容頂部推，輸入框吸附底部 ---
-                    <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-                        {/* 頂部預留 Header 空間 */}
-                        <div className="h-[80px] shrink-0" />
-                        
-                        {/* 滾動訊息區 */}
-                        <div className="flex-1 overflow-y-auto px-4 md:px-0">
-                            <div className="max-w-3xl mx-auto space-y-6 pb-4">
-                                {messages.map((message, index) => (
-                                    <MessageBubble
-                                        key={message.id}
-                                        message={message}
-                                        isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-                                    />
-                                ))}
-                                <div ref={messagesEndRef} />
-                            </div>
-                        </div>
-
-                        {/* 直立式底部輸入框區 */}
-                        <div className="shrink-0 pt-4 pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent">
-                            <div className="max-w-3xl mx-auto px-4 md:px-0 w-full">
-                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
-                                    <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-2">
-                                        <InputPlusIcon />
-                                    </button>
-                                    
-                                    <textarea
-                                        ref={inputRef}
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder="Message Corphia AI..."
-                                        rows={1}
-                                        disabled={isConnecting}
-                                        className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
-                                        style={{ lineHeight: '1.4' }}
-                                    />
-                                    
-                                    <div className="ml-1 mr-1 mb-1">
-                                        {isStreaming ? (
-                                            <button onClick={handleStop} className="transition-transform active:scale-95">
-                                                <StopIcon />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleSend()}
-                                                disabled={!input.trim() || isConnecting}
-                                                className="transition-transform active:scale-95"
-                                            >
-                                                <SendDotBtn disabled={!input.trim() || isConnecting} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                </div>
             </main>
         </div>
     )
