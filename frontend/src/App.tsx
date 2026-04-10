@@ -23,12 +23,21 @@ export default function App() {
     const { isAuthenticated } = useAuthStore()
     const { theme } = useUIStore()
 
-    // 應用主題
+    // 應用主題與強制覆蓋 Safari 狀態列顏色 (theme-color)
     useEffect(() => {
+        let metaThemeColor = document.querySelector('meta[name="theme-color"]')
+        if (!metaThemeColor) {
+            metaThemeColor = document.createElement('meta')
+            metaThemeColor.setAttribute('name', 'theme-color')
+            document.head.appendChild(metaThemeColor)
+        }
+
         if (theme === 'dark') {
             document.documentElement.classList.add('dark')
+            metaThemeColor.setAttribute('content', '#1a1a1a') // 對應深色背景
         } else {
             document.documentElement.classList.remove('dark')
+            metaThemeColor.setAttribute('content', '#f0f2f5') // 對應淺色背景
         }
     }, [theme])
 
