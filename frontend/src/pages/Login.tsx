@@ -279,7 +279,7 @@ export default function Login() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-2xl overflow-hidden z-50 flex flex-col p-1"
+                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-2xl overflow-hidden z-50 flex flex-col p-1"
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
