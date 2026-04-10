@@ -153,7 +153,7 @@ export default function Login() {
                 <div className="flex-1 flex items-center justify-center px-8 pb-12">
                     {/* 1:1 正方形卡片 */}
                     <div
-                        className="w-full max-w-[420px] bg-[#1f1f1f] rounded-2xl p-8 flex flex-col"
+                        className="w-full max-w-[420px] bg-[#1f1f1f] rounded-[36px] p-8 flex flex-col"
                         style={{ aspectRatio: '1 / 1' }}
                     >
                         {/* ── Pill Tab 切換（滑動黑色背景） ── */}
@@ -202,66 +202,57 @@ export default function Login() {
 
 
                         {/* ── 表單區域 ── */}
-                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
                             {/* 錯誤訊息 */}
                             {error && (
-                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm mb-2">
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm">
                                     {error}
                                 </div>
                             )}
 
-                            {/* 上方彈性空白 */}
-                            <div className="flex-1" />
+                            {/* 帳號 — flex 直接子元素，justify-between 自動分配 */}
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                placeholder={t('auth.account')}
+                                className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                            />
 
-                            {/* ── 輸入欄位群組（pill 膠囊型，無邊框） ── */}
-                            <div className="flex flex-col gap-3">
-                                {/* 帳號 */}
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    placeholder={t('auth.account')}
-                                    className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none transition-colors"
-                                    style={{ caretColor: '#fff' }}
-                                />
+                            {/* 密碼 — flex 直接子元素 */}
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                placeholder={t('auth.password')}
+                                className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                            />
 
-                                {/* 密碼 */}
+                            {/* 確認密碼 — height 動畫，0 → 56px
+                                 height=0 時 justify-between 將其視為不占位的元素，自動展開 3 個空白
+                                 height=56px 時 justify-between 重新平均分配 4 個元素 */}
+                            <div
+                                style={{
+                                    height: activeTab === 'register' ? '56px' : '0px',
+                                    opacity: activeTab === 'register' ? 1 : 0,
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                    transition: 'height 0.4s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease',
+                                }}
+                            >
                                 <input
                                     type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    placeholder={t('auth.password')}
-                                    className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none transition-colors"
-                                    style={{ caretColor: '#fff' }}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required={activeTab === 'register'}
+                                    placeholder={t('auth.confirmPassword')}
+                                    className="w-full h-full px-5 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
                                 />
-
-                                {/* 確認密碼 — max-height 動畫展開，不造成其他欄位位移 */}
-                                <div
-                                    style={{
-                                        maxHeight: activeTab === 'register' ? '64px' : '0px',
-                                        opacity: activeTab === 'register' ? 1 : 0,
-                                        overflow: 'hidden',
-                                        transition: 'max-height 0.35s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease',
-                                    }}
-                                >
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required={activeTab === 'register'}
-                                        placeholder={t('auth.confirmPassword')}
-                                        className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
-                                        style={{ caretColor: '#fff' }}
-                                    />
-                                </div>
                             </div>
 
-                            {/* 下方彈性空白 */}
-                            <div className="flex-1" />
-
-                            {/* 提交按鈕 */}
+                            {/* 提交按鈕 — flex 直接子元素 */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
