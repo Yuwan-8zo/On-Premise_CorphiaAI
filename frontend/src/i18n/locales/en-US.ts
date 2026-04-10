@@ -27,7 +27,7 @@ export default {
         logout: 'Logout',
         register: 'Register',
         email: 'Email',
-        account: 'Account',
+        account: 'Email',
         password: 'Password',
         confirmPassword: 'Confirm Password',
         name: 'Name',

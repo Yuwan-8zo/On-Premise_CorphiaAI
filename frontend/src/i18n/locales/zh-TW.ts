@@ -27,7 +27,7 @@ export default {
         logout: '登出',
         register: '註冊',
         email: '電子郵件',
-        account: '帳號',
+        account: '信箱',
         password: '密碼',
         confirmPassword: '確認密碼',
         name: '名稱',

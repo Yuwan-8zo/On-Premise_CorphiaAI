@@ -27,7 +27,7 @@ export default {
         logout: 'ログアウト',
         register: '登録',
         email: 'メールアドレス',
-        account: 'アカウント',
+        account: 'メールアドレス',
         password: 'パスワード',
         confirmPassword: 'パスワード確認',
         name: '名前',
