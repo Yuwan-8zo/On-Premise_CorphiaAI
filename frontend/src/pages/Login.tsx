@@ -210,10 +210,13 @@ export default function Login() {
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
+                        {t('auth.welcomeTitle')}
+                    </h2>
                     <h1 className="text-4xl font-light text-gray-900 dark:text-white mb-2 transition-colors">
                         Corphia AI
                     </h1>
-                    <p className="text-gray-500 text-sm">{t('auth.engineDesc')}</p>
+                    <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
                 </div>
 
                 {/* 登入卡片容器 - 居中 */}
@@ -268,69 +271,78 @@ export default function Login() {
 
 
                         {/* ── 表單區域 ── */}
-                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col relative h-full">
+                        <form onSubmit={handleSubmit} className="contents">
                             {/* 錯誤訊息 (改為浮動，不影響均分排版) */}
                             {error && (
-                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-full bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
+                                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-4rem)] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
                                     {error}
                                 </div>
                             )}
 
-                            {/* 輸入框群組 */}
-                            <div className="flex flex-col gap-4 lg:gap-6 w-full">
-                                {/* 共通信箱欄位 */}
-                                <FloatingInput
-                                    id={activeTab === 'login' ? 'login-email' : 'reg-email'}
-                                    type="email"
-                                    value={activeTab === 'login' ? loginEmail : registerEmail}
-                                    onChange={(e) => activeTab === 'login' ? setLoginEmail(e.target.value) : setRegisterEmail(e.target.value)}
-                                    required
-                                    label={t('auth.account')}
-                                    delayClass="delay-75"
-                                />
-                                
-                                {/* 共通密碼欄位 */}
-                                <FloatingInput
-                                    id={activeTab === 'login' ? 'login-password' : 'reg-password'}
-                                    type="password"
-                                    value={activeTab === 'login' ? loginPassword : registerPassword}
-                                    onChange={(e) => activeTab === 'login' ? setLoginPassword(e.target.value) : setRegisterPassword(e.target.value)}
-                                    required
-                                    label={t('auth.password')}
-                                    delayClass="delay-150"
-                                />
+                            {activeTab === 'login' ? (
+                                    <>
+                                        {/* 登入表單 - 獨立2個 */}
+                                        <FloatingInput
+                                            id="login-email"
+                                            type="email"
+                                            value={loginEmail}
+                                            onChange={(e) => setLoginEmail(e.target.value)}
+                                            required
+                                            label={t('auth.account')}
+                                            delayClass=""
+                                        />
+                                        <FloatingInput
+                                            id="login-password"
+                                            type="password"
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            required
+                                            label={t('auth.password')}
+                                            delayClass="delay-75"
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* 註冊表單 - 獨立3個 */}
+                                        <FloatingInput
+                                            id="reg-email"
+                                            type="email"
+                                            value={registerEmail}
+                                            onChange={(e) => setRegisterEmail(e.target.value)}
+                                            required
+                                            label={t('auth.account')}
+                                            delayClass=""
+                                        />
+                                        <FloatingInput
+                                            id="reg-password"
+                                            type="password"
+                                            value={registerPassword}
+                                            onChange={(e) => setRegisterPassword(e.target.value)}
+                                            required
+                                            label={t('auth.password')}
+                                            delayClass="delay-75"
+                                        />
+                                        <FloatingInput
+                                            id="reg-confirm"
+                                            type="password"
+                                            value={registerConfirmPassword}
+                                            onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                                            required
+                                            label={t('auth.confirmPassword')}
+                                            delayClass="delay-150"
+                                        />
+                                    </>
+                                )}
 
-                                {/* 確認密碼欄位 - 平滑開合動畫 */}
-                                <div
-                                    className={`grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                        activeTab === 'register' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                                    }`}
-                                >
-                                    <div className="overflow-hidden">
-                                        <div className="pt-2"> {/* 內部稍微推開一點間距，避免文字因為 overflow hidden 被裁切邊界 */}
-                                            <FloatingInput
-                                                id="reg-confirm"
-                                                type="password"
-                                                value={registerConfirmPassword}
-                                                onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                                                required={activeTab === 'register'}
-                                                label={t('auth.confirmPassword')}
-                                                delayClass="delay-300"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 提交按鈕 — 鎖定在最底部 */}
+                            {/* 提交按鈕 — flex 直接子元素 */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="mt-auto w-full py-4 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
+                                className="w-full py-4 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
                                        text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
                                        focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                        disabled:opacity-50 disabled:cursor-not-allowed
-                                       transition-all transform active:scale-[0.98]"
+                                       transition-all"
                             >
                                 {isLoading ? (
                                     <span className="flex items-center justify-center">

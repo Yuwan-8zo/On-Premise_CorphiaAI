@@ -44,7 +44,7 @@ export default {
         createAccount: '建立帳號',
         welcomeTitle: '歡迎使用',
         subtitle: '您的智能企業助手',
-        engineDesc: '企業級 RAG 與 GGUF 分析引擎。',
+        engineDesc: '企業級 RAG 與 GGUF 分析引擎',
         feature1: '智能問答系統',
         feature2: '文檔深度剖析',
         feature3: '本地部署隱私',

@@ -44,7 +44,7 @@ export default {
         createAccount: 'アカウント作成',
         welcomeTitle: 'ようこそ',
         subtitle: 'あなたのインテリジェントな企業アシスタント',
-        engineDesc: 'エンタープライズグレードRAG＆GGUF分析エンジン。',
+        engineDesc: 'エンタープライズグレードRAG＆GGUF分析エンジン',
         feature1: 'スマートQ&Aシステム',
         feature2: 'ドキュメント深層分析',
         feature3: 'ローカルデプロイプライバシー',

@@ -44,7 +44,7 @@ export default {
         createAccount: 'Create account',
         welcomeTitle: 'Welcome to',
         subtitle: 'Your Intelligent Enterprise Assistant',
-        engineDesc: 'Enterprise-grade RAG & GGUF Analysis Engine.',
+        engineDesc: 'Enterprise-grade RAG & GGUF Analysis Engine',
         feature1: 'Smart Q&A System',
         feature2: 'Deep Document Analysis',
         feature3: 'Local Deployment Privacy',
