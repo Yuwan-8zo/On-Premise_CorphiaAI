@@ -298,7 +298,7 @@ export default function Login() {
                             </motion.div>
 
                             {/* 確認密碼欄位：使用 AnimatePresence 達成滑順淡入淡出及高度擴張 */}
-                            <AnimatePresence>
+                            <AnimatePresence mode="popLayout">
                                 {activeTab === 'register' && (
                                     <motion.div
                                         layout
