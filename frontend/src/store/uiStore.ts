@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
-type Language = 'zh-TW' | 'en-US' | 'ja-JP'
+type Language = 'zh-TW' | 'en-US'
 
 interface UIState {
     // 狀態

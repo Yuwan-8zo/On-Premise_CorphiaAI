@@ -8,7 +8,6 @@ import { initReactI18next } from 'react-i18next'
 // 翻譯資源
 import zhTW from './locales/zh-TW'
 import enUS from './locales/en-US'
-import jaJP from './locales/ja-JP'
 
 // 取得儲存的語言或使用預設
 const savedLanguage = localStorage.getItem('ui-storage')
@@ -22,7 +21,6 @@ i18n
         resources: {
             'zh-TW': { translation: zhTW },
             'en-US': { translation: enUS },
-            'ja-JP': { translation: jaJP },
         },
         lng: defaultLanguage,
         fallbackLng: 'zh-TW',

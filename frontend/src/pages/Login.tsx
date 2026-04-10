@@ -93,7 +93,7 @@ export default function Login() {
     const navigate = useNavigate()
     const location = useLocation()
     const { setAuth, setLoading, isLoading } = useAuthStore()
-    const { theme, toggleTheme } = useUIStore()
+    const { theme, toggleTheme, language, setLanguage } = useUIStore()
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     
@@ -129,10 +129,9 @@ export default function Login() {
 
     // 語言切換
     const toggleLanguage = () => {
-        const langs = ['zh-TW', 'en', 'ja']
-        const currentIndex = langs.indexOf(i18n.language)
-        const nextIndex = (currentIndex + 1) % langs.length
-        i18n.changeLanguage(langs[nextIndex])
+        const nextLang = language === 'zh-TW' ? 'en-US' : 'zh-TW'
+        setLanguage(nextLang)
+        i18n.changeLanguage(nextLang)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
