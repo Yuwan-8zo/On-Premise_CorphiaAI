@@ -51,13 +51,13 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 <AnimatePresence>
                     {isFilled && (
                         <motion.button
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.8, y: "-50%" }}
+                            animate={{ opacity: 1, scale: 1, y: "-50%" }}
+                            exit={{ opacity: 0, scale: 0.8, y: "-50%" }}
                             transition={{ duration: 0.2 }}
                             type="button"
                             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                            className="absolute right-4 top-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
                             tabIndex={-1}
                         >
                             <AnimatePresence mode="wait" initial={false}>
