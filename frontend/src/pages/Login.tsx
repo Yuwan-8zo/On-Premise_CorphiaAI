@@ -277,7 +277,7 @@ export default function Login() {
                     <motion.form
                         layout
                         onSubmit={handleSubmit}
-                        className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[52px] lg:rounded-[60px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 min-h-[400px] lg:min-h-0 ${
+                        className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[52px] lg:rounded-[60px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 ${
                             activeTab === 'login' ? 'aspect-square' : 'aspect-auto'
                         }`}
                     >
