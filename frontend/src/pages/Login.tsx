@@ -215,9 +215,10 @@ export default function Login() {
 
                 {/* 登入卡片容器 - 居中 */}
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    {/* 卡片本體：使用 Framer Motion 監控外層高度變化 */}
-                    <motion.div
+                    {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
+                    <motion.form
                         layout
+                        onSubmit={handleSubmit}
                         className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[32px] lg:rounded-[40px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 min-h-[400px] lg:min-h-0 ${
                             activeTab === 'login' ? 'aspect-square' : 'aspect-auto'
                         }`}
@@ -267,8 +268,6 @@ export default function Login() {
                         </div>
 
 
-                        {/* ── 表單區域 ── */}
-                        <form onSubmit={handleSubmit} className="contents">
                             {/* 錯誤訊息 (改為浮動，不影響均分排版) */}
                             {error && (
                                 <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-4rem)] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
@@ -303,11 +302,11 @@ export default function Login() {
                                 {activeTab === 'register' && (
                                     <motion.div
                                         layout
-                                        initial={{ opacity: 0, height: 0, marginTop: -20, marginBottom: -20 }}
-                                        animate={{ opacity: 1, height: 'auto', marginTop: 0, marginBottom: 0 }}
-                                        exit={{ opacity: 0, height: 0, marginTop: -20, marginBottom: -20 }}
+                                        initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                        animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                                        exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
                                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                                        className="w-full overflow-hidden"
+                                        className="w-full"
                                     >
                                         <FloatingInput
                                             id="confirm-password"
@@ -345,8 +344,7 @@ export default function Login() {
                                     activeTab === 'login' ? t('auth.login') : t('auth.register')
                                 )}
                             </motion.button>
-                        </form>
-                    </motion.div>
+                    </motion.form>
                 </div>
             </div>
 
