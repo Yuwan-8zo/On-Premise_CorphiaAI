@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
+import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 
 export default function Login() {
@@ -15,6 +16,7 @@ export default function Login() {
     const navigate = useNavigate()
     const location = useLocation()
     const { setAuth, setLoading, isLoading } = useAuthStore()
+    const { theme, toggleTheme } = useUIStore()
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [email, setEmail] = useState('')
@@ -135,8 +137,16 @@ export default function Login() {
 
             {/* ── 右側：登入表單 (桌面 50%，手機 100%) ── */}
             <div className="w-full lg:w-1/2 flex flex-col">
-                {/* 右上角語言切換 */}
-                <div className="flex justify-end p-6">
+                {/* 右上角區塊 */}
+                <div className="flex justify-end p-6 gap-2">
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
+                        title={t('settings.theme')}
+                    >
+                        {theme === 'dark' ? '☀️' : '🌙'}
+                    </button>
+
                     <button
                         onClick={toggleLanguage}
                         className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
