@@ -399,7 +399,7 @@ export default function Login() {
                                     type="submit"
                                     disabled={isLoading}
                                     className="w-full py-4 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
-                                           text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
+                                           text-gray-900 dark:text-white font-medium rounded-[8px] text-sm shadow-sm dark:shadow-none
                                            focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all shrink-0"
