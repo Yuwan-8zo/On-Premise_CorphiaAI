@@ -128,7 +128,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-300">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-[#0B1120] transition-colors duration-300">
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
