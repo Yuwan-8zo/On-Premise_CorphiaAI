@@ -37,7 +37,7 @@ const FileIcon = ({ type }: { type: string }) => {
     }
 
     return (
-        <div className={`w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center ${colors[type] || 'text-slate-500'}`}>
+        <div className={`w-10 h-10 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center ${colors[type] || 'text-gray-500'}`}>
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
             </svg>
@@ -53,10 +53,10 @@ const TrashIcon = () => (
 
 const StatusBadge = ({ status }: { status: Document['status'] }) => {
     const styles = {
-        pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-        processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-        completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-        failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+        pending: 'bg-yellow-100/50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20',
+        processing: 'bg-[#1877F2]/10 text-[#1877F2] dark:bg-[#1877F2]/20 dark:text-blue-400 border border-blue-200 dark:border-[#1877F2]/30',
+        completed: 'bg-green-100/50 text-green-700 dark:bg-green-500/10 dark:text-green-400 border border-green-200 dark:border-green-500/20',
+        failed: 'bg-red-100/50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20',
     }
 
     const labels = {
@@ -191,27 +191,27 @@ export default function Documents() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] transition-colors duration-300">
             {/* 頂部導覽列 */}
-            <header className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 bg-white dark:bg-slate-900">
-                <h1 className="text-lg font-semibold text-slate-800 dark:text-white">
+            <header className="h-[80px] border-b border-gray-200 dark:border-[#222] flex items-center justify-between px-8 bg-white dark:bg-[#111111] transition-colors">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-wide">
                     📁 {t('nav.documents')}
                 </h1>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
                 >
                     {theme === 'dark' ? '☀️' : '🌙'}
                 </button>
             </header>
 
-            <div className="max-w-5xl mx-auto p-6">
+            <div className="max-w-5xl mx-auto p-8 pt-10">
                 {/* 上傳區域 */}
                 <div
-                    className={`relative border-2 border-dashed rounded-xl p-8 mb-8 transition-colors ${dragActive
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : 'border-slate-300 dark:border-slate-700 hover:border-primary-400'
-                        }`}
+                    className={`relative border-2 border-dashed rounded-[20px] p-10 mb-10 transition-colors bg-white dark:bg-[#2a2a2a] ${dragActive
+                            ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
+                            : 'border-gray-300 dark:border-[#444] hover:border-[#1877F2]/50'
+                        } shadow-sm dark:shadow-none`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -225,28 +225,30 @@ export default function Documents() {
                         disabled={isUploading}
                     />
 
-                    <div className="text-center">
-                        <div className="text-slate-400 dark:text-slate-500 mb-4">
+                    <div className="text-center flex flex-col items-center">
+                        <div className="text-[#1877F2] mb-4">
                             <UploadIcon />
                         </div>
-                        <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">
+                        <p className="text-gray-900 dark:text-gray-100 font-medium mb-2 text-lg">
                             拖放文件到此處，或點擊選擇
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             支援 PDF、Word、Excel、TXT、Markdown
                         </p>
                     </div>
 
                     {/* 上傳進度 */}
                     {isUploading && (
-                        <div className="mt-4">
-                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className="mt-6 max-w-md mx-auto">
+                            <div className="h-2 bg-gray-100 dark:bg-[#1a1a1a] rounded-full overflow-hidden border border-gray-200 dark:border-[#333]">
                                 <div
-                                    className="h-full bg-primary-500 transition-all duration-300"
+                                    className="h-full bg-[#1877F2] transition-all duration-300 relative"
                                     style={{ width: `${uploadProgress}%` }}
-                                />
+                                >
+                                    <div className="absolute inset-0 bg-white/20" />
+                                </div>
                             </div>
-                            <p className="text-sm text-slate-500 text-center mt-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
                                 上傳中... {uploadProgress}%
                             </p>
                         </div>
@@ -255,38 +257,38 @@ export default function Documents() {
 
                 {/* 錯誤訊息 */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
+                    <div className="mb-8 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-red-600 dark:text-red-400 shadow-sm">
                         {error}
                     </div>
                 )}
 
                 {/* 文件列表 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-                        <h2 className="font-semibold text-slate-800 dark:text-white">
+                <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                    <div className="px-8 py-5 border-b border-gray-200 dark:border-[#333]">
+                        <h2 className="font-semibold text-gray-900 dark:text-white">
                             已上傳文件 ({documents.length})
                         </h2>
                     </div>
 
                     {isLoading ? (
-                        <div className="p-8 text-center text-slate-500">
+                        <div className="p-10 text-center text-gray-500 dark:text-gray-400">
                             載入中...
                         </div>
                     ) : documents.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500">
+                        <div className="p-10 text-center text-gray-500 dark:text-gray-400">
                             尚無上傳的文件
                         </div>
                     ) : (
-                        <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                        <div className="divide-y divide-gray-100 dark:divide-[#333]">
                             {documents.map(doc => (
-                                <div key={doc.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-gray-50 dark:hover:bg-[#333]/50 transition-colors">
                                     <FileIcon type={doc.fileType} />
 
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-slate-800 dark:text-white truncate">
+                                        <p className="font-medium text-[15px] text-gray-900 dark:text-white truncate mb-0.5">
                                             {doc.originalFilename}
                                         </p>
-                                        <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                        <div className="flex items-center gap-2.5 text-sm text-gray-500 dark:text-gray-400">
                                             <span>{formatFileSize(doc.fileSize)}</span>
                                             <span>•</span>
                                             <span>{doc.chunkCount} 分塊</span>
@@ -299,7 +301,7 @@ export default function Documents() {
 
                                     <button
                                         onClick={() => deleteDocument(doc.id)}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        className="p-2 md:p-2.5 ml-4 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
                                         title="刪除"
                                     >
                                         <TrashIcon />

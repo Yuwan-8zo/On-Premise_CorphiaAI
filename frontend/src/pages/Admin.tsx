@@ -89,13 +89,10 @@ export default function Admin() {
     // 載入統計數據
     const loadStats = useCallback(async () => {
         try {
-            // 模擬 API 呼叫，實際應該從後端取得
-            setStats({
-                totalUsers: 12,
-                totalConversations: 156,
-                totalDocuments: 45,
-                totalMessages: 1289,
-            })
+            const response = await apiClient.get('/admin/stats')
+            if (response.data && response.data.status === 'success') {
+                setStats(response.data.data)
+            }
         } catch (err) {
             console.error('載入統計失敗:', err)
         }
@@ -184,14 +181,14 @@ export default function Admin() {
     }
 
     const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-white`}>
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
+            <div className="flex items-center gap-5">
+                <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-sm`}>
                     {icon}
                 </div>
                 <div>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{value.toLocaleString()}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">{value.toLocaleString()}</p>
+                    <p className="text-[15px] font-medium text-gray-500 dark:text-gray-400">{label}</p>
                 </div>
             </div>
         </div>
@@ -199,50 +196,50 @@ export default function Admin() {
 
     const RoleBadge = ({ role }: { role: UserData['role'] }) => {
         const styles = {
-            admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-            engineer: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-            user: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300',
+            admin: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20',
+            engineer: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20',
+            user: 'bg-gray-50 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20',
         }
         return (
-            <span className={`px-2 py-0.5 text-xs rounded-full ${styles[role]}`}>
+            <span className={`px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase rounded-md ${styles[role]}`}>
                 {role}
             </span>
         )
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] transition-colors duration-300">
             {/* 頂部導覽列 */}
-            <header className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 bg-white dark:bg-slate-900">
+            <header className="h-[80px] border-b border-gray-200 dark:border-[#222] flex items-center justify-between px-8 bg-white dark:bg-[#111111] transition-colors">
                 <div className="flex items-center">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg mr-2"
+                        className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg mr-4 transition-colors"
                     >
                         <BackIcon />
                     </button>
-                    <h1 className="text-lg font-semibold text-slate-800 dark:text-white">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-wide">
                         🛡️ {t('nav.admin')}
                     </h1>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
                 >
                     {theme === 'dark' ? '☀️' : '🌙'}
                 </button>
             </header>
 
-            <div className="max-w-6xl mx-auto p-6">
+            <div className="max-w-6xl mx-auto p-8 pt-10">
                 {/* 分頁標籤 */}
-                <div className="flex gap-2 mb-6">
+                <div className="flex gap-3 mb-8">
                     {(['overview', 'users', 'models', 'system'] as AdminSection[]).map((section) => (
                         <button
                             key={section}
                             onClick={() => setActiveSection(section)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeSection === section
-                                ? 'bg-primary-600 text-white'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            className={`px-5 py-2.5 rounded-xl font-medium transition-colors border ${activeSection === section
+                                ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
+                                : 'bg-white dark:bg-[#2a2a2a] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#333]/50 border-gray-200 dark:border-[#333]'
                                 }`}
                         >
                             {section === 'overview' && '總覽'}
@@ -257,24 +254,24 @@ export default function Admin() {
                 {activeSection === 'overview' && (
                     <div className="space-y-6">
                         {/* 統計卡片 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <StatCard
                                 icon={<UsersIcon />}
                                 label="總使用者"
                                 value={stats.totalUsers}
-                                color="bg-primary-500"
+                                color="bg-[#1877F2]"
                             />
                             <StatCard
                                 icon={<ChatIcon />}
                                 label="總對話"
                                 value={stats.totalConversations}
-                                color="bg-green-500"
+                                color="bg-emerald-500"
                             />
                             <StatCard
                                 icon={<DocumentIcon />}
                                 label="總文件"
                                 value={stats.totalDocuments}
-                                color="bg-orange-500"
+                                color="bg-amber-500"
                             />
                             <StatCard
                                 icon={<MessageIcon />}
@@ -285,11 +282,11 @@ export default function Admin() {
                         </div>
 
                         {/* 最近活動 */}
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+                        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors mt-8">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                                 最近活動
                             </h2>
-                            <div className="text-slate-500 dark:text-slate-400 text-center py-8">
+                            <div className="text-gray-500 dark:text-gray-400 text-center py-10 font-medium bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-xl border border-dashed border-gray-200 dark:border-[#444]">
                                 暫無活動記錄
                             </div>
                         </div>
@@ -298,68 +295,68 @@ export default function Admin() {
 
                 {/* 使用者管理 */}
                 {activeSection === 'users' && (
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                            <h2 className="font-semibold text-slate-800 dark:text-white">
+                    <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                        <div className="px-8 py-5 border-b border-gray-200 dark:border-[#333] flex items-center justify-between">
+                            <h2 className="font-semibold text-gray-900 dark:text-white">
                                 使用者列表 ({users.length})
                             </h2>
-                            <button className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+                            <button className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white text-[15px] font-medium rounded-xl transition-colors shadow-sm shadow-[#1877F2]/20">
                                 + 新增使用者
                             </button>
                         </div>
 
                         {isLoading ? (
-                            <div className="p-8 text-center text-slate-500">載入中...</div>
+                            <div className="p-10 text-center text-gray-500 dark:text-gray-400">載入中...</div>
                         ) : (
                             <table className="w-full">
-                                <thead className="bg-slate-50 dark:bg-slate-900/50">
+                                <thead className="bg-gray-50 dark:bg-[#1a1a1a]">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             使用者
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             角色
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             狀態
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             最後登入
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             操作
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tbody className="divide-y divide-gray-100 dark:divide-[#333]">
                                     {users.map((u) => (
-                                        <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-medium">
+                                        <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-[#333]/30 transition-colors">
+                                            <td className="px-8 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-[#1877F2]/10 dark:bg-[#1877F2]/20 flex items-center justify-center text-[#1877F2] dark:text-[#1877F2] font-semibold text-sm">
                                                         {u.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-slate-800 dark:text-white">{u.name}</p>
-                                                        <p className="text-sm text-slate-500 dark:text-slate-400">{u.email}</p>
+                                                        <p className="font-medium text-gray-900 dark:text-white mb-0.5">{u.name}</p>
+                                                        <p className="text-[13px] text-gray-500 dark:text-gray-400">{u.email}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-8 py-4">
                                                 <RoleBadge role={u.role} />
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center gap-1 text-sm ${u.isActive ? 'text-green-600 dark:text-green-400' : 'text-slate-500'
+                                            <td className="px-8 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'
                                                     }`}>
-                                                    <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-slate-400'}`} />
+                                                    <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
                                                     {u.isActive ? '啟用' : '停用'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400">
                                                 {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW') : '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button className="text-primary-600 hover:text-primary-700 dark:text-primary-400 text-sm">
+                                            <td className="px-8 py-4 text-right">
+                                                <button className="text-[#1877F2] hover:text-[#166fe5] dark:text-[#1877F2] text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#1877F2]/5 dark:hover:bg-[#1877F2]/10 transition-colors">
                                                     編輯
                                                 </button>
                                             </td>
@@ -374,33 +371,33 @@ export default function Admin() {
                 {/* 模型管理 */}
                 {activeSection === 'models' && (
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-                            <div className="flex items-center justify-between mb-4">
+                        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
+                            <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                         🤖 LLM 模型
                                     </h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                        目錄: {modelsDir}
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        目錄: <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#1a1a1a] font-mono text-[13px]">{modelsDir}</code>
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleRefreshModels}
                                     disabled={isLoadingModels}
-                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                    className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] disabled:opacity-50 disabled:hover:bg-[#1877F2] text-white text-[15px] font-medium rounded-xl transition-colors shadow-sm shadow-[#1877F2]/20"
                                 >
                                     {isLoadingModels ? '掃描中...' : '🔄 重新掃描'}
                                 </button>
                             </div>
 
                             {isLoadingModels ? (
-                                <div className="text-center py-8 text-slate-500">載入中...</div>
+                                <div className="text-center py-10 text-gray-500 dark:text-gray-400">載入中...</div>
                             ) : models.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-500 dark:text-slate-400">
+                                <div className="text-center py-10 bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-xl border border-dashed border-gray-200 dark:border-[#444]">
+                                    <p className="text-gray-600 dark:text-gray-300 font-medium">
                                         未找到 GGUF 模型檔案
                                     </p>
-                                    <p className="text-sm text-slate-400 mt-2">
+                                    <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-2">
                                         請將 .gguf 模型放入 ai_model 目錄
                                     </p>
                                 </div>
@@ -409,37 +406,37 @@ export default function Admin() {
                                     {models.map((model) => (
                                         <div
                                             key={model.name}
-                                            className={`p-4 rounded-lg border ${model.is_current
-                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                            className={`p-5 rounded-xl border transition-colors ${model.is_current
+                                                ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10 shadow-sm'
+                                                : 'border-gray-200 dark:border-[#333] hover:bg-gray-50 dark:hover:bg-[#333]/30 hover:border-gray-300 dark:hover:border-[#444]'
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <h3 className="font-medium text-slate-800 dark:text-white">
+                                                    <div className="flex items-center gap-3">
+                                                        <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">
                                                             {model.name}
                                                         </h3>
                                                         {model.is_current && (
-                                                            <span className="px-2 py-0.5 text-xs bg-primary-500 text-white rounded-full">
+                                                            <span className="px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase bg-[#1877F2] text-white rounded-full">
                                                                 使用中
                                                             </span>
                                                         )}
                                                         {model.quantization && (
-                                                            <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">
+                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-[#111111] border border-gray-200 dark:border-[#222] text-gray-600 dark:text-gray-400 rounded-md font-mono">
                                                                 {model.quantization}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                        <span>{model.size_gb} GB</span>
-                                                        <span>檔案: {model.filename}</span>
+                                                    <div className="flex items-center gap-4 mt-2 text-[13px] text-gray-500 dark:text-gray-400">
+                                                        <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>{model.size_gb} GB</span>
+                                                        <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>{model.filename}</span>
                                                     </div>
                                                 </div>
                                                 {!model.is_current && (
                                                     <button
                                                         onClick={() => handleSelectModel(model.name)}
-                                                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                                        className="px-5 py-2 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors"
                                                     >
                                                         選擇
                                                     </button>
@@ -451,13 +448,13 @@ export default function Admin() {
                             )}
                         </div>
 
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-3">
+                        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                 如何添加新模型
                             </h2>
-                            <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                            <ol className="list-decimal list-inside space-y-3 text-[15px] text-gray-600 dark:text-gray-400">
                                 <li>從 Hugging Face 下載 GGUF 格式的模型</li>
-                                <li>將檔案放入 <code className="px-1 bg-slate-100 dark:bg-slate-700 rounded">ai_model/</code> 目錄</li>
+                                <li>將檔案放入 <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-[#1a1a1a] rounded font-mono text-[13px]">ai_model/</code> 目錄</li>
                                 <li>點擊「重新掃描」按鈕</li>
                                 <li>選擇要使用的模型</li>
                             </ol>
@@ -468,50 +465,50 @@ export default function Admin() {
                 {/* 系統資訊 */}
                 {activeSection === 'system' && (
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+                        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                                 系統資訊
                             </h2>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-[15px]">
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">版本</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">2.2.0</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">版本</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium">2.2.0</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">後端</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">FastAPI</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">後端</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium">FastAPI</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">LLM Engine</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">llama.cpp</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">LLM Engine</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium">llama.cpp</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">向量資料庫</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">ChromaDB</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">向量資料庫</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium">ChromaDB</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">資料庫</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">SQLite</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">資料庫</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium">SQLite</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-500 dark:text-slate-400">Python</p>
-                                    <p className="text-slate-800 dark:text-white font-medium">3.10+</p>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-1">Python</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-medium tracking-wide">3.10+</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+                        <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                                 維護操作
                             </h2>
-                            <div className="flex gap-3">
-                                <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                            <div className="flex gap-4">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
                                     清除快取
                                 </button>
-                                <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
                                     重建索引
                                 </button>
-                                <button className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
+                                <button className="px-5 py-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors ml-auto">
                                     重啟服務
                                 </button>
                             </div>

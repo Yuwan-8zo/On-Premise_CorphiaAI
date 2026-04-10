@@ -21,7 +21,7 @@ const PlusIcon = () => (
 )
 
 const InputPlusIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
     </svg>
@@ -255,31 +255,31 @@ export default function Chat() {
     }, [])
 
     return (
-        // 主畫面全區背景 #1a1a1a
-        <div className="flex h-screen bg-[#1a1a1a] text-white overflow-hidden font-sans selection:bg-[#1877F2]/30">
-            {/* --- 左側邊欄 Sidebar (#111111) --- */}
+        // 主畫面全區背景
+        <div className="flex h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300">
+            {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-20 absolute md:relative h-full border-r border-[#222]`}
+                    } bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-20 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className="p-4 space-y-4 pt-6">
-                    {/* 新對話按鈕 (bg-[#2a2a2a] 帶滿版圓角) */}
+                    {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
-                        className="w-full flex items-center justify-start gap-3 px-4 py-3 bg-[#2a2a2a] hover:bg-[#333] 
-                                   text-white rounded-[14px] transition-colors font-medium"
+                        className="w-full flex items-center justify-start gap-3 px-4 py-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] 
+                                   text-gray-800 dark:text-white rounded-[14px] transition-colors font-medium"
                     >
                         <PlusIcon />
                         <span className="text-[15px]">新對話</span>
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
-                    <div className="flex bg-[#222222] rounded-full p-1 w-full">
+                    <div className="flex bg-gray-100 dark:bg-[#222222] rounded-full p-1 w-full transition-colors">
                         <button
                             onClick={() => setChatMode('general')}
                             className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
-                                chatMode === 'general' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-200'
+                                chatMode === 'general' ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             一般
@@ -287,7 +287,7 @@ export default function Chat() {
                         <button
                             onClick={() => setChatMode('project')}
                             className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
-                                chatMode === 'project' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-200'
+                                chatMode === 'project' ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             專案
@@ -302,17 +302,17 @@ export default function Chat() {
                         <span className="text-[12px] text-gray-500 tracking-wider">一般聊天</span>
                     </div>
                     {/* 時間線指示器邊距效果 */}
-                    <div className="border-l border-[#222] ml-2 pl-2 space-y-1">
+                    <div className="border-l border-gray-200 dark:border-[#222] ml-2 pl-2 space-y-1 transition-colors">
                         {conversations.length === 0 ? (
-                            <p className="text-[#666] text-xs py-4 pl-2">No recent chats</p>
+                            <p className="text-gray-400 dark:text-[#666] text-xs py-4 pl-2">No recent chats</p>
                         ) : (
                             conversations.map((conv) => (
                                 <button
                                     key={conv.id}
                                     onClick={() => selectConversation(conv)}
                                     className={`w-full flex items-center text-left px-3 py-2 rounded-lg text-[14.5px] truncate transition-colors ${currentConversation?.id === conv.id
-                                        ? 'bg-[#2a2a2a] text-white'
-                                        : 'text-gray-400 hover:bg-[#222] hover:text-gray-200'
+                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
                                         }`}
                                 >
                                     <span className="truncate">{conv.title}</span>
@@ -326,16 +326,16 @@ export default function Chat() {
                 <div className="p-4 pb-6">
                     <button 
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
                     >
-                        {/* 深黑圓形頭像框 */}
-                        <div className="w-[34px] h-[34px] rounded-full bg-[#111] flex items-center justify-center shrink-0 border border-[#333]">
-                            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-gray-500">
+                        {/* 圓形頭像框 */}
+                        <div className="w-[34px] h-[34px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
+                            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-gray-400 dark:text-gray-500">
                                 <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
                             </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[14px] text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
+                            <p className="text-[14px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
                         </div>
                     </button>
                 </div>
@@ -344,18 +344,20 @@ export default function Chat() {
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col relative w-full h-full">
                 {/* 絕對定位的 Corphia Title，維持在左上角 */}
-                <div className="absolute top-0 left-0 w-full p-6 flex items-center z-10 pointer-events-none">
-                    {!sidebarOpen && (
-                        <button
-                            onClick={toggleSidebar}
-                            className="mr-4 p-2 pointer-events-auto rounded-lg hover:bg-[#2a2a2a] transition-colors"
-                        >
-                            <SidebarIcon />
-                        </button>
-                    )}
-                    <h1 className="text-[22px] font-semibold text-gray-200 tracking-wide pointer-events-auto">
-                        Corphia
-                    </h1>
+                <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-10 pointer-events-none">
+                    <div className="flex items-center">
+                        {!sidebarOpen && (
+                            <button
+                                onClick={toggleSidebar}
+                                className="mr-4 p-2 pointer-events-auto rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors"
+                            >
+                                <SidebarIcon />
+                            </button>
+                        )}
+                        <h1 className="text-[22px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide pointer-events-auto">
+                            Corphia
+                        </h1>
+                    </div>
                 </div>
 
                 {/* 內容區：根據是否為空狀態自動切換置中或置底 */}
@@ -363,9 +365,9 @@ export default function Chat() {
                     // --- 空狀態 (Empty State): 全螢幕置中輸入框 ---
                     <div className="flex-1 flex items-center justify-center h-full px-4 md:px-8">
                         <div className="w-full max-w-3xl">
-                            <div className="relative flex items-center gap-3 bg-[#2a2a2a] rounded-full p-2 pl-4 shadow-xl">
+                            <div className="relative flex items-center gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent rounded-full p-2 pl-4 shadow-xl transition-colors">
                                 {/* 顯眼的加號圖標 */}
-                                <button className="p-2 transition-transform active:scale-95 text-gray-300 hover:text-white">
+                                <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white">
                                     <InputPlusIcon />
                                 </button>
                                 
@@ -377,7 +379,7 @@ export default function Chat() {
                                     placeholder="Message Corphia AI..."
                                     rows={1}
                                     disabled={isConnecting}
-                                    className="flex-1 resize-none bg-transparent text-gray-100 placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[17px] custom-scrollbar"
+                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[17px] custom-scrollbar"
                                     style={{ lineHeight: '1.4' }}
                                 />
                                 
@@ -421,10 +423,10 @@ export default function Chat() {
                         </div>
 
                         {/* 直立式底部輸入框區 */}
-                        <div className="shrink-0 pt-4 pb-8 w-full bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a] to-transparent">
+                        <div className="shrink-0 pt-4 pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent">
                             <div className="max-w-3xl mx-auto px-4 md:px-0 w-full">
-                                <div className="relative flex items-end gap-3 bg-[#2a2a2a] rounded-[32px] p-2 pl-4 shadow-xl border border-[#333]/50">
-                                    <button className="p-2 transition-transform active:scale-95 text-gray-300 hover:text-white mb-2">
+                                <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[32px] p-2 pl-4 shadow-xl transition-colors">
+                                    <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-2">
                                         <InputPlusIcon />
                                     </button>
                                     
@@ -436,7 +438,7 @@ export default function Chat() {
                                         placeholder="Message Corphia AI..."
                                         rows={1}
                                         disabled={isConnecting}
-                                        className="flex-1 resize-none bg-transparent text-gray-100 placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
+                                        className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-4 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar"
                                         style={{ lineHeight: '1.4' }}
                                     />
                                     

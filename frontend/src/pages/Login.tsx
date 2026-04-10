@@ -81,18 +81,18 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#0a0a0a]">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-300">
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
                 {/* 後端狀態指示器 */}
-                <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-md w-fit">
+                <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-md w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
-                    <span className="text-sm text-gray-400">Backend:</span>
-                    <span className={`text-sm ${backendStatus === 'online' ? 'text-green-400' :
-                        backendStatus === 'offline' ? 'text-red-400' : 'text-yellow-400'
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Backend:</span>
+                    <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
+                        backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
                         }`}>
                         {backendStatus === 'online' ? 'Online' :
                             backendStatus === 'offline' ? 'Offline' : 'Checking...'}
@@ -103,29 +103,29 @@ export default function Login() {
                 <div className="flex-1 flex flex-col max-w-md">
                     <div className="flex-[2]"></div>
                     <div>
-                        <h2 className="text-4xl font-bold text-white mb-1 italic">
+                        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 italic transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-5xl font-light text-white mb-4">
+                        <h1 className="text-5xl font-light text-gray-900 dark:text-white mb-4 transition-colors">
                             Corphia AI
                         </h1>
-                        <p className="text-gray-500 mb-10">
+                        <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
                             {t('auth.engineDesc')}
                         </p>
 
                         {/* 功能列表 */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                <span className="text-gray-300">{t('auth.feature1')}</span>
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature1')}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                <span className="text-gray-300">{t('auth.feature2')}</span>
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature2')}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                <span className="text-gray-300">{t('auth.feature3')}</span>
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature3')}</span>
                             </div>
                         </div>
                     </div>
@@ -139,7 +139,7 @@ export default function Login() {
                 <div className="flex justify-end p-6">
                     <button
                         onClick={toggleLanguage}
-                        className="p-2 text-gray-500 hover:text-white transition-colors"
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
                         title={t('settings.language')}
                     >
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,27 +152,27 @@ export default function Login() {
                 <div className="flex-1 flex items-center justify-center px-8 pb-12">
                     {/* 1:1 正方形卡片 */}
                     <div
-                        className="w-full max-w-[420px] bg-[#1c1c1c] rounded-[40px] p-8 flex flex-col"
+                        className="w-full max-w-[420px] bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] p-8 flex flex-col transition-colors"
                         style={{ aspectRatio: '1 / 1' }}
                     >
-                        {/* ── Pill Tab 切換（滑動黑色背景） ── */}
+                        {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex mb-8 rounded-full select-none cursor-pointer"
-                            style={{ background: '#2a2a2a', padding: '5px' }}
+                            className="relative flex mb-8 rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors"
+                            style={{ padding: '5px' }}
                         >
-                            {/* 滑動黑色 Pill 背景 */}
+                            {/* 滑動背景 Pill */}
                             <div
+                                className="bg-white dark:bg-[#fff] shadow-sm"
                                 style={{
                                     position: 'absolute',
                                     top: '5px',
                                     left: activeTab === 'login' ? '5px' : 'calc(50% + 0px)',
                                     width: 'calc(50% - 5px)',
                                     height: 'calc(100% - 10px)',
-                                    background: '#fff',
                                     borderRadius: '999px',
                                     transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
                                     zIndex: 1,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                 }}
                             />
                             {/* 登入 */}
@@ -181,7 +181,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-[#111]' : 'text-gray-500 hover:text-gray-300'
+                                    activeTab === 'login' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -192,7 +192,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-[#111]' : 'text-gray-500 hover:text-gray-300'
+                                    activeTab === 'register' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.register')}
@@ -204,7 +204,7 @@ export default function Login() {
                         <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
                             {/* 錯誤訊息 */}
                             {error && (
-                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm">
+                                <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
                                     {error}
                                 </div>
                             )}
@@ -216,7 +216,7 @@ export default function Login() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 placeholder={t('auth.account')}
-                                className="w-full px-6 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
+                                className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
                             />
 
                             {/* 密碼 */}
@@ -226,7 +226,7 @@ export default function Login() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 placeholder={t('auth.password')}
-                                className="w-full px-6 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
+                                className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
                             />
 
                             {/* 確認密碼 — height 動畫，0 → 60px
@@ -247,7 +247,7 @@ export default function Login() {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required={activeTab === 'register'}
                                     placeholder={t('auth.confirmPassword')}
-                                    className="w-full h-full px-6 rounded-full bg-[#2a2a2a] border-none text-white text-base placeholder-[#777] outline-none focus:ring-1 focus:ring-white/10 transition-all"
+                                    className="w-full h-full px-6 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
                                 />
                             </div>
 
@@ -255,9 +255,9 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-4 bg-transparent border border-[#4a4a4a] hover:border-gray-400
-                                       text-white font-medium rounded-full text-sm
-                                       focus:outline-none
+                                className="w-full py-4 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
+                                       text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
+                                       focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                        disabled:opacity-50 disabled:cursor-not-allowed
                                        transition-all"
                             >
@@ -278,9 +278,9 @@ export default function Login() {
                 </div>
 
                 {/* 手機版品牌顯示 */}
-                <div className="lg:hidden px-8 pb-8 text-center">
-                    <h1 className="text-2xl font-light text-white">Corphia AI</h1>
-                    <p className="text-sm text-gray-500 mt-1">{t('auth.engineDesc')}</p>
+                <div className="lg:hidden px-8 pb-8 text-center mt-auto">
+                    <h1 className="text-2xl font-light text-gray-900 dark:text-white transition-colors">Corphia AI</h1>
+                    <p className="text-sm text-gray-500 tracking-wide mt-1 transition-colors">{t('auth.engineDesc')}</p>
                 </div>
             </div>
 
