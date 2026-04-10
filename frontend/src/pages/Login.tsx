@@ -286,22 +286,12 @@ export default function Login() {
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         繁體中文
-                                        {language === 'zh-TW' && (
-                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        )}
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         English
-                                        {language === 'en-US' && (
-                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        )}
                                     </button>
                                 </motion.div>
                             )}
