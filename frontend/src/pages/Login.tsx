@@ -277,7 +277,7 @@ export default function Login() {
                     <motion.form
                         layout
                         onSubmit={handleSubmit}
-                        className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[32px] lg:rounded-[40px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 min-h-[400px] lg:min-h-0 ${
+                        className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[52px] lg:rounded-[60px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 min-h-[400px] lg:min-h-0 ${
                             activeTab === 'login' ? 'aspect-square' : 'aspect-auto'
                         }`}
                     >
@@ -399,7 +399,7 @@ export default function Login() {
                                     type="submit"
                                     disabled={isLoading}
                                     className="w-full py-4 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
-                                           text-gray-900 dark:text-white font-medium rounded-[8px] text-sm shadow-sm dark:shadow-none
+                                           text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
                                            focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all shrink-0"
