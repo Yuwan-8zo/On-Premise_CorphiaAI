@@ -10,68 +10,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/auth'
 
-// ── Floating Label Input 元件 ──
-function FloatInput({
-    id, type, value, onChange, label, required,
-}: {
-    id: string
-    type: string
-    value: string
-    onChange: (v: string) => void
-    label: string
-    required?: boolean
-}) {
-    const [focused, setFocused] = useState(false)
-    const active = focused || value.length > 0
-
-    return (
-        <div className="relative w-full">
-            <input
-                id={id}
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                required={required}
-                autoComplete="off"
-                className="w-full px-4 rounded-xl bg-[#2a2a2a] border text-white outline-none transition-all"
-                style={{
-                    paddingTop: active ? '20px' : '14px',
-                    paddingBottom: active ? '8px' : '14px',
-                    borderColor: focused ? '#6b7280' : '#3a3a3a',
-                    boxShadow: focused ? '0 0 0 1px #6b7280' : 'none',
-                }}
-            />
-            {/* 浮動標籤 */}
-            <label
-                htmlFor={id}
-                className="pointer-events-none absolute left-3 font-medium transition-all duration-200"
-                style={active ? {
-                    // 浮起狀態：white pill badge
-                    top: '-10px',
-                    fontSize: '11px',
-                    background: '#fff',
-                    color: '#111',
-                    padding: '2px 10px',
-                    borderRadius: '999px',
-                    fontWeight: 600,
-                    letterSpacing: '0.02em',
-                } : {
-                    // 預設狀態：像 placeholder 在中間
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: '14px',
-                    color: '#6b7280',
-                    fontWeight: 400,
-                }}
-            >
-                {label}
-            </label>
-        </div>
-    )
-}
-
 
 export default function Login() {
     const { t, i18n } = useTranslation()
@@ -263,7 +201,7 @@ export default function Login() {
                         </div>
 
 
-                        {/* 表單區域 */}
+                        {/* ── 表單區域 ── */}
                         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
                             {/* 錯誤訊息 */}
                             {error && (
@@ -272,59 +210,64 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {/* ── 均勻分佈：flex-1 spacer 讓三個元素平均分配垂直空間 ── */}
-                            <div className="flex-1"></div>
+                            {/* 上方彈性空白 */}
+                            <div className="flex-1" />
 
-                            {/* 帳號 */}
-                            <FloatInput
-                                id="login-email"
-                                type="email"
-                                value={email}
-                                onChange={setEmail}
-                                label={t('auth.account')}
-                                required
-                            />
-
-                            <div className="flex-1"></div>
-
-                            {/* 密碼 */}
-                            <FloatInput
-                                id="login-password"
-                                type="password"
-                                value={password}
-                                onChange={setPassword}
-                                label={t('auth.password')}
-                                required
-                            />
-
-                            {/* 確認密碼 — 始終渲染佔位，切換 visibility 避免位移 */}
-                            <div
-                                style={{
-                                    visibility: activeTab === 'register' ? 'visible' : 'hidden',
-                                    opacity: activeTab === 'register' ? 1 : 0,
-                                    transition: 'opacity 0.25s ease',
-                                    marginTop: '12px',
-                                }}
-                            >
-                                <FloatInput
-                                    id="login-confirm-password"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={setConfirmPassword}
-                                    label={t('auth.confirmPassword')}
-                                    required={activeTab === 'register'}
+                            {/* ── 輸入欄位群組（pill 膠囊型，無邊框） ── */}
+                            <div className="flex flex-col gap-3">
+                                {/* 帳號 */}
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    placeholder={t('auth.account')}
+                                    className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none transition-colors"
+                                    style={{ caretColor: '#fff' }}
                                 />
+
+                                {/* 密碼 */}
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    placeholder={t('auth.password')}
+                                    className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none transition-colors"
+                                    style={{ caretColor: '#fff' }}
+                                />
+
+                                {/* 確認密碼 — max-height 動畫展開，不造成其他欄位位移 */}
+                                <div
+                                    style={{
+                                        maxHeight: activeTab === 'register' ? '64px' : '0px',
+                                        opacity: activeTab === 'register' ? 1 : 0,
+                                        overflow: 'hidden',
+                                        transition: 'max-height 0.35s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease',
+                                    }}
+                                >
+                                    <input
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required={activeTab === 'register'}
+                                        placeholder={t('auth.confirmPassword')}
+                                        className="w-full px-5 py-4 rounded-full bg-[#2a2a2a] border-none text-white text-sm placeholder-gray-500 outline-none"
+                                        style={{ caretColor: '#fff' }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="flex-1"></div>
+                            {/* 下方彈性空白 */}
+                            <div className="flex-1" />
 
                             {/* 提交按鈕 */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-3.5 bg-transparent border border-[#4a4a4a] hover:border-gray-400
-                                       text-white font-medium rounded-full
-                                       focus:outline-none focus:ring-1 focus:ring-gray-500
+                                className="w-full py-4 bg-transparent border border-[#4a4a4a] hover:border-gray-400
+                                       text-white font-medium rounded-full text-sm
+                                       focus:outline-none
                                        disabled:opacity-50 disabled:cursor-not-allowed
                                        transition-all"
                             >
