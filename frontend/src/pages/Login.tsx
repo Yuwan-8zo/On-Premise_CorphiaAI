@@ -239,57 +239,56 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {activeTab === 'login' ? (
-                                <div className="flex flex-col flex-1 justify-between gap-4 mb-6">
-                                    {/* 登入表單 - 獨立2個 */}
-                                    <input
-                                        type="email"
-                                        value={loginEmail}
-                                        onChange={(e) => setLoginEmail(e.target.value)}
-                                        required
-                                        placeholder={t('auth.account')}
-                                        className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={loginPassword}
-                                        onChange={(e) => setLoginPassword(e.target.value)}
-                                        required
-                                        placeholder={t('auth.password')}
-                                        className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
-                                    />
-                                    {/* 佔位用以維持與註冊表單高度一致的過渡，避免按鈕位置跳動太多 */}
-                                    <div className="flex-1 min-h-[56px] opacity-0 pointer-events-none"></div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col flex-1 justify-between gap-4 mb-6">
-                                    {/* 註冊表單 - 獨立3個 */}
-                                    <input
-                                        type="email"
-                                        value={registerEmail}
-                                        onChange={(e) => setRegisterEmail(e.target.value)}
-                                        required
-                                        placeholder={t('auth.account')}
-                                        className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={registerPassword}
-                                        onChange={(e) => setRegisterPassword(e.target.value)}
-                                        required
-                                        placeholder={t('auth.password')}
-                                        className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={registerConfirmPassword}
-                                        onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                                        required
-                                        placeholder={t('auth.confirmPassword')}
-                                        className="w-full h-[56px] px-6 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all animate-fade-in-up"
-                                    />
-                                </div>
-                            )}
+                            <div className="flex-1 flex flex-col justify-between">
+                                {activeTab === 'login' ? (
+                                    <>
+                                        {/* 登入表單 - 獨立2個 */}
+                                        <input
+                                            type="email"
+                                            value={loginEmail}
+                                            onChange={(e) => setLoginEmail(e.target.value)}
+                                            required
+                                            placeholder={t('auth.account')}
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                        />
+                                        <input
+                                            type="password"
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            required
+                                            placeholder={t('auth.password')}
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* 註冊表單 - 獨立3個 */}
+                                        <input
+                                            type="email"
+                                            value={registerEmail}
+                                            onChange={(e) => setRegisterEmail(e.target.value)}
+                                            required
+                                            placeholder={t('auth.account')}
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                        />
+                                        <input
+                                            type="password"
+                                            value={registerPassword}
+                                            onChange={(e) => setRegisterPassword(e.target.value)}
+                                            required
+                                            placeholder={t('auth.password')}
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                        />
+                                        <input
+                                            type="password"
+                                            value={registerConfirmPassword}
+                                            onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                                            required
+                                            placeholder={t('auth.confirmPassword')}
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                        />
+                                    </>
+                                )}
 
                             {/* 提交按鈕 — flex 直接子元素 */}
                             <button
@@ -313,6 +312,7 @@ export default function Login() {
                                     activeTab === 'login' ? t('auth.login') : t('auth.register')
                                 )}
                             </button>
+                            </div>
                         </form>
                     </div>
                 </div>
