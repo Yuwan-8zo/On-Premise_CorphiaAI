@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -272,40 +273,51 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {/* 將輸入框群組化，讓 justify-between 的空間分配更穩定，並加上展開過渡動畫 */}
-                            <div className="flex flex-col gap-4 lg:gap-6 w-full">
-                                <FloatingInput
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    label={t('auth.account')}
-                                />
-                                <FloatingInput
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    label={t('auth.password')}
-                                />
-                                {/* 確認密碼欄位：使用 max-height 與 opacity 達成滑順淡入淡出 */}
-                                <div
-                                    className={`w-full overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                        activeTab === 'register' ? 'max-h-[80px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
-                                    }`}
-                                >
+                            {/* 使用 Framer Motion 與 justify-evenly，達成完美的垂直居中與滑順的動態間距分配 */}
+                            <motion.div layout className="flex-1 flex flex-col justify-evenly w-full pt-4 pb-2">
+                                <motion.div layout transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
                                     <FloatingInput
-                                        id="confirm-password"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required={activeTab === 'register'}
-                                        label={t('auth.confirmPassword')}
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        label={t('auth.account')}
                                     />
-                                </div>
-                            </div>
+                                </motion.div>
+                                <motion.div layout transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
+                                    <FloatingInput
+                                        id="password"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        label={t('auth.password')}
+                                    />
+                                </motion.div>
+                                {/* 確認密碼欄位：使用 AnimatePresence 達成滑順淡入淡出及高度擴張 */}
+                                <AnimatePresence>
+                                    {activeTab === 'register' && (
+                                        <motion.div
+                                            layout
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                            className="w-full overflow-hidden"
+                                        >
+                                            <FloatingInput
+                                                id="confirm-password"
+                                                type="password"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                required={activeTab === 'register'}
+                                                label={t('auth.confirmPassword')}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
 
                             {/* 提交按鈕 — flex 直接子元素 */}
                             <button
