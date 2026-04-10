@@ -10,6 +10,69 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/auth'
 
+// ── Floating Label Input 元件 ──
+function FloatInput({
+    id, type, value, onChange, label, required,
+}: {
+    id: string
+    type: string
+    value: string
+    onChange: (v: string) => void
+    label: string
+    required?: boolean
+}) {
+    const [focused, setFocused] = useState(false)
+    const active = focused || value.length > 0
+
+    return (
+        <div className="relative w-full">
+            <input
+                id={id}
+                type={type}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                required={required}
+                autoComplete="off"
+                className="w-full px-4 rounded-xl bg-[#2a2a2a] border text-white outline-none transition-all"
+                style={{
+                    paddingTop: active ? '20px' : '14px',
+                    paddingBottom: active ? '8px' : '14px',
+                    borderColor: focused ? '#6b7280' : '#3a3a3a',
+                    boxShadow: focused ? '0 0 0 1px #6b7280' : 'none',
+                }}
+            />
+            {/* 浮動標籤 */}
+            <label
+                htmlFor={id}
+                className="pointer-events-none absolute left-3 font-medium transition-all duration-200"
+                style={active ? {
+                    // 浮起狀態：white pill badge
+                    top: '-10px',
+                    fontSize: '11px',
+                    background: '#fff',
+                    color: '#111',
+                    padding: '2px 10px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    letterSpacing: '0.02em',
+                } : {
+                    // 預設狀態：像 placeholder 在中間
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    fontWeight: 400,
+                }}
+            >
+                {label}
+            </label>
+        </div>
+    )
+}
+
+
 export default function Login() {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
@@ -213,25 +276,25 @@ export default function Login() {
                             <div className="flex-1"></div>
 
                             {/* 帳號 */}
-                            <input
+                            <FloatInput
+                                id="login-email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={setEmail}
+                                label={t('auth.account')}
                                 required
-                                className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
-                                placeholder={t('auth.account')}
                             />
 
                             <div className="flex-1"></div>
 
                             {/* 密碼 */}
-                            <input
+                            <FloatInput
+                                id="login-password"
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={setPassword}
+                                label={t('auth.password')}
                                 required
-                                className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
-                                placeholder={t('auth.password')}
                             />
 
                             {/* 確認密碼 — 始終渲染佔位，切換 visibility 避免位移 */}
@@ -243,13 +306,13 @@ export default function Login() {
                                     marginTop: '12px',
                                 }}
                             >
-                                <input
+                                <FloatInput
+                                    id="login-confirm-password"
                                     type="password"
                                     value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    onChange={setConfirmPassword}
+                                    label={t('auth.confirmPassword')}
                                     required={activeTab === 'register'}
-                                    className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
-                                    placeholder={t('auth.confirmPassword')}
                                 />
                             </div>
 
