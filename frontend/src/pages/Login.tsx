@@ -11,6 +11,39 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 
+interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    label: string;
+    delayClass?: string;
+    id?: string;
+}
+
+const FloatingInput = ({ label, delayClass, id, value, className, ...props }: FloatingInputProps) => {
+    const isFilled = Boolean(value && value.toString().length > 0);
+    
+    return (
+        <div className={`relative w-full shrink-0 animate-fade-in ${delayClass || ''}`}>
+            <input
+                id={id}
+                value={value}
+                className={`peer w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder-transparent ${className || ''}`}
+                placeholder={label}
+                {...props}
+            />
+            <label
+                htmlFor={id}
+                className={`absolute left-5 top-1/2 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left
+                    ${isFilled 
+                        ? 'top-0 scale-[0.85] bg-black dark:bg-[#e0e0e0] text-white dark:text-black font-semibold py-0.5' 
+                        : 'scale-100 bg-transparent text-gray-400 dark:text-[#777] py-0'}
+                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-black dark:peer-focus:bg-[#e0e0e0] peer-focus:text-white dark:peer-focus:text-black peer-focus:font-semibold peer-focus:py-0.5
+                `}
+            >
+                {label}
+            </label>
+        </div>
+    );
+};
+
 export default function Login() {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
@@ -242,54 +275,54 @@ export default function Login() {
                             {activeTab === 'login' ? (
                                     <>
                                         {/* 登入表單 - 獨立2個 */}
-                                        <input
-                                            key="login-email"
+                                        <FloatingInput
+                                            id="login-email"
                                             type="email"
                                             value={loginEmail}
                                             onChange={(e) => setLoginEmail(e.target.value)}
                                             required
-                                            placeholder={t('auth.account')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in"
+                                            label={t('auth.account')}
+                                            delayClass=""
                                         />
-                                        <input
-                                            key="login-password"
+                                        <FloatingInput
+                                            id="login-password"
                                             type="password"
                                             value={loginPassword}
                                             onChange={(e) => setLoginPassword(e.target.value)}
                                             required
-                                            placeholder={t('auth.password')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-75"
+                                            label={t('auth.password')}
+                                            delayClass="delay-75"
                                         />
                                     </>
                                 ) : (
                                     <>
                                         {/* 註冊表單 - 獨立3個 */}
-                                        <input
-                                            key="reg-email"
+                                        <FloatingInput
+                                            id="reg-email"
                                             type="email"
                                             value={registerEmail}
                                             onChange={(e) => setRegisterEmail(e.target.value)}
                                             required
-                                            placeholder={t('auth.account')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in"
+                                            label={t('auth.account')}
+                                            delayClass=""
                                         />
-                                        <input
-                                            key="reg-password"
+                                        <FloatingInput
+                                            id="reg-password"
                                             type="password"
                                             value={registerPassword}
                                             onChange={(e) => setRegisterPassword(e.target.value)}
                                             required
-                                            placeholder={t('auth.password')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-75"
+                                            label={t('auth.password')}
+                                            delayClass="delay-75"
                                         />
-                                        <input
-                                            key="reg-confirm"
+                                        <FloatingInput
+                                            id="reg-confirm"
                                             type="password"
                                             value={registerConfirmPassword}
                                             onChange={(e) => setRegisterConfirmPassword(e.target.value)}
                                             required
-                                            placeholder={t('auth.confirmPassword')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-150"
+                                            label={t('auth.confirmPassword')}
+                                            delayClass="delay-150"
                                         />
                                     </>
                                 )}
