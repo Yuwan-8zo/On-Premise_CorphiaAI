@@ -201,59 +201,61 @@ export default function Login() {
 
 
                         {/* 表單區域 */}
-                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
+                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
                             {/* 錯誤訊息 */}
                             {error && (
-                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm mb-4">
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm mb-2">
                                     {error}
                                 </div>
                             )}
 
-                            {/* 輸入欄位區 */}
-                            <div className="flex flex-col gap-3">
-                                {/* 帳號 */}
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]
-                                           text-white placeholder-gray-500
-                                           focus:ring-1 focus:ring-gray-500 focus:border-gray-500
-                                           transition-all outline-none"
-                                    placeholder={t('auth.account')}
-                                />
+                            {/* ── 均勻分佈：flex-1 spacer 讓三個元素平均分配垂直空間 ── */}
+                            <div className="flex-1"></div>
 
-                                {/* 密碼 */}
+                            {/* 帳號 */}
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
+                                placeholder={t('auth.account')}
+                            />
+
+                            <div className="flex-1"></div>
+
+                            {/* 密碼 */}
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
+                                placeholder={t('auth.password')}
+                            />
+
+                            {/* 確認密碼 — 始終渲染佔位，切換 visibility 避免位移 */}
+                            <div
+                                style={{
+                                    visibility: activeTab === 'register' ? 'visible' : 'hidden',
+                                    opacity: activeTab === 'register' ? 1 : 0,
+                                    transition: 'opacity 0.25s ease',
+                                    marginTop: '12px',
+                                }}
+                            >
                                 <input
                                     type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]
-                                           text-white placeholder-gray-500
-                                           focus:ring-1 focus:ring-gray-500 focus:border-gray-500
-                                           transition-all outline-none"
-                                    placeholder={t('auth.password')}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required={activeTab === 'register'}
+                                    className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-white placeholder-gray-500 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-all outline-none"
+                                    placeholder={t('auth.confirmPassword')}
                                 />
-
-                                {/* 確認密碼 (註冊時) */}
-                                {activeTab === 'register' && (
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                        className="w-full px-4 py-3.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]
-                                               text-white placeholder-gray-500
-                                               focus:ring-1 focus:ring-gray-500 focus:border-gray-500
-                                               transition-all outline-none"
-                                        placeholder={t('auth.confirmPassword')}
-                                    />
-                                )}
                             </div>
 
-                            {/* 登入按鈕 */}
+                            <div className="flex-1"></div>
+
+                            {/* 提交按鈕 */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
