@@ -32,7 +32,7 @@ body {
   color-scheme: dark;
 }
 
-.dark html, .dark body {
+html.dark, .dark body {
   background-color: #1a1a1a;
   color: #f3f4f6;
 }
