@@ -261,7 +261,7 @@ export default function Chat() {
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden transition-opacity"
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden transition-opacity"
                     onClick={toggleSidebar}
                 />
             )}
@@ -269,7 +269,7 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } overflow-hidden bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-30 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
+                    } overflow-hidden bg-white dark:bg-[#111111] transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-r border-gray-200 dark:border-[#222]`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className="p-4 space-y-4 pt-6 w-[280px]">
@@ -353,7 +353,7 @@ export default function Chat() {
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col relative w-full h-full">
                 {/* 絕對定位的 Corphia Title，維持在左上角 */}
-                <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-20 pointer-events-none">
                     <div className="flex items-center">
                         {!sidebarOpen && (
                             <button
