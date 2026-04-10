@@ -201,7 +201,7 @@ export default function Login() {
 
 
                         {/* 表單區域 */}
-                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
                             {/* 錯誤訊息 */}
                             {error && (
                                 <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm mb-4">
@@ -210,7 +210,7 @@ export default function Login() {
                             )}
 
                             {/* 輸入欄位區 */}
-                            <div className="flex-1 flex flex-col justify-center space-y-4">
+                            <div className="flex flex-col gap-3">
                                 {/* 帳號 */}
                                 <input
                                     type="email"
@@ -257,7 +257,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-3.5 mt-6 bg-transparent border border-[#4a4a4a] hover:border-gray-400
+                                className="w-full py-3.5 bg-transparent border border-[#4a4a4a] hover:border-gray-400
                                        text-white font-medium rounded-full
                                        focus:outline-none focus:ring-1 focus:ring-gray-500
                                        disabled:opacity-50 disabled:cursor-not-allowed
