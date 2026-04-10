@@ -182,12 +182,12 @@ export default function Login() {
                 <div className="flex-1 flex items-center justify-center px-8 pb-12">
                     {/* 1:1 正方形卡片 */}
                     <div
-                        className="w-full max-w-[420px] bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] p-8 flex flex-col transition-colors"
+                        className="w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] p-8 flex flex-col justify-between transition-colors"
                         style={{ aspectRatio: '1 / 1' }}
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex mb-8 rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors"
+                            className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
@@ -231,16 +231,15 @@ export default function Login() {
 
 
                         {/* ── 表單區域 ── */}
-                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
-                            {/* 錯誤訊息 */}
+                        <form onSubmit={handleSubmit} className="contents">
+                            {/* 錯誤訊息 (改為浮動，不影響均分排版) */}
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm mb-4">
+                                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-4rem)] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm text-center z-50 shadow-sm animate-fade-in-up">
                                     {error}
                                 </div>
                             )}
 
-                            <div className="flex-1 flex flex-col justify-between">
-                                {activeTab === 'login' ? (
+                            {activeTab === 'login' ? (
                                     <>
                                         {/* 登入表單 - 獨立2個 */}
                                         <input
@@ -312,7 +311,6 @@ export default function Login() {
                                     activeTab === 'login' ? t('auth.login') : t('auth.register')
                                 )}
                             </button>
-                            </div>
                         </form>
                     </div>
                 </div>
