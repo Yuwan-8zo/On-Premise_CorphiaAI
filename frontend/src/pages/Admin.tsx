@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { getModels, refreshModels, selectModel, ModelItem } from '../api/models'
+import { apiClient } from '../api/client'
 
 // Types
 interface UserData {
