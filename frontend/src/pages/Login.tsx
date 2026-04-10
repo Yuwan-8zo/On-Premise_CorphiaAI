@@ -53,14 +53,11 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     
-    // 登入狀態
-    const [loginEmail, setLoginEmail] = useState('')
-    const [loginPassword, setLoginPassword] = useState('')
-    
-    // 註冊狀態
-    const [registerEmail, setRegisterEmail] = useState('')
-    const [registerPassword, setRegisterPassword] = useState('')
-    const [registerConfirmPassword, setRegisterConfirmPassword] = useState('')
+    // 共用的輸入狀態
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    // 註冊專用的確認密碼狀態
+    const [confirmPassword, setConfirmPassword] = useState('')
 
     const [error, setError] = useState('')
     const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
@@ -101,24 +98,20 @@ export default function Login() {
 
         try {
             if (activeTab === 'register') {
-                if (registerPassword !== registerConfirmPassword) {
+                if (password !== confirmPassword) {
                     setError(t('auth.passwordMismatch'))
                     setLoading(false)
                     return
                 }
-                await authApi.register({ email: registerEmail, password: registerPassword })
-                const tokens = await authApi.login({ email: registerEmail, password: registerPassword })
-                useAuthStore.setState({ accessToken: tokens.accessToken })
-                const user = await authApi.me()
-                setAuth(user, tokens.accessToken, tokens.refreshToken)
-                navigate(from, { replace: true })
-            } else {
-                const tokens = await authApi.login({ email: loginEmail, password: loginPassword })
-                useAuthStore.setState({ accessToken: tokens.accessToken })
-                const user = await authApi.me()
-                setAuth(user, tokens.accessToken, tokens.refreshToken)
-                navigate(from, { replace: true })
+                await authApi.register({ email, password })
             }
+            
+            // 無論登入或註冊成功後都執行登入
+            const tokens = await authApi.login({ email, password })
+            useAuthStore.setState({ accessToken: tokens.accessToken })
+            const user = await authApi.me()
+            setAuth(user, tokens.accessToken, tokens.refreshToken)
+            navigate(from, { replace: true })
         } catch (err) {
             console.error('Auth error:', err)
             setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
@@ -279,51 +272,38 @@ export default function Login() {
                                 </div>
                             )}
 
-                            {/* 輸入框群組：共用 DOM 節點以確保平移而不會重新渲染（瞬間移動） */}
-                            <div className="flex-1 flex flex-col justify-start gap-4 lg:gap-6 pt-4 lg:pt-8">
-                                {/* Email 欄位 (共用) */}
-                                <div className="transition-transform duration-500 ease-out-expo will-change-transform z-20">
+                            {/* 將輸入框群組化，讓 justify-between 的空間分配更穩定，並加上展開過渡動畫 */}
+                            <div className="flex flex-col gap-4 lg:gap-6 w-full">
+                                <FloatingInput
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    label={t('auth.account')}
+                                />
+                                <FloatingInput
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    label={t('auth.password')}
+                                />
+                                {/* 確認密碼欄位：使用 max-height 與 opacity 達成滑順淡入淡出 */}
+                                <div
+                                    className={`w-full overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                        activeTab === 'register' ? 'max-h-[80px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+                                    }`}
+                                >
                                     <FloatingInput
-                                        id="email"
-                                        type="email"
-                                        value={activeTab === 'login' ? loginEmail : registerEmail}
-                                        onChange={(e) => activeTab === 'login' ? setLoginEmail(e.target.value) : setRegisterEmail(e.target.value)}
-                                        required
-                                        label={t('auth.account')}
-                                        delayClass=""
-                                    />
-                                </div>
-                                
-                                {/* Password 欄位 (共用) */}
-                                <div className="transition-transform duration-500 ease-out-expo will-change-transform z-10">
-                                    <FloatingInput
-                                        id="password"
+                                        id="confirm-password"
                                         type="password"
-                                        value={activeTab === 'login' ? loginPassword : registerPassword}
-                                        onChange={(e) => activeTab === 'login' ? setLoginPassword(e.target.value) : setRegisterPassword(e.target.value)}
-                                        required
-                                        label={t('auth.password')}
-                                        delayClass=""
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required={activeTab === 'register'}
+                                        label={t('auth.confirmPassword')}
                                     />
-                                </div>
-
-                                {/* Confirm Password 欄位 (僅註冊模式) - 使用 Grid 高度動畫平滑展開 */}
-                                <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                    activeTab === 'register' ? 'grid-rows-[1fr] opacity-100 mt-0' : 'grid-rows-[0fr] opacity-0 -mt-6 pointer-events-none'
-                                }`}>
-                                    <div className="overflow-hidden">
-                                        <div className="pt-0"> {/* 依靠外層 gap 或者自身的 padding 展開空間 */}
-                                            <FloatingInput
-                                                id="confirm-password"
-                                                type="password"
-                                                value={registerConfirmPassword}
-                                                onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                                                required={activeTab === 'register'}
-                                                label={t('auth.confirmPassword')}
-                                                delayClass=""
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
