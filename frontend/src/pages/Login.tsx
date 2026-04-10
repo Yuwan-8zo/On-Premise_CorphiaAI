@@ -282,7 +282,9 @@ export default function Login() {
                         }`}
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
-                        <div
+                        <motion.div
+                            layout
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                             className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
@@ -323,7 +325,7 @@ export default function Login() {
                             >
                                 {t('auth.register')}
                             </button>
-                        </div>
+                        </motion.div>
 
 
 
