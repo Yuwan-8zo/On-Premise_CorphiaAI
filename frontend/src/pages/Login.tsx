@@ -243,48 +243,53 @@ export default function Login() {
                                     <>
                                         {/* 登入表單 - 獨立2個 */}
                                         <input
+                                            key="login-email"
                                             type="email"
                                             value={loginEmail}
                                             onChange={(e) => setLoginEmail(e.target.value)}
                                             required
                                             placeholder={t('auth.account')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in"
                                         />
                                         <input
+                                            key="login-password"
                                             type="password"
                                             value={loginPassword}
                                             onChange={(e) => setLoginPassword(e.target.value)}
                                             required
                                             placeholder={t('auth.password')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-75"
                                         />
                                     </>
                                 ) : (
                                     <>
                                         {/* 註冊表單 - 獨立3個 */}
                                         <input
+                                            key="reg-email"
                                             type="email"
                                             value={registerEmail}
                                             onChange={(e) => setRegisterEmail(e.target.value)}
                                             required
                                             placeholder={t('auth.account')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in"
                                         />
                                         <input
+                                            key="reg-password"
                                             type="password"
                                             value={registerPassword}
                                             onChange={(e) => setRegisterPassword(e.target.value)}
                                             required
                                             placeholder={t('auth.password')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-75"
                                         />
                                         <input
+                                            key="reg-confirm"
                                             type="password"
                                             value={registerConfirmPassword}
                                             onChange={(e) => setRegisterConfirmPassword(e.target.value)}
                                             required
                                             placeholder={t('auth.confirmPassword')}
-                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0"
+                                            className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-[#777] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all shrink-0 animate-fade-in delay-150"
                                         />
                                     </>
                                 )}
