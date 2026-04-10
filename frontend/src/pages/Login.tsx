@@ -155,27 +155,50 @@ export default function Login() {
                         className="w-full max-w-[420px] bg-[#1f1f1f] rounded-2xl p-8 flex flex-col"
                         style={{ aspectRatio: '1 / 1' }}
                     >
-                        {/* 標籤切換 */}
-                        <div className="flex mb-8">
+                        {/* ── Pill Tab 切換（滑動黑色背景） ── */}
+                        <div
+                            className="relative flex mb-8 rounded-full select-none cursor-pointer"
+                            style={{ background: '#2a2a2a', padding: '5px' }}
+                        >
+                            {/* 滑動黑色 Pill 背景 */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: '5px',
+                                    left: activeTab === 'login' ? '5px' : 'calc(50% + 0px)',
+                                    width: 'calc(50% - 5px)',
+                                    height: 'calc(100% - 10px)',
+                                    background: '#fff',
+                                    borderRadius: '999px',
+                                    transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    zIndex: 1,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                                }}
+                            />
+                            {/* 登入 */}
                             <button
+                                type="button"
                                 onClick={() => setActiveTab('login')}
-                                className={`flex-1 py-3 text-center rounded-full text-sm font-medium transition-all ${activeTab === 'login'
-                                    ? 'bg-[#2a2a2a] text-white'
-                                    : 'text-gray-500 hover:text-gray-300'
-                                    }`}
+                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                    activeTab === 'login' ? 'text-[#111]' : 'text-gray-500 hover:text-gray-300'
+                                }`}
                             >
                                 {t('auth.login')}
                             </button>
+                            {/* 註冊 */}
                             <button
+                                type="button"
                                 onClick={() => setActiveTab('register')}
-                                className={`flex-1 py-3 text-center rounded-full text-sm font-medium transition-all ${activeTab === 'register'
-                                    ? 'bg-[#2a2a2a] text-white'
-                                    : 'text-gray-500 hover:text-gray-300'
-                                    }`}
+                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                    activeTab === 'register' ? 'text-[#111]' : 'text-gray-500 hover:text-gray-300'
+                                }`}
                             >
                                 {t('auth.register')}
                             </button>
                         </div>
+
 
                         {/* 表單區域 */}
                         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
