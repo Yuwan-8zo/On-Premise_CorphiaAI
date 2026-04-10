@@ -21,13 +21,13 @@ body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: #f9fafb;
+  color: #111827;
 }
 
 .dark body {
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: #131314;
+  color: #f3f4f6;
 }
 
 /* 滾動條樣式 */
