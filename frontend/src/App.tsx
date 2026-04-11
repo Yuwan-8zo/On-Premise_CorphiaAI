@@ -42,7 +42,6 @@ export default function App() {
     useEffect(() => {
         const isDark = theme === 'dark'
         const bg = isDark ? '#1a1a1a' : '#f0f2f5'
-        const cs = isDark ? 'dark' : 'light'
 
         // dark class 切換
         if (isDark) {
