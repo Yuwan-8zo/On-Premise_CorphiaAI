@@ -68,7 +68,7 @@ export default function Chat() {
         setSourcesToLastMessage,
         deleteConversation
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar, showConfirm } = useUIStore()
+    const { sidebarOpen, toggleSidebar, showConfirm, setSettingsOpen } = useUIStore()
 
     const navigate = useNavigate()
     const [input, setInput] = useState('')
@@ -408,10 +408,10 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[44px] ${sidebarOpen ? 'md:rounded-[24px]' : 'md:rounded-[36px]'} md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform,border-radius] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
+                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[36px] md:rounded-[36px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className={`pt-6 pb-2 w-full transition-all duration-300 ${sidebarOpen ? 'pl-4 pr-6 md:pr-4 space-y-4' : 'px-2 space-y-4 flex flex-col items-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 space-y-3 ${!sidebarOpen && 'flex flex-col items-center'}`}>
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
@@ -638,9 +638,9 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className={`pt-2 w-full transition-all duration-300 ${sidebarOpen ? 'pb-6 pl-4 pr-6 md:pr-4' : 'pb-6 px-2 flex justify-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
                     <button 
-                        onClick={() => navigate('/settings')}
+                        onClick={() => setSettingsOpen(true)}
                         title="前往設定"
                         className={`flex items-center gap-3 p-1.5 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full pr-4' : 'w-12 h-12 justify-center shrink-0'}`}
                     >

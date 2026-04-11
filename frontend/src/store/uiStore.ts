@@ -30,6 +30,8 @@ interface UIState {
     setSidebarWidth: (width: number) => void
     showConfirm: (message: string, onConfirm: () => void | Promise<void>) => void
     closeConfirm: () => void
+    isSettingsOpen: boolean
+    setSettingsOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -74,6 +76,10 @@ export const useUIStore = create<UIState>()(
             confirmConfig: null,
             showConfirm: (message, onConfirm) => set({ confirmConfig: { message, onConfirm } }),
             closeConfirm: () => set({ confirmConfig: null }),
+
+            // 設定彈窗
+            isSettingsOpen: false,
+            setSettingsOpen: (open) => set({ isSettingsOpen: open }),
         }),
         {
             name: 'ui-storage',

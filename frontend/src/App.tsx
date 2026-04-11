@@ -12,15 +12,16 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Documents from './pages/Documents'
-import Settings from './pages/Settings'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
+
+import ConfirmModal from './components/ui/ConfirmModal'
+import SettingsModal from './components/ui/SettingsModal'
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
-import { ConfirmModal } from './components/ui/ConfirmModal'
 
 export default function App() {
     const { isAuthenticated } = useAuthStore()
@@ -136,15 +137,6 @@ export default function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route
-                        path="/settings"
-                        element={
-                            <ProtectedRoute>
-                                <Settings />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
                         path="/admin"
                         element={
                             <ProtectedRoute>
@@ -160,6 +152,7 @@ export default function App() {
             
             {/* 全域元件 */}
             <ConfirmModal />
+            <SettingsModal />
         </>
     )
 }
