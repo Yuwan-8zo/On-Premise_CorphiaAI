@@ -56,31 +56,52 @@ html.dark body {
   color: #f3f4f6;
 }
 
-/* 滾動條樣式 */
+/* 滾動條樣式 - 預設隱藏，滾動時才顯示 */
+
+/* 使用 overflow: overlay 讓滾動條不佔空間 (非標準但 Chrome 支援) */
+* {
+  scrollbar-color: transparent transparent; /* Firefox: 預設透明 */
+  scrollbar-width: thin;
+}
+
+/* 滾動中才顯示 (透過互動類別切換) */
+*:hover {
+  scrollbar-color: #2A2A2A transparent; /* Firefox: hover 時顯示 */
+}
+
+/* Chrome / Safari / Edge */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
+/* 預設完全透明（隱藏） */
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: transparent;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+}
+
+/* 滑鼠移入可滾動區域時顯示滾動條 */
+*:hover::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #3a3a3a;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+/* 淺色模式 - 滾動條顏色稍亮 */
+html:not(.dark) *:hover::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }
 
 /* 動畫 */
