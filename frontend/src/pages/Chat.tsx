@@ -254,7 +254,9 @@ export default function Chat() {
         if (!confirm('確定要刪除此對話嗎？')) return
 
         try {
-            await conversationsApi.delete(id)
+            if (!id.startsWith('temp-')) {
+                await conversationsApi.delete(id)
+            }
             deleteConversation(id)
             if (currentConversation?.id === id) {
                 setCurrentConversation(null)
@@ -272,7 +274,9 @@ export default function Chat() {
         try {
             const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
             for (const conv of relatedConvs) {
-                await conversationsApi.delete(conv.id)
+                if (!conv.id.startsWith('temp-')) {
+                    await conversationsApi.delete(conv.id)
+                }
                 deleteConversation(conv.id)
                 if (currentConversation?.id === conv.id) {
                     setCurrentConversation(null)
@@ -281,7 +285,8 @@ export default function Chat() {
             }
 
             const res = await documentsApi.list()
-            const relatedDocs = res.data.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
+            const docList = Array.isArray(res) ? res : (res.data || [])
+            const relatedDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
             for (const doc of relatedDocs) {
                 await documentsApi.delete(doc.id)
             }
@@ -710,10 +715,15 @@ export default function Chat() {
                                                 </span>
                                                 
                                                 <button
-                                                    onClick={async () => {
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation()
                                                         if (confirm('確定要刪除此文件嗎？')) {
-                                                            await documentsApi.delete(doc.id)
-                                                            if (selectedFolder) loadFolderDocuments(selectedFolder)
+                                                            try {
+                                                                await documentsApi.delete(doc.id)
+                                                                if (selectedFolder) loadFolderDocuments(selectedFolder)
+                                                            } catch (error) {
+                                                                console.error('刪除文件失敗', error)
+                                                            }
                                                         }
                                                     }}
                                                     className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
