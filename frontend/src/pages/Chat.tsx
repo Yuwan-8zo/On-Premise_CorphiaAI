@@ -540,11 +540,11 @@ export default function Chat() {
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
                                         >
-                                            <span className="truncate pr-2">{conv.title}</span>
+                                            <span className="truncate pr-2 pl-1">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                 <button
                                                     onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                    className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                    className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                     title="選項"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -640,11 +640,11 @@ export default function Chat() {
                                                                     }`}
                                                                     style={{ width: 'calc(100% - 4px)' }}
                                                                 >
-                                                                    <span className="truncate pr-2">{conv.title}</span>
+                                                                    <span className="truncate pr-2 pl-1">{conv.title}</span>
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                                         <button
                                                                             onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                            className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                                             title="選項"
                                                                         >
                                                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
