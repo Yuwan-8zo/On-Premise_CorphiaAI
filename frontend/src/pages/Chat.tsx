@@ -11,6 +11,7 @@ import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
+import { motion } from 'framer-motion'
 import type { Message } from '../types/chat'
 
 // --- Custom UI Icons ---
@@ -159,7 +160,10 @@ export default function Chat() {
 
     const createNewConversation = async () => {
         try {
-            const conversation = await conversationsApi.create({ title: '新對話' })
+            const conversation = await conversationsApi.create({ 
+                title: '新對話',
+                settings: { isProject: chatMode === 'project' } 
+            })
             addConversation(conversation)
             await selectConversation(conversation)
         } catch (error) {
@@ -177,7 +181,10 @@ export default function Chat() {
         let conversationId = currentConversation?.id
         if (!conversationId) {
             try {
-                const conversation = await conversationsApi.create({ title: userMessage.slice(0, 50) })
+                const conversation = await conversationsApi.create({ 
+                    title: userMessage.slice(0, 50),
+                    settings: { isProject: chatMode === 'project' }
+                })
                 addConversation(conversation)
                 setCurrentConversation(conversation)
                 conversationId = conversation.id
@@ -282,51 +289,84 @@ export default function Chat() {
                         <span className="text-[15px]">新對話</span>
                     </button>
 
-                    {/* 一般 / 專案 切換膠囊 */}
-                    <div className="flex bg-gray-100 dark:bg-[#222222] rounded-full p-1 w-full transition-colors">
+                    {/* 一般 / 專案 切換膠囊 (與 Login 頁面相同樣式) */}
+                    <motion.div
+                        layout
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0 w-full"
+                        style={{ padding: '4px' }}
+                    >
+                        {/* 滑動背景 Pill */}
+                        <div
+                            className="bg-white dark:bg-[#fff] shadow-sm"
+                            style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: chatMode === 'general' ? '4px' : 'calc(50% + 0px)',
+                                width: 'calc(50% - 4px)',
+                                height: 'calc(100% - 8px)',
+                                borderRadius: '999px',
+                                transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
+                                zIndex: 1,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            }}
+                        />
+                        {/* 一般 */}
                         <button
+                            type="button"
                             onClick={() => setChatMode('general')}
-                            className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
-                                chatMode === 'general' ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
+                                chatMode === 'general' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
-                            一般
+                            一般聊天
                         </button>
+                        {/* 專案 */}
                         <button
+                            type="button"
                             onClick={() => setChatMode('project')}
-                            className={`flex-1 py-1.5 rounded-full text-[14px] font-medium transition-colors ${
-                                chatMode === 'project' ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
+                                chatMode === 'project' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
-                            專案
+                            專案聊天室
                         </button>
-                    </div>
+                    </motion.div>
                 </div>
 
                 {/* 對話列表列 */}
                 <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-full">
-                    {/* 分類標籤：一般聊天 */}
-                    <div className="mb-2 pl-2">
-                        <span className="text-[12px] text-gray-500 tracking-wider">一般聊天</span>
+                    {/* 分類標籤：依據聊天模式 */}
+                    <div className="mb-2 pl-2 mt-1">
+                        <span className="text-[12px] text-gray-500 tracking-wider font-medium">{chatMode === 'general' ? '一般聊天' : '專案聊天室'}</span>
                     </div>
                     {/* 時間線指示器邊距效果 */}
-                    <div className="border-l border-gray-200 dark:border-[#222] ml-2 pl-2 space-y-1 transition-colors">
-                        {conversations.length === 0 ? (
-                            <p className="text-gray-400 dark:text-[#666] text-xs py-4 pl-2">No recent chats</p>
-                        ) : (
-                            conversations.map((conv) => (
+                    <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
+                        {(() => {
+                            const filteredConversations = conversations.filter(conv => {
+                                const isProject = Boolean(conv.settings?.isProject)
+                                return chatMode === 'project' ? isProject : !isProject
+                            })
+
+                            if (filteredConversations.length === 0) {
+                                return <p className="text-gray-400 dark:text-[#666] text-xs py-4 pl-2">No recent chats</p>
+                            }
+
+                            return filteredConversations.map((conv) => (
                                 <button
                                     key={conv.id}
                                     onClick={() => selectConversation(conv)}
-                                    className={`w-full flex items-center text-left px-3 py-2 rounded-lg text-[14.5px] truncate transition-colors ${currentConversation?.id === conv.id
-                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white'
+                                    className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[14px] transition-colors group ${currentConversation?.id === conv.id
+                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium'
                                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
                                         }`}
                                 >
-                                    <span className="truncate">{conv.title}</span>
+                                    <span className="truncate pr-2">{conv.title}</span>
                                 </button>
                             ))
-                        )}
+                        })()}
                     </div>
                 </div>
 

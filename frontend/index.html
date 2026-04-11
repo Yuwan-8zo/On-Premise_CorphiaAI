@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Corphia AI Platform - 企業級私有部署 AI 問答系統" />
     <title>Corphia AI</title>
-    <!-- 
-      color-scheme: 告訴 Safari 頁面使用的顏色方案
-      不使用 meta[theme-color]，讓頂部與底部 Safari 工具列使用相同的背景採樣邏輯
-    -->
+    <!-- 預設主题色：根據系統 prefers-color-scheme 決定預設顏色 -->
+    <meta id="theme-color-meta" name="theme-color" content="#f0f2f5" />
     <meta id="color-scheme-meta" name="color-scheme" content="only light" />
     <!--
-      重要：這段同步 script 必須在任何 React 代碼執行前就讀取 localStorage 並設定主題
+      重要：這段同步 script 必須在任何 React 代碼執行前就讀取 localStorage 並設定就好主顔Ꞩ
       這樣 Safari 在第一次畫面時就能讀到正確的背景色
+      (Gemini 跟 ChatGPT 都是用這個方法解決 Safari 白邊問題)
     -->
     <script>
       (function() {
@@ -33,6 +32,7 @@
             document.documentElement.classList.add('dark');
             document.documentElement.style.backgroundColor = '#1a1a1a';
             document.documentElement.style.colorScheme = 'only dark';
+            document.getElementById('theme-color-meta').setAttribute('content', '#1a1a1a');
             document.getElementById('color-scheme-meta').setAttribute('content', 'only dark');
           } else {
             document.documentElement.style.backgroundColor = '#f0f2f5';

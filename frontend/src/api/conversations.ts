@@ -8,6 +8,7 @@ import type { Conversation, Message } from '../types/chat'
 export interface CreateConversationRequest {
     title?: string
     model?: string
+    settings?: Record<string, unknown>
 }
 
 export interface SendMessageRequest {
@@ -36,6 +37,7 @@ export const conversationsApi = {
         const response = await apiClient.post('/conversations', {
             title: data.title || '新對話',
             model: data.model || 'default',
+            settings: data.settings || {},
         })
         return mapConversation(response.data)
     },

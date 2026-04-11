@@ -37,41 +37,49 @@ export default function App() {
         return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
     }, [setTheme])
 
-    // 主題同步：讓頂部與底部 Safari 工具列使用【相同邏輯】
-    // 策略：移除 meta[theme-color]，讓 iOS Safari 自動採樣頁面背景色
-    //       → 頂部狀態列與底部工具列都用相同機制，保持一致
+    // 主題同步：更新 html/body 背景色 + meta theme-color
+    // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
         const bg = isDark ? '#1a1a1a' : '#f0f2f5'
 
-        // dark class 切換（控制 Tailwind dark: 樣式）
+        // dark class 切換
         if (isDark) {
             document.documentElement.classList.add('dark')
         } else {
             document.documentElement.classList.remove('dark')
         }
 
-        // html/body 背景色即時更新（Safari 採樣這個顏色決定兩個工具列的顏色）
+        // html/body 背景色即時更新（不依賴 CSS transition）
+        // 讓 iOS Safari 底部工具列能立刻偵測到新的頁面背景色
         document.documentElement.style.backgroundColor = bg
         document.body.style.backgroundColor = bg
 
-        // color-scheme: only dark/light — 告訴瀏覽器頁面的顏色方案
-        // 'only' 關鍵字防止瀏覽器自動套用系統深色模式覆蓋我們的選擇
+        // 關鍵：使用 'only light'/'only dark' 而非單純 'light'/'dark'
+        // 'only' 關鍵字告訴瀏覽器：此頁面【只】支援這個顏色方案，不允許系統偏好覆蓋
+        // 這是讓 iOS Safari 底部工具列也跟隨 App 主題的核心機制（參考 Gemini 實作）
         const csOnly = isDark ? 'only dark' : 'only light'
         document.documentElement.style.colorScheme = csOnly
 
-        // 同步 meta[color-scheme]（影響系統鍵盤、scrollbar 等原生 UI）
+        // 強制 Safari 重新偵測 meta[theme-color]：先移除再新增
+        // 直接 setAttribute 有時不會觸發 Safari 的 toolbar 顏色更新
+        const existingThemeColor = document.querySelector('meta[name="theme-color"]')
+        if (existingThemeColor) existingThemeColor.remove()
+
+        const metaThemeColor = document.createElement('meta')
+        metaThemeColor.setAttribute('name', 'theme-color')
+        metaThemeColor.setAttribute('content', bg)
+        document.head.appendChild(metaThemeColor)
+
+        // color-scheme meta 更新（控制鍵盤、scrollbar 等原生 UI）
+        // 同樣使用 'only light'/'only dark' 讓 Safari 底部工具列強制跟隨 App 主題
         const existingColorScheme = document.querySelector('meta[name="color-scheme"]')
         if (existingColorScheme) existingColorScheme.remove()
+
         const metaColorScheme = document.createElement('meta')
         metaColorScheme.setAttribute('name', 'color-scheme')
         metaColorScheme.setAttribute('content', csOnly)
         document.head.appendChild(metaColorScheme)
-
-        // 移除 meta[theme-color]（之前用來控制頂部狀態列，但會造成頂底不一致）
-        // 現在讓頂部跟底部都由 iOS 自動採樣頁面背景色決定 → 兩者邏輯相同
-        const existingThemeColor = document.querySelector('meta[name="theme-color"]')
-        if (existingThemeColor) existingThemeColor.remove()
     }, [theme])
 
     return (
