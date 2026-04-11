@@ -88,6 +88,27 @@ export default function Chat() {
     const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadedFiles, setUploadedFiles] = useState<{name: string}[]>([])
 
+    // Dropdown Menu 狀態
+    const [activeMenu, setActiveMenu] = useState<{ convId: string, x: number, y: number } | null>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setActiveMenu(null)
+            }
+        }
+        // 使用 capture 階段確保比其他 onClick 先觸發
+        document.addEventListener('mousedown', handleClickOutside, true)
+        return () => document.removeEventListener('mousedown', handleClickOutside, true)
+    }, [])
+
+    const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
+        e.stopPropagation()
+        const rect = e.currentTarget.getBoundingClientRect()
+        // 浮動選單放置在按鈕正下方
+        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 })
+    }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
             const res = await documentsApi.list()
@@ -520,13 +541,15 @@ export default function Chat() {
                                             }`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                 <button
-                                                    onClick={(e) => handleDeleteConversation(conv.id, e)}
-                                                    className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                    title="刪除"
+                                                    onClick={(e) => handleOpenMenu(e, conv.id)}
+                                                    className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                    title="選項"
                                                 >
-                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                                    </svg>
                                                 </button>
                                             </div>
                                         </button>
@@ -618,13 +641,15 @@ export default function Chat() {
                                                                     style={{ width: 'calc(100% - 4px)' }}
                                                                 >
                                                                     <span className="truncate pr-2">{conv.title}</span>
-                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                                         <button
-                                                                            onClick={(e) => handleDeleteConversation(conv.id, e)}
-                                                                            className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                                            title="刪除"
+                                                                            onClick={(e) => handleOpenMenu(e, conv.id)}
+                                                                            className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            title="選項"
                                                                         >
-                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                                                            </svg>
                                                                         </button>
                                                                     </div>
                                                                 </button>
@@ -958,6 +983,67 @@ export default function Chat() {
                 className="hidden" 
                 accept=".pdf,.docx,.xlsx,.txt,.md"
             />
+            {/* Global Conversation Context Menu */}
+            <AnimatePresence>
+                {activeMenu && (
+                    <motion.div 
+                        ref={menuRef}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.1 }}
+                        className="fixed z-[100] w-[240px] bg-white dark:bg-[#282828] border border-gray-100 dark:border-[#333] shadow-lg dark:shadow-2xl rounded-2xl overflow-hidden py-1.5 text-[14px] font-medium text-gray-800 dark:text-gray-200"
+                        style={{ 
+                            left: activeMenu.x, 
+                            top: Math.min(activeMenu.y, window.innerHeight - 300) 
+                        }}
+                    >
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                            <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                            分享
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                            <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                            開始群組對話
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                            <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            重新命名
+                        </button>
+                        <button className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left group" onClick={() => setActiveMenu(null)}>
+                            <div className="flex items-center gap-3">
+                                <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                                <span>移至專案</span>
+                            </div>
+                            <svg className="w-4 h-4 opacity-0 group-hover:opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+
+                        <div className="h-[1px] bg-gray-100 dark:bg-[#444] my-1 mx-3" />
+
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                            <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" /></svg>
+                            釘選聊天
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                            <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                            封存
+                        </button>
+
+                        <div className="h-[1px] bg-gray-100 dark:bg-[#444] my-1 mx-3" />
+
+                        <button 
+                            onClick={(e) => {
+                                handleDeleteConversation(activeMenu.convId, e);
+                                setActiveMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-[#333] text-red-500 transition-colors text-left group"
+                        >
+                            <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            刪除
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
