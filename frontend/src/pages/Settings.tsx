@@ -68,13 +68,31 @@ export default function Settings() {
     const { user, clearAuth } = useAuthStore()
     const { theme, setTheme } = useUIStore()
 
-    // 切換主題後刷新頁面，讓 iOS Safari 頂部與底部工具列從 index.html
-    // 預載腳本重新讀取正確的主題色，達到上下同色的效果
+    // 主題切換：使用 淡出→刷新→淡入 的過渡方式
+    // 1. 背景色即時切換到新主題色
+    // 2. 頁面內容淡出 (0.25s)
+    // 3. 刷新頁面（預載腳本確保新主題在首次 paint 前已套用）
+    // 4. page-transition 動畫自動完成淡入
+    // 效果：流暢的主題切換，同時讓 iOS Safari 頂底工具列正確同步
     const handleThemeChange = (newTheme: 'light' | 'dark') => {
         if (theme === newTheme) return
+
+        const newBg = newTheme === 'dark' ? '#1a1a1a' : '#f0f2f5'
+
+        // 立刻切換背景色（讓淡出的底色就是新主題色，避免閃白/閃黑）
+        document.documentElement.style.backgroundColor = newBg
+        document.body.style.backgroundColor = newBg
+
+        // 頁面內容淡出
+        const root = document.getElementById('root')
+        if (root) {
+            root.style.transition = 'opacity 0.25s ease'
+            root.style.opacity = '0'
+        }
+
+        // 儲存新主題 → 淡出完成後刷新
         setTheme(newTheme)
-        // 50ms 確保 Zustand 已將新主題寫入 localStorage，再觸發刷新
-        setTimeout(() => window.location.reload(), 50)
+        setTimeout(() => window.location.reload(), 280)
     }
 
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
