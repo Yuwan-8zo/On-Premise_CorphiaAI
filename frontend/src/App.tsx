@@ -45,7 +45,17 @@ export default function App() {
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
-        const bg = isDark ? '#1a1a1a' : '#f0f2f5'
+        
+        // 根據當前頁面與主題，動態設定 iOS Safari Safe Area（狀態列與底部）的背景色
+        let bg = isDark ? '#1a1a1a' : '#f0f2f5'
+        
+        if (location.pathname === '/' || location.pathname.startsWith('/chat')) {
+            // Chat 頁面本身背景為 bg-white / bg-[#212121]
+            bg = isDark ? '#212121' : '#ffffff'
+        } else if (location.pathname === '/login' || location.pathname === '/register') {
+            // 登入與註冊頁面背景為 bg-gray-50 / bg-[#131314]
+            bg = isDark ? '#131314' : '#f9fafb'
+        }
 
         // dark class 切換
         if (isDark) {
@@ -84,7 +94,7 @@ export default function App() {
         metaColorScheme.setAttribute('name', 'color-scheme')
         metaColorScheme.setAttribute('content', csOnly)
         document.head.appendChild(metaColorScheme)
-    }, [theme])
+    }, [theme, location.pathname])
 
     return (
         <>
