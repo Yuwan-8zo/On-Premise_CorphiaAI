@@ -1,7 +1,7 @@
 """
 Corphia AI - 一鍵啟動腳本
 執行方式: python start.py
-按下 Ctrl+C 可同時關閉前端與後端
+按下 Ctrl+C 可同時關閉前端、後端與 Ngrok
 """
 
 import subprocess
@@ -10,6 +10,10 @@ import sys
 import time
 import signal
 import socket
+import urllib.request
+import urllib.error
+import json
+import shutil
 
 # 修正 Windows 終端機編碼問題
 if sys.platform == "win32":
@@ -19,11 +23,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 BACKEND_DIR = os.path.join(BASE_DIR, "backend")
 
+# 儲存所有已啟動的子程序
+processes: list[subprocess.Popen] = []
+
 
 def get_local_ip() -> str:
     """取得本機區網 IP"""
     try:
-        # 連線到外部 DNS 位址（不會真的送封包），藉此取得對外的本機 IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
@@ -31,9 +37,6 @@ def get_local_ip() -> str:
         return ip
     except Exception:
         return "無法取得 IP"
-
-# 儲存所有已啟動的子程序
-processes: list[subprocess.Popen] = []
 
 
 def kill_process_tree(pid: int):
@@ -52,7 +55,12 @@ def shutdown(sig=None, frame=None):
             kill_process_tree(proc.pid)
         except Exception:
             pass
-    print("  [OK] 前端與後端已全部關閉\n")
+
+    # NOTE: 也嘗試關閉可能殘留的 ngrok 程序
+    if sys.platform == "win32":
+        subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+
+    print("  [OK] 所有服務已全部關閉\n")
     sys.exit(0)
 
 
@@ -63,9 +71,13 @@ signal.signal(signal.SIGTERM, shutdown)
 
 def kill_port(port: int):
     """找出佔用指定 Port 的程序並強制終止 (僅限 Windows)"""
-    if sys.platform != "win32": return
+    if sys.platform != "win32":
+        return
     try:
-        result = subprocess.run(f"netstat -ano | findstr :{port} | findstr LISTENING", shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            f"netstat -ano | findstr :{port} | findstr LISTENING",
+            shell=True, capture_output=True, text=True
+        )
         if result.stdout:
             for line in result.stdout.strip().split("\n"):
                 parts = line.strip().split()
@@ -73,8 +85,9 @@ def kill_port(port: int):
                     pid = parts[-1]
                     if pid != "0":
                         subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
-    except Exception as e:
+    except Exception:
         pass
+
 
 def start_service(title: str, cwd: str, command: str) -> subprocess.Popen:
     """
@@ -91,10 +104,88 @@ def start_service(title: str, cwd: str, command: str) -> subprocess.Popen:
     return proc
 
 
+def find_ngrok() -> str | None:
+    """
+    尋找 ngrok 執行檔位置
+    搜尋順序: 系統 PATH → 專案根目錄 → 常見安裝位置
+    """
+    # 先從 PATH 找
+    ngrok_in_path = shutil.which("ngrok")
+    if ngrok_in_path:
+        return ngrok_in_path
+
+    # 從專案根目錄找
+    local_ngrok = os.path.join(BASE_DIR, "ngrok.exe")
+    if os.path.exists(local_ngrok):
+        return local_ngrok
+
+    # 常見 Windows 安裝位置
+    common_paths = [
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Packages", "ngrok.ngrok"),
+        r"C:\ngrok\ngrok.exe",
+        os.path.join(os.environ.get("USERPROFILE", ""), "ngrok.exe"),
+        r"C:\Windows\System32\ngrok.exe",
+    ]
+    for path in common_paths:
+        if os.path.exists(path):
+            return path
+
+    return None
+
+
+def start_ngrok(port: int = 5173) -> str | None:
+    """
+    啟動 Ngrok 並取得公開網址
+    回傳格式: https://xxxx.ngrok-free.app 或 None（失敗時）
+    """
+    ngrok_path = find_ngrok()
+
+    if not ngrok_path:
+        print("  [SKIP] 找不到 ngrok，跳過公開網址功能")
+        print("         請下載 ngrok.exe 並放置在此專案資料夾下，或安裝後加入 PATH")
+        return None
+
+    print(f"  [OK] 找到 ngrok: {ngrok_path}")
+
+    # 先關掉殘留的 ngrok 程序（避免 port 衝突）
+    if sys.platform == "win32":
+        subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+        time.sleep(0.5)
+
+    # 啟動 ngrok（在背景，不開新視窗）
+    ngrok_proc = subprocess.Popen(
+        f'"{ngrok_path}" http {port}',
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    processes.append(ngrok_proc)
+
+    # 等待 ngrok 啟動（最多 8 秒）
+    ngrok_url = None
+    for attempt in range(16):
+        time.sleep(0.5)
+        try:
+            # NOTE: ngrok 的本地管理 API 在 localhost:4040
+            res = urllib.request.urlopen("http://127.0.0.1:4040/api/tunnels", timeout=2)
+            data = json.loads(res.read())
+            tunnels = data.get("tunnels", [])
+            for tunnel in tunnels:
+                if tunnel.get("proto") == "https":
+                    ngrok_url = tunnel["public_url"]
+                    break
+            if ngrok_url:
+                break
+        except Exception:
+            pass  # 尚未啟動，繼續等待
+
+    return ngrok_url
+
+
 def main():
     print("=" * 50)
     print("  Corphia AI - 啟動中...")
-    print("  按下 Ctrl+C 可同時關閉前端與後端")
+    print("  按下 Ctrl+C 可同時關閉所有服務")
     print("=" * 50)
 
     # --- 清理可能殘留的 Port ---
@@ -126,6 +217,13 @@ def main():
     else:
         print("  [SKIP] 找不到 frontend 資料夾，跳過")
 
+    time.sleep(2)
+
+    # --- 啟動 Ngrok ---
+    print("[3] 啟動 Ngrok 公開通道...")
+    ngrok_url = start_ngrok(port=5173)
+
+    # --- 顯示存取資訊 ---
     local_ip = get_local_ip()
     print("\n" + "=" * 50)
     print("  本機存取")
@@ -134,6 +232,11 @@ def main():
     print("  區域網路存取 (手機/其他裝置)")
     print(f"    前端: http://{local_ip}:5173")
     print(f"    後端: http://{local_ip}:8000")
+    if ngrok_url:
+        print("  🌍 公開網址 (可分享給任何人)")
+        print(f"    前端: {ngrok_url}")
+    else:
+        print("  ⚠️  未啟動 Ngrok，無公開網址")
     print(f"  API 文件: http://localhost:8000/docs")
     print("=" * 50)
     print("\n  服務運行中... 按 Ctrl+C 可關閉所有服務\n")
@@ -142,7 +245,7 @@ def main():
     while True:
         time.sleep(1)
         # 若子程序意外退出，提示使用者
-        for proc in processes:
+        for proc in list(processes):
             if proc.poll() is not None:
                 print(f"  [WARN] PID {proc.pid} 意外退出 (code: {proc.returncode})")
                 processes.remove(proc)
