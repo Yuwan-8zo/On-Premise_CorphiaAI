@@ -31,7 +31,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-base outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-3 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -301,10 +301,10 @@ export default function Login() {
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">
                         Corphia AI
                     </h1>
                     <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
@@ -316,7 +316,7 @@ export default function Login() {
                     <motion.form
                         layout
                         onSubmit={handleSubmit}
-                        className={`w-full max-w-[420px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[52px] lg:rounded-[60px] p-6 lg:p-8 flex flex-col justify-between transition-colors gap-5 lg:gap-6 ${
+                        className={`w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] lg:rounded-[48px] p-5 lg:p-6 flex flex-col justify-between transition-colors gap-4 lg:gap-5 ${
                             activeTab === 'login' ? 'aspect-square' : 'aspect-auto'
                         }`}
                     >
@@ -347,7 +347,7 @@ export default function Login() {
                                 type="button"
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
                                     activeTab === 'login' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                             >
@@ -358,7 +358,7 @@ export default function Login() {
                                 type="button"
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-3 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
                                     activeTab === 'register' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                             >
@@ -439,7 +439,7 @@ export default function Login() {
                                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-4 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
+                                    className="w-full py-3 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
                                            text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
                                            focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                            disabled:opacity-50 disabled:cursor-not-allowed
