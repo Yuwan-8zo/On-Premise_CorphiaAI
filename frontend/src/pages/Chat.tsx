@@ -271,7 +271,7 @@ export default function Chat() {
 
         showConfirm(t('common.confirmDelete'), async () => {
             try {
-                const relatedConvs = conversations.filter(c => ((c.settings?.folderName as string) || '新資料夾') === folderName)
+                const relatedConvs = conversations.filter(c => c.type === 'project' && ((c.settings?.folderName as string) || '新資料夾') === folderName)
                 for (const conv of relatedConvs) {
                     if (!conv.id.startsWith('temp-')) {
                         await conversationsApi.delete(conv.id)
