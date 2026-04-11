@@ -3,6 +3,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
@@ -54,7 +55,7 @@ const SidebarIcon = () => (
 
 export default function Chat() {
     const { t } = useTranslation()
-    const { user, clearAuth } = useAuthStore()
+    const { user } = useAuthStore()
     const {
         conversations,
         currentConversation,
@@ -70,6 +71,7 @@ export default function Chat() {
     } = useChatStore()
     const { sidebarOpen, toggleSidebar } = useUIStore()
 
+    const navigate = useNavigate()
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -245,10 +247,6 @@ export default function Chat() {
         setStreaming(false)
     }
 
-    const handleLogout = () => {
-        if (wsRef.current) wsRef.current.disconnect()
-        clearAuth()
-    }
 
     useEffect(() => {
         return () => wsRef.current?.disconnect()
@@ -334,7 +332,8 @@ export default function Chat() {
                 {/* 底部滿版膠囊使用者卡片 */}
                 <div className="p-4 pb-6 w-[280px]">
                     <button 
-                        onClick={handleLogout}
+                        onClick={() => navigate('/settings')}
+                        title="前往設定"
                         className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
                     >
                         {/* 圓形頭像框 */}
