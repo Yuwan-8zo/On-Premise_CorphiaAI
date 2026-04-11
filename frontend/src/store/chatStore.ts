@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand'
-import type { Conversation, Message } from '../types/chat'
+import type { Conversation, Message, MessageSource } from '../types/chat'
 
 interface ChatState {
     // 狀態

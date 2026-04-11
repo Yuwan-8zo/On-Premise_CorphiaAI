@@ -9,7 +9,6 @@ import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
 import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
-import apiClient from '../api/client'
 import { documentsApi, type DocumentResponse } from '../api/documents'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
@@ -66,7 +65,8 @@ export default function Chat() {
         addMessage,
         setStreaming,
         appendToLastMessage,
-        setSourcesToLastMessage
+        setSourcesToLastMessage,
+        deleteConversation
     } = useChatStore()
     const { sidebarOpen, toggleSidebar } = useUIStore()
 
@@ -246,6 +246,52 @@ export default function Chat() {
             await selectConversation(conversation)
         } catch (error) {
             console.error('建立對話失敗:', error)
+        }
+    }
+
+    const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm('確定要刪除此對話嗎？')) return
+
+        try {
+            await conversationsApi.delete(id)
+            deleteConversation(id)
+            if (currentConversation?.id === id) {
+                setCurrentConversation(null)
+                setMessages([])
+            }
+        } catch (error) {
+            console.error('刪除對話失敗:', error)
+        }
+    }
+
+    const handleDeleteFolder = async (folderName: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm(`確定要刪除資料夾「${folderName}」嗎？這將會刪除裡面所有的檔案及對話！`)) return
+
+        try {
+            const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
+            for (const conv of relatedConvs) {
+                await conversationsApi.delete(conv.id)
+                deleteConversation(conv.id)
+                if (currentConversation?.id === conv.id) {
+                    setCurrentConversation(null)
+                    setMessages([])
+                }
+            }
+
+            const res = await documentsApi.list()
+            const relatedDocs = res.data.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
+            for (const doc of relatedDocs) {
+                await documentsApi.delete(doc.id)
+            }
+
+            if (selectedFolder === folderName) {
+                setSelectedFolder(null)
+                setFolderDocuments([])
+            }
+        } catch (error) {
+            console.error('刪除資料夾失敗:', error)
         }
     }
 
@@ -439,6 +485,15 @@ export default function Chat() {
                                             }`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => handleDeleteConversation(conv.id, e)}
+                                                    className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                    title="刪除"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
                                         </button>
                                     ))
                                 })()}
@@ -483,9 +538,18 @@ export default function Chat() {
                                                         setSelectedFolder(folderName)
                                                         setCurrentConversation(null) // Reset conversation
                                                     }}
-                                                    className={`flex items-center text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-[#222] ${selectedFolder === folderName ? 'text-[#1877F2]' : 'text-gray-700 dark:text-gray-300 hover:text-[#1877F2]'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-[#222] group ${selectedFolder === folderName ? 'text-[#1877F2]' : 'text-gray-700 dark:text-gray-300 hover:text-[#1877F2]'}`}
                                                 >
-                                                    {folderName}
+                                                    <span className="truncate pr-2">{folderName}</span>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={(e) => handleDeleteFolder(folderName, e)}
+                                                            className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                            title="刪除資料夾及內容"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 {/* 次層：聊天清單 */}
@@ -513,6 +577,15 @@ export default function Chat() {
                                                                     style={{ width: 'calc(100% - 4px)' }}
                                                                 >
                                                                     <span className="truncate pr-2">{conv.title}</span>
+                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={(e) => handleDeleteConversation(conv.id, e)}
+                                                                            className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                            title="刪除"
+                                                                        >
+                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                        </button>
+                                                                    </div>
                                                                 </button>
                                                             </div>
                                                         )
@@ -620,9 +693,9 @@ export default function Chat() {
                                                 </label>
                                                 
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="font-medium text-[15px] text-gray-800 dark:text-gray-200 truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
+                                                    <span className="font-medium text-[15px] text-gray-800 dark:text-gray-200 truncate">{doc.filename || "Unknown"}</span>
                                                     <span className="text-[13px] text-gray-500 mt-0.5">
-                                                        {new Date(doc.created_at).toLocaleString()} • {Math.round(doc.file_size / 1024)} KB
+                                                        {new Date(doc.created_at).toLocaleString()} • {Math.round((doc.size_bytes || 0) / 1024)} KB
                                                     </span>
                                                 </div>
                                             </div>

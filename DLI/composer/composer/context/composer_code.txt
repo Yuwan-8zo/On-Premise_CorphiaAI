@@ -1,0 +1,476 @@
+################
+### <FILENAME>/dli/task/composer/Dockerfile</FILENAME>
+
+# Use a base image with Python
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /dli
+
+RUN apt-get update && apt-get install -y apt-utils
+RUN apt-get install -y build-essential bash curl unzip wget git libgl1
+
+#Run pip dependencies
+COPY composer/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN pip install --upgrade ipywidgets jupyterlab==4.4.6 jupyterlab-widgets jupyter-archive jupyter-resource-usage jupytext
+RUN pip install uv
+WORKDIR /dli/task
+
+# Copy a jupyterlab workspace into the image to set initial jupyter lab view. See `set-landing` for details.
+COPY composer/jupyter/ /root/.jupyter
+
+# Start JupyterLab when the container runs
+ADD composer/entrypoint.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/*.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+
+################
+### <FILENAME>/dli/task/composer/docker-compose.override.yml</FILENAME>
+
+version: '2.4'
+
+services:
+
+  # During development we want to build our Docker image from relevant
+  # Dockerfiles, as opposed to pulling it from a repository somewhere.
+
+  lab:
+    build: 
+      context: notebooks
+      dockerfile: composer/Dockerfile
+
+  llm_client:
+    build:
+      context: notebooks/composer/microservices
+      dockerfile: llm_client.Dockerfile
+    environment:
+      - DEBUG=1
+    env_file:
+      - .env-dev  ## NVIDIA_API_KEY
+  
+  docker_router:
+    build:
+      context: notebooks/composer/microservices
+      dockerfile: docker_router.Dockerfile
+
+  nginx:
+    ports:
+      - $DEV_NGINX_PORT:80
+
+  assessment:
+    ports:
+      - $DEV_ASSESSMENT_PORT:8080
+
+  # nim:
+  #   env_file:
+  #     - .env-dev  ## NGC_API_KEY
+
+  # embedding:
+  #   env_file:
+  #     - .env-dev  ## NGC_API_KEY
+
+  # ranking:
+  #   env_file:
+  #     - .env-dev  ## NGC_API_KEY
+
+  ddg-cache:
+    container_name: ddg-cache
+    build:
+      context: ./notebooks/composer/microservices
+      dockerfile: ddg_dockerfile.Dockerfile
+
+  lg_viz:
+    build: notebooks/composer/microservices/lg_viz
+
+
+################
+### <FILENAME>/dli/task/composer/docker-compose.yml</FILENAME>
+
+# (1) Use this file for docker runtime configurations that are common to both
+# development and deployment.
+
+# `version : '2.3'` lets us use the `runtime=nvidia` configuration so that our
+# containers can interact with the GPU(s).
+version: '2.4'
+
+volumes: 
+  assessment_results:
+  pgdata:        # PostgreSQL data
+  cache_data:    # SQLite fallback
+  logs:          # Application logs
+
+# `services` defines the containers you want to run. There will always be at least 2:
+# a `lab` container for your content, and `nginx` as a reverse proxy.
+#
+# Commonly, a third container for data loading is used here, and sometimes, even more
+# containers for other services like assessments, remote desktop, tensorboard, etc.
+services:
+
+# (2) To prevent name collisions, be sure to set the course id as project name in `.env`
+
+  ## Deliver jupyter labs interface for students.
+  lab:
+    container_name: jupyter-notebook-server  
+    init: true
+    volumes:
+      - ./notebooks/:/dli/task/
+      - ./docker-compose.yml:/dli/task/composer/docker-compose.yml
+      - ./docker-compose.override.yml:/dli/task/composer/docker-compose.override.yml
+      - ./nginx.conf:/dli/task/composer/nginx.conf
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - JUPYTER_TOKEN
+
+  # ## Deliver a server to interface with host docker orchestration
+  # docker_router:
+  #   container_name: docker_router
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock  ## Give access to host docker
+  #     - ./assessment:/app/assessment
+  #     - ./notebooks:/app/notebooks
+  #   ports:
+  #     - "8070:8070"
+
+  # This container is required to reverse proxy content. It expects a config
+  # file at `/etc/nginx/nginx.conf` which we provide in this repo and mount.
+  #
+  # All services should be proxied through nginx, and all should be accessible
+  # on port 80, for compatibility with restricted corporate networks and to
+  # be compatible with upcoming course requirements.
+  nginx:
+    image: nginx:1.15.12-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - lab
+
+  ########################################################################################################
+  ## NIMs
+
+  # nim:
+  #   user: root # you don't have to be the root, but need to specify some user
+  #   container_name: nim-llm
+  #   # image: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.3.3
+  #   image: 224292665285.dkr.ecr.us-east-1.amazonaws.com/nim_llm:llama-3.1-8b-instruct-1.3.3
+  #   runtime: nvidia
+  #   shm_size: 16gb
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=0
+  #     # Necessary since we are running as root on potentially-multiple GPUs
+  #     - OMPI_ALLOW_RUN_AS_ROOT=1
+  #     - OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  #     - end_id
+  #   volumes:
+  #     - ./nim-cache/nim:/opt/nim/.cache
+
+  # embedding:
+  #   container_name: nim-embedding
+  #   # image: nvcr.io/nim/nvidia/nv-embedqa-e5-v5:1.1.0
+  #   image: 224292665285.dkr.ecr.us-east-1.amazonaws.com/nim_llm:nv-embedqa-e5-v5-1.1.0
+  #   user: root
+  #   shm_size: 16gb
+  #   ports:
+  #     - 8000:8000
+  #   volumes: 
+  #     - ./nim-cache/embedding:/opt/nim/.cache
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #     - NIM_HTTP_API_PORT=8000
+  #     - NIM_TRITON_LOG_VERBOSE=1
+  #   runtime: nvidia
+
+  # ranking:
+  #   container_name: nim-ranking
+  #   # image: "nvcr.io/nim/nvidia/llama-3.2-nv-rerankqa-1b-v2:1.0.2"
+  #   image: 224292665285.dkr.ecr.us-east-1.amazonaws.com/nim_llm:nv-rerankqa-mistral-4b-v3-1.0.2
+  #   user: root
+  #   shm_size: 16gb
+  #   ports:
+  #     - 7007:8000
+  #   volumes: 
+  #     - ./nim-cache/ranking:/opt/nim/.cache
+  #   environment:
+  #     - NIM_HTTP_API_PORT=8000
+  #     - NIM_TRITON_LOG_VERBOSE=1
+  #     - CUDA_VISIBLE_DEVICES=1
+  #   runtime: nvidia
+
+  lg_viz:
+    ports:
+      - '3002:3002'
+
+  ## Assessment microservice. Checks for assignment completion
+  assessment:
+    image: python:3.10-slim
+    volumes:
+      - assessment_results:/dli/assessment_results/
+      - ./assessment:/dli/assessment
+    entrypoint: ["/bin/sh", "-c"]
+    command: [". /dli/assessment/entrypoint.assessment.sh"]
+
+  # --- Docker Router ---
+  docker_router:
+    container_name: docker_router
+    ports:
+      - "8070:8070"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  ## Give access to host docker
+      - ./assessment:/app/assessment
+      - ./notebooks:/app/notebooks
+    environment:
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --- LLM Client ---
+  llm_client:
+    container_name: llm_client
+    ports:
+      - "9000:9000"
+    volumes:
+      - logs:/logs
+    environment:
+      # - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      # - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LOG_LEVEL=INFO
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --- Observability: Distributed Tracing ---
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=info
+    restart: unless-stopped
+
+  # --- Observability: Logs ---
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    ports:
+      - "9999:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  # --- Database Admin UI ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d ddg_cache || pg_isready -U user -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      bash -c "
+      docker-entrypoint.sh postgres &
+      until pg_isready -U user -d postgres; do sleep 3; done;
+      psql -U user -d postgres -c 'CREATE DATABASE ddg_cache;' || true;
+      wait"
+
+  dbgate:
+    image: dbgate/dbgate:latest
+    container_name: dbgate
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      CONNECTIONS: con1
+      LABEL_con1: DDG Cache
+      SERVER_con1: postgres
+      USER_con1: user
+      PASSWORD_con1: pass
+      PORT_con1: 5432
+      DATABASE_con1: ddg_cache
+      ENGINE_con1: postgres@dbgate-plugin-postgres
+
+  ddg-cache:
+    container_name: ddg-cache
+    ports:
+      - "7860:7860"  # Gradio interface
+      - "7861:7861"  # FastAPI (if running both)
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:pass@postgres:5432/ddg_cache
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - LLM_BASE_URL=http://llm_client:9000/v1
+      - DEBUG=0
+    volumes:
+      # Mount source for development/hot-reload
+      - ./notebooks/composer/microservices:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+      llm_client:
+        condition: service_started    
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  default:
+    name: nvidia-agents
+
+
+################
+### <FILENAME>/dli/task/composer/entrypoint.sh</FILENAME>
+
+#!/bin/bash
+
+# JUPYTER_TOKEN will empty in development, but set for
+# deployments. It will be applied from the environment
+# automatically when running `docker-compose up`.
+# For more details see `docker-compose.production.yml`,
+# `docker-compose.override.yml`, and
+# `nginx.conf`.
+
+pip install --upgrade ddgs &
+
+jupyter lab \
+        --ip 0.0.0.0                               `# Run on localhost` \
+        --allow-root                               `# Enable the use of sudo commands in the notebook` \
+        --no-browser                               `# Do not launch a browser by default` \
+        --NotebookApp.base_url="/lab"              `# Allow value to be passed in for production` \
+        --NotebookApp.token="$JUPYTER_TOKEN"       `# Do not require token to access notebook` \
+        --NotebookApp.password=""                  `# Do not require password to run jupyter server`
+
+
+################
+### <FILENAME>/dli/task/composer/nginx.conf</FILENAME>
+
+worker_processes auto;
+pid /etc/nginx/.nginx.pid;
+
+events {
+	worker_connections 768;
+}
+
+http {
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	client_max_body_size 0;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+
+	default_type application/octet-stream;
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # Dropping SSLv3, ref: POODLE
+		ssl_prefer_server_ciphers on;
+
+	access_log /var/log/access.log;
+	error_log /var/log/error.log;
+
+	gzip on;
+	gzip_disable "msie6";
+
+	server {
+
+		listen 80 default_server;
+		listen [::]:80 default_server;
+
+		location / {
+			proxy_pass http://localhost/lab;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_buffering off;
+		}
+
+		location /lab {
+			proxy_pass http://lab:8888;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_buffering off;
+		}
+		
+		location /dozzle/ {
+			proxy_pass http://dozzle:8080;
+			chunked_transfer_encoding off;
+			proxy_buffering off;
+			proxy_cache off;
+			proxy_http_version 1.1;
+			proxy_redirect off;
+			proxy_set_header Host $http_host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Host $host;
+			proxy_set_header X-Forwarded-Proto $scheme;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "upgrade";
+		}
+	}
+}
+
+
+################
+### <FILENAME>/dli/task/composer/requirements.txt</FILENAME>
+
+beautifulsoup4==4.13.3
+colorama==0.4.6
+crewai==0.105.0
+crewai-tools==0.36.0
+datasets==3.3.2
+ddgs==9.0.0
+duckduckgo_search==7.5.1
+faiss-gpu-cu12==1.9.0.0
+jupyterlab==4.3.5
+langchain==0.3.20
+langchain-community==0.3.19
+langchain-nvidia-ai-endpoints==0.3.9
+langgraph==0.3.7
+matplotlib==3.10.1
+networkx==3.4.2
+nltk==3.9.1
+pandas==2.2.3
+plotly==6.0.0
+pyvis==0.3.2
+ragas==0.2.3
+rank-bm25==0.2.2
+scikit-learn==1.6.1
+scipy==1.15.2
+seaborn==0.13.2
+transformers==4.46.3
+asyncpg==0.30.0
+sentence-transformers==5.1.1
+trafilatura==2.0.0
+
