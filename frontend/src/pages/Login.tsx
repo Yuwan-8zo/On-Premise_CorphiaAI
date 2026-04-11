@@ -283,13 +283,13 @@ export default function Login() {
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-[10px] flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-xl flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-[10px] flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         English
                                     </button>
@@ -315,7 +315,7 @@ export default function Login() {
                     {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] lg:rounded-[48px] p-5 lg:p-6 flex flex-col justify-between transition-colors gap-4 lg:gap-5 aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[44px] lg:rounded-[44px] p-5 flex flex-col justify-between transition-colors gap-4 aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
