@@ -12,7 +12,13 @@ export default defineConfig({
     },
     server: {
         port: 5173,
-        allowedHosts: true,
+        allowedHosts: [
+            'manor-pusher-emerald.ngrok-free.dev',
+            '.ngrok-free.dev',
+            '.ngrok-free.app',
+            '.ngrok.app',
+            '.ngrok.io'
+        ],
         proxy: {
             '/api': {
                 target: 'http://127.0.0.1:8000',
