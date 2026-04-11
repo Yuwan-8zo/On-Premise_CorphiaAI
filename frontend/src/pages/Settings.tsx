@@ -66,34 +66,7 @@ export default function Settings() {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
     const { user, clearAuth } = useAuthStore()
-    const { theme, setTheme } = useUIStore()
-
-    // 主題切換：使用 淡出→刷新→淡入 的過渡方式
-    // 1. 背景色即時切換到新主題色
-    // 2. 頁面內容淡出 (0.25s)
-    // 3. 刷新頁面（預載腳本確保新主題在首次 paint 前已套用）
-    // 4. page-transition 動畫自動完成淡入
-    // 效果：流暢的主題切換，同時讓 iOS Safari 頂底工具列正確同步
-    const handleThemeChange = (newTheme: 'light' | 'dark') => {
-        if (theme === newTheme) return
-
-        const newBg = newTheme === 'dark' ? '#1a1a1a' : '#f0f2f5'
-
-        // 立刻切換背景色（讓淡出的底色就是新主題色，避免閃白/閃黑）
-        document.documentElement.style.backgroundColor = newBg
-        document.body.style.backgroundColor = newBg
-
-        // 頁面內容淡出
-        const root = document.getElementById('root')
-        if (root) {
-            root.style.transition = 'opacity 0.25s ease'
-            root.style.opacity = '0'
-        }
-
-        // 儲存新主題 → 淡出完成後刷新
-        setTheme(newTheme)
-        setTimeout(() => window.location.reload(), 280)
-    }
+    const { theme, toggleTheme } = useUIStore()
 
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
@@ -212,7 +185,7 @@ export default function Settings() {
                                         <div className="flex gap-6">
                                             {/* 日間模式 */}
                                             <button
-                                                onClick={() => handleThemeChange('light')}
+                                                onClick={() => theme === 'dark' && toggleTheme()}
                                                 className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${theme === 'light'
                                                         ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
                                                         : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444]'
@@ -228,7 +201,7 @@ export default function Settings() {
 
                                             {/* 夜間模式 */}
                                             <button
-                                                onClick={() => handleThemeChange('dark')}
+                                                onClick={() => theme === 'light' && toggleTheme()}
                                                 className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${theme === 'dark'
                                                         ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
                                                         : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444]'

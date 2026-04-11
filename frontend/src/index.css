@@ -16,7 +16,8 @@
 html {
   font-size: 16px;
   background-color: #f0f2f5;
-  color-scheme: light;
+  /* 'only light' 阻止瀏覽器以系統深色模式覆蓋頁面（參考 Gemini 實作） */
+  color-scheme: only light;
   height: 100%;
   /* iOS Safari safe-area 安全區域背景色填充 */
   background-attachment: fixed;
@@ -40,11 +41,12 @@ body {
 }
 
 .dark {
-  color-scheme: dark;
+  /* 'only dark' 阻止瀏覽器以系統淺色模式覆蓋頁面 */
+  color-scheme: only dark;
 }
 
 html.dark {
-  color-scheme: dark;
+  color-scheme: only dark;
   background-color: #1a1a1a;
   color: #f3f4f6;
 }

@@ -8,7 +8,7 @@
     <title>Corphia AI</title>
     <!-- 預設主题色：根據系統 prefers-color-scheme 決定預設顏色 -->
     <meta id="theme-color-meta" name="theme-color" content="#f0f2f5" />
-    <meta id="color-scheme-meta" name="color-scheme" content="light" />
+    <meta id="color-scheme-meta" name="color-scheme" content="only light" />
     <!--
       重要：這段同步 script 必須在任何 React 代碼執行前就讀取 localStorage 並設定就好主顔Ꞩ
       這樣 Safari 在第一次畫面時就能讀到正確的背景色
@@ -31,12 +31,12 @@
           if (theme === 'dark') {
             document.documentElement.classList.add('dark');
             document.documentElement.style.backgroundColor = '#1a1a1a';
-            document.documentElement.style.colorScheme = 'dark';
+            document.documentElement.style.colorScheme = 'only dark';
             document.getElementById('theme-color-meta').setAttribute('content', '#1a1a1a');
-            document.getElementById('color-scheme-meta').setAttribute('content', 'dark');
+            document.getElementById('color-scheme-meta').setAttribute('content', 'only dark');
           } else {
             document.documentElement.style.backgroundColor = '#f0f2f5';
-            document.documentElement.style.colorScheme = 'light';
+            document.documentElement.style.colorScheme = 'only light';
           }
         } catch(e) {}
       })();

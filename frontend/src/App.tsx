@@ -55,7 +55,12 @@ export default function App() {
         // 讓 iOS Safari 底部工具列能立刻偵測到新的頁面背景色
         document.documentElement.style.backgroundColor = bg
         document.body.style.backgroundColor = bg
-        document.documentElement.style.colorScheme = cs
+
+        // 關鍵：使用 'only light'/'only dark' 而非單純 'light'/'dark'
+        // 'only' 關鍵字告訴瀏覽器：此頁面【只】支援這個顏色方案，不允許系統偏好覆蓋
+        // 這是讓 iOS Safari 底部工具列也跟隨 App 主題的核心機制（參考 Gemini 實作）
+        const csOnly = isDark ? 'only dark' : 'only light'
+        document.documentElement.style.colorScheme = csOnly
 
         // 強制 Safari 重新偵測 meta[theme-color]：先移除再新增
         // 直接 setAttribute 有時不會觸發 Safari 的 toolbar 顏色更新
@@ -68,12 +73,13 @@ export default function App() {
         document.head.appendChild(metaThemeColor)
 
         // color-scheme meta 更新（控制鍵盤、scrollbar 等原生 UI）
+        // 同樣使用 'only light'/'only dark' 讓 Safari 底部工具列強制跟隨 App 主題
         const existingColorScheme = document.querySelector('meta[name="color-scheme"]')
         if (existingColorScheme) existingColorScheme.remove()
 
         const metaColorScheme = document.createElement('meta')
         metaColorScheme.setAttribute('name', 'color-scheme')
-        metaColorScheme.setAttribute('content', cs)
+        metaColorScheme.setAttribute('content', csOnly)
         document.head.appendChild(metaColorScheme)
     }, [theme])
 
