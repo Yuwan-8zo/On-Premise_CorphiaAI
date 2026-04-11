@@ -61,6 +61,21 @@ signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
 
 
+def kill_port(port: int):
+    """找出佔用指定 Port 的程序並強制終止 (僅限 Windows)"""
+    if sys.platform != "win32": return
+    try:
+        result = subprocess.run(f"netstat -ano | findstr :{port} | findstr LISTENING", shell=True, capture_output=True, text=True)
+        if result.stdout:
+            for line in result.stdout.strip().split("\n"):
+                parts = line.strip().split()
+                if len(parts) > 4:
+                    pid = parts[-1]
+                    if pid != "0":
+                        subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
+    except Exception as e:
+        pass
+
 def start_service(title: str, cwd: str, command: str) -> subprocess.Popen:
     """
     在新的視窗中啟動服務，並返回程序物件
@@ -81,6 +96,11 @@ def main():
     print("  Corphia AI - 啟動中...")
     print("  按下 Ctrl+C 可同時關閉前端與後端")
     print("=" * 50)
+
+    # --- 清理可能殘留的 Port ---
+    print("\n[0] 正在清理可能殘留的系統資源...")
+    kill_port(8000)
+    kill_port(5173)
 
     # --- 啟動後端 ---
     print("\n[1] 啟動後端 (FastAPI)...")
