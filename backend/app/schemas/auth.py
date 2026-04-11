@@ -4,12 +4,12 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
     """登入請求"""
-    email: EmailStr
+    email: str  # 允許非標準格式 (如 admin@local)
     password: str = Field(..., min_length=6)
 
 
@@ -35,7 +35,7 @@ class TokenPayload(BaseModel):
 
 class RegisterRequest(BaseModel):
     """註冊請求"""
-    email: EmailStr
+    email: str  # 允許非標準格式 (如 admin@local)
     password: str = Field(..., min_length=6)
     name: Optional[str] = Field(None, min_length=1, max_length=100)  # 可選，預設使用 email 前綴
     tenant_slug: Optional[str] = None  # 租戶識別碼

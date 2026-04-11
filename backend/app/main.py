@@ -69,11 +69,11 @@ app = FastAPI(
 )
 
 
-# CORS 中間件
+# CORS 中間件（測試模式：允許所有來源）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

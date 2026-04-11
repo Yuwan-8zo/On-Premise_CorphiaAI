@@ -4,14 +4,14 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.models.user import UserRole
 
 
 class UserBase(BaseModel):
     """使用者基礎 Schema"""
-    email: EmailStr
+    email: str  # 允許非標準格式 (如 admin@local)
     name: str = Field(..., min_length=1, max_length=100)
 
 
