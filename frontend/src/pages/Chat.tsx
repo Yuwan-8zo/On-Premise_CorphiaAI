@@ -682,7 +682,7 @@ export default function Chat() {
                         </div>
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-[14px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
+                                <p className="text-[13px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
                             </div>
                         )}
                     </button>
@@ -709,7 +709,7 @@ export default function Chat() {
                         >
                             <SidebarIcon />
                         </button>
-                        <h1 className="text-[22px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
+                        <h1 className="text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
                             Corphia
                         </h1>
                     </div>
@@ -720,7 +720,7 @@ export default function Chat() {
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-y-auto px-6 py-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
                         <div className="mb-8 pl-2">
-                            <h2 className="text-[28px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+                            <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
                                 <svg className="w-8 h-8 text-[#1877F2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
@@ -853,7 +853,7 @@ export default function Chat() {
                         // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                         <div className="w-full max-w-3xl mx-auto pb-8 pt-[15vh]">
                             {/* Greeting */}
-                            <h2 className="text-[28px] md:text-3xl font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
+                            <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
                                 {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
                             </h2>
 
@@ -870,8 +870,8 @@ export default function Chat() {
                                         onClick={() => setInput(item.desc)}
                                         className="text-left p-4 rounded-[18px] border border-gray-200 dark:border-[#333] bg-white/60 dark:bg-[#222]/60 hover:bg-white dark:hover:bg-[#2a2a2a] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                     >
-                                        <div className="font-semibold text-[15px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[#1877F2] transition-colors">{item.title}</div>
-                                        <div className="text-[13.5px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
+                                        <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[#1877F2] transition-colors">{item.title}</div>
+                                        <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
                                     </button>
                                 ))}
                             </div>

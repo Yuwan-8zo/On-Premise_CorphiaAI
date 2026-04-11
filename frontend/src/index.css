@@ -14,7 +14,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 14px;  /* 對齊 ChatGPT / Gemini / Claude 視覺密度（競品皆為緊湊佈局） */
   background-color: #f0f2f5;
   /* 'only light' 阻止瀏覽器以系統深色模式覆蓋頁面（參考 Gemini 實作） */
   color-scheme: only light;
