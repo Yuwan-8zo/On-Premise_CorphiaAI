@@ -9,6 +9,7 @@ import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
 import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
+import apiClient from '../api/client'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
 import { motion } from 'framer-motion'
@@ -22,12 +23,7 @@ const PlusIcon = () => (
     </svg>
 )
 
-const InputPlusIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-)
+
 
 // The blue circle in the reference doesn't clearly show an arrow, but usually it represents send.
 const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
@@ -81,6 +77,12 @@ export default function Chat() {
 
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
+
+    // 檔案上傳相關狀態
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [isUploading, setIsUploading] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [uploadedFiles, setUploadedFiles] = useState<{name: string}[]>([])
 
 
     useEffect(() => {
@@ -158,6 +160,40 @@ export default function Chat() {
         }
     }, [setCurrentConversation, setMessages, connectWebSocket])
 
+    // --- 檔案上傳處理 ---
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        setUploadProgress(0)
+
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+            await apiClient.post('/documents/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const progress = progressEvent.total
+                        ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        : 0
+                    setUploadProgress(progress)
+                },
+            })
+            
+            // 加入到已上傳清單中顯示 Chip
+            setUploadedFiles(prev => [...prev, { name: file.name }])
+        } catch (err) {
+            console.error('上傳失敗:', err)
+            // 可在此加入 toast
+        } finally {
+            setIsUploading(false)
+            setUploadProgress(0)
+            if (fileInputRef.current) fileInputRef.current.value = ''
+        }
+    }
+
     const createNewConversation = async () => {
         try {
             const conversation = await conversationsApi.create({ 
@@ -165,6 +201,7 @@ export default function Chat() {
                 settings: { isProject: chatMode === 'project' } 
             })
             addConversation(conversation)
+            setUploadedFiles([]) // Reset files for new conversation
             await selectConversation(conversation)
         } catch (error) {
             console.error('建立對話失敗:', error)
@@ -215,15 +252,17 @@ export default function Chat() {
         addMessage(tempAssistantMessage)
         setStreaming(true)
 
+        const shouldUseRag = chatMode === 'project'
+
         if (wsRef.current?.isConnected) {
-            wsRef.current.sendMessage(userMessage, true)
+            wsRef.current.sendMessage(userMessage, shouldUseRag)
         } else {
             // Frontend fallback flow
             try {
                 if (conversationId) {
                     const response = await conversationsApi.sendMessage(conversationId, {
                         content: userMessage,
-                        useRag: true,
+                        useRag: shouldUseRag,
                     })
                     useChatStore.setState((state) => {
                         const newMessages = [...state.messages]
@@ -457,38 +496,78 @@ export default function Chat() {
                 {/* 固定的底部輸入框區（不管有沒有訊息都在最底下） */}
                 <div className="shrink-0 pt-2 pb-6 md:pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent z-20">
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
-                        {/* 這裡的 rounded-[28px] 近似 56px 高度的 1/2 */}
-                        <div className="relative flex items-end gap-3 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[28px] p-2 pl-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
-                            <button className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-1">
-                                <InputPlusIcon />
-                            </button>
+                        {/* 外層圓角與框限 */}
+                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                             
-                            <textarea
-                                ref={inputRef}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Message Corphia AI..."
-                                rows={1}
-                                disabled={isConnecting}
-                                className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-3.5 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
-                                style={{ lineHeight: '1.4' }}
-                            />
-                            
-                            <div className="ml-1 mr-1 mb-1">
-                                {isStreaming ? (
-                                    <button onClick={handleStop} className="transition-transform active:scale-95">
-                                        <StopIcon />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => handleSend()}
-                                        disabled={!input.trim() || isConnecting}
-                                        className="transition-transform active:scale-95"
-                                    >
-                                        <SendDotBtn disabled={!input.trim() || isConnecting} />
-                                    </button>
+                            {/* Tags / Files Row */}
+                            {(uploadedFiles.length > 0 || isUploading) && (
+                                <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
+                                    {uploadedFiles.map((f, i) => (
+                                        <div key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] px-3 py-1.5 rounded-xl text-[13px] border border-gray-200 dark:border-[#444] animate-fade-in-up">
+                                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                            <span className="truncate max-w-[120px] text-gray-700 dark:text-gray-300">{f.name}</span>
+                                        </div>
+                                    ))}
+                                    {isUploading && (
+                                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl text-[13px] text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                            <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+                                            <span>上傳中 {uploadProgress}%</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Input Row */}
+                            <div className="flex items-end gap-3 p-2 pl-4">
+                                {chatMode === 'project' && (
+                                    <>
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileUpload}
+                                            className="hidden" 
+                                            accept=".pdf,.docx,.xlsx,.txt,.md"
+                                        />
+                                        <button 
+                                            onClick={() => fileInputRef.current?.click()} 
+                                            disabled={isConnecting || isUploading}
+                                            className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-1 disabled:opacity-50"
+                                            title="上傳專案文件 (NotebookLM 模式)"
+                                        >
+                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                            </svg>
+                                        </button>
+                                    </>
                                 )}
+                                
+                                <textarea
+                                    ref={inputRef}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder={chatMode === 'project' ? "傳送訊息或上傳資料..." : "Message Corphia AI..."}
+                                    rows={1}
+                                    disabled={isConnecting}
+                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-3 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
+                                    style={{ lineHeight: '1.4' }}
+                                />
+                                
+                                <div className="ml-1 mr-1 mb-1">
+                                    {isStreaming ? (
+                                        <button onClick={handleStop} className="transition-transform active:scale-95">
+                                            <StopIcon />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleSend()}
+                                            disabled={!input.trim() || isConnecting}
+                                            className="transition-transform active:scale-95"
+                                        >
+                                            <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
