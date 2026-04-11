@@ -255,7 +255,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 transition-colors duration-300">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (

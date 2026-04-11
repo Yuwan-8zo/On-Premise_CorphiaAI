@@ -95,7 +95,7 @@ export default function Settings() {
 
     return (
         // 1. 最外層：固定高度視窗，overflow-hidden 確保內容只在 main 區域滾動
-        <div className="flex flex-col fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] transition-colors duration-300">
+        <div className="flex flex-col fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a]">
 
             {/* 2. 固定頂部 Header：顏色與頁面背景一致 */}
             <header className="shrink-0 h-[64px] flex items-center px-6 bg-[#f0f2f5] dark:bg-[#1a1a1a] border-b border-gray-200/70 dark:border-[#2a2a2a] transition-colors z-20">
