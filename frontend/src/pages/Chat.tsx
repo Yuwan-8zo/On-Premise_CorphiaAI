@@ -198,7 +198,10 @@ export default function Chat() {
         try {
             const conversation = await conversationsApi.create({ 
                 title: '新對話',
-                settings: { isProject: chatMode === 'project' } 
+                settings: { 
+                    isProject: chatMode === 'project',
+                    folderName: chatMode === 'project' ? '新資料夾' : undefined
+                } 
             })
             addConversation(conversation)
             setUploadedFiles([]) // Reset files for new conversation
@@ -377,36 +380,107 @@ export default function Chat() {
 
                 {/* 對話列表列 */}
                 <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-full">
-                    {/* 分類標籤：依據聊天模式 */}
-                    <div className="mb-2 pl-2 mt-1">
-                        <span className="text-[12px] text-gray-500 tracking-wider font-medium">{chatMode === 'general' ? '一般聊天' : '專案聊天室'}</span>
-                    </div>
-                    {/* 時間線指示器邊距效果 */}
-                    <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
-                        {(() => {
-                            const filteredConversations = conversations.filter(conv => {
-                                const isProject = Boolean(conv.settings?.isProject)
-                                return chatMode === 'project' ? isProject : !isProject
-                            })
+                    {/* 分類標籤與歷史樹狀結構 */}
+                    {chatMode === 'general' ? (
+                        <>
+                            <div className="mb-2 pl-2 mt-1">
+                                <span className="text-[12px] text-gray-500 tracking-wider font-medium">一般聊天</span>
+                            </div>
+                            <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
+                                {(() => {
+                                    const filtered = conversations.filter(c => !Boolean(c.settings?.isProject))
+                                    if (filtered.length === 0) return <p className="text-gray-400 text-xs py-4 pl-2">No recent chats</p>
+                                    
+                                    return filtered.map((conv) => (
+                                        <button
+                                            key={conv.id}
+                                            onClick={() => selectConversation(conv)}
+                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[14px] transition-colors group ${currentConversation?.id === conv.id
+                                                ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
+                                            }`}
+                                        >
+                                            <span className="truncate pr-2">{conv.title}</span>
+                                        </button>
+                                    ))
+                                })()}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="mb-2 pl-2 mt-1">
+                                <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
+                            </div>
+                            <div className="ml-2 pl-1 space-y-2 mt-2">
+                                {(() => {
+                                    const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
+                                    if (filtered.length === 0) return <p className="text-gray-400 text-xs py-4 pl-2 border-l border-gray-200 dark:border-[#333]">尚無專案</p>
+                                    
+                                    // 依據 folderName 分群
+                                    const grouped: Record<string, typeof conversations> = {}
+                                    filtered.forEach(conv => {
+                                        const folder = (conv.settings?.folderName as string) || '新資料夾'
+                                        if (!grouped[folder]) grouped[folder] = []
+                                        grouped[folder].push(conv)
+                                    })
 
-                            if (filteredConversations.length === 0) {
-                                return <p className="text-gray-400 dark:text-[#666] text-xs py-4 pl-2">No recent chats</p>
-                            }
+                                    const folderNames = Object.keys(grouped)
+                                    
+                                    return folderNames.map((folderName, index) => {
+                                        const isLastFolder = index === folderNames.length - 1
+                                        return (
+                                            <div key={folderName} className="relative">
+                                                {/* 主線：連接「專案資料夾」到此資料夾 L型節點 */}
+                                                <div 
+                                                    className="absolute left-[3px] top-[-16px] w-[12px] border-l border-b border-gray-300 dark:border-[#444] rounded-bl-sm"
+                                                    style={{ height: '28px' }}
+                                                />
+                                                {/* 主線的垂直延伸 (如果不是最後一個資料夾，繼續往下畫) */}
+                                                {!isLastFolder && (
+                                                    <div className="absolute left-[3px] top-[12px] bottom-[-8px] border-l border-gray-300 dark:border-[#444]" />
+                                                )}
 
-                            return filteredConversations.map((conv) => (
-                                <button
-                                    key={conv.id}
-                                    onClick={() => selectConversation(conv)}
-                                    className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[14px] transition-colors group ${currentConversation?.id === conv.id
-                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium'
-                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
-                                        }`}
-                                >
-                                    <span className="truncate pr-2">{conv.title}</span>
-                                </button>
-                            ))
-                        })()}
-                    </div>
+                                                <div className="flex items-center text-gray-700 dark:text-gray-300 text-[14px] font-medium pl-[22px] py-1 cursor-default">
+                                                    {folderName}
+                                                </div>
+
+                                                {/* 次層：聊天清單 */}
+                                                <div className="relative ml-[22px] mt-1 space-y-1">
+                                                    {grouped[folderName].map((conv, cIndex) => {
+                                                        const isLastConv = cIndex === grouped[folderName].length - 1
+                                                        return (
+                                                            <div key={conv.id} className="relative">
+                                                                {/* 次層 L 型節點 */}
+                                                                <div 
+                                                                    className="absolute left-[-11px] top-[-10px] w-[12px] border-l border-b border-gray-300 dark:border-[#444] rounded-bl-sm pointer-events-none"
+                                                                    style={{ height: '28px' }}
+                                                                />
+                                                                {/* 次層垂直延伸 */}
+                                                                {!isLastConv && (
+                                                                    <div className="absolute left-[-11px] top-[18px] bottom-[-4px] border-l border-gray-300 dark:border-[#444] pointer-events-none" />
+                                                                )}
+                                                                
+                                                                <button
+                                                                    onClick={() => selectConversation(conv)}
+                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-lg text-[13px] transition-colors group ml-[4px] border border-transparent ${currentConversation?.id === conv.id
+                                                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium border-gray-200 dark:border-[#333]'
+                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#222]'
+                                                                    }`}
+                                                                    style={{ width: 'calc(100% - 4px)' }}
+                                                                >
+                                                                    <span className="truncate pr-2">{conv.title}</span>
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                })()}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
