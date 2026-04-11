@@ -508,7 +508,7 @@ export default function Chat() {
                             <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
                                 {(() => {
                                     const filtered = conversations.filter(c => !Boolean(c.settings?.isProject))
-                                    if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-4">{t('chat.noChats')}</p>
+                                    if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
                                     
                                     return filtered.map((conv) => (
                                         <button
