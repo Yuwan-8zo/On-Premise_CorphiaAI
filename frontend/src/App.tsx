@@ -52,6 +52,16 @@ export default function App() {
             document.head.appendChild(metaThemeColor)
         }
         metaThemeColor.setAttribute('content', bg)
+
+        // meta[name="color-scheme"] - 控制 iOS Safari 底部工具列和鍵盤的明暗模式
+        // 這是讓 Safari 底部 toolbar 跟隨 App 主題切換的關鍵
+        let metaColorScheme = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null
+        if (!metaColorScheme) {
+            metaColorScheme = document.createElement('meta') as HTMLMetaElement
+            metaColorScheme.setAttribute('name', 'color-scheme')
+            document.head.appendChild(metaColorScheme)
+        }
+        metaColorScheme.setAttribute('content', isDark ? 'dark' : 'light')
     }, [theme])
 
     return (
