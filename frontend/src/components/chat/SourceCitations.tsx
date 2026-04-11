@@ -64,10 +64,10 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
             {isExpanded && (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
                     {sources.map((source, index) => (
-                        <div key={source.chunkId} className="bg-white dark:bg-slate-900">
+                        <div key={source.chunk_id} className="bg-white dark:bg-slate-900">
                             {/* 來源標題 */}
                             <button
-                                onClick={() => toggleItem(source.chunkId)}
+                                onClick={() => toggleItem(source.chunk_id)}
                                 className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                             >
                                 <div className="flex items-center gap-2 text-sm">
@@ -75,17 +75,17 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                         {index + 1}
                                     </span>
                                     <span className="text-slate-700 dark:text-slate-300 truncate">
-                                        {source.documentName}
+                                        {source.document_name || "未知文件"}
                                     </span>
                                     <span className="text-xs text-slate-400 dark:text-slate-500">
                                         ({Math.round(source.score * 100)}% 相關)
                                     </span>
                                 </div>
-                                <ChevronIcon isOpen={expandedItems.has(source.chunkId)} />
+                                <ChevronIcon isOpen={expandedItems.has(source.chunk_id)} />
                             </button>
 
                             {/* 來源內容 */}
-                            {expandedItems.has(source.chunkId) && (
+                            {expandedItems.has(source.chunk_id) && (
                                 <div className="px-3 pb-3">
                                     <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                         {source.content}

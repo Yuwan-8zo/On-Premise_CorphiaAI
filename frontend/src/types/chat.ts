@@ -17,9 +17,9 @@ export interface Conversation {
 }
 
 export interface MessageSource {
-    documentId: string
-    documentName: string
-    chunkId: string
+    document_id: string
+    document_name: string
+    chunk_id: string
     content: string
     score: number
 }

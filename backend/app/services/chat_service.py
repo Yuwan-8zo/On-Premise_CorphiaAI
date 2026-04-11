@@ -37,6 +37,16 @@ class ChatService:
 2. 如果有參考資料，優先使用資料中的資訊
 3. 如果不確定，誠實說明
 4. 必要時使用 Markdown 格式組織回答"""
+
+    STRICT_RAG_SYSTEM_PROMPT = """你是一個專案專屬的 AI 知識助理。
+- 友善、專業、樂於助人
+- 支援繁體中文、英文和日文
+
+回答規則（極度重要）：
+1. 你**必須**且**只能**基於使用者提供的「參考資料」來回答問題。
+2. 如果使用者的問題超出了參考資料的範圍，或者資料中沒有相關資訊，請直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
+3. 絕對不可以編造答案或使用你原本內建的外部知識來回答專業問題。
+4. 回答請條理分明，必要時使用 Markdown 格式並標註來源所在。"""
     
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -195,7 +205,8 @@ class ChatService:
                             "chunk_id": r["chunk_id"],
                             "content": r["content"][:200],
                             "score": r["score"],
-                            "metadata": r["metadata"],
+                            "document_id": r["metadata"].get("document_id", ""),
+                            "document_name": r["metadata"].get("filename", "未知文件"),
                         }
                         for r in search_results
                     ]
@@ -207,9 +218,11 @@ class ChatService:
         ]
         chat_history.append({"role": "user", "content": content})
         
+        system_prompt = self.STRICT_RAG_SYSTEM_PROMPT if (use_rag and 'folder_name' in locals() and folder_name) else self.DEFAULT_SYSTEM_PROMPT
+        
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
-            system_prompt=self.DEFAULT_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             context=context if context else None,
         )
         
@@ -320,7 +333,8 @@ class ChatService:
                             "chunk_id": r["chunk_id"],
                             "content": r["content"][:200],
                             "score": r["score"],
-                            "metadata": r["metadata"],
+                            "document_id": r["metadata"].get("document_id", ""),
+                            "document_name": r["metadata"].get("filename", "未知文件"),
                         }
                         for r in search_results
                     ]
@@ -332,9 +346,11 @@ class ChatService:
         ]
         chat_history.append({"role": "user", "content": content})
         
+        system_prompt = self.STRICT_RAG_SYSTEM_PROMPT if (use_rag and 'folder_name' in locals() and folder_name) else self.DEFAULT_SYSTEM_PROMPT
+        
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
-            system_prompt=self.DEFAULT_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             context=context if context else None,
         )
         

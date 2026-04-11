@@ -25,6 +25,7 @@ interface ChatState {
     setStreaming: (streaming: boolean) => void
     setLoading: (loading: boolean) => void
     appendToLastMessage: (content: string) => void
+    setSourcesToLastMessage: (sources: any[]) => void
     clearMessages: () => void
 }
 
@@ -101,6 +102,20 @@ export const useChatStore = create<ChatState>()((set) => ({
                 messages[messages.length - 1] = {
                     ...lastMessage,
                     content: lastMessage.content + content,
+                }
+            }
+            return { messages }
+        }),
+
+    // 設定最後一則訊息的來源引用 (串流用)
+    setSourcesToLastMessage: (sources) =>
+        set((state) => {
+            const messages = [...state.messages]
+            if (messages.length > 0) {
+                const lastMessage = messages[messages.length - 1]
+                messages[messages.length - 1] = {
+                    ...lastMessage,
+                    sources: sources as MessageSource[],
                 }
             }
             return { messages }

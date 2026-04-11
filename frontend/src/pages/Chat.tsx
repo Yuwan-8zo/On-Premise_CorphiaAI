@@ -65,7 +65,8 @@ export default function Chat() {
         setMessages,
         addMessage,
         setStreaming,
-        appendToLastMessage
+        appendToLastMessage,
+        setSourcesToLastMessage
     } = useChatStore()
     const { sidebarOpen, toggleSidebar } = useUIStore()
 
@@ -144,10 +145,12 @@ export default function Chat() {
                 setStreaming(false)
                 break
             case 'sources':
-                console.log('收到來源:', data.sources)
+                if (data.sources) {
+                    setSourcesToLastMessage(data.sources)
+                }
                 break
         }
-    }, [appendToLastMessage, setStreaming])
+    }, [appendToLastMessage, setStreaming, setSourcesToLastMessage])
 
     const connectWebSocket = useCallback(async (conversationId: string) => {
         if (wsRef.current) {
