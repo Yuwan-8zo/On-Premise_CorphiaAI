@@ -163,6 +163,69 @@ class LLMService:
             logger.error(f"LLM 串流生成失敗: {e}")
             raise
     
+    async def generate_structured(
+        self,
+        prompt: str,
+        schema_dict: dict,
+        max_tokens: int = 1024,
+        temperature: float = 0.1,
+        top_p: float = 0.9,
+    ) -> dict:
+        """
+        生成結構化 JSON 回應 (基於 Pydantic Schema 的 JSON Schema)
+        
+        Args:
+            prompt: 輸入提示
+            schema_dict: JSON Schema 定義字典
+            max_tokens: 最大輸出 Token 數
+            temperature: 溫度參數 (強制較低以求穩定)
+            top_p: Top-p 取樣
+            
+        Returns:
+            dict: 解析後的 JSON 資料
+        """
+        import json
+        
+        if not self._initialized:
+            await self.initialize()
+            
+        if self.model is None:
+            # 模擬模式：嘗試讀取 schema properties 給出基本的模擬回應
+            try:
+                properties = schema_dict.get("properties", {})
+                simulated_result = {}
+                for key, prop in properties.items():
+                    if prop.get("type") == "boolean":
+                        simulated_result[key] = False
+                    elif prop.get("type") == "string":
+                        simulated_result[key] = "simulated"
+                    else:
+                        simulated_result[key] = None
+                return simulated_result
+            except Exception:
+                return {}
+
+        try:
+            output = self.model(
+                prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                echo=False,
+                response_format={
+                    "type": "json_object",
+                    "schema": schema_dict
+                }
+            )
+            
+            result_str = output["choices"][0]["text"]
+            return json.loads(result_str)
+            
+        except Exception as e:
+            logger.error(f"LLM 結構化生成失敗: {e}")
+            # 原本若無法解析，會引發錯誤。
+            raise
+    
     def _simulate_response(self, prompt: str) -> str:
         """模擬回應（無模型時使用）"""
         return f"""這是一個模擬的 AI 回應。

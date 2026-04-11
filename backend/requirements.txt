@@ -18,6 +18,8 @@ email-validator>=2.1.0
 
 # LLM
 llama-cpp-python>=0.2.50
+langgraph>=0.0.26
+duckduckgo-search>=5.0.0
 
 # Vector Store
 chromadb>=0.4.22

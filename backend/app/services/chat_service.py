@@ -10,6 +10,10 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict, Optional, Any, AsyncGenerator
+
+from duckduckgo_search import AsyncDDGS
 
 from app.models.conversation import Conversation
 from app.models.message import Message, MessageRole
@@ -18,6 +22,18 @@ from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
 
 logger = logging.getLogger(__name__)
+
+class AgentState(TypedDict, total=False):
+    conversation_id: str
+    tenant_id: str
+    folder_name: Optional[str]
+    use_rag: bool
+    query: str
+    chat_history: list[dict]
+    route: str
+    context: str
+    sources: list[dict]
+
 
 
 class ChatService:
@@ -52,6 +68,140 @@ class ChatService:
         self.db = db
         self.llm_service = get_llm_service()
         self.rag_service = get_rag_service()
+        self.agent_graph = self._build_agent_graph()
+        
+    def _build_agent_graph(self):
+        workflow = StateGraph(AgentState)
+        
+        workflow.add_node("router", self._router_node)
+        workflow.add_node("rag", self._rag_node)
+        workflow.add_node("web_search", self._web_search_node)
+        workflow.add_node("chat_prep", self._chat_prep_node)
+        
+        workflow.add_edge(START, "router")
+        
+        def route_condition(state: AgentState):
+            return state.get("route", "chat_prep")
+            
+        workflow.add_conditional_edges(
+            "router",
+            route_condition,
+            {
+                "rag": "rag",
+                "web_search": "web_search",
+                "chat": "chat_prep"
+            }
+        )
+        
+        workflow.add_edge("rag", END)
+        workflow.add_edge("web_search", END)
+        workflow.add_edge("chat_prep", END)
+        
+        return workflow.compile()
+        
+    async def _router_node(self, state: AgentState) -> dict:
+        use_rag = state.get("use_rag", True)
+        folder_name = state.get("folder_name")
+        
+        if use_rag and folder_name:
+            # 專案綁定，強制內部 RAG 減少外部幻覺
+            return {"route": "rag"}
+            
+        schema = {
+            "type": "object",
+            "properties": {
+                "route": {
+                    "type": "string",
+                    "enum": ["rag", "web_search", "chat"]
+                }
+            },
+            "required": ["route"]
+        }
+        
+        prompt_text = f"分析最後一則訊息以決定路徑：\n'rag': 從專案資料夾內部文獻中尋找答案\n'web_search': 需要上網搜尋最新即時資訊\n'chat': 一般問答\n\n使用者最新訊息：「{state.get('query')}」"
+        system_prompt = "你是一個分類系統。請務必唯一輸出符合 schema 的 JSON。"
+        
+        prompt = self.llm_service.build_chat_prompt(
+            messages=[{"role": "user", "content": prompt_text}],
+            system_prompt=system_prompt
+        )
+        
+        try:
+            decision = await self.llm_service.generate_structured(prompt, schema)
+            route = decision.get("route", "chat")
+            if route not in ["rag", "web_search", "chat"]:
+                route = "chat"
+        except Exception as e:
+            logger.error(f"Router Decision Error: {e}")
+            route = "rag" if use_rag else "chat"
+            
+        return {"route": route}
+
+    async def _rag_node(self, state: AgentState) -> dict:
+        context = ""
+        sources = []
+        folder_name = state.get("folder_name")
+        document_ids = None
+        
+        if folder_name:
+            from app.models.document import Document
+            docs_result = await self.db.execute(
+                select(Document).where(Document.tenant_id == state.get("tenant_id"))
+            )
+            documents = docs_result.scalars().all()
+            
+            document_ids = []
+            for doc in documents:
+                metadata = doc.doc_metadata or {}
+                if metadata.get("folderName") == folder_name and metadata.get("isActive", True):
+                    document_ids.append(doc.id)
+                    
+        search_results = await self.rag_service.search(
+            query=state.get("query", ""),
+            tenant_id=state.get("tenant_id"),
+            n_results=3,
+            document_ids=document_ids,
+        )
+        
+        if search_results:
+            context = self.rag_service.build_context(search_results)
+            sources = [
+                {
+                    "chunk_id": r["chunk_id"],
+                    "content": r["content"][:200],
+                    "score": r["score"],
+                    "document_id": r["metadata"].get("document_id", ""),
+                    "document_name": r["metadata"].get("filename", "未知文件"),
+                }
+                for r in search_results
+            ]
+        return {"context": context, "sources": sources}
+
+    async def _web_search_node(self, state: AgentState) -> dict:
+        context = ""
+        sources = []
+        try:
+            # DuckDuckGo 異步搜尋
+            async with AsyncDDGS() as ddgs:
+                results = [r async for r in ddgs.text(state.get("query"), max_results=3)]
+                
+            for idx, r in enumerate(results):
+                context += f"【來源 {idx+1}】 {r.get('title')}\n{r.get('body')}\n\n"
+                sources.append({
+                    "chunk_id": f"web_{idx}",
+                    "content": r.get('body', '')[:200],
+                    "score": 0.9,
+                    "document_id": r.get('href', ''),
+                    "document_name": f"網頁：{r.get('title')}"
+                })
+        except Exception as e:
+            logger.error(f"Web Search Error: {e}")
+            
+        return {"context": context, "sources": sources}
+
+    async def _chat_prep_node(self, state: AgentState) -> dict:
+        return {"context": "", "sources": []}
+
     
     async def create_conversation(
         self,
@@ -140,16 +290,6 @@ class ChatService:
     ) -> Message:
         """
         發送訊息並取得回應（非串流）
-        
-        Args:
-            conversation_id: 對話 ID
-            content: 訊息內容
-            use_rag: 是否使用 RAG
-            temperature: 溫度參數
-            max_tokens: 最大 Token 數
-            
-        Returns:
-            Message: 助手回應訊息
         """
         # 儲存使用者訊息
         user_message = Message(
@@ -162,64 +302,47 @@ class ChatService:
         # 取得對話歷史
         messages = await self.get_messages(conversation_id)
         
-        # RAG 檢索
-        context = ""
-        sources = []
-        if use_rag:
-            result = await self.db.execute(
-                select(Conversation).where(Conversation.id == conversation_id)
-            )
-            conversation = result.scalar_one_or_none()
-            
-            if conversation:
-                folder_name = conversation.settings.get("folderName")
-                document_ids = None
-                
-                if folder_name:
-                    from app.models.document import Document
-                    # 取得目前 tenant 的所有文件進行 Python 內存過濾，以避免不同資料庫的 JSON 語法差異
-                    docs_result = await self.db.execute(
-                        select(Document).where(Document.tenant_id == conversation.tenant_id)
-                    )
-                    documents = docs_result.scalars().all()
-                    
-                    document_ids = []
-                    for doc in documents:
-                        metadata = doc.doc_metadata or {}
-                        if metadata.get("folderName") == folder_name:
-                            # 預設為啟動，除非特別標明 isActive 為 False
-                            if metadata.get("isActive", True):
-                                document_ids.append(doc.id)
-                
-                search_results = await self.rag_service.search(
-                    query=content,
-                    tenant_id=conversation.tenant_id,
-                    n_results=3,
-                    document_ids=document_ids,
-                )
-                
-                if search_results:
-                    context = self.rag_service.build_context(search_results)
-                    sources = [
-                        {
-                            "chunk_id": r["chunk_id"],
-                            "content": r["content"][:200],
-                            "score": r["score"],
-                            "document_id": r["metadata"].get("document_id", ""),
-                            "document_name": r["metadata"].get("filename", "未知文件"),
-                        }
-                        for r in search_results
-                    ]
+        # 取得 tenant 和 folder
+        result = await self.db.execute(
+            select(Conversation).where(Conversation.id == conversation_id)
+        )
+        conversation = result.scalar_one_or_none()
+        folder_name = conversation.settings.get("folderName") if conversation else None
+        tenant_id = conversation.tenant_id if conversation else "default"
         
-        # 建構 Prompt
         chat_history = [
             {"role": m.role, "content": m.content}
-            for m in messages[-10:]  # 只取最近 10 則訊息
+            for m in messages[-10:]
         ]
+        
+        # 執行 LangGraph 路由
+        initial_state: AgentState = {
+            "conversation_id": conversation_id,
+            "tenant_id": tenant_id,
+            "folder_name": folder_name,
+            "use_rag": use_rag,
+            "query": content,
+            "chat_history": chat_history,
+            "route": "",
+            "context": "",
+            "sources": []
+        }
+        
+        final_state = await self.agent_graph.ainvoke(initial_state)
+        
+        context = final_state.get("context", "")
+        sources = final_state.get("sources", [])
+        route = final_state.get("route", "chat")
+        
         chat_history.append({"role": "user", "content": content})
         
-        system_prompt = self.STRICT_RAG_SYSTEM_PROMPT if (use_rag and 'folder_name' in locals() and folder_name) else self.DEFAULT_SYSTEM_PROMPT
-        
+        if final_state.get("folder_name"):
+            system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
+        elif route == "web_search":
+            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合回答問題。"
+        else:
+            system_prompt = self.DEFAULT_SYSTEM_PROMPT
+            
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
             system_prompt=system_prompt,
@@ -267,16 +390,6 @@ class ChatService:
     ) -> AsyncGenerator[dict, None]:
         """
         發送訊息並串流回應
-        
-        Args:
-            conversation_id: 對話 ID
-            content: 訊息內容
-            use_rag: 是否使用 RAG
-            temperature: 溫度參數
-            max_tokens: 最大 Token 數
-            
-        Yields:
-            dict: 串流回應
         """
         # 儲存使用者訊息
         user_message = Message(
@@ -290,64 +403,47 @@ class ChatService:
         # 取得對話歷史
         messages = await self.get_messages(conversation_id)
         
-        # RAG 檢索
-        context = ""
-        sources = []
-        if use_rag:
-            result = await self.db.execute(
-                select(Conversation).where(Conversation.id == conversation_id)
-            )
-            conversation = result.scalar_one_or_none()
-            
-            if conversation:
-                folder_name = conversation.settings.get("folderName")
-                document_ids = None
-                
-                if folder_name:
-                    from app.models.document import Document
-                    # 取得目前 tenant 的所有文件進行 Python 內存過濾，以避免不同資料庫的 JSON 語法差異
-                    docs_result = await self.db.execute(
-                        select(Document).where(Document.tenant_id == conversation.tenant_id)
-                    )
-                    documents = docs_result.scalars().all()
-                    
-                    document_ids = []
-                    for doc in documents:
-                        metadata = doc.doc_metadata or {}
-                        if metadata.get("folderName") == folder_name:
-                            # 預設為啟動，除非特別標明 isActive 為 False
-                            if metadata.get("isActive", True):
-                                document_ids.append(doc.id)
-                                
-                search_results = await self.rag_service.search(
-                    query=content,
-                    tenant_id=conversation.tenant_id,
-                    n_results=3,
-                    document_ids=document_ids,
-                )
-                
-                if search_results:
-                    context = self.rag_service.build_context(search_results)
-                    sources = [
-                        {
-                            "chunk_id": r["chunk_id"],
-                            "content": r["content"][:200],
-                            "score": r["score"],
-                            "document_id": r["metadata"].get("document_id", ""),
-                            "document_name": r["metadata"].get("filename", "未知文件"),
-                        }
-                        for r in search_results
-                    ]
+        # 取得 tenant 和 folder
+        result = await self.db.execute(
+            select(Conversation).where(Conversation.id == conversation_id)
+        )
+        conversation = result.scalar_one_or_none()
+        folder_name = conversation.settings.get("folderName") if conversation else None
+        tenant_id = conversation.tenant_id if conversation else "default"
         
-        # 建構 Prompt
         chat_history = [
             {"role": m.role, "content": m.content}
             for m in messages[-10:]
         ]
+        
+        # 執行 LangGraph 路由
+        initial_state: AgentState = {
+            "conversation_id": conversation_id,
+            "tenant_id": tenant_id,
+            "folder_name": folder_name,
+            "use_rag": use_rag,
+            "query": content,
+            "chat_history": chat_history,
+            "route": "",
+            "context": "",
+            "sources": []
+        }
+        
+        final_state = await self.agent_graph.ainvoke(initial_state)
+        
+        context = final_state.get("context", "")
+        sources = final_state.get("sources", [])
+        route = final_state.get("route", "chat")
+        
         chat_history.append({"role": "user", "content": content})
         
-        system_prompt = self.STRICT_RAG_SYSTEM_PROMPT if (use_rag and 'folder_name' in locals() and folder_name) else self.DEFAULT_SYSTEM_PROMPT
-        
+        if final_state.get("folder_name"):
+            system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
+        elif route == "web_search":
+            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合客觀地回答問題。"
+        else:
+            system_prompt = self.DEFAULT_SYSTEM_PROMPT
+            
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
             system_prompt=system_prompt,
