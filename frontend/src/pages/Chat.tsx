@@ -535,7 +535,7 @@ export default function Chat() {
                                         <button
                                             key={conv.id}
                                             onClick={() => selectConversation(conv)}
-                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[14px] transition-colors group ${currentConversation?.id === conv.id
+                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-full text-[14px] transition-colors group ${currentConversation?.id === conv.id
                                                 ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
@@ -634,7 +634,7 @@ export default function Chat() {
                                                                 
                                                                 <button
                                                                     onClick={() => selectConversation(conv)}
-                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-lg text-[13px] transition-colors group ml-[4px] border border-transparent ${currentConversation?.id === conv.id
+                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-full text-[13px] transition-colors group ml-[4px] border border-transparent ${currentConversation?.id === conv.id
                                                                         ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium border-gray-200 dark:border-[#333]'
                                                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#222]'
                                                                     }`}
