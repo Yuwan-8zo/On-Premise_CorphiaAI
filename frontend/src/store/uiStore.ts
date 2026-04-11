@@ -8,12 +8,18 @@ import { persist } from 'zustand/middleware'
 type Theme = 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US'
 
+interface ConfirmConfig {
+    message: string
+    onConfirm: () => void | Promise<void>
+}
+
 interface UIState {
     // 狀態
     theme: Theme
     language: Language
     sidebarOpen: boolean
     sidebarWidth: number
+    confirmConfig: ConfirmConfig | null
 
     // 動作
     setTheme: (theme: Theme) => void
@@ -22,6 +28,8 @@ interface UIState {
     setSidebarOpen: (open: boolean) => void
     toggleSidebar: () => void
     setSidebarWidth: (width: number) => void
+    showConfirm: (message: string, onConfirm: () => void | Promise<void>) => void
+    closeConfirm: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -61,6 +69,11 @@ export const useUIStore = create<UIState>()(
 
             // 設定側邊欄寬度
             setSidebarWidth: (width) => set({ sidebarWidth: width }),
+
+            // 確認彈窗
+            confirmConfig: null,
+            showConfirm: (message, onConfirm) => set({ confirmConfig: { message, onConfirm } }),
+            closeConfirm: () => set({ confirmConfig: null }),
         }),
         {
             name: 'ui-storage',

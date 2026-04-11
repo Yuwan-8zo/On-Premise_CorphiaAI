@@ -68,7 +68,7 @@ export default function Chat() {
         setSourcesToLastMessage,
         deleteConversation
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar } = useUIStore()
+    const { sidebarOpen, toggleSidebar, showConfirm } = useUIStore()
 
     const navigate = useNavigate()
     const [input, setInput] = useState('')
@@ -251,53 +251,55 @@ export default function Chat() {
 
     const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm(t('common.confirmDelete'))) return
 
-        try {
-            if (!id.startsWith('temp-')) {
-                await conversationsApi.delete(id)
+        showConfirm(t('common.confirmDelete'), async () => {
+            try {
+                if (!id.startsWith('temp-')) {
+                    await conversationsApi.delete(id)
+                }
+                deleteConversation(id)
+                if (currentConversation?.id === id) {
+                    setCurrentConversation(null)
+                    setMessages([])
+                }
+            } catch (error) {
+                console.error('刪除對話失敗:', error)
             }
-            deleteConversation(id)
-            if (currentConversation?.id === id) {
-                setCurrentConversation(null)
-                setMessages([])
-            }
-        } catch (error) {
-            console.error('刪除對話失敗:', error)
-        }
+        })
     }
 
     const handleDeleteFolder = async (folderName: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm(t('common.confirmDelete'))) return
 
-        try {
-            const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
-            for (const conv of relatedConvs) {
-                if (!conv.id.startsWith('temp-')) {
-                    await conversationsApi.delete(conv.id)
+        showConfirm(t('common.confirmDelete'), async () => {
+            try {
+                const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
+                for (const conv of relatedConvs) {
+                    if (!conv.id.startsWith('temp-')) {
+                        await conversationsApi.delete(conv.id)
+                    }
+                    deleteConversation(conv.id)
+                    if (currentConversation?.id === conv.id) {
+                        setCurrentConversation(null)
+                        setMessages([])
+                    }
                 }
-                deleteConversation(conv.id)
-                if (currentConversation?.id === conv.id) {
-                    setCurrentConversation(null)
-                    setMessages([])
+
+                const res = await documentsApi.list()
+                const docList = Array.isArray(res) ? res : (res.data || [])
+                const relatedDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
+                for (const doc of relatedDocs) {
+                    await documentsApi.delete(doc.id)
                 }
-            }
 
-            const res = await documentsApi.list()
-            const docList = Array.isArray(res) ? res : (res.data || [])
-            const relatedDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
-            for (const doc of relatedDocs) {
-                await documentsApi.delete(doc.id)
+                if (selectedFolder === folderName) {
+                    setSelectedFolder(null)
+                    setFolderDocuments([])
+                }
+            } catch (error) {
+                console.error('刪除資料夾失敗:', error)
             }
-
-            if (selectedFolder === folderName) {
-                setSelectedFolder(null)
-                setFolderDocuments([])
-            }
-        } catch (error) {
-            console.error('刪除資料夾失敗:', error)
-        }
+        })
     }
 
     const handleSend = async (overrideValue?: string) => {
@@ -715,16 +717,16 @@ export default function Chat() {
                                                 </span>
                                                 
                                                 <button
-                                                    onClick={async (e) => {
+                                                    onClick={(e) => {
                                                         e.stopPropagation()
-                                                        if (confirm(t('common.confirmDelete'))) {
+                                                        showConfirm(t('common.confirmDelete'), async () => {
                                                             try {
                                                                 await documentsApi.delete(doc.id)
                                                                 if (selectedFolder) loadFolderDocuments(selectedFolder)
                                                             } catch (error) {
                                                                 console.error('刪除文件失敗', error)
                                                             }
-                                                        }
+                                                        })
                                                     }}
                                                     className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
                                                     title="刪除"

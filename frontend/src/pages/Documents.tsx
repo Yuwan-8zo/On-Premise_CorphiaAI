@@ -75,7 +75,7 @@ const StatusBadge = ({ status }: { status: Document['status'] }) => {
 
 export default function Documents() {
     const { t } = useTranslation()
-    const { theme, toggleTheme } = useUIStore()
+    const { theme, toggleTheme, showConfirm } = useUIStore()
 
     const [documents, setDocuments] = useState<Document[]>([])
     const [isLoading, setIsLoading] = useState(false)
@@ -146,15 +146,15 @@ export default function Documents() {
 
     // 刪除文件
     const deleteDocument = async (id: string) => {
-        if (!confirm(t('common.confirmDelete'))) return
-
-        try {
-            await apiClient.delete(`/documents/${id}`)
-            setDocuments(docs => docs.filter(d => d.id !== id))
-        } catch (err) {
-            console.error('刪除失敗:', err)
-            setError('刪除文件失敗')
-        }
+        showConfirm(t('common.confirmDelete'), async () => {
+            try {
+                await apiClient.delete(`/documents/${id}`)
+                setDocuments(docs => docs.filter(d => d.id !== id))
+            } catch (err) {
+                console.error('刪除失敗:', err)
+                setError('刪除文件失敗')
+            }
+        })
     }
 
     // 拖放處理

@@ -19,6 +19,9 @@ import NotFound from './pages/NotFound'
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
+// Global UI Components
+import { ConfirmModal } from './components/ui/ConfirmModal'
+
 export default function App() {
     const { isAuthenticated } = useAuthStore()
     const { theme, setTheme } = useUIStore()
@@ -82,77 +85,81 @@ export default function App() {
         document.head.appendChild(metaColorScheme)
     }, [theme])
 
-    return (
-        // 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入
-        <div
-            key={location.pathname}
-            className="page-transition"
-        >
-            <Routes location={location}>
-                {/* 公開路由 */}
-                <Route
-                    path="/login"
-                    element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
-                />
-                <Route
-                    path="/register"
-                    element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
-                />
+        <>
+            {/* 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入 */}
+            <div
+                key={location.pathname}
+                className="page-transition"
+            >
+                <Routes location={location}>
+                    {/* 公開路由 */}
+                    <Route
+                        path="/login"
+                        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+                    />
+                    <Route
+                        path="/register"
+                        element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+                    />
 
-                {/* 受保護路由 */}
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            <Chat />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/chat"
-                    element={
-                        <ProtectedRoute>
-                            <Chat />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/chat/:conversationId"
-                    element={
-                        <ProtectedRoute>
-                            <Chat />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/documents"
-                    element={
-                        <ProtectedRoute>
-                            <Documents />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/settings"
-                    element={
-                        <ProtectedRoute>
-                            <Settings />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/admin"
-                    element={
-                        <ProtectedRoute>
-                            <Admin />
-                        </ProtectedRoute>
-                    }
-                />
+                    {/* 受保護路由 */}
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectedRoute>
+                                <Chat />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/chat"
+                        element={
+                            <ProtectedRoute>
+                                <Chat />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/chat/:conversationId"
+                        element={
+                            <ProtectedRoute>
+                                <Chat />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/documents"
+                        element={
+                            <ProtectedRoute>
+                                <Documents />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/settings"
+                        element={
+                            <ProtectedRoute>
+                                <Settings />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin"
+                        element={
+                            <ProtectedRoute>
+                                <Admin />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </div>
+                    {/* 404 */}
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
+            </div>
+            
+            {/* 全域元件 */}
+            <ConfirmModal />
+        </>
     )
 }
 
