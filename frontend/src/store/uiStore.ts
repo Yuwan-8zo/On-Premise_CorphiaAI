@@ -30,7 +30,8 @@ export const useUIStore = create<UIState>()(
             // 初始狀態
             theme: 'light',
             language: 'zh-TW',
-            sidebarOpen: true,
+            // 手機版預設收起，桌機版預設展開
+            sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             sidebarWidth: 280,
 
             // 設定主題
