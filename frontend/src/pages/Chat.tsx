@@ -904,7 +904,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
