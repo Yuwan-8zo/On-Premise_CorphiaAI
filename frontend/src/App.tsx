@@ -2,7 +2,7 @@
  * App 根組件 - 路由設定
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
