@@ -13,6 +13,7 @@ export default {
         loading: 'Loading...',
         search: 'Search',
         confirm: 'Confirm',
+        confirmDelete: 'Do you want to delete?',
         back: 'Back',
         close: 'Close',
         error: 'Error',

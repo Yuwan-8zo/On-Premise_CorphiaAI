@@ -13,6 +13,7 @@ export default {
         loading: '載入中...',
         search: '搜尋',
         confirm: '確認',
+        confirmDelete: '要刪除嗎？',
         back: '返回',
         close: '關閉',
         error: '錯誤',

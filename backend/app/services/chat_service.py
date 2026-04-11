@@ -13,7 +13,8 @@ from sqlalchemy import select, update
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Optional, Any, AsyncGenerator
 
-from duckduckgo_search import AsyncDDGS
+from duckduckgo_search import DDGS
+import asyncio
 
 from app.models.conversation import Conversation
 from app.models.message import Message, MessageRole
@@ -181,10 +182,13 @@ class ChatService:
         context = ""
         sources = []
         try:
-            # DuckDuckGo 異步搜尋
-            async with AsyncDDGS() as ddgs:
-                results = [r async for r in ddgs.text(state.get("query"), max_results=3)]
-                
+            # DuckDuckGo 搜尋 (以 thread 非同步執行避免阻塞)
+            def _sync_search():
+                with DDGS() as ddgs:
+                    return list(ddgs.text(state.get("query"), max_results=3))
+            
+            results = await asyncio.to_thread(_sync_search)
+            
             for idx, r in enumerate(results):
                 context += f"【來源 {idx+1}】 {r.get('title')}\n{r.get('body')}\n\n"
                 sources.append({

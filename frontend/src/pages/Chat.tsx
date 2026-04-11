@@ -251,7 +251,7 @@ export default function Chat() {
 
     const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm('確定要刪除此對話嗎？')) return
+        if (!confirm(t('common.confirmDelete'))) return
 
         try {
             if (!id.startsWith('temp-')) {
@@ -269,7 +269,7 @@ export default function Chat() {
 
     const handleDeleteFolder = async (folderName: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm(`確定要刪除資料夾「${folderName}」嗎？這將會刪除裡面所有的檔案及對話！`)) return
+        if (!confirm(t('common.confirmDelete'))) return
 
         try {
             const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
@@ -717,7 +717,7 @@ export default function Chat() {
                                                 <button
                                                     onClick={async (e) => {
                                                         e.stopPropagation()
-                                                        if (confirm('確定要刪除此文件嗎？')) {
+                                                        if (confirm(t('common.confirmDelete'))) {
                                                             try {
                                                                 await documentsApi.delete(doc.id)
                                                                 if (selectedFolder) loadFolderDocuments(selectedFolder)

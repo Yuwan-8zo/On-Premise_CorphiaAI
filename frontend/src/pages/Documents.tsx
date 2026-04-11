@@ -146,7 +146,7 @@ export default function Documents() {
 
     // 刪除文件
     const deleteDocument = async (id: string) => {
-        if (!confirm('確定要刪除此文件嗎？')) return
+        if (!confirm(t('common.confirmDelete'))) return
 
         try {
             await apiClient.delete(`/documents/${id}`)
