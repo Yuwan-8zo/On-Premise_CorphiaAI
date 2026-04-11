@@ -3,7 +3,6 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
@@ -70,7 +69,6 @@ export default function Chat() {
     } = useChatStore()
     const { sidebarOpen, toggleSidebar, showConfirm, setSettingsOpen } = useUIStore()
 
-    const navigate = useNavigate()
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)

@@ -15,7 +15,7 @@ import Documents from './pages/Documents'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
-import ConfirmModal from './components/ui/ConfirmModal'
+import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/ui/SettingsModal'
 
 // Protected Route Component
@@ -137,6 +137,7 @@ export default function App() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route
                         path="/admin"
                         element={
                             <ProtectedRoute>
