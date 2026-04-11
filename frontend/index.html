@@ -24,6 +24,9 @@
             if (parsed && parsed.state && parsed.state.theme) {
               theme = parsed.state.theme;
             }
+          } else {
+            // 無儲存設定時，跟隨系統主題
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           }
           if (theme === 'dark') {
             document.documentElement.classList.add('dark');

@@ -21,8 +21,21 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 export default function App() {
     const { isAuthenticated } = useAuthStore()
-    const { theme } = useUIStore()
+    const { theme, setTheme } = useUIStore()
     const location = useLocation()
+
+    // 監聽系統主題變化（當使用者在 iPhone 設定切換深色/淺色模式時）
+    // 同步 App 主題，確保 Safari 底部工具列與 App 保持一致
+    // 注意：iOS Safari 底部工具列永遠跟隨系統主題，這是 Apple 的系統限制
+    //       唯有讓 App 主題與系統主題一致，才能讓頂部與底部同色
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+            setTheme(e.matches ? 'dark' : 'light')
+        }
+        mediaQuery.addEventListener('change', handleSystemThemeChange)
+        return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
+    }, [setTheme])
 
     // 主題同步：更新 html/body 背景色 + meta theme-color
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致

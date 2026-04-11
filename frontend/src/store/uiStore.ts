@@ -27,8 +27,12 @@ interface UIState {
 export const useUIStore = create<UIState>()(
     persist(
         (set) => ({
-            // 初始狀態
-            theme: 'light',
+            // 預設跟隨系統主題（深色/淺色模式）
+            // 這樣 iOS Safari 的頂部與底部工具列顏色才能與 App 保持一致
+            // 注意：當 App 主題與系統主題不同時，底部 Safari 工具列永遠跟隨系統（iOS 限制）
+            theme: typeof window !== 'undefined'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : 'light',
             language: 'zh-TW',
             // 手機版預設收起，桌機版預設展開
             sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
