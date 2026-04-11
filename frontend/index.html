@@ -30,9 +30,14 @@
           }
           if (theme === 'dark') {
             document.documentElement.classList.add('dark');
-            document.documentElement.style.backgroundColor = '#1a1a1a';
+            var currentPath = window.location.pathname;
+            var initialBg = '#1a1a1a';
+            if (currentPath === '/' || currentPath.startsWith('/chat')) { initialBg = '#212121'; }
+            else if (currentPath === '/login' || currentPath === '/register') { initialBg = '#131314'; }
+            
+            document.documentElement.style.backgroundColor = initialBg;
             document.documentElement.style.colorScheme = 'only dark';
-            document.getElementById('theme-color-meta').setAttribute('content', '#1a1a1a');
+            document.getElementById('theme-color-meta').setAttribute('content', initialBg);
             document.getElementById('color-scheme-meta').setAttribute('content', 'only dark');
           } else {
             document.documentElement.style.backgroundColor = '#f0f2f5';
