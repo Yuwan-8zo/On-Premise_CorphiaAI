@@ -314,16 +314,11 @@ export default function Login() {
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
                     {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
                     <motion.form
-                        layout
                         onSubmit={handleSubmit}
-                        className={`w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] lg:rounded-[48px] p-5 lg:p-6 flex flex-col justify-between transition-colors gap-4 lg:gap-5 ${
-                            activeTab === 'login' ? 'aspect-square' : 'aspect-auto'
-                        }`}
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[40px] lg:rounded-[48px] p-5 lg:p-6 flex flex-col justify-between transition-colors gap-4 lg:gap-5 aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
-                        <motion.div
-                            layout
-                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        <div
                             className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
@@ -364,41 +359,37 @@ export default function Login() {
                             >
                                 {t('auth.register')}
                             </button>
-                        </motion.div>
+                        </div>
 
-
-
-                            <motion.div layout transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="w-full">
-                                <FloatingInput
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    label={t('auth.account')}
-                                />
-                            </motion.div>
+                        {/* 輸入欄位群組 - 以 flex-col 排列，高度自動撐開 */}
+                        <div className="w-full flex flex-col gap-4 flex-1 justify-center">
+                            <FloatingInput
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                label={t('auth.account')}
+                            />
                             
-                            <motion.div layout transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="w-full">
-                                <FloatingInput
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    label={t('auth.password')}
-                                />
-                            </motion.div>
+                            <FloatingInput
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                label={t('auth.password')}
+                            />
 
-                            {/* 確認密碼欄位：使用 AnimatePresence 達成滑順淡入淡出及高度擴張 */}
-                            <AnimatePresence mode="popLayout">
+                            {/* 確認密碼欄位：純 opacity+translateY 動畫，不影響 layout，避免 reflow 卡頓 */}
+                            <AnimatePresence initial={false}>
                                 {activeTab === 'register' && (
                                     <motion.div
-                                        layout
-                                        initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                                        animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
-                                        exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                        key="confirm"
+                                        initial={{ opacity: 0, y: -12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -8 }}
+                                        transition={{ duration: 0.22, ease: 'easeOut' }}
                                         className="w-full"
                                     >
                                         <FloatingInput
@@ -412,9 +403,10 @@ export default function Login() {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
+                        </div>
 
-                            {/* 底層按鈕與錯誤提示區塊 */}
-                            <motion.div layout className="w-full flex flex-col gap-3 shrink-0">
+                        {/* 底層按鈕與錯誤提示區塊 */}
+                        <div className="w-full flex flex-col gap-3 shrink-0">
                                 <AnimatePresence>
                                     {error && (
                                         <motion.div
@@ -456,8 +448,8 @@ export default function Login() {
                                     ) : (
                                         activeTab === 'login' ? t('auth.login') : t('auth.register')
                                     )}
-                                </motion.button>
-                            </motion.div>
+                            </motion.button>
+                        </div>
                     </motion.form>
                 </div>
             </div>
