@@ -280,7 +280,13 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } overflow-hidden bg-white dark:bg-[#111111] rounded-r-[28px] md:rounded-r-none transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-gray-200 dark:border-[#222] md:border-r`}
+                    } overflow-hidden bg-white dark:bg-[#111111]
+                    rounded-[28px] md:rounded-none
+                    m-2 md:m-0
+                    h-[calc(100%-1rem)] md:h-full
+                    shadow-xl md:shadow-none
+                    transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative
+                    md:border-r border-gray-200 dark:border-[#222]`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className="p-4 space-y-4 pt-6 w-[280px]">
