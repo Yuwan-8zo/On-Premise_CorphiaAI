@@ -66,7 +66,16 @@ export default function Settings() {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
     const { user, clearAuth } = useAuthStore()
-    const { theme, toggleTheme } = useUIStore()
+    const { theme, setTheme } = useUIStore()
+
+    // 切換主題後刷新頁面，讓 iOS Safari 頂部與底部工具列從 index.html
+    // 預載腳本重新讀取正確的主題色，達到上下同色的效果
+    const handleThemeChange = (newTheme: 'light' | 'dark') => {
+        if (theme === newTheme) return
+        setTheme(newTheme)
+        // 50ms 確保 Zustand 已將新主題寫入 localStorage，再觸發刷新
+        setTimeout(() => window.location.reload(), 50)
+    }
 
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
@@ -185,7 +194,7 @@ export default function Settings() {
                                         <div className="flex gap-6">
                                             {/* 日間模式 */}
                                             <button
-                                                onClick={() => theme === 'dark' && toggleTheme()}
+                                                onClick={() => handleThemeChange('light')}
                                                 className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${theme === 'light'
                                                         ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
                                                         : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444]'
@@ -201,7 +210,7 @@ export default function Settings() {
 
                                             {/* 夜間模式 */}
                                             <button
-                                                onClick={() => theme === 'light' && toggleTheme()}
+                                                onClick={() => handleThemeChange('dark')}
                                                 className={`flex-1 p-4 rounded-[16px] border-2 transition-all ${theme === 'dark'
                                                         ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
                                                         : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444]'
