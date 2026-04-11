@@ -69,7 +69,7 @@ export default function Chat() {
         setStreaming,
         appendToLastMessage
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar } = useUIStore()
+    const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore()
 
     const navigate = useNavigate()
     const [input, setInput] = useState('')
@@ -80,6 +80,19 @@ export default function Chat() {
 
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
+
+    // 手機版：進入頁面時自動收起側邊欄；桌機版：保持展開
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setSidebarOpen(false)
+            }
+        }
+        // 初次掛載即判斷
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [setSidebarOpen])
 
     useEffect(() => {
         const loadConversations = async () => {
