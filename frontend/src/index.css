@@ -20,8 +20,7 @@ html {
   height: 100%;
   /* iOS Safari safe-area 安全區域背景色填充 */
   background-attachment: fixed;
-  /* 主題切換時背景色平滑過渡（0.5s 配合 iOS Safari 原生 bar 動畫速度） */
-  transition: background-color 0.5s ease;
+  /* 背景色不加 transition，確保 iOS Safari 底部工具列能即時讀到新顏色 */
 }
 
 body {
@@ -32,8 +31,7 @@ body {
   color: #111827;
   overscroll-behavior-y: none;
   height: 100%;
-  /* 主題切換時背景色平滑過渡（0.5s 配合 iOS Safari 原生 bar 動畫速度） */
-  transition: background-color 0.5s ease;
+  /* 背景色不加 transition，確保 iOS Safari 底部工具列能即時讀到新顏色 */
 }
 
 /* React root 填滿全高 */

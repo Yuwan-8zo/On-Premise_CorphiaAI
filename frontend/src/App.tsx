@@ -29,13 +29,7 @@ export default function App() {
     useEffect(() => {
         const isDark = theme === 'dark'
         const bg = isDark ? '#1a1a1a' : '#f0f2f5'
-
-        // html 元素背景（控制 iOS Safari 頂部 safe-area 顏色）
-        document.documentElement.style.backgroundColor = bg
-        // body 背景（控制 iOS Safari 底部 safe-area 顏色）
-        document.body.style.backgroundColor = bg
-        // color-scheme 讓 Safari UI 元素（鍵盤、滑動條）隨主題變色
-        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+        const cs = isDark ? 'dark' : 'light'
 
         // dark class 切換
         if (isDark) {
@@ -44,24 +38,30 @@ export default function App() {
             document.documentElement.classList.remove('dark')
         }
 
-        // meta[name="theme-color"] - 控制 Android Chrome/Safari 瀏覽器 toolbar 顏色
-        let metaThemeColor = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null
-        if (!metaThemeColor) {
-            metaThemeColor = document.createElement('meta') as HTMLMetaElement
-            metaThemeColor.setAttribute('name', 'theme-color')
-            document.head.appendChild(metaThemeColor)
-        }
-        metaThemeColor.setAttribute('content', bg)
+        // html/body 背景色即時更新（不依賴 CSS transition）
+        // 讓 iOS Safari 底部工具列能立刻偵測到新的頁面背景色
+        document.documentElement.style.backgroundColor = bg
+        document.body.style.backgroundColor = bg
+        document.documentElement.style.colorScheme = cs
 
-        // meta[name="color-scheme"] - 控制 iOS Safari 底部工具列和鍵盤的明暗模式
-        // 這是讓 Safari 底部 toolbar 跟隨 App 主題切換的關鍵
-        let metaColorScheme = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null
-        if (!metaColorScheme) {
-            metaColorScheme = document.createElement('meta') as HTMLMetaElement
-            metaColorScheme.setAttribute('name', 'color-scheme')
-            document.head.appendChild(metaColorScheme)
-        }
-        metaColorScheme.setAttribute('content', isDark ? 'dark' : 'light')
+        // 強制 Safari 重新偵測 meta[theme-color]：先移除再新增
+        // 直接 setAttribute 有時不會觸發 Safari 的 toolbar 顏色更新
+        const existingThemeColor = document.querySelector('meta[name="theme-color"]')
+        if (existingThemeColor) existingThemeColor.remove()
+
+        const metaThemeColor = document.createElement('meta')
+        metaThemeColor.setAttribute('name', 'theme-color')
+        metaThemeColor.setAttribute('content', bg)
+        document.head.appendChild(metaThemeColor)
+
+        // color-scheme meta 更新（控制鍵盤、scrollbar 等原生 UI）
+        const existingColorScheme = document.querySelector('meta[name="color-scheme"]')
+        if (existingColorScheme) existingColorScheme.remove()
+
+        const metaColorScheme = document.createElement('meta')
+        metaColorScheme.setAttribute('name', 'color-scheme')
+        metaColorScheme.setAttribute('content', cs)
+        document.head.appendChild(metaColorScheme)
     }, [theme])
 
     return (
