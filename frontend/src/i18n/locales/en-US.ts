@@ -67,6 +67,7 @@ export default {
         renameChat: 'Rename',
         placeholder: 'Type a message...',
         noConversations: 'No conversations yet',
+        noChats: 'No recent chats',
         startNewChat: 'Start a new chat',
         copied: 'Copied',
         messageCopied: 'Message copied to clipboard',

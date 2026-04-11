@@ -67,6 +67,7 @@ export default {
         renameChat: '重新命名',
         placeholder: '輸入訊息...',
         noConversations: '尚無對話記錄',
+        noChats: '尚無聊天',
         startNewChat: '開始新對話',
         copied: '已複製',
         messageCopied: '訊息已複製到剪貼簿',
