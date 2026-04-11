@@ -320,7 +320,7 @@ export default function Chat() {
                                 chatMode === 'general' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
-                            一般聊天
+                            一般
                         </button>
                         {/* 專案 */}
                         <button
@@ -331,7 +331,7 @@ export default function Chat() {
                                 chatMode === 'project' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
-                            專案聊天室
+                            專案
                         </button>
                     </motion.div>
                 </div>
