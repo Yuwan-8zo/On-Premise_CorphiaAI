@@ -539,24 +539,30 @@ export default function Chat() {
                             <div className="mb-2 pl-2 mt-1">
                                 <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
                             </div>
-                            <div className="ml-2 pl-1 space-y-2 mt-2">
-                                {(() => {
-                                    const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
-                                    if (filtered.length === 0) return <p className="text-gray-400 text-xs py-4 pl-2 border-l border-gray-200 dark:border-[#333]">尚無專案</p>
-                                    
-                                    // 依據 folderName 分群
-                                    const grouped: Record<string, typeof conversations> = {}
-                                    filtered.forEach(conv => {
-                                        const folder = (conv.settings?.folderName as string) || '新資料夾'
-                                        if (!grouped[folder]) grouped[folder] = []
-                                        grouped[folder].push(conv)
-                                    })
+                            {(() => {
+                                const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
+                                            <p className="text-gray-400 text-[13px] py-4 pl-3">尚無專案</p>
+                                        </div>
+                                    )
+                                }
 
-                                    const folderNames = Object.keys(grouped)
-                                    
-                                    return folderNames.map((folderName, index) => {
-                                        const isLastFolder = index === folderNames.length - 1
-                                        return (
+                                const grouped: Record<string, typeof conversations> = {}
+                                filtered.forEach(conv => {
+                                    const folder = (conv.settings?.folderName as string) || '新資料夾'
+                                    if (!grouped[folder]) grouped[folder] = []
+                                    grouped[folder].push(conv)
+                                })
+
+                                const folderNames = Object.keys(grouped)
+                                
+                                return (
+                                    <div className="ml-2 pl-1 space-y-2 mt-2">
+                                        {folderNames.map((folderName, index) => {
+                                            const isLastFolder = index === folderNames.length - 1
+                                            return (
                                             <div key={folderName} className="relative">
                                                 {/* 主線：連接「專案資料夾」到此資料夾 L型節點 */}
                                                 <div 
@@ -628,9 +634,10 @@ export default function Chat() {
                                                 </div>
                                             </div>
                                         )
-                                    })
-                                })()}
-                            </div>
+                                        })}
+                                    </div>
+                                )
+                            })()}
                         </>
                     )}
                 </div>
