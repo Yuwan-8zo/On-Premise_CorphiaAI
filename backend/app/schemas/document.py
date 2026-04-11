@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 
 
@@ -17,6 +17,7 @@ class DocumentResponse(BaseModel):
     status: str
     chunk_count: int
     error_message: Optional[str] = None
+    doc_metadata: Dict[str, Any] = {}
     created_at: datetime
     processed_at: Optional[datetime] = None
     
@@ -36,3 +37,8 @@ class DocumentUploadResponse(BaseModel):
     filename: str
     status: str
     message: str
+
+
+class DocumentMetadataUpdate(BaseModel):
+    """文件 metadata 更新"""
+    doc_metadata: Dict[str, Any]

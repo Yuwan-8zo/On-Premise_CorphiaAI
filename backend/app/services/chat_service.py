@@ -162,10 +162,30 @@ class ChatService:
             conversation = result.scalar_one_or_none()
             
             if conversation:
+                folder_name = conversation.settings.get("folderName")
+                document_ids = None
+                
+                if folder_name:
+                    from app.models.document import Document
+                    # 取得目前 tenant 的所有文件進行 Python 內存過濾，以避免不同資料庫的 JSON 語法差異
+                    docs_result = await self.db.execute(
+                        select(Document).where(Document.tenant_id == conversation.tenant_id)
+                    )
+                    documents = docs_result.scalars().all()
+                    
+                    document_ids = []
+                    for doc in documents:
+                        metadata = doc.doc_metadata or {}
+                        if metadata.get("folderName") == folder_name:
+                            # 預設為啟動，除非特別標明 isActive 為 False
+                            if metadata.get("isActive", True):
+                                document_ids.append(doc.id)
+                
                 search_results = await self.rag_service.search(
                     query=content,
                     tenant_id=conversation.tenant_id,
                     n_results=3,
+                    document_ids=document_ids,
                 )
                 
                 if search_results:
@@ -267,10 +287,30 @@ class ChatService:
             conversation = result.scalar_one_or_none()
             
             if conversation:
+                folder_name = conversation.settings.get("folderName")
+                document_ids = None
+                
+                if folder_name:
+                    from app.models.document import Document
+                    # 取得目前 tenant 的所有文件進行 Python 內存過濾，以避免不同資料庫的 JSON 語法差異
+                    docs_result = await self.db.execute(
+                        select(Document).where(Document.tenant_id == conversation.tenant_id)
+                    )
+                    documents = docs_result.scalars().all()
+                    
+                    document_ids = []
+                    for doc in documents:
+                        metadata = doc.doc_metadata or {}
+                        if metadata.get("folderName") == folder_name:
+                            # 預設為啟動，除非特別標明 isActive 為 False
+                            if metadata.get("isActive", True):
+                                document_ids.append(doc.id)
+                                
                 search_results = await self.rag_service.search(
                     query=content,
                     tenant_id=conversation.tenant_id,
                     n_results=3,
+                    document_ids=document_ids,
                 )
                 
                 if search_results:

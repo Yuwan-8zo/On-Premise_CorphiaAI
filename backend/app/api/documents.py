@@ -5,7 +5,7 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks, Form
 
 from sqlalchemy import select, func
 
@@ -15,6 +15,7 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentListResponse,
     DocumentUploadResponse,
+    DocumentMetadataUpdate,
 )
 from app.services.document_service import DocumentService
 
@@ -64,6 +65,7 @@ async def upload_document(
     db: DbSession,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
+    folderName: Optional[str] = Form(None),
 ):
     """
     上傳文件
@@ -87,6 +89,11 @@ async def upload_document(
             tenant_id=current_user.tenant_id or "default",
             user_id=current_user.id,
         )
+        
+        if folderName:
+            document.doc_metadata = {"folderName": folderName, "isActive": True}
+            # SQLAlchemy needs a commit to save the update
+            await db.commit()
         
         # 背景處理文件
         background_tasks.add_task(
@@ -143,6 +150,35 @@ async def get_document(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="文件不存在"
         )
+    
+    return DocumentResponse.model_validate(document)
+
+
+@router.patch("/{document_id}/metadata", response_model=DocumentResponse)
+async def update_document_metadata(
+    document_id: str,
+    request: DocumentMetadataUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """更新文件 metadata (如啟用/停用 RAG 參考)"""
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.tenant_id == (current_user.tenant_id or "default"),
+        )
+    )
+    document = result.scalar_one_or_none()
+    
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="文件不存在"
+        )
+        
+    document.doc_metadata = request.doc_metadata
+    await db.commit()
+    await db.refresh(document)
     
     return DocumentResponse.model_validate(document)
 

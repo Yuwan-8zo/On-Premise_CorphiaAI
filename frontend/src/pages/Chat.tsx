@@ -10,6 +10,7 @@ import { useChatStore } from '../store/chatStore'
 import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
 import apiClient from '../api/client'
+import { documentsApi, type DocumentResponse } from '../api/documents'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
 import { motion } from 'framer-motion'
@@ -78,11 +79,31 @@ export default function Chat() {
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
 
+    // Folder View 狀態
+    const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+    const [folderDocuments, setFolderDocuments] = useState<DocumentResponse[]>([])
+
     // 檔案上傳相關狀態
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadedFiles, setUploadedFiles] = useState<{name: string}[]>([])
+
+    const loadFolderDocuments = useCallback(async (folderName: string) => {
+        try {
+            const res = await documentsApi.list()
+            const docs = res.data.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
+            setFolderDocuments(docs)
+        } catch (error) {
+            console.error('Failed to load documents:', error)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (selectedFolder) {
+            loadFolderDocuments(selectedFolder)
+        }
+    }, [selectedFolder, loadFolderDocuments])
 
 
     useEffect(() => {
@@ -151,6 +172,7 @@ export default function Chat() {
     const selectConversation = useCallback(async (conversation: typeof currentConversation) => {
         if (!conversation) return
         setCurrentConversation(conversation)
+        setSelectedFolder(null)
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
             setMessages(msgs)
@@ -168,29 +190,42 @@ export default function Chat() {
         setIsUploading(true)
         setUploadProgress(0)
 
-        const formData = new FormData()
-        formData.append('file', file)
+        const targetFolder = selectedFolder || (currentConversation?.settings?.folderName as string) || '新資料夾'
 
         try {
-            await apiClient.post('/documents/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                onUploadProgress: (progressEvent) => {
-                    const progress = progressEvent.total
-                        ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                        : 0
-                    setUploadProgress(progress)
-                },
+            await documentsApi.upload(file, targetFolder, (progressEvent) => {
+                const progress = progressEvent.total
+                    ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                    : 0
+                setUploadProgress(progress)
             })
             
-            // 加入到已上傳清單中顯示 Chip
-            setUploadedFiles(prev => [...prev, { name: file.name }])
+            if (selectedFolder) {
+                await loadFolderDocuments(selectedFolder)
+            } else {
+                setUploadedFiles(prev => [...prev, { name: file.name }])
+            }
         } catch (err) {
             console.error('上傳失敗:', err)
-            // 可在此加入 toast
         } finally {
             setIsUploading(false)
             setUploadProgress(0)
             if (fileInputRef.current) fileInputRef.current.value = ''
+        }
+    }
+
+    const handleToggleDocActive = async (doc: DocumentResponse) => {
+        const isActive = doc.doc_metadata?.isActive ?? true
+        try {
+            await documentsApi.updateMetadata(doc.id, {
+                ...doc.doc_metadata,
+                isActive: !isActive
+            })
+            if (selectedFolder) {
+                loadFolderDocuments(selectedFolder)
+            }
+        } catch (e) {
+            console.error('Failed to toggle doc metadata:', e)
         }
     }
 
@@ -440,7 +475,13 @@ export default function Chat() {
                                                     <div className="absolute left-[3px] top-[12px] bottom-[-8px] border-l border-gray-300 dark:border-[#444]" />
                                                 )}
 
-                                                <div className="flex items-center text-gray-700 dark:text-gray-300 text-[14px] font-medium pl-[22px] py-1 cursor-default">
+                                                <div 
+                                                    onClick={() => {
+                                                        setSelectedFolder(folderName)
+                                                        setCurrentConversation(null) // Reset conversation
+                                                    }}
+                                                    className={`flex items-center text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-[#222] ${selectedFolder === folderName ? 'text-[#1877F2]' : 'text-gray-700 dark:text-gray-300 hover:text-[#1877F2]'}`}
+                                                >
                                                     {folderName}
                                                 </div>
 
@@ -523,6 +564,132 @@ export default function Chat() {
                 </header>
 
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
+                {selectedFolder ? (
+                    // 專案管理頁面 Folder View
+                    <div className="flex-1 overflow-y-auto px-6 py-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
+                        <div className="mb-8 pl-2">
+                            <h2 className="text-[28px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+                                <svg className="w-8 h-8 text-[#1877F2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                </svg>
+                                {selectedFolder}
+                            </h2>
+                            <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理專屬來源文獻，Corphia 將會依據你打勾勾選的檔案作為參考資料來回答對話。</p>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-[#111] rounded-[24px] shadow-sm border border-gray-200 dark:border-[#333] overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-[#333] flex justify-between items-center bg-gray-50/50 dark:bg-[#1a1a1a]">
+                                <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({folderDocuments.length})</h3>
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl transition-all shadow-sm shadow-[#1877F2]/20 hover:shadow-[#1877F2]/40 text-sm font-medium"
+                                >
+                                    <PlusIcon /> <span className="mr-1">新增來源</span>
+                                </button>
+                            </div>
+                            
+                            {folderDocuments.length === 0 ? (
+                                <div className="p-16 text-center">
+                                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-[#444] mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                    </svg>
+                                    <p className="text-[17px] font-semibold text-gray-600 dark:text-gray-300 mb-1">尚無文獻來源</p>
+                                    <p className="text-[14px] text-gray-400">點擊右上角新增，建立專案護城河</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-100 dark:divide-[#2a2a2a]">
+                                    {folderDocuments.map((doc) => (
+                                        <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors group">
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <label className="relative flex cursor-pointer items-center rounded-full" htmlFor={`checkbox-${doc.id}`}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        id={`checkbox-${doc.id}`}
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-[#1877F2] checked:bg-[#1877F2] checked:before:bg-[#1877F2] hover:before:opacity-10 dark:border-[#555]"
+                                                        checked={doc.doc_metadata?.isActive ?? true}
+                                                        onChange={() => handleToggleDocActive(doc)}
+                                                    />
+                                                    <div className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                                                        </svg>
+                                                    </div>
+                                                </label>
+                                                
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-medium text-[15px] text-gray-800 dark:text-gray-200 truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
+                                                    <span className="text-[13px] text-gray-500 mt-0.5">
+                                                        {new Date(doc.created_at).toLocaleString()} • {Math.round(doc.file_size / 1024)} KB
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-4">
+                                                <span className={`text-[12px] px-2.5 py-1 rounded-full font-medium ${
+                                                    doc.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    doc.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                }`}>
+                                                    {doc.status === 'completed' ? '已處理' : doc.status === 'failed' ? '失敗' : '處理中'}
+                                                </span>
+                                                
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm('確定要刪除此文件嗎？')) {
+                                                            await documentsApi.delete(doc.id)
+                                                            if (selectedFolder) loadFolderDocuments(selectedFolder)
+                                                        }
+                                                    }}
+                                                    className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
+                                                    title="刪除"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* 專案上傳進度 */}
+                        {isUploading && selectedFolder && (
+                            <div className="mt-6 p-4 bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-2xl border border-[#1877F2]/20 flex items-center justify-between shadow-sm animate-fade-in-up">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 rounded-full border-2 border-[#1877F2] border-t-transparent animate-spin" />
+                                    <span className="text-[#1877F2] text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                </div>
+                                <span className="text-[#1877F2] font-semibold">{uploadProgress}%</span>
+                            </div>
+                        )}
+                        
+                        {/* New Chat Button at exactly Folder View */}
+                        <div className="mt-12 flex justify-center pb-20">
+                            <button
+                                onClick={async () => {
+                                    // Start a chat automatically linked to this folder
+                                    try {
+                                        const conversation = await conversationsApi.create({ 
+                                            title: '新對話',
+                                            settings: { 
+                                                isProject: true,
+                                                folderName: selectedFolder
+                                            } 
+                                        })
+                                        addConversation(conversation)
+                                        setUploadedFiles([])
+                                        await selectConversation(conversation) // will clear selectedFolder and enter chat view automatically
+                                    } catch (error) {
+                                        console.error('建立對話失敗:', error)
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-6 py-3 bg-gray-900 border-gray-900 border dark:bg-white text-white dark:text-gray-900 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
+                            >
+                                基於此來源開始提問 →
+                            </button>
+                        </div>
+                    </div>
+                ) : (
                 <div className="flex-1 flex flex-col overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4 min-h-0">
                     
                     {messages.length === 0 ? (
@@ -566,8 +733,10 @@ export default function Chat() {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* 固定的底部輸入框區（不管有沒有訊息都在最底下） */}
+                {!selectedFolder && (
                 <div className="shrink-0 pt-2 pb-6 md:pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent z-20">
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
@@ -595,17 +764,10 @@ export default function Chat() {
                             <div className="flex items-end gap-3 p-2 pl-4">
                                 {chatMode === 'project' && (
                                     <>
-                                        <input 
-                                            type="file" 
-                                            ref={fileInputRef} 
-                                            onChange={handleFileUpload}
-                                            className="hidden" 
-                                            accept=".pdf,.docx,.xlsx,.txt,.md"
-                                        />
                                         <button 
                                             onClick={() => fileInputRef.current?.click()} 
                                             disabled={isConnecting || isUploading}
-                                            className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white mb-1 disabled:opacity-50"
+                                            className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-[#1877F2] dark:hover:text-[#1877F2] mb-1 disabled:opacity-50"
                                             title="上傳專案文件 (NotebookLM 模式)"
                                         >
                                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
@@ -646,7 +808,16 @@ export default function Chat() {
                         </div>
                     </div>
                 </div>
+                )}
             </main>
+            {/* hidden upload specific for chat view */}
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload}
+                className="hidden" 
+                accept=".pdf,.docx,.xlsx,.txt,.md"
+            />
         </div>
     )
 }

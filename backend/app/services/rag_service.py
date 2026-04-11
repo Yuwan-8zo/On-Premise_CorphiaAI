@@ -169,6 +169,7 @@ class RAGService:
         query: str,
         tenant_id: Optional[str] = None,
         n_results: int = 5,
+        document_ids: Optional[list[str]] = None,
     ) -> list[dict]:
         """
         搜尋相關文件
@@ -177,6 +178,7 @@ class RAGService:
             query: 查詢文字
             tenant_id: 租戶 ID（用於過濾）
             n_results: 回傳結果數量
+            document_ids: 指定要搜尋的文件 ID 列表
             
         Returns:
             list[dict]: 搜尋結果
@@ -186,15 +188,27 @@ class RAGService:
         
         if self.collection is None:
             return []
+            
+        # 如果提供了 document_ids 但為空列表，直接返回空結果（不執行無意義搜索）
+        if document_ids is not None and len(document_ids) == 0:
+            return []
         
         try:
             # 生成查詢向量
             query_embedding = self.get_embedding(query)
             
             # 建立過濾條件
-            where_filter = None
+            where_conditions = []
             if tenant_id:
-                where_filter = {"tenant_id": tenant_id}
+                where_conditions.append({"tenant_id": tenant_id})
+            if document_ids:
+                where_conditions.append({"document_id": {"$in": document_ids}})
+                
+            where_filter = None
+            if len(where_conditions) == 1:
+                where_filter = where_conditions[0]
+            elif len(where_conditions) > 1:
+                where_filter = {"$and": where_conditions}
             
             # 執行搜尋
             results = self.collection.query(
