@@ -279,11 +279,11 @@ export default function Chat() {
 
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
-                className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full'
+                className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full'
                     } overflow-hidden bg-white dark:bg-[#111111] rounded-r-[44px] md:rounded-r-none transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-gray-200 dark:border-[#222] md:border-r`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className="p-4 space-y-4 pt-6 w-[280px]">
+                <div className="pl-4 pr-6 md:pr-4 space-y-4 pt-6 pb-2 w-full">
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
@@ -316,7 +316,7 @@ export default function Chat() {
                 </div>
 
                 {/* 對話列表列 */}
-                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-[280px]">
+                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-full">
                     {/* 分類標籤：一般聊天 */}
                     <div className="mb-2 pl-2">
                         <span className="text-[12px] text-gray-500 tracking-wider">一般聊天</span>
@@ -343,7 +343,7 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className="p-4 pb-6 w-[280px]">
+                <div className="pl-4 pr-6 md:pr-4 pb-6 pt-2 w-full">
                     <button 
                         onClick={() => navigate('/settings')}
                         title="前往設定"
