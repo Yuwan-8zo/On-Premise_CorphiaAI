@@ -85,6 +85,7 @@ export default function App() {
         document.head.appendChild(metaColorScheme)
     }, [theme])
 
+    return (
         <>
             {/* 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入 */}
             <div

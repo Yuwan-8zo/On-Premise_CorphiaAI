@@ -12,7 +12,7 @@ import { conversationsApi } from '../api/conversations'
 import { documentsApi, type DocumentResponse } from '../api/documents'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
 
 // --- Custom UI Icons ---
@@ -273,7 +273,7 @@ export default function Chat() {
 
         showConfirm(t('common.confirmDelete'), async () => {
             try {
-                const relatedConvs = conversations.filter(c => c.settings?.folderName === folderName)
+                const relatedConvs = conversations.filter(c => ((c.settings?.folderName as string) || '新資料夾') === folderName)
                 for (const conv of relatedConvs) {
                     if (!conv.id.startsWith('temp-')) {
                         await conversationsApi.delete(conv.id)
@@ -287,7 +287,7 @@ export default function Chat() {
 
                 const res = await documentsApi.list()
                 const docList = Array.isArray(res) ? res : (res.data || [])
-                const relatedDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
+                const relatedDocs = docList.filter((d: DocumentResponse) => ((d.doc_metadata?.folderName as string) || '新資料夾') === folderName)
                 for (const doc of relatedDocs) {
                     await documentsApi.delete(doc.id)
                 }
@@ -395,7 +395,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#f0f2f5] dark:bg-[#1a1a1a] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-white dark:bg-[#212121] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
@@ -407,70 +407,100 @@ export default function Chat() {
 
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
-                className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full'
-                    } overflow-hidden bg-white dark:bg-[#111111] rounded-r-[44px] md:rounded-r-none transition-all duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full border-gray-200 dark:border-[#222] md:border-r`}
+                className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
+                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[44px] ${sidebarOpen ? 'md:rounded-[24px]' : 'md:rounded-[36px]'} md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform,border-radius] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
             >
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className="pl-4 pr-6 md:pr-4 space-y-4 pt-6 pb-2 w-full">
+                <div className={`pt-6 pb-2 w-full transition-all duration-300 ${sidebarOpen ? 'pl-4 pr-6 md:pr-4 space-y-4' : 'px-2 space-y-4 flex flex-col items-center'}`}>
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
-                        className="w-full flex items-center justify-start gap-3 px-4 py-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] 
-                                   text-gray-800 dark:text-white rounded-full transition-colors font-medium"
+                        className={`flex items-center gap-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-4 py-3 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        style={{ padding: sidebarOpen ? '' : '0' }}
                     >
-                        <PlusIcon />
-                        <span className="text-[15px]">新對話</span>
+                        <span className="shrink-0"><PlusIcon /></span>
+                        {sidebarOpen && <span className="text-[15px] whitespace-nowrap">新對話</span>}
                     </button>
 
-                    {/* 一般 / 專案 切換膠囊 (與 Login 頁面相同樣式) */}
-                    <motion.div
-                        layout
-                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0 w-full"
-                        style={{ padding: '4px' }}
-                    >
-                        {/* 滑動背景 Pill */}
-                        <div
-                            className="bg-white dark:bg-[#fff] shadow-sm"
-                            style={{
-                                position: 'absolute',
-                                top: '4px',
-                                left: chatMode === 'general' ? '4px' : 'calc(50% + 0px)',
-                                width: 'calc(50% - 4px)',
-                                height: 'calc(100% - 8px)',
-                                borderRadius: '999px',
-                                transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
-                                zIndex: 1,
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                            }}
-                        />
-                        {/* 一般 */}
-                        <button
-                            type="button"
-                            onClick={() => setChatMode('general')}
-                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
-                                chatMode === 'general' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                            }`}
+                    {/* 一般 / 專案 切換膠囊 */}
+                    {sidebarOpen ? (
+                        <motion.div
+                            layout
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0 w-full"
+                            style={{ padding: '4px' }}
                         >
-                            一般
-                        </button>
-                        {/* 專案 */}
-                        <button
-                            type="button"
-                            onClick={() => setChatMode('project')}
-                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
-                                chatMode === 'project' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                            }`}
+                            {/* 滑動背景 Pill */}
+                            <div
+                                className="bg-white dark:bg-[#fff] shadow-sm"
+                                style={{
+                                    position: 'absolute',
+                                    top: '4px',
+                                    left: chatMode === 'general' ? '4px' : 'calc(50% + 0px)',
+                                    width: 'calc(50% - 4px)',
+                                    height: 'calc(100% - 8px)',
+                                    borderRadius: '999px',
+                                    transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    zIndex: 1,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                }}
+                            />
+                            {/* 一般 */}
+                            <button
+                                type="button"
+                                onClick={() => setChatMode('general')}
+                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
+                                    chatMode === 'general' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                }`}
+                            >
+                                一般
+                            </button>
+                            {/* 專案 */}
+                            <button
+                                type="button"
+                                onClick={() => setChatMode('project')}
+                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
+                                    chatMode === 'project' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                }`}
+                            >
+                                專案
+                            </button>
+                        </motion.div>
+                    ) : (
+                        <div 
+                            className="relative flex flex-col items-center justify-between bg-gray-100 dark:bg-[#2a2a2a] rounded-full p-1 cursor-pointer w-12 shrink-0 transition-colors"
+                            style={{ height: '88px' }}
+                            onClick={() => setChatMode(prev => prev === 'general' ? 'project' : 'general')}
                         >
-                            專案
-                        </button>
-                    </motion.div>
+                            <div 
+                                className="absolute bg-[#fff] w-10 h-10 rounded-full shadow-sm"
+                                style={{
+                                    top: '4px',
+                                    transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
+                                    transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    zIndex: 1
+                                }}
+                            />
+                            {/* General Mode Icon (Message) */}
+                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            {/* Project Mode Icon (Folder) */}
+                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* 對話列表列 */}
-                <div className="flex-1 overflow-y-auto px-4 mt-2 custom-scrollbar w-full">
+                {/* 對話列表列 - 縮起來時完全隱藏 */}
+                <div className={`flex-1 overflow-y-auto mt-2 custom-scrollbar w-full transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 px-4' : 'opacity-0 px-0 overflow-hidden pointer-events-none'}`}>
                     {/* 分類標籤與歷史樹狀結構 */}
                     {chatMode === 'general' ? (
                         <>
@@ -608,11 +638,11 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className="pl-4 pr-6 md:pr-4 pb-6 pt-2 w-full">
+                <div className={`pt-2 w-full transition-all duration-300 ${sidebarOpen ? 'pb-6 pl-4 pr-6 md:pr-4' : 'pb-6 px-2 flex justify-center'}`}>
                     <button 
                         onClick={() => navigate('/settings')}
                         title="前往設定"
-                        className="w-full flex items-center gap-3 p-1.5 pr-4 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                        className={`flex items-center gap-3 p-1.5 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full pr-4' : 'w-12 h-12 justify-center shrink-0'}`}
                     >
                         {/* 圓形頭像框 */}
                         <div className="w-[34px] h-[34px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
@@ -620,26 +650,35 @@ export default function Chat() {
                                 <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
                             </svg>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[14px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
-                        </div>
+                        {sidebarOpen && (
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[14px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
+                            </div>
+                        )}
                     </button>
                 </div>
             </aside>
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden">
+            <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden bg-transparent">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-[#f0f2f5] dark:bg-[#1a1a1a]">
+                <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-transparent">
                     <div className="flex items-center">
-                        {!sidebarOpen && (
-                            <button
-                                onClick={toggleSidebar}
-                                className="mr-4 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors"
-                            >
-                                <SidebarIcon />
-                            </button>
-                        )}
+                        {/* Mobile Hamburguer (only visible when sidebar is closed on mobile) */}
+                        <button
+                            onClick={toggleSidebar}
+                            className={`mr-4 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'hidden' : 'block'}`}
+                        >
+                            <SidebarIcon />
+                        </button>
+                        
+                        {/* Desktop Sidebar Toggle (Always visible on md+) */}
+                        <button
+                            onClick={toggleSidebar}
+                            className="mr-4 p-2 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors hidden md:block"
+                        >
+                            <SidebarIcon />
+                        </button>
                         <h1 className="text-[22px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
                             Corphia
                         </h1>
@@ -824,8 +863,15 @@ export default function Chat() {
                 )}
 
                 {/* 固定的底部輸入框區（不管有沒有訊息都在最底下） */}
+                <AnimatePresence>
                 {!selectedFolder && (
-                <div className="shrink-0 pt-2 pb-6 md:pb-8 w-full bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] dark:from-[#1a1a1a] dark:via-[#1a1a1a] to-transparent z-20">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="shrink-0 pt-2 pb-6 md:pb-8 w-full z-20"
+                >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
                         <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
@@ -895,8 +941,9 @@ export default function Chat() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
                 )}
+                </AnimatePresence>
             </main>
             {/* hidden upload specific for chat view */}
             <input 
