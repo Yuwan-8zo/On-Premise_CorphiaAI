@@ -860,8 +860,8 @@ export default function Chat() {
 
                                                 {/* 次層：聊天清單 */}
                                                 <div className="relative ml-[22px] mt-1 space-y-1">
-                                                    {grouped[folderName].map((conv, cIndex) => {
-                                                        const isLastConv = cIndex === grouped[folderName].length - 1
+                                                    {(grouped[folderName] || []).map((conv, cIndex) => {
+                                                        const isLastConv = cIndex === (grouped[folderName] || []).length - 1
                                                         return (
                                                             <div key={conv.id} className="relative">
                                                                 {/* 次層 L 型節點 */}
