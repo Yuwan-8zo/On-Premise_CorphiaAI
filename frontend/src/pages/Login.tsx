@@ -225,6 +225,24 @@ export default function Login() {
                                 <span className="text-black dark:text-white transition-colors">{t('auth.feature3')}</span>
                             </div>
                         </div>
+
+                        {/* 展示用 QR Code - 僅在桌面顯示以供手機掃描測試 */}
+                        <div className="mt-12 p-5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 border border-gray-200/50 dark:border-white/5 rounded-[24px] flex items-center gap-5 w-fit shadow-sm transition-colors">
+                            <div className="bg-white p-2.5 rounded-[16px] shrink-0 shadow-sm">
+                                <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
+                                    alt="Mobile Access QR Code" 
+                                    className="w-[84px] h-[84px] rounded-[8px]"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[15px] font-bold text-gray-900 dark:text-white mb-1 transition-colors">📱 掃描體驗手機版</span>
+                                <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed transition-colors">
+                                    拿出手機掃描左側條碼，<br/>
+                                    立即享受響應式行動體驗！
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
