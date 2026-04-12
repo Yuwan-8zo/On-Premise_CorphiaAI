@@ -451,7 +451,7 @@ export default function Chat() {
                 <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
                     {sidebarOpen && (
                         <div className="flex items-center px-1">
-                            <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[8px] overflow-hidden" />
+                            <CorphiaLogo className="w-8 h-8 shrink-0 rounded-full overflow-hidden" />
                         </div>
                     )}
                     <button
@@ -464,7 +464,7 @@ export default function Chat() {
                         {sidebarOpen || isSidebarHovered ? (
                             <SidebarIcon className="w-[18px] h-[18px]" />
                         ) : (
-                            <CorphiaLogo className="w-[22px] h-[22px] rounded-[5px]" />
+                            <CorphiaLogo className="w-[22px] h-[22px] rounded-full" />
                         )}
                     </button>
                 </div>
