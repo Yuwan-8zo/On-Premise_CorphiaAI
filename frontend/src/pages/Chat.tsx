@@ -476,11 +476,16 @@ export default function Chat() {
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
-                        className={`flex items-center gap-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-4 py-3 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-2xl' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
-                        <span className="shrink-0"><PlusIcon /></span>
-                        {sidebarOpen && <span className="text-[15px] whitespace-nowrap">新對話</span>}
+                        <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-[#2a2a2a]">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </div>
+                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">新對話</span>}
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
@@ -710,21 +715,22 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className={`w-full transition-all duration-300 p-3 pb-[24px] md:px-[11px] md:pb-[11px] mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
-                        className={`flex items-center gap-3 p-1.5 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full pr-4' : 'w-12 h-12 justify-center shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-2xl' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        style={{ padding: sidebarOpen ? '' : '0' }}
                     >
                         {/* 圓形頭像框 */}
-                        <div className="w-[36px] h-[36px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
-                            <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px] text-gray-400 dark:text-gray-500">
+                        <div className="w-[32px] h-[32px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
+                            <svg viewBox="0 0 24 24" fill="none" className="w-[16px] h-[16px] text-gray-400 dark:text-gray-500">
                                 <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
                             </svg>
                         </div>
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-[13px] text-gray-700 dark:text-gray-300 font-medium truncate">{user?.name || 'Local User'}</p>
+                                <p className="font-semibold text-[14px] text-gray-800 dark:text-white truncate">{user?.name || 'Local User'}</p>
                             </div>
                         )}
                     </button>
