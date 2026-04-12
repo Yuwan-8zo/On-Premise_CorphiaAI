@@ -935,7 +935,7 @@ export default function Chat() {
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 transition-colors">
+                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 md:border-b-0 transition-colors">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
