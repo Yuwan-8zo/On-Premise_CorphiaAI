@@ -43,10 +43,11 @@ const StopIcon = () => (
     </div>
 )
 
-const SidebarIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-white">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="9" y1="3" x2="9" y2="21"></line>
+const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" {...props}>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="6" x2="20" y2="6"></line>
+        <line x1="4" y1="18" x2="20" y2="18"></line>
     </svg>
 )
 
@@ -430,6 +431,25 @@ export default function Chat() {
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
                     } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[36px] md:rounded-[36px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
             >
+                {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
+                <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
+                    {sidebarOpen && (
+                        <div className="flex items-center gap-2 px-1">
+                            <CorphiaLogo className="w-6 h-6 shrink-0 rounded-md overflow-hidden" />
+                            <span className="font-[700] text-[17px] text-gray-800 dark:text-gray-100 tracking-wide whitespace-nowrap">
+                                Corphia AI
+                            </span>
+                        </div>
+                    )}
+                    <button
+                        onClick={toggleSidebar}
+                        title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
+                        className="p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0"
+                    >
+                        <SidebarIcon className="w-[18px] h-[18px]" />
+                    </button>
+                </div>
+
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className={`w-full transition-all duration-300 p-3 space-y-3 ${!sidebarOpen && 'flex flex-col items-center'}`}>
                     {/* 新對話按鈕 */}
@@ -694,23 +714,17 @@ export default function Chat() {
             <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden bg-transparent">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-transparent">
-                    <div className="flex items-center">
-                        {/* Mobile Hamburguer (only visible when sidebar is closed on mobile) */}
+                    <div className="flex items-center gap-3">
+                        {/* 手機版的開啟側邊欄按鈕 (桌機隱藏) */}
                         <button
                             onClick={toggleSidebar}
-                            className={`mr-4 p-2 rounded-xl hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'hidden' : 'block'}`}
+                            className={`p-2 -ml-2 rounded-xl hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
                         >
-                            <SidebarIcon />
+                            <SidebarIcon className="w-5 h-5" />
                         </button>
                         
-                        {/* Desktop Sidebar Toggle (Always visible on md+) */}
-                        <button
-                            onClick={toggleSidebar}
-                            className="mr-4 p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors hidden md:block"
-                        >
-                            <SidebarIcon />
-                        </button>
-                        <h1 className="text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2">
+                        {/* 手機版專屬 Logo */}
+                        <h1 className={`md:hidden text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2 transition-opacity ${sidebarOpen ? 'opacity-0' : 'opacity-100'}`}>
                             <CorphiaLogo className="w-5 h-5 rounded-md overflow-hidden" />
                             Corphia
                         </h1>
