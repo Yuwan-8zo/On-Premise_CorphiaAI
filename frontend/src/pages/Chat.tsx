@@ -431,16 +431,8 @@ export default function Chat() {
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
                     } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[36px] md:rounded-[36px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
             >
-                {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
-                <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
-                    {sidebarOpen && (
-                        <div className="flex items-center gap-2 px-1">
-                            <CorphiaLogo className="w-6 h-6 shrink-0 rounded-md overflow-hidden" />
-                            <span className="font-[700] text-[17px] text-gray-800 dark:text-gray-100 tracking-wide whitespace-nowrap">
-                                Corphia AI
-                            </span>
-                        </div>
-                    )}
+                {/* 桌面版專屬：側邊欄頂部 Header (收合按鈕) */}
+                <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
                     <button
                         onClick={toggleSidebar}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
@@ -723,8 +715,8 @@ export default function Chat() {
                             <SidebarIcon className="w-5 h-5" />
                         </button>
                         
-                        {/* 手機版專屬 Logo */}
-                        <h1 className={`md:hidden text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2 transition-opacity ${sidebarOpen ? 'opacity-0' : 'opacity-100'}`}>
+                        {/* 共用的 Logo (Corphia)，移到側邊欄外 */}
+                        <h1 className={`text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
                             <CorphiaLogo className="w-5 h-5 rounded-md overflow-hidden" />
                             Corphia
                         </h1>

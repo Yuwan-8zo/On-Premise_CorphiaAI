@@ -204,7 +204,7 @@ export default function Login() {
                         </h2>
                         <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-colors flex items-center gap-4">
                             <CorphiaLogo className="w-14 h-14" />
-                            Corphia AI
+                            Corphia
                         </h1>
                         <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
                             {t('auth.engineDesc')}
@@ -308,7 +308,7 @@ export default function Login() {
                     </h2>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors flex items-center justify-center gap-3">
                         <CorphiaLogo className="w-8 h-8" />
-                        Corphia AI
+                        Corphia
                     </h1>
                     <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
                 </div>
