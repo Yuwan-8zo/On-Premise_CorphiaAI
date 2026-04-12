@@ -32,7 +32,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-2.5 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
