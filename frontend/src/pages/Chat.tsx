@@ -738,9 +738,9 @@ export default function Chat() {
             </aside>
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden bg-transparent">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-[#212121]">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="absolute top-0 left-0 w-full p-4 md:p-6 flex items-center justify-between z-30 bg-white/90 dark:bg-[#212121]/90 backdrop-blur-md">
+                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-[#212121] border-b border-gray-100 dark:border-white/5 transition-colors">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
@@ -863,7 +863,7 @@ export default function Chat() {
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
                 {selectedFolder ? (
                     // 專案管理頁面 Folder View
-                    <div className="flex-1 overflow-y-auto px-6 pt-[88px] md:pt-[100px] mb-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
+                    <div className="flex-1 overflow-y-auto px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
                         <div className="mb-8 pl-2">
                             <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
                                 <svg className="w-8 h-8 text-[#1877F2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -992,11 +992,11 @@ export default function Chat() {
                         </div>
                     </div>
                 ) : (
-                <div className="flex-1 flex flex-col overflow-y-auto w-full relative z-10 custom-scrollbar px-4 md:px-0 pb-4 min-h-0">
+                <div className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4">
                     
                     {messages.length === 0 ? (
                         // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
-                        <div className="w-full max-w-3xl mx-auto pb-8 pt-[15vh]">
+                        <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                             {/* Greeting */}
                             <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
                                 {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
@@ -1023,7 +1023,7 @@ export default function Chat() {
                         </div>
                     ) : (
                         // 聊天紀錄
-                        <div className="max-w-3xl mx-auto space-y-6 pb-4 w-full">
+                        <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
                             {messages.map((message, index) => (
                                 <MessageBubble
                                     key={message.id}
