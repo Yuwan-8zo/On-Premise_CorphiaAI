@@ -9,6 +9,7 @@ import { useChatStore } from '../store/chatStore'
 import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
 import { documentsApi, type DocumentResponse } from '../api/documents'
+import modelsApi, { type ModelItem } from '../api/models'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble } from '../components/chat'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -50,13 +51,6 @@ const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 )
 
-const GGUF_MODELS = [
-    { id: 'llama3', name: 'Llama-3-8B-Instruct.gguf', desc: 'Local GGUF - 高速推理' },
-    { id: 'mistral', name: 'Mistral-Nemo-12B.gguf', desc: 'Local GGUF - 邏輯強化' },
-    { id: 'qwen', name: 'Qwen2.5-7B-Instruct.gguf', desc: 'Local GGUF - 中文特化' },
-    { id: 'gemma', name: 'Gemma-2-9B-It.gguf', desc: 'Local GGUF - 輕量精準' }
-];
-
 export default function Chat() {
     const { t } = useTranslation()
     const { user } = useAuthStore()
@@ -85,7 +79,8 @@ export default function Chat() {
     
     // GGUF Model Dropdown State
     const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
-    const [selectedModel, setSelectedModel] = useState(GGUF_MODELS[0])
+    const [availableModels, setAvailableModels] = useState<ModelItem[]>([])
+    const [selectedModel, setSelectedModel] = useState<ModelItem | null>(null)
 
     // Header Options Menu State
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
@@ -142,6 +137,28 @@ export default function Chat() {
             loadFolderDocuments(selectedFolder)
         }
     }, [selectedFolder, loadFolderDocuments])
+
+    const loadModels = useCallback(async () => {
+        try {
+            const res = await modelsApi.getModels()
+            setAvailableModels(res.models)
+            
+            // Set current model from API if exists
+            if (res.current_model) {
+                const current = res.models.find((m) => m.name === res.current_model)
+                if (current) setSelectedModel(current)
+                else if (res.models.length > 0) setSelectedModel(res.models[0])
+            } else if (res.models.length > 0) {
+                setSelectedModel(res.models[0])
+            }
+        } catch (error) {
+            console.error('Failed to load models:', error)
+        }
+    }, [])
+
+    useEffect(() => {
+        loadModels()
+    }, [loadModels])
 
 
     useEffect(() => {
@@ -765,7 +782,9 @@ export default function Chat() {
                                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                                 className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-[12px] hover:bg-gray-100/80 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-[#333]"
                             >
-                                <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400">{selectedModel.name}</span>
+                                <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400">
+                                    {selectedModel ? selectedModel.name : 'Loading Models...'}
+                                </span>
                                 <svg className={`w-4 h-4 text-gray-400 opacity-80 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
 
@@ -778,31 +797,53 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[300px] bg-white dark:bg-[#2a2a2a] rounded-[24px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
+                                            className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-[#2a2a2a] rounded-[24px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
                                         >
-                                            {GGUF_MODELS.map(model => (
-                                                <button
-                                                    key={model.id}
-                                                    onClick={() => {
-                                                        setSelectedModel(model);
-                                                        setModelDropdownOpen(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-3 rounded-[16px] flex items-center justify-between transition-colors ${selectedModel.id === model.id ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
-                                                >
-                                                    <div className="flex flex-col min-w-0">
-                                                        <span className={`font-semibold text-[15px] truncate ${selectedModel.id === model.id ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
-                                                        <span className="text-[13px] text-gray-500 mt-0.5">{model.desc}</span>
-                                                    </div>
-                                                    {selectedModel.id === model.id && (
-                                                        <svg className="w-5 h-5 ml-2 text-gray-800 dark:text-gray-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
-                                                    )}
-                                                </button>
-                                            ))}
+                                            <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                {availableModels.length === 0 ? (
+                                                    <div className="p-4 text-center text-sm text-gray-500">無可用模型，請掃描目錄。</div>
+                                                ) : (
+                                                    availableModels.map(model => (
+                                                        <button
+                                                            key={model.name}
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await modelsApi.selectModel(model.name);
+                                                                    setSelectedModel(model);
+                                                                    setModelDropdownOpen(false);
+                                                                } catch (err) {
+                                                                    console.error('選擇模型失敗', err);
+                                                                }
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 mb-1 rounded-[16px] flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
+                                                        >
+                                                            <div className="flex flex-col min-w-0 pr-3">
+                                                                <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
+                                                                <span className="text-[12px] text-gray-500 mt-1 flex items-center gap-2">
+                                                                    <span>{model.size_gb.toFixed(1)} GB</span>
+                                                                    {model.quantization && (
+                                                                        <span className="bg-gray-200/50 dark:bg-[#444] px-1.5 py-0.5 rounded text-[10px] uppercase">{model.quantization}</span>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            {selectedModel?.name === model.name && (
+                                                                <svg className="w-5 h-5 ml-2 text-[#1877F2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                            )}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
                                             
                                             <div className="mt-2 pt-2 border-t border-gray-100 dark:border-[#333]">
-                                                <button className="w-full text-left px-4 py-3 rounded-[16px] flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400">
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                                                    <span className="font-semibold text-[15px]">管理 GGUF 模型...</span>
+                                                <button 
+                                                    onClick={async () => {
+                                                        const res = await modelsApi.refreshModels();
+                                                        setAvailableModels(res.models);
+                                                    }}
+                                                    className="w-full text-left px-4 py-3 rounded-[16px] flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400 group"
+                                                >
+                                                    <svg className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                    <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
                                                 </button>
                                             </div>
                                         </motion.div>
