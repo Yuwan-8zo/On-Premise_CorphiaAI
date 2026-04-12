@@ -364,9 +364,9 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 輸入欄位群組 - 垂直平均分配，透過自適應 margin 解決退場跳動 */}
-                        <div className="w-full flex flex-col flex-1 justify-center">
-                            <div className="w-full shrink-0">
+                        {/* 輸入欄位群組 - 完美垂直平均分配與平滑佈局動畫 */}
+                        <motion.div layout className="w-full flex flex-col flex-1 justify-evenly relative">
+                            <motion.div layout className="w-full shrink-0 z-10">
                                 <FloatingInput
                                     id="email"
                                     type="email"
@@ -375,9 +375,9 @@ export default function Login() {
                                     required
                                     label={t('auth.account')}
                                 />
-                            </div>
+                            </motion.div>
                             
-                            <div className={`w-full shrink-0 transition-all duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${activeTab === 'login' ? 'mt-10' : 'mt-6'}`}>
+                            <motion.div layout className="w-full shrink-0 z-10">
                                 <FloatingInput
                                     id="password"
                                     type="password"
@@ -386,18 +386,19 @@ export default function Login() {
                                     required
                                     label={t('auth.password')}
                                 />
-                            </div>
+                            </motion.div>
 
-                            {/* 確認密碼欄位：結合 height 動畫與 marginTop 將物理空間壓縮到 0，徹底消滅 flex 跳動 */}
-                            <AnimatePresence initial={false}>
+                            {/* 確認密碼欄位：使用 popLayout 模式，讓元素退場時立刻脫離佈局，觸發完美的 justify-evenly 空間重算動畫 */}
+                            <AnimatePresence mode="popLayout" initial={false}>
                                 {activeTab === 'register' && (
                                     <motion.div
                                         key="confirm"
-                                        initial={{ opacity: 0, height: 0, scale: 0.95, marginTop: 0 }}
-                                        animate={{ opacity: 1, height: 'auto', scale: 1, marginTop: 24 }} // 24px = mt-6
-                                        exit={{ opacity: 0, height: 0, scale: 0.95, marginTop: 0 }}
-                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                                        className="w-full overflow-hidden shrink-0"
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                        className="w-full shrink-0 z-0"
                                     >
                                         <FloatingInput
                                             id="confirm-password"
@@ -410,7 +411,7 @@ export default function Login() {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
-                        </div>
+                        </motion.div>
 
                         {/* 底層按鈕與錯誤提示區塊 */}
                         <div className="w-full flex flex-col gap-3 shrink-0">
