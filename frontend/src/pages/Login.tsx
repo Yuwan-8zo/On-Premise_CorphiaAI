@@ -315,10 +315,10 @@ export default function Login() {
 
                 {/* 登入卡片容器 - 居中 */}
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
+                    {/* 卡片本體：移除 aspect-square 並用 gap 代替 justify-between 讓排版更緊密 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-card-xl p-4 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[38px] p-5 flex flex-col gap-6 transition-colors overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
@@ -364,8 +364,8 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 輸入欄位群組 - 以 flex-col 排列，均分上下與彼此之間的空間 */}
-                        <div className="w-full flex flex-col flex-1 justify-evenly">
+                        {/* 輸入欄位群組 - 改用 gap-5 緊湊排版 */}
+                        <div className="w-full flex flex-col gap-4">
                             <FloatingInput
                                 id="email"
                                 type="email"
