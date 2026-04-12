@@ -86,6 +86,18 @@ async def upload_document(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="缺少檔案名稱"
         )
+        
+    # 雙重驗證: MIME Type 與檔案簽章 (Magic Bytes)
+    from app.core.file_validator import validate_file_signature
+    file_bytes = await file.read(1024)
+    await file.seek(0) # 重置讀取指標
+    
+    if not validate_file_signature(file_bytes, file.filename, file.content_type):
+        logger.error(f"檔案上傳攔截: {file.filename} signature 驗證失敗")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="不支援的檔案類型，或檔案內容與副檔名不符"
+        )
     
     # 上傳
     doc_service = DocumentService(db)
@@ -141,7 +153,6 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="文件上傳失敗"
-        )
         )
 
 

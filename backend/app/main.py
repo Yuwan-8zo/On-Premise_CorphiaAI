@@ -24,16 +24,16 @@ from app.api import (
     users_router,
     admin_router,
     audit_logs_router,
+    tenants_router,
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
 
 
 # 設定日誌
-logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+import logging
+from app.core.logging_config import setup_logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -44,6 +44,13 @@ async def lifespan(app: FastAPI):
     logger.info(f"🚀 啟動 {settings.app_name} v2.2.0")
     await init_db()
     logger.info("✅ 資料庫初始化完成")
+    
+    # 生產環境安全檢查：避免使用預設 SECRET_KEY
+    if settings.app_env.lower() == "production" and settings.secret_key == "your-super-secret-key-change-in-production":
+        logger.critical("🚨 [安全警告] 生產環境中使用了預設的 SECRET_KEY！系統拒絕啟動。")
+        logger.critical("請執行 `python scripts/generate_key.py` 產生密鑰，並更新至 .env 檔案中。")
+        import sys
+        sys.exit(1)
     
     # 清理過期的 Token 黑名單記錄
     try:
@@ -81,11 +88,18 @@ app = FastAPI(
 )
 
 
-# CORS 中間件（測試模式：允許所有來源）
+# CORS 中間件設定
+if settings.app_env.lower() == "production":
+    cors_allow_origins = settings.cors_origins_list
+    cors_allow_credentials = True
+else:
+    cors_allow_origins = ["*"]
+    cors_allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=cors_allow_origins,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=[
@@ -101,6 +115,10 @@ app.add_middleware(
 from app.core.rate_limiter import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware)
 
+
+# 上傳檔案大小限制中間件
+from app.core.middleware import MaxUploadSizeMiddleware
+app.add_middleware(MaxUploadSizeMiddleware, max_upload_size=settings.max_upload_size_mb * 1024 * 1024)
 
 # 全域例外處理
 @app.exception_handler(RequestValidationError)
@@ -151,6 +169,7 @@ app.include_router(messages_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(audit_logs_router, prefix="/api/v1")
+app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 
