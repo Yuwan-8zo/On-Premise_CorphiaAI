@@ -61,6 +61,7 @@ export default function Chat() {
         isStreaming,
         setConversations,
         addConversation,
+        updateConversation,
         setCurrentConversation,
         setMessages,
         addMessage,
@@ -121,6 +122,62 @@ export default function Chat() {
         const rect = e.currentTarget.getBoundingClientRect()
         // 浮動選單放置在按鈕正下方
         setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 })
+    }
+
+    const handleRenameConversation = async (convId: string) => {
+        const conv = conversations.find(c => c.id === convId)
+        if (!conv) return
+        const newTitle = window.prompt("重新命名對話", conv.title)
+        if (newTitle !== null && newTitle.trim() !== '' && newTitle !== conv.title) {
+            try {
+                await conversationsApi.update(conv.id, { title: newTitle.trim() })
+                updateConversation(conv.id, { title: newTitle.trim() })
+            } catch (error) {
+                console.error("Rename failed:", error)
+                alert("重新命名失敗")
+            }
+        }
+    }
+
+    const handleMoveToProject = async (convId: string) => {
+        const conv = conversations.find(c => c.id === convId)
+        if (!conv) return
+        const isProject = Boolean(conv.settings?.isProject)
+        
+        if (isProject) {
+            const confirmMove = window.confirm("要將此對話移回一般聊天嗎？")
+            if (confirmMove) {
+                try {
+                    const newSettings = { ...conv.settings, isProject: false }
+                    await conversationsApi.update(conv.id, { settings: newSettings })
+                    updateConversation(conv.id, { settings: newSettings })
+                    setChatMode('general')
+                } catch (error) {
+                    console.error("Move failed:", error)
+                    alert("移動失敗")
+                }
+            }
+        } else {
+            const folderName = window.prompt("請輸入專案資料夾名稱", (conv.settings?.folderName as string) || "新資料夾")
+            if (folderName !== null) {
+                try {
+                    const newSettings = { ...conv.settings, isProject: true, folderName: folderName.trim() || '新資料夾' }
+                    await conversationsApi.update(conv.id, { settings: newSettings })
+                    updateConversation(conv.id, { settings: newSettings })
+                    setChatMode('project')
+                } catch (error) {
+                    console.error("Move failed:", error)
+                    alert("移動失敗")
+                }
+            }
+        }
+    }
+
+    const handleShareConversation = (convId: string) => {
+        const link = `${window.location.origin}/share/${convId}`
+        navigator.clipboard.writeText(link)
+            .then(() => alert("已複製分享連結到剪貼簿：\n" + link))
+            .catch(() => alert("無法複製到剪貼簿，請手動複製：" + link))
     }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
@@ -1184,18 +1241,18 @@ export default function Chat() {
                             top: Math.min(activeMenu.y, window.innerHeight - 300) 
                         }}
                     >
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => { handleShareConversation(activeMenu.convId); setActiveMenu(null); }}>
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                             分享
                         </button>
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => { handleRenameConversation(activeMenu.convId); setActiveMenu(null); }}>
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             重新命名
                         </button>
-                        <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left group" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left group" onClick={() => { handleMoveToProject(activeMenu.convId); setActiveMenu(null); }}>
                             <div className="flex items-center gap-3">
                                 <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-                                <span>移至專案</span>
+                                <span>{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? '移至一般聊天' : '移至專案'}</span>
                             </div>
                             <svg className="w-4 h-4 opacity-0 group-hover:opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
