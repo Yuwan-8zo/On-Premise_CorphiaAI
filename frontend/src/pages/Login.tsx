@@ -178,7 +178,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-ios-light-gray6 dark:bg-ios-dark-gray6 transition-colors duration-300">
+        <div className="min-h-screen flex bg-ios-light-gray5 dark:bg-ios-dark-gray6 transition-colors duration-300">
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
