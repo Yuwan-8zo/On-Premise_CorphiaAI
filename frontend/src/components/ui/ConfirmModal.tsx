@@ -35,7 +35,7 @@ export const ConfirmModal: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
+                        className="bg-white dark:bg-[#212121] rounded-3xl w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
                     >
                         <div className="p-6">
                             <div className="flex items-center gap-4 mb-4">
@@ -52,11 +52,11 @@ export const ConfirmModal: React.FC = () => {
                             </p>
                         </div>
                         
-                        <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end gap-3 border-t border-zinc-100 dark:border-zinc-800">
+                        <div className="p-4 bg-zinc-50 dark:bg-transparent flex justify-end gap-3 border-t border-zinc-100 dark:border-zinc-800">
                             <button
                                 onClick={closeConfirm}
                                 disabled={isProcessing}
-                                className="px-5 py-2.5 rounded-full text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                                className="px-5 py-2.5 rounded-full text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-[#333] transition-colors disabled:opacity-50"
                             >
                                 {t('common.cancel')}
                             </button>
