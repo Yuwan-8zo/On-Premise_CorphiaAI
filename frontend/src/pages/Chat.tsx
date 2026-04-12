@@ -708,11 +708,11 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className={`w-full transition-all duration-300 p-3 pb-6 md:pb-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 pb-[24px] md:px-[11px] md:pb-[11px] mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
-                        className={`flex items-center gap-3 p-1.5 rounded-full bg-gray-50 dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full pr-4' : 'w-12 h-12 justify-center shrink-0'}`}
+                        className={`flex items-center gap-3 p-1.5 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full pr-4' : 'w-12 h-12 justify-center shrink-0'}`}
                     >
                         {/* 圓形頭像框 */}
                         <div className="w-[36px] h-[36px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
