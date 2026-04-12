@@ -666,6 +666,7 @@ export default function Chat() {
                     {/* 新對話 / 新資料夾 按鈕 */}
                     <button
                         onClick={() => {
+                            console.log('[DEBUG] chatMode =', chatMode)
                             if (chatMode === 'project') {
                                 setNewFolderInput('')
                                 setNewFolderModal(true)
