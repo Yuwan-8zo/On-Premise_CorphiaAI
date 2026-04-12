@@ -435,7 +435,7 @@ export default function Chat() {
                 <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
                     {sidebarOpen && (
                         <div className="flex items-center px-1">
-                            <CorphiaLogo className="w-6 h-6 shrink-0 rounded-md overflow-hidden" />
+                            <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[8px] overflow-hidden" />
                         </div>
                     )}
                     <button
@@ -721,9 +721,9 @@ export default function Chat() {
                         </button>
                         
                         {/* 桌機版：外部只放文字 Corphia / 手機版：保留完整 Logo 與字 */}
-                        <h1 className={`text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
+                        <h1 className={`text-[20px] font-bold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
                             <span className="md:hidden flex items-center">
-                                <CorphiaLogo className="w-5 h-5 rounded-md overflow-hidden" />
+                                <CorphiaLogo className="w-7 h-7 rounded-[7px] overflow-hidden" />
                             </span>
                             Corphia
                         </h1>

@@ -202,8 +202,8 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-colors flex items-center gap-4">
-                            <CorphiaLogo className="w-14 h-14" />
+                        <h1 className="text-[64px] font-extrabold text-gray-900 dark:text-white mb-6 transition-colors flex items-center gap-5">
+                            <CorphiaLogo className="w-[72px] h-[72px]" />
                             Corphia
                         </h1>
                         <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
@@ -306,8 +306,8 @@ export default function Login() {
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors flex items-center justify-center gap-3">
-                        <CorphiaLogo className="w-8 h-8" />
+                    <h1 className="text-[40px] font-extrabold text-gray-900 dark:text-white mb-3 transition-colors flex items-center justify-center gap-4">
+                        <CorphiaLogo className="w-12 h-12" />
                         Corphia
                     </h1>
                     <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
