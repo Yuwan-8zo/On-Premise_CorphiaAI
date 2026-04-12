@@ -25,7 +25,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
 const FallbackLoader = () => (
-    <div className="flex items-center justify-center h-[100dvh] w-full bg-ios-light-gray5 dark:bg-ios-dark-gray6">
+    <div className="flex items-center justify-center h-[100dvh] w-full bg-ios-light-gray6 dark:bg-ios-dark-gray6">
         <div className="w-8 h-8 rounded-full border-2 border-ios-blue-light/20 dark:border-ios-blue-dark/20 border-t-ios-blue-light dark:border-t-ios-blue-dark animate-spin"></div>
     </div>
 )
@@ -55,7 +55,7 @@ export default function App() {
         
         // 根據當前層級與主題，動態設定 iOS Safari Safe Area（狀態列與底部）的背景色
         // 全部統一使用 Layer 0 (Gray 6) 作為 Safari Safe Area 背景，確保沉浸式體驗
-        let bg = isDark ? '#1c1c1e' : '#e5e5ea'
+        let bg = isDark ? '#1c1c1e' : '#ffffff'
 
         // dark class 切換
         if (isDark) {

@@ -449,7 +449,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-ios-light-gray5 dark:bg-ios-dark-gray6 text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-white dark:bg-ios-dark-gray6 text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
@@ -462,7 +462,7 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                    } overflow-hidden bg-white dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-ios-light-gray5 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
+                    } overflow-hidden bg-ios-light-gray6 dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
             >
                 {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
                 <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -755,9 +755,9 @@ export default function Chat() {
             </aside>
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 md:h-[calc(100vh-24px)] md:my-3 md:mr-3 relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6 md:rounded-card-xl md:border border-ios-light-gray5 dark:border-white/5 overflow-hidden">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white/95 dark:bg-ios-dark-gray6/95 backdrop-blur-md border-b border-gray-100 dark:border-white/5 transition-colors">
+                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 transition-colors">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}

@@ -15,7 +15,7 @@
 
 html {
   font-size: 14px;  /* 對齊 ChatGPT / Gemini / Claude 視覺密度（競品皆為緊湊佈局） */
-  background-color: #f0f2f5;
+  background-color: #ffffff;
   /* 'only light' 阻止瀏覽器以系統深色模式覆蓋頁面（參考 Gemini 實作） */
   color-scheme: only light;
   height: 100%;
@@ -28,7 +28,7 @@ body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5;
+  background-color: #ffffff;
   color: #111827;
   overscroll-behavior-y: none;
   height: 100%;
