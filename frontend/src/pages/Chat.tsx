@@ -653,10 +653,10 @@ export default function Chat() {
                                     if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
                                     
                                     return filtered.map((conv) => (
-                                        <button
+                                        <div
                                             key={conv.id}
                                             onClick={() => selectConversation(conv)}
-                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-full text-[14px] transition-colors group ${currentConversation?.id === conv.id
+                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-full text-[14px] transition-colors group cursor-pointer ${currentConversation?.id === conv.id
                                                 ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
@@ -673,7 +673,7 @@ export default function Chat() {
                                                     </svg>
                                                 </button>
                                             </div>
-                                        </button>
+                                        </div>
                                     ))
                                 })()}
                             </div>
@@ -753,9 +753,9 @@ export default function Chat() {
                                                                     <div className="absolute left-[-11px] top-[18px] bottom-[-4px] border-l border-gray-300 dark:border-white/5 pointer-events-none" />
                                                                 )}
                                                                 
-                                                                <button
+                                                                <div
                                                                     onClick={() => selectConversation(conv)}
-                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-full text-[13px] transition-colors group ml-[4px] border border-transparent ${currentConversation?.id === conv.id
+                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-full text-[13px] transition-colors group cursor-pointer ml-[4px] border border-transparent ${currentConversation?.id === conv.id
                                                                         ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium border-gray-200 dark:border-white/5'
                                                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3'
                                                                     }`}
@@ -765,7 +765,7 @@ export default function Chat() {
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                                         <button
                                                                             onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                                             title="選項"
                                                                         >
                                                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -773,7 +773,7 @@ export default function Chat() {
                                                                             </svg>
                                                                         </button>
                                                                     </div>
-                                                                </button>
+                                                                </div>
                                                             </div>
                                                         )
                                                     })}
