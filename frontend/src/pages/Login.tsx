@@ -142,8 +142,8 @@ export default function Login() {
     }, [])
 
     // 語言選擇處理
-    const handleLanguageSelect = (lang: 'zh-TW' | 'en-US') => {
-        setLanguage(lang)
+    const handleLanguageSelect = (lang: 'zh-TW' | 'en-US' | 'ja-JP') => {
+        setLanguage(lang as any)
         i18n.changeLanguage(lang)
         setIsLangMenuOpen(false)
     }
@@ -294,6 +294,12 @@ export default function Login() {
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-ios-blue-light dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-ios-light-gray6 dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         English
+                                    </button>
+                                    <button 
+                                        onClick={() => handleLanguageSelect('ja-JP')}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-ios-blue-light dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-ios-light-gray6 dark:hover:bg-ios-dark-gray5'}`}
+                                    >
+                                        日本語
                                     </button>
                                 </motion.div>
                             )}

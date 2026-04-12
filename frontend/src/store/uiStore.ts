@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
-type Language = 'zh-TW' | 'en-US'
+type Language = 'zh-TW' | 'en-US' | 'ja-JP'
 
 interface ConfirmConfig {
     message: string
