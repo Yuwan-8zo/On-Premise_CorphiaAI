@@ -134,7 +134,7 @@ export default function SettingsModal() {
                                 {menuItems.map(item => (
                                     <button
                                         key={item.id}
-                                        onClick={() => { setActiveSection(item.id); if (window.innerWidth < 768) setMobileMenuOpen(false); }}
+                                        onClick={() => setActiveSection(item.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
                                                 ? 'bg-white dark:bg-[#2a2a2a] text-[#1877F2] dark:text-blue-400 shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
@@ -176,7 +176,7 @@ export default function SettingsModal() {
 
                                     <div className="pt-8">
                                         <button
-                                            onClick={() => alert('清除成功！')}
+                                            onClick={handleLogout}
                                             className="px-6 py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 font-semibold rounded-full transition-colors"
                                         >
                                             {t('auth.logout')}
