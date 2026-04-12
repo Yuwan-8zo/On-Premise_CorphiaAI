@@ -27,8 +27,8 @@ const PlusIcon = () => (
 
 // The blue circle in the reference doesn't clearly show an arrow, but usually it represents send.
 const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[44px] h-[44px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-[#3b3b3b]' : 'bg-[#1877F2] hover:bg-[#166fe5]'}`}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
+    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-[#3b3b3b]' : 'bg-[#1877F2] hover:bg-[#166fe5]'}`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
             <line x1="12" y1="19" x2="12" y2="5"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
         </svg>
@@ -36,8 +36,8 @@ const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
 )
 
 const StopIcon = () => (
-    <div className="w-[44px] h-[44px] rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+    <div className="w-[32px] h-[32px] rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
             <rect x="5" y="5" width="14" height="14" rx="2" />
         </svg>
     </div>
@@ -1043,7 +1043,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[26px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
@@ -1064,7 +1064,7 @@ export default function Chat() {
                             )}
 
                             {/* Input Row */}
-                            <div className="flex items-end gap-2 pl-4 pt-3 pr-[4px] pb-[4px]">
+                            <div className="flex items-end gap-2 p-2 pl-4">
                                 {chatMode === 'project' && (
                                     <>
                                         <button 
@@ -1088,7 +1088,7 @@ export default function Chat() {
                                     placeholder={chatMode === 'project' ? "傳送訊息或上傳資料..." : "Message Corphia AI..."}
                                     rows={1}
                                     disabled={isConnecting}
-                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-3 max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
+                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
                                     style={{ lineHeight: '1.4' }}
                                 />
                                 
