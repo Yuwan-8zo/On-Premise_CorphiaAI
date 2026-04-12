@@ -364,8 +364,8 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 輸入欄位群組 - 改用 gap-5 緊湊排版 */}
-                        <div className="w-full flex flex-col gap-4">
+                        {/* 輸入欄位群組 - 垂直平均分配在切換bar與按鈕之間 */}
+                        <div className="w-full flex flex-col flex-1 justify-evenly">
                             <FloatingInput
                                 id="email"
                                 type="email"
