@@ -183,7 +183,7 @@ export default function Login() {
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
                 {/* 後端狀態指示器 */}
-                <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
+                <div className="flex items-center gap-2 bg-white dark:bg-ios-dark-gray5 border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
@@ -233,7 +233,7 @@ export default function Login() {
             <div className="w-full lg:w-1/2 flex flex-col">
                 {/* 頂部區塊 (手機版顯示左側狀態與右側按鈕，桌面版只顯示右側按鈕) */}
                 <div className="flex justify-between items-center p-6 w-full">
-                    <div className="lg:hidden flex items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
+                    <div className="lg:hidden flex items-center gap-2 bg-white dark:bg-ios-dark-gray5 border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
                         <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                             backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></span>
@@ -266,7 +266,7 @@ export default function Login() {
                     <div className="relative" ref={langMenuRef}>
                         <button
                             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-[#333]' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-ios-dark-gray4' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-ios-dark-gray4'}`}
                             title={t('settings.language')}
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -281,7 +281,7 @@ export default function Login() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
+                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-ios-dark-gray5 border border-gray-100 dark:border-white/5 shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}

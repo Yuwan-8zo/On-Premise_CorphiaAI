@@ -28,7 +28,7 @@ const PlusIcon = () => (
 
 // The blue circle in the reference doesn't clearly show an arrow, but usually it represents send.
 const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-[#3b3b3b]' : 'bg-[#1877F2] hover:bg-[#166fe5]'}`}>
+    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-ios-dark-gray2 dark:bg-ios-dark-gray3' : 'bg-ios-blue-light hover:bg-ios-blue-light/90 dark:bg-ios-blue-dark dark:hover:bg-ios-blue-dark/90'}`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
             <line x1="12" y1="19" x2="12" y2="5"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
@@ -449,7 +449,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-white dark:bg-[#212121] text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-[#1877F2]/30 relative transition-colors">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-ios-light-gray6 dark:bg-ios-dark-gray6 text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarOpen && (
@@ -462,7 +462,7 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[20px] md:rounded-[20px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
+                    } overflow-hidden bg-white dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-ios-light-gray5 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
             >
                 {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
                 <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -476,7 +476,7 @@ export default function Chat() {
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className={`rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-all duration-200 shrink-0 flex items-center justify-center ${
+                        className={`rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 flex items-center justify-center ${
                             (!sidebarOpen && !isSidebarHovered) ? 'w-8 h-8 p-0' : 'w-[36px] h-[36px] p-2'
                         }`}
                     >
@@ -493,10 +493,10 @@ export default function Chat() {
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
-                        <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-[#2a2a2a]">
+                        <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-ios-dark-gray4">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -510,12 +510,12 @@ export default function Chat() {
                         <motion.div
                             layout
                             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                            className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0 w-full"
+                            className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-ios-dark-gray6 transition-colors shrink-0 w-full"
                             style={{ padding: '4px' }}
                         >
                             {/* 滑動背景 Pill */}
                             <div
-                                className="bg-white dark:bg-[#fff] shadow-sm"
+                                className="bg-white dark:bg-ios-dark-gray4 shadow-sm border-transparent dark:border-white/5 border"
                                 style={{
                                     position: 'absolute',
                                     top: '4px',
@@ -533,8 +533,8 @@ export default function Chat() {
                                 type="button"
                                 onClick={() => setChatMode('general')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
-                                    chatMode === 'general' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${
+                                    chatMode === 'general' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
                                 一般
@@ -544,8 +544,8 @@ export default function Chat() {
                                 type="button"
                                 onClick={() => setChatMode('project')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-medium transition-colors duration-300 ${
-                                    chatMode === 'project' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${
+                                    chatMode === 'project' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
                                 專案
@@ -553,12 +553,12 @@ export default function Chat() {
                         </motion.div>
                     ) : (
                         <div 
-                            className="relative flex flex-col items-center justify-between bg-gray-100 dark:bg-[#2a2a2a] rounded-full p-1 cursor-pointer w-12 shrink-0 transition-colors"
+                            className="relative flex flex-col items-center justify-between bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-full p-1 cursor-pointer w-12 shrink-0 transition-colors"
                             style={{ height: '88px' }}
                             onClick={() => setChatMode(prev => prev === 'general' ? 'project' : 'general')}
                         >
                             <div 
-                                className="absolute bg-[#fff] w-10 h-10 rounded-full shadow-sm"
+                                className="absolute bg-white dark:bg-ios-dark-gray4 w-10 h-10 rounded-full shadow-sm"
                                 style={{
                                     top: '4px',
                                     transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
@@ -567,13 +567,13 @@ export default function Chat() {
                                 }}
                             />
                             {/* General Mode Icon (Message) */}
-                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}>
+                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                 </svg>
                             </div>
                             {/* Project Mode Icon (Folder) */}
-                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}>
+                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                 </svg>
@@ -590,7 +590,7 @@ export default function Chat() {
                             <div className="mb-2 pl-2 mt-1">
                                 <span className="text-[12px] text-gray-500 tracking-wider font-medium">一般聊天</span>
                             </div>
-                            <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
+                            <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
                                 {(() => {
                                     const filtered = conversations.filter(c => !Boolean(c.settings?.isProject))
                                     if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
@@ -600,15 +600,15 @@ export default function Chat() {
                                             key={conv.id}
                                             onClick={() => selectConversation(conv)}
                                             className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-full text-[14px] transition-colors group ${currentConversation?.id === conv.id
-                                                ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium'
-                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-gray-200'
+                                                ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
                                         >
                                             <span className="truncate pr-2 pl-1">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                 <button
                                                     onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                    className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                    className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                     title="選項"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -630,7 +630,7 @@ export default function Chat() {
                                 const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
                                 if (filtered.length === 0) {
                                     return (
-                                        <div className="border-l border-gray-200 dark:border-[#333] ml-2 pl-2 space-y-1 transition-colors">
+                                        <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
                                             <p className="text-gray-400 text-[13px] py-4 pl-3">尚無專案</p>
                                         </div>
                                     )
@@ -653,12 +653,12 @@ export default function Chat() {
                                             <div key={folderName} className="relative">
                                                 {/* 主線：連接「專案資料夾」到此資料夾 L型節點 */}
                                                 <div 
-                                                    className="absolute left-[3px] top-[-16px] w-[12px] border-l border-b border-gray-300 dark:border-[#444] rounded-bl-sm"
+                                                    className="absolute left-[3px] top-[-16px] w-[12px] border-l border-b border-gray-300 dark:border-white/5 rounded-bl-sm"
                                                     style={{ height: '28px' }}
                                                 />
                                                 {/* 主線的垂直延伸 (如果不是最後一個資料夾，繼續往下畫) */}
                                                 {!isLastFolder && (
-                                                    <div className="absolute left-[3px] top-[12px] bottom-[-8px] border-l border-gray-300 dark:border-[#444]" />
+                                                    <div className="absolute left-[3px] top-[12px] bottom-[-8px] border-l border-gray-300 dark:border-white/5" />
                                                 )}
 
                                                 <div 
@@ -666,7 +666,7 @@ export default function Chat() {
                                                         setSelectedFolder(folderName)
                                                         setCurrentConversation(null) // Reset conversation
                                                     }}
-                                                    className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-[#222] group ${selectedFolder === folderName ? 'text-[#1877F2]' : 'text-gray-700 dark:text-gray-300 hover:text-[#1877F2]'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 group ${selectedFolder === folderName ? 'text-ios-blue-light dark:text-ios-blue-dark' : 'text-gray-700 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark'}`}
                                                 >
                                                     <span className="truncate pr-2">{folderName}</span>
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -688,19 +688,19 @@ export default function Chat() {
                                                             <div key={conv.id} className="relative">
                                                                 {/* 次層 L 型節點 */}
                                                                 <div 
-                                                                    className="absolute left-[-11px] top-[-10px] w-[12px] border-l border-b border-gray-300 dark:border-[#444] rounded-bl-sm pointer-events-none"
+                                                                    className="absolute left-[-11px] top-[-10px] w-[12px] border-l border-b border-gray-300 dark:border-white/5 rounded-bl-sm pointer-events-none"
                                                                     style={{ height: '28px' }}
                                                                 />
                                                                 {/* 次層垂直延伸 */}
                                                                 {!isLastConv && (
-                                                                    <div className="absolute left-[-11px] top-[18px] bottom-[-4px] border-l border-gray-300 dark:border-[#444] pointer-events-none" />
+                                                                    <div className="absolute left-[-11px] top-[18px] bottom-[-4px] border-l border-gray-300 dark:border-white/5 pointer-events-none" />
                                                                 )}
                                                                 
                                                                 <button
                                                                     onClick={() => selectConversation(conv)}
                                                                     className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-full text-[13px] transition-colors group ml-[4px] border border-transparent ${currentConversation?.id === conv.id
-                                                                        ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white font-medium border-gray-200 dark:border-[#333]'
-                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#222]'
+                                                                        ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium border-gray-200 dark:border-white/5'
+                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3'
                                                                     }`}
                                                                     style={{ width: 'calc(100% - 4px)' }}
                                                                 >
@@ -708,7 +708,7 @@ export default function Chat() {
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                                         <button
                                                                             onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-[#444] ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-[#444] text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                                             title="選項"
                                                                         >
                                                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -736,11 +736,11 @@ export default function Chat() {
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
                         {/* 圓形頭像框 */}
-                        <div className="w-[32px] h-[32px] rounded-full bg-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#333]">
+                        <div className="w-[32px] h-[32px] rounded-full bg-white dark:bg-ios-dark-gray6 flex items-center justify-center shrink-0 border border-gray-200 dark:border-white/5">
                             <svg viewBox="0 0 24 24" fill="none" className="w-[16px] h-[16px] text-gray-400 dark:text-gray-500">
                                 <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
                             </svg>
@@ -755,13 +755,13 @@ export default function Chat() {
             </aside>
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-[#212121]">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-[#212121] border-b border-gray-100 dark:border-white/5 transition-colors">
+                <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 transition-colors">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
-                            className={`p-2 -ml-2 rounded-full hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
+                            className={`p-2 -ml-2 rounded-full hover:bg-gray-200/50 dark:hover:bg-ios-dark-gray4 transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
                         >
                             <SidebarIcon className="w-5 h-5" />
                         </button>
@@ -780,7 +780,7 @@ export default function Chat() {
                         <div className="relative">
                             <button 
                                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-[#333]"
+                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-ios-dark-gray3"
                             >
                                 <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400">
                                     {selectedModel ? selectedModel.name : 'Loading Models...'}
@@ -797,7 +797,7 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-[#2a2a2a] rounded-[20px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
+                                            className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-2"
                                         >
                                             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                                 {availableModels.length === 0 ? (
@@ -815,32 +815,32 @@ export default function Chat() {
                                                                     console.error('選擇模型失敗', err);
                                                                 }
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
+                                                            className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-ios-dark-gray4' : 'hover:bg-gray-50 dark:hover:bg-ios-dark-gray4'}`}
                                                         >
                                                             <div className="flex flex-col min-w-0 pr-3">
                                                                 <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
                                                                 <span className="text-[12px] text-gray-500 mt-1 flex items-center gap-2">
                                                                     <span>{model.size_gb.toFixed(1)} GB</span>
                                                                     {model.quantization && (
-                                                                        <span className="bg-gray-200/50 dark:bg-[#444] px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
+                                                                        <span className="bg-gray-200/50 dark:bg-ios-dark-gray6 px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
                                                                     )}
                                                                 </span>
                                                             </div>
                                                             {selectedModel?.name === model.name && (
-                                                                <svg className="w-5 h-5 ml-2 text-[#1877F2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                                <svg className="w-5 h-5 ml-2 text-ios-blue-light dark:text-ios-blue-dark shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
                                                             )}
                                                         </button>
                                                     ))
                                                 )}
                                             </div>
                                             
-                                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-[#333]">
+                                            <div className="mt-2 pt-2 border-t border-ios-light-gray5 dark:border-white/5">
                                                 <button 
                                                     onClick={async () => {
                                                         const res = await modelsApi.refreshModels();
                                                         setAvailableModels(res.models);
                                                     }}
-                                                    className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400 group"
+                                                    className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-400 group"
                                                 >
                                                     <svg className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                                     <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
@@ -856,7 +856,7 @@ export default function Chat() {
                         <div className="relative">
                             <button 
                                 onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                                className={`p-2 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-full transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-[#2a2a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                                className={`p-2 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-ios-dark-gray4' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
@@ -874,22 +874,22 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[220px] bg-[#1a1a1a] rounded-[20px] shadow-xl border border-[#333] overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-[#e5e5e5]"
+                                            className="absolute right-0 top-full mt-2 w-[220px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
                                         >
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                                                 <span className="font-medium text-[15px]">分享</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                                 <span className="font-medium text-[15px]">重新命名</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                                 <span className="font-medium text-[15px]">移至專案</span>
                                             </button>
-                                            <div className="my-1 border-t border-[#333]" />
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-red-500/10 text-red-500 active:bg-red-500/20">
+                                            <div className="my-1 border-t border-ios-light-gray5 dark:border-white/5" />
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 active:bg-red-100 dark:active:bg-red-500/20">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                 <span className="font-medium text-[15px]">刪除</span>
                                             </button>
@@ -907,7 +907,7 @@ export default function Chat() {
                     <div className="flex-1 overflow-y-auto px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
                         <div className="mb-8 pl-2">
                             <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
-                                <svg className="w-8 h-8 text-[#1877F2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-8 h-8 text-ios-blue-light dark:text-ios-blue-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
                                 {selectedFolder}
@@ -915,12 +915,12 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理專屬來源文獻，Corphia 將會依據你打勾勾選的檔案作為參考資料來回答對話。</p>
                         </div>
                         
-                        <div className="bg-white dark:bg-[#111] rounded-[20px] shadow-sm border border-gray-200 dark:border-[#333] overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-100 dark:border-[#333] flex justify-between items-center bg-gray-50/50 dark:bg-[#1a1a1a]">
+                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-ios-dark-gray6/50">
                                 <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full transition-all shadow-sm shadow-[#1877F2]/20 hover:shadow-[#1877F2]/40 text-sm font-medium"
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white rounded-full transition-all shadow-sm shadow-ios-blue-light/20 hover:shadow-ios-blue-light/40 text-sm font-medium"
                                 >
                                     <PlusIcon /> <span className="mr-1">新增來源</span>
                                 </button>
@@ -928,22 +928,22 @@ export default function Chat() {
                             
                             {folderDocuments.length === 0 ? (
                                 <div className="p-16 text-center">
-                                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-[#444] mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                     </svg>
                                     <p className="text-[17px] font-semibold text-gray-600 dark:text-gray-300 mb-1">尚無文獻來源</p>
                                     <p className="text-[14px] text-gray-400">點擊右上角新增，建立專案護城河</p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-gray-100 dark:divide-[#2a2a2a]">
+                                <div className="divide-y divide-gray-100 dark:divide-white/5">
                                     {folderDocuments.map((doc) => (
-                                        <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors group">
+                                        <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors group">
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <label className="relative flex cursor-pointer items-center rounded-full" htmlFor={`checkbox-${doc.id}`}>
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-[#1877F2] checked:bg-[#1877F2] checked:before:bg-[#1877F2] hover:before:opacity-10 dark:border-[#555]"
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-ios-blue-light checked:bg-ios-blue-light checked:before:bg-ios-blue-light dark:checked:border-ios-blue-dark dark:checked:bg-ios-blue-dark dark:checked:before:bg-ios-blue-dark hover:before:opacity-10 dark:border-white/20 dark:bg-ios-dark-gray6"
                                                         checked={doc.doc_metadata?.isActive ?? true}
                                                         onChange={() => handleToggleDocActive(doc)}
                                                     />
@@ -997,12 +997,12 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {isUploading && selectedFolder && (
-                            <div className="mt-6 p-4 bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-[20px] border border-[#1877F2]/20 flex items-center justify-between shadow-sm animate-fade-in-up">
+                            <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-ios-blue-light/20 flex items-center justify-between shadow-sm animate-fade-in-up">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full border-2 border-[#1877F2] border-t-transparent animate-spin" />
-                                    <span className="text-[#1877F2] text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <div className="w-5 h-5 rounded-full border-2 border-ios-blue-light dark:border-ios-blue-dark border-t-transparent animate-spin" />
+                                    <span className="text-ios-blue-light dark:text-ios-blue-dark text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
                                 </div>
-                                <span className="text-[#1877F2] font-semibold">{uploadProgress}%</span>
+                                <span className="text-ios-blue-light dark:text-ios-blue-dark font-semibold">{uploadProgress}%</span>
                             </div>
                         )}
                         
@@ -1054,9 +1054,9 @@ export default function Chat() {
                                     <button 
                                         key={index}
                                         onClick={() => setInput(item.desc)}
-                                        className="text-left p-4 rounded-[20px] border border-gray-200 dark:border-[#333] bg-white/60 dark:bg-[#222]/60 hover:bg-white dark:hover:bg-[#2a2a2a] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                        className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                     >
-                                        <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[#1877F2] transition-colors">{item.title}</div>
+                                        <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-ios-blue-light dark:group-hover:text-ios-blue-dark transition-colors">{item.title}</div>
                                         <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
                                     </button>
                                 ))}
@@ -1090,13 +1090,13 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-ios-blue-light/20 dark:focus-within:ring-ios-blue-dark/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
-                                        <div key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] px-3 py-1.5 rounded-full text-[13px] border border-gray-200 dark:border-[#444] animate-fade-in-up">
+                                        <div key={i} className="flex items-center gap-1.5 bg-ios-light-gray5 dark:bg-ios-dark-gray6 px-3 py-1.5 rounded-full text-[13px] border border-transparent dark:border-white/5 animate-fade-in-up">
                                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                             <span className="truncate max-w-[120px] text-gray-700 dark:text-gray-300">{f.name}</span>
                                         </div>
@@ -1117,7 +1117,7 @@ export default function Chat() {
                                         <button 
                                             onClick={() => fileInputRef.current?.click()} 
                                             disabled={isConnecting || isUploading}
-                                            className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-[#1877F2] dark:hover:text-[#1877F2] mb-1 disabled:opacity-50"
+                                            className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark mb-1 disabled:opacity-50"
                                             title="上傳專案文件 (NotebookLM 模式)"
                                         >
                                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
@@ -1178,21 +1178,21 @@ export default function Chat() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="fixed z-[100] w-[240px] bg-white dark:bg-[#282828] border border-gray-100 dark:border-[#333] shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-gray-800 dark:text-gray-200"
+                        className="fixed z-[100] w-[240px] bg-white dark:bg-ios-dark-gray5 border border-gray-100 dark:border-white/5 shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-gray-800 dark:text-gray-200"
                         style={{ 
                             left: activeMenu.x, 
                             top: Math.min(activeMenu.y, window.innerHeight - 300) 
                         }}
                     >
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => setActiveMenu(null)}>
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                             分享
                         </button>
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => setActiveMenu(null)}>
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             重新命名
                         </button>
-                        <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-[#333] transition-colors text-left group" onClick={() => setActiveMenu(null)}>
+                        <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left group" onClick={() => setActiveMenu(null)}>
                             <div className="flex items-center gap-3">
                                 <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
                                 <span>移至專案</span>
@@ -1200,14 +1200,14 @@ export default function Chat() {
                             <svg className="w-4 h-4 opacity-0 group-hover:opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
 
-                        <div className="h-[1px] bg-gray-100 dark:bg-[#444] my-1 mx-3" />
+                        <div className="h-[1px] bg-gray-100 dark:bg-white/5 my-1 mx-3" />
 
                         <button 
                             onClick={(e) => {
                                 handleDeleteConversation(activeMenu.convId, e);
                                 setActiveMenu(null);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-red-50 dark:hover:bg-[#3a2020] text-red-500 transition-colors text-left group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-red-50 dark:hover:bg-red-900/40 text-red-500 transition-colors text-left group"
                         >
                             <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             刪除

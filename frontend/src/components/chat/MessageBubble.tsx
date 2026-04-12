@@ -29,7 +29,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
         <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}>
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
-                <div className="max-w-[75%] bg-[#2f2f2f] text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
+                <div className="max-w-[75%] bg-gray-100 dark:bg-ios-dark-gray5 text-gray-900 dark:text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
                     {message.content}
                 </div>
             ) : (
@@ -39,9 +39,9 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                     <AIAvatar />
                     
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 pt-0.5 text-gray-100 text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 pt-0.5 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
-                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-800 max-w-none">
+                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-gray-100 dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-white/5 max-w-none">
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (

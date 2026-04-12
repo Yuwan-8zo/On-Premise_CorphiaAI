@@ -113,7 +113,7 @@ export default function SettingsModal() {
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         // Mathematical Padding constraint: p-4 (16px), inner active pill -> rounded-full
-                        className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-[#202123]/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
+                        className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-ios-dark-gray5/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
                     >
                         {/* Close button (Mobile only or Top Right absolute) */}
                         <button
@@ -124,7 +124,7 @@ export default function SettingsModal() {
                         </button>
 
                         {/* 側邊選單 (Sidebar of Settings) */}
-                        <div className="md:w-64 bg-gray-50/50 dark:bg-[#111]/30 border-r border-gray-200/50 dark:border-[#333]/50 flex-shrink-0 flex flex-col">
+                        <div className="md:w-64 bg-gray-50/50 dark:bg-ios-dark-gray6/30 border-r border-gray-200/50 dark:border-white/5 flex-shrink-0 flex flex-col">
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-wide">
                                     {t('settings.title')}
@@ -136,7 +136,7 @@ export default function SettingsModal() {
                                         key={item.id}
                                         onClick={() => setActiveSection(item.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
-                                                ? 'bg-white dark:bg-[#2a2a2a] text-[#1877F2] dark:text-blue-400 shadow-sm font-semibold'
+                                                ? 'bg-white dark:bg-ios-dark-gray4 text-ios-blue-light dark:text-ios-blue-light shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
                                             }`}
                                     >
@@ -152,13 +152,13 @@ export default function SettingsModal() {
                             {/* 個人資料 */}
                             {activeSection === 'profile' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-[#333]">
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.profile')}
                                     </h2>
 
                                     {/* 頭像與資訊 */}
                                     <div className="flex items-center gap-8 mb-10">
-                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1877F2] to-[#0a4fa8] flex items-center justify-center text-white text-4xl font-bold shadow-lg shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-ios-blue-light to-ios-blue-dark flex items-center justify-center text-white text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div>
@@ -168,7 +168,7 @@ export default function SettingsModal() {
                                             <p className="text-lg text-gray-500 dark:text-gray-400 mb-3">
                                                 {user?.email}
                                             </p>
-                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[#1877F2]/10 dark:bg-[#1877F2]/20 text-[#1877F2] rounded-full">
+                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light rounded-full">
                                                 {user?.role}
                                             </span>
                                         </div>
@@ -188,7 +188,7 @@ export default function SettingsModal() {
                             {/* 外觀設定 */}
                             {activeSection === 'appearance' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-[#333]">
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.theme')}
                                     </h2>
 
@@ -197,14 +197,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
-                                                    ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10 ring-4 ring-[#1877F2]/20'
-                                                    : 'border-gray-200 dark:border-[#444] hover:border-gray-300 dark:hover:border-[#555]'
+                                                    ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-light/10 ring-4 ring-ios-blue-light/20'
+                                                    : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-white border border-gray-200 shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[#1877F2]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-ios-blue-light' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
@@ -213,14 +213,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
-                                                    ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10 ring-4 ring-[#1877F2]/20'
-                                                    : 'border-gray-200 dark:border-[#444] hover:border-gray-300 dark:hover:border-[#555]'
+                                                    ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-light/10 ring-4 ring-ios-blue-light/20'
+                                                    : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
-                                            <div className="w-full h-24 rounded-xl bg-[#111111] border border-[#333] shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
+                                            <div className="w-full h-24 rounded-xl bg-ios-dark-gray6 border border-white/5 shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[#1877F2] dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-ios-blue-light dark:text-ios-blue-light' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {t('settings.themeDark')}
                                             </p>
                                         </button>
@@ -231,7 +231,7 @@ export default function SettingsModal() {
                             {/* 語言設定 */}
                             {activeSection === 'language' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-[#333]">
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.language')}
                                     </h2>
 
@@ -241,8 +241,8 @@ export default function SettingsModal() {
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between px-6 py-5 rounded-full transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-[#1877F2]/5 dark:bg-[#1877F2]/10 text-[#1877F2] dark:text-blue-400 border-[#1877F2]'
-                                                        : 'bg-white dark:bg-[#2a2a2a] hover:bg-gray-50 dark:hover:bg-[#333] text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
+                                                        ? 'bg-ios-blue-light/5 dark:bg-ios-blue-light/10 text-ios-blue-light dark:text-ios-blue-light border-ios-blue-light'
+                                                        : 'bg-white dark:bg-ios-dark-gray4 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
                                                     }`}
                                             >
                                                 <span className="font-semibold text-[16px]">{lang.label}</span>
@@ -260,12 +260,12 @@ export default function SettingsModal() {
                             {/* 關於 */}
                             {activeSection === 'about' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-[#333]">
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.about')}
                                     </h2>
 
                                     <div className="text-center py-6">
-                                        <div className="inline-flex items-center justify-center w-28 h-28 rounded-[20px] bg-gradient-to-tr from-[#0a4fa8] to-[#1877F2] mb-6 shadow-xl shadow-[#1877F2]/30">
+                                        <div className="inline-flex items-center justify-center w-28 h-28 rounded-[20px] bg-gradient-to-tr from-ios-blue-dark to-ios-blue-light mb-6 shadow-xl shadow-ios-blue-light/30">
                                             <RobotIcon />
                                         </div>
                                         <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
@@ -279,7 +279,7 @@ export default function SettingsModal() {
                                         </p>
                                     </div>
 
-                                    <div className="mt-8 p-6 bg-gray-50 dark:bg-[#111]/50 rounded-[20px]">
+                                    <div className="mt-8 p-6 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-transparent dark:border-white/5">
                                         <div className="grid grid-cols-2 gap-4 text-sm text-left">
                                             <div>
                                                 <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">技術棧</p>

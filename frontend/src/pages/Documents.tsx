@@ -37,7 +37,7 @@ const FileIcon = ({ type }: { type: string }) => {
     }
 
     return (
-        <div className={`w-10 h-10 rounded-[16px] bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center ${colors[type] || 'text-gray-500'}`}>
+        <div className={`w-10 h-10 rounded-[16px] bg-ios-light-gray5 dark:bg-ios-dark-gray6 flex items-center justify-center ${colors[type] || 'text-gray-500'}`}>
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
             </svg>
@@ -54,7 +54,7 @@ const TrashIcon = () => (
 const StatusBadge = ({ status }: { status: Document['status'] }) => {
     const styles = {
         pending: 'bg-yellow-100/50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20',
-        processing: 'bg-[#1877F2]/10 text-[#1877F2] dark:bg-[#1877F2]/20 dark:text-blue-400 border border-blue-200 dark:border-[#1877F2]/30',
+        processing: 'bg-ios-blue-light/10 text-ios-blue-light dark:bg-ios-blue-dark/20 dark:text-ios-blue-light border border-blue-200 dark:border-ios-blue-dark/30',
         completed: 'bg-green-100/50 text-green-700 dark:bg-green-500/10 dark:text-green-400 border border-green-200 dark:border-green-500/20',
         failed: 'bg-red-100/50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20',
     }
@@ -191,15 +191,15 @@ export default function Documents() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#1a1a1a] transition-colors duration-300">
+        <div className="min-h-screen bg-ios-light-gray6 dark:bg-ios-dark-gray6 transition-colors duration-300">
             {/* 頂部導覽列 */}
-            <header className="h-[80px] border-b border-gray-200 dark:border-[#222] flex items-center justify-between px-8 bg-white dark:bg-[#111111] transition-colors">
+            <header className="h-[80px] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-8 bg-white/95 dark:bg-ios-dark-gray6/95 backdrop-blur-md transition-colors sticky top-0 z-10">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-wide">
                     📁 {t('nav.documents')}
                 </h1>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-full transition-colors"
+                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
                 >
                     {theme === 'dark' ? (
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,9 +216,9 @@ export default function Documents() {
             <div className="max-w-5xl mx-auto p-8 pt-10">
                 {/* 上傳區域 */}
                 <div
-                    className={`relative border-2 border-dashed rounded-[20px] p-10 mb-10 transition-colors bg-white dark:bg-[#2a2a2a] ${dragActive
-                            ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10'
-                            : 'border-gray-300 dark:border-[#444] hover:border-[#1877F2]/50'
+                    className={`relative border-2 border-dashed rounded-[20px] p-10 mb-10 transition-colors bg-white dark:bg-ios-dark-gray5 ${dragActive
+                            ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-dark/10'
+                            : 'border-gray-300 dark:border-white/5 hover:border-ios-blue-light/50 dark:hover:border-ios-blue-dark/50'
                         } shadow-sm dark:shadow-none`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -234,7 +234,7 @@ export default function Documents() {
                     />
 
                     <div className="text-center flex flex-col items-center">
-                        <div className="text-[#1877F2] mb-4">
+                        <div className="text-ios-blue-light dark:text-ios-blue-dark mb-4">
                             <UploadIcon />
                         </div>
                         <p className="text-gray-900 dark:text-gray-100 font-medium mb-2 text-lg">
@@ -248,9 +248,9 @@ export default function Documents() {
                     {/* 上傳進度 */}
                     {isUploading && (
                         <div className="mt-6 max-w-md mx-auto">
-                            <div className="h-2 bg-gray-100 dark:bg-[#1a1a1a] rounded-full overflow-hidden border border-gray-200 dark:border-[#333]">
+                            <div className="h-2 bg-gray-100 dark:bg-ios-dark-gray6 rounded-full overflow-hidden border border-gray-200 dark:border-white/5">
                                 <div
-                                    className="h-full bg-[#1877F2] transition-all duration-300 relative"
+                                    className="h-full bg-ios-blue-light dark:bg-ios-blue-dark transition-all duration-300 relative"
                                     style={{ width: `${uploadProgress}%` }}
                                 >
                                     <div className="absolute inset-0 bg-white/20" />
@@ -271,8 +271,8 @@ export default function Documents() {
                 )}
 
                 {/* 文件列表 */}
-                <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] overflow-hidden shadow-sm dark:shadow-none transition-colors">
-                    <div className="px-8 py-5 border-b border-gray-200 dark:border-[#333]">
+                <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                    <div className="px-8 py-5 border-b border-gray-200 dark:border-white/5">
                         <h2 className="font-semibold text-gray-900 dark:text-white">
                             已上傳文件 ({documents.length})
                         </h2>
@@ -287,9 +287,9 @@ export default function Documents() {
                             尚無上傳的文件
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100 dark:divide-[#333]">
+                        <div className="divide-y divide-gray-100 dark:divide-white/5">
                             {documents.map(doc => (
-                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-gray-50 dark:hover:bg-[#333]/50 transition-colors">
+                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors">
                                     <FileIcon type={doc.fileType} />
 
                                     <div className="flex-1 min-w-0">

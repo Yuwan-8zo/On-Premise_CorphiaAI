@@ -5,7 +5,7 @@ import React from 'react';
 export const CorphiaLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
         {/* 背景大圓角方塊 / 圓形 */}
-        <rect width="24" height="24" rx="12" fill="#1C1C1E" />
+        <rect width="24" height="24" rx="12" className="fill-gray-900 dark:fill-ios-dark-gray6" />
         
         {/* 幾何 C 字 */}
         <path d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5" 

@@ -25,8 +25,8 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
 const FallbackLoader = () => (
-    <div className="flex items-center justify-center h-[100dvh] w-full bg-white dark:bg-[#212121]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#1877F2]/20 border-t-[#1877F2] animate-spin"></div>
+    <div className="flex items-center justify-center h-[100dvh] w-full bg-ios-light-gray6 dark:bg-ios-dark-gray6">
+        <div className="w-8 h-8 rounded-full border-2 border-ios-blue-light/20 dark:border-ios-blue-dark/20 border-t-ios-blue-light dark:border-t-ios-blue-dark animate-spin"></div>
     </div>
 )
 
@@ -53,16 +53,9 @@ export default function App() {
     useEffect(() => {
         const isDark = theme === 'dark'
         
-        // 根據當前頁面與主題，動態設定 iOS Safari Safe Area（狀態列與底部）的背景色
-        let bg = isDark ? '#1a1a1a' : '#f0f2f5'
-        
-        if (location.pathname === '/' || location.pathname.startsWith('/chat')) {
-            // Chat 頁面本身背景為 bg-white / bg-[#212121]
-            bg = isDark ? '#212121' : '#ffffff'
-        } else if (location.pathname === '/login' || location.pathname === '/register') {
-            // 登入與註冊頁面背景為 bg-gray-50 / bg-[#131314]
-            bg = isDark ? '#131314' : '#f9fafb'
-        }
+        // 根據當前層級與主題，動態設定 iOS Safari Safe Area（狀態列與底部）的背景色
+        // 全部統一使用 Layer 0 (Gray 6) 作為 Safari Safe Area 背景，確保沉浸式體驗
+        let bg = isDark ? '#1c1c1e' : '#f2f2f7'
 
         // dark class 切換
         if (isDark) {
