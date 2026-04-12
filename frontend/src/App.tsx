@@ -7,13 +7,15 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
 
-// Pages
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Chat from './pages/Chat'
-import Documents from './pages/Documents'
-import Admin from './pages/Admin'
-import NotFound from './pages/NotFound'
+import { lazy, Suspense } from 'react'
+
+// Lazy loaded Pages
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Chat = lazy(() => import('./pages/Chat'))
+const Documents = lazy(() => import('./pages/Documents'))
+const Admin = lazy(() => import('./pages/Admin'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/ui/SettingsModal'
@@ -22,6 +24,11 @@ import SettingsModal from './components/ui/SettingsModal'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
+const FallbackLoader = () => (
+    <div className="flex items-center justify-center h-[100dvh] w-full bg-white dark:bg-[#212121]">
+        <div className="w-8 h-8 rounded-full border-2 border-[#1877F2]/20 border-t-[#1877F2] animate-spin"></div>
+    </div>
+)
 
 export default function App() {
     const { isAuthenticated } = useAuthStore()
@@ -103,62 +110,64 @@ export default function App() {
                 key={location.pathname}
                 className="page-transition"
             >
-                <Routes location={location}>
-                    {/* 公開路由 */}
-                    <Route
-                        path="/login"
-                        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
-                    />
-                    <Route
-                        path="/register"
-                        element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
-                    />
+                <Suspense fallback={<FallbackLoader />}>
+                    <Routes location={location}>
+                        {/* 公開路由 */}
+                        <Route
+                            path="/login"
+                            element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+                        />
+                        <Route
+                            path="/register"
+                            element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+                        />
 
-                    {/* 受保護路由 */}
-                    <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute>
-                                <Chat />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/chat"
-                        element={
-                            <ProtectedRoute>
-                                <Chat />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/chat/:conversationId"
-                        element={
-                            <ProtectedRoute>
-                                <Chat />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/documents"
-                        element={
-                            <ProtectedRoute>
-                                <Documents />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin"
-                        element={
-                            <ProtectedRoute>
-                                <Admin />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* 受保護路由 */}
+                        <Route
+                            path="/"
+                            element={
+                                <ProtectedRoute>
+                                    <Chat />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/chat"
+                            element={
+                                <ProtectedRoute>
+                                    <Chat />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/chat/:conversationId"
+                            element={
+                                <ProtectedRoute>
+                                    <Chat />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/documents"
+                            element={
+                                <ProtectedRoute>
+                                    <Documents />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin"
+                            element={
+                                <ProtectedRoute>
+                                    <Admin />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    {/* 404 */}
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
+                        {/* 404 */}
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
+                </Suspense>
             </div>
             
             {/* 全域元件 */}
