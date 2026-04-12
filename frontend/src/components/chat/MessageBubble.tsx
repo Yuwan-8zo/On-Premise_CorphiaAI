@@ -6,19 +6,17 @@ import { memo } from 'react'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import type { Message } from '../../types/chat'
+import { CorphiaLogo } from '../icons/CorphiaIcons'
 
 interface MessageBubbleProps {
     message: Message
     isStreaming?: boolean
 }
 
-// AI 簡約頭像 (ChatGPT 樣式：空心或簡潔的圖標)
+// AI 品牌頭像：使用 Corphia 官方 Logo 圖示
 const AIAvatar = () => (
-    <div className="w-8 h-8 rounded-[12px] border border-gray-600 bg-transparent flex items-center justify-center flex-shrink-0">
-        <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-gray-200">
-            {/* 簡單的 AI / Star 圖示代表模型 */}
-            <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6L12 2z" />
-        </svg>
+    <div className="w-8 h-8 flex-shrink-0">
+        <CorphiaLogo className="w-8 h-8" />
     </div>
 )
 
