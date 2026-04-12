@@ -115,6 +115,11 @@ export default function Chat() {
     const [moveModal, setMoveModal] = useState<{ convId: string, isProject: boolean, folderName: string } | null>(null)
     const [moveInput, setMoveInput] = useState('')
 
+    // 新建資料夾 Modal 狀態
+    const [newFolderModal, setNewFolderModal] = useState(false)
+    const [newFolderInput, setNewFolderInput] = useState('')
+    const newFolderInputRef = useRef<HTMLInputElement>(null)
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -194,6 +199,23 @@ export default function Chat() {
         } catch {
             // 即使複製失敗也不做任何 —— 避免 alert 被封鎖
         }
+    }
+
+    const submitNewFolder = async () => {
+        const folderName = newFolderInput.trim() || '新資料夾'
+        // 建立一個新對話並標記為專案資料夾
+        try {
+            const newConv = await conversationsApi.create({
+                title: '新對話',
+                settings: { isProject: true, folderName }
+            })
+            addConversation(newConv)
+            setChatMode('project')
+        } catch (error) {
+            console.error('Create folder failed:', error)
+        }
+        setNewFolderModal(false)
+        setNewFolderInput('')
     }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
@@ -696,8 +718,17 @@ export default function Chat() {
                         </>
                     ) : (
                         <>
-                            <div className="mb-2 pl-2 mt-1">
+                            <div className="mb-2 pl-2 mt-1 flex items-center justify-between pr-1">
                                 <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
+                                <button
+                                    onClick={() => { setNewFolderInput(''); setNewFolderModal(true); setTimeout(() => newFolderInputRef.current?.focus(), 100) }}
+                                    className="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors"
+                                    title="新建資料夾"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
                             </div>
                             {(() => {
                                 const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
@@ -1441,6 +1472,59 @@ export default function Chat() {
                                     </div>
                                 </>
                             )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── New Folder Modal ── */}
+            <AnimatePresence>
+                {newFolderModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                        onClick={() => setNewFolderModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.93, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.93, opacity: 0 }}
+                            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                            className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-2xl w-[340px] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="px-6 pt-6 pb-4">
+                                <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-1">新建資料夾</h3>
+                                <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-4">建立資料夾並自動加入一筆新對話</p>
+                                <input
+                                    ref={newFolderInputRef}
+                                    type="text"
+                                    value={newFolderInput}
+                                    onChange={e => setNewFolderInput(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') submitNewFolder(); if (e.key === 'Escape') setNewFolderModal(false); }}
+                                    className="w-full px-4 py-2.5 bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 rounded-xl text-[15px] text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark focus:ring-2 focus:ring-ios-blue-light/20 dark:focus:ring-ios-blue-dark/20 transition-all"
+                                    placeholder="資料夾名稱"
+                                    autoComplete="off"
+                                />
+                            </div>
+                            <div className="flex border-t border-gray-100 dark:border-white/5">
+                                <button
+                                    onClick={() => setNewFolderModal(false)}
+                                    className="flex-1 py-3.5 text-[16px] text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
+                                >
+                                    取消
+                                </button>
+                                <div className="w-px bg-gray-100 dark:bg-white/5" />
+                                <button
+                                    onClick={submitNewFolder}
+                                    className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
+                                >
+                                    建立
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
