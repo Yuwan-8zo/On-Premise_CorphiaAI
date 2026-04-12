@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 import { motion, AnimatePresence } from 'framer-motion'
+import { QrCode } from 'lucide-react'
 import { CorphiaLogo } from '../components/icons/CorphiaIcons'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -98,6 +99,7 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
+    const [showQR, setShowQR] = useState(false) // 新增 QR Modal 狀態
     const langMenuRef = useRef<HTMLDivElement>(null)
     
     // 共用的輸入狀態
@@ -178,7 +180,35 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white dark:bg-ios-dark-gray6 transition-colors duration-300">
+        <div className="min-h-screen flex bg-white dark:bg-ios-dark-gray6 transition-colors duration-300 relative overflow-hidden">
+            {/* ── 全螢幕 QR Code 虛化背景 Modal ── */}
+            <AnimatePresence>
+                {showQR && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4"
+                        onClick={() => setShowQR(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white p-6 rounded-[32px] shadow-2xl flex flex-col items-center"
+                        >
+                            <img 
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
+                                alt="Mobile Access QR Code" 
+                                className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-[16px]"
+                            />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
@@ -226,25 +256,17 @@ export default function Login() {
                             </div>
                         </div>
 
-                        {/* 展示用 QR Code - 僅在桌面顯示以供手機掃描測試 */}
-                        <div className="mt-12 p-5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 border border-gray-200/50 dark:border-white/5 rounded-[24px] flex items-center gap-5 w-fit shadow-sm transition-colors">
-                            <div className="bg-white p-2.5 rounded-[16px] shrink-0 shadow-sm">
-                                <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
-                                    alt="Mobile Access QR Code" 
-                                    className="w-[84px] h-[84px] rounded-[8px]"
-                                />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-[15px] font-bold text-gray-900 dark:text-white mb-1 transition-colors">📱 掃描體驗手機版</span>
-                                <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed transition-colors">
-                                    拿出手機掃描左側條碼，<br/>
-                                    立即享受響應式行動體驗！
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </div>
+
+                {/* 左下角：顯示 QR Code 按鈕 (僅圖示) */}
+                <button
+                    onClick={() => setShowQR(true)}
+                    title="掃描條碼體驗行動版"
+                    className="absolute bottom-8 left-8 flex items-center justify-center w-12 h-12 bg-white/70 dark:bg-ios-dark-gray5/70 backdrop-blur-lg border border-gray-200/50 dark:border-white/10 rounded-full shadow-sm hover:scale-105 hover:bg-white dark:hover:bg-ios-dark-gray4 transition-all group z-10"
+                >
+                    <QrCode className="w-[22px] h-[22px] text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform" />
+                </button>
             </div>
 
             {/* ── 右側：登入表單 (桌面 50%，手機 100%) ── */}
