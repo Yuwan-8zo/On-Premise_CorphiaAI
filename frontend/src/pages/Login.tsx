@@ -315,10 +315,10 @@ export default function Login() {
 
                 {/* 登入卡片容器 - 居中 */}
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    {/* 卡片本體：強制 1:1 正方形，並用 justify-center 讓內部緊密的排版置中 */}
+                    {/* 卡片本體：強制 1:1 正方形，上下元素固定於邊緣，中間輸入框緊密群聚 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[38px] p-5 flex flex-col justify-center gap-6 transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
