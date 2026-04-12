@@ -90,6 +90,9 @@ export default function Chat() {
     // Header Options Menu State
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
 
+    // Sidebar Logo Hover State
+    const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
 
@@ -453,16 +456,15 @@ export default function Chat() {
                     )}
                     <button
                         onClick={toggleSidebar}
+                        onMouseEnter={() => setIsSidebarHovered(true)}
+                        onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className="group p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 relative flex items-center justify-center w-[36px] h-[36px]"
+                        className="p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 flex items-center justify-center w-[36px] h-[36px]"
                     >
-                        {sidebarOpen ? (
+                        {sidebarOpen || isSidebarHovered ? (
                             <SidebarIcon className="w-[18px] h-[18px]" />
                         ) : (
-                            <>
-                                <CorphiaLogo className="w-[22px] h-[22px] rounded-[5px] transition-opacity duration-200 group-hover:opacity-0 absolute" />
-                                <SidebarIcon className="w-[18px] h-[18px] opacity-0 transition-opacity duration-200 group-hover:opacity-100 absolute" />
-                            </>
+                            <CorphiaLogo className="w-[22px] h-[22px] rounded-[5px]" />
                         )}
                     </button>
                 </div>
