@@ -4,6 +4,7 @@
 JWT Token 與密碼處理
 """
 
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
@@ -53,6 +54,9 @@ def create_access_token(
 ) -> str:
     """
     建立 Access Token
+
+    每個 Token 都會被賦予唯一的 jti (JWT ID)，
+    用於 Token 黑名單機制追蹤個別 Token 的撤銷狀態。
     
     Args:
         data: Token 資料
@@ -70,7 +74,12 @@ def create_access_token(
             minutes=settings.jwt_expire_minutes
         )
     
-    to_encode.update({"exp": expire, "type": "access"})
+    to_encode.update({
+        "exp": expire,
+        "iat": datetime.now(timezone.utc),
+        "type": "access",
+        "jti": str(uuid.uuid4()),
+    })
     
     return jwt.encode(
         to_encode,
@@ -85,6 +94,8 @@ def create_refresh_token(
 ) -> str:
     """
     建立 Refresh Token
+
+    同樣包含唯一 jti，支援黑名單撤銷。
     
     Args:
         data: Token 資料
@@ -102,7 +113,12 @@ def create_refresh_token(
             days=settings.jwt_refresh_expire_days
         )
     
-    to_encode.update({"exp": expire, "type": "refresh"})
+    to_encode.update({
+        "exp": expire,
+        "iat": datetime.now(timezone.utc),
+        "type": "refresh",
+        "jti": str(uuid.uuid4()),
+    })
     
     return jwt.encode(
         to_encode,
@@ -130,3 +146,4 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
         return payload
     except JWTError:
         return None
+

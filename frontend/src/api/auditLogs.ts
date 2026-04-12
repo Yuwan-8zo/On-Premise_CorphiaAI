@@ -92,6 +92,8 @@ export const ACTION_LABELS: Record<string, string> = {
     document_metadata_update: '更新文件設定',
     model_select: '選擇模型',
     model_refresh: '刷新模型',
+    token_revoke: 'Token 撤銷',
+    user_force_logout: '強制踢出',
 }
 
 /**

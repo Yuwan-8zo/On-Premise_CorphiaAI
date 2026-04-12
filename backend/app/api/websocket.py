@@ -77,6 +77,15 @@ async def websocket_chat(
         await websocket.close(code=4001, reason="無效的認證 Token")
         return
     
+    # 檢查 Token 是否已被撤銷（黑名單機制）
+    jti = payload.get("jti")
+    if jti:
+        from app.services.token_service import is_token_blacklisted
+        is_blacklisted = await is_token_blacklisted(db, jti)
+        if is_blacklisted:
+            await websocket.close(code=4001, reason="Token 已被撤銷")
+            return
+    
     user_id = payload.get("sub")
     connection_id = f"{user_id}_{conversation_id}"
     

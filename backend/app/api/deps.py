@@ -3,6 +3,7 @@ API 依賴注入模組
 """
 
 from typing import Annotated, Optional
+from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,6 +13,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import decode_token
 from app.models.user import User, UserRole
+from app.services.token_service import is_token_blacklisted
 
 
 # HTTP Bearer 認證
@@ -24,6 +26,13 @@ async def get_current_user(
 ) -> User:
     """
     取得當前登入使用者
+
+    驗證流程:
+    1. 解碼 Token 並驗證簽章
+    2. 檢查 Token 類型 (必須為 access)
+    3. 檢查 Token 是否在黑名單中（已被撤銷）
+    4. 查詢使用者並確認帳號狀態
+    5. 檢查 Token 是否在使用者 token_revoked_at 之前發放
     
     Args:
         credentials: Bearer Token
@@ -61,6 +70,17 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # 檢查 Token 是否在黑名單中（登出撤銷 / 管理員強制踢出）
+    jti = payload.get("jti")
+    if jti:
+        is_blacklisted = await is_token_blacklisted(db, jti)
+        if is_blacklisted:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token 已被撤銷",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    
     # 查詢使用者
     result = await db.execute(
         select(User).where(User.id == user_id)
@@ -79,6 +99,19 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="使用者帳號已停用"
         )
+    
+    # 檢查 Token 是否在使用者 token_revoked_at 之前發放
+    # （管理員強制撤銷所有 Token 時設定的時間戳）
+    if user.token_revoked_at:
+        token_iat = payload.get("iat")
+        if token_iat:
+            token_issued_at = datetime.fromtimestamp(token_iat, tz=timezone.utc)
+            if token_issued_at < user.token_revoked_at.replace(tzinfo=timezone.utc):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token 已被撤銷，請重新登入",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
     
     return user
 

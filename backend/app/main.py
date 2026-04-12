@@ -45,6 +45,17 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("✅ 資料庫初始化完成")
     
+    # 清理過期的 Token 黑名單記錄
+    try:
+        from app.core.database import async_session_maker
+        from app.services.token_service import cleanup_expired_blacklist
+        async with async_session_maker() as session:
+            count = await cleanup_expired_blacklist(session)
+            if count > 0:
+                logger.info(f"🧹 已清理 {count} 筆過期的 Token 黑名單記錄")
+    except Exception as e:
+        logger.warning(f"Token 黑名單清理失敗（可忽略）: {e}")
+    
     # 初始化 LLM 和 RAG 服務
     llm_service = get_llm_service()
     await llm_service.initialize()

@@ -67,6 +67,10 @@ class User(Base):
     # 登入記錄
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
+    # Token 撤銷時間戳（用於批量撤銷使用者所有 Token）
+    # 所有在此時間之前發放的 Token 都會被視為無效
+    token_revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

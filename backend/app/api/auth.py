@@ -4,6 +4,7 @@
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +33,10 @@ from app.services.audit_service import (
     get_client_ip,
     get_user_agent,
 )
+from app.services.token_service import add_token_to_blacklist
+
+# Bearer 安全方案（用於取得原始 Token）
+bearer_scheme = HTTPBearer()
 
 router = APIRouter(prefix="/auth", tags=["認證"])
 
@@ -209,7 +214,7 @@ async def refresh_token(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    """刷新 Access Token"""
+    """刷新 Access Token（舊的 Refresh Token 同時被撤銷）"""
     payload = decode_token(request_body.refresh_token)
 
     if payload is None or payload.get("type") != "refresh":
@@ -217,6 +222,17 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="無效的 Refresh Token"
         )
+
+    # 檢查 Refresh Token 是否已被撤銷
+    old_jti = payload.get("jti")
+    if old_jti:
+        from app.services.token_service import is_token_blacklisted
+        is_blacklisted = await is_token_blacklisted(db, old_jti)
+        if is_blacklisted:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh Token 已被撤銷"
+            )
 
     user_id = payload.get("sub")
 
@@ -230,6 +246,19 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="使用者不存在或已停用"
+        )
+
+    # 撤銷舊的 Refresh Token（防止重複使用）
+    if old_jti:
+        old_exp = payload.get("exp")
+        expires_at = datetime.fromtimestamp(old_exp, tz=timezone.utc) if old_exp else None
+        await add_token_to_blacklist(
+            db=db,
+            jti=old_jti,
+            user_id=user_id,
+            token_type="refresh",
+            expires_at=expires_at,
+            reason="token_refresh",
         )
 
     # 建立新 Token
@@ -268,13 +297,33 @@ async def get_current_user_info(current_user: CurrentUser):
 async def logout(
     current_user: CurrentUser,
     request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ):
     """
     使用者登出
 
-    NOTE: JWT 無狀態，實際登出需由前端清除 Token
+    將當前 Access Token 加入黑名單，使其立即失效。
     """
+    # 解碼 Token 取得 JTI
+    token = credentials.credentials
+    payload = decode_token(token)
+
+    if payload and payload.get("jti"):
+        jti = payload["jti"]
+        exp = payload.get("exp")
+        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc) if exp else None
+
+        # 加入黑名單
+        await add_token_to_blacklist(
+            db=db,
+            jti=jti,
+            user_id=current_user.id,
+            token_type="access",
+            expires_at=expires_at,
+            reason="logout",
+        )
+
     # 登出審計
     await write_audit_log(
         db=db,

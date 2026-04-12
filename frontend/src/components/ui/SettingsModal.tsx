@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
+import { authApi } from '../../api/auth'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -87,7 +88,13 @@ export default function SettingsModal() {
         localStorage.setItem('language', langCode)
     }
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            // 先呼叫後端 API 將 Token 加入黑名單
+            await authApi.logout()
+        } catch {
+            // 即使 API 失敗也繼續清除本地 Token
+        }
         clearAuth()
         setSettingsOpen(false)
         window.location.href = '/login'

@@ -468,9 +468,26 @@ export default function Admin() {
                                                 {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW') : '-'}
                                             </td>
                                             <td className="px-8 py-4 text-right">
-                                                <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
-                                                    編輯
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                        編輯
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!confirm(`確定要強制踢出 ${u.name} 嗎？\n此操作會撤銷該使用者所有已發放的 Token。`)) return
+                                                            try {
+                                                                await apiClient.post(`/users/${u.id}/force-logout`)
+                                                                alert(`已成功踢出 ${u.name}`)
+                                                            } catch {
+                                                                alert('踢出失敗，請稍後重試')
+                                                            }
+                                                        }}
+                                                        className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
+                                                        title="強制登出此使用者"
+                                                    >
+                                                        ⚡ 踢出
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

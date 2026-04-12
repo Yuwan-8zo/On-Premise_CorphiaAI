@@ -45,6 +45,10 @@ class AuditAction:
     MODEL_SELECT = "model_select"
     MODEL_REFRESH = "model_refresh"
 
+    # Token 黑名單
+    TOKEN_REVOKE = "token_revoke"
+    USER_FORCE_LOGOUT = "user_force_logout"
+
 
 # 資源類型常數
 class AuditResource:

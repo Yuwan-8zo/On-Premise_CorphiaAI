@@ -309,3 +309,72 @@ async def activate_user(
     )
     
     return {"message": "使用者已啟用"}
+
+
+@router.post("/{user_id}/force-logout")
+async def force_logout_user(
+    user_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request = None,
+):
+    """
+    強制踢出使用者（僅 admin 可用）
+
+    撤銷該使用者所有已發放的 Token，使其立即被強制登出。
+    """
+    # 權限檢查
+    if current_user.role not in ["admin", "engineer"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="權限不足"
+        )
+
+    # 不能踢出自己
+    if user_id == str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="無法強制踢出自己"
+        )
+
+    # 取得使用者
+    result = await db.execute(
+        select(User).where(
+            User.id == user_id,
+            User.tenant_id == current_user.tenant_id
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="使用者不存在"
+        )
+
+    # 撤銷所有 Token
+    from app.services.token_service import revoke_all_user_tokens
+    await revoke_all_user_tokens(
+        db=db,
+        user_id=user_id,
+        reason="admin_force_logout",
+        revoked_by=current_user.id,
+    )
+
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action="user_force_logout",
+        resource_type=AuditResource.USER,
+        resource_id=user_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"管理員強制踢出使用者: {user.email}",
+        details={"target_user_email": user.email},
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
+
+    return {"message": f"已強制踢出使用者 {user.email}"}
+

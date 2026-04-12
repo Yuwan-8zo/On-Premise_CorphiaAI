@@ -5,6 +5,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
+import { authApi } from '../../api/auth'
 
 // Icons
 const ChatIcon = () => (
@@ -48,7 +49,13 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         { path: '/settings', icon: <SettingsIcon />, label: t('nav.settings') },
     ]
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            // 先呼叫後端 API 將 Token 加入黑名單
+            await authApi.logout()
+        } catch {
+            // 即使 API 失敗也繼續清除本地 Token
+        }
         clearAuth()
         navigate('/login')
     }
