@@ -382,19 +382,56 @@ export default function Chat() {
     }
 
     const createNewConversation = async () => {
+        if (chatMode === 'project') {
+            // 專案模式：開啟新建資料夾 Modal
+            setNewFolderInput('')
+            setNewFolderModal(true)
+            setTimeout(() => newFolderInputRef.current?.focus(), 100)
+        } else {
+            // 一般模式：建立新對話
+            try {
+                const conversation = await conversationsApi.create({ 
+                    title: '新對話',
+                    settings: { isProject: false }
+                })
+                addConversation(conversation)
+                setUploadedFiles([])
+                await selectConversation(conversation)
+            } catch (error) {
+                console.error('建立對話失敗:', error)
+            }
+        }
+    }
+
+    /** 在指定資料夾內新增對話 */
+    const createConvInFolder = async (folderName: string, e: React.MouseEvent) => {
+        e.stopPropagation()
         try {
-            const conversation = await conversationsApi.create({ 
+            const conversation = await conversationsApi.create({
                 title: '新對話',
-                settings: { 
-                    isProject: chatMode === 'project',
-                    folderName: chatMode === 'project' ? '新資料夾' : undefined
-                } 
+                settings: { isProject: true, folderName }
             })
             addConversation(conversation)
-            setUploadedFiles([]) // Reset files for new conversation
+            setUploadedFiles([])
             await selectConversation(conversation)
+
+            // 偵測資料夾是否有文件，若無檔案則自動模擬 AI 回覆
+            const res = await documentsApi.list()
+            const docList = Array.isArray(res) ? res : (res.data || [])
+            const folderDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName && (d.doc_metadata?.isActive ?? true))
+            if (folderDocs.length === 0) {
+                // 此資料夾內尚無檢索文件，自動提示上傳
+                const promptMsg: Message = {
+                    id: `auto-${Date.now()}`,
+                    role: 'assistant',
+                    content: `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要芳您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`,
+                    tokens: 0,
+                    createdAt: new Date().toISOString(),
+                }
+                addMessage(promptMsg)
+            }
         } catch (error) {
-            console.error('建立對話失敗:', error)
+            console.error('新增對話失敗:', error)
         }
     }
 
@@ -597,7 +634,7 @@ export default function Chat() {
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </div>
-                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">新對話</span>}
+                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? '新資料夾' : '新對話'}</span>}
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
@@ -718,17 +755,8 @@ export default function Chat() {
                         </>
                     ) : (
                         <>
-                            <div className="mb-2 pl-2 mt-1 flex items-center justify-between pr-1">
+                            <div className="mb-2 pl-2 mt-1">
                                 <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
-                                <button
-                                    onClick={() => { setNewFolderInput(''); setNewFolderModal(true); setTimeout(() => newFolderInputRef.current?.focus(), 100) }}
-                                    className="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors"
-                                    title="新建資料夾"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                </button>
                             </div>
                             {(() => {
                                 const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
@@ -774,6 +802,17 @@ export default function Chat() {
                                                 >
                                                     <span className="truncate pr-2">{folderName}</span>
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        {/* + 新增對話到此資料夾 */}
+                                                        <button
+                                                            onClick={(e) => createConvInFolder(folderName, e)}
+                                                            className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-ios-dark-gray4"
+                                                            title="在此資料夾新增對話"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                                            </svg>
+                                                        </button>
+                                                        {/* ... 資料夾選項選單（番前使用刪除按鈕） */}
                                                         <button
                                                             onClick={(e) => handleDeleteFolder(folderName, e)}
                                                             className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
