@@ -985,7 +985,7 @@ export default function Chat() {
                                 </svg>
                                 {selectedFolder}
                             </h2>
-                            <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理專屬來源文獻，Corphia 將會依據你打勾勾選的檔案作為參考資料來回答對話。</p>
+                            <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
                         <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden">
