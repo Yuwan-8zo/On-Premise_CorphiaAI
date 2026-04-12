@@ -106,6 +106,15 @@ export default function Chat() {
     const [activeMenu, setActiveMenu] = useState<{ convId: string, x: number, y: number } | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
+    // 重新命名 Modal 狀態
+    const [renameModal, setRenameModal] = useState<{ convId: string, title: string } | null>(null)
+    const [renameInput, setRenameInput] = useState('')
+    const renameInputRef = useRef<HTMLInputElement>(null)
+
+    // 移至專案 Modal 狀態
+    const [moveModal, setMoveModal] = useState<{ convId: string, isProject: boolean, folderName: string } | null>(null)
+    const [moveInput, setMoveInput] = useState('')
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -124,60 +133,67 @@ export default function Chat() {
         setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 })
     }
 
-    const handleRenameConversation = async (convId: string) => {
+    const handleRenameConversation = (convId: string) => {
         const conv = conversations.find(c => c.id === convId)
         if (!conv) return
-        const newTitle = window.prompt("重新命名對話", conv.title)
-        if (newTitle !== null && newTitle.trim() !== '' && newTitle !== conv.title) {
-            try {
-                await conversationsApi.update(conv.id, { title: newTitle.trim() })
-                updateConversation(conv.id, { title: newTitle.trim() })
-            } catch (error) {
-                console.error("Rename failed:", error)
-                alert("重新命名失敗")
-            }
-        }
+        setRenameInput(conv.title)
+        setRenameModal({ convId, title: conv.title })
+        // 等 modal render 後 focus
+        setTimeout(() => renameInputRef.current?.focus(), 100)
     }
 
-    const handleMoveToProject = async (convId: string) => {
+    const submitRename = async () => {
+        if (!renameModal) return
+        const newTitle = renameInput.trim()
+        if (!newTitle || newTitle === renameModal.title) { setRenameModal(null); return }
+        try {
+            await conversationsApi.update(renameModal.convId, { title: newTitle })
+            updateConversation(renameModal.convId, { title: newTitle })
+        } catch (error) {
+            console.error('Rename failed:', error)
+        }
+        setRenameModal(null)
+    }
+
+    const handleMoveToProject = (convId: string) => {
         const conv = conversations.find(c => c.id === convId)
         if (!conv) return
         const isProject = Boolean(conv.settings?.isProject)
-        
-        if (isProject) {
-            const confirmMove = window.confirm("要將此對話移回一般聊天嗎？")
-            if (confirmMove) {
-                try {
-                    const newSettings = { ...conv.settings, isProject: false }
-                    await conversationsApi.update(conv.id, { settings: newSettings })
-                    updateConversation(conv.id, { settings: newSettings })
-                    setChatMode('general')
-                } catch (error) {
-                    console.error("Move failed:", error)
-                    alert("移動失敗")
-                }
-            }
-        } else {
-            const folderName = window.prompt("請輸入專案資料夾名稱", (conv.settings?.folderName as string) || "新資料夾")
-            if (folderName !== null) {
-                try {
-                    const newSettings = { ...conv.settings, isProject: true, folderName: folderName.trim() || '新資料夾' }
-                    await conversationsApi.update(conv.id, { settings: newSettings })
-                    updateConversation(conv.id, { settings: newSettings })
-                    setChatMode('project')
-                } catch (error) {
-                    console.error("Move failed:", error)
-                    alert("移動失敗")
-                }
-            }
-        }
+        const folderName = (conv.settings?.folderName as string) || '新資料夾'
+        setMoveInput(isProject ? '' : folderName)
+        setMoveModal({ convId, isProject, folderName })
     }
 
-    const handleShareConversation = (convId: string) => {
+    const submitMove = async () => {
+        if (!moveModal) return
+        try {
+            if (moveModal.isProject) {
+                // 移回一般聊天
+                const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: false }
+                await conversationsApi.update(moveModal.convId, { settings: newSettings })
+                updateConversation(moveModal.convId, { settings: newSettings })
+                setChatMode('general')
+            } else {
+                // 移至專案
+                const folderName = moveInput.trim() || '新資料夾'
+                const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: true, folderName }
+                await conversationsApi.update(moveModal.convId, { settings: newSettings })
+                updateConversation(moveModal.convId, { settings: newSettings })
+                setChatMode('project')
+            }
+        } catch (error) {
+            console.error('Move failed:', error)
+        }
+        setMoveModal(null)
+    }
+
+    const handleShareConversation = async (convId: string) => {
         const link = `${window.location.origin}/share/${convId}`
-        navigator.clipboard.writeText(link)
-            .then(() => alert("已複製分享連結到剪貼簿：\n" + link))
-            .catch(() => alert("無法複製到剪貼簿，請手動複製：" + link))
+        try {
+            await navigator.clipboard.writeText(link)
+        } catch {
+            // 即使複製失敗也不做任何 —— 避免 alert 被封鎖
+        }
     }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
@@ -1295,6 +1311,137 @@ export default function Chat() {
                             <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             刪除
                         </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Rename Modal ── */}
+            <AnimatePresence>
+                {renameModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                        onClick={() => setRenameModal(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.93, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.93, opacity: 0 }}
+                            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                            className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-2xl w-[340px] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="px-6 pt-6 pb-4">
+                                <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-4">重新命名</h3>
+                                <input
+                                    ref={renameInputRef}
+                                    type="text"
+                                    value={renameInput}
+                                    onChange={e => setRenameInput(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setRenameModal(null); }}
+                                    className="w-full px-4 py-2.5 bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 rounded-xl text-[15px] text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark focus:ring-2 focus:ring-ios-blue-light/20 dark:focus:ring-ios-blue-dark/20 transition-all"
+                                    placeholder="對話名稱"
+                                    autoComplete="off"
+                                />
+                            </div>
+                            <div className="flex border-t border-gray-100 dark:border-white/5">
+                                <button
+                                    onClick={() => setRenameModal(null)}
+                                    className="flex-1 py-3.5 text-[16px] text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
+                                >
+                                    取消
+                                </button>
+                                <div className="w-px bg-gray-100 dark:bg-white/5" />
+                                <button
+                                    onClick={submitRename}
+                                    className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
+                                >
+                                    確定
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Move to Project Modal ── */}
+            <AnimatePresence>
+                {moveModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                        onClick={() => setMoveModal(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.93, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.93, opacity: 0 }}
+                            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                            className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-2xl w-[340px] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {moveModal.isProject ? (
+                                <>
+                                    <div className="px-6 pt-6 pb-4">
+                                        <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-2">移至一般聊天</h3>
+                                        <p className="text-[14px] text-gray-500 dark:text-gray-400">確定要將此對話移回一般聊天？將會從「{moveModal.folderName}」資料夾移除。</p>
+                                    </div>
+                                    <div className="flex border-t border-gray-100 dark:border-white/5">
+                                        <button
+                                            onClick={() => setMoveModal(null)}
+                                            className="flex-1 py-3.5 text-[16px] text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
+                                        >
+                                            取消
+                                        </button>
+                                        <div className="w-px bg-gray-100 dark:bg-white/5" />
+                                        <button
+                                            onClick={submitMove}
+                                            className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
+                                        >
+                                            確定
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="px-6 pt-6 pb-4">
+                                        <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-4">移至專案</h3>
+                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-3">請輸入專案資料夾名稱</p>
+                                        <input
+                                            type="text"
+                                            value={moveInput}
+                                            onChange={e => setMoveInput(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') submitMove(); if (e.key === 'Escape') setMoveModal(null); }}
+                                            className="w-full px-4 py-2.5 bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 rounded-xl text-[15px] text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark focus:ring-2 focus:ring-ios-blue-light/20 dark:focus:ring-ios-blue-dark/20 transition-all"
+                                            placeholder="新資料夾"
+                                            autoFocus
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                    <div className="flex border-t border-gray-100 dark:border-white/5">
+                                        <button
+                                            onClick={() => setMoveModal(null)}
+                                            className="flex-1 py-3.5 text-[16px] text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
+                                        >
+                                            取消
+                                        </button>
+                                        <div className="w-px bg-gray-100 dark:bg-white/5" />
+                                        <button
+                                            onClick={submitMove}
+                                            className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
+                                        >
+                                            確定
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
