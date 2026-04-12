@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 import { motion, AnimatePresence } from 'framer-motion'
+import { CorphiaLogo } from '../components/icons/CorphiaIcons'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -201,7 +202,8 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">
+                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-colors flex items-center gap-4">
+                            <CorphiaLogo className="w-14 h-14" />
                             Corphia AI
                         </h1>
                         <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
@@ -304,7 +306,8 @@ export default function Login() {
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors flex items-center justify-center gap-3">
+                        <CorphiaLogo className="w-8 h-8" />
                         Corphia AI
                     </h1>
                     <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
