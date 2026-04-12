@@ -25,6 +25,12 @@ export default {
             fontFamily: {
                 sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],
             },
+            borderRadius: {
+                'card-sm': '22px',
+                'card-md': '30px',
+                'card-lg': '34px',
+                'card-xl': '38px',
+            },
         },
     },
     plugins: [],

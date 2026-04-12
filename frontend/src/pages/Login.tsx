@@ -32,7 +32,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-2.5 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -318,7 +318,7 @@ export default function Login() {
                     {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[20px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-card-xl p-4 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
@@ -434,7 +434,7 @@ export default function Login() {
                                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-3 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
+                                    className="w-full py-2.5 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
                                            text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
                                            focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
                                            disabled:opacity-50 disabled:cursor-not-allowed
