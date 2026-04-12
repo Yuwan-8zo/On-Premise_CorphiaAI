@@ -47,7 +47,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     }
 
     return (
-        <div className="mt-3 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+        <div className="mt-3 border border-slate-200 dark:border-slate-700 rounded-[20px] overflow-hidden">
             {/* 標題列 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -87,7 +87,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                             {/* 來源內容 */}
                             {expandedItems.has(source.chunk_id) && (
                                 <div className="px-3 pb-3">
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-[12px] text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                         {source.content}
                                     </div>
                                 </div>

@@ -462,7 +462,7 @@ export default function Chat() {
             {/* --- 左側邊欄 Sidebar --- */}
             <aside
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[36px] md:rounded-[36px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
+                    } overflow-hidden bg-[#f9f9f9] dark:bg-[#171717] rounded-r-[20px] md:rounded-[20px] md:border border-gray-200 dark:border-[#2a2a2a] transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-sm`}
             >
                 {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
                 <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -493,7 +493,7 @@ export default function Chat() {
                     {/* 新對話按鈕 */}
                     <button
                         onClick={createNewConversation}
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-2xl' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
                         <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-[#2a2a2a]">
@@ -736,7 +736,7 @@ export default function Chat() {
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-2xl' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
+                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
                         {/* 圓形頭像框 */}
@@ -761,7 +761,7 @@ export default function Chat() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
-                            className={`p-2 -ml-2 rounded-xl hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
+                            className={`p-2 -ml-2 rounded-full hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
                         >
                             <SidebarIcon className="w-5 h-5" />
                         </button>
@@ -780,7 +780,7 @@ export default function Chat() {
                         <div className="relative">
                             <button 
                                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-[12px] hover:bg-gray-100/80 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-[#333]"
+                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-[#333]"
                             >
                                 <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400">
                                     {selectedModel ? selectedModel.name : 'Loading Models...'}
@@ -797,7 +797,7 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-[#2a2a2a] rounded-[24px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
+                                            className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-[#2a2a2a] rounded-[20px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
                                         >
                                             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                                 {availableModels.length === 0 ? (
@@ -815,14 +815,14 @@ export default function Chat() {
                                                                     console.error('選擇模型失敗', err);
                                                                 }
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 mb-1 rounded-[16px] flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
+                                                            className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
                                                         >
                                                             <div className="flex flex-col min-w-0 pr-3">
                                                                 <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
                                                                 <span className="text-[12px] text-gray-500 mt-1 flex items-center gap-2">
                                                                     <span>{model.size_gb.toFixed(1)} GB</span>
                                                                     {model.quantization && (
-                                                                        <span className="bg-gray-200/50 dark:bg-[#444] px-1.5 py-0.5 rounded text-[10px] uppercase">{model.quantization}</span>
+                                                                        <span className="bg-gray-200/50 dark:bg-[#444] px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
                                                                     )}
                                                                 </span>
                                                             </div>
@@ -840,7 +840,7 @@ export default function Chat() {
                                                         const res = await modelsApi.refreshModels();
                                                         setAvailableModels(res.models);
                                                     }}
-                                                    className="w-full text-left px-4 py-3 rounded-[16px] flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400 group"
+                                                    className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400 group"
                                                 >
                                                     <svg className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                                     <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
@@ -856,7 +856,7 @@ export default function Chat() {
                         <div className="relative">
                             <button 
                                 onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                                className={`p-2 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-[12px] transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-[#2a2a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                                className={`p-2 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-full transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-[#2a2a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
@@ -874,22 +874,22 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[220px] bg-[#1a1a1a] rounded-[16px] shadow-xl border border-[#333] overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-[#e5e5e5]"
+                                            className="absolute right-0 top-full mt-2 w-[220px] bg-[#1a1a1a] rounded-[20px] shadow-xl border border-[#333] overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-[#e5e5e5]"
                                         >
-                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                                                 <span className="font-medium text-[15px]">分享</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                                 <span className="font-medium text-[15px]">重新命名</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                                 <span className="font-medium text-[15px]">移至專案</span>
                                             </button>
                                             <div className="my-1 border-t border-[#333]" />
-                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-red-500/10 text-red-500 active:bg-red-500/20">
+                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-red-500/10 text-red-500 active:bg-red-500/20">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                 <span className="font-medium text-[15px]">刪除</span>
                                             </button>
@@ -915,12 +915,12 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理專屬來源文獻，Corphia 將會依據你打勾勾選的檔案作為參考資料來回答對話。</p>
                         </div>
                         
-                        <div className="bg-white dark:bg-[#111] rounded-[24px] shadow-sm border border-gray-200 dark:border-[#333] overflow-hidden">
+                        <div className="bg-white dark:bg-[#111] rounded-[20px] shadow-sm border border-gray-200 dark:border-[#333] overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-100 dark:border-[#333] flex justify-between items-center bg-gray-50/50 dark:bg-[#1a1a1a]">
                                 <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl transition-all shadow-sm shadow-[#1877F2]/20 hover:shadow-[#1877F2]/40 text-sm font-medium"
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full transition-all shadow-sm shadow-[#1877F2]/20 hover:shadow-[#1877F2]/40 text-sm font-medium"
                                 >
                                     <PlusIcon /> <span className="mr-1">新增來源</span>
                                 </button>
@@ -983,7 +983,7 @@ export default function Chat() {
                                                             }
                                                         })
                                                     }}
-                                                    className="p-2 text-gray-400 hover:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
+                                                    className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
                                                     title="刪除"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -997,7 +997,7 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {isUploading && selectedFolder && (
-                            <div className="mt-6 p-4 bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-2xl border border-[#1877F2]/20 flex items-center justify-between shadow-sm animate-fade-in-up">
+                            <div className="mt-6 p-4 bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-[20px] border border-[#1877F2]/20 flex items-center justify-between shadow-sm animate-fade-in-up">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-[#1877F2] border-t-transparent animate-spin" />
                                     <span className="text-[#1877F2] text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
@@ -1054,7 +1054,7 @@ export default function Chat() {
                                     <button 
                                         key={index}
                                         onClick={() => setInput(item.desc)}
-                                        className="text-left p-4 rounded-[18px] border border-gray-200 dark:border-[#333] bg-white/60 dark:bg-[#222]/60 hover:bg-white dark:hover:bg-[#2a2a2a] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                        className="text-left p-4 rounded-[20px] border border-gray-200 dark:border-[#333] bg-white/60 dark:bg-[#222]/60 hover:bg-white dark:hover:bg-[#2a2a2a] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                     >
                                         <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[#1877F2] transition-colors">{item.title}</div>
                                         <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
@@ -1090,19 +1090,19 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
-                                        <div key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] px-3 py-1.5 rounded-xl text-[13px] border border-gray-200 dark:border-[#444] animate-fade-in-up">
+                                        <div key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] px-3 py-1.5 rounded-full text-[13px] border border-gray-200 dark:border-[#444] animate-fade-in-up">
                                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                             <span className="truncate max-w-[120px] text-gray-700 dark:text-gray-300">{f.name}</span>
                                         </div>
                                     ))}
                                     {isUploading && (
-                                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl text-[13px] text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full text-[13px] text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
                                             <span>上傳中 {uploadProgress}%</span>
                                         </div>

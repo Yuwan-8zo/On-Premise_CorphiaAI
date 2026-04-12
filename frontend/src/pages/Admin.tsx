@@ -184,7 +184,7 @@ export default function Admin() {
     const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
         <div className="bg-white dark:bg-[#2a2a2a] rounded-[20px] border border-gray-200 dark:border-[#333] p-8 shadow-sm dark:shadow-none transition-colors">
             <div className="flex items-center gap-5">
-                <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-sm`}>
+                <div className={`w-14 h-14 rounded-[16px] ${color} flex items-center justify-center text-white shadow-sm`}>
                     {icon}
                 </div>
                 <div>
@@ -202,7 +202,7 @@ export default function Admin() {
             user: 'bg-gray-50 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20',
         }
         return (
-            <span className={`px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase rounded-md ${styles[role]}`}>
+            <span className={`px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase rounded-full ${styles[role]}`}>
                 {role}
             </span>
         )
@@ -215,7 +215,7 @@ export default function Admin() {
                 <div className="flex items-center">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg mr-4 transition-colors"
+                        className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-full mr-4 transition-colors"
                     >
                         <BackIcon />
                     </button>
@@ -225,7 +225,7 @@ export default function Admin() {
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-full transition-colors"
                 >
                     {theme === 'dark' ? (
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,7 +246,7 @@ export default function Admin() {
                         <button
                             key={section}
                             onClick={() => setActiveSection(section)}
-                            className={`px-5 py-2.5 rounded-xl font-medium transition-colors border ${activeSection === section
+                            className={`px-5 py-2.5 rounded-full font-medium transition-colors border ${activeSection === section
                                 ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
                                 : 'bg-white dark:bg-[#2a2a2a] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#333]/50 border-gray-200 dark:border-[#333]'
                                 }`}
@@ -295,7 +295,7 @@ export default function Admin() {
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                                 最近活動
                             </h2>
-                            <div className="text-gray-500 dark:text-gray-400 text-center py-10 font-medium bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-xl border border-dashed border-gray-200 dark:border-[#444]">
+                            <div className="text-gray-500 dark:text-gray-400 text-center py-10 font-medium bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-[20px] border border-dashed border-gray-200 dark:border-[#444]">
                                 暫無活動記錄
                             </div>
                         </div>
@@ -309,7 +309,7 @@ export default function Admin() {
                             <h2 className="font-semibold text-gray-900 dark:text-white">
                                 使用者列表 ({users.length})
                             </h2>
-                            <button className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white text-[15px] font-medium rounded-xl transition-colors shadow-sm shadow-[#1877F2]/20">
+                            <button className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-[#1877F2]/20">
                                 + 新增使用者
                             </button>
                         </div>
@@ -365,7 +365,7 @@ export default function Admin() {
                                                 {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW') : '-'}
                                             </td>
                                             <td className="px-8 py-4 text-right">
-                                                <button className="text-[#1877F2] hover:text-[#166fe5] dark:text-[#1877F2] text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#1877F2]/5 dark:hover:bg-[#1877F2]/10 transition-colors">
+                                                <button className="text-[#1877F2] hover:text-[#166fe5] dark:text-[#1877F2] text-sm font-medium px-3 py-1.5 rounded-full hover:bg-[#1877F2]/5 dark:hover:bg-[#1877F2]/10 transition-colors">
                                                     編輯
                                                 </button>
                                             </td>
@@ -393,7 +393,7 @@ export default function Admin() {
                                 <button
                                     onClick={handleRefreshModels}
                                     disabled={isLoadingModels}
-                                    className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] disabled:opacity-50 disabled:hover:bg-[#1877F2] text-white text-[15px] font-medium rounded-xl transition-colors shadow-sm shadow-[#1877F2]/20"
+                                    className="px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] disabled:opacity-50 disabled:hover:bg-[#1877F2] text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-[#1877F2]/20"
                                 >
                                     {isLoadingModels ? '掃描中...' : '🔄 重新掃描'}
                                 </button>
@@ -402,7 +402,7 @@ export default function Admin() {
                             {isLoadingModels ? (
                                 <div className="text-center py-10 text-gray-500 dark:text-gray-400">載入中...</div>
                             ) : models.length === 0 ? (
-                                <div className="text-center py-10 bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-xl border border-dashed border-gray-200 dark:border-[#444]">
+                                <div className="text-center py-10 bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-[20px] border border-dashed border-gray-200 dark:border-[#444]">
                                     <p className="text-gray-600 dark:text-gray-300 font-medium">
                                         未找到 GGUF 模型檔案
                                     </p>
@@ -415,7 +415,7 @@ export default function Admin() {
                                     {models.map((model) => (
                                         <div
                                             key={model.name}
-                                            className={`p-5 rounded-xl border transition-colors ${model.is_current
+                                            className={`p-5 rounded-[20px] border transition-colors ${model.is_current
                                                 ? 'border-[#1877F2] bg-[#1877F2]/5 dark:bg-[#1877F2]/10 shadow-sm'
                                                 : 'border-gray-200 dark:border-[#333] hover:bg-gray-50 dark:hover:bg-[#333]/30 hover:border-gray-300 dark:hover:border-[#444]'
                                                 }`}
@@ -432,7 +432,7 @@ export default function Admin() {
                                                             </span>
                                                         )}
                                                         {model.quantization && (
-                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-[#111111] border border-gray-200 dark:border-[#222] text-gray-600 dark:text-gray-400 rounded-md font-mono">
+                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-[#111111] border border-gray-200 dark:border-[#222] text-gray-600 dark:text-gray-400 rounded-full font-mono">
                                                                 {model.quantization}
                                                             </span>
                                                         )}
@@ -445,7 +445,7 @@ export default function Admin() {
                                                 {!model.is_current && (
                                                     <button
                                                         onClick={() => handleSelectModel(model.name)}
-                                                        className="px-5 py-2 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors"
+                                                        className="px-5 py-2 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors"
                                                     >
                                                         選擇
                                                     </button>
@@ -511,13 +511,13 @@ export default function Admin() {
                                 維護操作
                             </h2>
                             <div className="flex gap-4">
-                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
                                     清除快取
                                 </button>
-                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-xl border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#222] transition-colors">
                                     重建索引
                                 </button>
-                                <button className="px-5 py-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors ml-auto">
+                                <button className="px-5 py-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 font-medium rounded-full hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors ml-auto">
                                     重啟服務
                                 </button>
                             </div>

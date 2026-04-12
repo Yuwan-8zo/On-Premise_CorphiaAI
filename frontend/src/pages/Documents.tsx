@@ -37,7 +37,7 @@ const FileIcon = ({ type }: { type: string }) => {
     }
 
     return (
-        <div className={`w-10 h-10 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center ${colors[type] || 'text-gray-500'}`}>
+        <div className={`w-10 h-10 rounded-[16px] bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center ${colors[type] || 'text-gray-500'}`}>
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
             </svg>
@@ -199,7 +199,7 @@ export default function Documents() {
                 </h1>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#2a2a2a] rounded-full transition-colors"
                 >
                     {theme === 'dark' ? (
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,7 +265,7 @@ export default function Documents() {
 
                 {/* 錯誤訊息 */}
                 {error && (
-                    <div className="mb-8 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-red-600 dark:text-red-400 shadow-sm">
+                    <div className="mb-8 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-[20px] text-red-600 dark:text-red-400 shadow-sm">
                         {error}
                     </div>
                 )}
@@ -309,7 +309,7 @@ export default function Documents() {
 
                                     <button
                                         onClick={() => deleteDocument(doc.id)}
-                                        className="p-2 md:p-2.5 ml-4 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
+                                        className="p-2 md:p-2.5 ml-4 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors"
                                         title="刪除"
                                     >
                                         <TrashIcon />

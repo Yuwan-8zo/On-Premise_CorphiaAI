@@ -31,11 +31,12 @@ export const ConfirmModal: React.FC = () => {
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
                 >
                     <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="bg-white dark:bg-[#212121] rounded-3xl w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
+                        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="bg-white dark:bg-[#212121] rounded-[20px] w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
+                        onClick={e => e.stopPropagation()}
                     >
                         <div className="p-6">
                             <div className="flex items-center gap-4 mb-4">

@@ -61,7 +61,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
             {/* Logo */}
             <div className="p-4 border-b border-slate-700">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-[16px] bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                         <span className="text-xl">🤖</span>
                     </div>
                     <div>
@@ -78,7 +78,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                            `flex items-center gap-3 px-4 py-3 rounded-full transition-colors ${isActive
                                 ? 'bg-primary-600/20 text-primary-400'
                                 : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                             }`

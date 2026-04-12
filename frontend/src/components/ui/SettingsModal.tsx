@@ -112,8 +112,8 @@ export default function SettingsModal() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        // Mathematical Padding constraint: p-4 (16px), inner active pill -> rounded-xl (12px rounded). Setting Modal has rounded-[32px] because: button has radius ~16 + pad 16 = 32px
-                        className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-[#202123]/95 backdrop-blur-2xl rounded-[32px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
+                        // Mathematical Padding constraint: p-4 (16px), inner active pill -> rounded-full
+                        className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-[#202123]/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
                     >
                         {/* Close button (Mobile only or Top Right absolute) */}
                         <button
@@ -134,8 +134,8 @@ export default function SettingsModal() {
                                 {menuItems.map(item => (
                                     <button
                                         key={item.id}
-                                        onClick={() => setActiveSection(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all ${activeSection === item.id
+                                        onClick={() => { setActiveSection(item.id); if (window.innerWidth < 768) setMobileMenuOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
                                                 ? 'bg-white dark:bg-[#2a2a2a] text-[#1877F2] dark:text-blue-400 shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
                                             }`}
@@ -176,8 +176,8 @@ export default function SettingsModal() {
 
                                     <div className="pt-8">
                                         <button
-                                            onClick={handleLogout}
-                                            className="px-6 py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 font-semibold rounded-[16px] transition-colors"
+                                            onClick={() => alert('清除成功！')}
+                                            className="px-6 py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 font-semibold rounded-full transition-colors"
                                         >
                                             {t('auth.logout')}
                                         </button>
@@ -240,7 +240,7 @@ export default function SettingsModal() {
                                             <button
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
-                                                className={`w-full flex items-center justify-between px-6 py-5 rounded-[16px] transition-all border-2 ${i18n.language === lang.code
+                                                className={`w-full flex items-center justify-between px-6 py-5 rounded-full transition-all border-2 ${i18n.language === lang.code
                                                         ? 'bg-[#1877F2]/5 dark:bg-[#1877F2]/10 text-[#1877F2] dark:text-blue-400 border-[#1877F2]'
                                                         : 'bg-white dark:bg-[#2a2a2a] hover:bg-gray-50 dark:hover:bg-[#333] text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
                                                     }`}
@@ -265,7 +265,7 @@ export default function SettingsModal() {
                                     </h2>
 
                                     <div className="text-center py-6">
-                                        <div className="inline-flex items-center justify-center w-28 h-28 rounded-[32px] bg-gradient-to-tr from-[#0a4fa8] to-[#1877F2] mb-6 shadow-xl shadow-[#1877F2]/30">
+                                        <div className="inline-flex items-center justify-center w-28 h-28 rounded-[20px] bg-gradient-to-tr from-[#0a4fa8] to-[#1877F2] mb-6 shadow-xl shadow-[#1877F2]/30">
                                             <RobotIcon />
                                         </div>
                                         <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
@@ -279,8 +279,8 @@ export default function SettingsModal() {
                                         </p>
                                     </div>
 
-                                    <div className="mt-8 p-6 bg-gray-50 dark:bg-[#111]/50 rounded-[24px]">
-                                        <div className="grid grid-cols-2 gap-y-6 gap-x-8 text-[15px]">
+                                    <div className="mt-8 p-6 bg-gray-50 dark:bg-[#111]/50 rounded-[20px]">
+                                        <div className="grid grid-cols-2 gap-4 text-sm text-left">
                                             <div>
                                                 <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">技術棧</p>
                                                 <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">React + FastAPI</p>

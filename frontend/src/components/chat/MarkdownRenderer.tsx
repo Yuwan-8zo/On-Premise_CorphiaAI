@@ -209,7 +209,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         <img
                             src={src}
                             alt={alt || ''}
-                            className="max-w-full h-auto rounded-lg my-4"
+                            className="max-w-full h-auto rounded-[16px] my-4"
                         />
                     ),
                 }}

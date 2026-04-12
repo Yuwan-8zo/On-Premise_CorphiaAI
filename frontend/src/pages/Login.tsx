@@ -281,17 +281,17 @@ export default function Login() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-2xl overflow-hidden z-50 flex flex-col p-1"
+                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-[#1f1f1f] border border-gray-100 dark:border-[#333] shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-[10px] flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-[10px] flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
                                     >
                                         English
                                     </button>
@@ -318,7 +318,7 @@ export default function Login() {
                     {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[44px] lg:rounded-[44px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[20px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
@@ -418,7 +418,7 @@ export default function Login() {
                                             exit={{ opacity: 0, scale: 0.95, height: 0, marginTop: 0 }}
                                             className="w-full text-center overflow-hidden"
                                         >
-                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-2xl text-sm font-medium border border-red-200 dark:border-red-500/30 shadow-sm transition-colors">
+                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium border border-red-200 dark:border-red-500/30 shadow-sm transition-colors">
                                                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                 </svg>

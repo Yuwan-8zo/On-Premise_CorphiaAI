@@ -14,7 +14,7 @@ interface MessageBubbleProps {
 
 // AI 簡約頭像 (ChatGPT 樣式：空心或簡潔的圖標)
 const AIAvatar = () => (
-    <div className="w-8 h-8 rounded-full border border-gray-600 bg-transparent flex items-center justify-center flex-shrink-0">
+    <div className="w-8 h-8 rounded-[12px] border border-gray-600 bg-transparent flex items-center justify-center flex-shrink-0">
         <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-gray-200">
             {/* 簡單的 AI / Star 圖示代表模型 */}
             <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6L12 2z" />
@@ -29,7 +29,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
         <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}>
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
-                <div className="max-w-[75%] bg-[#2f2f2f] text-gray-100 rounded-[24px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
+                <div className="max-w-[75%] bg-[#2f2f2f] text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
                     {message.content}
                 </div>
             ) : (
@@ -41,7 +41,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                     {/* 內容區塊 */}
                     <div className="flex-1 min-w-0 pt-0.5 text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
-                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl prose-pre:border prose-pre:border-gray-800 max-w-none">
+                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-800 max-w-none">
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
