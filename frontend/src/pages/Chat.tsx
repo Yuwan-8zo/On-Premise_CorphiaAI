@@ -45,7 +45,7 @@ const StopIcon = () => (
 
 const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" {...props}>
-        <rect x="3" y="3" width="18" height="18" rx="9" ry="9"></rect>
+        <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
         <line x1="9" y1="3" x2="9" y2="21"></line>
     </svg>
 )
@@ -459,7 +459,7 @@ export default function Chat() {
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className="p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 flex items-center justify-center w-[36px] h-[36px]"
+                        className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 flex items-center justify-center w-[36px] h-[36px]"
                     >
                         {sidebarOpen || isSidebarHovered ? (
                             <SidebarIcon className="w-[18px] h-[18px]" />
