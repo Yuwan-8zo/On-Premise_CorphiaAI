@@ -32,7 +32,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-2.5 rounded-full bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-transparent text-gray-900 dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-[#1877F2]/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-2.5 rounded-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-primary-500/50 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -40,9 +40,9 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 htmlFor={id}
                 className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-black dark:bg-[#e0e0e0] text-white dark:text-black font-semibold py-0.5' 
-                        : 'top-1/2 scale-100 bg-transparent text-gray-400 dark:text-[#777] py-0'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-black dark:peer-focus:bg-[#e0e0e0] peer-focus:text-white dark:peer-focus:text-black peer-focus:font-semibold peer-focus:py-0.5
+                        ? 'top-0 scale-[0.85] bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold py-0.5' 
+                        : 'top-1/2 scale-100 bg-transparent text-gray-400 dark:text-gray-400 py-0'}
+                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-primary-600 dark:peer-focus:bg-primary-500 peer-focus:text-white dark:peer-focus:text-white peer-focus:font-semibold peer-focus:py-0.5
                 `}
             >
                 {label}
@@ -178,7 +178,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-[#131314] transition-colors duration-300">
+        <div className="min-h-screen flex bg-corphia-light dark:bg-corphia-dark transition-colors duration-300">
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
@@ -213,16 +213,22 @@ export default function Login() {
                         {/* 功能列表 */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
-                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature1')}</span>
+                                <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-primary-500 shadow-sm shadow-primary-500/50"></span>
+                                </div>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors font-medium">{t('auth.feature1')}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
-                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature2')}</span>
+                                <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-primary-500 shadow-sm shadow-primary-500/50"></span>
+                                </div>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors font-medium">{t('auth.feature2')}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2]"></span>
-                                <span className="text-gray-700 dark:text-gray-300 transition-colors">{t('auth.feature3')}</span>
+                                <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-primary-500 shadow-sm shadow-primary-500/50"></span>
+                                </div>
+                                <span className="text-gray-700 dark:text-gray-300 transition-colors font-medium">{t('auth.feature3')}</span>
                             </div>
                         </div>
                     </div>
@@ -285,13 +291,13 @@ export default function Login() {
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-primary-600 dark:text-primary-400 font-semibold bg-primary-50 dark:bg-primary-500/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-[#1877F2] font-semibold bg-[#1877F2]/5 dark:bg-[#1877F2]/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-primary-600 dark:text-primary-400 font-semibold bg-primary-50 dark:bg-primary-500/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                                     >
                                         English
                                     </button>
@@ -318,16 +324,16 @@ export default function Login() {
                     {/* 卡片本體：強制 1:1 正方形，上下元素固定於邊緣，中間輸入框緊密群聚 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-corphia-card shadow-xl dark:shadow-2xl dark:shadow-black/50 border border-primary-50 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-gray-100 dark:bg-[#2a2a2a] transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white-5/5 transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
                             <div
-                                className="bg-white dark:bg-[#fff] shadow-sm"
+                                className="bg-white dark:bg-white/10 dark:backdrop-blur-md shadow-sm border border-gray-200/50 dark:border-white/10"
                                 style={{
                                     position: 'absolute',
                                     top: '5px',
@@ -346,7 +352,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                    activeTab === 'login' ? 'text-primary-600 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -357,7 +363,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-gray-900 dark:text-[#111]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                    activeTab === 'register' ? 'text-primary-600 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                             >
                                 {t('auth.register')}
@@ -433,17 +439,17 @@ export default function Login() {
                                     )}
                                 </AnimatePresence>
 
-                                {/* 提交按鈕 */}
+                                {/* 提交按鈕 - 改用品牌漸層與 Solid 樣式 */}
                                 <motion.button
                                     layout
                                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-2.5 mt-1 bg-white dark:bg-transparent border border-gray-300 dark:border-[#4a4a4a] hover:border-gray-400 dark:hover:border-gray-400
-                                           text-gray-900 dark:text-white font-medium rounded-full text-sm shadow-sm dark:shadow-none
-                                           focus:outline-none focus:ring-1 focus:ring-[#1877F2]/50
+                                    className="w-full py-2.5 mt-1 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400
+                                           text-white font-medium rounded-full text-[15px] shadow-lg shadow-primary-500/25 dark:shadow-primary-500/10
+                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-corphia-card focus:ring-primary-500
                                            disabled:opacity-50 disabled:cursor-not-allowed
-                                           transition-all shrink-0"
+                                           transition-all shrink-0 border border-transparent"
                                 >
                                     {isLoading ? (
                                         <span className="flex items-center justify-center">

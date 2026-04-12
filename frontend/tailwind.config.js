@@ -8,19 +8,25 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Corphia Brand Indigo/Violet - 更具高階 AI 科技感的專屬主色調
                 primary: {
-                    50: '#f0f9ff',
-                    100: '#e0f2fe',
-                    200: '#bae6fd',
-                    300: '#7dd3fc',
-                    400: '#38bdf8',
-                    500: '#0ea5e9',
-                    600: '#0284c7',
-                    700: '#0369a1',
-                    800: '#075985',
-                    900: '#0c4a6e',
-                    950: '#082f49',
+                    50: '#eef2ff',
+                    100: '#e0e7ff',
+                    200: '#c7d2fe',
+                    300: '#a5b4fc',
+                    400: '#818cf8',
+                    500: '#6366f1', // Main brand
+                    600: '#4f46e5',
+                    700: '#4338ca',
+                    800: '#3730a3',
+                    900: '#312e81',
+                    950: '#1e1b4b',
                 },
+                corphia: {
+                    dark: '#0A0F1C', // 帶有深邃藍紫調的黑，不使用 ChatGPT 的平淡純灰黑
+                    card: '#131B2B', // 暗色模式的卡片底色
+                    light: '#F8FAFC', // 帶有極微弱冷色調的白
+                }
             },
             fontFamily: {
                 sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],
