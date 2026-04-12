@@ -1041,7 +1041,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
+                        <div className="relative flex flex-col bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#333]/50 rounded-[26px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-[#1877F2]/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
@@ -1062,7 +1062,7 @@ export default function Chat() {
                             )}
 
                             {/* Input Row */}
-                            <div className="flex items-end gap-3 p-2 pl-4">
+                            <div className="flex items-end gap-2 pl-4 pt-3 pr-[4px] pb-[4px]">
                                 {chatMode === 'project' && (
                                     <>
                                         <button 
@@ -1090,7 +1090,7 @@ export default function Chat() {
                                     style={{ lineHeight: '1.4' }}
                                 />
                                 
-                                <div className="ml-1 mr-1 mb-1">
+                                <div className="shrink-0">
                                     {isStreaming ? (
                                         <button onClick={handleStop} className="transition-transform active:scale-95">
                                             <StopIcon />
