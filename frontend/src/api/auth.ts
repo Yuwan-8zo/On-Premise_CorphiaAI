@@ -6,6 +6,16 @@ import apiClient from './client'
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth'
 import type { User } from '../types/auth'
 
+/**
+ * 密碼強度回應
+ */
+export interface PasswordStrengthResult {
+    score: number
+    level: 'weak' | 'medium' | 'strong' | 'very_strong'
+    errors: string[]
+    is_valid: boolean
+}
+
 export const authApi = {
     /**
      * 使用者登入
@@ -70,5 +80,25 @@ export const authApi = {
             tokenType: response.data.token_type,
             expiresIn: response.data.expires_in,
         }
+    },
+
+    /**
+     * 修改密碼
+     */
+    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+        await apiClient.post('/auth/change-password', {
+            current_password: currentPassword,
+            new_password: newPassword,
+        })
+    },
+
+    /**
+     * 檢查密碼強度（無需登入）
+     */
+    checkPasswordStrength: async (password: string): Promise<PasswordStrengthResult> => {
+        const response = await apiClient.post('/auth/check-password-strength', {
+            password,
+        })
+        return response.data
     },
 }

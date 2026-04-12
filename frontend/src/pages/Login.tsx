@@ -171,9 +171,20 @@ export default function Login() {
             const user = await authApi.me()
             setAuth(user, tokens.accessToken, tokens.refreshToken)
             navigate(from, { replace: true })
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Auth error:', err)
-            setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+            const axiosError = err as { response?: { status?: number; data?: { detail?: string } } }
+            const detail = axiosError?.response?.data?.detail
+
+            if (axiosError?.response?.status === 429) {
+                // 帳號被鎖定
+                setError(detail || '帳號已被暫時鎖定，請稍後再試')
+            } else if (detail) {
+                // 後端回傳的具體錯誤訊息（含剩餘次數提示）
+                setError(detail)
+            } else {
+                setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+            }
         } finally {
             setLoading(false)
         }

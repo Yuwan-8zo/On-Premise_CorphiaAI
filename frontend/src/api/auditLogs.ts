@@ -94,6 +94,9 @@ export const ACTION_LABELS: Record<string, string> = {
     model_refresh: '刷新模型',
     token_revoke: 'Token 撤銷',
     user_force_logout: '強制踢出',
+    password_change_success: '密碼修改成功',
+    password_change_failed: '密碼修改失敗',
+    account_locked: '帳號鎖定',
 }
 
 /**

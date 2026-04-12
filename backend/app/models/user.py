@@ -71,6 +71,14 @@ class User(Base):
     # 所有在此時間之前發放的 Token 都會被視為無效
     token_revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
+    # 登入失敗鎖定機制（暴力破解防護）
+    failed_login_attempts: Mapped[int] = mapped_column(
+        default=0,
+        nullable=False,
+        server_default="0",
+    )
+    locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

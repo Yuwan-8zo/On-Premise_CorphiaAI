@@ -49,6 +49,11 @@ class AuditAction:
     TOKEN_REVOKE = "token_revoke"
     USER_FORCE_LOGOUT = "user_force_logout"
 
+    # 密碼安全
+    PASSWORD_CHANGE_SUCCESS = "password_change_success"
+    PASSWORD_CHANGE_FAILED = "password_change_failed"
+    ACCOUNT_LOCKED = "account_locked"
+
 
 # 資源類型常數
 class AuditResource:

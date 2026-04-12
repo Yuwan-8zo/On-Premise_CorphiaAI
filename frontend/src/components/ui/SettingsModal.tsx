@@ -70,6 +70,18 @@ export default function SettingsModal() {
 
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
+    // 密碼修改狀態
+    const [showPasswordForm, setShowPasswordForm] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmNewPassword, setConfirmNewPassword] = useState('')
+    const [passwordError, setPasswordError] = useState('')
+    const [passwordSuccess, setPasswordSuccess] = useState('')
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [passwordStrength, setPasswordStrength] = useState<{
+        score: number; level: string; errors: string[]; is_valid: boolean
+    } | null>(null)
+
     const menuItems = [
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
         { id: 'appearance' as const, icon: <PaletteIcon />, label: t('settings.theme') },
@@ -90,7 +102,6 @@ export default function SettingsModal() {
 
     const handleLogout = async () => {
         try {
-            // 先呼叫後端 API 將 Token 加入黑名單
             await authApi.logout()
         } catch {
             // 即使 API 失敗也繼續清除本地 Token
@@ -98,6 +109,108 @@ export default function SettingsModal() {
         clearAuth()
         setSettingsOpen(false)
         window.location.href = '/login'
+    }
+
+    /**
+     * 即時檢查密碼強度
+     */
+    const handleNewPasswordChange = async (value: string) => {
+        setNewPassword(value)
+        setPasswordError('')
+        setPasswordSuccess('')
+
+        if (value.length === 0) {
+            setPasswordStrength(null)
+            return
+        }
+
+        // 本地即時驗證（避免過多 API 請求）
+        const errors: string[] = []
+        if (value.length < 8) errors.push('至少 8 個字元')
+        if (!/[A-Z]/.test(value)) errors.push('需包含大寫字母')
+        if (!/[a-z]/.test(value)) errors.push('需包含小寫字母')
+        if (!/\d/.test(value)) errors.push('需包含數字')
+        if (!/[!@#$%^&*()\-_=+\[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push('需包含特殊字元')
+
+        let score = 0
+        if (value.length >= 8) score += 20
+        if (value.length >= 12) score += 10
+        if (value.length >= 16) score += 10
+        if (/[a-z]/.test(value)) score += 15
+        if (/[A-Z]/.test(value)) score += 15
+        if (/\d/.test(value)) score += 15
+        if (/[!@#$%^&*()\-_=+\[\]{};:'",.<>?/\\|`~]/.test(value)) score += 15
+        score = Math.min(score, 100)
+
+        let level = 'weak'
+        if (score >= 80) level = 'very_strong'
+        else if (score >= 60) level = 'strong'
+        else if (score >= 40) level = 'medium'
+
+        setPasswordStrength({ score, level, errors, is_valid: errors.length === 0 })
+    }
+
+    /**
+     * 提交密碼修改
+     */
+    const handleChangePassword = async () => {
+        setPasswordError('')
+        setPasswordSuccess('')
+
+        if (!currentPassword) {
+            setPasswordError('請輸入當前密碼')
+            return
+        }
+        if (!newPassword) {
+            setPasswordError('請輸入新密碼')
+            return
+        }
+        if (newPassword !== confirmNewPassword) {
+            setPasswordError('新密碼與確認密碼不一致')
+            return
+        }
+        if (passwordStrength && !passwordStrength.is_valid) {
+            setPasswordError('新密碼不符合安全要求')
+            return
+        }
+
+        setIsChangingPassword(true)
+        try {
+            await authApi.changePassword(currentPassword, newPassword)
+            setPasswordSuccess('密碼修改成功！')
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmNewPassword('')
+            setPasswordStrength(null)
+            // 3 秒後收起表單
+            setTimeout(() => {
+                setShowPasswordForm(false)
+                setPasswordSuccess('')
+            }, 3000)
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } }
+            setPasswordError(error?.response?.data?.detail || '密碼修改失敗')
+        } finally {
+            setIsChangingPassword(false)
+        }
+    }
+
+    /** 密碼強度指示器顏色 */
+    const getStrengthColor = (level: string) => {
+        switch (level) {
+            case 'very_strong': return 'bg-green-500'
+            case 'strong': return 'bg-blue-500'
+            case 'medium': return 'bg-yellow-500'
+            default: return 'bg-red-500'
+        }
+    }
+    const getStrengthLabel = (level: string) => {
+        switch (level) {
+            case 'very_strong': return '非常強'
+            case 'strong': return '強'
+            case 'medium': return '中等'
+            default: return '弱'
+        }
     }
 
     return (
@@ -119,10 +232,9 @@ export default function SettingsModal() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        // Mathematical Padding constraint: p-4 (16px), inner active pill -> rounded-full
                         className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-ios-dark-gray5/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
                     >
-                        {/* Close button (Mobile only or Top Right absolute) */}
+                        {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
                             className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-900 hover:bg-black/5 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10 rounded-full transition-colors z-20"
@@ -130,7 +242,7 @@ export default function SettingsModal() {
                             <CloseIcon />
                         </button>
 
-                        {/* 側邊選單 (Sidebar of Settings) */}
+                        {/* 側邊選單 */}
                         <div className="md:w-64 bg-gray-50/50 dark:bg-ios-dark-gray6/30 border-r border-gray-200/50 dark:border-white/5 flex-shrink-0 flex flex-col">
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-wide">
@@ -181,7 +293,133 @@ export default function SettingsModal() {
                                         </div>
                                     </div>
 
-                                    <div className="pt-8">
+                                    {/* 修改密碼區塊 */}
+                                    <div className="mb-8">
+                                        <button
+                                            onClick={() => {
+                                                setShowPasswordForm(!showPasswordForm)
+                                                setPasswordError('')
+                                                setPasswordSuccess('')
+                                                setCurrentPassword('')
+                                                setNewPassword('')
+                                                setConfirmNewPassword('')
+                                                setPasswordStrength(null)
+                                            }}
+                                            className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-ios-dark-gray4 hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 font-semibold rounded-full transition-colors"
+                                        >
+                                            🔒 {showPasswordForm ? '收起' : '修改密碼'}
+                                        </button>
+
+                                        {showPasswordForm && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="mt-4 p-6 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[16px] border border-gray-200 dark:border-white/5 space-y-4 max-w-md"
+                                            >
+                                                {/* 密碼策略提示 */}
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-ios-dark-gray4 rounded-xl p-3 space-y-1">
+                                                    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">密碼安全要求：</p>
+                                                    <p>• 至少 8 個字元</p>
+                                                    <p>• 包含大寫字母 (A-Z)</p>
+                                                    <p>• 包含小寫字母 (a-z)</p>
+                                                    <p>• 包含數字 (0-9)</p>
+                                                    <p>• 包含特殊字元 (!@#$% 等)</p>
+                                                </div>
+
+                                                {/* 當前密碼 */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">當前密碼</label>
+                                                    <input
+                                                        type="password"
+                                                        value={currentPassword}
+                                                        onChange={e => { setCurrentPassword(e.target.value); setPasswordError('') }}
+                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
+                                                        placeholder="輸入當前密碼"
+                                                    />
+                                                </div>
+
+                                                {/* 新密碼 */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">新密碼</label>
+                                                    <input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={e => handleNewPasswordChange(e.target.value)}
+                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
+                                                        placeholder="輸入新密碼"
+                                                    />
+
+                                                    {/* 密碼強度指示器 */}
+                                                    {passwordStrength && (
+                                                        <div className="mt-2">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <div className="flex-1 h-2 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full transition-all duration-300 ${getStrengthColor(passwordStrength.level)}`}
+                                                                        style={{ width: `${passwordStrength.score}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className={`text-xs font-semibold ${
+                                                                    passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
+                                                                    passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
+                                                                    passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                                                    'text-red-600 dark:text-red-400'
+                                                                }`}>
+                                                                    {getStrengthLabel(passwordStrength.level)}
+                                                                </span>
+                                                            </div>
+                                                            {passwordStrength.errors.length > 0 && (
+                                                                <ul className="text-xs text-red-500 dark:text-red-400 space-y-0.5">
+                                                                    {passwordStrength.errors.map((err, i) => (
+                                                                        <li key={i}>✗ {err}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* 確認新密碼 */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">確認新密碼</label>
+                                                    <input
+                                                        type="password"
+                                                        value={confirmNewPassword}
+                                                        onChange={e => { setConfirmNewPassword(e.target.value); setPasswordError('') }}
+                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
+                                                        placeholder="再次輸入新密碼"
+                                                    />
+                                                    {confirmNewPassword && newPassword !== confirmNewPassword && (
+                                                        <p className="mt-1 text-xs text-red-500">密碼不一致</p>
+                                                    )}
+                                                </div>
+
+                                                {/* 錯誤/成功訊息 */}
+                                                {passwordError && (
+                                                    <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium">
+                                                        ⚠️ {passwordError}
+                                                    </div>
+                                                )}
+                                                {passwordSuccess && (
+                                                    <div className="p-3 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium">
+                                                        ✅ {passwordSuccess}
+                                                    </div>
+                                                )}
+
+                                                {/* 提交按鈕 */}
+                                                <button
+                                                    onClick={handleChangePassword}
+                                                    disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                                                    className="w-full py-3 bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:hover:bg-ios-blue-light text-white font-semibold rounded-full transition-colors"
+                                                >
+                                                    {isChangingPassword ? '修改中...' : '確認修改密碼'}
+                                                </button>
+                                            </motion.div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-4">
                                         <button
                                             onClick={handleLogout}
                                             className="px-6 py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 font-semibold rounded-full transition-colors"

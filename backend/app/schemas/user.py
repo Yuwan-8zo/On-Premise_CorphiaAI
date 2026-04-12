@@ -17,7 +17,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """建立使用者 Schema"""
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     role: str = UserRole.USER.value
     tenant_id: Optional[str] = None
 

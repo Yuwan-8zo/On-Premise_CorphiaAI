@@ -4,13 +4,15 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.services.password_service import validate_password_strength
 
 
 class LoginRequest(BaseModel):
     """登入請求"""
     email: str  # 允許非標準格式 (如 admin@local)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=1)
 
 
 class LoginResponse(BaseModel):
@@ -36,13 +38,43 @@ class TokenPayload(BaseModel):
 class RegisterRequest(BaseModel):
     """註冊請求"""
     email: str  # 允許非標準格式 (如 admin@local)
-    password: str = Field(..., min_length=6)
-    name: Optional[str] = Field(None, min_length=1, max_length=100)  # 可選，預設使用 email 前綴
-    tenant_slug: Optional[str] = None  # 租戶識別碼
+    password: str = Field(..., min_length=8)
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    tenant_slug: Optional[str] = None
 
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        """驗證密碼強度"""
+        errors = validate_password_strength(v)
+        if errors:
+            raise ValueError("; ".join(errors))
+        return v
 
 
 class PasswordChangeRequest(BaseModel):
     """變更密碼請求"""
     current_password: str
-    new_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        """驗證新密碼強度"""
+        errors = validate_password_strength(v)
+        if errors:
+            raise ValueError("; ".join(errors))
+        return v
+
+
+class PasswordStrengthRequest(BaseModel):
+    """密碼強度檢查請求"""
+    password: str
+
+
+class PasswordStrengthResponse(BaseModel):
+    """密碼強度回應"""
+    score: int
+    level: str  # weak / medium / strong / very_strong
+    errors: list[str]
+    is_valid: bool
