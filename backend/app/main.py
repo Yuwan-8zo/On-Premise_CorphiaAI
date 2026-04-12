@@ -88,7 +88,18 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Window",
+        "X-RateLimit-Reset",
+        "Retry-After",
+    ],
 )
+
+# 速率限制中間件
+from app.core.rate_limiter import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
 
 
 # 全域例外處理

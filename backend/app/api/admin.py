@@ -51,3 +51,36 @@ async def get_system_stats(
             "totalMessages": total_messages
         }
     }
+
+
+@router.get("/rate-limit/stats", summary="取得速率限制統計")
+async def get_rate_limit_stats(
+    _ = RequireAdmin
+) -> Dict[str, Any]:
+    """
+    取得速率限制器的即時統計資料 (僅限管理員)
+    """
+    from app.core.rate_limiter import get_rate_limiter, GLOBAL_RATE_LIMIT, ENDPOINT_RATE_LIMITS
+
+    limiter = get_rate_limiter()
+    stats = limiter.get_stats()
+
+    return {
+        "status": "success",
+        "data": {
+            "limiter_stats": stats,
+            "global_rule": {
+                "max_requests": GLOBAL_RATE_LIMIT.max_requests,
+                "window_seconds": GLOBAL_RATE_LIMIT.window_seconds,
+                "description": GLOBAL_RATE_LIMIT.description,
+            },
+            "endpoint_rules": {
+                path: {
+                    "max_requests": rule.max_requests,
+                    "window_seconds": rule.window_seconds,
+                    "description": rule.description,
+                }
+                for path, rule in ENDPOINT_RATE_LIMITS.items()
+            },
+        }
+    }

@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     upload_directory: str = "./uploads"
     max_upload_size_mb: int = 50
     
+    # 速率限制
+    rate_limit_enabled: bool = True
+    rate_limit_global_max: int = 120           # 全域每分鐘最大請求數
+    rate_limit_login_max: int = 10             # 登入每分鐘最大嘗試數
+    rate_limit_register_max: int = 5           # 註冊每小時最大次數
+    
     # CORS
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     

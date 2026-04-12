@@ -29,11 +29,23 @@ apiClient.interceptors.request.use(
     (error) => Promise.reject(error)
 )
 
-// 回應攔截器 - 處理錯誤和 Token 刷新
+// 回應攔截器 - 處理錯誤、Token 刷新、速率限制
 apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+        // 429 Too Many Requests - 速率限制
+        if (error.response?.status === 429) {
+            const retryAfter = error.response.headers['retry-after']
+            const data = error.response.data as { error?: { message?: string } }
+            const message = data?.error?.message || `請求過於頻繁，請在 ${retryAfter || '數'} 秒後重試`
+
+            // 觸發全域提示（如果有 toast 系統可以替換）
+            console.warn(`[Rate Limit] ${message}`)
+
+            return Promise.reject(error)
+        }
 
         // Token 過期，嘗試刷新
         if (error.response?.status === 401 && !originalRequest._retry) {
