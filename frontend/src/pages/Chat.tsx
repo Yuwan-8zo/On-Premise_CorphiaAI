@@ -222,38 +222,16 @@ export default function Chat() {
         const folderName = newFolderInput.trim() || DEFAULT_FOLDER
         setNewFolderModal(false)
         setNewFolderInput('')
-        // 將資料夾名稱儲存到 localStorage
-        if (!savedFolders.includes(folderName)) {
-            persistFolders([...savedFolders, folderName])
-        }
-        try {
-            const newConv = await conversationsApi.create({
-                title: '\u65b0\u5c0d\u8a71',
-                settings: { isProject: true, folderName }
-            })
-            addConversation(newConv)
-            setChatMode('project')
-            // \u5207\u63db\u5230\u65b0\u5c0d\u8a71\uff0c\u8b93\u4f7f\u7528\u8005\u770b\u5230\u8cc7\u6599\u593e\u5df2\u5efa\u7acb
-            await selectConversation(newConv)
-            // \u5075\u6e2c\u662f\u5426\u6709\u6587\u4ef6\uff0c\u82e5\u7121\u5247\u63d0\u793a\u4e0a\u50b3
-            const res = await documentsApi.list()
-            const docList = Array.isArray(res) ? res : (res.data || [])
-            const folderDocs = docList.filter((d: DocumentResponse) =>
-                d.doc_metadata?.folderName === folderName && (d.doc_metadata?.isActive ?? true)
-            )
-            if (folderDocs.length === 0) {
-                const promptMsg: Message = {
-                    id: `auto-${Date.now()}`,
-                    role: 'assistant',
-                    content: `\u60a8\u597d\uff01\u5c08\u6848\u8cc7\u6599\u593e\u300c${folderName}\u300d\u5df2\u5efa\u7acb\u3002\n\n\u76ee\u524d\u6b64\u8cc7\u6599\u593e\u5167\u5c1a\u672a\u4e0a\u50b3\u4efb\u4f55\u6a94\u6848\uff0cCorphia \u9700\u8981\u53c3\u8003\u8cc7\u6599\u624d\u80fd\u56de\u7b54\u5c08\u6848\u76f8\u95dc\u554f\u984c\u3002\n\n**\u8acb\u5728\u53f3\u5074\u9ede\u64ca\u300c\ud83d\udcce\u9644\u4ef6\u300d\u6309\u9215\uff0c\u4e0a\u50b3\u76f8\u95dc\u6a94\u6848\uff08\u652f\u63f4 PDF\u3001DOCX\u3001XLSX\u3001TXT \u7b49\u683c\u5f0f\uff09\u3002**`,
-                    tokens: 0,
-                    createdAt: new Date().toISOString(),
-                }
-                addMessage(promptMsg)
-            }
-        } catch (error) {
-            console.error('Create folder failed:', error)
-        }
+
+        // \u5c07\u8cc7\u6599\u593e\u5132\u5b58\u5230 localStorage \u2014\u2014 \u4e0d\u81ea\u52d5\u5efa\u7acb\u5c0d\u8a71\uff0c\u4fdd\u6301\u8cc7\u6599\u593e\u70ba\u7a7a
+        const updated = savedFolders.includes(folderName)
+            ? savedFolders
+            : [...savedFolders, folderName]
+        persistFolders(updated)
+        setChatMode('project')
+        // \u6e05\u7a7a\u76ee\u524d\u9078\u53d6\u7684\u5c0d\u8a71\uff0c\u986f\u793a\u7a7a\u8cc7\u6599\u593e\u5167\u5bb9
+        setCurrentConversation(null)
+        setMessages([])
     }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
