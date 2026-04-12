@@ -13,6 +13,7 @@ import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '..
 import { MessageBubble } from '../components/chat'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
+import { CorphiaLogo } from '../components/icons/CorphiaIcons'
 
 // --- Custom UI Icons ---
 const PlusIcon = () => (
@@ -709,7 +710,8 @@ export default function Chat() {
                         >
                             <SidebarIcon />
                         </button>
-                        <h1 className="text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
+                        <h1 className="text-[17px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-2">
+                            <CorphiaLogo className="w-5 h-5 rounded-md overflow-hidden" />
                             Corphia
                         </h1>
                     </div>
