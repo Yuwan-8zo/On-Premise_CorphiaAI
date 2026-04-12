@@ -663,9 +663,17 @@ export default function Chat() {
 
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
                 <div className={`w-full transition-all duration-300 p-3 space-y-3 ${!sidebarOpen && 'flex flex-col items-center'}`}>
-                    {/* 新對話按鈕 */}
+                    {/* 新對話 / 新資料夾 按鈕 */}
                     <button
-                        onClick={createNewConversation}
+                        onClick={() => {
+                            if (chatMode === 'project') {
+                                setNewFolderInput('')
+                                setNewFolderModal(true)
+                                setTimeout(() => newFolderInputRef.current?.focus(), 100)
+                            } else {
+                                createNewConversation()
+                            }
+                        }}
                         className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
@@ -675,7 +683,7 @@ export default function Chat() {
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </div>
-                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? '新資料夾' : '新對話'}</span>}
+                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? '\u65b0\u8cc7\u6599\u593e' : '\u65b0\u5c0d\u8a71'}</span>}
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
