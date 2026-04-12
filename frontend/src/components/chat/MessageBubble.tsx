@@ -32,12 +32,14 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                 </div>
             ) : (
                 // AI 訊息：無背景框，流暢文字排版，包含頭像，靠左
-                <div className="w-full flex gap-4">
-                    {/* 頭像固定靠左，不隨內容拉伸 */}
-                    <AIAvatar />
+                <div className="w-full flex items-start gap-3">
+                    {/* 頭像固定靠左，對齊第一行文字 */}
+                    <div className="mt-1 flex-shrink-0">
+                        <AIAvatar />
+                    </div>
                     
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 pt-0.5 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-gray-100 dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-white/5 max-w-none">
                                 <MarkdownRenderer content={message.content} />
