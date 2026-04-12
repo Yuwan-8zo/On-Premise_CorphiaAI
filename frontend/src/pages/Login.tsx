@@ -315,7 +315,7 @@ export default function Login() {
                     {/* 卡片本體：改用 <motion.form> 取代 div + contents 以徹底避免 Safari/iOS 下 flex 的間距計算 Bug */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[44px] p-5 flex flex-col transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-white dark:bg-[#1c1c1c] shadow-xl dark:shadow-none border border-gray-100 dark:border-transparent rounded-[44px] lg:rounded-[44px] p-5 flex flex-col justify-between transition-colors gap-4 aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
@@ -361,11 +361,8 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 上方彈性留白 - 與下方 spacer 等分，確保 input 群組精確置中 */}
-                        <div className="flex-1" />
-
-                        {/* 輸入欄位群組 - shrink-0 保持固有高度不被壓縮 */}
-                        <div className="w-full flex flex-col gap-4 shrink-0">
+                        {/* 輸入欄位群組 - 以 flex-col 排列，均分上下與彼此之間的空間 */}
+                        <div className="w-full flex flex-col flex-1 justify-evenly">
                             <FloatingInput
                                 id="email"
                                 type="email"
@@ -384,16 +381,16 @@ export default function Login() {
                                 label={t('auth.password')}
                             />
 
-                            {/* 確認密碼欄位：純 opacity+translateY 動畫，不影響 layout，避免 reflow 卡頓 */}
+                            {/* 確認密碼欄位：結合 height 動畫使父容器的 justify-evenly 能平滑地重新分配空間 */}
                             <AnimatePresence initial={false}>
                                 {activeTab === 'register' && (
                                     <motion.div
                                         key="confirm"
-                                        initial={{ opacity: 0, y: -12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -8 }}
-                                        transition={{ duration: 0.22, ease: 'easeOut' }}
-                                        className="w-full"
+                                        initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                                        exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                        className="w-full overflow-hidden"
                                     >
                                         <FloatingInput
                                             id="confirm-password"
@@ -407,9 +404,6 @@ export default function Login() {
                                 )}
                             </AnimatePresence>
                         </div>
-
-                        {/* 下方彈性留白 - 與上方 spacer 等分 */}
-                        <div className="flex-1" />
 
                         {/* 底層按鈕與錯誤提示區塊 */}
                         <div className="w-full flex flex-col gap-3 shrink-0">
