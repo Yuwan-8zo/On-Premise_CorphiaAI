@@ -454,9 +454,16 @@ export default function Chat() {
                     <button
                         onClick={toggleSidebar}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className="p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0"
+                        className="group p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 relative flex items-center justify-center w-[36px] h-[36px]"
                     >
-                        <SidebarIcon className="w-[18px] h-[18px]" />
+                        {sidebarOpen ? (
+                            <SidebarIcon className="w-[18px] h-[18px]" />
+                        ) : (
+                            <>
+                                <CorphiaLogo className="w-[22px] h-[22px] rounded-[5px] transition-opacity duration-200 group-hover:opacity-0 absolute" />
+                                <SidebarIcon className="w-[18px] h-[18px] opacity-0 transition-opacity duration-200 group-hover:opacity-100 absolute" />
+                            </>
+                        )}
                     </button>
                 </div>
 
