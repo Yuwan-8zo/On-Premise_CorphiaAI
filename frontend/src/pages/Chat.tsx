@@ -459,12 +459,14 @@ export default function Chat() {
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors shrink-0 flex items-center justify-center w-[36px] h-[36px]"
+                        className={`rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333] transition-all duration-200 shrink-0 flex items-center justify-center ${
+                            (!sidebarOpen && !isSidebarHovered) ? 'w-8 h-8 p-0' : 'w-[36px] h-[36px] p-2'
+                        }`}
                     >
                         {sidebarOpen || isSidebarHovered ? (
                             <SidebarIcon className="w-[18px] h-[18px]" />
                         ) : (
-                            <CorphiaLogo className="w-[22px] h-[22px] rounded-full" />
+                            <CorphiaLogo className="w-8 h-8 rounded-full" />
                         )}
                     </button>
                 </div>
