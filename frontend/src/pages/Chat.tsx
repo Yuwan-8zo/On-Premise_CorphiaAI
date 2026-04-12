@@ -50,6 +50,13 @@ const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 )
 
+const GGUF_MODELS = [
+    { id: 'llama3', name: 'Llama-3-8B-Instruct.gguf', desc: 'Local GGUF - 高速推理' },
+    { id: 'mistral', name: 'Mistral-Nemo-12B.gguf', desc: 'Local GGUF - 邏輯強化' },
+    { id: 'qwen', name: 'Qwen2.5-7B-Instruct.gguf', desc: 'Local GGUF - 中文特化' },
+    { id: 'gemma', name: 'Gemma-2-9B-It.gguf', desc: 'Local GGUF - 輕量精準' }
+];
+
 export default function Chat() {
     const { t } = useTranslation()
     const { user } = useAuthStore()
@@ -75,6 +82,10 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const wsRef = useRef<ChatWebSocket | null>(null)
+    
+    // GGUF Model Dropdown State
+    const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
+    const [selectedModel, setSelectedModel] = useState(GGUF_MODELS[0])
 
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
@@ -709,9 +720,8 @@ export default function Chat() {
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col relative w-full min-h-0 overflow-hidden bg-transparent">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <header className="shrink-0 w-full p-4 md:p-6 flex items-center justify-between z-20 bg-transparent">
+                <header className="absolute top-0 left-0 w-full p-4 md:p-6 flex items-center justify-between z-30 bg-white/90 dark:bg-[#212121]/90 backdrop-blur-md">
                     <div className="flex items-center gap-3">
-                        {/* 手機版的開啟側邊欄按鈕 (桌機隱藏) */}
                         <button
                             onClick={toggleSidebar}
                             className={`p-2 -ml-2 rounded-xl hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-gray-600 dark:text-gray-300'}`}
@@ -719,20 +729,71 @@ export default function Chat() {
                             <SidebarIcon className="w-5 h-5" />
                         </button>
                         
-                        {/* 桌機版：外部只放文字 Corphia / 手機版：保留完整 Logo 與字 */}
-                        <h1 className={`text-[20px] font-bold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                            <span className="md:hidden flex items-center">
-                                <CorphiaLogo className="w-7 h-7 rounded-[7px] overflow-hidden" />
-                            </span>
-                            Corphia
-                        </h1>
+                        <div className="relative">
+                            <button 
+                                onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                                className={`flex items-center gap-2 md:gap-3 transition-opacity px-2 py-1.5 -ml-2 rounded-2xl hover:bg-gray-100 dark:hover:bg-[#2a2a2a] ${sidebarOpen ? 'max-md:opacity-0 pointer-events-none md:pointer-events-auto' : 'opacity-100'}`}
+                            >
+                                <span className="md:hidden flex items-center">
+                                    <CorphiaLogo className="w-7 h-7 rounded-[7px] overflow-hidden" />
+                                </span>
+                                
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[20px] font-bold text-gray-800 dark:text-gray-200 tracking-wide">Corphia</span>
+                                    <span className="text-[17px] font-semibold text-gray-500 dark:text-gray-400 font-mono tracking-tight hidden sm:block">{selectedModel.name}</span>
+                                    <svg className={`w-5 h-5 text-gray-400 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </button>
+
+                            {/* GGUF 選擇下拉選單 */}
+                            <AnimatePresence>
+                                {modelDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                                            className="absolute left-0 top-full mt-2 w-[300px] bg-white dark:bg-[#2a2a2a] rounded-[24px] shadow-xl border border-gray-100 dark:border-[#333] overflow-hidden z-50 p-2"
+                                        >
+                                            {GGUF_MODELS.map(model => (
+                                                <button
+                                                    key={model.id}
+                                                    onClick={() => {
+                                                        setSelectedModel(model);
+                                                        setModelDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-3 rounded-[16px] flex items-center justify-between transition-colors ${selectedModel.id === model.id ? 'bg-gray-50 dark:bg-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#333]'}`}
+                                                >
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className={`font-semibold text-[15px] truncate ${selectedModel.id === model.id ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
+                                                        <span className="text-[13px] text-gray-500 mt-0.5">{model.desc}</span>
+                                                    </div>
+                                                    {selectedModel.id === model.id && (
+                                                        <svg className="w-5 h-5 ml-2 text-gray-800 dark:text-gray-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                    )}
+                                                </button>
+                                            ))}
+                                            
+                                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-[#333]">
+                                                <button className="w-full text-left px-4 py-3 rounded-[16px] flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#333] text-gray-600 dark:text-gray-400">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    <span className="font-semibold text-[15px]">管理 GGUF 模型...</span>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </header>
 
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
                 {selectedFolder ? (
                     // 專案管理頁面 Folder View
-                    <div className="flex-1 overflow-y-auto px-6 py-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
+                    <div className="flex-1 overflow-y-auto px-6 pt-[88px] md:pt-[100px] mb-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
                         <div className="mb-8 pl-2">
                             <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
                                 <svg className="w-8 h-8 text-[#1877F2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
