@@ -668,7 +668,7 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className={`w-full transition-all duration-300 p-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 pb-6 md:pb-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
@@ -697,7 +697,7 @@ export default function Chat() {
                         {/* Mobile Hamburguer (only visible when sidebar is closed on mobile) */}
                         <button
                             onClick={toggleSidebar}
-                            className={`mr-4 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'hidden' : 'block'}`}
+                            className={`mr-4 p-2 rounded-xl hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors md:hidden ${sidebarOpen ? 'hidden' : 'block'}`}
                         >
                             <SidebarIcon />
                         </button>
@@ -705,7 +705,7 @@ export default function Chat() {
                         {/* Desktop Sidebar Toggle (Always visible on md+) */}
                         <button
                             onClick={toggleSidebar}
-                            className="mr-4 p-2 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors hidden md:block"
+                            className="mr-4 p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-[#2a2a2a] transition-colors hidden md:block"
                         >
                             <SidebarIcon />
                         </button>
@@ -797,7 +797,7 @@ export default function Chat() {
                                                             }
                                                         })
                                                     }}
-                                                    className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
+                                                    className="p-2 text-gray-400 hover:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 group-hover:opacity-100 transition-all"
                                                     title="刪除"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

@@ -415,7 +415,7 @@ export default function Login() {
                                             exit={{ opacity: 0, scale: 0.95, height: 0, marginTop: 0 }}
                                             className="w-full text-center overflow-hidden"
                                         >
-                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium border border-red-200 dark:border-red-500/30 shadow-sm transition-colors">
+                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-2xl text-sm font-medium border border-red-200 dark:border-red-500/30 shadow-sm transition-colors">
                                                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                 </svg>
