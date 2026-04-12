@@ -123,6 +123,20 @@ export default function Chat() {
     const [newFolderInput, setNewFolderInput] = useState('')
     const newFolderInputRef = useRef<HTMLInputElement>(null)
 
+    // 持久化儲存的資料夾清單（即使資料夾內沒有對話也保留）
+    const [savedFolders, setSavedFolders] = useState<string[]>(() => {
+        try {
+            const raw = localStorage.getItem('corphia_project_folders')
+            return raw ? JSON.parse(raw) : []
+        } catch {
+            return []
+        }
+    })
+    const persistFolders = (folders: string[]) => {
+        setSavedFolders(folders)
+        localStorage.setItem('corphia_project_folders', JSON.stringify(folders))
+    }
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -208,6 +222,10 @@ export default function Chat() {
         const folderName = newFolderInput.trim() || DEFAULT_FOLDER
         setNewFolderModal(false)
         setNewFolderInput('')
+        // 將資料夾名稱儲存到 localStorage
+        if (!savedFolders.includes(folderName)) {
+            persistFolders([...savedFolders, folderName])
+        }
         try {
             const newConv = await conversationsApi.create({
                 title: '\u65b0\u5c0d\u8a71',
@@ -479,7 +497,7 @@ export default function Chat() {
 
         showConfirm(t('common.confirmDelete'), async () => {
             try {
-                const relatedConvs = conversations.filter(c => Boolean(c.settings?.isProject) && ((c.settings?.folderName as string) || '新資料夾') === folderName)
+                const relatedConvs = conversations.filter(c => Boolean(c.settings?.isProject) && ((c.settings?.folderName as string) || DEFAULT_FOLDER) === folderName)
                 for (const conv of relatedConvs) {
                     if (!conv.id.startsWith('temp-')) {
                         await conversationsApi.delete(conv.id)
@@ -493,10 +511,13 @@ export default function Chat() {
 
                 const res = await documentsApi.list()
                 const docList = Array.isArray(res) ? res : (res.data || [])
-                const relatedDocs = docList.filter((d: DocumentResponse) => ((d.doc_metadata?.folderName as string) || '新資料夾') === folderName)
+                const relatedDocs = docList.filter((d: DocumentResponse) => ((d.doc_metadata?.folderName as string) || DEFAULT_FOLDER) === folderName)
                 for (const doc of relatedDocs) {
                     await documentsApi.delete(doc.id)
                 }
+
+                // 從 localStorage 中移除資料夾
+                persistFolders(savedFolders.filter(f => f !== folderName))
 
                 if (selectedFolder === folderName) {
                     setSelectedFolder(null)
@@ -779,8 +800,14 @@ export default function Chat() {
                                 <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
                             </div>
                             {(() => {
-                                const filtered = conversations.filter(c => Boolean(c.settings?.isProject))
-                                if (filtered.length === 0) {
+                                // 使用 savedFolders 作為資料夾清單來源，即使資料夾內沒有對話也保留
+                                // 同時將 conversations 中尚未存入 savedFolders 的自動補漏
+                                const convFolders = conversations
+                                    .filter(c => Boolean(c.settings?.isProject))
+                                    .map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)
+                                const allFolders = Array.from(new Set([...savedFolders, ...convFolders]))
+
+                                if (allFolders.length === 0) {
                                     return (
                                         <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
                                             <p className="text-gray-400 text-[13px] py-4 pl-3">尚無專案</p>
@@ -789,13 +816,15 @@ export default function Chat() {
                                 }
 
                                 const grouped: Record<string, typeof conversations> = {}
-                                filtered.forEach(conv => {
-                                    const folder = (conv.settings?.folderName as string) || '新資料夾'
-                                    if (!grouped[folder]) grouped[folder] = []
-                                    grouped[folder].push(conv)
-                                })
+                                conversations
+                                    .filter(c => Boolean(c.settings?.isProject))
+                                    .forEach(conv => {
+                                        const folder = (conv.settings?.folderName as string) || DEFAULT_FOLDER
+                                        if (!grouped[folder]) grouped[folder] = []
+                                        grouped[folder].push(conv)
+                                    })
 
-                                const folderNames = Object.keys(grouped)
+                                const folderNames = allFolders  // \u4f7f\u7528 allFolders \u78ba\u4fdd\u7a7a\u8cc7\u6599\u593e\u4e5f\u80fd\u986f\u793a
                                 
                                 return (
                                     <div className="ml-2 pl-1 space-y-2 mt-2">
