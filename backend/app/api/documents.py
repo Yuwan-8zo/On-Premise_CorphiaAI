@@ -5,7 +5,7 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks, Form
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks, Form, Request
 
 from sqlalchemy import select, func
 
@@ -18,6 +18,13 @@ from app.schemas.document import (
     DocumentMetadataUpdate,
 )
 from app.services.document_service import DocumentService
+from app.services.audit_service import (
+    write_audit_log,
+    AuditAction,
+    AuditResource,
+    get_client_ip,
+    get_user_agent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +71,7 @@ async def upload_document(
     current_user: CurrentUser,
     db: DbSession,
     background_tasks: BackgroundTasks,
+    request: Request,
     file: UploadFile = File(...),
     folderName: Optional[str] = Form(None),
 ):
@@ -101,6 +109,21 @@ async def upload_document(
             document.id,
         )
         
+        # 審計日誌
+        await write_audit_log(
+            db=db,
+            action=AuditAction.DOCUMENT_UPLOAD,
+            resource_type=AuditResource.DOCUMENT,
+            resource_id=document.id,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=current_user.tenant_id or "default",
+            description=f"上傳文件: {file.filename}",
+            details={"filename": file.filename, "folder": folderName},
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        
         return DocumentUploadResponse(
             id=document.id,
             filename=document.original_filename,
@@ -118,6 +141,7 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="文件上傳失敗"
+        )
         )
 
 
@@ -188,6 +212,7 @@ async def delete_document(
     document_id: str,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """刪除文件"""
     # 檢查權限
@@ -212,6 +237,8 @@ async def delete_document(
             detail="無權刪除此文件"
         )
     
+    original_filename = document.original_filename
+    
     doc_service = DocumentService(db)
     success = await doc_service.delete_document(document_id)
     
@@ -220,3 +247,18 @@ async def delete_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="刪除文件失敗"
         )
+    
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.DOCUMENT_DELETE,
+        resource_type=AuditResource.DOCUMENT,
+        resource_id=document_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id or "default",
+        description=f"刪除文件: {original_filename}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
+

@@ -9,6 +9,15 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { getModels, refreshModels, selectModel, ModelItem } from '../api/models'
 import { apiClient } from '../api/client'
+import {
+    getAuditLogs,
+    exportAuditLogsCSV,
+    exportAuditLogsJSON,
+    ACTION_LABELS,
+    RESOURCE_LABELS,
+    AuditLogItem,
+    AuditLogQuery,
+} from '../api/auditLogs'
 
 // Types
 interface UserData {
@@ -59,7 +68,7 @@ const MessageIcon = () => (
     </svg>
 )
 
-type AdminSection = 'overview' | 'users' | 'models' | 'system'
+type AdminSection = 'overview' | 'users' | 'models' | 'system' | 'audit'
 
 export default function Admin() {
     const { t } = useTranslation()
@@ -79,6 +88,18 @@ export default function Admin() {
     const [models, setModels] = useState<ModelItem[]>([])
     const [modelsDir, setModelsDir] = useState('')
     const [isLoadingModels, setIsLoadingModels] = useState(false)
+
+    // 審計日誌 state
+    const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
+    const [auditTotal, setAuditTotal] = useState(0)
+    const [auditPage, setAuditPage] = useState(1)
+    const [auditTotalPages, setAuditTotalPages] = useState(0)
+    const [isLoadingAudit, setIsLoadingAudit] = useState(false)
+    const [auditFilter, setAuditFilter] = useState<AuditLogQuery>({
+        page: 1,
+        page_size: 15,
+    })
+    const [auditSearchInput, setAuditSearchInput] = useState('')
 
     // 檢查權限
     useEffect(() => {
@@ -181,6 +202,87 @@ export default function Admin() {
         }
     }
 
+    // 載入審計日誌
+    const loadAuditLogs = useCallback(async (query: AuditLogQuery = auditFilter) => {
+        setIsLoadingAudit(true)
+        try {
+            const data = await getAuditLogs(query)
+            setAuditLogs(data.data)
+            setAuditTotal(data.total)
+            setAuditPage(data.page)
+            setAuditTotalPages(data.total_pages)
+        } catch (err) {
+            console.error('載入審計日誌失敗:', err)
+        } finally {
+            setIsLoadingAudit(false)
+        }
+    }, [auditFilter])
+
+    // 切換到審計日誌分頁時載入
+    useEffect(() => {
+        if (activeSection === 'audit') {
+            loadAuditLogs()
+        }
+    }, [activeSection, loadAuditLogs])
+
+    // 審計日誌篩選
+    const handleAuditSearch = () => {
+        const newFilter = { ...auditFilter, search: auditSearchInput || undefined, page: 1 }
+        setAuditFilter(newFilter)
+        loadAuditLogs(newFilter)
+    }
+
+    const handleAuditFilterChange = (key: keyof AuditLogQuery, value: string) => {
+        const newFilter = { ...auditFilter, [key]: value || undefined, page: 1 }
+        setAuditFilter(newFilter)
+        loadAuditLogs(newFilter)
+    }
+
+    const handleAuditPageChange = (newPage: number) => {
+        const newFilter = { ...auditFilter, page: newPage }
+        setAuditFilter(newFilter)
+        loadAuditLogs(newFilter)
+    }
+
+    // 匯出功能
+    const handleExportCSV = async () => {
+        try {
+            const blob = await exportAuditLogsCSV({
+                action: auditFilter.action,
+                resource_type: auditFilter.resource_type,
+                start_date: auditFilter.start_date,
+                end_date: auditFilter.end_date,
+            })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('匯出 CSV 失敗:', err)
+        }
+    }
+
+    const handleExportJSON = async () => {
+        try {
+            const blob = await exportAuditLogsJSON({
+                action: auditFilter.action,
+                resource_type: auditFilter.resource_type,
+                start_date: auditFilter.start_date,
+                end_date: auditFilter.end_date,
+            })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.json`
+            a.click()
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('匯出 JSON 失敗:', err)
+        }
+    }
+
     const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
         <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
             <div className="flex items-center gap-5">
@@ -241,8 +343,8 @@ export default function Admin() {
 
             <div className="max-w-6xl mx-auto p-8 pt-10">
                 {/* 分頁標籤 */}
-                <div className="flex gap-3 mb-8">
-                    {(['overview', 'users', 'models', 'system'] as AdminSection[]).map((section) => (
+                <div className="flex gap-3 mb-8 flex-wrap">
+                    {(['overview', 'users', 'models', 'audit', 'system'] as AdminSection[]).map((section) => (
                         <button
                             key={section}
                             onClick={() => setActiveSection(section)}
@@ -254,6 +356,7 @@ export default function Admin() {
                             {section === 'overview' && '總覽'}
                             {section === 'users' && '使用者'}
                             {section === 'models' && '模型'}
+                            {section === 'audit' && '📝 審計日誌'}
                             {section === 'system' && '系統'}
                         </button>
                     ))}
@@ -467,6 +570,235 @@ export default function Admin() {
                                 <li>點擊「重新掃描」按鈕</li>
                                 <li>選擇要使用的模型</li>
                             </ol>
+                        </div>
+                    </div>
+                )}
+
+                {/* 審計日誌 */}
+                {activeSection === 'audit' && (
+                    <div className="space-y-6">
+                        {/* 篩選列 */}
+                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-6 shadow-sm dark:shadow-none transition-colors">
+                            <div className="flex flex-wrap gap-3 items-end">
+                                {/* 搜尋框 */}
+                                <div className="flex-1 min-w-[200px]">
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">搜尋</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={auditSearchInput}
+                                            onChange={(e) => setAuditSearchInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAuditSearch()}
+                                            placeholder="搜尋描述或 Email..."
+                                            className="flex-1 px-4 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors"
+                                        />
+                                        <button
+                                            onClick={handleAuditSearch}
+                                            className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[14px] font-medium rounded-full transition-colors shadow-sm"
+                                        >
+                                            搜尋
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 操作類型 */}
+                                <div className="min-w-[140px]">
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">操作類型</label>
+                                    <select
+                                        value={auditFilter.action || ''}
+                                        onChange={(e) => handleAuditFilterChange('action', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors appearance-none"
+                                    >
+                                        <option value="">全部</option>
+                                        <option value="login_success">登入成功</option>
+                                        <option value="login_failed">登入失敗</option>
+                                        <option value="logout">登出</option>
+                                        <option value="register">註冊</option>
+                                        <option value="user_update">更新使用者</option>
+                                        <option value="user_delete">停用使用者</option>
+                                        <option value="conversation_create">建立對話</option>
+                                        <option value="conversation_delete">刪除對話</option>
+                                        <option value="document_upload">上傳文件</option>
+                                        <option value="document_delete">刪除文件</option>
+                                    </select>
+                                </div>
+
+                                {/* 資源類型 */}
+                                <div className="min-w-[120px]">
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">資源類型</label>
+                                    <select
+                                        value={auditFilter.resource_type || ''}
+                                        onChange={(e) => handleAuditFilterChange('resource_type', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors appearance-none"
+                                    >
+                                        <option value="">全部</option>
+                                        <option value="auth">認證</option>
+                                        <option value="user">使用者</option>
+                                        <option value="conversation">對話</option>
+                                        <option value="document">文件</option>
+                                        <option value="model">模型</option>
+                                    </select>
+                                </div>
+
+                                {/* 匯出按鈕 */}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleExportCSV}
+                                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-medium rounded-full transition-colors shadow-sm"
+                                    >
+                                        📥 CSV
+                                    </button>
+                                    <button
+                                        onClick={handleExportJSON}
+                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[13px] font-medium rounded-full transition-colors shadow-sm"
+                                    >
+                                        📥 JSON
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 日誌列表 */}
+                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                            <div className="px-8 py-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
+                                <h2 className="font-semibold text-gray-900 dark:text-white">
+                                    審計日誌 ({auditTotal.toLocaleString()} 筆)
+                                </h2>
+                                <span className="text-[13px] text-gray-500 dark:text-gray-400">
+                                    第 {auditPage} / {auditTotalPages || 1} 頁
+                                </span>
+                            </div>
+
+                            {isLoadingAudit ? (
+                                <div className="p-10 text-center text-gray-500 dark:text-gray-400">載入中...</div>
+                            ) : auditLogs.length === 0 ? (
+                                <div className="p-10 text-center text-gray-500 dark:text-gray-400">
+                                    <p className="font-medium">暫無審計日誌</p>
+                                    <p className="text-[13px] mt-1">系統操作將自動記錄在此</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[800px]">
+                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                            <tr>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    時間
+                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    操作
+                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    資源
+                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    操作者
+                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    描述
+                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    IP
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                            {auditLogs.map((log) => {
+                                                const isFailure = log.action.includes('failed')
+                                                const isAuth = log.resource_type === 'auth'
+                                                const isDelete = log.action.includes('delete')
+
+                                                return (
+                                                    <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                        <td className="px-5 py-3 text-[13px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                            {new Date(log.created_at).toLocaleString('zh-TW', {
+                                                                month: '2-digit',
+                                                                day: '2-digit',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                second: '2-digit',
+                                                            })}
+                                                        </td>
+                                                        <td className="px-5 py-3">
+                                                            <span className={`inline-flex px-2.5 py-0.5 text-[11px] font-bold tracking-wide rounded-full ${
+                                                                isFailure
+                                                                    ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
+                                                                    : isDelete
+                                                                        ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20'
+                                                                        : isAuth
+                                                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
+                                                                            : 'bg-gray-50 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20'
+                                                            }`}>
+                                                                {ACTION_LABELS[log.action] || log.action}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-3">
+                                                            <span className="text-[13px] text-gray-600 dark:text-gray-300">
+                                                                {RESOURCE_LABELS[log.resource_type] || log.resource_type}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-3 text-[13px] text-gray-600 dark:text-gray-300 max-w-[180px] truncate">
+                                                            {log.user_email || log.user_id || '-'}
+                                                        </td>
+                                                        <td className="px-5 py-3 text-[13px] text-gray-600 dark:text-gray-300 max-w-[250px] truncate">
+                                                            {log.description || '-'}
+                                                        </td>
+                                                        <td className="px-5 py-3 text-[12px] font-mono text-gray-400 dark:text-gray-500">
+                                                            {log.ip_address || '-'}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* 分頁控制 */}
+                            {auditTotalPages > 1 && (
+                                <div className="px-8 py-4 border-t border-gray-200 dark:border-white/5 flex items-center justify-between">
+                                    <button
+                                        onClick={() => handleAuditPageChange(auditPage - 1)}
+                                        disabled={auditPage <= 1}
+                                        className="px-4 py-2 text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        ← 上一頁
+                                    </button>
+                                    <div className="flex gap-1">
+                                        {Array.from({ length: Math.min(auditTotalPages, 5) }, (_, i) => {
+                                            let pageNum: number
+                                            if (auditTotalPages <= 5) {
+                                                pageNum = i + 1
+                                            } else if (auditPage <= 3) {
+                                                pageNum = i + 1
+                                            } else if (auditPage >= auditTotalPages - 2) {
+                                                pageNum = auditTotalPages - 4 + i
+                                            } else {
+                                                pageNum = auditPage - 2 + i
+                                            }
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => handleAuditPageChange(pageNum)}
+                                                    className={`w-9 h-9 rounded-full text-[14px] font-medium transition-colors ${
+                                                        pageNum === auditPage
+                                                            ? 'bg-ios-blue-light text-white'
+                                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4'
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                    <button
+                                        onClick={() => handleAuditPageChange(auditPage + 1)}
+                                        disabled={auditPage >= auditTotalPages}
+                                        className="px-4 py-2 text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        下一頁 →
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

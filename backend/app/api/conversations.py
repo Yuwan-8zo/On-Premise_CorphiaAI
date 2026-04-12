@@ -3,7 +3,7 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
@@ -17,6 +17,13 @@ from app.schemas.conversation import (
     ConversationResponse,
     ConversationListResponse,
     MessageResponse,
+)
+from app.services.audit_service import (
+    write_audit_log,
+    AuditAction,
+    AuditResource,
+    get_client_ip,
+    get_user_agent,
 )
 
 router = APIRouter(prefix="/conversations", tags=["對話"])
@@ -81,23 +88,38 @@ async def list_conversations(
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
-    request: ConversationCreate,
+    request_body: ConversationCreate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """建立新對話"""
     conversation = Conversation(
         tenant_id=current_user.tenant_id or "default",
         user_id=current_user.id,
-        title=request.title,
-        model=request.model,
-        folder_id=request.folder_id,
-        settings=request.settings,
+        title=request_body.title,
+        model=request_body.model,
+        folder_id=request_body.folder_id,
+        settings=request_body.settings,
     )
     
     db.add(conversation)
     await db.commit()
     await db.refresh(conversation)
+    
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.CONVERSATION_CREATE,
+        resource_type=AuditResource.CONVERSATION,
+        resource_id=conversation.id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"建立對話: {conversation.title}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
     
     return ConversationResponse.model_validate(conversation)
 
@@ -164,6 +186,7 @@ async def delete_conversation(
     conversation_id: str,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """刪除對話"""
     result = await db.execute(
@@ -180,8 +203,24 @@ async def delete_conversation(
             detail="對話不存在"
         )
     
+    conversation_title = conversation.title
+    
     await db.delete(conversation)
     await db.commit()
+    
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.CONVERSATION_DELETE,
+        resource_type=AuditResource.CONVERSATION,
+        resource_id=conversation_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"刪除對話: {conversation_title}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
 
 
 @router.get("/{conversation_id}/messages", response_model=List[MessageResponse])

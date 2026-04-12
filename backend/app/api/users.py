@@ -3,13 +3,20 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Request
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate, UserListResponse
+from app.services.audit_service import (
+    write_audit_log,
+    AuditAction,
+    AuditResource,
+    get_client_ip,
+    get_user_agent,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -141,6 +148,7 @@ async def update_user(
     data: UserUpdate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """
     更新指定使用者資訊（僅 admin 可用）
@@ -175,6 +183,21 @@ async def update_user(
     await db.commit()
     await db.refresh(user)
     
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.USER_UPDATE,
+        resource_type=AuditResource.USER,
+        resource_id=user_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"管理員更新使用者: {user.email}",
+        details={"updated_fields": list(update_data.keys())},
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
+    
     return UserResponse.model_validate(user)
 
 
@@ -183,6 +206,7 @@ async def delete_user(
     user_id: str,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """
     刪除使用者（僅 admin 可用）
@@ -220,6 +244,20 @@ async def delete_user(
     user.is_active = False
     await db.commit()
     
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.USER_DELETE,
+        resource_type=AuditResource.USER,
+        resource_id=user_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"管理員停用使用者: {user.email}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
+    
     return {"message": "使用者已停用"}
 
 
@@ -228,6 +266,7 @@ async def activate_user(
     user_id: str,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request = None,
 ):
     """
     啟用使用者（僅 admin 可用）
@@ -254,5 +293,19 @@ async def activate_user(
     
     user.is_active = True
     await db.commit()
+    
+    # 審計日誌
+    await write_audit_log(
+        db=db,
+        action=AuditAction.USER_ACTIVATE,
+        resource_type=AuditResource.USER,
+        resource_id=user_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"管理員啟用使用者: {user.email}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
     
     return {"message": "使用者已啟用"}
