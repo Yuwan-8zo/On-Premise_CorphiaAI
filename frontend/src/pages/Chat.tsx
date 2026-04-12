@@ -1241,15 +1241,39 @@ export default function Chat() {
                             top: Math.min(activeMenu.y, window.innerHeight - 300) 
                         }}
                     >
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => { handleShareConversation(activeMenu.convId); setActiveMenu(null); }}>
+                        <button 
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const id = activeMenu.convId; 
+                                setActiveMenu(null); 
+                                setTimeout(() => handleShareConversation(id), 50); 
+                            }}
+                        >
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                             分享
                         </button>
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" onClick={() => { handleRenameConversation(activeMenu.convId); setActiveMenu(null); }}>
+                        <button 
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left" 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const id = activeMenu.convId; 
+                                setActiveMenu(null); 
+                                setTimeout(() => handleRenameConversation(id), 50); 
+                            }}
+                        >
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             重新命名
                         </button>
-                        <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left group" onClick={() => { handleMoveToProject(activeMenu.convId); setActiveMenu(null); }}>
+                        <button 
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors text-left group" 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const id = activeMenu.convId; 
+                                setActiveMenu(null); 
+                                setTimeout(() => handleMoveToProject(id), 50); 
+                            }}
+                        >
                             <div className="flex items-center gap-3">
                                 <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
                                 <span>{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? '移至一般聊天' : '移至專案'}</span>
@@ -1261,8 +1285,10 @@ export default function Chat() {
 
                         <button 
                             onClick={(e) => {
-                                handleDeleteConversation(activeMenu.convId, e);
+                                e.stopPropagation();
+                                const id = activeMenu.convId;
                                 setActiveMenu(null);
+                                setTimeout(() => handleDeleteConversation(id, e as unknown as React.MouseEvent), 50);
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-red-50 dark:hover:bg-red-900/40 text-red-500 transition-colors text-left group"
                         >
