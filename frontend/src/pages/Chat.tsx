@@ -817,10 +817,10 @@ export default function Chat() {
                                 onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
                                 className={`p-2 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-[12px] transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-[#2a2a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="5" cy="12" r="1.5"></circle>
-                                    <circle cx="12" cy="12" r="1.5"></circle>
-                                    <circle cx="19" cy="12" r="1.5"></circle>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
+                                    <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                                    <circle cx="19" cy="12" r="1.5" fill="currentColor"></circle>
                                 </svg>
                             </button>
 
