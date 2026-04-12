@@ -364,36 +364,40 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 輸入欄位群組 - 垂直平均分配在切換bar與按鈕之間 */}
-                        <div className="w-full flex flex-col flex-1 justify-evenly">
-                            <FloatingInput
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                label={t('auth.account')}
-                            />
+                        {/* 輸入欄位群組 - 垂直平均分配，透過自適應 margin 解決退場跳動 */}
+                        <div className="w-full flex flex-col flex-1 justify-center">
+                            <div className="w-full shrink-0">
+                                <FloatingInput
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    label={t('auth.account')}
+                                />
+                            </div>
                             
-                            <FloatingInput
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                label={t('auth.password')}
-                            />
+                            <div className={`w-full shrink-0 transition-all duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${activeTab === 'login' ? 'mt-10' : 'mt-6'}`}>
+                                <FloatingInput
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    label={t('auth.password')}
+                                />
+                            </div>
 
-                            {/* 確認密碼欄位：結合 height 動畫使父容器的 justify-evenly 能平滑地重新分配空間 */}
+                            {/* 確認密碼欄位：結合 height 動畫與 marginTop 將物理空間壓縮到 0，徹底消滅 flex 跳動 */}
                             <AnimatePresence initial={false}>
                                 {activeTab === 'register' && (
                                     <motion.div
                                         key="confirm"
-                                        initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                                        exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                        className="w-full overflow-hidden"
+                                        initial={{ opacity: 0, height: 0, scale: 0.95, marginTop: 0 }}
+                                        animate={{ opacity: 1, height: 'auto', scale: 1, marginTop: 24 }} // 24px = mt-6
+                                        exit={{ opacity: 0, height: 0, scale: 0.95, marginTop: 0 }}
+                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                        className="w-full overflow-hidden shrink-0"
                                     >
                                         <FloatingInput
                                             id="confirm-password"
