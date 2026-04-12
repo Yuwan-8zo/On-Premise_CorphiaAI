@@ -87,6 +87,9 @@ export default function Chat() {
     const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
     const [selectedModel, setSelectedModel] = useState(GGUF_MODELS[0])
 
+    // Header Options Menu State
+    const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
+
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
 
@@ -792,13 +795,51 @@ export default function Chat() {
                         </div>
 
                         {/* 右側：三個點選單 */}
-                        <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-[12px] transition-colors">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="1.5"></circle>
-                                <circle cx="12" cy="5" r="1.5"></circle>
-                                <circle cx="12" cy="19" r="1.5"></circle>
-                            </svg>
-                        </button>
+                        <div className="relative">
+                            <button 
+                                onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
+                                className={`p-2 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-[12px] transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-[#2a2a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="5" cy="12" r="1.5"></circle>
+                                    <circle cx="12" cy="12" r="1.5"></circle>
+                                    <circle cx="19" cy="12" r="1.5"></circle>
+                                </svg>
+                            </button>
+
+                            <AnimatePresence>
+                                {headerMenuOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setHeaderMenuOpen(false)} />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                                            className="absolute right-0 top-full mt-2 w-[220px] bg-[#1a1a1a] rounded-[16px] shadow-xl border border-[#333] overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-[#e5e5e5]"
+                                        >
+                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                                                <span className="font-medium text-[15px]">分享</span>
+                                            </button>
+                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                                <span className="font-medium text-[15px]">重新命名</span>
+                                            </button>
+                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-white/10 active:bg-white/20">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                                                <span className="font-medium text-[15px]">移至專案</span>
+                                            </button>
+                                            <div className="my-1 border-t border-[#333]" />
+                                            <button className="w-full text-left px-3 py-2.5 rounded-[10px] flex items-center gap-3 transition-colors hover:bg-red-500/10 text-red-500 active:bg-red-500/20">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                <span className="font-medium text-[15px]">刪除</span>
+                                            </button>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </header>
 
