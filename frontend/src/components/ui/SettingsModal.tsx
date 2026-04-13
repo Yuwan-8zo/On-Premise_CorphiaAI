@@ -659,12 +659,6 @@ export default function SettingsModal() {
                                 alt="Mobile Access QR Code"
                                 className="w-[380px] h-[380px] rounded-[16px]"
                             />
-                            <button
-                                onClick={() => setShowQR(false)}
-                                className="w-full py-2.5 bg-ios-blue-light dark:bg-ios-blue-dark text-white font-semibold rounded-full text-[15px] hover:bg-opacity-90 transition-all"
-                            >
-                                關閉
-                            </button>
                         </motion.div>
                     </motion.div>
                 )}
