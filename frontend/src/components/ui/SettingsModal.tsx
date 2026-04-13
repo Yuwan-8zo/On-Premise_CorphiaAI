@@ -489,7 +489,7 @@ export default function SettingsModal() {
                             {/* 兩欄式密碼規則 + 輸入欄位 */}
                             <div className="flex gap-6">
                                 {/* 左欄：密碼規則 */}
-                                <div className="flex-1 bg-ios-light-gray6 dark:bg-ios-dark-gray4 rounded-[20px] p-5 text-[13px] text-gray-500 dark:text-gray-400 space-y-2.5 self-start border border-transparent dark:border-white/5">
+                                <div className="flex-1 bg-ios-light-gray6 dark:bg-ios-dark-gray4 rounded-[20px] p-5 text-[13px] text-gray-500 dark:text-gray-400 space-y-2.5 border border-transparent dark:border-white/5">
                                     <p className="font-semibold text-gray-700 dark:text-gray-200 text-[14px] mb-2">密碼安全要求</p>
                                     {[
                                         '至少 8 個字元',
@@ -554,7 +554,7 @@ export default function SettingsModal() {
                                 </div>
 
                                 {/* 右欄：輸入欄位 */}
-                                <div className="flex-1 flex flex-col gap-5">
+                                <div className="flex-1 flex flex-col justify-evenly">
                                     {/* 當前密碼 */}
                                     <PwdFloatingInput
                                         label="當前密碼"
