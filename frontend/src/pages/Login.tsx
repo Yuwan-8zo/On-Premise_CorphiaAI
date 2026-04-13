@@ -173,15 +173,43 @@ export default function Login() {
             navigate(from, { replace: true })
         } catch (err: unknown) {
             console.error('Auth error:', err)
-            const axiosError = err as { response?: { status?: number; data?: { detail?: string } } }
-            const detail = axiosError?.response?.data?.detail
+            const axiosError = err as {
+                response?: {
+                    status?: number
+                    data?: {
+                        detail?: string
+                        error?: { message?: string; code?: string }
+                        errors?: Array<{ field: string; message: string }>
+                    }
+                }
+            }
+            const status = axiosError?.response?.status
+            const data = axiosError?.response?.data
 
-            if (axiosError?.response?.status === 429) {
-                // 帳號被鎖定
-                setError(detail || '帳號已被暫時鎖定，請稍後再試')
-            } else if (detail) {
-                // 後端回傳的具體錯誤訊息（含剩餘次數提示）
-                setError(detail)
+            if (status === 429) {
+                // 速率限制：後端同時回傳 detail 和 error.message
+                setError(data?.detail || data?.error?.message || '請求過於頻繁，請稍後再試')
+            } else if (status === 422) {
+                // Pydantic 驗證錯誤 (密碼強度不符合等)
+                // 後端回傳格式: { error: { details: [{ field, message }] } }
+                const details = (data as any)?.error?.details as Array<{ field: string; message: string }> | undefined
+                if (details && details.length > 0) {
+                    // 找密碼相關的錯誤
+                    const pwdError = details.find(d => d.field?.includes('password'))
+                    if (pwdError) {
+                        // msg 格式為 "Value error, 密碼長度至少...; 密碼需包含..."
+                        const cleaned = pwdError.message.replace(/^Value error,\s*/i, '')
+                        setError(cleaned)
+                    } else {
+                        setError(details.map(d => d.message.replace(/^Value error,\s*/i, '')).join('；'))
+                    }
+                } else {
+                    setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+                }
+            } else if (data?.detail) {
+                setError(data.detail)
+            } else if (data?.error?.message) {
+                setError(data.error.message)
             } else {
                 setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
             }

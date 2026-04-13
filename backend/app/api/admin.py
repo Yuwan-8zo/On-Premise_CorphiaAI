@@ -60,19 +60,20 @@ async def get_rate_limit_stats(
     """
     取得速率限制器的即時統計資料 (僅限管理員)
     """
-    from app.core.rate_limiter import get_rate_limiter, GLOBAL_RATE_LIMIT, ENDPOINT_RATE_LIMITS
+    from app.core.rate_limiter import get_rate_limiter, _build_limits
 
     limiter = get_rate_limiter()
     stats = limiter.get_stats()
+    global_limit, endpoint_limits = _build_limits()
 
     return {
         "status": "success",
         "data": {
             "limiter_stats": stats,
             "global_rule": {
-                "max_requests": GLOBAL_RATE_LIMIT.max_requests,
-                "window_seconds": GLOBAL_RATE_LIMIT.window_seconds,
-                "description": GLOBAL_RATE_LIMIT.description,
+                "max_requests": global_limit.max_requests,
+                "window_seconds": global_limit.window_seconds,
+                "description": global_limit.description,
             },
             "endpoint_rules": {
                 path: {
@@ -80,9 +81,31 @@ async def get_rate_limit_stats(
                     "window_seconds": rule.window_seconds,
                     "description": rule.description,
                 }
-                for path, rule in ENDPOINT_RATE_LIMITS.items()
+                for path, rule in endpoint_limits.items()
             },
         }
+    }
+
+
+@router.post("/rate-limit/reset", summary="重置速率限制記錄")
+async def reset_rate_limit(
+    ip: str = None,
+    path: str = None,
+    _ = RequireAdmin
+) -> Dict[str, Any]:
+    """
+    清除指定 IP 或終點的速率限制記錄，無需重啟後端。
+    
+    - `ip`: 指定 IP（空白則清除全部）
+    - `path`: 指定路徑（空白則清除全部）
+    """
+    from app.core.rate_limiter import get_rate_limiter
+    limiter = get_rate_limiter()
+    cleared = limiter.reset(ip=ip, path=path)
+    return {
+        "status": "success",
+        "message": f"已清除 {cleared} 筆速率限制記錄",
+        "cleared": cleared,
     }
 
 

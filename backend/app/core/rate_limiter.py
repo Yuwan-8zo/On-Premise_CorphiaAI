@@ -40,47 +40,59 @@ class RequestRecord:
 
 
 # ==================== 速率限制配置 ====================
+# NOTE: 所有限制值從 Settings 動態讀取，在開發環境中設定更寬鬆的限制
 
-# 全域限制：每個 IP 每分鐘最多 120 次請求
-GLOBAL_RATE_LIMIT = RateLimitRule(
-    max_requests=120,
-    window_seconds=60,
-    description="全域 IP 限制",
-)
+def _build_limits() -> tuple:
+    """動態建立速率限制規則（使用 settings，避免 import 時的循環依賴）"""
+    from app.core.config import settings
 
-# 端點級限制：敏感操作更嚴格
-ENDPOINT_RATE_LIMITS: dict[str, RateLimitRule] = {
-    # 登入：每個 IP 每分鐘最多 10 次
-    "/api/v1/auth/login": RateLimitRule(
-        max_requests=10,
+    # 開發環境使用較寬鬆的限制
+    is_dev = settings.app_env.lower() != "production"
+
+    global_limit = RateLimitRule(
+        max_requests=settings.rate_limit_global_max if not is_dev else 600,
         window_seconds=60,
-        description="登入嘗試限制"
-    ),
-    # 註冊：每個 IP 每小時最多 5 次
-    "/api/v1/auth/register": RateLimitRule(
-        max_requests=5,
-        window_seconds=3600,
-        description="註冊限制"
-    ),
-    # 密碼修改：每個 IP 每小時最多 10 次
-    "/api/v1/auth/change-password": RateLimitRule(
-        max_requests=10,
-        window_seconds=3600,
-        description="密碼修改限制"
-    ),
-    # Token 刷新：每個 IP 每分鐘最多 20 次
-    "/api/v1/auth/refresh": RateLimitRule(
-        max_requests=20,
-        window_seconds=60,
-        description="Token 刷新限制"
-    ),
-    # 文件上傳：每個 IP 每分鐘最多 10 次
-    "/api/v1/documents/upload": RateLimitRule(
-        max_requests=10,
-        window_seconds=60,
-        description="文件上傳限制"
-    ),
-}
+        description="全域 IP 限制",
+    )
+
+    login_max = settings.rate_limit_login_max if not is_dev else 60
+    register_max = settings.rate_limit_register_max if not is_dev else 30
+
+    endpoint_limits: dict[str, RateLimitRule] = {
+        # 登入：生產 10次/分鐘，開發 60次/分鐘
+        "/api/v1/auth/login": RateLimitRule(
+            max_requests=login_max,
+            window_seconds=60,
+            description="登入嘗試限制",
+        ),
+        # 註冊：生產 5次/小時，開發 30次/小時
+        "/api/v1/auth/register": RateLimitRule(
+            max_requests=register_max,
+            window_seconds=3600,
+            description="註冊限制",
+        ),
+        # 密碼修改：每個 IP 每小時最多 10 次（生產）/ 50 次（開發）
+        "/api/v1/auth/change-password": RateLimitRule(
+            max_requests=10 if not is_dev else 50,
+            window_seconds=3600,
+            description="密碼修改限制",
+        ),
+        # Token 刷新：每個 IP 每分鐘最多 20 次
+        "/api/v1/auth/refresh": RateLimitRule(
+            max_requests=20,
+            window_seconds=60,
+            description="Token 刷新限制",
+        ),
+        # 文件上傳：每個 IP 每分鐘最多 10 次
+        "/api/v1/documents/upload": RateLimitRule(
+            max_requests=10,
+            window_seconds=60,
+            description="文件上傳限制",
+        ),
+    }
+
+    return global_limit, endpoint_limits
+
 
 # 不需要速率限制的路徑（白名單）
 RATE_LIMIT_WHITELIST = {
@@ -90,6 +102,7 @@ RATE_LIMIT_WHITELIST = {
     "/openapi.json",
     "/",
 }
+
 
 
 class RateLimiter:
@@ -169,10 +182,10 @@ class RateLimiter:
             return
 
         self._last_cleanup = now
-        # 找出所有超過最長視窗的記錄
+        global_limit, endpoint_limits = _build_limits()
         max_window = max(
-            GLOBAL_RATE_LIMIT.window_seconds,
-            *(r.window_seconds for r in ENDPOINT_RATE_LIMITS.values()),
+            global_limit.window_seconds,
+            *(r.window_seconds for r in endpoint_limits.values()),
         )
         cutoff = now - max_window
 
@@ -187,6 +200,31 @@ class RateLimiter:
 
         if keys_to_delete:
             logger.debug(f"速率限制器清理了 {len(keys_to_delete)} 條過期記錄")
+
+    def reset(self, ip: Optional[str] = None, path: Optional[str] = None) -> int:
+        """
+        重置速率限制記錄（管理員用途）
+
+        Args:
+            ip: 指定 IP（None 表示全部）
+            path: 指定路徑（None 表示全部）
+
+        Returns:
+            int: 清除的記錄數
+        """
+        with self._lock:
+            keys_to_delete = []
+            for key in self._records:
+                if ip and ip not in key:
+                    continue
+                if path and path not in key:
+                    continue
+                keys_to_delete.append(key)
+            for key in keys_to_delete:
+                del self._records[key]
+            if keys_to_delete:
+                logger.info(f"管理員重置速率限制: 清除 {len(keys_to_delete)} 筆，IP={ip}, path={path}")
+            return len(keys_to_delete)
 
     def get_stats(self) -> dict:
         """取得當前速率限制器的統計資訊"""
@@ -259,9 +297,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         client_ip = _get_client_ip(request)
 
+        # 動態取得限制規則
+        global_limit, endpoint_limits = _build_limits()
+
         # ── 1. 端點級限制（僅 POST 請求） ──
-        if request.method == "POST" and path in ENDPOINT_RATE_LIMITS:
-            rule = ENDPOINT_RATE_LIMITS[path]
+        if request.method == "POST" and path in endpoint_limits:
+            rule = endpoint_limits[path]
             endpoint_key = f"endpoint:{client_ip}:{path}"
             is_limited, info = self.limiter.is_rate_limited(endpoint_key, rule)
 
@@ -277,7 +318,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # ── 2. 全域 IP 限制 ──
         global_key = f"global:{client_ip}"
         is_limited, info = self.limiter.is_rate_limited(
-            global_key, GLOBAL_RATE_LIMIT
+            global_key, global_limit
         )
 
         if is_limited:
@@ -303,23 +344,33 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         description: str,
     ) -> JSONResponse:
         """產生 429 Too Many Requests 回應"""
+        retry_after = info["retry_after"]
+        minutes = retry_after // 60
+        seconds = retry_after % 60
+        if minutes > 0:
+            wait_str = f"{minutes} 分 {seconds} 秒" if seconds else f"{minutes} 分鐘"
+        else:
+            wait_str = f"{seconds} 秒"
+
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={
+                "detail": f"請求過於頻繁（{description}），請在 {wait_str} 後重試",
                 "error": {
                     "code": "RATE_LIMIT_EXCEEDED",
-                    "message": f"請求過於頻繁（{description}），請在 {info['retry_after']} 秒後重試",
+                    "message": f"請求過於頻繁（{description}），請在 {wait_str} 後重試",
                     "details": {
                         "limit": info["limit"],
                         "window_seconds": info["window"],
-                        "retry_after": info["retry_after"],
+                        "retry_after": retry_after,
                     },
                 }
             },
             headers={
-                "Retry-After": str(info["retry_after"]),
+                "Retry-After": str(retry_after),
                 "X-RateLimit-Limit": str(info["limit"]),
                 "X-RateLimit-Remaining": "0",
-                "X-RateLimit-Reset": str(info["retry_after"]),
+                "X-RateLimit-Reset": str(retry_after),
             },
         )
+
