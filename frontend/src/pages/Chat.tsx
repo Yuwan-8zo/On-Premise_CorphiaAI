@@ -1241,17 +1241,17 @@ export default function Chat() {
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                                 {/* Greeting */}
                                 <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
-                                    {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
+                                    {t('chat.emptyGreeting', { name: user?.name || 'User' })}
                                 </h2>
 
                                 {/* Suggested Prompts */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
-                                    {[
+                                    {((t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
                                         { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
                                         { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
                                         { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
                                         { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
-                                    ].map((item, index) => (
+                                    ]).map((item, index) => (
                                         <button 
                                             key={index}
                                             onClick={() => setInput(item.desc)}
@@ -1334,7 +1334,7 @@ export default function Chat() {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    placeholder={chatMode === 'project' ? "傳送訊息或上傳資料..." : "Message Corphia AI..."}
+                                    placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting}
                                     className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"

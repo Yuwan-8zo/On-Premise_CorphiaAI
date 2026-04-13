@@ -57,6 +57,15 @@ export default {
 
     // 對話
     chat: {
+        emptyGreeting: '有什麼我可以幫忙的，{{name}}？',
+        inputPlaceholder: '傳送訊息給 Corphia AI...',
+        projectInputPlaceholder: '傳送訊息或上傳資料...',
+        suggestions: [
+            { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
+            { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
+            { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
+            { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
+        ],
         newChat: '新對話',
         sendMessage: '發送訊息',
         thinking: '思考中...',

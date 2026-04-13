@@ -57,6 +57,15 @@ export default {
 
     // Chat
     chat: {
+        emptyGreeting: 'What can I help you with, {{name}}?',
+        inputPlaceholder: 'Message Corphia AI...',
+        projectInputPlaceholder: 'Send a message or upload documents...',
+        suggestions: [
+            { title: "Summarize Document", desc: "Help me organize a simple key summary" },
+            { title: "Translate Content", desc: "Translate this text into fluent local language" },
+            { title: "Write an Email", desc: "Write a business cooperation email using professional terms" },
+            { title: "Explain Code", desc: "Help me explain the logic of this code in detail" }
+        ],
         newChat: 'New Chat',
         sendMessage: 'Send',
         thinking: 'Thinking...',

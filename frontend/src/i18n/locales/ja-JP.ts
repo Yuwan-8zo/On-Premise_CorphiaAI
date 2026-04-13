@@ -57,6 +57,15 @@ export default {
 
     // 對話 (Chat)
     chat: {
+        emptyGreeting: '何かお手伝いしましょうか、{{name}}？',
+        inputPlaceholder: 'Corphia AI にメッセージを送信...',
+        projectInputPlaceholder: 'メッセージを送信するか、資料をアップロードしてください...',
+        suggestions: [
+            { title: "ドキュメントを要約", desc: "簡単な要点のまとめを作成してください" },
+            { title: "コンテンツを翻訳", desc: "このテキストを自然な現地語に翻訳してください" },
+            { title: "メールを作成", desc: "専門用語を使ってビジネス協力のメールを作成してください" },
+            { title: "コードを説明", desc: "このコードのロジックを詳しく説明してください" }
+        ],
         newChat: '新しいチャット',
         sendMessage: 'メッセージを送信',
         thinking: '考え中...',
