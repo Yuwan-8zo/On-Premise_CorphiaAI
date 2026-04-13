@@ -67,6 +67,13 @@ export default {
             { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
         ],
         newChat: '新對話',
+        newFolder: '新資料夾',
+        general: '一般',
+        project: '專案',
+        generalChat: '一般聊天',
+        moveToGeneralChat: '移至一般聊天',
+        moveToProject: '移至專案',
+        confirmMoveToGeneral: '確定要將此對話移回一般聊天？將會從「{{folder}}」資料夾移除。',
         sendMessage: '發送訊息',
         thinking: '思考中...',
         stopGeneration: '停止生成',

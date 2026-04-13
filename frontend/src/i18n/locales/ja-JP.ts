@@ -67,6 +67,13 @@ export default {
             { title: "コードを説明", desc: "このコードのロジックを詳しく説明してください" }
         ],
         newChat: '新しいチャット',
+        newFolder: '新しいフォルダ',
+        general: '一般',
+        project: 'プロジェクト',
+        generalChat: '一般チャット',
+        moveToGeneralChat: '一般チャットへ移動',
+        moveToProject: 'プロジェクトへ移動',
+        confirmMoveToGeneral: 'このチャットを一般チャットに移動しますか？「{{folder}}」フォルダから削除されます。',
         sendMessage: 'メッセージを送信',
         thinking: '考え中...',
         stopGeneration: '生成を停止',

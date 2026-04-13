@@ -663,7 +663,7 @@ export default function Chat() {
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </div>
-                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? '\u65b0\u8cc7\u6599\u593e' : '\u65b0\u5c0d\u8a71'}</span>}
+                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>}
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
@@ -698,7 +698,7 @@ export default function Chat() {
                                     chatMode === 'general' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
-                                一般
+                                {t('chat.general')}
                             </button>
                             {/* 專案 */}
                             <button
@@ -709,7 +709,7 @@ export default function Chat() {
                                     chatMode === 'project' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
-                                專案
+                                {t('chat.project')}
                             </button>
                         </motion.div>
                     ) : (
@@ -749,7 +749,7 @@ export default function Chat() {
                     {chatMode === 'general' ? (
                         <>
                             <div className="mb-2 pl-2 mt-1">
-                                <span className="text-[12px] text-gray-500 tracking-wider font-medium">一般聊天</span>
+                                <span className="text-[12px] text-gray-500 tracking-wider font-medium">{t('chat.generalChat')}</span>
                             </div>
                             <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
                                 {(() => {
@@ -1421,7 +1421,7 @@ export default function Chat() {
                         >
                             <div className="flex items-center gap-3">
                                 <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-                                <span>{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? '移至一般聊天' : '移至專案'}</span>
+                                <span>{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
                             </div>
                             <svg className="w-4 h-4 opacity-0 group-hover:opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
@@ -1518,8 +1518,8 @@ export default function Chat() {
                             {moveModal.isProject ? (
                                 <>
                                     <div className="px-6 pt-6 pb-4">
-                                        <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-2">移至一般聊天</h3>
-                                        <p className="text-[14px] text-gray-500 dark:text-gray-400">確定要將此對話移回一般聊天？將會從「{moveModal.folderName}」資料夾移除。</p>
+                                        <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-2">{t('chat.moveToGeneralChat')}</h3>
+                                        <p className="text-[14px] text-gray-500 dark:text-gray-400">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
                                     </div>
                                     <div className="flex border-t border-gray-100 dark:border-white/5">
                                         <button
