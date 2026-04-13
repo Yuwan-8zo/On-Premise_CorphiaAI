@@ -20,6 +20,7 @@ export default {
         success: 'Success',
         warning: 'Warning',
         info: 'Info',
+        changeName: 'Change Name',
     },
 
     // Authentication
@@ -53,6 +54,7 @@ export default {
         privacy: 'Privacy',
         terms: 'Terms of Service',
         help: 'Help & Support',
+        changePassword: 'Change Password',
     },
 
     // Chat
@@ -102,6 +104,8 @@ export default {
         profile: 'Profile',
         account: 'Account',
         about: 'About',
+        guide: 'Guide',
+        mobileScanner: 'Mobile Scanner',
     },
 
     // Errors
@@ -120,5 +124,52 @@ export default {
         documents: 'Documents',
         settings: 'Settings',
         admin: 'Admin',
+    },
+
+    // About
+    about: {
+        version: 'Version',
+        systemStable: 'System Stable',
+        description: 'Enterprise-grade private deployment AI Q&A system, supporting local LLMs and RAG enterprise knowledge base precise retrieval technology.',
+        frontend: 'Frontend / API',
+        inference: 'Inference Engine',
+        vector: 'Vector Storage',
+        dataCore: 'Data Core',
+        copyright: '© 2024 Corphia AI. MIT License.',
+    },
+
+    // Guide
+    guide: {
+        title: 'System Guide',
+        subtitle: 'Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system\'s resources and exclusive features.',
+        auth: {
+            title: 'Identity and Access Management',
+            engineer: 'System highest access, can create and assign all "Tenants", and access full logs.',
+            admin: 'Tenant exclusive admin, can manage internal tenant members and basic data environment settings.',
+            user: 'General user, can use general chat, view projects and create personalized knowledge extraction projects.'
+        },
+        project: {
+            title: 'Project Mode and Knowledge Base Creation',
+            descStart: 'You can switch the interface from the top left to ',
+            mode: 'Project Mode',
+            descEnd: ', which will open an independent knowledge base folder structure:',
+            step1: 'Click the New Project icon on the left to name a folder for your research or project (e.g., "Financial Report Analysis").',
+            step2Start: 'Enter the folder and click the upload button, supporting ',
+            step2Types: '.txt, .md, .csv or .pdf',
+            step2End: ' files.',
+            step3: 'The system backend will automatically send files to chunking and write to the enterprise vector database (ChromaDB).',
+            step4: 'Once processed, click "Ask questions based on this source", and AI will answer and trace sources accurately based on your documents.'
+        },
+        chat: {
+            title: 'Efficient Chat and Navigation',
+            minimapTitle: 'Scroll Minimap',
+            minimapDescStart: 'After entering many messages, a blue-gray block indicator will appear on the right scrollbar, representing the proportional position of each message in the entire canvas; ',
+            minimapDescHighlight: 'hover and click',
+            minimapDescEnd: ' to quickly jump to the corresponding node.',
+            scrollBottomTitle: 'Floating Scroll-to-Bottom Button',
+            scrollBottomDesc: 'If you are scrolling up through past records, a downward arrow will quietly emerge at the bottom right after some distance. Clicking it will drop you back to the latest response in one second.',
+            renameTitle: 'Rename and Global Delete',
+            renameDesc: 'Hover over any chat in the left navigation to display a popup menu, where you can "Edit Title", "Move Project Directory" or immediately "Delete Entire Chat Record".'
+        }
     },
 }

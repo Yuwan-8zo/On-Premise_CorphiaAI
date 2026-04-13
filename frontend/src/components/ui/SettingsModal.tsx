@@ -110,7 +110,7 @@ export default function SettingsModal() {
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
         { id: 'appearance' as const, icon: <PaletteIcon />, label: t('settings.theme') },
         { id: 'language' as const, icon: <GlobeIcon />, label: t('settings.language') },
-        { id: 'guide' as const, icon: <BookIcon />, label: t('settings.guide', '使用說明') },
+        { id: 'guide' as const, icon: <BookIcon />, label: t('settings.guide') },
         { id: 'about' as const, icon: <InfoIcon />, label: t('settings.about') },
     ]
 
@@ -318,7 +318,7 @@ export default function SettingsModal() {
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-800 dark:hover:text-gray-200 transition-all font-medium"
                                 >
                                     <QrCodeIcon />
-                                    <span className="text-sm">行動裝置掃描</span>
+                                    <span className="text-sm">{t('settings.mobileScanner')}</span>
                                 </button>
                             </div>
                         </div>
@@ -360,7 +360,7 @@ export default function SettingsModal() {
                                                             disabled={isUpdatingName}
                                                             className="p-1 px-2 text-sm bg-ios-blue-light text-white rounded-md flex-shrink-0"
                                                         >
-                                                            {isUpdatingName ? '儲存中...' : t('common.save', '儲存')}
+                                                            {isUpdatingName ? t('common.loading') : t('common.save')}
                                                         </button>
                                                         <button 
                                                             onClick={() => {
@@ -381,7 +381,7 @@ export default function SettingsModal() {
                                                         <button 
                                                             onClick={() => setIsEditingName(true)}
                                                             className="text-gray-400 hover:text-ios-blue-light dark:hover:text-ios-blue-dark transition-colors"
-                                                            title="修改名稱"
+                                                            title={t('common.changeName')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
