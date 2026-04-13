@@ -271,9 +271,9 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-[64px] font-extrabold text-gray-900 dark:text-white mb-6 transition-colors flex items-center gap-5">
-                            <CorphiaLogo className="w-[72px] h-[72px]" />
-                            Corphia
+                        <h1 className="text-[64px] font-extrabold text-gray-900 dark:text-white mb-6 transition-colors flex items-center tracking-tight">
+                            <CorphiaLogo className="w-[68px] h-[68px] mt-1 mr-[2px]" />
+                            orphia
                         </h1>
                         <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
                             {t('auth.engineDesc')}

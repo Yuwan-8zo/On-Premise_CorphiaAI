@@ -740,6 +740,7 @@ export default function Chat() {
                                 className="absolute bg-white dark:bg-ios-dark-gray4 w-10 h-10 rounded-full shadow-sm"
                                 style={{
                                     top: '4px',
+                                    left: '4px',
                                     transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
                                     transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
                                     zIndex: 1
