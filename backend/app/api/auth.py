@@ -99,13 +99,6 @@ async def login(
     user = result.scalar_one_or_none()
 
     if user is None or not verify_password(request_body.password, user.password_hash):
-        import logging
-        from app.core.security import verify_password
-        logger = logging.getLogger(__name__)
-        logger.error(f"DEBUG LOGIN FAIL: email='{request_body.email}', pwd='{request_body.password}', user_exists={user is not None}")
-        if user:
-            logger.error(f"DEBUG PWD MATCH: {verify_password(request_body.password, user.password_hash)}")
-        
         # 記錄登入失敗（累加計數）
         failure_info = await record_login_failure(db, request_body.email)
 
