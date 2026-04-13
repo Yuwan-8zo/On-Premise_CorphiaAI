@@ -193,6 +193,15 @@ def main():
     kill_port(8000)
     kill_port(5173)
 
+    # --- 自動硬體適配與 AI 引擎配置 ---
+    if os.path.exists(BACKEND_DIR):
+        engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
+        if os.path.exists(engine_script):
+            venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
+            py_exec = venv_python if os.path.exists(venv_python) else sys.executable
+            # 優先使用系統終端機執行，避免日誌被吃掉
+            subprocess.run([py_exec, engine_script])
+
     # --- 啟動後端 ---
     print("\n[1] 啟動後端 (FastAPI)...")
     if os.path.exists(BACKEND_DIR):
