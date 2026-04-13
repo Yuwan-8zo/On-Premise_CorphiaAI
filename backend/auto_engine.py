@@ -94,8 +94,10 @@ def check_and_optimize(force=False):
         try:
             with open(STATE_PATH, "r", encoding="utf-8") as f:
                 saved_state = json.load(f)
-                if saved_state == current_state:
-                    # 狀態不變，跳過優化
+                # 若 GPU 組合與 Backend 目標一致，且曾成功或已記錄失敗，則不重複嘗試
+                if saved_state.get("gpus") == current_state["gpus"] and saved_state.get("backend") == current_state["backend"]:
+                    if saved_state.get("failed"):
+                        print(f"\n[AI 引擎管家] 先前切換至 {backend} 模式遇到錯誤，為了不影響啟動已自動跳過。若需重試請加上 --force。")
                     return False
         except Exception:
             pass
@@ -142,6 +144,10 @@ def check_and_optimize(force=False):
             return True
         else:
             print("\033[91m引擎自動切換失敗，保留預設狀態。\033[0m")
+            # 記錄失敗狀態，避免下次無限重試
+            current_state["failed"] = True
+            with open(STATE_PATH, "w", encoding="utf-8") as f:
+                json.dump(current_state, f)
             return False
             
     except Exception as e:
