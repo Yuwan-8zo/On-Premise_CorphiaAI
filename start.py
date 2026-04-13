@@ -199,8 +199,8 @@ def main():
         if os.path.exists(engine_script):
             venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
             py_exec = venv_python if os.path.exists(venv_python) else sys.executable
-            # 優先使用系統終端機執行，避免日誌被吃掉
-            subprocess.run([py_exec, engine_script])
+            # 優先使用系統終端機執行，並將命令列參數往下傳遞（例如 --force）
+            subprocess.run([py_exec, engine_script] + sys.argv[1:])
 
     # --- 啟動後端 ---
     print("\n[1] 啟動後端 (FastAPI)...")
