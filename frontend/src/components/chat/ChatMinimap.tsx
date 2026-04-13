@@ -91,7 +91,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
     if (markers.length === 0) return null
 
     return (
-        <div className="absolute right-1 top-4 bottom-4 w-2 z-10 pointer-events-none group hidden md:block">
+        <div className="absolute right-1 top-4 bottom-4 w-4 z-10 pointer-events-none group hidden md:block">
             <div 
                 className="relative w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
                 onClick={(e) => {
@@ -107,12 +107,12 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 }}
             >
                 {/* Visual track background */}
-                <div className="absolute inset-y-0 right-[3px] w-[2px] bg-gray-200/50 dark:bg-gray-700/50 rounded-full" />
+                <div className="absolute inset-y-0 right-[5px] w-[6px] bg-gray-200/50 dark:bg-gray-700/50 rounded-full" />
                 
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
-                        className={`absolute right-[2px] w-[4px] rounded-full transition-all duration-300 hover:w-[6px] hover:-right-0.5 ${
+                        className={`absolute right-[4px] w-[8px] rounded-full transition-all duration-300 hover:w-[12px] hover:right-[2px] ${
                             marker.role === 'user' 
                                 ? 'bg-gray-400 dark:bg-gray-500' 
                                 : 'bg-ios-blue-light dark:bg-ios-blue-dark'
