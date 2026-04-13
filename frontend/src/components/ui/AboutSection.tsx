@@ -1,11 +1,7 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 
-const RobotIcon = () => (
-    <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-2.4 2.4m0 0-2.4 2.4M19.8 15l2.4 2.4m-2.4-2.4-2.4-2.4M9 9h.01M15 9h.01M9 12h6M7.5 19.5h9" />
-    </svg>
-)
+import { CorphiaLogoSymbol } from '../icons/CorphiaIcons'
 
 export default function AboutSection() {
     const { t } = useTranslation()
@@ -43,7 +39,7 @@ export default function AboutSection() {
                 <div
                     className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] bg-gradient-to-tr from-ios-blue-dark via-ios-blue-light to-blue-400 border border-white/20"
                 >
-                    <RobotIcon />
+                    <CorphiaLogoSymbol className="w-16 h-16" />
                 </div>
             </motion.div>
 
