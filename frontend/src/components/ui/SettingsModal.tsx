@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
+import GuideSection from './GuideSection'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -37,6 +38,12 @@ const GlobeIcon = () => (
 const InfoIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+)
+
+const BookIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     </svg>
 )
 
@@ -73,7 +80,7 @@ const QrCodeIcon = () => (
     </svg>
 )
 
-type SettingSection = 'profile' | 'appearance' | 'language' | 'about'
+type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
@@ -101,6 +108,7 @@ export default function SettingsModal() {
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
         { id: 'appearance' as const, icon: <PaletteIcon />, label: t('settings.theme') },
         { id: 'language' as const, icon: <GlobeIcon />, label: t('settings.language') },
+        { id: 'guide' as const, icon: <BookIcon />, label: t('settings.guide', '使用說明') },
         { id: 'about' as const, icon: <InfoIcon />, label: t('settings.about') },
     ]
 
@@ -423,6 +431,12 @@ export default function SettingsModal() {
                             )}
 
                             {/* 關於 */}
+                            {activeSection === 'guide' && (
+                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full">
+                                    <GuideSection />
+                                </motion.div>
+                            )}
+
                             {activeSection === 'about' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
