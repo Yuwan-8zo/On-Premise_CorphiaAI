@@ -185,3 +185,16 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
   /* 移除瀏覽器預設的 focus outline，避免藍色光暈 */
   outline: none;
 }
+
+/* ── 主題切換瞬間凍結所有 transition ──────────────────────────
+   切換深色/淺色時由 JS 暫時加上此 class，下一個畫格後移除。
+   這讓顏色切換即時發生，避免 Tailwind transition-colors 300ms 延遲。
+   參考：GitHub、Linear、Vercel 皆採用相同模式。
+──────────────────────────────────────────────────────────── */
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+  transition: none !important;
+  animation-duration: 0.01ms !important;
+}

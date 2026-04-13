@@ -52,48 +52,56 @@ export default function App() {
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
-        
-        // 根據當前層級與主題，動態設定 iOS Safari Safe Area（狀態列與底部）的背景色
-        // 全部統一使用 Layer 0 (Gray 6) 作為 Safari Safe Area 背景，確保沉浸式體驗
-        let bg = isDark ? '#1c1c1e' : '#ffffff'
+        const bg = isDark ? '#1c1c1e' : '#ffffff'
+        const csOnly = isDark ? 'only dark' : 'only light'
+        const html = document.documentElement
 
-        // dark class 切換
+        // ── 關鍵優化：切換前先停用所有 transition ──────────────────
+        // 加上 no-transition → 切換 dark class → 下一幀移除 no-transition
+        // 這讓背景色、文字色、邊框色同步即時生效，無 300ms 延遲
+        html.classList.add('no-transition')
+
+        // dark class 切換（必須在 no-transition 加上後才做）
         if (isDark) {
-            document.documentElement.classList.add('dark')
+            html.classList.add('dark')
         } else {
-            document.documentElement.classList.remove('dark')
+            html.classList.remove('dark')
         }
 
         // html/body 背景色即時更新（不依賴 CSS transition）
         // 讓 iOS Safari 底部工具列能立刻偵測到新的頁面背景色
-        document.documentElement.style.backgroundColor = bg
+        html.style.backgroundColor = bg
         document.body.style.backgroundColor = bg
 
-        // 關鍵：使用 'only light'/'only dark' 而非單純 'light'/'dark'
-        // 'only' 關鍵字告訴瀏覽器：此頁面【只】支援這個顏色方案，不允許系統偏好覆蓋
-        // 這是讓 iOS Safari 底部工具列也跟隨 App 主題的核心機制（參考 Gemini 實作）
-        const csOnly = isDark ? 'only dark' : 'only light'
-        document.documentElement.style.colorScheme = csOnly
+        // color-scheme 更新（控制鍵盤、scrollbar 等原生 UI）
+        html.style.colorScheme = csOnly
 
-        // 強制 Safari 重新偵測 meta[theme-color]：先移除再新增
-        // 直接 setAttribute 有時不會觸發 Safari 的 toolbar 顏色更新
+        // meta[theme-color] 更新（控制 Safari toolbar 顏色）
+        // 先移除再新增才能強制 Safari 重新偵測
         const existingThemeColor = document.querySelector('meta[name="theme-color"]')
         if (existingThemeColor) existingThemeColor.remove()
-
         const metaThemeColor = document.createElement('meta')
         metaThemeColor.setAttribute('name', 'theme-color')
         metaThemeColor.setAttribute('content', bg)
         document.head.appendChild(metaThemeColor)
 
-        // color-scheme meta 更新（控制鍵盤、scrollbar 等原生 UI）
-        // 同樣使用 'only light'/'only dark' 讓 Safari 底部工具列強制跟隨 App 主題
+        // meta[color-scheme] 更新
         const existingColorScheme = document.querySelector('meta[name="color-scheme"]')
         if (existingColorScheme) existingColorScheme.remove()
-
         const metaColorScheme = document.createElement('meta')
         metaColorScheme.setAttribute('name', 'color-scheme')
         metaColorScheme.setAttribute('content', csOnly)
         document.head.appendChild(metaColorScheme)
+
+        // ── 下一個繪製幀後恢復 transition ──────────────────────────
+        // requestAnimationFrame 保證瀏覽器已完成本次重繪後才恢復
+        // 雙層 rAF 確保 iOS Safari 也能正確觸發
+        const raf = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                html.classList.remove('no-transition')
+            })
+        })
+        return () => cancelAnimationFrame(raf)
     }, [theme, location.pathname])
 
     return (
