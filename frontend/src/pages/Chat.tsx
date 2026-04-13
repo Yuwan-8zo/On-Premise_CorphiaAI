@@ -985,7 +985,18 @@ export default function Chat() {
                                         </>
                                     ) : selectedModel ? (
                                         <>
-                                            <span className="md:hidden truncate max-w-[120px]">{selectedModel.name.split('.')[0]}</span>
+                                            <span className="md:hidden truncate max-w-[120px]">
+                                                {(() => {
+                                                    const name = selectedModel.name.toLowerCase();
+                                                    if (name.includes('qwen') && name.includes('2.5') && name.includes('7b')) {
+                                                        if (name.includes('q5_k_m')) return 'Q2.5-7B-Q5KM';
+                                                        if (name.includes('q4_k_m')) return 'Q2.5-7B-Q4KM';
+                                                        return 'Q2.5-7B';
+                                                    }
+                                                    if (name.includes('llama') && name.includes('3')) return 'Llama3';
+                                                    return selectedModel.name.split('.')[0].substring(0, 12);
+                                                })()}
+                                            </span>
                                             <span className="hidden md:inline">{selectedModel.name}</span>
                                         </>
                                     ) : 'Loading Models...'}
