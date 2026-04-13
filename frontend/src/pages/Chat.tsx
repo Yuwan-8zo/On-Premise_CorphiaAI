@@ -1326,9 +1326,9 @@ export default function Chat() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="shrink-0 pt-2 pb-4 md:pb-6 w-full z-20"
+                    className="shrink-0 pt-2 pb-6 md:pb-8 w-full z-20"
                 >
-                    <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-0 w-full relative">
+                    <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
                         <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-ios-blue-light/20 dark:focus-within:ring-ios-blue-dark/20">
                             
