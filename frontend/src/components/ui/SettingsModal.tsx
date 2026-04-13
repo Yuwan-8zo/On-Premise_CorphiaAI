@@ -679,22 +679,17 @@ export default function SettingsModal() {
                             exit={{ scale: 0.9, y: 20, opacity: 0 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={e => e.stopPropagation()}
-                            className="bg-white dark:bg-ios-dark-gray5 p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-gray-100 dark:border-white/10"
+                            className="bg-white p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
                         >
                             {/* QR Code 圖片 */}
                             <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(window.location.origin)}`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(window.location.origin)}`}
                                 alt="Mobile Access QR Code"
-                                className="w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] rounded-[16px]"
+                                className="w-[380px] h-[380px] rounded-[16px]"
                             />
-                            <div className="text-center">
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">行動裝置掃描</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">掃描 QR Code 在手機上開啟 Corphia AI</p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 font-mono">{window.location.origin}</p>
-                            </div>
                             <button
                                 onClick={() => setShowQR(false)}
-                                className="mt-1 px-8 py-2.5 bg-ios-blue-light dark:bg-ios-blue-dark text-white font-semibold rounded-full text-[15px] hover:bg-opacity-90 transition-all"
+                                className="w-full py-2.5 bg-ios-blue-light dark:bg-ios-blue-dark text-white font-semibold rounded-full text-[15px] hover:bg-opacity-90 transition-all"
                             >
                                 關閉
                             </button>
