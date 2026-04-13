@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
+import { usersApi } from '../../api/users'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
 
@@ -80,7 +81,7 @@ type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
-    const { user, clearAuth } = useAuthStore()
+    const { user, clearAuth, updateUser } = useAuthStore()
     const { theme, toggleTheme, isSettingsOpen, setSettingsOpen } = useUIStore()
 
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
@@ -99,6 +100,11 @@ export default function SettingsModal() {
     const [passwordStrength, setPasswordStrength] = useState<{
         score: number; level: string; errors: string[]; is_valid: boolean
     } | null>(null)
+
+    // 名稱修改狀態
+    const [isEditingName, setIsEditingName] = useState(false)
+    const [editName, setEditName] = useState(user?.name || '')
+    const [isUpdatingName, setIsUpdatingName] = useState(false)
 
     const menuItems = [
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
@@ -128,6 +134,25 @@ export default function SettingsModal() {
         clearAuth()
         setSettingsOpen(false)
         window.location.href = '/login'
+    }
+
+    const handleUpdateName = async () => {
+        if (!editName.trim() || editName.trim() === user?.name) {
+            setIsEditingName(false)
+            return
+        }
+
+        try {
+            setIsUpdatingName(true)
+            const updatedUser = await usersApi.updateMe({ name: editName.trim() })
+            updateUser(updatedUser)
+            setIsEditingName(false)
+        } catch (error) {
+            console.error('更新名稱失敗:', error)
+            // 可選：加入 toast 提示
+        } finally {
+            setIsUpdatingName(false)
+        }
     }
 
     /**
@@ -313,9 +338,58 @@ export default function SettingsModal() {
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div>
-                                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                                                {user?.name}
-                                            </h3>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                {isEditingName ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={editName}
+                                                            onChange={(e) => setEditName(e.target.value)}
+                                                            className="text-xl font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-ios-dark-gray4 border border-ios-blue-light/50 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-ios-blue-light w-48"
+                                                            autoFocus
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleUpdateName()
+                                                                if (e.key === 'Escape') {
+                                                                    setEditName(user?.name || '')
+                                                                    setIsEditingName(false)
+                                                                }
+                                                            }}
+                                                        />
+                                                        <button 
+                                                            onClick={handleUpdateName}
+                                                            disabled={isUpdatingName}
+                                                            className="p-1 px-2 text-sm bg-ios-blue-light text-white rounded-md flex-shrink-0"
+                                                        >
+                                                            {isUpdatingName ? '儲存中...' : t('common.save', '儲存')}
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setEditName(user?.name || '')
+                                                                setIsEditingName(false)
+                                                            }}
+                                                            disabled={isUpdatingName}
+                                                            className="p-1 px-2 text-sm bg-gray-200 dark:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 rounded-md flex-shrink-0"
+                                                        >
+                                                            {t('common.cancel', '取消')}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                                            {user?.name}
+                                                        </h3>
+                                                        <button 
+                                                            onClick={() => setIsEditingName(true)}
+                                                            className="text-gray-400 hover:text-ios-blue-light dark:hover:text-ios-blue-dark transition-colors"
+                                                            title="修改名稱"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                             <p className="text-lg text-gray-500 dark:text-gray-400 mb-3">
                                                 {user?.email}
                                             </p>
