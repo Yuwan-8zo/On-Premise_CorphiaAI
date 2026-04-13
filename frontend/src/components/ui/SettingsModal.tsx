@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
 import GuideSection from './GuideSection'
+import AboutSection from './AboutSection'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -61,12 +62,7 @@ const MoonIcon = () => (
     </svg>
 )
 
-/** 關於頁面 AI Robot Icon */
-const RobotIcon = () => (
-    <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-2.4 2.4m0 0-2.4 2.4M19.8 15l2.4 2.4m-2.4-2.4-2.4-2.4M9 9h.01M15 9h.01M9 12h6M7.5 19.5h9" />
-    </svg>
-)
+
 
 const LockIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -438,46 +434,8 @@ export default function SettingsModal() {
                             )}
 
                             {activeSection === 'about' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
-                                        {t('settings.about')}
-                                    </h2>
-
-                                    <div className="text-center py-6">
-                                        <div className="inline-flex items-center justify-center w-28 h-28 rounded-[20px] bg-gradient-to-tr from-ios-blue-dark to-ios-blue-light mb-6 shadow-xl shadow-ios-blue-light/30">
-                                            <RobotIcon />
-                                        </div>
-                                        <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
-                                            Corphia AI Platform
-                                        </h3>
-                                        <p className="text-gray-500 dark:text-gray-400 font-medium mb-6 text-lg">
-                                            版本 2.2.0
-                                        </p>
-                                        <p className="text-[16px] text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
-                                            企業級私有部署 AI 問答系統，支援本地 LLM 推論和 RAG 知識庫檢索。
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-8 p-6 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-transparent dark:border-white/5">
-                                        <div className="grid grid-cols-2 gap-4 text-sm text-left">
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">技術棧</p>
-                                                <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">React + FastAPI</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">LLM Engine</p>
-                                                <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">llama.cpp</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">向量資料庫</p>
-                                                <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">ChromaDB</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400 mb-1 text-sm font-medium">授權</p>
-                                                <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">MIT License</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
+                                    <AboutSection />
                                 </motion.div>
                             )}
                         </div>
