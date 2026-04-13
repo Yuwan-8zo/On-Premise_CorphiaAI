@@ -14,6 +14,13 @@ class LoginRequest(BaseModel):
     email: str  # 允許非標準格式 (如 admin@local)
     password: str = Field(..., min_length=1)
 
+    @field_validator("email", "password", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
 
 class LoginResponse(BaseModel):
     """登入回應"""
