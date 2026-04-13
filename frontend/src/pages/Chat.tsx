@@ -919,14 +919,12 @@ export default function Chat() {
                         style={{ padding: sidebarOpen ? '' : '0' }}
                     >
                         {/* 圓形頭像框 */}
-                        <div className="w-[32px] h-[32px] rounded-full bg-white dark:bg-ios-dark-gray6 flex items-center justify-center shrink-0 border border-gray-200 dark:border-white/5">
-                            <svg viewBox="0 0 24 24" fill="none" className="w-[16px] h-[16px] text-gray-400 dark:text-gray-500">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4ZM6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8C18 11.3137 15.3137 14 12 14C8.68629 14 6 11.3137 6 8ZM12 15C7.58172 15 4 18.5817 4 23C4 23.5523 4.44772 24 5 24H19C19.5523 24 20 23.5523 20 23C20 18.5817 16.4183 15 12 15ZM6.04631 22C6.54145 19.1673 8.98926 17 12 17C15.0107 17 17.4586 19.1673 17.9537 22H6.04631Z" fill="currentColor"/>
-                            </svg>
+                        <div className="w-[32px] h-[32px] rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark flex items-center justify-center shrink-0 border border-ios-blue-light/20 dark:border-ios-blue-dark/20 font-bold text-[14px]">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-[14px] text-gray-800 dark:text-white truncate">{user?.name || 'Local User'}</p>
+                                <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate">{user?.name || 'Local User'}</p>
                             </div>
                         )}
                     </button>
