@@ -19,7 +19,7 @@ export default function GuideSection() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-6 pr-2 custom-scrollbar overflow-y-auto max-h-[60vh] pb-8"
+            className="space-y-6 pr-2 custom-scrollbar overflow-y-auto h-full pb-8"
         >
             <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">系統使用說明書</h3>

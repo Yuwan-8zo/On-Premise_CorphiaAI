@@ -430,9 +430,9 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
-                            {/* 關於 */}
+                            {/* 使用說明 */}
                             {activeSection === 'guide' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full">
+                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
                                     <GuideSection />
                                 </motion.div>
                             )}
