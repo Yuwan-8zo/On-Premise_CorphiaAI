@@ -57,6 +57,15 @@ export default {
                 'card-lg': '34px',
                 'card-xl': '38px',
             },
+            keyframes: {
+                'typing-bounce': {
+                    '0%, 100%': { transform: 'translateY(10%)', opacity: '0.4' },
+                    '50%': { transform: 'translateY(-60%)', opacity: '1' },
+                }
+            },
+            animation: {
+                'typing-bounce': 'typing-bounce 1s infinite',
+            }
         },
     },
     plugins: [],

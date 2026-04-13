@@ -88,6 +88,7 @@ export default function Chat() {
 
     // Header Options Menu State
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
+    const [isModelLoading, setIsModelLoading] = useState(false)
 
     // Sidebar Logo Hover State
     const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -958,10 +959,16 @@ export default function Chat() {
                         <div className="relative">
                             <button 
                                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-ios-dark-gray3"
+                                disabled={isModelLoading}
+                                className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-ios-dark-gray3 disabled:opacity-50"
                             >
-                                <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400">
-                                    {selectedModel ? selectedModel.name : 'Loading Models...'}
+                                <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                    {isModelLoading ? (
+                                        <>
+                                            <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                                            正在處理模型...
+                                        </>
+                                    ) : selectedModel ? selectedModel.name : 'Loading Models...'}
                                 </span>
                                 <svg className={`w-4 h-4 text-gray-400 opacity-80 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
@@ -985,12 +992,16 @@ export default function Chat() {
                                                         <button
                                                             key={model.name}
                                                             onClick={async () => {
+                                                                if (isModelLoading) return;
                                                                 try {
+                                                                    setIsModelLoading(true);
                                                                     await modelsApi.selectModel(model.name);
                                                                     setSelectedModel(model);
                                                                     setModelDropdownOpen(false);
                                                                 } catch (err) {
                                                                     console.error('選擇模型失敗', err);
+                                                                } finally {
+                                                                    setIsModelLoading(false);
                                                                 }
                                                             }}
                                                             className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-ios-dark-gray4' : 'hover:bg-gray-50 dark:hover:bg-ios-dark-gray4'}`}
@@ -1015,8 +1026,16 @@ export default function Chat() {
                                             <div className="mt-2 pt-2 border-t border-ios-light-gray5 dark:border-white/5">
                                                 <button 
                                                     onClick={async () => {
-                                                        const res = await modelsApi.refreshModels();
-                                                        setAvailableModels(res.models);
+                                                        if (isModelLoading) return;
+                                                        try {
+                                                            setIsModelLoading(true);
+                                                            const res = await modelsApi.refreshModels();
+                                                            setAvailableModels(res.models);
+                                                        } catch (err) {
+                                                            console.error('重新掃描失敗', err);
+                                                        } finally {
+                                                            setIsModelLoading(false);
+                                                        }
                                                     }}
                                                     className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-400 group"
                                                 >
@@ -1268,7 +1287,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-ios-blue-light/20 dark:focus-within:ring-ios-blue-dark/20">
+                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-ios-blue-light/20 dark:focus-within:ring-ios-blue-dark/20">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
@@ -1289,7 +1308,7 @@ export default function Chat() {
                             )}
 
                             {/* Input Row */}
-                            <div className="flex items-end gap-2 p-2 pl-4">
+                            <div className="flex items-center gap-2 p-2 pl-4">
                                 {chatMode === 'project' && (
                                     <>
                                         <button 
@@ -1313,7 +1332,7 @@ export default function Chat() {
                                     placeholder={chatMode === 'project' ? "傳送訊息或上傳資料..." : "Message Corphia AI..."}
                                     rows={1}
                                     disabled={isConnecting}
-                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] custom-scrollbar border-0"
+                                    className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                                     style={{ lineHeight: '1.4' }}
                                 />
                                 

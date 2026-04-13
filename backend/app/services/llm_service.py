@@ -98,14 +98,18 @@ class LLMService:
             return self._simulate_response(prompt)
         
         try:
-            output = self.model(
-                prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                stop=stop or [],
-                echo=False,
-            )
+            import asyncio
+            def _run():
+                return self.model(
+                    prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    stop=stop or [],
+                    echo=False,
+                )
+            
+            output = await asyncio.to_thread(_run)
             
             return output["choices"][0]["text"]
             
@@ -154,7 +158,17 @@ class LLMService:
                 stream=True,
             )
             
-            for output in stream:
+            import asyncio
+            def get_next():
+                try:
+                    return next(stream)
+                except StopIteration:
+                    return None
+
+            while True:
+                output = await asyncio.to_thread(get_next)
+                if output is None:
+                    break
                 text = output["choices"][0]["text"]
                 if text:
                     yield text
@@ -206,17 +220,21 @@ class LLMService:
                 return {}
 
         try:
-            output = self.model(
-                prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                echo=False,
-                response_format={
-                    "type": "json_object",
-                    "schema": schema_dict
-                }
-            )
+            import asyncio
+            def _run():
+                return self.model(
+                    prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    echo=False,
+                    response_format={
+                        "type": "json_object",
+                        "schema": schema_dict
+                    }
+                )
+            
+            output = await asyncio.to_thread(_run)
             
             result_str = output["choices"][0]["text"]
             return json.loads(result_str)

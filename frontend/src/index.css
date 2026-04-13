@@ -118,6 +118,21 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
   animation: spin 1s linear infinite;
 }
 
+@keyframes typing-bounce {
+  0%, 100% {
+    transform: translateY(15%);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-40%);
+    opacity: 1;
+  }
+}
+
+.animate-typing-bounce {
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

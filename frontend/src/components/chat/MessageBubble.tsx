@@ -45,7 +45,14 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
-                            <span className="inline-block w-3 h-3 rounded-full bg-gray-400 animate-pulse mt-1" />
+                            <div className="flex items-center gap-1 mt-1">
+                                <span className="font-semibold text-gray-500 dark:text-gray-400 text-[14px] mr-0.5">Thinking</span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '200ms' }} />
+                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '400ms' }} />
+                                </span>
+                            </div>
                         ) : null}
 
                         {/* 來源引用 */}

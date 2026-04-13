@@ -61,6 +61,12 @@ const RobotIcon = () => (
     </svg>
 )
 
+const LockIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+)
+
 type SettingSection = 'profile' | 'appearance' | 'language' | 'about'
 
 export default function SettingsModal() {
@@ -214,7 +220,8 @@ export default function SettingsModal() {
     }
 
     return (
-        <AnimatePresence>
+        <>
+            <AnimatePresence>
             {isSettingsOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12">
                     {/* Backdrop */}
@@ -297,7 +304,7 @@ export default function SettingsModal() {
                                     <div className="mb-8">
                                         <button
                                             onClick={() => {
-                                                setShowPasswordForm(!showPasswordForm)
+                                                setShowPasswordForm(true)
                                                 setPasswordError('')
                                                 setPasswordSuccess('')
                                                 setCurrentPassword('')
@@ -307,116 +314,8 @@ export default function SettingsModal() {
                                             }}
                                             className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-ios-dark-gray4 hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 font-semibold rounded-full transition-colors"
                                         >
-                                            🔒 {showPasswordForm ? '收起' : '修改密碼'}
+                                            <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
-
-                                        {showPasswordForm && (
-                                            <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                className="mt-4 p-6 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[16px] border border-gray-200 dark:border-white/5 space-y-4 max-w-md"
-                                            >
-                                                {/* 密碼策略提示 */}
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-ios-dark-gray4 rounded-xl p-3 space-y-1">
-                                                    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">密碼安全要求：</p>
-                                                    <p>• 至少 8 個字元</p>
-                                                    <p>• 包含大寫字母 (A-Z)</p>
-                                                    <p>• 包含小寫字母 (a-z)</p>
-                                                    <p>• 包含數字 (0-9)</p>
-                                                    <p>• 包含特殊字元 (!@#$% 等)</p>
-                                                </div>
-
-                                                {/* 當前密碼 */}
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">當前密碼</label>
-                                                    <input
-                                                        type="password"
-                                                        value={currentPassword}
-                                                        onChange={e => { setCurrentPassword(e.target.value); setPasswordError('') }}
-                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
-                                                        placeholder="輸入當前密碼"
-                                                    />
-                                                </div>
-
-                                                {/* 新密碼 */}
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">新密碼</label>
-                                                    <input
-                                                        type="password"
-                                                        value={newPassword}
-                                                        onChange={e => handleNewPasswordChange(e.target.value)}
-                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
-                                                        placeholder="輸入新密碼"
-                                                    />
-
-                                                    {/* 密碼強度指示器 */}
-                                                    {passwordStrength && (
-                                                        <div className="mt-2">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <div className="flex-1 h-2 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className={`h-full rounded-full transition-all duration-300 ${getStrengthColor(passwordStrength.level)}`}
-                                                                        style={{ width: `${passwordStrength.score}%` }}
-                                                                    />
-                                                                </div>
-                                                                <span className={`text-xs font-semibold ${
-                                                                    passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
-                                                                    passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
-                                                                    passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                                                                    'text-red-600 dark:text-red-400'
-                                                                }`}>
-                                                                    {getStrengthLabel(passwordStrength.level)}
-                                                                </span>
-                                                            </div>
-                                                            {passwordStrength.errors.length > 0 && (
-                                                                <ul className="text-xs text-red-500 dark:text-red-400 space-y-0.5">
-                                                                    {passwordStrength.errors.map((err, i) => (
-                                                                        <li key={i}>✗ {err}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* 確認新密碼 */}
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">確認新密碼</label>
-                                                    <input
-                                                        type="password"
-                                                        value={confirmNewPassword}
-                                                        onChange={e => { setConfirmNewPassword(e.target.value); setPasswordError('') }}
-                                                        className="w-full px-4 py-3 rounded-full bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-blue-light focus:border-transparent outline-none transition-all"
-                                                        placeholder="再次輸入新密碼"
-                                                    />
-                                                    {confirmNewPassword && newPassword !== confirmNewPassword && (
-                                                        <p className="mt-1 text-xs text-red-500">密碼不一致</p>
-                                                    )}
-                                                </div>
-
-                                                {/* 錯誤/成功訊息 */}
-                                                {passwordError && (
-                                                    <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium">
-                                                        ⚠️ {passwordError}
-                                                    </div>
-                                                )}
-                                                {passwordSuccess && (
-                                                    <div className="p-3 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium">
-                                                        ✅ {passwordSuccess}
-                                                    </div>
-                                                )}
-
-                                                {/* 提交按鈕 */}
-                                                <button
-                                                    onClick={handleChangePassword}
-                                                    disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                                    className="w-full py-3 bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:hover:bg-ios-blue-light text-white font-semibold rounded-full transition-colors"
-                                                >
-                                                    {isChangingPassword ? '修改中...' : '確認修改密碼'}
-                                                </button>
-                                            </motion.div>
-                                        )}
                                     </div>
 
                                     <div className="pt-4">
@@ -550,6 +449,243 @@ export default function SettingsModal() {
                     </motion.div>
                 </div>
             )}
-        </AnimatePresence>
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showPasswordForm && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowPasswordForm(false)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        />
+
+                        {/* Card — 仿登入頁正方形卡片風格 */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                            className="relative w-full max-w-[440px] bg-white dark:bg-ios-dark-gray5 shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-7 flex flex-col gap-5 transition-colors overflow-hidden"
+                        >
+                            {/* Close button */}
+                            <button
+                                onClick={() => setShowPasswordForm(false)}
+                                className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <CloseIcon />
+                            </button>
+
+                            {/* Title */}
+                            <div>
+                                <h3 className="text-[22px] font-bold text-gray-900 dark:text-white tracking-tight">
+                                    {t('auth.changePassword', '修改密碼')}
+                                </h3>
+                            </div>
+
+                            {/* 兩欄式密碼規則 + 輸入欄位 */}
+                            <div className="flex gap-5">
+                                {/* 左欄：密碼規則 */}
+                                <div className="flex-1 bg-ios-light-gray6 dark:bg-ios-dark-gray4 rounded-[20px] p-4 text-[12.5px] text-gray-500 dark:text-gray-400 space-y-2 self-start border border-transparent dark:border-white/5">
+                                    <p className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] mb-1">密碼安全要求</p>
+                                    {[
+                                        '至少 8 個字元',
+                                        '包含大寫字母 (A-Z)',
+                                        '包含小寫字母 (a-z)',
+                                        '包含數字 (0-9)',
+                                        '包含特殊字元',
+                                    ].map((rule, i) => {
+                                        const passed = passwordStrength
+                                            ? !passwordStrength.errors.some(e => e.includes(rule.split(' ')[1] || rule))
+                                            : null
+                                        return (
+                                            <div key={i} className={`flex items-center gap-1.5 transition-colors ${
+                                                passed === true ? 'text-green-600 dark:text-green-400' :
+                                                passed === false ? 'text-red-500 dark:text-red-400' : ''
+                                            }`}>
+                                                {passed === true ? (
+                                                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                ) : passed === false ? (
+                                                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                ) : (
+                                                    <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">•</span>
+                                                )}
+                                                <span>{rule}</span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* 右欄：輸入欄位 */}
+                                <div className="flex-1 flex flex-col gap-4">
+                                    {/* 當前密碼 */}
+                                    <PwdFloatingInput
+                                        label="當前密碼"
+                                        value={currentPassword}
+                                        onChange={v => { setCurrentPassword(v); setPasswordError('') }}
+                                    />
+
+                                    {/* 新密碼 */}
+                                    <div>
+                                        <PwdFloatingInput
+                                            label="新密碼"
+                                            value={newPassword}
+                                            onChange={handleNewPasswordChange}
+                                        />
+                                        {/* 強度條 */}
+                                        {passwordStrength && (
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <div className="flex-1 h-1.5 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
+                                                        style={{ width: `${passwordStrength.score}%` }}
+                                                    />
+                                                </div>
+                                                <span className={`text-[11px] font-semibold shrink-0 ${
+                                                    passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
+                                                    passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
+                                                    passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                                    'text-red-600 dark:text-red-400'
+                                                }`}>
+                                                    {getStrengthLabel(passwordStrength.level)}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 確認新密碼 */}
+                                    <div>
+                                        <PwdFloatingInput
+                                            label="確認新密碼"
+                                            value={confirmNewPassword}
+                                            onChange={v => { setConfirmNewPassword(v); setPasswordError('') }}
+                                        />
+                                        <AnimatePresence>
+                                            {confirmNewPassword && newPassword !== confirmNewPassword && (
+                                                <motion.p
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                    className="mt-1 pl-3 text-[11px] font-medium text-red-500 overflow-hidden"
+                                                >
+                                                    密碼不一致
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 訊息 */}
+                            <AnimatePresence>
+                                {(passwordError || passwordSuccess) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -8, height: 0 }}
+                                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                    >
+                                        {passwordError && (
+                                            <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[13px] font-medium border border-red-200 dark:border-red-500/20">
+                                                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                {passwordError}
+                                            </div>
+                                        )}
+                                        {passwordSuccess && (
+                                            <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[13px] font-medium border border-green-200 dark:border-green-500/20">
+                                                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                {passwordSuccess}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* 提交按鈕 — 仿登入頁藍底圓角按鈕 */}
+                            <button
+                                onClick={handleChangePassword}
+                                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                                className="w-full py-3 bg-ios-blue-light dark:bg-ios-blue-dark hover:bg-opacity-90 disabled:opacity-50 text-white font-semibold rounded-full transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-ios-blue-light focus:ring-offset-2"
+                            >
+                                {isChangingPassword ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        修改中...
+                                    </span>
+                                ) : '確認修改密碼'}
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </>
+    )
+}
+
+// ── 密碼輸入框（仿登入頁 FloatingInput 風格） ──
+interface PwdFloatingInputProps {
+    label: string
+    value: string
+    onChange: (v: string) => void
+}
+
+function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
+    const [visible, setVisible] = useState(false)
+    const isFilled = value.length > 0
+    return (
+        <div className="relative w-full">
+            <input
+                type={visible ? 'text' : 'password'}
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                placeholder={label}
+                className={`peer w-full px-4 py-3 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[14px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isFilled ? 'pr-10' : ''}`}
+            />
+            <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-2 origin-left whitespace-nowrap
+                ${isFilled
+                    ? 'top-0 scale-[0.82] bg-black dark:bg-white text-white dark:text-black font-semibold py-0.5'
+                    : 'top-1/2 scale-100 bg-transparent text-ios-light-gray1 dark:text-ios-dark-gray1 py-0'}
+                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-ios-blue-light dark:peer-focus:bg-ios-blue-dark peer-focus:text-white peer-focus:font-semibold peer-focus:py-0.5
+            `}>
+                {label}
+            </label>
+            <AnimatePresence>
+                {isFilled && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => setVisible(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    >
+                        {visible ? (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        )}
+                    </motion.button>
+                )}
+            </AnimatePresence>
+        </div>
     )
 }
