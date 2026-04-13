@@ -635,8 +635,8 @@ export default function Chat() {
                     } overflow-hidden bg-ios-light-gray6 dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
             >
                 {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
-                <div className="flex items-center justify-between w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300">
-                    <div className={`flex items-center px-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0'}`}>
+                <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
+                    <div className={`flex items-center overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10 md:px-1' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0 md:px-0'}`}>
                         <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden" />
                     </div>
                     <button
@@ -645,19 +645,19 @@ export default function Chat() {
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
                         className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 items-center justify-center ${
-                            (!sidebarOpen && !isSidebarHovered) ? 'w-8 h-8 p-0' : 'w-[36px] h-[36px] p-2'
+                            (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
                         }`}
                     >
                         {sidebarOpen || isSidebarHovered ? (
-                            <SidebarIcon className="w-[18px] h-[18px]" />
+                            <SidebarIcon className="w-[20px] h-[20px]" />
                         ) : (
-                            <CorphiaLogo className="w-8 h-8 rounded-[7px]" />
+                            <CorphiaLogo className="w-[30px] h-[30px] rounded-[7px]" />
                         )}
                     </button>
                 </div>
 
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className={`w-full transition-all duration-300 p-3 space-y-3 flex flex-col`}>
+                <div className={`w-full transition-all duration-300 lg:p-3 p-3 flex flex-col gap-3 py-3 ${!sidebarOpen ? 'items-center' : ''}`}>
                     {/* 新對話 / 新資料夾 按鈕 */}
                     <button
                         onClick={() => {
@@ -669,8 +669,7 @@ export default function Chat() {
                                 createNewConversation()
                             }
                         }}
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-white transition-colors font-medium overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
-                        style={{ padding: sidebarOpen ? '' : '0' }}
+                        className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-white transition-colors overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                     >
                         <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-ios-dark-gray4">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300">
@@ -678,7 +677,11 @@ export default function Chat() {
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </div>
-                        {sidebarOpen && <span className="font-semibold text-[14px] truncate">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>}
+                        {sidebarOpen && (
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-[14px] truncate text-left m-0 leading-none">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</p>
+                            </div>
+                        )}
                     </button>
 
                     {/* 一般 / 專案 切換膠囊 */}
@@ -927,20 +930,20 @@ export default function Chat() {
                 </div>
 
                 {/* 底部滿版膠囊使用者卡片 */}
-                <div className={`w-full transition-all duration-300 p-3 mt-auto flex ${!sidebarOpen && 'justify-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 mt-auto flex flex-col ${!sidebarOpen ? 'items-center' : ''}`}>
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
-                        className={`flex items-center gap-3 bg-transparent hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors text-left overflow-hidden ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full' : 'w-12 h-12 justify-center rounded-full shrink-0'}`}
-                        style={{ padding: sidebarOpen ? '' : '0' }}
+                        className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                     >
                         {/* 圓形頭像框 */}
                         <div className="w-[32px] h-[32px] rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark flex items-center justify-center shrink-0 border border-ios-blue-light/20 dark:border-ios-blue-dark/20 font-bold text-[14px]">
                             {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
+                        {/* Highlight 暈染解決: 把 hover hover-highlight 限定在頭部? - 原本已經自帶 hover */}
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate">{user?.name || 'Local User'}</p>
+                                <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate text-left m-0 leading-none">{user?.name || 'Local User'}</p>
                             </div>
                         )}
                     </button>
