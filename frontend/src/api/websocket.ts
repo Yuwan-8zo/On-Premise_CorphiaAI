@@ -10,6 +10,8 @@ export interface WebSocketMessage {
     useRag?: boolean
     temperature?: number
     maxTokens?: number
+    /** 使用者介面語言，例如 'zh-TW' | 'en-US' | 'ja-JP' */
+    language?: string
 }
 
 export interface StreamResponse {
@@ -103,12 +105,13 @@ export class ChatWebSocket {
         }
     }
 
-    sendMessage(content: string, useRag = true, temperature = 0.7): void {
+    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW'): void {
         this.send({
             type: 'message',
             content,
             useRag,
             temperature,
+            language,
         })
     }
 

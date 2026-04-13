@@ -50,7 +50,7 @@ class ChatService:
 - 可以參考提供的資料來回答問題
 
 回答規則：
-1. 使用與使用者相同的語言回答
+1. 必須使用系統指定的回覆語言回答，不能自行判斷
 2. 如果有參考資料，優先使用資料中的資訊
 3. 如果不確定，誠實說明
 4. 必要時使用 Markdown 格式組織回答"""
@@ -63,7 +63,15 @@ class ChatService:
 1. 你**必須**且**只能**基於使用者提供的「參考資料」來回答問題。
 2. 如果使用者的問題超出了參考資料的範圍，或者資料中沒有相關資訊，請直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
 3. 絕對不可以編造答案或使用你原本內建的外部知識來回答專業問題。
-4. 回答請條理分明，必要時使用 Markdown 格式並標註來源所在。"""
+4. 回答請條理分明，必要時使用 Markdown 格式並標註來源所在。
+5. 必須使用系統指定的回覆語言回答，不能自行判斷。"""
+
+    # 語言指令對照表
+    LANGUAGE_DIRECTIVES: dict[str, str] = {
+        "zh-TW": "【重要】你必須完全使用繁體中文回答。不論使用者用什麼語言提問，你的所有回覆都必須是繁體中文。",
+        "en-US": "[IMPORTANT] You MUST reply entirely in English. Regardless of the language the user writes in, all your responses must be in English.",
+        "ja-JP": "【重要】あなたは必ず日本語で回答してください。ユーザーがどの言語で質問しても、すべての返答は日本語でなければなりません。",
+    }
     
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -291,9 +299,13 @@ class ChatService:
         use_rag: bool = True,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        language: str = "zh-TW",
     ) -> Message:
         """
         發送訊息並取得回應（非串流）
+
+        Args:
+            language: 回覆語言代碼（zh-TW / en-US / ja-JP）
         """
         # 儲存使用者訊息
         user_message = Message(
@@ -343,9 +355,13 @@ class ChatService:
         if final_state.get("folder_name"):
             system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
         elif route == "web_search":
-            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合回答問題。"
+            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合回答問題。必須使用系統指定的回覆語言。"
         else:
             system_prompt = self.DEFAULT_SYSTEM_PROMPT
+
+        # 在系統提示末尾注入語言強制指令
+        lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
+        system_prompt = f"{system_prompt}\n\n{lang_directive}"
             
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
@@ -391,9 +407,13 @@ class ChatService:
         use_rag: bool = True,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        language: str = "zh-TW",
     ) -> AsyncGenerator[dict, None]:
         """
         發送訊息並串流回應
+
+        Args:
+            language: 回覆語言代碼（zh-TW / en-US / ja-JP）
         """
         # 儲存使用者訊息
         user_message = Message(
@@ -444,9 +464,14 @@ class ChatService:
         if final_state.get("folder_name"):
             system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
         elif route == "web_search":
-            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合客觀地回答問題。"
+            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合客觀地回答問題。必須使用系統指定的回覆語言。"
         else:
             system_prompt = self.DEFAULT_SYSTEM_PROMPT
+
+        # 在系統提示末尾注入語言強制指令
+        # 強制語言比「使用使用者語言」更可靠，因大多數 LLM 容易忽略模糊指令
+        lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
+        system_prompt = f"{system_prompt}\n\n{lang_directive}"
             
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,

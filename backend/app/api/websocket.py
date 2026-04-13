@@ -118,6 +118,8 @@ async def websocket_chat(
                     use_rag = data.get("use_rag", True)
                     temperature = data.get("temperature", 0.7)
                     max_tokens = data.get("max_tokens", 2048)
+                    # 前端傳來的使用者介面語言（zh-TW / en-US / ja-JP）
+                    language = data.get("language", "zh-TW")
                     
                     if not content:
                         await websocket.send_json({
@@ -133,6 +135,7 @@ async def websocket_chat(
                         use_rag=use_rag,
                         temperature=temperature,
                         max_tokens=max_tokens,
+                        language=language,
                     ):
                         await websocket.send_json(chunk)
                 

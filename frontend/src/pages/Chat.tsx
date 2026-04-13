@@ -73,7 +73,7 @@ export default function Chat() {
         setSourcesToLastMessage,
         deleteConversation
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar, showConfirm, setSettingsOpen } = useUIStore()
+    const { sidebarOpen, toggleSidebar, showConfirm, setSettingsOpen, language } = useUIStore()
 
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
@@ -555,7 +555,7 @@ export default function Chat() {
         const shouldUseRag = chatMode === 'project'
 
         if (wsRef.current?.isConnected) {
-            wsRef.current.sendMessage(userMessage, shouldUseRag)
+            wsRef.current.sendMessage(userMessage, shouldUseRag, 0.7, language)
         } else {
             // Frontend fallback flow
             try {
