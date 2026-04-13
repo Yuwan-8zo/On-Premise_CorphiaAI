@@ -618,12 +618,10 @@ export default function Chat() {
                     } overflow-hidden bg-ios-light-gray6 dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
             >
                 {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
-                <div className={`hidden md:flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
-                    {sidebarOpen && (
-                        <div className="flex items-center px-1">
-                            <CorphiaLogo className="w-8 h-8 shrink-0 rounded-full overflow-hidden" />
-                        </div>
-                    )}
+                <div className="hidden md:flex items-center justify-between w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300">
+                    <div className={`flex items-center px-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2' : 'w-0 opacity-0 mr-0'}`}>
+                        <CorphiaLogo className="w-8 h-8 shrink-0 rounded-full overflow-hidden" />
+                    </div>
                     <button
                         onClick={toggleSidebar}
                         onMouseEnter={() => setIsSidebarHovered(true)}
@@ -642,7 +640,7 @@ export default function Chat() {
                 </div>
 
                 {/* 頂端控制區（包含新對話按鈕與切換器） */}
-                <div className={`w-full transition-all duration-300 p-3 space-y-3 ${!sidebarOpen && 'flex flex-col items-center'}`}>
+                <div className={`w-full transition-all duration-300 p-3 space-y-3 flex flex-col`}>
                     {/* 新對話 / 新資料夾 按鈕 */}
                     <button
                         onClick={() => {
