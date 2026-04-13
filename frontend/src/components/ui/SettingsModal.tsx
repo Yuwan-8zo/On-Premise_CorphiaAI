@@ -521,6 +521,36 @@ export default function SettingsModal() {
                                             </div>
                                         )
                                     })}
+
+                                    {/* 密碼強度條 — 置於左欄底部 */}
+                                    <AnimatePresence>
+                                        {passwordStrength && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="pt-3 mt-1 border-t border-gray-200/60 dark:border-white/10 overflow-hidden"
+                                            >
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[11px] text-gray-500 dark:text-gray-400">強度</span>
+                                                    <span className={`text-[11px] font-semibold ml-auto ${
+                                                        passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
+                                                        passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
+                                                        passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                                        'text-red-600 dark:text-red-400'
+                                                    }`}>
+                                                        {getStrengthLabel(passwordStrength.level)}
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
+                                                        style={{ width: `${passwordStrength.score}%` }}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 右欄：輸入欄位 */}
@@ -533,32 +563,11 @@ export default function SettingsModal() {
                                     />
 
                                     {/* 新密碼 */}
-                                    <div>
-                                        <PwdFloatingInput
-                                            label="新密碼"
-                                            value={newPassword}
-                                            onChange={handleNewPasswordChange}
-                                        />
-                                        {/* 強度條 */}
-                                        {passwordStrength && (
-                                            <div className="mt-2 flex items-center gap-2">
-                                                <div className="flex-1 h-1.5 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
-                                                        style={{ width: `${passwordStrength.score}%` }}
-                                                    />
-                                                </div>
-                                                <span className={`text-[11px] font-semibold shrink-0 ${
-                                                    passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
-                                                    passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
-                                                    passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                                                    'text-red-600 dark:text-red-400'
-                                                }`}>
-                                                    {getStrengthLabel(passwordStrength.level)}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <PwdFloatingInput
+                                        label="新密碼"
+                                        value={newPassword}
+                                        onChange={handleNewPasswordChange}
+                                    />
 
                                     {/* 確認新密碼 */}
                                     <div>
