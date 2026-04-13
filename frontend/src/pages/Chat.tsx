@@ -11,7 +11,7 @@ import { conversationsApi } from '../api/conversations'
 import { documentsApi, type DocumentResponse } from '../api/documents'
 import modelsApi, { type ModelItem } from '../api/models'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
-import { MessageBubble } from '../components/chat'
+import { MessageBubble, ChatMinimap, ScrollToBottomButton } from '../components/chat'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
 import { CorphiaLogo } from '../components/icons/CorphiaIcons'
@@ -78,6 +78,7 @@ export default function Chat() {
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const wsRef = useRef<ChatWebSocket | null>(null)
     
@@ -1228,48 +1229,54 @@ export default function Chat() {
                         </div>
                     </div>
                 ) : (
-                <div className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4">
+                <div className="relative flex-1 overflow-hidden h-full flex flex-col">
+                    {/* 右側小地圖與置底按鈕 */}
+                    <ChatMinimap messages={messages} containerRef={scrollContainerRef} />
+                    <ScrollToBottomButton containerRef={scrollContainerRef} dependsOn={messages} />
                     
-                    {messages.length === 0 ? (
-                        // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
-                        <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
-                            {/* Greeting */}
-                            <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
-                                {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
-                            </h2>
+                    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
+                        
+                        {messages.length === 0 ? (
+                            // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
+                            <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
+                                {/* Greeting */}
+                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
+                                    {t('chat.emptyGreeting', `What can I help you with, ${user?.name || 'User'}?`)}
+                                </h2>
 
-                            {/* Suggested Prompts */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
-                                {[
-                                    { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
-                                    { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
-                                    { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
-                                    { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
-                                ].map((item, index) => (
-                                    <button 
-                                        key={index}
-                                        onClick={() => setInput(item.desc)}
-                                        className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
-                                    >
-                                        <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-ios-blue-light dark:group-hover:text-ios-blue-dark transition-colors">{item.title}</div>
-                                        <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
-                                    </button>
-                                ))}
+                                {/* Suggested Prompts */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
+                                    {[
+                                        { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
+                                        { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
+                                        { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
+                                        { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
+                                    ].map((item, index) => (
+                                        <button 
+                                            key={index}
+                                            onClick={() => setInput(item.desc)}
+                                            className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                        >
+                                            <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-ios-blue-light dark:group-hover:text-ios-blue-dark transition-colors">{item.title}</div>
+                                            <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        // 聊天紀錄
-                        <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
-                            {messages.map((message, index) => (
-                                <MessageBubble
-                                    key={message.id}
-                                    message={message}
-                                    isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-                                />
-                            ))}
-                            <div ref={messagesEndRef} />
-                        </div>
-                    )}
+                        ) : (
+                            // 聊天紀錄
+                            <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
+                                {messages.map((message, index) => (
+                                    <MessageBubble
+                                        key={message.id}
+                                        message={message}
+                                        isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+                                    />
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        )}
+                    </div>
                 </div>
                 )}
 

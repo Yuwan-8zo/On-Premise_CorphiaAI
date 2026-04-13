@@ -24,7 +24,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
     const isUser = message.role === 'user'
 
     return (
-        <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}>
+        <div id={`msg-${message.id}`} className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}>
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
                 <div className="max-w-[75%] bg-gray-100 dark:bg-ios-dark-gray5 text-gray-900 dark:text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed">
