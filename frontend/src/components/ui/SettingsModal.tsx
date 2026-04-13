@@ -469,7 +469,7 @@ export default function SettingsModal() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 16 }}
                             transition={{ type: "spring", stiffness: 300, damping: 28 }}
-                            className="relative w-full max-w-[440px] bg-white dark:bg-ios-dark-gray5 shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-7 flex flex-col gap-5 transition-colors overflow-hidden"
+                            className="relative w-full max-w-[640px] bg-white dark:bg-ios-dark-gray5 shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden"
                         >
                             {/* Close button */}
                             <button
@@ -487,10 +487,10 @@ export default function SettingsModal() {
                             </div>
 
                             {/* 兩欄式密碼規則 + 輸入欄位 */}
-                            <div className="flex gap-5">
+                            <div className="flex gap-6">
                                 {/* 左欄：密碼規則 */}
-                                <div className="flex-1 bg-ios-light-gray6 dark:bg-ios-dark-gray4 rounded-[20px] p-4 text-[12.5px] text-gray-500 dark:text-gray-400 space-y-2 self-start border border-transparent dark:border-white/5">
-                                    <p className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] mb-1">密碼安全要求</p>
+                                <div className="flex-1 bg-ios-light-gray6 dark:bg-ios-dark-gray4 rounded-[20px] p-5 text-[13px] text-gray-500 dark:text-gray-400 space-y-2.5 self-start border border-transparent dark:border-white/5">
+                                    <p className="font-semibold text-gray-700 dark:text-gray-200 text-[14px] mb-2">密碼安全要求</p>
                                     {[
                                         '至少 8 個字元',
                                         '包含大寫字母 (A-Z)',
@@ -524,7 +524,7 @@ export default function SettingsModal() {
                                 </div>
 
                                 {/* 右欄：輸入欄位 */}
-                                <div className="flex-1 flex flex-col gap-4">
+                                <div className="flex-1 flex flex-col gap-5">
                                     {/* 當前密碼 */}
                                     <PwdFloatingInput
                                         label="當前密碼"
@@ -652,7 +652,7 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={label}
-                className={`peer w-full px-4 py-3 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[14px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isFilled ? 'pr-10' : ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
             />
             <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-2 origin-left whitespace-nowrap
                 ${isFilled
