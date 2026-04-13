@@ -30,7 +30,7 @@ export default function AboutSection() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="flex flex-col items-center justify-center h-full pb-6 px-4"
+            className="flex flex-col items-center h-full pt-4 pb-8 px-4 overflow-y-auto custom-scrollbar"
         >
             {/* 懸浮機器人圖標 */}
             <motion.div 
