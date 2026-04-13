@@ -3,6 +3,7 @@
  */
 
 import { useAuthStore } from '../store/authStore'
+import { useChatStore } from '../store/chatStore'
 
 export interface WebSocketMessage {
     type: 'message' | 'ping' | 'stop'
@@ -80,17 +81,26 @@ export class ChatWebSocket {
 
             this.ws.onclose = () => {
                 console.log('WebSocket 已斷開')
+                
+                // 強制重置 Streaming 狀態，避免 UI 卡死
+                useChatStore.getState().setStreaming(false)
+                
                 this.closeHandlers.forEach((handler) => handler())
 
                 // 嘗試重連
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++
-                    setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts)
+                    setTimeout(() => {
+                        this.connect().catch(e => console.error('背景重連失敗:', e))
+                    }, this.reconnectDelay * this.reconnectAttempts)
                 }
             }
 
             this.ws.onerror = (error) => {
                 console.error('WebSocket 錯誤:', error)
+                // 強制重置 Streaming 狀態，避免 UI 卡死
+                useChatStore.getState().setStreaming(false)
+                
                 this.errorHandlers.forEach((handler) => handler(error))
                 reject(error)
             }

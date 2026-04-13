@@ -105,6 +105,30 @@ async def websocket_chat(
             await websocket.close(code=4004, reason="對話不存在")
             return
         
+        # 建立一個變數來追蹤當前的生成任務
+        current_generation_task = None
+
+        async def _generate_and_send(conv_id, text, r_flag, temp, m_token, lang):
+            try:
+                # 串流回應
+                async for chunk in chat_service.send_message_stream(
+                    conversation_id=conv_id,
+                    content=text,
+                    use_rag=r_flag,
+                    temperature=temp,
+                    max_tokens=m_token,
+                    language=lang,
+                ):
+                    await websocket.send_json(chunk)
+            except asyncio.CancelledError:
+                logger.info(f"生成任務已中斷: {connection_id}")
+                await websocket.send_json({"type": "done", "content": "\n[已停止生成]"})
+            except Exception as e:
+                logger.error(f"生成發生錯誤: {e}")
+                # 避免在 WebSocketDisconnect 時再送 error
+                if not isinstance(e, WebSocketDisconnect):
+                    await websocket.send_json({"type": "error", "message": str(e)})
+
         # 訊息處理迴圈
         while True:
             try:
@@ -118,7 +142,6 @@ async def websocket_chat(
                     use_rag = data.get("use_rag", True)
                     temperature = data.get("temperature", 0.7)
                     max_tokens = data.get("max_tokens", 2048)
-                    # 前端傳來的使用者介面語言（zh-TW / en-US / ja-JP）
                     language = data.get("language", "zh-TW")
                     
                     if not content:
@@ -128,23 +151,28 @@ async def websocket_chat(
                         })
                         continue
                     
-                    # 串流回應
-                    async for chunk in chat_service.send_message_stream(
-                        conversation_id=conversation_id,
-                        content=content,
-                        use_rag=use_rag,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        language=language,
-                    ):
-                        await websocket.send_json(chunk)
+                    # 避免重複發送請求
+                    if current_generation_task and not current_generation_task.done():
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "前一個請求正在處理中，請先停止"
+                        })
+                        continue
+                    
+                    # 啟動非同步生成任務
+                    current_generation_task = asyncio.create_task(
+                        _generate_and_send(conversation_id, content, use_rag, temperature, max_tokens, language)
+                    )
                 
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})
                 
                 elif msg_type == "stop":
-                    # TODO: 實作停止生成
                     logger.info(f"收到停止請求: {connection_id}")
+                    if current_generation_task and not current_generation_task.done():
+                        current_generation_task.cancel()
+                        # 給一點時間讓 Cancellation Propagate
+                        await asyncio.sleep(0.1)
                 
                 else:
                     await websocket.send_json({

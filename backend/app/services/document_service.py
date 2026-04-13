@@ -200,74 +200,91 @@ class DocumentService:
     async def _parse_text_file(self, file_path: Path) -> str:
         """解析純文字檔案"""
         import chardet
+        import asyncio
         
-        with open(file_path, "rb") as f:
-            raw_data = f.read()
-        
-        # 偵測編碼
-        detected = chardet.detect(raw_data)
-        encoding = detected.get("encoding", "utf-8")
-        
-        return raw_data.decode(encoding, errors="ignore")
+        def _process():
+            with open(file_path, "rb") as f:
+                raw_data = f.read()
+            # 偵測編碼
+            detected = chardet.detect(raw_data)
+            encoding = detected.get("encoding", "utf-8")
+            return raw_data.decode(encoding, errors="ignore")
+            
+        return await asyncio.to_thread(_process)
     
     async def _parse_pdf(self, file_path: Path) -> str:
         """解析 PDF 檔案"""
-        try:
-            from PyPDF2 import PdfReader
-            
-            reader = PdfReader(str(file_path))
-            text_parts = []
-            
-            for page in reader.pages:
-                text = page.extract_text()
-                if text:
-                    text_parts.append(text)
-            
-            return "\n\n".join(text_parts)
-            
-        except ImportError:
-            logger.warning("PyPDF2 未安裝，無法解析 PDF")
-            raise
+        import asyncio
+        
+        def _process():
+            try:
+                from PyPDF2 import PdfReader
+                
+                reader = PdfReader(str(file_path))
+                text_parts = []
+                
+                for page in reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(text)
+                
+                return "\n\n".join(text_parts)
+                
+            except ImportError:
+                logger.warning("PyPDF2 未安裝，無法解析 PDF")
+                raise
+                
+        return await asyncio.to_thread(_process)
     
     async def _parse_word(self, file_path: Path) -> str:
         """解析 Word 檔案"""
-        try:
-            from docx import Document as DocxDocument
-            
-            doc = DocxDocument(str(file_path))
-            text_parts = []
-            
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    text_parts.append(para.text)
-            
-            return "\n\n".join(text_parts)
-            
-        except ImportError:
-            logger.warning("python-docx 未安裝，無法解析 Word")
-            raise
+        import asyncio
+        
+        def _process():
+            try:
+                from docx import Document as DocxDocument
+                
+                doc = DocxDocument(str(file_path))
+                text_parts = []
+                
+                for para in doc.paragraphs:
+                    if para.text.strip():
+                        text_parts.append(para.text)
+                
+                return "\n\n".join(text_parts)
+                
+            except ImportError:
+                logger.warning("python-docx 未安裝，無法解析 Word")
+                raise
+                
+        return await asyncio.to_thread(_process)
     
     async def _parse_excel(self, file_path: Path) -> str:
         """解析 Excel 檔案"""
-        try:
-            from openpyxl import load_workbook
-            
-            wb = load_workbook(str(file_path), data_only=True)
-            text_parts = []
-            
-            for sheet in wb.worksheets:
-                sheet_text = f"### {sheet.title}\n"
-                for row in sheet.iter_rows(values_only=True):
-                    row_text = " | ".join(str(cell) if cell else "" for cell in row)
-                    if row_text.strip():
-                        sheet_text += row_text + "\n"
-                text_parts.append(sheet_text)
-            
-            return "\n\n".join(text_parts)
-            
-        except ImportError:
-            logger.warning("openpyxl 未安裝，無法解析 Excel")
-            raise
+        import asyncio
+        
+        def _process():
+            try:
+                from openpyxl import load_workbook
+                
+                wb = load_workbook(str(file_path), data_only=True)
+                text_parts = []
+                
+                for sheet in wb.worksheets:
+                    sheet_text = f"### {sheet.title}\n"
+                    for row in sheet.iter_rows(values_only=True):
+                        row_text = " | ".join(str(cell) if cell else "" for cell in row)
+                        if row_text.strip():
+                            sheet_text += row_text + "\n"
+                    text_parts.append(sheet_text)
+                
+                return "\n\n".join(text_parts)
+                
+            except ImportError:
+                logger.warning("openpyxl 未安裝，無法解析 Excel")
+                raise
+                
+        return await asyncio.to_thread(_process)
     
     def _chunk_text(self, text: str) -> list[str]:
         """
