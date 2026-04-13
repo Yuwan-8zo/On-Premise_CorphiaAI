@@ -67,6 +67,12 @@ const LockIcon = () => (
     </svg>
 )
 
+const QrCodeIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3V3zm0 12h6v6H3v-6zm12-12h6v6h-6V3zm-2 8h2m0 0h2m-2 0v2m0 0v2m0-2h2m0 0v2m-2-2h-2m2 0v-2M3 12h2" />
+    </svg>
+)
+
 type SettingSection = 'profile' | 'appearance' | 'language' | 'about'
 
 export default function SettingsModal() {
@@ -78,6 +84,9 @@ export default function SettingsModal() {
 
     // 密碼修改狀態
     const [showPasswordForm, setShowPasswordForm] = useState(false)
+
+    // QR Code 彈窗狀態
+    const [showQR, setShowQR] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
@@ -271,6 +280,18 @@ export default function SettingsModal() {
                                     </button>
                                 ))}
                             </nav>
+
+                            {/* QR Code 按鈕 — 側邊欄底部 */}
+                            <div className="p-4 border-t border-gray-100 dark:border-white/5">
+                                <button
+                                    onClick={() => setShowQR(true)}
+                                    title="掃描 QR Code 在手機上開啟"
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-800 dark:hover:text-gray-200 transition-all font-medium"
+                                >
+                                    <QrCodeIcon />
+                                    <span className="text-sm">行動裝置掃描</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* 內容區域 */}
@@ -638,6 +659,47 @@ export default function SettingsModal() {
                             </button>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* QR Code 彈窗 */}
+            <AnimatePresence>
+                {showQR && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
+                        onClick={() => setShowQR(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-white dark:bg-ios-dark-gray5 p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-gray-100 dark:border-white/10"
+                        >
+                            {/* QR Code 圖片 */}
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(window.location.origin)}`}
+                                alt="Mobile Access QR Code"
+                                className="w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] rounded-[16px]"
+                            />
+                            <div className="text-center">
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">行動裝置掃描</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">掃描 QR Code 在手機上開啟 Corphia AI</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 font-mono">{window.location.origin}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowQR(false)}
+                                className="mt-1 px-8 py-2.5 bg-ios-blue-light dark:bg-ios-blue-dark text-white font-semibold rounded-full text-[15px] hover:bg-opacity-90 transition-all"
+                            >
+                                關閉
+                            </button>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </>
