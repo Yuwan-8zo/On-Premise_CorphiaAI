@@ -144,6 +144,67 @@ def get_password_strength_score(password: str) -> dict:
 LOGIN_MAX_ATTEMPTS = 5          # 最大嘗試次數
 LOGIN_LOCKOUT_MINUTES = 15      # 鎖定時間（分鐘）
 
+import time
+from threading import Lock
+
+_mock_lock = Lock()
+_mock_failures: dict[str, dict] = {}
+
+def _handle_mock_check(email: str) -> dict:
+    with _mock_lock:
+        now = time.time()
+        record = _mock_failures.get(email)
+        if not record:
+            return {
+                "is_locked": False,
+                "remaining_attempts": LOGIN_MAX_ATTEMPTS,
+                "lockout_until": None,
+                "minutes_remaining": 0,
+            }
+        
+        if record["locked_until"] > now:
+            remaining = int((record["locked_until"] - now) / 60) + 1
+            return {
+                "is_locked": True,
+                "remaining_attempts": 0,
+                "lockout_until": datetime.fromtimestamp(record["locked_until"], tz=timezone.utc),
+                "minutes_remaining": remaining,
+            }
+        else:
+            if record["locked_until"] != 0:
+                record["attempts"] = 0
+                record["locked_until"] = 0
+            
+        remaining_attempts = max(LOGIN_MAX_ATTEMPTS - record["attempts"], 0)
+        return {
+            "is_locked": False,
+            "remaining_attempts": remaining_attempts,
+            "lockout_until": None,
+            "minutes_remaining": 0,
+        }
+
+def _handle_mock_failure(email: str) -> dict:
+    with _mock_lock:
+        now = time.time()
+        if email not in _mock_failures:
+            _mock_failures[email] = {"attempts": 0, "locked_until": 0}
+        record = _mock_failures[email]
+        
+        record["attempts"] += 1
+        if record["attempts"] >= LOGIN_MAX_ATTEMPTS:
+            record["locked_until"] = now + LOGIN_LOCKOUT_MINUTES * 60
+            return {
+                "is_locked": True,
+                "remaining_attempts": 0,
+                "lockout_minutes": LOGIN_LOCKOUT_MINUTES,
+            }
+            
+        remaining = max(LOGIN_MAX_ATTEMPTS - record["attempts"], 0)
+        return {
+            "is_locked": False,
+            "remaining_attempts": remaining,
+            "lockout_minutes": 0,
+        }
 
 async def check_login_lockout(
     db: AsyncSession,
@@ -170,13 +231,8 @@ async def check_login_lockout(
     user = result.scalar_one_or_none()
 
     if user is None:
-        # 使用者不存在，不揭露此資訊，回傳未鎖定
-        return {
-            "is_locked": False,
-            "remaining_attempts": LOGIN_MAX_ATTEMPTS,
-            "lockout_until": None,
-            "minutes_remaining": 0,
-        }
+        # 使用者不存在，套用模擬鎖定機制防範列舉攻擊
+        return _handle_mock_check(email)
 
     # 檢查是否已被鎖定
     if user.locked_until:
@@ -234,11 +290,8 @@ async def record_login_failure(
     user = result.scalar_one_or_none()
 
     if user is None:
-        return {
-            "is_locked": False,
-            "remaining_attempts": LOGIN_MAX_ATTEMPTS - 1,
-            "lockout_minutes": 0,
-        }
+        # 使用者不存在，套用模擬失敗機制防範列舉攻擊
+        return _handle_mock_failure(email)
 
     user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
 
@@ -259,7 +312,7 @@ async def record_login_failure(
         }
 
     await db.commit()
-    remaining = LOGIN_MAX_ATTEMPTS - user.failed_login_attempts
+    remaining = max(LOGIN_MAX_ATTEMPTS - user.failed_login_attempts, 0)
     return {
         "is_locked": False,
         "remaining_attempts": remaining,
