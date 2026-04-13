@@ -106,6 +106,9 @@ export default function SettingsModal() {
     const [editName, setEditName] = useState(user?.name || '')
     const [isUpdatingName, setIsUpdatingName] = useState(false)
 
+    // Mobile view state: 'menu' or 'content'
+    const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu')
+
     const menuItems = [
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
         { id: 'appearance' as const, icon: <PaletteIcon />, label: t('settings.theme') },
@@ -288,7 +291,7 @@ export default function SettingsModal() {
                         </button>
 
                         {/* 側邊選單 */}
-                        <div className="md:w-64 bg-gray-50/50 dark:bg-ios-dark-gray6/30 border-r border-gray-200/50 dark:border-white/5 flex-shrink-0 flex flex-col">
+                        <div className={`md:w-64 bg-gray-50/50 dark:bg-ios-dark-gray6/30 border-r border-gray-200/50 dark:border-white/5 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-wide">
                                     {t('settings.title')}
@@ -298,7 +301,10 @@ export default function SettingsModal() {
                                 {menuItems.map(item => (
                                     <button
                                         key={item.id}
-                                        onClick={() => setActiveSection(item.id)}
+                                        onClick={() => {
+                                            setActiveSection(item.id)
+                                            setMobileView('content')
+                                        }}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
                                                 ? 'bg-white dark:bg-ios-dark-gray4 text-ios-blue-light dark:text-ios-blue-light shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
@@ -324,7 +330,17 @@ export default function SettingsModal() {
                         </div>
 
                         {/* 內容區域 */}
-                        <div className="flex-1 overflow-y-auto min-h-0 bg-transparent p-6 md:p-10 relative">
+                        <div className={`flex-1 overflow-y-auto min-h-0 bg-transparent p-6 md:p-10 relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                            {/* 行動版返回按鈕 */}
+                            <button 
+                                className="md:hidden mb-6 flex items-center text-ios-blue-light font-medium hover:opacity-80 transition-opacity"
+                                onClick={() => setMobileView('menu')}
+                            >
+                                <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                {t('common.cancel', '返回')}
+                            </button>
                             {/* 個人資料 */}
                             {activeSection === 'profile' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
@@ -731,7 +747,7 @@ export default function SettingsModal() {
                             <img
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(window.location.origin)}`}
                                 alt="Mobile Access QR Code"
-                                className="w-[380px] h-[380px] rounded-[16px]"
+                                className="w-full max-w-[380px] aspect-square object-contain mx-auto rounded-[16px]"
                             />
                         </motion.div>
                     </motion.div>

@@ -617,24 +617,24 @@ export default function Chat() {
                 className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
                     } overflow-hidden bg-ios-light-gray6 dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-40 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-none`}
             >
-                {/* 桌面版專屬：側邊欄頂部 Header (Logo + 收合按鈕) */}
-                <div className="hidden md:flex items-center justify-between w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300">
-                    <div className={`flex items-center px-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2' : 'w-0 opacity-0 mr-0'}`}>
-                        <CorphiaLogo className="w-8 h-8 shrink-0 rounded-full overflow-hidden" />
+                {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
+                <div className="flex items-center justify-between w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300">
+                    <div className={`flex items-center px-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0'}`}>
+                        <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden" />
                     </div>
                     <button
                         onClick={toggleSidebar}
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                        className={`rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 flex items-center justify-center ${
+                        className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 items-center justify-center ${
                             (!sidebarOpen && !isSidebarHovered) ? 'w-8 h-8 p-0' : 'w-[36px] h-[36px] p-2'
                         }`}
                     >
                         {sidebarOpen || isSidebarHovered ? (
                             <SidebarIcon className="w-[18px] h-[18px]" />
                         ) : (
-                            <CorphiaLogo className="w-8 h-8 rounded-full" />
+                            <CorphiaLogo className="w-8 h-8 rounded-[7px]" />
                         )}
                     </button>
                 </div>
@@ -944,7 +944,7 @@ export default function Chat() {
                         
                         {/* 左側：Corphia Logo 與文字 */}
                         <h1 className={`text-[20px] font-bold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                            <span className="md:hidden flex items-center">
+                            <span className="hidden md:flex items-center">
                                 <CorphiaLogo className="w-7 h-7 rounded-[7px] overflow-hidden" />
                             </span>
                             Corphia
@@ -963,9 +963,15 @@ export default function Chat() {
                                     {isModelLoading ? (
                                         <>
                                             <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                                            正在處理模型...
+                                            <span className="hidden md:inline">正在處理模型...</span>
+                                            <span className="md:hidden">載入中...</span>
                                         </>
-                                    ) : selectedModel ? selectedModel.name : 'Loading Models...'}
+                                    ) : selectedModel ? (
+                                        <>
+                                            <span className="md:hidden truncate max-w-[120px]">{selectedModel.name.split('.')[0]}</span>
+                                            <span className="hidden md:inline">{selectedModel.name}</span>
+                                        </>
+                                    ) : 'Loading Models...'}
                                 </span>
                                 <svg className={`w-4 h-4 text-gray-400 opacity-80 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
@@ -1070,20 +1076,37 @@ export default function Chat() {
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
                                             className="absolute right-0 top-full mt-2 w-[220px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
                                         >
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                                            <button 
+                                                onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}
+                                                className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                                 <span className="font-medium text-[15px]">分享</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
+                                            <button 
+                                                onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleRenameConversation(currentConversation.id) }}
+                                                className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                            >
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                                 <span className="font-medium text-[15px]">重新命名</span>
                                             </button>
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10">
+                                            <button 
+                                                onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleMoveToProject(currentConversation.id) }}
+                                                className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                            >
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                                 <span className="font-medium text-[15px]">移至專案</span>
                                             </button>
                                             <div className="my-1 border-t border-ios-light-gray5 dark:border-white/5" />
-                                            <button className="w-full text-left px-3 py-2.5 rounded-full flex items-center gap-3 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 active:bg-red-100 dark:active:bg-red-500/20">
+                                            <button 
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); setHeaderMenuOpen(false); 
+                                                    if(currentConversation) {
+                                                        showConfirm('確定要刪除這筆對話紀錄嗎？', () => handleDeleteConversation(currentConversation.id))
+                                                    } 
+                                                }}
+                                                className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 active:bg-red-100 dark:active:bg-red-500/20"
+                                            >
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                 <span className="font-medium text-[15px]">刪除</span>
                                             </button>
