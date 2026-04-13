@@ -9,16 +9,9 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { getModels, refreshModels, selectModel, ModelItem } from '../api/models'
 import { apiClient } from '../api/client'
-import {
-    getAuditLogs,
-    exportAuditLogsCSV,
-    exportAuditLogsJSON,
-    ACTION_LABELS,
-    RESOURCE_LABELS,
-    AuditLogItem,
-    AuditLogQuery,
-} from '../api/auditLogs'
+import { getAuditLogs, exportAuditLogsCSV, exportAuditLogsJSON, ACTION_LABELS, RESOURCE_LABELS, AuditLogItem, AuditLogQuery } from '../api/auditLogs'
 import { tenantsApi, Tenant } from '../api/tenants'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Types
 interface UserData {
@@ -105,6 +98,10 @@ export default function Admin() {
     // 租戶 state
     const [tenants, setTenants] = useState<Tenant[]>([])
     const [isLoadingTenants, setIsLoadingTenants] = useState(false)
+    const [isTenantModalOpen, setIsTenantModalOpen] = useState(false)
+    const [currentEditingTenant, setCurrentEditingTenant] = useState<Tenant | null>(null)
+    const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', description: '', is_active: true })
+    const [isSubmittingTenant, setIsSubmittingTenant] = useState(false)
 
     // 檢查權限
     useEffect(() => {
@@ -137,6 +134,65 @@ export default function Admin() {
             setIsLoadingTenants(false)
         }
     }, [])
+
+    // 租戶操作 Handlers
+    const handleAddTenant = () => {
+        setCurrentEditingTenant(null)
+        setTenantFormData({ name: '', slug: '', description: '', is_active: true })
+        setIsTenantModalOpen(true)
+    }
+
+    const handleEditTenant = (tenant: Tenant) => {
+        setCurrentEditingTenant(tenant)
+        setTenantFormData({
+            name: tenant.name,
+            slug: tenant.slug,
+            description: tenant.description || '',
+            is_active: tenant.is_active
+        })
+        setIsTenantModalOpen(true)
+    }
+
+    const handleTenantSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsSubmittingTenant(true)
+        try {
+            if (currentEditingTenant) {
+                await tenantsApi.updateTenant(currentEditingTenant.id, tenantFormData)
+            } else {
+                await tenantsApi.createTenant(tenantFormData)
+            }
+            setIsTenantModalOpen(false)
+            loadTenants()
+        } catch (err: any) {
+            console.error('儲存租戶失敗:', err)
+            // 從後端錯誤訊息抓取詳細原因
+            const errorDetail = err.response?.data?.detail || err.message
+            alert(`儲存失敗: ${errorDetail}`)
+        } finally {
+            setIsSubmittingTenant(false)
+        }
+    }
+
+    const handleToggleTenantStatus = async (tenant: Tenant) => {
+        if (!window.confirm(`確定要${tenant.is_active ? '停用' : '啟用'}租戶「${tenant.name}」嗎？\n(停用後該租戶的使用者將無法登入)`)) {
+            return
+        }
+        try {
+            if (tenant.is_active) {
+                // 停用 (軟刪除)
+                await tenantsApi.deleteTenant(tenant.id)
+            } else {
+                // 重新啟用
+                await tenantsApi.updateTenant(tenant.id, { is_active: true })
+            }
+            loadTenants()
+        } catch (err: any) {
+            console.error('切換狀態失敗:', err)
+            const errorDetail = err.response?.data?.detail || err.message
+            alert(`切換狀態失敗: ${errorDetail}`)
+        }
+    }
 
     // 載入使用者列表
     const loadUsers = useCallback(async () => {
@@ -907,7 +963,9 @@ export default function Admin() {
                             <h2 className="font-semibold text-gray-900 dark:text-white">
                                 租戶列表 ({tenants.length})
                             </h2>
-                            <button className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
+                            <button 
+                                onClick={handleAddTenant}
+                                className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
                                 + 新增租戶
                             </button>
                         </div>
@@ -946,7 +1004,19 @@ export default function Admin() {
                                             </td>
                                             <td className="px-8 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                    <button 
+                                                        onClick={() => handleToggleTenantStatus(t)}
+                                                        className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
+                                                            t.is_active 
+                                                                ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'
+                                                                : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10'
+                                                        }`}
+                                                    >
+                                                        {t.is_active ? '停用' : '啟用'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleEditTenant(t)}
+                                                        className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
                                                         編輯
                                                     </button>
                                                 </div>
@@ -957,8 +1027,109 @@ export default function Admin() {
                             </table>
                         )}
                     </div>
-                )}
-            </div>
-        </div>
+        {/* 租戶表單 Modal */}
+        <AnimatePresence>
+            {isTenantModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
+                        onClick={() => setIsTenantModalOpen(false)}
+                    />
+                    <motion.div 
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
+                    >
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                            {currentEditingTenant ? '編輯租戶' : '新增租戶'}
+                        </h3>
+                        
+                        <form onSubmit={handleTenantSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">租戶名稱 <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={tenantFormData.name}
+                                    onChange={e => setTenantFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="例如：Acme Corp"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">存取識別碼 (Slug) <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={tenantFormData.slug}
+                                    onChange={e => setTenantFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                                    placeholder="例如：acme-corp"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow font-mono text-sm"
+                                />
+                                <p className="mt-1 text-[12px] text-gray-500">僅限小寫英數字與連字號，將作為登入網址區隔使用。</p>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">描述 (選填)</label>
+                                <textarea
+                                    value={tenantFormData.description}
+                                    onChange={e => setTenantFormData(prev => ({ ...prev, description: e.target.value }))}
+                                    rows={3}
+                                    placeholder="簡短描述這個租戶的用途..."
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow resize-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">是否啟用</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setTenantFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                        tenantFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-white/20'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                            tenantFormData.is_active ? 'translate-x-5' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="flex gap-3 pt-6 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTenantModalOpen(false)}
+                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingTenant || !tenantFormData.name || !tenantFormData.slug}
+                                    className="flex-1 px-4 py-2.5 text-white font-medium bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors shadow-sm shadow-ios-blue-light/20 flex items-center justify-center"
+                                >
+                                    {isSubmittingTenant ? (
+                                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : (
+                                        currentEditingTenant ? '儲存變更' : '建立租戶'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+
     )
 }
