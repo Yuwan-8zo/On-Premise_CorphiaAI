@@ -40,13 +40,11 @@ export default function AboutSection() {
                 {/* 背景光暈 */}
                 <div className="absolute inset-0 bg-ios-blue-light/30 dark:bg-ios-blue-light/20 blur-2xl rounded-full scale-150" />
                 
-                <motion.div
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                <div
                     className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] bg-gradient-to-tr from-ios-blue-dark via-ios-blue-light to-blue-400 shadow-xl shadow-ios-blue-light/30 border border-white/20"
                 >
                     <RobotIcon />
-                </motion.div>
+                </div>
             </motion.div>
 
             {/* 系統標題 */}
