@@ -37,11 +37,8 @@ export default function AboutSection() {
                 variants={itemVariants}
                 className="relative mb-6"
             >
-                {/* 背景光暈 */}
-                <div className="absolute inset-0 bg-ios-blue-light/30 dark:bg-ios-blue-light/20 blur-2xl rounded-full scale-150" />
-                
                 <div
-                    className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] bg-gradient-to-tr from-ios-blue-dark via-ios-blue-light to-blue-400 shadow-xl shadow-ios-blue-light/30 border border-white/20"
+                    className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] bg-gradient-to-tr from-ios-blue-dark via-ios-blue-light to-blue-400 border border-white/20"
                 >
                     <RobotIcon />
                 </div>
