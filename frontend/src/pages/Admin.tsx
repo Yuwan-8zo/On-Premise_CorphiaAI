@@ -18,6 +18,7 @@ import {
     AuditLogItem,
     AuditLogQuery,
 } from '../api/auditLogs'
+import { tenantsApi, Tenant } from '../api/tenants'
 
 // Types
 interface UserData {
@@ -68,7 +69,7 @@ const MessageIcon = () => (
     </svg>
 )
 
-type AdminSection = 'overview' | 'users' | 'models' | 'system' | 'audit'
+type AdminSection = 'overview' | 'users' | 'models' | 'system' | 'audit' | 'tenants'
 
 export default function Admin() {
     const { t } = useTranslation()
@@ -101,6 +102,10 @@ export default function Admin() {
     })
     const [auditSearchInput, setAuditSearchInput] = useState('')
 
+    // 租戶 state
+    const [tenants, setTenants] = useState<Tenant[]>([])
+    const [isLoadingTenants, setIsLoadingTenants] = useState(false)
+
     // 檢查權限
     useEffect(() => {
         if (user?.role !== 'admin' && user?.role !== 'engineer') {
@@ -117,6 +122,19 @@ export default function Admin() {
             }
         } catch (err) {
             console.error('載入統計失敗:', err)
+        }
+    }, [])
+
+    // 載入租戶列表
+    const loadTenants = useCallback(async () => {
+        setIsLoadingTenants(true)
+        try {
+            const data = await tenantsApi.listTenants({ page_size: 100 })
+            setTenants(data.data)
+        } catch (err) {
+            console.error('載入租戶失敗:', err)
+        } finally {
+            setIsLoadingTenants(false)
         }
     }, [])
 
@@ -224,6 +242,13 @@ export default function Admin() {
             loadAuditLogs()
         }
     }, [activeSection, loadAuditLogs])
+
+    // 切換到租戶分頁時載入
+    useEffect(() => {
+        if (activeSection === 'tenants') {
+            loadTenants()
+        }
+    }, [activeSection, loadTenants])
 
     // 審計日誌篩選
     const handleAuditSearch = () => {
@@ -344,7 +369,7 @@ export default function Admin() {
             <div className="max-w-6xl mx-auto p-8 pt-10">
                 {/* 分頁標籤 */}
                 <div className="flex gap-3 mb-8 flex-wrap">
-                    {(['overview', 'users', 'models', 'audit', 'system'] as AdminSection[]).map((section) => (
+                    {(['overview', 'users', 'models', 'audit', 'system', 'tenants'] as AdminSection[]).map((section) => (
                         <button
                             key={section}
                             onClick={() => setActiveSection(section)}
@@ -358,6 +383,7 @@ export default function Admin() {
                             {section === 'models' && '模型'}
                             {section === 'audit' && '📝 審計日誌'}
                             {section === 'system' && '系統'}
+                            {section === 'tenants' && '🏢 租戶管理'}
                         </button>
                     ))}
                 </div>
@@ -871,6 +897,65 @@ export default function Admin() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* 租戶管理 */}
+                {activeSection === 'tenants' && (
+                    <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                        <div className="px-8 py-5 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
+                            <h2 className="font-semibold text-gray-900 dark:text-white">
+                                租戶列表 ({tenants.length})
+                            </h2>
+                            <button className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
+                                + 新增租戶
+                            </button>
+                        </div>
+
+                        {isLoadingTenants ? (
+                            <div className="p-10 text-center text-gray-500 dark:text-gray-400">載入中...</div>
+                        ) : tenants.length === 0 ? (
+                            <div className="text-center py-10 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20 m-6">
+                                <p className="text-gray-600 dark:text-gray-300 font-medium">暫無租戶</p>
+                            </div>
+                        ) : (
+                            <table className="w-full">
+                                <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                    <tr>
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">名稱 / Slug</th>
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">狀態</th>
+                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">描述</th>
+                                        <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                    {tenants.map(t => (
+                                        <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                            <td className="px-8 py-4">
+                                                <p className="font-medium text-gray-900 dark:text-white mb-0.5">{t.name}</p>
+                                                <p className="text-[13px] text-gray-500 font-mono bg-black/5 dark:bg-white/5 inline-block px-1.5 py-0.5 rounded">{t.slug}</p>
+                                            </td>
+                                            <td className="px-8 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.is_active ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                    <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                    {t.is_active ? '啟用' : '停用'}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400 max-w-[200px] truncate">
+                                                {t.description || '-'}
+                                            </td>
+                                            <td className="px-8 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                        編輯
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 )}
             </div>
