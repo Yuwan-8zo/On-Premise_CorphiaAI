@@ -45,7 +45,8 @@ class User(Base):
     tenant_id: Mapped[Optional[str]] = mapped_column(
         String(36),
         ForeignKey("tenants.id", ondelete="CASCADE"),
-        nullable=True
+        nullable=True,
+        index=True
     )
     
     # 認證資訊
@@ -83,7 +84,8 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=func.now(),
-        nullable=False
+        nullable=False,
+        index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

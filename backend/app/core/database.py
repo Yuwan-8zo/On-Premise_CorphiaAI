@@ -14,6 +14,9 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     future=True,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True,
 )
 
 # 建立非同步 Session 工廠

@@ -10,6 +10,24 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['react', 'react-dom'],
+                    router: ['react-router-dom'],
+                    state: ['zustand'],
+                    motion: ['framer-motion'],
+                    markdown: ['react-markdown', 'remark-gfm', 'react-syntax-highlighter']
+                }
+            }
+        },
+        minify: 'esbuild',
+        target: 'esnext'
+    },
+    esbuild: {
+        drop: ['console', 'debugger']
+    },
     server: {
         port: 5173,
         allowedHosts: [

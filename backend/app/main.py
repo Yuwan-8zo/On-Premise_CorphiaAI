@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """應用程式生命週期管理"""
     # 啟動時執行
-    logger.info(f"🚀 啟動 {settings.app_name} v2.2.0")
+    logger.info(f"🚀 啟動 {settings.app_name} v2.3.0")
     await init_db()
     logger.info("✅ 資料庫初始化完成")
     
@@ -82,7 +83,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description="企業級私有部署 AI 問答系統",
-    version="2.2.0",
+    version="2.3.0",
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan,
@@ -111,6 +112,9 @@ app.add_middleware(
         "Retry-After",
     ],
 )
+
+# 傳輸壓縮中間件
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # 速率限制中間件
 from app.core.rate_limiter import RateLimitMiddleware
@@ -181,7 +185,7 @@ async def root():
     """API 根路徑"""
     return {
         "name": settings.app_name,
-        "version": "2.2.0",
+        "version": "2.3.0",
         "docs": "/docs" if settings.debug else None,
         "status": "running"
     }

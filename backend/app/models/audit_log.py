@@ -25,16 +25,16 @@ class AuditLog(Base):
     )
     
     # 操作者
-    user_id: Mapped[str] = mapped_column(String(36), nullable=True)
-    user_email: Mapped[str] = mapped_column(String(255), nullable=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=True, index=True)
+    user_email: Mapped[str] = mapped_column(String(255), nullable=True, index=True)
     
     # 租戶
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=True, index=True)
     
     # 操作資訊
-    action: Mapped[str] = mapped_column(String(50), nullable=False)
-    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    resource_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    resource_id: Mapped[str] = mapped_column(String(36), nullable=True, index=True)
     
     # 詳細資訊
     description: Mapped[str] = mapped_column(Text, nullable=True)
@@ -48,7 +48,8 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=func.now(),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     def __repr__(self) -> str:

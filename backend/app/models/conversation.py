@@ -35,17 +35,20 @@ class Conversation(Base):
     tenant_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("tenants.id", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     user_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     folder_id: Mapped[Optional[str]] = mapped_column(
         String(36),
         ForeignKey("folders.id", ondelete="SET NULL"),
-        nullable=True
+        nullable=True,
+        index=True
     )
     
     # 對話資訊
@@ -67,13 +70,15 @@ class Conversation(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=func.now(),
-        nullable=False
+        nullable=False,
+        index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     # 關聯

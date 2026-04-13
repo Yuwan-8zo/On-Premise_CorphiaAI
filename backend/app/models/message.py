@@ -40,7 +40,8 @@ class Message(Base):
     conversation_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("conversations.id", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     # 訊息內容
@@ -63,7 +64,8 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=func.now(),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     # 關聯
