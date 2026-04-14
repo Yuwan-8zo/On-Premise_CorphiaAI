@@ -218,9 +218,6 @@ export default function SettingsModal() {
         { id: 'language' as const, icon: <GlobeIcon />, label: t('settings.language') },
         { id: 'guide' as const, icon: <BookIcon />, label: t('settings.guide') },
         { id: 'about' as const, icon: <InfoIcon />, label: t('settings.about') },
-        ...(user?.role === 'admin' || user?.role === 'engineer'
-            ? [{ id: 'tenants' as const, icon: <TenantIcon />, label: '租戶管理' }]
-            : []),
     ]
 
     const languages = [
