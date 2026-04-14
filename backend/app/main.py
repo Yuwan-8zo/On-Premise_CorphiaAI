@@ -153,12 +153,15 @@ async def global_exception_handler(request: Request, exc: Exception):
     """全域例外處理"""
     logger.error(f"未處理的例外: {exc}", exc_info=True)
     
+    with open("crash.log", "w", encoding="utf-8") as f:
+        import traceback
+        f.write(traceback.format_exc())
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": {
                 "code": "INTERNAL_ERROR",
-                "message": "伺服器內部錯誤",
+                "message": f"伺服器內部錯誤: {str(exc)}",
                 "details": []
             }
         }

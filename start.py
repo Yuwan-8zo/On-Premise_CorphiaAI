@@ -84,7 +84,7 @@ def kill_port(port: int):
                 if len(parts) > 4:
                     pid = parts[-1]
                     if pid != "0":
-                        subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
+                        subprocess.run(f"taskkill /F /T /PID {pid}", shell=True, capture_output=True)
     except Exception:
         pass
 
