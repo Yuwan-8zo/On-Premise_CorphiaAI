@@ -10,7 +10,6 @@ import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
 import { usersApi } from '../../api/users'
-import { tenantsApi, type Tenant } from '../../api/tenants'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
 
@@ -87,34 +86,7 @@ const QrCodeIcon = () => (
     </svg>
 )
 
-const TenantIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-    </svg>
-)
-
-/** Plus Icon */
-const PlusSmIcon = () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-)
-
-/** Check Icon */
-const CheckIcon = () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-    </svg>
-)
-
-/** X/Close small */
-const XSmIcon = () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-)
-
-type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about' | 'tenants'
+type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
@@ -138,72 +110,6 @@ export default function SettingsModal() {
     const [passwordStrength, setPasswordStrength] = useState<{
         score: number; level: string; errors: string[]; is_valid: boolean
     } | null>(null)
-
-    // 租戶管理 state
-    const [tenants, setTenants] = useState<Tenant[]>([])
-    const [isLoadingTenants, setIsLoadingTenants] = useState(false)
-    const [isTenantModalOpen, setIsTenantModalOpen] = useState(false)
-    const [currentEditingTenant, setCurrentEditingTenant] = useState<Tenant | null>(null)
-    const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', description: '', is_active: true })
-    const [isSubmittingTenant, setIsSubmittingTenant] = useState(false)
-
-    const loadTenants = useCallback(async () => {
-        setIsLoadingTenants(true)
-        try {
-            const data = await tenantsApi.listTenants({ page_size: 100 })
-            setTenants(data.data)
-        } catch (err) {
-            console.error('載入租戶失敗:', err)
-        } finally {
-            setIsLoadingTenants(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (activeSection === 'tenants') loadTenants()
-    }, [activeSection, loadTenants])
-
-    const handleAddTenant = () => {
-        setCurrentEditingTenant(null)
-        setTenantFormData({ name: '', slug: '', description: '', is_active: true })
-        setIsTenantModalOpen(true)
-    }
-    const handleEditTenant = (tenant: Tenant) => {
-        setCurrentEditingTenant(tenant)
-        setTenantFormData({ name: tenant.name, slug: tenant.slug, description: tenant.description || '', is_active: tenant.is_active })
-        setIsTenantModalOpen(true)
-    }
-    const handleTenantSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSubmittingTenant(true)
-        try {
-            if (currentEditingTenant) {
-                await tenantsApi.updateTenant(currentEditingTenant.id, tenantFormData)
-            } else {
-                await tenantsApi.createTenant(tenantFormData)
-            }
-            setIsTenantModalOpen(false)
-            loadTenants()
-        } catch (err: any) {
-            alert(`儲存失敗: ${err.response?.data?.detail || err.message}`)
-        } finally {
-            setIsSubmittingTenant(false)
-        }
-    }
-    const handleToggleTenantStatus = async (tenant: Tenant) => {
-        if (!window.confirm(`確定要${tenant.is_active ? '停用' : '啟用'}「${tenant.name}」嗎？`)) return
-        try {
-            if (tenant.is_active) {
-                await tenantsApi.deleteTenant(tenant.id)
-            } else {
-                await tenantsApi.updateTenant(tenant.id, { is_active: true })
-            }
-            loadTenants()
-        } catch (err: any) {
-            alert(`操作失敗: ${err.response?.data?.detail || err.message}`)
-        }
-    }
-
     // 名稱修改狀態
     const [isEditingName, setIsEditingName] = useState(false)
     const [editName, setEditName] = useState(user?.name || '')
@@ -648,164 +554,13 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
-                            {/* 租戶管理 */}
-                            {activeSection === 'tenants' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
-                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">租戶管理</h2>
-                                        <button
-                                            onClick={handleAddTenant}
-                                            className="flex items-center gap-2 px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[14px] font-semibold rounded-full transition-colors shadow-sm shadow-ios-blue-light/20"
-                                        >
-                                            <PlusSmIcon />
-                                            新增租戶
-                                        </button>
-                                    </div>
-
-                                    {isLoadingTenants ? (
-                                        <div className="py-12 flex items-center justify-center">
-                                            <svg className="animate-spin h-6 w-6 text-ios-blue-light" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                        </div>
-                                    ) : tenants.length === 0 ? (
-                                        <div className="py-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[20px]">
-                                            <TenantIcon />
-                                            <p className="mt-3 text-gray-500 dark:text-gray-400 font-medium">尚無租戶</p>
-                                            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">點擊「新增租戶」建立第一個租戶</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {tenants.map(tenant => (
-                                                <div key={tenant.id} className="flex items-center gap-4 px-5 py-4 bg-gray-50 dark:bg-ios-dark-gray4/50 border border-gray-200 dark:border-white/5 rounded-[16px]">
-                                                    <div className="w-10 h-10 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark shrink-0">
-                                                        <TenantIcon />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate">{tenant.name}</p>
-                                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 font-mono truncate">{tenant.slug}</p>
-                                                    </div>
-                                                    <span className={`px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase rounded-full ${
-                                                        tenant.is_active
-                                                            ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20'
-                                                            : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
-                                                    }`}>
-                                                        {tenant.is_active ? (
-                                                            <span className="flex items-center gap-1"><CheckIcon /><span>啟用</span></span>
-                                                        ) : (
-                                                            <span className="flex items-center gap-1"><XSmIcon /><span>停用</span></span>
-                                                        )}
-                                                    </span>
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        <button
-                                                            onClick={() => handleToggleTenantStatus(tenant)}
-                                                            className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-colors ${
-                                                                tenant.is_active
-                                                                    ? 'text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-500/10'
-                                                                    : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-500/10'
-                                                            }`}
-                                                        >
-                                                            {tenant.is_active ? '停用' : '啟用'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleEditTenant(tenant)}
-                                                            className="px-3 py-1.5 text-[13px] font-medium text-ios-blue-light dark:text-ios-blue-dark hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 rounded-full transition-colors"
-                                                        >
-                                                            編輯
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            )}
                         </div>
                     </motion.div>
                 </div>
             )}
             </AnimatePresence>
 
-            <AnimatePresence>
-                {isTenantModalOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            onClick={() => setIsTenantModalOpen(false)}
-                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                            className="relative w-full max-w-md bg-white dark:bg-ios-dark-gray5 rounded-[28px] shadow-2xl p-7 border border-gray-100 dark:border-white/5"
-                        >
-                            <button onClick={() => setIsTenantModalOpen(false)} className="absolute top-5 right-5 p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors">
-                                <XSmIcon />
-                            </button>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                                {currentEditingTenant ? '編輯租戶' : '新增租戶'}
-                            </h3>
-                            <form onSubmit={handleTenantSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">租戶名稱 <span className="text-red-500">*</span></label>
-                                    <input
-                                        type="text" required
-                                        value={tenantFormData.name}
-                                        onChange={e => setTenantFormData(p => ({ ...p, name: e.target.value }))}
-                                        placeholder="例如：Acme Corp"
-                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">識別碼 (Slug) <span className="text-red-500">*</span></label>
-                                    <input
-                                        type="text" required
-                                        value={tenantFormData.slug}
-                                        onChange={e => setTenantFormData(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-                                        placeholder="例如：acme-corp"
-                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 font-mono text-sm"
-                                    />
-                                    <p className="mt-1 text-[12px] text-gray-500">僅限小寫英數字與連字號</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">描述（選填）</label>
-                                    <textarea
-                                        value={tenantFormData.description}
-                                        onChange={e => setTenantFormData(p => ({ ...p, description: e.target.value }))}
-                                        rows={2} placeholder="簡短描述..."
-                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 resize-none text-sm"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between pt-1">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">是否啟用</label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setTenantFormData(p => ({ ...p, is_active: !p.is_active }))}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${tenantFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-white/20'}`}
-                                    >
-                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${tenantFormData.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
-                                    </button>
-                                </div>
-                                <div className="flex gap-3 pt-4">
-                                    <button type="button" onClick={() => setIsTenantModalOpen(false)} className="flex-1 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors">取消</button>
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmittingTenant || !tenantFormData.name || !tenantFormData.slug}
-                                        className="flex-1 py-2.5 text-white font-semibold bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 rounded-full transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        {isSubmittingTenant ? (
-                                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                                        ) : currentEditingTenant ? '儲存變更' : '建立租戶'}
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+
 
             <AnimatePresence>
                 {showPasswordForm && (
