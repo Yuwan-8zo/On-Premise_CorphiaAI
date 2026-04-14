@@ -332,9 +332,9 @@ export default function SettingsModal() {
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
                                         title="前往管理後台"
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all font-semibold text-sm group"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 transition-all font-medium text-sm group"
                                     >
-                                        <span className="w-5 h-5 flex items-center justify-center text-purple-500 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                                        <span className="w-5 h-5 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
                                             <ShieldIcon />
                                         </span>
                                         <span>管理後台</span>
