@@ -430,7 +430,7 @@ export default function Admin() {
                             key={section}
                             onClick={() => setActiveSection(section)}
                             className={`px-5 py-2.5 rounded-full font-medium transition-colors border ${activeSection === section
-                                ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm'
                                 : 'bg-white dark:bg-ios-dark-gray5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/50 border-gray-200 dark:border-white/5'
                                 }`}
                         >
