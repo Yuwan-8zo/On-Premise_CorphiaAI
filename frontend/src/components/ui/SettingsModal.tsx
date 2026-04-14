@@ -289,7 +289,7 @@ export default function SettingsModal() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="relative w-full max-w-5xl h-full max-h-[750px] bg-white/95 dark:bg-ios-dark-gray5/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-white/95 dark:bg-ios-dark-gray5/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
                     >
                         {/* Close button */}
                         <button
@@ -315,7 +315,7 @@ export default function SettingsModal() {
                                             setMobileView('content')
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
-                                                ? 'bg-white dark:bg-ios-dark-gray4 text-ios-blue-light dark:text-ios-blue-light shadow-sm font-semibold'
+                                                ? 'md:bg-white md:dark:bg-ios-dark-gray4 text-gray-900 dark:text-gray-200 md:text-ios-blue-light md:dark:text-ios-blue-light md:shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
                                             }`}
                                     >
@@ -355,23 +355,24 @@ export default function SettingsModal() {
                         </div>
 
                         {/* 內容區域 */}
-                        <div className={`flex-1 overflow-y-auto min-h-0 bg-transparent p-6 md:p-10 relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
-                            {/* 行動版返回按鈕 */}
-                            <button 
-                                className="md:hidden mb-6 flex items-center text-ios-blue-light font-medium hover:opacity-80 transition-opacity"
-                                onClick={() => setMobileView('menu')}
-                            >
-                                <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                                </svg>
-                                {t('common.cancel', '返回')}
-                            </button>
-                            {/* 個人資料 */}
-                            {activeSection === 'profile' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
-                                        {t('settings.profile')}
-                                    </h2>
+                        <div className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                            <div className="p-6 md:p-10 min-h-full">
+                                {/* 行動版返回按鈕 */}
+                                <button 
+                                    className="md:hidden mb-6 flex items-center text-ios-blue-light font-medium hover:opacity-80 transition-opacity"
+                                    onClick={() => setMobileView('menu')}
+                                >
+                                    <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    {t('common.cancel', '返回')}
+                                </button>
+                                {/* 個人資料 */}
+                                {activeSection === 'profile' && (
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
+                                            {t('settings.profile')}
+                                        </h2>
 
                                     {/* 頭像與資訊 */}
                                     <div className="flex items-center gap-8 mb-10">
@@ -554,6 +555,7 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
+                            </div>
                         </div>
                     </motion.div>
                 </div>

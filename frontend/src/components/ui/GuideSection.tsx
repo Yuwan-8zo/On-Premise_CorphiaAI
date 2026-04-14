@@ -22,7 +22,7 @@ export default function GuideSection() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-6 pr-2 custom-scrollbar overflow-y-auto h-full pb-8"
+            className="space-y-6 pb-8"
         >
             <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{t('guide.title')}</h3>
@@ -43,16 +43,16 @@ export default function GuideSection() {
                 </h4>
                 <div className="bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/5 rounded-[20px] p-4 text-[14px]">
                     <ul className="space-y-4">
-                        <li className="flex gap-3">
-                            <span className="w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">Engineer</span>
+                        <li className="flex flex-col sm:flex-row sm:gap-3 gap-1">
+                            <span className="w-auto sm:w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">Engineer</span>
                             <span className="text-gray-600 dark:text-gray-400">{t('guide.auth.engineer')}</span>
                         </li>
-                        <li className="border-t border-gray-100 dark:border-white/5 pt-3 flex gap-3">
-                            <span className="w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">Admin</span>
+                        <li className="border-t border-gray-100 dark:border-white/5 pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
+                            <span className="w-auto sm:w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">Admin</span>
                             <span className="text-gray-600 dark:text-gray-400">{t('guide.auth.admin')}</span>
                         </li>
-                        <li className="border-t border-gray-100 dark:border-white/5 pt-3 flex gap-3">
-                            <span className="w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">User</span>
+                        <li className="border-t border-gray-100 dark:border-white/5 pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
+                            <span className="w-auto sm:w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">User</span>
                             <span className="text-gray-600 dark:text-gray-400">{t('guide.auth.user')}</span>
                         </li>
                     </ul>
