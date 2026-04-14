@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
@@ -79,7 +80,14 @@ const QrCodeIcon = () => (
     </svg>
 )
 
-/** 租戶管理 Icon */
+/** 盾牌 Icon */
+const ShieldIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+)
+
+
 const TenantIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
@@ -114,6 +122,7 @@ export default function SettingsModal() {
     const { user, clearAuth, updateUser } = useAuthStore()
     const { theme, toggleTheme, isSettingsOpen, setSettingsOpen } = useUIStore()
 
+    const navigate = useNavigate()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
     // 密碼修改狀態
@@ -415,8 +424,19 @@ export default function SettingsModal() {
                                 ))}
                             </nav>
 
-                            {/* QR Code 按鈕 — 側邊欄底部 */}
-                            <div className="p-4 border-t border-gray-100 dark:border-white/5">
+                            {/* 底部按鈕區 */}
+                            <div className="p-4 border-t border-gray-100 dark:border-white/5 space-y-1">
+                                {/* 管理後台入口：僅 admin / engineer 可見 */}
+                                {(user?.role === 'admin' || user?.role === 'engineer') && (
+                                    <button
+                                        onClick={() => { setSettingsOpen(false); navigate('/admin') }}
+                                        title="前往管理後台"
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-300 transition-all font-medium"
+                                    >
+                                        <ShieldIcon />
+                                        <span className="text-sm">管理後台</span>
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowQR(true)}
                                     title="掃描 QR Code 在手機上開啟"

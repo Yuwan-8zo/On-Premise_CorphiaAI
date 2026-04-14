@@ -3,7 +3,6 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
@@ -57,7 +56,6 @@ const DEFAULT_FOLDER = '新資料夾'
 
 export default function Chat() {
     const { t } = useTranslation()
-    const navigate = useNavigate()
     const { user } = useAuthStore()
     const {
         conversations,
@@ -932,27 +930,8 @@ export default function Chat() {
                     )}
                 </div>
 
-                {/* 底部：管理後台入口 + 使用者卡片 */}
-                <div className={`w-full transition-all duration-300 p-3 mt-auto flex flex-col gap-1 ${!sidebarOpen ? 'items-center' : ''}`}>
-                    {/* 管理後台按鈕，僅 admin / engineer 可見 */}
-                    {(user?.role === 'admin' || user?.role === 'engineer') && (
-                        <button
-                            onClick={() => navigate('/admin')}
-                            title="管理後台"
-                            className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
-                        >
-                            <div className="w-[32px] h-[32px] rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-500 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-500/20">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                                </svg>
-                            </div>
-                            {sidebarOpen && (
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-[14px] text-purple-600 dark:text-purple-400 truncate text-left m-0 leading-none">管理後台</p>
-                                </div>
-                            )}
-                        </button>
-                    )}
+                {/* 底部：使用者卡片 */}
+                <div className={`w-full transition-all duration-300 p-3 mt-auto flex flex-col ${!sidebarOpen ? 'items-center' : ''}`}>
                     <button 
                         onClick={() => setSettingsOpen(true)}
                         title="前往設定"
