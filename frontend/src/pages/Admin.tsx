@@ -1027,6 +1027,8 @@ export default function Admin() {
                             </table>
                         )}
                     </div>
+                )}
+
         {/* 租戶表單 Modal */}
         <AnimatePresence>
             {isTenantModalOpen && (
@@ -1130,6 +1132,7 @@ export default function Admin() {
                 </div>
             )}
         </AnimatePresence>
-
+            </div>
+        </div>
     )
 }
