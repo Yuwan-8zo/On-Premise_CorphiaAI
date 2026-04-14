@@ -964,9 +964,6 @@ export default function Chat() {
                         
                         {/* 左側：Corphia Logo 與文字 */}
                         <h1 className={`text-[20px] font-bold text-gray-800 dark:text-gray-200 tracking-wide flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                            <span className="hidden md:flex items-center">
-                                <CorphiaLogo className="w-7 h-7 rounded-[7px] overflow-hidden" />
-                            </span>
                             Corphia
                         </h1>
                     </div>
