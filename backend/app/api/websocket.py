@@ -4,6 +4,7 @@ WebSocket 對話 API
 
 import json
 import logging
+import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query

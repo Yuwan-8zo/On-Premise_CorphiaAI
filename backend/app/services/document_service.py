@@ -157,7 +157,7 @@ class DocumentService:
             # 更新文件狀態
             document.status = DocumentStatus.COMPLETED.value
             document.chunk_count = len(chunks)
-            document.processed_at = datetime.utcnow()
+            document.processed_at = datetime.now().replace(tzinfo=None)
             
             await self.db.commit()
             

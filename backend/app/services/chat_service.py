@@ -392,7 +392,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=Conversation.message_count + 2,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now().replace(tzinfo=None),
             )
         )
         
@@ -517,7 +517,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=Conversation.message_count + 2,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now().replace(tzinfo=None),
             )
         )
         
