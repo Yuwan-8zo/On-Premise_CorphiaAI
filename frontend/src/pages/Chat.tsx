@@ -821,7 +821,7 @@ export default function Chat() {
                                             }`}
                                         >
                                             <span className="truncate pr-2 pl-1">{conv.title}</span>
-                                            <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                            <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                 <button
                                                     onClick={(e) => handleOpenMenu(e, conv.id)}
                                                     className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
@@ -894,7 +894,7 @@ export default function Chat() {
                                                     className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 group ${selectedFolder === folderName ? 'text-ios-blue-light dark:text-ios-blue-dark' : 'text-gray-700 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark'}`}
                                                 >
                                                     <span className="truncate pr-2">{folderName}</span>
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                         {/* + 新增對話到此資料夾 */}
                                                         <button
                                                             onClick={(e) => createConvInFolder(folderName, e)}
@@ -941,7 +941,7 @@ export default function Chat() {
                                                                     style={{ width: 'calc(100% - 4px)' }}
                                                                 >
                                                                     <span className="truncate pr-2 pl-1">{conv.title}</span>
-                                                                    <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                                    <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                         <button
                                                                             onClick={(e) => handleOpenMenu(e, conv.id)}
                                                                             className={`p-1.5 rounded-full hover:bg-gray-200 dark:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
