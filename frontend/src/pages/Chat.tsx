@@ -943,7 +943,7 @@ export default function Chat() {
                         </div>
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate text-left m-0 leading-none">{user?.name || 'Local User'}</p>
+                                <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate text-left m-0 leading-snug">{user?.name || 'Local User'}</p>
                             </div>
                         )}
                     </button>
