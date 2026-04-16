@@ -1165,9 +1165,9 @@ export default function Chat() {
                                             <div className="my-1 border-t border-ios-light-gray5 dark:border-white/5" />
                                             <button 
                                                 onClick={(e) => { 
-                                                    e.stopPropagation(); setHeaderMenuOpen(false); 
+                                                    setHeaderMenuOpen(false); 
                                                     if(currentConversation) {
-                                                        showConfirm(t('common.confirmDelete'), () => handleDeleteConversation(currentConversation.id))
+                                                        handleDeleteConversation(currentConversation.id, e)
                                                     } 
                                                 }}
                                                 className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 active:bg-red-100 dark:active:bg-red-500/20"

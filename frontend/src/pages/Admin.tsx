@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
-import { useUIStore } from '../store/uiStore'
+
 import { getModels, refreshModels, selectModel, ModelItem } from '../api/models'
 import { apiClient } from '../api/client'
 import { getAuditLogs, exportAuditLogsCSV, exportAuditLogsJSON, ACTION_LABELS, RESOURCE_LABELS, AuditLogItem, AuditLogQuery } from '../api/auditLogs'
@@ -68,7 +68,6 @@ export default function Admin() {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuthStore()
-    const { theme, toggleTheme } = useUIStore()
 
     const [activeSection, setActiveSection] = useState<AdminSection>('overview')
     const [users, setUsers] = useState<UserData[]>([])

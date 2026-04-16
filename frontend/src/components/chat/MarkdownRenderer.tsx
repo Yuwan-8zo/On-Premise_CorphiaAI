@@ -7,6 +7,8 @@
 import React, { memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+// @ts-expect-error - no types available
+import remarkMark from 'remark-mark'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
@@ -85,7 +87,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
     return (
         <div className={`markdown-body ${className}`}>
             <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, remarkMark]}
                 components={{
                     // 程式碼區塊
                     code({ className, children, ...props }) {
@@ -128,11 +130,13 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         </h3>
                     ),
 
-                    // 粗體文字 (加上螢光筆視覺效果)
-                    strong: ({ children }) => (
-                        <strong className="font-bold text-gray-900 dark:text-white highlighter-marker">
+
+
+                    // 螢光筆/標記文字 (==文字==)
+                    mark: ({ children }) => (
+                        <mark className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-primary-600 dark:text-primary-400 rounded font-medium">
                             {children}
-                        </strong>
+                        </mark>
                     ),
 
                     // 段落
