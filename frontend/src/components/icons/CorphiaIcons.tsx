@@ -39,3 +39,49 @@ const CorphiaLogoPaths = ({ color = "white" }: { color?: string }) => (
     </>
 );
 
+// 方案 C: 軌跡描繪 (The Neural Drawing)
+export const CorphiaThinkingIcon: React.FC<{ className?: string, color?: string }> = ({ className = 'w-6 h-6', color = "currentColor" }) => (
+    <span className={`inline-flex items-center justify-center ${className}`}>
+        <svg viewBox="5.5 5.5 15 14" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                {`
+                @keyframes draw-c-path {
+                    0% { stroke-dashoffset: 28; opacity: 0; }
+                    10% { stroke-dashoffset: 28; opacity: 1; }
+                    50% { stroke-dashoffset: 0; opacity: 1; }
+                    70% { stroke-dashoffset: 0; opacity: 1; }
+                    100% { stroke-dashoffset: -28; opacity: 0; }
+                }
+                @keyframes pop-spark {
+                    0%, 40% { transform: scale(0); opacity: 0; }
+                    50% { transform: scale(1.2); opacity: 1; }
+                    60%, 75% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(0); opacity: 0; }
+                }
+                .animate-neural-c {
+                    stroke-dasharray: 28;
+                    stroke-dashoffset: 28;
+                    animation: draw-c-path 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                }
+                .animate-neural-spark {
+                    transform-origin: 18px 11px;
+                    animation: pop-spark 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+                }
+                `}
+            </style>
+            
+            {/* 幾何 C 字 - 軌跡描繪 */}
+            <path d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5" 
+                  stroke={color} 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round"
+                  className="animate-neural-c" />
+            
+            {/* AI 星芒 - 尾端點亮 */}
+            <path d="M18 9C18 10 19 11 20 11C19 11 18 12 18 13C18 12 17 11 16 11C17 11 18 10 18 9Z" 
+                  fill={color}
+                  className="animate-neural-spark" />
+        </svg>
+    </span>
+);
+

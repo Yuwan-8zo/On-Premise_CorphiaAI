@@ -4,7 +4,8 @@ uvicorn[standard]>=0.27.0
 
 # Database
 sqlalchemy[asyncio]>=2.0.25
-aiosqlite>=0.19.0
+asyncpg>=0.29.0
+pgvector>=0.2.4
 
 # Authentication
 python-jose[cryptography]>=3.3.0
@@ -17,12 +18,11 @@ pydantic-settings>=2.1.0
 email-validator>=2.1.0
 
 # LLM
-llama-cpp-python>=0.2.50
+llama-cpp-python==0.2.50
 langgraph>=0.0.26
 duckduckgo-search>=5.0.0
 
 # Vector Store
-chromadb>=0.4.22
 sentence-transformers>=2.3.0
 
 # Document Processing

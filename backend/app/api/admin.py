@@ -120,15 +120,15 @@ async def clear_system_cache(
     return {"status": "success", "message": "System cache cleared."}
 
 
-@router.post("/index/rebuild", summary="重建向量索引")
+@router.post("/index/rebuild", summary="最佳化 PostgreSQL 向量索引")
 async def rebuild_vector_index(
     _ = RequireAdmin
 ) -> Dict[str, Any]:
-    """重建 ChromaDB 向量索引 (僅限管理員)"""
+    """最佳化 pgvector 向量索引 (僅限管理員)"""
     # Trigger background indexing job
     return {
         "status": "success", 
-        "message": "Vector index rebuild task triggered automatically in background."
+        "message": "Vector index optimization task triggered automatically in background."
     }
 
 

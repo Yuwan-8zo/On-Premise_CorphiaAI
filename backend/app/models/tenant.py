@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import String, Boolean, DateTime, Text, func
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base

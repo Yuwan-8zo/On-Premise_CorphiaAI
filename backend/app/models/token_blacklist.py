@@ -55,7 +55,7 @@ class TokenBlacklist(Base):
 
     # Token 過期時間（用於自動清理過期的黑名單記錄）
     expires_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=False,
     )
 
@@ -73,7 +73,7 @@ class TokenBlacklist(Base):
 
     # 建立時間
     created_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         default=func.now(),
         nullable=False,
     )

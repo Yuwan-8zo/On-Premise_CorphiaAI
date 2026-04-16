@@ -166,6 +166,7 @@ class ChatService:
                     document_ids.append(doc.id)
                     
         search_results = await self.rag_service.search(
+            db=self.db,
             query=state.get("query", ""),
             tenant_id=state.get("tenant_id"),
             n_results=3,

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import String, DateTime, Text, func
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base

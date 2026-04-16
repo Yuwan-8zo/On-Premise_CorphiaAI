@@ -122,7 +122,7 @@ async def revoke_all_user_tokens(
     user = result.scalar_one_or_none()
 
     if user:
-        user.token_revoked_at = datetime.now(timezone.utc)
+        user.token_revoked_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.commit()
         logger.info(
             f"已撤銷使用者所有 Token: user={user_id}, "

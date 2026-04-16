@@ -9,8 +9,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, DateTime, ForeignKey, Integer, Text, func
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 
@@ -41,8 +42,8 @@ class DocumentChunk(Base):
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
-    # 向量 ID (對應 ChromaDB)
-    vector_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    # 向量資料 (對應 pgvector)
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=True)
     
     # 元資料 (頁碼、位置等)
     chunk_metadata: Mapped[dict] = mapped_column(JSON, default=dict)

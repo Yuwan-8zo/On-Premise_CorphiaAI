@@ -6,7 +6,7 @@ import { memo } from 'react'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import type { Message } from '../../types/chat'
-import { CorphiaLogo } from '../icons/CorphiaIcons'
+import { CorphiaLogo, CorphiaThinkingIcon } from '../icons/CorphiaIcons'
 
 interface MessageBubbleProps {
     message: Message
@@ -45,13 +45,9 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
-                            <div className="flex items-center gap-1 mt-1">
-                                <span className="font-semibold text-gray-500 dark:text-gray-400 text-[14px] mr-0.5">Thinking</span>
-                                <span className="flex items-center gap-1">
-                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '0ms' }} />
-                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '200ms' }} />
-                                    <span className="w-[5px] h-[5px] rounded-full bg-gray-500 dark:bg-gray-400 animate-typing-bounce" style={{ animationDelay: '400ms' }} />
-                                </span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="font-semibold text-gray-500 dark:text-gray-400 text-[14px]">Thinking</span>
+                                <CorphiaThinkingIcon className="w-5 h-5 text-ios-blue-light dark:text-ios-blue-dark" />
                             </div>
                         ) : null}
 

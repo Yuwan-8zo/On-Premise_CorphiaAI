@@ -135,30 +135,24 @@ class DocumentService:
             # 分塊
             chunks = self._chunk_text(content)
             
+            rag_service = get_rag_service()
+            
             # 儲存分塊到資料庫
             for i, chunk_content in enumerate(chunks):
+                # 取得向量
+                embedding = rag_service.get_embedding(chunk_content)
+                
                 chunk = DocumentChunk(
                     document_id=document.id,
                     chunk_index=i,
                     content=chunk_content,
+                    embedding=embedding,
                     chunk_metadata={
                         "filename": document.original_filename,
                         "tenant_id": document.tenant_id,
                     }
                 )
                 self.db.add(chunk)
-            
-            # 新增到向量儲存
-            rag_service = get_rag_service()
-            await rag_service.add_document(
-                doc_id=document.id,
-                chunks=chunks,
-                metadatas=[{
-                    "filename": document.original_filename,
-                    "tenant_id": document.tenant_id,
-                    "chunk_index": i,
-                } for i in range(len(chunks))]
-            )
             
             # 更新文件狀態
             document.status = DocumentStatus.COMPLETED.value
@@ -367,9 +361,7 @@ class DocumentService:
             if file_path.exists():
                 os.remove(file_path)
             
-            # 刪除向量儲存
-            rag_service = get_rag_service()
-            await rag_service.delete_document(document_id)
+            # 由於 DocumentChunk 設定了 CASCADE，刪除 Document 時會一併從資料庫刪除所有向量分塊
             
             # 刪除資料庫記錄
             await self.db.delete(document)

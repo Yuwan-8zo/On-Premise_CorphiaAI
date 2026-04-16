@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     debug: bool = True
     
     # 資料庫
-    database_url: str = "sqlite+aiosqlite:///./corphia.db"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/corphia"
     
     # JWT 認證
     secret_key: str = "your-super-secret-key-change-in-production"
@@ -30,9 +30,6 @@ class Settings(BaseSettings):
     llama_model_path: str = "../ai_model/model.gguf"
     llama_context_size: int = 4096
     llama_n_gpu_layers: int = 0
-    
-    # ChromaDB
-    chroma_persist_directory: str = "./chroma_data"
     
     # 上傳
     upload_directory: str = "./uploads"

@@ -296,9 +296,9 @@ async def record_login_failure(
     user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
 
     if user.failed_login_attempts >= LOGIN_MAX_ATTEMPTS:
-        user.locked_until = datetime.now(timezone.utc) + timedelta(
+        user.locked_until = (datetime.now(timezone.utc) + timedelta(
             minutes=LOGIN_LOCKOUT_MINUTES
-        )
+        )).replace(tzinfo=None)
         await db.commit()
         logger.warning(
             f"帳號已鎖定: {email}, "
