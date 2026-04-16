@@ -13,10 +13,30 @@ interface MessageBubbleProps {
     isStreaming?: boolean
 }
 
-// AI 品牌頭像：使用 Corphia 官方 Logo 圖示
-const AIAvatar = () => (
-    <div className="w-8 h-8 flex-shrink-0">
-        <CorphiaLogo className="w-8 h-8" />
+/**
+ * AI 品牌頭像
+ *
+ * 動態與靜態 icon 疊放在同一個容器中，透過 opacity + transition 做 cross-fade：
+ * - isStreaming=true  → 動態 thinking icon 可見，靜態 logo 隱藏
+ * - isStreaming=false → 靜態 logo 可見，  動態 thinking icon 隱藏
+ */
+const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
+    <div className="relative w-8 h-8 flex-shrink-0">
+        {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
+        <span
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
+            style={{ opacity: isStreaming ? 1 : 0 }}
+        >
+            <CorphiaThinkingIcon className="w-7 h-7 text-ios-blue-light dark:text-ios-blue-dark" />
+        </span>
+
+        {/* 【上層】靜態 Logo — streaming 結束後淡入 */}
+        <span
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
+            style={{ opacity: isStreaming ? 0 : 1 }}
+        >
+            <CorphiaLogo className="w-8 h-8" />
+        </span>
     </div>
 )
 
@@ -33,11 +53,11 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
             ) : (
                 // AI 訊息：無背景框，流暢文字排版，包含頭像，靠左
                 <div className="w-full flex items-start gap-3">
-                    {/* 頭像固定靠左，對齊第一行文字 */}
+                    {/* 頭像固定靠左，動態/靜態 cross-fade */}
                     <div className="mt-1 flex-shrink-0">
-                        <AIAvatar />
+                        <AIAvatar isStreaming={isStreaming && !message.content} />
                     </div>
-                    
+
                     {/* 內容區塊 */}
                     <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
@@ -45,10 +65,8 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="font-semibold text-gray-500 dark:text-gray-400 text-[14px]">Thinking</span>
-                                <CorphiaThinkingIcon className="w-5 h-5 text-ios-blue-light dark:text-ios-blue-dark" />
-                            </div>
+                            // NOTE: 空白佔位，讓動態 icon 撐起高度，避免訊息列高度 = 0
+                            <div className="h-8" />
                         ) : null}
 
                         {/* 來源引用 */}
