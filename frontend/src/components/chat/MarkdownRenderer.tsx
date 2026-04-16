@@ -128,6 +128,13 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         </h3>
                     ),
 
+                    // 粗體文字 (加上螢光筆視覺效果)
+                    strong: ({ children }) => (
+                        <strong className="font-bold text-gray-900 dark:text-white highlighter-marker">
+                            {children}
+                        </strong>
+                    ),
+
                     // 段落
                     p: ({ children }) => (
                         <p className="my-3 leading-relaxed text-slate-700 dark:text-slate-300">
