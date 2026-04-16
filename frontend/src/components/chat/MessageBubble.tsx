@@ -136,7 +136,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4 pt-[3px]">
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-gray-100 dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-white/5 max-w-none [&_.markdown-body>*:first-child]:!mt-0">
                                 <MarkdownRenderer content={message.content} />
