@@ -49,12 +49,14 @@ export const CorphiaThinkingIcon: React.FC<{ className?: string, color?: string 
                   stroke={color} 
                   strokeWidth="2.5" 
                   strokeLinecap="round"
-                  className="animate-neural-c" />
+                  style={{ strokeDasharray: 28 }}
+                  className="animate-draw-c" />
             
             {/* AI 星芒 - 尾端點亮 */}
             <path d="M18 9C18 10 19 11 20 11C19 11 18 12 18 13C18 12 17 11 16 11C17 11 18 10 18 9Z" 
                   fill={color}
-                  className="animate-neural-spark" />
+                  style={{ transformOrigin: '18px 11px' }}
+                  className="animate-pop-spark" />
         </svg>
     </span>
 );

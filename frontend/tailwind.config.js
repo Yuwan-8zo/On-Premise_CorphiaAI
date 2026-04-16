@@ -61,10 +61,25 @@ export default {
                 'typing-bounce': {
                     '0%, 100%': { transform: 'translateY(10%)', opacity: '0.4' },
                     '50%': { transform: 'translateY(-60%)', opacity: '1' },
+                },
+                'draw-c-path': {
+                    '0%': { strokeDashoffset: '28', opacity: '0' },
+                    '10%': { strokeDashoffset: '28', opacity: '1' },
+                    '50%': { strokeDashoffset: '0', opacity: '1' },
+                    '70%': { strokeDashoffset: '0', opacity: '1' },
+                    '100%': { strokeDashoffset: '-28', opacity: '0' },
+                },
+                'pop-spark': {
+                    '0%, 40%': { transform: 'scale(0)', opacity: '0' },
+                    '50%': { transform: 'scale(1.2)', opacity: '1' },
+                    '60%, 75%': { transform: 'scale(1)', opacity: '1' },
+                    '100%': { transform: 'scale(0)', opacity: '0' },
                 }
             },
             animation: {
                 'typing-bounce': 'typing-bounce 1s infinite',
+                'draw-c': 'draw-c-path 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+                'pop-spark': 'pop-spark 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite',
             }
         },
     },
