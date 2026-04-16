@@ -804,7 +804,7 @@ export default function Chat() {
                     ) : (
                         <>
                             <div className="mb-2 pl-2 mt-1">
-                                <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">專案資料夾</span>
+                                <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">{t('chat.projectFolderLabel')}</span>
                             </div>
                             {(() => {
                                 // 使用 savedFolders 作為資料夾清單來源，即使資料夾內沒有對話也保留
@@ -817,7 +817,7 @@ export default function Chat() {
                                 if (allFolders.length === 0) {
                                     return (
                                         <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
-                                            <p className="text-gray-400 text-[13px] py-4 pl-3">尚無專案</p>
+                                            <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noProjects')}</p>
                                         </div>
                                     )
                                 }
@@ -1130,7 +1130,7 @@ export default function Chat() {
                                                 onClick={(e) => { 
                                                     e.stopPropagation(); setHeaderMenuOpen(false); 
                                                     if(currentConversation) {
-                                                        showConfirm('確定要刪除這筆對話紀錄嗎？', () => handleDeleteConversation(currentConversation.id))
+                                                        showConfirm(t('common.confirmDelete'), () => handleDeleteConversation(currentConversation.id))
                                                     } 
                                                 }}
                                                 className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 active:bg-red-100 dark:active:bg-red-500/20"
@@ -1273,7 +1273,7 @@ export default function Chat() {
                                 }}
                                 className="flex items-center gap-2 px-6 py-3 bg-gray-900 border-gray-900 border dark:bg-white text-white dark:text-gray-900 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
                             >
-                                基於此來源開始提問 →
+                                {t('chat.askFromSource')}
                             </button>
                         </div>
                     </div>

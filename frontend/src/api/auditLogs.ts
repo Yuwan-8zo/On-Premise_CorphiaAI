@@ -108,4 +108,5 @@ export const RESOURCE_LABELS: Record<string, string> = {
     conversation: '對話',
     document: '文件',
     model: '模型',
+    system: '系統',
 }
