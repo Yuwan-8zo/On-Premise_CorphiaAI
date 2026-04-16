@@ -10,7 +10,7 @@ from app.core.database import get_db
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message
-from app.schemas.conversation import MessageCreate, MessageResponse
+from app.schemas.conversation import MessageCreate, MessageResponse, MessageUpdate
 from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/messages", tags=["訊息"])
@@ -50,6 +50,39 @@ async def send_message(
         content=request.content,
         use_rag=request.use_rag,
     )
+    
+    return MessageResponse.model_validate(message)
+
+
+@router.put("/{message_id}", response_model=MessageResponse)
+async def update_message(
+    message_id: str,
+    request: MessageUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """
+    修改訊息的內容 (不觸發重新生成)
+    """
+    result = await db.execute(
+        select(Message)
+        .join(Conversation, Message.conversation_id == Conversation.id)
+        .where(
+            Message.id == message_id,
+            Conversation.user_id == current_user.id,
+        )
+    )
+    message = result.scalar_one_or_none()
+    
+    if message is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="訊息不存在"
+        )
+    
+    message.content = request.content
+    await db.commit()
+    await db.refresh(message)
     
     return MessageResponse.model_validate(message)
 

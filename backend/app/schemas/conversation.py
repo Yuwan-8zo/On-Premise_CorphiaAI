@@ -64,6 +64,11 @@ class MessageCreate(BaseModel):
     use_rag: bool = True
 
 
+class MessageUpdate(BaseModel):
+    """更新訊息 Schema"""
+    content: str = Field(..., min_length=1)
+
+
 class MessageResponse(BaseModel):
     """訊息回應 Schema"""
     id: str

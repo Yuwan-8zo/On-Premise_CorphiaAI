@@ -83,6 +83,16 @@ export const conversationsApi = {
         })
         return mapMessage(response.data)
     },
+
+    /**
+     * 更新訊息內容
+     */
+    updateMessageText: async (messageId: string, content: string): Promise<Message> => {
+        const response = await apiClient.put(`/messages/${messageId}`, {
+            content,
+        })
+        return mapMessage(response.data)
+    },
 }
 
 // 轉換函數
