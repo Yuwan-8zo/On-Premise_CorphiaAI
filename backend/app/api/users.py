@@ -154,7 +154,7 @@ async def update_user(
     更新指定使用者資訊（僅 admin 可用）
     """
     # 權限檢查
-    if current_user.role != "admin":
+    if current_user.role not in ["admin", "engineer"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="權限不足"
@@ -212,7 +212,7 @@ async def delete_user(
     刪除使用者（僅 admin 可用）
     """
     # 權限檢查
-    if current_user.role != "admin":
+    if current_user.role not in ["admin", "engineer"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="權限不足"

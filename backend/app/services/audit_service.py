@@ -63,6 +63,7 @@ class AuditResource:
     CONVERSATION = "conversation"
     DOCUMENT = "document"
     MODEL = "model"
+    SYSTEM = "system"
 
 
 async def write_audit_log(

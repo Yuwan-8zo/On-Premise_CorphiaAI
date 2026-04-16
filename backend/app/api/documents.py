@@ -37,7 +37,7 @@ async def list_documents(
     db: DbSession,
     page: int = 1,
     page_size: int = 20,
-    status: Optional[str] = None,
+    doc_status: Optional[str] = None,
 ):
     """取得文件列表"""
     # 建立查詢
@@ -45,8 +45,8 @@ async def list_documents(
         Document.tenant_id == (current_user.tenant_id or "default")
     )
     
-    if status:
-        query = query.where(Document.status == status)
+    if doc_status:
+        query = query.where(Document.status == doc_status)
     
     # 計算總數
     count_query = select(func.count()).select_from(query.subquery())
