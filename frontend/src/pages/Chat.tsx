@@ -73,7 +73,7 @@ export default function Chat() {
         setSourcesToLastMessage,
         deleteConversation
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar, showConfirm, setSettingsOpen, language } = useUIStore()
+    const { sidebarOpen, toggleSidebar, setSidebarOpen, showConfirm, setSettingsOpen, language } = useUIStore()
 
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
@@ -360,6 +360,9 @@ export default function Chat() {
         if (!conversation) return
         setCurrentConversation(conversation)
         setSelectedFolder(null)
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false)
+        }
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
             setMessages(msgs)
@@ -886,6 +889,7 @@ export default function Chat() {
                                                     onClick={() => {
                                                         setSelectedFolder(folderName)
                                                         setCurrentConversation(null) // Reset conversation
+                                                        if (window.innerWidth < 768) setSidebarOpen(false)
                                                     }}
                                                     className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 group ${selectedFolder === folderName ? 'text-ios-blue-light dark:text-ios-blue-dark' : 'text-gray-700 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark'}`}
                                                 >
