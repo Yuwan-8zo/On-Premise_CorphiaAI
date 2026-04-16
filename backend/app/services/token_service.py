@@ -43,7 +43,8 @@ async def add_token_to_blacklist(
     # 如果未提供過期時間，使用 24 小時後
     if expires_at is None:
         from datetime import timedelta
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        # NOTE: 使用 naive datetime，與 DB TIMESTAMP WITHOUT TIME ZONE 欄位一致
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).replace(tzinfo=None)
 
     blacklist_entry = TokenBlacklist(
         jti=jti,

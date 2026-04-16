@@ -192,11 +192,15 @@ class ChatService:
         sources = []
         try:
             # DuckDuckGo 搜尋 (以 thread 非同步執行避免阻塞)
+            # NOTE: 加入 15 秒 timeout 保護，防止搜尋阻塞整個請求
             def _sync_search():
                 with DDGS() as ddgs:
                     return list(ddgs.text(state.get("query"), max_results=3))
             
-            results = await asyncio.to_thread(_sync_search)
+            results = await asyncio.wait_for(
+                asyncio.to_thread(_sync_search),
+                timeout=15.0
+            )
             
             for idx, r in enumerate(results):
                 context += f"【來源 {idx+1}】 {r.get('title')}\n{r.get('body')}\n\n"

@@ -196,7 +196,7 @@ async def websocket_chat(
                 "type": "error",
                 "message": str(e)
             })
-        except:
-            pass
+        except Exception as send_err:
+            logger.warning(f"WebSocket 無法送出錯誤訊息: {send_err}")
     finally:
         manager.disconnect(connection_id)
