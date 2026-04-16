@@ -393,7 +393,7 @@ export default function Admin() {
     return (
         <div className="min-h-screen bg-white dark:bg-ios-dark-gray6 transition-colors duration-300">
             {/* 頂部導覽列 */}
-            <header className="h-[80px] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-8 bg-white dark:bg-ios-dark-gray6 transition-colors">
+            <header className="h-[80px] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-4 md:px-8 bg-white dark:bg-ios-dark-gray6 sticky top-0 z-30 transition-colors">
                 <div className="flex items-center">
                     <button
                         onClick={() => navigate('/')}
@@ -410,36 +410,38 @@ export default function Admin() {
                 </div>
             </header>
 
-            <div className="max-w-6xl mx-auto p-4 pt-6 md:p-8 md:pt-10">
+            <div className="max-w-6xl mx-auto p-4 pt-2 md:p-8 md:pt-4">
                 {/* 分頁標籤 */}
-                <div className="flex gap-2 md:gap-3 mb-6 md:mb-8 flex-nowrap overflow-x-auto pb-2 custom-scrollbar">
-                    {(['overview', 'users', 'models', 'audit', 'system', 'tenants'] as AdminSection[]).map((section) => (
-                        <button
-                            key={section}
-                            onClick={() => setActiveSection(section)}
-                            className={`px-5 py-2.5 rounded-full font-medium transition-colors border ${activeSection === section
-                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm'
-                                : 'bg-white dark:bg-ios-dark-gray5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/50 border-gray-200 dark:border-white/5'
-                                }`}
-                        >
-                            {section === 'overview' && '總覽'}
-                            {section === 'users' && '使用者'}
-                            {section === 'models' && '模型'}
-                            {section === 'audit' && (
-                                <span className="flex items-center gap-1.5">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
-                                    審計日誌
-                                </span>
-                            )}
-                            {section === 'system' && '系統'}
-                            {section === 'tenants' && (
-                                <span className="flex items-center gap-1.5">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
-                                    租戶管理
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                <div className="sticky top-[80px] z-20 backdrop-blur-xl bg-white/90 dark:bg-ios-dark-gray6/90 py-4 -mx-4 px-4 md:-mx-8 md:px-8 mb-6 md:mb-8 border-b border-gray-200/50 dark:border-white/5 transition-colors">
+                    <div className="flex gap-2 md:gap-3 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x">
+                        {(['overview', 'users', 'models', 'audit', 'system', 'tenants'] as AdminSection[]).map((section) => (
+                            <button
+                                key={section}
+                                onClick={() => setActiveSection(section)}
+                                className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap shrink-0 transition-colors border ${activeSection === section
+                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm'
+                                    : 'bg-white dark:bg-ios-dark-gray5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/50 border-gray-200 dark:border-white/5'
+                                    }`}
+                            >
+                                {section === 'overview' && '總覽'}
+                                {section === 'users' && '使用者'}
+                                {section === 'models' && '模型'}
+                                {section === 'audit' && (
+                                    <span className="flex items-center gap-1.5">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
+                                        審計日誌
+                                    </span>
+                                )}
+                                {section === 'system' && '系統'}
+                                {section === 'tenants' && (
+                                    <span className="flex items-center gap-1.5">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                                        租戶管理
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* 總覽 */}
@@ -500,82 +502,129 @@ export default function Admin() {
                         {isLoading ? (
                             <div className="p-10 text-center text-gray-500 dark:text-gray-400">載入中...</div>
                         ) : (
-                            <table className="w-full">
-                                <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
-                                    <tr>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            使用者
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            角色
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            狀態
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            最後登入
-                                        </th>
-                                        <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            操作
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                            <>
+                                {/* 桌面版：傳統表格 */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full whitespace-nowrap">
+                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                            <tr>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    使用者
+                                                </th>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    角色
+                                                </th>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    狀態
+                                                </th>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    最後登入
+                                                </th>
+                                                <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    操作
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                            {users.map((u) => (
+                                                <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                    <td className="px-8 py-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark font-semibold text-sm">
+                                                                {u.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-gray-900 dark:text-white mb-0.5">{u.name}</p>
+                                                                <p className="text-[13px] text-gray-500 dark:text-gray-400">{u.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-4">
+                                                        <RoleBadge role={u.role} />
+                                                    </td>
+                                                    <td className="px-8 py-4">
+                                                        <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'
+                                                            }`}>
+                                                            <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                            {u.isActive ? '啟用' : '停用'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400">
+                                                        {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW') : '-'}
+                                                    </td>
+                                                    <td className="px-8 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                                編輯
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return
+                                                                    try {
+                                                                        await apiClient.post(`/users/${u.id}/force-logout`)
+                                                                        alert(`已成功刪除 ${u.name}`)
+                                                                    } catch {
+                                                                        alert('刪除失敗，請稍後重試')
+                                                                    }
+                                                                }}
+                                                                className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                                title="刪除此使用者"
+                                                            >
+                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                </svg>
+                                                                刪除
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                {/* 手機版：卡片清單 */}
+                                <div className="grid grid-cols-1 gap-4 md:hidden">
                                     {users.map((u) => (
-                                        <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
-                                            <td className="px-8 py-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark font-semibold text-sm">
-                                                        {u.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white mb-0.5">{u.name}</p>
-                                                        <p className="text-[13px] text-gray-500 dark:text-gray-400">{u.email}</p>
-                                                    </div>
+                                        <div key={u.id} className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="w-11 h-11 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark font-semibold text-sm shrink-0">
+                                                    {u.name.charAt(0).toUpperCase()}
                                                 </div>
-                                            </td>
-                                            <td className="px-8 py-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-gray-900 dark:text-white mb-0.5 truncate">{u.name}</p>
+                                                    <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
+                                                </div>
                                                 <RoleBadge role={u.role} />
-                                            </td>
-                                            <td className="px-8 py-4">
-                                                <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'
-                                                    }`}>
-                                                    <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
-                                                    {u.isActive ? '啟用' : '停用'}
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400">
-                                                {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW') : '-'}
-                                            </td>
-                                            <td className="px-8 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
-                                                        編輯
-                                                    </button>
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return
-                                                            try {
-                                                                await apiClient.post(`/users/${u.id}/force-logout`)
-                                                                alert(`已成功刪除 ${u.name}`)
-                                                            } catch {
-                                                                alert('刪除失敗，請稍後重試')
-                                                            }
-                                                        }}
-                                                        className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                                        title="刪除此使用者"
-                                                    >
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                        </svg>
-                                                        刪除
-                                                    </button>
+                                            </div>
+                                            <div className="bg-gray-50/50 dark:bg-ios-dark-gray4/50 rounded-xl p-3 mb-4 flex divide-x divide-gray-200 dark:divide-white/5 text-[13px]">
+                                                <div className="flex-1 px-3 pl-1">
+                                                    <p className="text-gray-500 dark:text-gray-400 mb-1">狀態</p>
+                                                    <span className={`inline-flex items-center gap-1.5 font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                        <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                        {u.isActive ? '啟用' : '停用'}
+                                                    </span>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                                <div className="flex-1 px-3">
+                                                    <p className="text-gray-500 dark:text-gray-400 mb-1">最後登入</p>
+                                                    <p className="text-gray-900 dark:text-gray-200 truncate">
+                                                        {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                                                <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
+                                                <button onClick={async () => {
+                                                    if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return;
+                                                    try { await apiClient.post(`/users/${u.id}/force-logout`); alert(`已成功刪除 ${u.name}`); } catch { alert('刪除失敗，請稍後重試'); }
+                                                }} className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20">
+                                                    刪除
+                                                </button>
+                                            </div>
+                                        </div>
                                     ))}
-                                </tbody>
-                            </table>
+                                </div>
+                            </>
                         )}
                     </div>
                 )}
@@ -584,7 +633,7 @@ export default function Admin() {
                 {activeSection === 'models' && (
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                 <div>
                                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                         <svg className="w-6 h-6 text-ios-blue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -593,13 +642,13 @@ export default function Admin() {
                                         LLM 模型
                                     </h2>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        目錄: <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-ios-dark-gray6 font-mono text-[13px]">{modelsDir}</code>
+                                        目錄: <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-ios-dark-gray6 font-mono text-[13px] break-all">{modelsDir}</code>
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleRefreshModels}
                                     disabled={isLoadingModels}
-                                    className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:hover:bg-ios-blue-light text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20"
+                                    className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:hover:bg-ios-blue-light text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20 shrink-0 whitespace-nowrap self-start md:self-auto"
                                 >
                                     {isLoadingModels ? '掃描中...' : (
                                         <span className="flex items-center gap-1.5">
@@ -633,32 +682,32 @@ export default function Admin() {
                                                 : 'border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/30 hover:border-gray-300 dark:hover:border-white/20'
                                                 }`}
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3">
-                                                        <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                                                        <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white break-words">
                                                             {model.name}
                                                         </h3>
                                                         {model.is_current && (
-                                                            <span className="px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase bg-ios-blue-light text-white rounded-full">
+                                                            <span className="px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase bg-ios-blue-light text-white rounded-full shrink-0 whitespace-nowrap">
                                                                 使用中
                                                             </span>
                                                         )}
                                                         {model.quantization && (
-                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 rounded-full font-mono">
+                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 rounded-full font-mono shrink-0 whitespace-nowrap">
                                                                 {model.quantization}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-4 mt-2 text-[13px] text-gray-500 dark:text-gray-400">
                                                         <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>{model.size_gb} GB</span>
-                                                        <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>{model.filename}</span>
+                                                        <span className="flex items-center gap-1.5 truncate min-w-0" title={model.filename}><svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span className="truncate">{model.filename}</span></span>
                                                     </div>
                                                 </div>
                                                 {!model.is_current && (
                                                     <button
                                                         onClick={() => handleSelectModel(model.name)}
-                                                        className="px-5 py-2 bg-gray-100 dark:bg-ios-dark-gray6 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors"
+                                                        className="px-5 py-2 bg-gray-100 dark:bg-ios-dark-gray6 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors shrink-0 whitespace-nowrap"
                                                     >
                                                         選擇
                                                     </button>
@@ -780,13 +829,37 @@ export default function Admin() {
 
                         {/* 日誌列表 */}
                         <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
-                            <div className="px-8 py-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
-                                <h2 className="font-semibold text-gray-900 dark:text-white">
-                                    審計日誌 ({auditTotal.toLocaleString()} 筆)
+                            <div className="px-6 md:px-8 py-3 md:py-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between gap-4">
+                                <h2 className="font-semibold text-gray-900 dark:text-white text-base md:text-lg flex items-center gap-2">
+                                    審計日誌
+                                    <span className="text-gray-400 dark:text-gray-500 font-normal text-[13px] md:text-sm bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                                        {auditTotal.toLocaleString()}
+                                    </span>
                                 </h2>
-                                <span className="text-[13px] text-gray-500 dark:text-gray-400">
-                                    第 {auditPage} / {auditTotalPages || 1} 頁
-                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[13px] text-gray-500 dark:text-gray-400 hidden sm:inline-block mr-1">
+                                        第 {auditPage} / {auditTotalPages || 1} 頁
+                                    </span>
+                                    <div className="flex items-center p-1 bg-gray-100/80 dark:bg-ios-dark-gray6 rounded-full border border-gray-200/50 dark:border-white/5">
+                                        <button
+                                            onClick={() => handleAuditPageChange(auditPage - 1)}
+                                            disabled={auditPage <= 1}
+                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-ios-blue-light dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
+                                        >
+                                            <svg className="w-4 h-4 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                                        </button>
+                                        <span className="text-[12px] font-medium text-gray-700 dark:text-gray-300 px-1 sm:hidden truncate max-w-[60px] text-center">
+                                            {auditPage} / {auditTotalPages || 1}
+                                        </span>
+                                        <button
+                                            onClick={() => handleAuditPageChange(auditPage + 1)}
+                                            disabled={auditPage >= auditTotalPages}
+                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-ios-blue-light dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
+                                        >
+                                            <svg className="w-4 h-4 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             {isLoadingAudit ? (
@@ -797,28 +870,17 @@ export default function Admin() {
                                     <p className="text-[13px] mt-1">系統操作將自動記錄在此</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[800px]">
+                            <>
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full min-w-[800px] whitespace-nowrap">
                                         <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
                                             <tr>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    時間
-                                                </th>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    操作
-                                                </th>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    資源
-                                                </th>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    操作者
-                                                </th>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    描述
-                                                </th>
-                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    IP
-                                                </th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">時間</th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">資源</th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作者</th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">描述</th>
+                                                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">IP</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-white/5">
@@ -871,6 +933,56 @@ export default function Admin() {
                                         </tbody>
                                     </table>
                                 </div>
+                                
+                                {/* 手機版：卡片清單 */}
+                                <div className="grid grid-cols-1 gap-3 p-4 border-t border-gray-100 dark:border-white/5 md:hidden">
+                                    {auditLogs.map((log) => {
+                                        const isFailure = log.action.includes('failed')
+                                        const isAuth = log.resource_type === 'auth'
+                                        const isDelete = log.action.includes('delete')
+                                        
+                                        return (
+                                            <div key={log.id} className="bg-gray-50/50 dark:bg-ios-dark-gray4/30 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
+                                                <div className="flex items-start justify-between mb-3 gap-2">
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <span className={`inline-flex px-2 py-0.5 text-[11px] font-bold tracking-wide rounded-md w-max ${
+                                                            isFailure
+                                                                ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                                                                : isDelete
+                                                                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400'
+                                                                    : isAuth
+                                                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                                                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300'
+                                                        }`}>
+                                                            {ACTION_LABELS[log.action] || log.action}
+                                                        </span>
+                                                        <span className="text-[12px] text-gray-500 dark:text-gray-400">
+                                                            {new Date(log.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[12px] font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-ios-dark-gray5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10 shrink-0">
+                                                        {RESOURCE_LABELS[log.resource_type] || log.resource_type}
+                                                    </span>
+                                                </div>
+                                                
+                                                <p className="text-[14px] text-gray-800 dark:text-gray-200 mb-3 leading-relaxed break-words">
+                                                    {log.description || '-'}
+                                                </p>
+                                                
+                                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200/50 dark:border-white/5">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                                        <span className="text-[12px] text-gray-600 dark:text-gray-400 truncate">{log.user_email || log.user_id || '系統'}</span>
+                                                    </div>
+                                                    <span className="text-[11px] font-mono text-gray-400 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                                        {log.ip_address || '-'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </>
                             )}
 
                             {/* 分頁控制 */}
@@ -998,54 +1110,87 @@ export default function Admin() {
                                 <p className="text-gray-600 dark:text-gray-300 font-medium">暫無租戶</p>
                             </div>
                         ) : (
-                            <table className="w-full">
-                                <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
-                                    <tr>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">名稱 / Slug</th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">狀態</th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">描述</th>
-                                        <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                            <>
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full whitespace-nowrap">
+                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                            <tr>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">名稱 / Slug</th>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">狀態</th>
+                                                <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">描述</th>
+                                                <th className="px-8 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                            {tenants.map(t => (
+                                                <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                    <td className="px-8 py-4">
+                                                        <p className="font-medium text-gray-900 dark:text-white mb-0.5">{t.name}</p>
+                                                        <p className="text-[13px] text-gray-500 font-mono bg-black/5 dark:bg-white/5 inline-block px-1.5 py-0.5 rounded">{t.slug}</p>
+                                                    </td>
+                                                    <td className="px-8 py-4">
+                                                        <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.is_active ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                            <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                            {t.is_active ? '啟用' : '停用'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400 max-w-[200px] truncate">
+                                                        {t.description || '-'}
+                                                    </td>
+                                                    <td className="px-8 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button 
+                                                                onClick={() => handleToggleTenantStatus(t)}
+                                                                className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
+                                                                    t.is_active 
+                                                                        ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'
+                                                                        : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10'
+                                                                }`}
+                                                            >
+                                                                {t.is_active ? '停用' : '啟用'}
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleEditTenant(t)}
+                                                                className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                                編輯
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                {/* 手機版：卡片清單 */}
+                                <div className="grid grid-cols-1 gap-4 md:hidden">
                                     {tenants.map(t => (
-                                        <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
-                                            <td className="px-8 py-4">
-                                                <p className="font-medium text-gray-900 dark:text-white mb-0.5">{t.name}</p>
-                                                <p className="text-[13px] text-gray-500 font-mono bg-black/5 dark:bg-white/5 inline-block px-1.5 py-0.5 rounded">{t.slug}</p>
-                                            </td>
-                                            <td className="px-8 py-4">
-                                                <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.is_active ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                        <div key={t.id} className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors flex flex-col">
+                                            <div className="flex items-start justify-between gap-3 mb-3">
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <p className="font-semibold text-[16px] text-gray-900 dark:text-white mb-1.5 truncate">{t.name}</p>
+                                                    <p className="text-[13px] text-gray-500 font-mono bg-gray-100 dark:bg-white/10 inline-flex items-center px-2 py-0.5 rounded-md">{t.slug}</p>
+                                                </div>
+                                                <span className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${t.is_active ? 'text-green-600 bg-green-50 border-green-100 dark:bg-green-500/10 dark:border-green-500/20 dark:text-emerald-400' : 'text-gray-500 bg-gray-50 border-gray-200 dark:border-white/5 dark:bg-white/5 dark:text-gray-400'}`}>
                                                     <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
                                                     {t.is_active ? '啟用' : '停用'}
                                                 </span>
-                                            </td>
-                                            <td className="px-8 py-4 text-[13px] text-gray-500 dark:text-gray-400 max-w-[200px] truncate">
-                                                {t.description || '-'}
-                                            </td>
-                                            <td className="px-8 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button 
-                                                        onClick={() => handleToggleTenantStatus(t)}
-                                                        className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
-                                                            t.is_active 
-                                                                ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'
-                                                                : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10'
-                                                        }`}
-                                                    >
-                                                        {t.is_active ? '停用' : '啟用'}
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleEditTenant(t)}
-                                                        className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
-                                                        編輯
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-[14px] text-gray-600 dark:text-gray-400 mb-4 leading-relaxed line-clamp-3">{t.description || '無描述'}</p>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-white/5 mt-auto">
+                                                <button onClick={() => handleToggleTenantStatus(t)} className={`text-[14px] font-medium px-5 py-2 rounded-full transition-colors border ${t.is_active ? 'text-orange-600 border-transparent hover:border-orange-200 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-500/10' : 'text-green-600 border-transparent hover:border-green-200 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-500/10'}`}>
+                                                    {t.is_active ? '停用' : '啟用'}
+                                                </button>
+                                                <button onClick={() => handleEditTenant(t)} className="text-ios-blue-light bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/20 dark:hover:bg-ios-blue-dark/40 transition-colors">
+                                                    編輯
+                                                </button>
+                                            </div>
+                                        </div>
                                     ))}
-                                </tbody>
-                            </table>
+                                </div>
+                            </>
                         )}
                     </div>
                 )}
