@@ -25,7 +25,7 @@ interface MessageBubbleProps {
  * - isStreaming=false → 靜態 logo 可見，  動態 thinking icon 隱藏
  */
 const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
-    <div className="relative w-8 h-8 flex-shrink-0 mt-[4px]">
+    <div className="relative w-8 h-8 flex-shrink-0 mt-[1px]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
