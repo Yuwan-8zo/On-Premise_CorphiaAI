@@ -600,6 +600,39 @@ export default function Chat() {
         }
     }
 
+    const handleResubmit = async (messageId: string, editedContent: string) => {
+        if (isStreaming) return
+
+        // 1. Truncate local message state
+        useChatStore.setState((state) => {
+            const index = state.messages.findIndex(m => m.id === messageId)
+            if (index === -1) return state
+            const newMessages = state.messages.slice(0, index + 1)
+            newMessages[index] = { ...newMessages[index], content: editedContent }
+            
+            // Add temp assistant message
+            const tempAssistantMessage: Message = {
+                id: `temp-${Date.now()}`,
+                role: 'assistant',
+                content: '',
+                tokens: 0,
+                createdAt: new Date().toISOString(),
+            }
+            return { messages: [...newMessages, tempAssistantMessage] }
+        })
+        
+        setStreaming(true)
+
+        // 2. Call backend via WebSocket
+        const shouldUseRag = chatMode === 'project'
+        if (wsRef.current?.isConnected) {
+            wsRef.current.sendResubmit(messageId, editedContent, shouldUseRag, 0.7, language)
+        } else {
+            console.error('WebSocket 未連接，無法使用重新生成功能')
+            setStreaming(false)
+        }
+    }
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
@@ -1320,6 +1353,7 @@ export default function Chat() {
                                         key={message.id}
                                         message={message}
                                         isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+                                        onResubmit={handleResubmit}
                                     />
                                 ))}
                                 <div ref={messagesEndRef} />

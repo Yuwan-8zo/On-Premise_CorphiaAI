@@ -6,8 +6,9 @@ import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
 
 export interface WebSocketMessage {
-    type: 'message' | 'ping' | 'stop'
+    type: 'message' | 'ping' | 'stop' | 'resubmit'
     content?: string
+    message_id?: string
     useRag?: boolean
     temperature?: number
     maxTokens?: number
@@ -118,6 +119,17 @@ export class ChatWebSocket {
     sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW'): void {
         this.send({
             type: 'message',
+            content,
+            useRag,
+            temperature,
+            language,
+        })
+    }
+
+    sendResubmit(messageId: string, content: string, useRag: boolean = true, temperature: number = 0.7, language: string = 'zh-TW') {
+        this.send({
+            type: 'resubmit',
+            message_id: messageId,
             content,
             useRag,
             temperature,

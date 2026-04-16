@@ -14,6 +14,7 @@ import { useChatStore } from '../../store/chatStore'
 interface MessageBubbleProps {
     message: Message
     isStreaming?: boolean
+    onResubmit?: (messageId: string, content: string) => void
 }
 
 /**
@@ -43,7 +44,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     
     // 編輯狀態
@@ -71,9 +72,14 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
             useChatStore.getState().updateMessage(message.id, { content: editContent })
             setIsEditing(false)
             
-            // 實際呼叫 API 更新後端資料庫
-            if (!message.id.startsWith('temp-')) {
-                await conversationsApi.updateMessageText(message.id, editContent)
+            if (onResubmit) {
+                // 如果有提供 onResubmit，代表此為重新生成流程，由上層處理截斷與重送
+                onResubmit(message.id, editContent)
+            } else {
+                // 實際呼叫 API 更新後端資料庫 (單純更新文字，不重新生成)
+                if (!message.id.startsWith('temp-')) {
+                    await conversationsApi.updateMessageText(message.id, editContent)
+                }
             }
         } catch (err) {
             console.error('更新訊息失敗:', err)

@@ -413,21 +413,39 @@ class ChatService:
         temperature: float = 0.7,
         max_tokens: int = 2048,
         language: str = "zh-TW",
+        resubmit_message_id: Optional[str] = None
     ) -> AsyncGenerator[dict, None]:
         """
         發送訊息並串流回應
 
         Args:
             language: 回覆語言代碼（zh-TW / en-US / ja-JP）
+            resubmit_message_id: 若提供，則為修改歷史對話並重新生成
         """
-        # 儲存使用者訊息
-        user_message = Message(
-            conversation_id=conversation_id,
-            role=MessageRole.USER.value,
-            content=content,
-        )
-        self.db.add(user_message)
-        await self.db.commit()
+        if resubmit_message_id:
+            from sqlalchemy import delete
+            # 尋找並更新使用者訊息
+            result = await self.db.execute(select(Message).where(Message.id == resubmit_message_id))
+            user_message = result.scalar_one_or_none()
+            if user_message:
+                user_message.content = content
+                # 截斷後續所有訊息
+                await self.db.execute(
+                    delete(Message).where(
+                        Message.conversation_id == conversation_id,
+                        Message.created_at > user_message.created_at
+                    )
+                )
+                await self.db.commit()
+        else:
+            # 儲存新使用者訊息
+            user_message = Message(
+                conversation_id=conversation_id,
+                role=MessageRole.USER.value,
+                content=content,
+            )
+            self.db.add(user_message)
+            await self.db.commit()
         
         # 取得對話歷史
         messages = await self.get_messages(conversation_id)

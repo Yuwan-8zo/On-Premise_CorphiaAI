@@ -165,6 +165,50 @@ async def websocket_chat(
                         _generate_and_send(conversation_id, content, use_rag, temperature, max_tokens, language)
                     )
                 
+                elif msg_type == "resubmit":
+                    content = data.get("content", "").strip()
+                    message_id = data.get("message_id")
+                    use_rag = data.get("use_rag", True)
+                    temperature = data.get("temperature", 0.7)
+                    max_tokens = data.get("max_tokens", 2048)
+                    language = data.get("language", "zh-TW")
+                    
+                    if not content or not message_id:
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "訊息內容或ID不能為空"
+                        })
+                        continue
+                        
+                    if current_generation_task and not current_generation_task.done():
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "前一個請求正在處理中，請先停止"
+                        })
+                        continue
+                        
+                    async def _resubmit_and_send():
+                        try:
+                            async for chunk in chat_service.send_message_stream(
+                                conversation_id=conversation_id,
+                                content=content,
+                                use_rag=use_rag,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                language=language,
+                                resubmit_message_id=message_id,
+                            ):
+                                await websocket.send_json(chunk)
+                        except asyncio.CancelledError:
+                            logger.info(f"生成任務已中斷: {connection_id}")
+                            await websocket.send_json({"type": "done", "content": "\n[已停止生成]"})
+                        except Exception as e:
+                            logger.error(f"生成發生錯誤: {e}")
+                            if not isinstance(e, WebSocketDisconnect):
+                                await websocket.send_json({"type": "error", "message": str(e)})
+
+                    current_generation_task = asyncio.create_task(_resubmit_and_send())
+                
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})
                 
