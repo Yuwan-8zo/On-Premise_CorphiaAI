@@ -25,13 +25,13 @@ interface MessageBubbleProps {
  * - isStreaming=false → 靜態 logo 可見，  動態 thinking icon 隱藏
  */
 const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
-    <div className="relative w-8 h-8 flex-shrink-0">
+    <div className="relative w-6 h-6 flex-shrink-0 mt-[3px]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
-            <CorphiaThinkingIcon className="w-7 h-7 text-ios-blue-light dark:text-ios-blue-dark" />
+            <CorphiaThinkingIcon className="w-5 h-5 text-ios-blue-light dark:text-ios-blue-dark" />
         </span>
 
         {/* 【上層】靜態 Logo — streaming 結束後淡入 */}
@@ -39,7 +39,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 0 : 1 }}
         >
-            <CorphiaLogo className="w-8 h-8" />
+            <CorphiaLogo className="w-6 h-6" />
         </span>
     </div>
 )
@@ -136,7 +136,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4 pt-[3px]">
+                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-gray-100 dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-white/5 max-w-none [&_.markdown-body>*:first-child]:!mt-0">
                                 <MarkdownRenderer content={message.content} />
