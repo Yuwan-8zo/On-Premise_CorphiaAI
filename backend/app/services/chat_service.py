@@ -68,7 +68,7 @@ class ChatService:
 
     # 語言指令對照表
     LANGUAGE_DIRECTIVES: dict[str, str] = {
-        "zh-TW": "【重要】你必須完全使用繁體中文回答。不論使用者用什麼語言提問，你的所有回覆都必須是繁體中文。",
+        "zh-TW": "【重要】你必須完全使用繁體中文（zh-TW）回答，並且務必使用台灣慣用語（例如：絕對要使用「資訊」而非「信息」，使用「程式」而非「程序」，使用「螢幕」而非「屏幕」，使用「網路」而非「網絡」）。不論使用者用什麼語言提問，你的所有回覆都必須是標準的台灣繁體中文。",
         "en-US": "[IMPORTANT] You MUST reply entirely in English. Regardless of the language the user writes in, all your responses must be in English.",
         "ja-JP": "【重要】あなたは必ず日本語で回答してください。ユーザーがどの言語で質問しても、すべての返答は日本語でなければなりません。",
     }

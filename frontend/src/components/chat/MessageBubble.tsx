@@ -31,7 +31,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
-            <CorphiaThinkingIcon className="w-8 h-8 text-ios-blue-light dark:text-ios-blue-dark" />
+            <CorphiaThinkingIcon className="w-6 h-6 text-ios-blue-light dark:text-ios-blue-dark" />
         </span>
 
         {/* 【上層】靜態 Logo — streaming 結束後淡入 */}
