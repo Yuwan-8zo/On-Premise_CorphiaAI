@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate, UserListResponse
+from app.schemas.user import UserResponse, UserUpdate, UserListResponse, UserCreate
+from app.core.security import get_password_hash
 from app.services.audit_service import (
     write_audit_log,
     AuditAction,
@@ -19,6 +20,58 @@ from app.services.audit_service import (
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    data: UserCreate,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request = None,
+):
+    """
+    建立使用者（僅 admin/engineer 可用）
+    """
+    if current_user.role not in ["admin", "engineer"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="權限不足"
+        )
+    
+    result = await db.execute(select(User).where(User.email == data.email))
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="信箱已被註冊"
+        )
+    
+    new_user = User(
+        email=data.email,
+        name=data.name,
+        password_hash=get_password_hash(data.password),
+        role=data.role,
+        tenant_id=current_user.tenant_id,
+        is_active=True
+    )
+    
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    
+    await write_audit_log(
+        db=db,
+        action=AuditAction.USER_CREATE,
+        resource_type=AuditResource.USER,
+        resource_id=new_user.id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"管理員建立使用者: {new_user.email}",
+        ip_address=get_client_ip(request) if request else None,
+        user_agent=get_user_agent(request) if request else None,
+    )
+    
+    return UserResponse.model_validate(new_user)
 
 
 @router.get("", response_model=UserListResponse)

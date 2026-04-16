@@ -102,6 +102,11 @@ export default function Admin() {
     const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', description: '', is_active: true })
     const [isSubmittingTenant, setIsSubmittingTenant] = useState(false)
 
+    // 使用者 Modal state
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false)
+    const [isSubmittingUser, setIsSubmittingUser] = useState(false)
+    const [currentEditingUser, setCurrentEditingUser] = useState<UserData | null>(null)
+    const [userFormData, setUserFormData] = useState({ name: '', email: '', password: '', role: 'user', is_active: true })
     // 檢查權限
     useEffect(() => {
         if (user?.role !== 'admin' && user?.role !== 'engineer') {
@@ -197,33 +202,68 @@ export default function Admin() {
     const loadUsers = useCallback(async () => {
         setIsLoading(true)
         try {
-            // 模擬 API 呼叫
-            setUsers([
-                {
-                    id: '1',
-                    name: 'Admin User',
-                    email: 'admin@example.com',
-                    role: 'admin',
-                    isActive: true,
-                    createdAt: '2024-01-01T00:00:00Z',
-                    lastLoginAt: '2024-01-28T10:00:00Z',
-                },
-                {
-                    id: '2',
-                    name: 'Test User',
-                    email: 'test@example.com',
-                    role: 'user',
-                    isActive: true,
-                    createdAt: '2024-01-15T00:00:00Z',
-                    lastLoginAt: '2024-01-27T15:30:00Z',
-                },
-            ])
+            const response = await apiClient.get('/users?page=1&page_size=100')
+            if (response.data && response.data.data) {
+                const fetchedUsers = response.data.data.map((u: any) => ({
+                    id: u.id,
+                    name: u.name,
+                    email: u.email,
+                    role: u.role,
+                    isActive: u.is_active,
+                    createdAt: u.created_at,
+                    lastLoginAt: u.last_login_at
+                }))
+                setUsers(fetchedUsers)
+            }
         } catch (err) {
             console.error('載入使用者失敗:', err)
         } finally {
             setIsLoading(false)
         }
     }, [])
+
+    const handleAddUser = () => {
+        setCurrentEditingUser(null)
+        setUserFormData({ name: '', email: '', password: '', role: 'user', is_active: true })
+        setIsUserModalOpen(true)
+    }
+
+    const handleEditUser = (u: UserData) => {
+        setCurrentEditingUser(u)
+        setUserFormData({
+            name: u.name,
+            email: u.email,
+            password: '', // 留空表示不修改密碼
+            role: u.role,
+            is_active: u.isActive
+        })
+        setIsUserModalOpen(true)
+    }
+
+    const handleUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsSubmittingUser(true)
+        try {
+            if (currentEditingUser) {
+                const updateData: any = {
+                    name: userFormData.name,
+                    role: userFormData.role,
+                    is_active: userFormData.is_active
+                }
+                if (userFormData.password) updateData.password = userFormData.password
+                await apiClient.put(`/users/${currentEditingUser.id}`, updateData)
+            } else {
+                await apiClient.post('/users', userFormData)
+            }
+            setIsUserModalOpen(false)
+            loadUsers()
+        } catch (err: any) {
+            const errorDetail = err.response?.data?.detail || err.message
+            alert(`儲存失敗: ${errorDetail}`)
+        } finally {
+            setIsSubmittingUser(false)
+        }
+    }
 
     useEffect(() => {
         loadStats()
@@ -494,7 +534,7 @@ export default function Admin() {
                             <h2 className="font-semibold text-gray-900 dark:text-white">
                                 使用者列表 ({users.length})
                             </h2>
-                            <button className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
+                            <button onClick={handleAddUser} className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
                                 + 新增使用者
                             </button>
                         </div>
@@ -554,17 +594,18 @@ export default function Admin() {
                                                     </td>
                                                     <td className="px-8 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                            <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
                                                                 編輯
                                                             </button>
                                                             <button
                                                                 onClick={async () => {
                                                                     if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return
                                                                     try {
-                                                                        await apiClient.post(`/users/${u.id}/force-logout`)
+                                                                        await apiClient.delete(`/users/${u.id}`)
                                                                         alert(`已成功刪除 ${u.name}`)
-                                                                    } catch {
-                                                                        alert('刪除失敗，請稍後重試')
+                                                                        loadUsers()
+                                                                    } catch (err: any) {
+                                                                        alert(`刪除失敗: ${err.response?.data?.detail || ''}`)
                                                                     }
                                                                 }}
                                                                 className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
@@ -613,10 +654,10 @@ export default function Admin() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/5">
-                                                <button className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
+                                                <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
                                                 <button onClick={async () => {
                                                     if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return;
-                                                    try { await apiClient.post(`/users/${u.id}/force-logout`); alert(`已成功刪除 ${u.name}`); } catch { alert('刪除失敗，請稍後重試'); }
+                                                    try { await apiClient.delete(`/users/${u.id}`); alert(`已成功刪除 ${u.name}`); loadUsers(); } catch (err: any) { alert(`刪除失敗: ${err.response?.data?.detail || ''}`); }
                                                 }} className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20">
                                                     刪除
                                                 </button>
@@ -1290,6 +1331,127 @@ export default function Admin() {
                                         </svg>
                                     ) : (
                                         currentEditingTenant ? '儲存變更' : '建立租戶'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+
+        {/* 使用者新增/編輯 Modal */}
+        <AnimatePresence>
+            {isUserModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-md"
+                        onClick={() => setIsUserModalOpen(false)}
+                    />
+                    <motion.div 
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
+                    >
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                            {currentEditingUser ? '編輯使用者' : '新增使用者'}
+                        </h3>
+                        
+                        <form onSubmit={handleUserSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">姓名 <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={userFormData.name}
+                                    onChange={e => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="例如：王小明"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">電子郵件 <span className="text-red-500">*</span></label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={userFormData.email}
+                                    onChange={e => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    placeholder="例如：user@example.com"
+                                    disabled={!!currentEditingUser}
+                                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow ${currentEditingUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    密碼 {!currentEditingUser && <span className="text-red-500">*</span>}
+                                </label>
+                                <input
+                                    type="password"
+                                    required={!currentEditingUser}
+                                    value={userFormData.password}
+                                    onChange={e => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
+                                    placeholder={currentEditingUser ? "留空表示不修改" : "請輸入密碼 (至少8碼)"}
+                                    minLength={8}
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">角色</label>
+                                <select
+                                    value={userFormData.role}
+                                    onChange={e => setUserFormData(prev => ({ ...prev, role: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                >
+                                    <option value="user">一般使用者 (User)</option>
+                                    <option value="engineer">工程師 (Engineer)</option>
+                                    <option value="admin">管理員 (Admin)</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">是否啟用</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setUserFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                        userFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-white/20'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                            userFormData.is_active ? 'translate-x-5' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="flex gap-3 pt-6 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUserModalOpen(false)}
+                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingUser || !userFormData.name || !userFormData.email || (!currentEditingUser && userFormData.password.length < 8)}
+                                    className="flex-1 px-4 py-2.5 text-white font-medium bg-ios-blue-light hover:bg-ios-blue-light/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors shadow-sm shadow-ios-blue-light/20 flex items-center justify-center"
+                                >
+                                    {isSubmittingUser ? (
+                                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : (
+                                        currentEditingUser ? '儲存變更' : '建立使用者'
                                     )}
                                 </button>
                             </div>
