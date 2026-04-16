@@ -36,7 +36,16 @@ class LLMService:
         if self._initialized:
             return True
         
-        model_path = Path(self.model_path)
+        # NOTE: 若 model_path 是相對路徑，則解析為相對於 backend/ 目錄的絕對路徑
+        # 這樣不管從哪個 CWD 啟動，路徑都能正確解析
+        raw_path = self.model_path
+        if not Path(raw_path).is_absolute():
+            # __file__ = backend/app/services/llm_service.py
+            # parent.parent.parent = backend/
+            backend_dir = Path(__file__).parent.parent.parent
+            model_path = (backend_dir / raw_path).resolve()
+        else:
+            model_path = Path(raw_path)
         
         if not model_path.exists():
             logger.warning(f"LLM 模型檔案不存在: {model_path}")
