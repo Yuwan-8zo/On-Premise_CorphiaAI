@@ -143,11 +143,7 @@ def start_ngrok(port: int = 5173) -> str | None:
     ngrok_path = find_ngrok()
 
     if not ngrok_path:
-        print("  [SKIP] 找不到 ngrok，跳過公開網址功能")
-        print("         請下載 ngrok.exe 並放置在此專案資料夾下，或安裝後加入 PATH")
         return None
-
-    print(f"  [OK] 找到 ngrok: {ngrok_path}")
 
     # 先關掉殘留的 ngrok 程序（避免 port 衝突）
     if sys.platform == "win32":
@@ -236,7 +232,6 @@ def main():
     local_ip = get_local_ip()
     print("\n" + "=" * 50)
     print("  🟢 服務已全面啟動完成")
-    print("  按下 Ctrl+C 結束所有服務")
     print("-" * 50)
     print("  本機存取")
     print(f"    前端: http://localhost:5173")
@@ -248,8 +243,10 @@ def main():
         print("  🌍 公開網址 (可分享給任何人)")
         print(f"    前端: {ngrok_url}")
     else:
-        print("  ⚠️  未啟動 Ngrok，無公開網址")
+        print("  ⚠️  未啟動 Ngrok，(可能因重啟過快被伺服器阻擋，請稍候重試)")
     print(f"  API 文件: http://localhost:8168/docs")
+    print("-" * 50)
+    print("  🛑 按下 Ctrl+C 可隨時關閉所有服務")
     print("=" * 50 + "\n")
 
     # 持續等待，直到 Ctrl+C
