@@ -1354,7 +1354,7 @@ export default function Chat() {
                                             onClick={() => setInput(item.desc)}
                                             className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                         >
-                                            <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-ios-blue-light dark:group-hover:text-ios-blue-dark transition-colors">{item.title}</div>
+                                            <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[rgb(var(--color-ios-accent-light))] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
                                             <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
                                         </button>
                                     ))}
