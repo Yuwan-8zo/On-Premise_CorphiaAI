@@ -1388,9 +1388,20 @@ export default function Chat() {
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className="shrink-0 pt-2 pb-6 md:pb-8 w-full z-20"
                 >
-                    <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
+                    <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative flex items-end gap-2">
+                        {/* 提示詞模版選單 (獨立在左側) */}
+                        <div className="shrink-0 mb-1.5">
+                            <PromptMenu 
+                                disabled={isConnecting || isUploading}
+                                onSelect={(prompt) => {
+                                    setInput((prev) => prev ? prompt + prev : prompt)
+                                    setTimeout(() => inputRef.current?.focus(), 0)
+                                }} 
+                            />
+                        </div>
+
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[30px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors focus-within:ring-4 focus-within:border-[rgb(var(--color-ios-accent-light))] dark:focus-within:border-[rgb(var(--color-ios-accent-dark))] focus-within:ring-[rgb(var(--color-ios-accent-light)/0.15)] dark:focus-within:ring-[rgb(var(--color-ios-accent-dark)/0.15)]">
+                        <div className="relative flex-1 flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[30px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors focus-within:ring-4 focus-within:border-[rgb(var(--color-ios-accent-light))] dark:focus-within:border-[rgb(var(--color-ios-accent-dark))] focus-within:ring-[rgb(var(--color-ios-accent-light)/0.15)] dark:focus-within:ring-[rgb(var(--color-ios-accent-dark)/0.15)]">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (
@@ -1426,17 +1437,6 @@ export default function Chat() {
                                         </button>
                                     </>
                                 )}
-                                
-                                {/* 提示詞模版選單 */}
-                                <div className="mb-1 shrink-0">
-                                    <PromptMenu 
-                                        disabled={isConnecting || isUploading}
-                                        onSelect={(prompt) => {
-                                            setInput((prev) => prev ? prompt + prev : prompt)
-                                            setTimeout(() => inputRef.current?.focus(), 0)
-                                        }} 
-                                    />
-                                </div>
                                 
                                 <textarea
                                     ref={inputRef}
