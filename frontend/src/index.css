@@ -233,27 +233,26 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
    <mark> 標籤原本用於此 class，這裡我們也加上了針對 accent_color 的 rgba(...)
 */
 .highlighter-marker {
-  background-image: linear-gradient(transparent 50%, rgb(var(--color-ios-accent-light) / 0.85) 50%);
-  background-repeat: no-repeat;
-  border-radius: 2px;
-  padding: 0 0.1em;
+  background-color: rgb(var(--color-ios-accent-light) / 0.15);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
   margin: 0 -0.1em;
 }
 
 html.dark .highlighter-marker {
-  background-image: linear-gradient(transparent 50%, rgb(var(--color-ios-accent-dark) / 0.85) 50%);
+  background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
 
 /* 粗體字切換重點色 + 螢光筆 (透明度 85%) 效果 */
 .markdown-body strong {
   color: rgb(var(--color-ios-accent-light));
-  background-image: linear-gradient(transparent 55%, rgb(var(--color-ios-accent-light) / 0.15) 55%, rgb(var(--color-ios-accent-light) / 0.15) 100%);
-  background-repeat: no-repeat;
-  background-position: bottom;
-  background-size: 100% 100%;
+  background-color: rgb(var(--color-ios-accent-light) / 0.15);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+  margin: 0 0.1em;
 }
 
 html.dark .markdown-body strong {
   color: rgb(var(--color-ios-accent-dark));
-  background-image: linear-gradient(transparent 55%, rgb(var(--color-ios-accent-dark) / 0.15) 55%, rgb(var(--color-ios-accent-dark) / 0.15) 100%);
+  background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
