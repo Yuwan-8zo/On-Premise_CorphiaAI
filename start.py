@@ -162,9 +162,9 @@ def start_ngrok(port: int = 5173) -> str | None:
     )
     processes.append(ngrok_proc)
 
-    # 等待 ngrok 啟動（最多 8 秒）
+    # 等待 ngrok 啟動（最多 30 秒，因有時網路受阻會需時更久）
     ngrok_url = None
-    for attempt in range(16):
+    for attempt in range(60):
         time.sleep(0.5)
         for api_port in [4040, 4041, 4042]:
             try:
