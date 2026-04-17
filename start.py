@@ -186,25 +186,17 @@ def start_ngrok(port: int = 5173) -> str | None:
 
 def main():
     print("=" * 50)
-    print("  Corphia AI - 啟動中...")
-    print("  按下 Ctrl+C 可同時關閉所有服務")
+    print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
     print("=" * 50)
 
-    # --- 啟動 Docker 容器 (PostgreSQL / 其他服務) ---
-    print("\n[0] 正在啟動基礎環境 (Docker)...")
+    # --- 啟動 Docker 容器 (背景靜默啟動) ---
     if os.path.exists("docker-compose.yml"):
-        print("  正在確認容器狀態，若尚未啟動將自動在背景啟動...")
         try:
-            # 加上 -d 讓它在背景執行
-            subprocess.run("docker-compose up -d", shell=True, check=True)
-            print("  [OK] Docker 容器狀態正常")
-        except Exception as e:
-            print(f"  [WARN] Docker 啟動失敗，請確認 Docker 是否已開啟 ({e})")
-    else:
-        print("  [SKIP] 找不到 docker-compose.yml，跳過 Docker 啟動")
+            subprocess.run("docker-compose up -d", shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
     # --- 清理可能殘留的 Port ---
-    print("\n[1] 正在清理可能殘留的系統資源...")
     kill_port(8168)
     kill_port(5173)
 
@@ -214,42 +206,38 @@ def main():
         if os.path.exists(engine_script):
             venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
             py_exec = venv_python if os.path.exists(venv_python) else sys.executable
-            # 優先使用系統終端機執行，並將命令列參數往下傳遞（例如 --force）
-            subprocess.run([py_exec, engine_script] + sys.argv[1:])
+            # 靜默執行引擎偵測
+            subprocess.run([py_exec, engine_script] + sys.argv[1:], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # --- 啟動後端 ---
-    print("\n[1] 啟動後端 (FastAPI)...")
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
         if os.path.exists(venv_python):
-            backend_cmd = [venv_python, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168"]
+            backend_cmd = [venv_python, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
         else:
-            backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168"]
-
-        proc = start_service("Backend (FastAPI :8168)", BACKEND_DIR, backend_cmd)
+            backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
+        
+        proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False)
         processes.append(proc)
-    else:
-        print("  [SKIP] 找不到 backend 資料夾，跳過")
 
     time.sleep(1)
 
     # --- 啟動前端 ---
-    print("[2] 啟動前端 (Vite)...")
     if os.path.exists(FRONTEND_DIR):
-        proc = start_service("Frontend (Vite :5173)", FRONTEND_DIR, "npm run dev -- --host")
+        proc = subprocess.Popen("npm run dev -- --host", cwd=FRONTEND_DIR, shell=True)
         processes.append(proc)
-    else:
-        print("  [SKIP] 找不到 frontend 資料夾，跳過")
 
     time.sleep(2)
 
     # --- 啟動 Ngrok ---
-    print("[3] 啟動 Ngrok 公開通道...")
     ngrok_url = start_ngrok(port=5173)
 
     # --- 顯示存取資訊 ---
     local_ip = get_local_ip()
     print("\n" + "=" * 50)
+    print("  🟢 服務已全面啟動完成")
+    print("  按下 Ctrl+C 結束所有服務")
+    print("-" * 50)
     print("  本機存取")
     print(f"    前端: http://localhost:5173")
     print("    後端: http://localhost:8168")
@@ -262,8 +250,7 @@ def main():
     else:
         print("  ⚠️  未啟動 Ngrok，無公開網址")
     print(f"  API 文件: http://localhost:8168/docs")
-    print("=" * 50)
-    print("\n  服務運行中... 按 Ctrl+C 可關閉所有服務\n")
+    print("=" * 50 + "\n")
 
     # 持續等待，直到 Ctrl+C
     while True:
@@ -271,7 +258,7 @@ def main():
         # 若子程序意外退出，提示使用者
         for proc in list(processes):
             if proc.poll() is not None:
-                print(f"  [WARN] PID {proc.pid} 意外退出 (code: {proc.returncode})")
+                # 不顯示 Vite 正常重啟產生的退出碼，保持靜默
                 processes.remove(proc)
                 break
 
