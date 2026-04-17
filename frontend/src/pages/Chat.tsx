@@ -769,7 +769,7 @@ export default function Chat() {
                     ) : (
                         <div 
                             className="relative flex flex-col items-center justify-between bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-full p-1 cursor-pointer w-12 shrink-0 transition-colors"
-                            style={{ height: '88px' }}
+                            style={{ height: '96px' }}
                             onClick={() => setChatMode(prev => prev === 'general' ? 'project' : 'general')}
                         >
                             <div 
@@ -777,7 +777,7 @@ export default function Chat() {
                                 style={{
                                     top: '4px',
                                     left: '4px',
-                                    transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
+                                    transform: `translateY(${chatMode === 'general' ? '0px' : '48px'})`,
                                     transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
                                     zIndex: 1
                                 }}
