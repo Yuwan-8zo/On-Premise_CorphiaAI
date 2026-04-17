@@ -217,14 +217,14 @@ def main():
         else:
             backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
         
-        proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False)
+        proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         processes.append(proc)
 
     time.sleep(1)
 
     # --- 啟動前端 ---
     if os.path.exists(FRONTEND_DIR):
-        proc = subprocess.Popen("npm run dev -- --host", cwd=FRONTEND_DIR, shell=True)
+        proc = subprocess.Popen("npm run dev -- --host --logLevel silent", cwd=FRONTEND_DIR, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         processes.append(proc)
 
     time.sleep(2)
