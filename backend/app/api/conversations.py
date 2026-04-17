@@ -232,8 +232,14 @@ async def list_messages(
     current_user: CurrentUser,
     db: DbSession,
     limit: int = Query(50, ge=1, le=200),
+    before_id: Optional[str] = Query(None, description="游標分頁：回傳此 message_id 之前的訊息"),
 ):
-    """取得對話訊息列表"""
+    """
+    取得對話訊息列表
+
+    - `before_id` 為空時：回傳最新的 `limit` 筆（供初次載入）
+    - `before_id` 有值時：回傳比該訊息更早的 `limit` 筆（供無限捲動）
+    """
     # 驗證對話所有權
     result = await db.execute(
         select(Conversation).where(
@@ -247,13 +253,21 @@ async def list_messages(
             detail="對話不存在"
         )
     
-    # 查詢訊息
-    result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at)
-        .limit(limit)
-    )
-    messages = result.scalars().all()
+    # 查詢訊息（支援 cursor 分頁）
+    query = select(Message).where(Message.conversation_id == conversation_id)
+    
+    if before_id:
+        # 查出 before_id 的 created_at，再取更早的訊息
+        cursor_result = await db.execute(
+            select(Message.created_at).where(Message.id == before_id)
+        )
+        cursor_time = cursor_result.scalar_one_or_none()
+        if cursor_time:
+            query = query.where(Message.created_at < cursor_time)
+    
+    # 先 DESC 取最新的 N 筆，再反轉為 ASC 確保時間順序正確
+    query = query.order_by(Message.created_at.desc()).limit(limit)
+    result = await db.execute(query)
+    messages = list(reversed(result.scalars().all()))
     
     return [MessageResponse.model_validate(m) for m in messages]

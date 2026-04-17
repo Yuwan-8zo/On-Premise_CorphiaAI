@@ -68,8 +68,10 @@ export const conversationsApi = {
     /**
      * 取得對話訊息
      */
-    getMessages: async (conversationId: string): Promise<Message[]> => {
-        const response = await apiClient.get(`/conversations/${conversationId}/messages`)
+    getMessages: async (conversationId: string, options?: { beforeId?: string }): Promise<Message[]> => {
+        const response = await apiClient.get(`/conversations/${conversationId}/messages`, {
+            params: { before_id: options?.beforeId }
+        })
         return response.data.map(mapMessage)
     },
 

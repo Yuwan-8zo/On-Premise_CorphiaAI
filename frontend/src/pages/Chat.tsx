@@ -10,8 +10,10 @@ import { useUIStore } from '../store/uiStore'
 import { conversationsApi } from '../api/conversations'
 import { documentsApi, type DocumentResponse } from '../api/documents'
 import modelsApi, { type ModelItem } from '../api/models'
+import { foldersApi } from '../api/folders'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { MessageBubble, ChatMinimap, ScrollToBottomButton, PromptMenu } from '../components/chat'
+import { useToastStore } from '../store/toastStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
 import { CorphiaLogo } from '../components/icons/CorphiaIcons'
@@ -56,6 +58,7 @@ const DEFAULT_FOLDER = '新資料夾'
 
 export default function Chat() {
     const { t } = useTranslation()
+    const toast = useToastStore()
     const { user } = useAuthStore()
     const {
         conversations,
@@ -126,19 +129,27 @@ export default function Chat() {
     const [newFolderInput, setNewFolderInput] = useState('')
     const newFolderInputRef = useRef<HTMLInputElement>(null)
 
-    // 持久化儲存的資料夾清單（即使資料夾內沒有對話也保留）
-    const [savedFolders, setSavedFolders] = useState<string[]>(() => {
+    // 持久化儲存的資料夾清單（從後端 API 取得）
+    const [savedFolders, setSavedFolders] = useState<string[]>([])
+    
+    // UI 相關：無限捲動
+    const [hasMoreMessages, setHasMoreMessages] = useState(false)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const topObserverRef = useRef<HTMLDivElement>(null)
+
+    // 載入資料夾
+    const loadFolders = useCallback(async () => {
         try {
-            const raw = localStorage.getItem('corphia_project_folders')
-            return raw ? JSON.parse(raw) : []
-        } catch {
-            return []
+            const data = await foldersApi.list()
+            setSavedFolders(data.map(f => f.name))
+        } catch (error) {
+            console.error('Failed to load folders:', error)
         }
-    })
-    const persistFolders = (folders: string[]) => {
-        setSavedFolders(folders)
-        localStorage.setItem('corphia_project_folders', JSON.stringify(folders))
-    }
+    }, [])
+
+    useEffect(() => {
+        loadFolders()
+    }, [loadFolders])
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -232,9 +243,9 @@ export default function Chat() {
                     textArea.remove()
                 }
             }
-            alert('已成功複製對話分享連結！\n您現在可以貼上連結分享給其他人。')
+            toast.success('已成功複製對話分享連結！')
         } catch {
-            alert('複製失敗，請手動複製連結：\n' + link)
+            toast.error('複製失敗，請手動複製連結：' + link)
         }
     }
 
@@ -243,11 +254,15 @@ export default function Chat() {
         setNewFolderModal(false)
         setNewFolderInput('')
 
-        // 將資料夾儲存到 localStorage —— 不自動建立對話，保持資料夾為空
-        const updated = savedFolders.includes(folderName)
-            ? savedFolders
-            : [...savedFolders, folderName]
-        persistFolders(updated)
+        // 將資料夾儲存到後端
+        try {
+            await foldersApi.create(folderName)
+            await loadFolders()
+        } catch (err) {
+            console.error('Failed to create folder:', err)
+            toast.error('建立資料夾失敗')
+        }
+        
         setChatMode('project')
         // 清空目前選取的對話，顯示空資料夾內容
         setCurrentConversation(null)
@@ -375,11 +390,60 @@ export default function Chat() {
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
             setMessages(msgs)
+            setHasMoreMessages(msgs.length === 50)
             await connectWebSocket(conversation.id)
         } catch (error) {
             console.error('載入訊息失敗:', error)
         }
     }, [setCurrentConversation, setMessages, connectWebSocket])
+
+    const loadMoreMessages = useCallback(async () => {
+        const convId = useChatStore.getState().currentConversation?.id
+        const currentMsgs = useChatStore.getState().messages
+        if (!convId || currentMsgs.length === 0 || isLoadingMore || !hasMoreMessages) return
+
+        try {
+            setIsLoadingMore(true)
+            const firstMsgId = currentMsgs[0].id
+            const olderMsgs = await conversationsApi.getMessages(convId, { beforeId: firstMsgId })
+            
+            if (olderMsgs.length > 0) {
+                // 保存捲動高度
+                const scrollContainer = scrollContainerRef.current
+                const oldScrollHeight = scrollContainer?.scrollHeight || 0
+                
+                useChatStore.getState().setMessages([...olderMsgs, ...currentMsgs])
+                setHasMoreMessages(olderMsgs.length === 50)
+                
+                // 恢復捲動位置
+                requestAnimationFrame(() => {
+                    if (scrollContainer) {
+                        scrollContainer.scrollTop = scrollContainer.scrollHeight - oldScrollHeight
+                    }
+                })
+            } else {
+                setHasMoreMessages(false)
+            }
+        } catch (error) {
+            console.error('載入舊訊息失敗:', error)
+        } finally {
+            setIsLoadingMore(false)
+        }
+    }, [isLoadingMore, hasMoreMessages])
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMoreMessages()
+                }
+            },
+            { root: scrollContainerRef.current, threshold: 0.1 }
+        )
+        const target = topObserverRef.current
+        if (target) observer.observe(target)
+        return () => observer.disconnect()
+    }, [loadMoreMessages])
 
     // --- 檔案上傳處理 ---
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -525,9 +589,14 @@ export default function Chat() {
                     await documentsApi.delete(doc.id)
                 }
 
-                // 從 localStorage 中移除資料夾
-                persistFolders(savedFolders.filter(f => f !== folderName))
-
+                // 從後端資料庫刪除資料夾
+                try {
+                    await foldersApi.delete(folderName)
+                    await loadFolders()
+                } catch (err) {
+                    console.error('刪除資料夾失敗:', err)
+                    toast.error('無法刪除資料夾')
+                }
                 if (selectedFolder === folderName) {
                     setSelectedFolder(null)
                     setFolderDocuments([])
@@ -1341,7 +1410,13 @@ export default function Chat() {
                     <ScrollToBottomButton containerRef={scrollContainerRef} dependsOn={messages} />
                     
                     <div ref={scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
-                        
+                        {/* 頂部感應器：無限捲動 */}
+                        <div ref={topObserverRef} className="w-full h-px opacity-0" />
+                        {isLoadingMore && (
+                            <div className="flex justify-center items-center py-2 text-gray-500">
+                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-gray-800 dark:border-gray-500 dark:border-t-gray-200"></span>
+                            </div>
+                        )}
                         {messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">

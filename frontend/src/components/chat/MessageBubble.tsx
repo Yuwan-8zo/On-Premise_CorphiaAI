@@ -15,6 +15,7 @@ interface MessageBubbleProps {
     message: Message
     isStreaming?: boolean
     onResubmit?: (messageId: string, content: string) => void
+    hideActions?: boolean
 }
 
 /**
@@ -44,7 +45,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActions = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     
     // 編輯狀態
@@ -129,7 +130,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                         )}
                     </div>
                     {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
-                    {!isEditing && (
+                    {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 dark:text-gray-500 mr-2">
                             <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
                                 {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -167,7 +168,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                         )}
 
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
-                        {message.content && !isStreaming && (
+                        {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 dark:text-gray-500">
                                 <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
                                     {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}

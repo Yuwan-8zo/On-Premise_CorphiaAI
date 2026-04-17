@@ -15,10 +15,12 @@ const Register = lazy(() => import('./pages/Register'))
 const Chat = lazy(() => import('./pages/Chat'))
 const Documents = lazy(() => import('./pages/Documents'))
 const Admin = lazy(() => import('./pages/Admin'))
+const Share = lazy(() => import('./pages/Share'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/ui/SettingsModal'
+import { ToastContainer } from './components/ui/Toast'
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -125,6 +127,10 @@ export default function App() {
                             path="/register"
                             element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
                         />
+                        <Route
+                            path="/share/:conversationId"
+                            element={<Share />}
+                        />
 
                         {/* 受保護路由 */}
                         <Route
@@ -177,6 +183,7 @@ export default function App() {
             {/* 全域元件 */}
             <ConfirmModal />
             <SettingsModal />
+            <ToastContainer />
         </>
     )
 }

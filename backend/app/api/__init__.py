@@ -13,6 +13,7 @@ from app.api.admin import router as admin_router
 from app.api.audit_logs import router as audit_logs_router
 from app.api.tenants import router as tenants_router
 from app.api.models import router as models_router
+from app.api.folders import router as folders_router
 
 __all__ = [
     "auth_router",
@@ -26,4 +27,5 @@ __all__ = [
     "audit_logs_router",
     "tenants_router",
     "models_router",
+    "folders_router",
 ]
