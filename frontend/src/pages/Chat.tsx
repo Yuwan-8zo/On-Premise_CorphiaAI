@@ -324,6 +324,13 @@ export default function Chat() {
                 break
             case 'done':
                 setStreaming(false)
+                // 重新載入訊息以取得剛建立的 message 的真實 UUID，這樣編輯重新生成才能正常運作
+                const currentConvId = useChatStore.getState().currentConversation?.id
+                if (currentConvId) {
+                    conversationsApi.getMessages(currentConvId)
+                        .then(msgs => useChatStore.getState().setMessages(msgs))
+                        .catch(err => console.error('同步訊息失敗:', err))
+                }
                 break
             case 'error':
                 console.error('WebSocket 錯誤:', data.message)
