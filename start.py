@@ -149,6 +149,8 @@ def start_ngrok(port: int = 5173) -> str | None:
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
         kill_port(4040)
+        kill_port(4041)
+        kill_port(4042)
         time.sleep(0.5)
 
     # 啟動 ngrok（在背景，不開新視窗）
@@ -164,19 +166,22 @@ def start_ngrok(port: int = 5173) -> str | None:
     ngrok_url = None
     for attempt in range(16):
         time.sleep(0.5)
-        try:
-            # NOTE: ngrok 的本地管理 API 在 localhost:4040
-            res = urllib.request.urlopen("http://127.0.0.1:4040/api/tunnels", timeout=2)
-            data = json.loads(res.read())
-            tunnels = data.get("tunnels", [])
-            for tunnel in tunnels:
-                if tunnel.get("proto") == "https":
-                    ngrok_url = tunnel["public_url"]
+        for api_port in [4040, 4041, 4042]:
+            try:
+                # NOTE: ngrok 的本地管理 API
+                res = urllib.request.urlopen(f"http://127.0.0.1:{api_port}/api/tunnels", timeout=1)
+                data = json.loads(res.read())
+                tunnels = data.get("tunnels", [])
+                for tunnel in tunnels:
+                    if tunnel.get("proto") == "https":
+                        ngrok_url = tunnel["public_url"]
+                        break
+                if ngrok_url:
                     break
-            if ngrok_url:
-                break
-        except Exception:
-            pass  # 尚未啟動，繼續等待
+            except Exception:
+                pass  # 這個 port 沒開，找下一個
+        if ngrok_url:
+            break
 
     return ngrok_url
 
