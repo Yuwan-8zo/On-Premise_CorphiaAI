@@ -252,27 +252,18 @@ export default function Login() {
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white dark:bg-ios-dark-gray6 backdrop-blur-md"
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/90 dark:bg-ios-dark-gray6/90 backdrop-blur-md"
                     >
                         <motion.div
-                            animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.7, 1, 0.7] }}
-                            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                            className="flex flex-col items-center gap-6"
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                            className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400"
                         >
-                            <CorphiaLogo className="w-24 h-24 text-ios-blue-light dark:text-ios-blue-dark drop-shadow-lg" />
-                            <div className="flex flex-col items-center gap-2 text-center">
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    Corphia AI 引擎啟動中
-                                </h2>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    正在喚醒後端服務與加載大語言模型，請稍候...
-                                </p>
-                                <div className="mt-4 flex items-center justify-center gap-2">
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                </div>
-                            </div>
+                            <svg className="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <p className="text-sm font-medium">正在加載後端、正在加載模型...</p>
                         </motion.div>
                         
                         <AnimatePresence>
@@ -281,9 +272,9 @@ export default function Login() {
                                     initial={{ opacity: 0, mt: 0 }}
                                     animate={{ opacity: 1, mt: 32 }}
                                     onClick={() => setHasInitialConnected(true)}
-                                    className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
+                                    className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
                                 >
-                                    跳過等待，強制進入畫面
+                                    跳過等待
                                 </motion.button>
                             )}
                         </AnimatePresence>
