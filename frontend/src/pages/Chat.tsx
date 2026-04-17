@@ -1490,7 +1490,7 @@ export default function Chat() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="fixed z-[100] w-[240px] bg-white dark:bg-ios-dark-gray5 border border-gray-100 dark:border-white/5 shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-gray-800 dark:text-gray-200"
+                        className="fixed z-[100] w-[160px] bg-white dark:bg-ios-dark-gray5 border border-gray-100 dark:border-white/5 shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-gray-800 dark:text-gray-200"
                         style={{ 
                             left: activeMenu.x, 
                             top: Math.min(activeMenu.y, window.innerHeight - 300) 
