@@ -145,9 +145,10 @@ def start_ngrok(port: int = 5173) -> str | None:
     if not ngrok_path:
         return None
 
-    # 先關掉殘留的 ngrok 程序（避免 port 衝突）
+    # 先關掉殘留的 ngrok 程序與可能佔用的 4040 api port（避免 port 與 tunnel 衝突）
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+        kill_port(4040)
         time.sleep(0.5)
 
     # 啟動 ngrok（在背景，不開新視窗）
