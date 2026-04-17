@@ -32,7 +32,7 @@ const FallbackLoader = () => (
 
 export default function App() {
     const { isAuthenticated } = useAuthStore()
-    const { theme, setTheme } = useUIStore()
+    const { theme, setTheme, accentColor } = useUIStore()
     const location = useLocation()
 
     // 監聽系統主題變化（當使用者在 iPhone 設定切換深色/淺色模式時）
@@ -48,13 +48,16 @@ export default function App() {
         return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
     }, [setTheme])
 
-    // 主題同步：更新 html/body 背景色 + meta theme-color
+    // 主題與重點色同步：更新 html/body 背景色 + meta theme-color + data-accent
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
         const bg = isDark ? '#1c1c1e' : '#ffffff'
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
+
+        // 設定重點色
+        html.setAttribute('data-accent', accentColor)
 
         // ── 關鍵優化：切換前先停用所有 transition ──────────────────
         // 加上 no-transition → 切換 dark class → 下一幀移除 no-transition
@@ -102,7 +105,7 @@ export default function App() {
             })
         })
         return () => cancelAnimationFrame(raf)
-    }, [theme, location.pathname])
+    }, [theme, accentColor, location.pathname])
 
     return (
         <>

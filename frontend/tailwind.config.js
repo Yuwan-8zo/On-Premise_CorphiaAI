@@ -24,8 +24,8 @@ export default {
                 // Apple iOS System Palette
                 ios: {
                     blue: {
-                        light: '#007aff',
-                        dark: '#0a84ff',
+                        light: 'rgb(var(--color-ios-accent-light) / <alpha-value>)',
+                        dark: 'rgb(var(--color-ios-accent-dark) / <alpha-value>)',
                     },
                     // 淺色模式系統灰
                     light: {

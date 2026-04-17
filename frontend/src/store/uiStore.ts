@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
+export type AccentColorType = 'blue' | 'purple' | 'pink' | 'orange' | 'green'
 
 interface ConfirmConfig {
     message: string
@@ -17,6 +18,7 @@ interface UIState {
     // 狀態
     theme: Theme
     language: Language
+    accentColor: AccentColorType
     sidebarOpen: boolean
     sidebarWidth: number
     confirmConfig: ConfirmConfig | null
@@ -25,6 +27,7 @@ interface UIState {
     setTheme: (theme: Theme) => void
     toggleTheme: () => void
     setLanguage: (language: Language) => void
+    setAccentColor: (color: AccentColorType) => void
     setSidebarOpen: (open: boolean) => void
     toggleSidebar: () => void
     setSidebarWidth: (width: number) => void
@@ -44,6 +47,7 @@ export const useUIStore = create<UIState>()(
                 ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                 : 'light',
             language: 'zh-TW',
+            accentColor: 'blue',
             // 手機版預設收起，桌機版預設展開
             sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             sidebarWidth: 280,
@@ -59,6 +63,9 @@ export const useUIStore = create<UIState>()(
 
             // 設定語言
             setLanguage: (language) => set({ language }),
+
+            // 設定重點色
+            setAccentColor: (color) => set({ accentColor: color }),
 
             // 設定側邊欄開關
             setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -86,6 +93,7 @@ export const useUIStore = create<UIState>()(
             partialize: (state) => ({
                 theme: state.theme,
                 language: state.language,
+                accentColor: state.accentColor,
                 sidebarWidth: state.sidebarWidth,
             }),
         }

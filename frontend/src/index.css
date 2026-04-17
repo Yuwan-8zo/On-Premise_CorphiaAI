@@ -5,6 +5,30 @@
 /* 全域樣式 */
 :root {
   --color-primary: #0ea5e9;
+  /* 預設(藍色) */
+  --color-ios-accent-light: 0 122 255; /* #007aff */
+  --color-ios-accent-dark: 10 132 255; /* #0a84ff */
+}
+
+/* 重點色設定 */
+html[data-accent="purple"] {
+  --color-ios-accent-light: 175 82 222; /* #af52de */
+  --color-ios-accent-dark: 191 90 242; /* #bf5af2 */
+}
+
+html[data-accent="pink"] {
+  --color-ios-accent-light: 255 45 85; /* #ff2d55 */
+  --color-ios-accent-dark: 255 55 95; /* #ff375f */
+}
+
+html[data-accent="orange"] {
+  --color-ios-accent-light: 255 149 0; /* #ff9500 */
+  --color-ios-accent-dark: 255 159 10; /* #ff9f0a */
+}
+
+html[data-accent="green"] {
+  --color-ios-accent-light: 52 199 89; /* #34c759 */
+  --color-ios-accent-dark: 48 209 88; /* #30d158 */
 }
 
 * {
