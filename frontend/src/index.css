@@ -5,30 +5,34 @@
 /* 全域樣式 */
 :root {
   --color-primary: #0ea5e9;
-  /* 預設(藍色) */
-  --color-ios-accent-light: 0 122 255; /* #007aff */
-  --color-ios-accent-dark: 10 132 255; /* #0a84ff */
+  /* 預設(藍色) #1F8DFC */
+  --color-ios-accent-light: 31 141 252;
+  --color-ios-accent-dark: 31 141 252;
 }
 
 /* 重點色設定 */
 html[data-accent="purple"] {
-  --color-ios-accent-light: 175 82 222; /* #af52de */
-  --color-ios-accent-dark: 191 90 242; /* #bf5af2 */
+  /* #DB37F4 */
+  --color-ios-accent-light: 219 55 244;
+  --color-ios-accent-dark: 219 55 244;
 }
 
 html[data-accent="pink"] {
-  --color-ios-accent-light: 255 45 85; /* #ff2d55 */
-  --color-ios-accent-dark: 255 55 95; /* #ff375f */
+  /* #F64066 */
+  --color-ios-accent-light: 246 64 102;
+  --color-ios-accent-dark: 246 64 102;
 }
 
 html[data-accent="orange"] {
-  --color-ios-accent-light: 255 149 0; /* #ff9500 */
-  --color-ios-accent-dark: 255 159 10; /* #ff9f0a */
+  /* #FB8D2D */
+  --color-ios-accent-light: 251 141 45;
+  --color-ios-accent-dark: 251 141 45;
 }
 
 html[data-accent="green"] {
-  --color-ios-accent-light: 52 199 89; /* #34c759 */
-  --color-ios-accent-dark: 48 209 88; /* #30d158 */
+  /* #22D9C5 */
+  --color-ios-accent-light: 34 217 197;
+  --color-ios-accent-dark: 34 217 197;
 }
 
 * {
@@ -225,9 +229,11 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
   animation-duration: 0.01ms !important;
 }
 
-/* 螢光筆效果 (對齊文字底部) */
+/* 螢光筆效果 (對齊文字底部)
+   <mark> 標籤原本用於此 class，這裡我們也加上了針對 accent_color 的 rgba(...)
+*/
 .highlighter-marker {
-  background-image: linear-gradient(transparent 50%, rgba(253, 224, 71, 0.6) 50%);
+  background-image: linear-gradient(transparent 50%, rgb(var(--color-ios-accent-light) / 0.85) 50%);
   background-repeat: no-repeat;
   border-radius: 2px;
   padding: 0 0.1em;
@@ -235,5 +241,19 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
 }
 
 html.dark .highlighter-marker {
-  background-image: linear-gradient(transparent 50%, rgba(234, 179, 8, 0.4) 50%);
+  background-image: linear-gradient(transparent 50%, rgb(var(--color-ios-accent-dark) / 0.85) 50%);
+}
+
+/* 粗體字切換重點色 + 螢光筆 (透明度 85%) 效果 */
+.markdown-body strong {
+  color: rgb(var(--color-ios-accent-light));
+  background-image: linear-gradient(transparent 55%, rgb(var(--color-ios-accent-light) / 0.15) 55%, rgb(var(--color-ios-accent-light) / 0.15) 100%);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 100%;
+}
+
+html.dark .markdown-body strong {
+  color: rgb(var(--color-ios-accent-dark));
+  background-image: linear-gradient(transparent 55%, rgb(var(--color-ios-accent-dark) / 0.15) 55%, rgb(var(--color-ios-accent-dark) / 0.15) 100%);
 }

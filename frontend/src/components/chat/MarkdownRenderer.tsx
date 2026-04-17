@@ -240,17 +240,9 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             <hr className="my-6 border-slate-200 dark:border-slate-700" />
                         ),
 
-                        // 強調
+                        // 強調 (改由 index.css 統一由 --color-ios-accent 控制顏色與螢光筆效果)
                         strong: ({ children }) => (
-                            <strong 
-                                className="font-semibold text-slate-900 dark:text-slate-100 relative whitespace-pre-wrap"
-                                style={{
-                                    backgroundImage: 'linear-gradient(transparent 55%, rgba(250, 204, 21, 0.5) 55%, rgba(250, 204, 21, 0.5) 100%)',
-                                    backgroundRepeat: 'no-repeat',
-                                    backgroundPosition: 'bottom',
-                                    backgroundSize: '100% 100%',
-                                }}
-                            >
+                            <strong className="font-semibold relative whitespace-pre-wrap">
                                 {children}
                             </strong>
                         ),

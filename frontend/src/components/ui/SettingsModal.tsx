@@ -519,11 +519,11 @@ export default function SettingsModal() {
                                         <div className="flex flex-wrap gap-4">
                                             {(['blue', 'purple', 'pink', 'orange', 'green'] as const).map((color) => {
                                                 const bgColors: Record<string, string> = {
-                                                    blue: 'bg-[#007aff]',
-                                                    purple: 'bg-[#af52de]',
-                                                    pink: 'bg-[#ff2d55]',
-                                                    orange: 'bg-[#ff9500]',
-                                                    green: 'bg-[#34c759]'
+                                                    blue: 'bg-[#1F8DFC]',
+                                                    purple: 'bg-[#DB37F4]',
+                                                    pink: 'bg-[#F64066]',
+                                                    orange: 'bg-[#FB8D2D]',
+                                                    green: 'bg-[#22D9C5]'
                                                 }
                                                 const isActive = accentColor === color
                                                 return (
