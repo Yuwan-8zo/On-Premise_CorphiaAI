@@ -1195,8 +1195,8 @@ export default function Chat() {
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
                 {selectedFolder ? (
                     // 專案管理頁面 Folder View
-                    <div className="flex-1 overflow-y-auto px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full custom-scrollbar pb-32">
-                        <div className="mb-8 pl-2">
+                    <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full pb-8">
+                        <div className="mb-8 pl-2 shrink-0">
                             <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
                                 <svg className="w-8 h-8 text-ios-blue-light dark:text-ios-blue-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -1206,8 +1206,8 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-ios-dark-gray6/50">
+                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 flex flex-col flex-1 min-h-0">
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-ios-dark-gray6/50 shrink-0">
                                 <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
@@ -1217,8 +1217,9 @@ export default function Chat() {
                                 </button>
                             </div>
                             
-                            {folderDocuments.length === 0 ? (
-                                <div className="p-16 text-center">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                {folderDocuments.length === 0 ? (
+                                    <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                     </svg>
@@ -1284,11 +1285,12 @@ export default function Chat() {
                                     ))}
                                 </div>
                             )}
+                            </div>
                         </div>
                         
                         {/* 專案上傳進度 */}
                         {isUploading && selectedFolder && (
-                            <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-ios-blue-light/20 flex items-center justify-between shadow-sm animate-fade-in-up">
+                            <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-ios-blue-light/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-ios-blue-light dark:border-ios-blue-dark border-t-transparent animate-spin" />
                                     <span className="text-ios-blue-light dark:text-ios-blue-dark text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
@@ -1298,7 +1300,7 @@ export default function Chat() {
                         )}
                         
                         {/* New Chat Button at exactly Folder View */}
-                        <div className="mt-12 flex justify-center pb-20">
+                        <div className="mt-8 flex justify-center shrink-0">
                             <button
                                 onClick={async () => {
                                     // Start a chat automatically linked to this folder
