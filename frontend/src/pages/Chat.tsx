@@ -1652,25 +1652,34 @@ export default function Chat() {
                                     <div className="px-6 pt-6 pb-4">
                                         <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-4">移至專案</h3>
                                         
-                                        {Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)])).length > 0 && (
-                                            <div className="mb-4">
-                                                <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-2">選擇現有專案：</p>
-                                                <div className="max-h-[160px] overflow-y-auto space-y-1 -mx-2 px-2 scrollbar-hide">
-                                                    {Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)])).map(folder => (
-                                                        <button 
-                                                            key={folder}
-                                                            onClick={() => { setMoveInput(folder); submitMove(folder); }}
-                                                            className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors font-medium text-[15px] flex items-center gap-3 text-gray-700 dark:text-gray-200"
-                                                        >
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-                                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                                            </svg>
-                                                            <span className="truncate">{folder}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const allFolders = Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)]))
+                                            if (allFolders.length > 0) {
+                                                return (
+                                                    <div className="mb-4">
+                                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-2">選擇現有專案：</p>
+                                                        <div className="relative">
+                                                            <select
+                                                                value={allFolders.includes(moveInput) ? moveInput : ''}
+                                                                onChange={e => setMoveInput(e.target.value)}
+                                                                className="w-full px-4 py-2.5 bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/10 rounded-xl text-[15px] text-gray-900 dark:text-white outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark focus:ring-2 focus:ring-ios-blue-light/20 dark:focus:ring-ios-blue-dark/20 transition-all cursor-pointer appearance-none"
+                                                            >
+                                                                <option value="" disabled>請選擇專案...</option>
+                                                                {allFolders.map(folder => (
+                                                                    <option key={folder} value={folder}>{folder}</option>
+                                                                ))}
+                                                            </select>
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 dark:text-gray-400">
+                                                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
+                                            return null
+                                        })()}
 
                                         <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-3">或輸入新專案名稱：</p>
                                         <input
