@@ -172,6 +172,9 @@ async def update_conversation(
     
     # 更新欄位
     update_data = request.model_dump(exclude_unset=True)
+    # NOTE: 防止 title 被更新為空字串
+    if 'title' in update_data:
+        update_data['title'] = (update_data['title'] or '').strip() or conversation.title
     for field, value in update_data.items():
         setattr(conversation, field, value)
     

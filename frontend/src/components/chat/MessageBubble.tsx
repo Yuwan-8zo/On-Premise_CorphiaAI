@@ -2,7 +2,7 @@
  * 訊息氣泡元件 (ChatGPT UI 復刻版)
  */
 
-import { memo, useState } from 'react'
+import { memo, useState, useEffect } from 'react'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import type { Message } from '../../types/chat'
@@ -50,6 +50,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
     // 編輯狀態
     const [isEditing, setIsEditing] = useState(false)
     const [editContent, setEditContent] = useState(message.content)
+    
+    // NOTE: 當上層 re-fetch 訊息後更新 message.content 時（如 resubmit 後同步），同步到 editContent
+    // 避免下次再點「編輯」時 textarea 還顯示舊內容
+    useEffect(() => {
+        if (!isEditing) {
+            setEditContent(message.content)
+        }
+    }, [message.content, isEditing])
     
     // 複製狀態
     const [isCopied, setIsCopied] = useState(false)

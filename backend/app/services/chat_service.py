@@ -9,7 +9,7 @@ from typing import Optional, AsyncGenerator
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Optional, Any, AsyncGenerator
 
@@ -427,16 +427,19 @@ class ChatService:
             # 尋找並更新使用者訊息
             result = await self.db.execute(select(Message).where(Message.id == resubmit_message_id))
             user_message = result.scalar_one_or_none()
-            if user_message:
-                user_message.content = content
-                # 截斷後續所有訊息
-                await self.db.execute(
-                    delete(Message).where(
-                        Message.conversation_id == conversation_id,
-                        Message.created_at > user_message.created_at
-                    )
+            if not user_message:
+                # FIXME: 訊息不存在（可能是 temp ID），返回錯誤避免無效快取
+                yield {"type": "error", "message": "訊息不存在，無法重新生成"}
+                return
+            user_message.content = content
+            # 截斷後續所有訊息
+            await self.db.execute(
+                delete(Message).where(
+                    Message.conversation_id == conversation_id,
+                    Message.created_at > user_message.created_at
                 )
-                await self.db.commit()
+            )
+            await self.db.commit()
         else:
             # 儲存新使用者訊息
             user_message = Message(
@@ -546,7 +549,20 @@ class ChatService:
         await self.db.commit()
         await self.db.refresh(assistant_message)
         
-        # 發送完成訊息
+        # 依據實際 DB 訊息數量更新對話統計（resubmit 後新增數可能不是 +2）
+        msg_count_result = await self.db.execute(
+            select(func.count(Message.id)).where(Message.conversation_id == conversation_id)
+        )
+        actual_count = msg_count_result.scalar_one_or_none() or 0
+        await self.db.execute(
+            update(Conversation)
+            .where(Conversation.id == conversation_id)
+            .values(
+                message_count=actual_count,
+                updated_at=datetime.now().replace(tzinfo=None),
+            )
+        )
+        await self.db.commit()
         yield {
             "type": "done",
             "message_id": assistant_message.id,

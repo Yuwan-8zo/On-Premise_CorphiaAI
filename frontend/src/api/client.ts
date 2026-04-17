@@ -11,7 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 // 建立 Axios 實例
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 30000,
+    timeout: 120000, // NOTE: 提高至 120s，支援重型 LLM 的非串流推論
     headers: {
         'Content-Type': 'application/json',
     },

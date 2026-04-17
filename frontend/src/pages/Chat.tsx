@@ -322,7 +322,7 @@ export default function Chat() {
                     appendToLastMessage(data.content)
                 }
                 break
-            case 'done':
+            case 'done': {
                 setStreaming(false)
                 // 重新載入訊息以取得剛建立的 message 的真實 UUID，這樣編輯重新生成才能正常運作
                 const currentConvId = useChatStore.getState().currentConversation?.id
@@ -332,6 +332,7 @@ export default function Chat() {
                         .catch(err => console.error('同步訊息失敗:', err))
                 }
                 break
+            }
             case 'error':
                 console.error('WebSocket 錯誤:', data.message)
                 setStreaming(false)
@@ -539,7 +540,7 @@ export default function Chat() {
 
     const handleSend = async (overrideValue?: string) => {
         const text = overrideValue ?? input
-        if (!text.trim() || isStreaming) return
+        if (!text.trim() || isStreaming || isConnecting) return
 
         const userMessage = text.trim()
         if (!overrideValue) setInput('')
