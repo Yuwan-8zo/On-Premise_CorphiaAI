@@ -46,7 +46,7 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className="flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-2 min-w-[36px] min-h-[36px] rounded-full transition-colors bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 shadow-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[rgb(var(--color-ios-accent-dark)/0.15)] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-ios-accent-light)/0.3)] dark:focus:ring-[rgb(var(--color-ios-accent-dark)/0.3)]"
+                className="flex items-center justify-center w-[42px] h-[42px] shrink-0 rounded-full transition-colors bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 shadow-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[rgb(var(--color-ios-accent-dark)/0.15)] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-ios-accent-light)/0.3)] dark:focus:ring-[rgb(var(--color-ios-accent-dark)/0.3)]"
                 title={t('chat.promptTemplatesTitle') || '提示詞模版'}
             >
                 {/* 閃亮圖示 (Sparkles) */}
