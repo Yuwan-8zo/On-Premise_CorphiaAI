@@ -558,7 +558,7 @@ export default function SettingsModal() {
                                             <button
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
-                                                className={`w-full flex items-center justify-between px-6 py-5 rounded-full transition-all border-2 ${i18n.language === lang.code
+                                                className={`w-full flex items-center justify-between p-5 rounded-[20px] transition-all border-2 ${i18n.language === lang.code
                                                         ? 'bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))]'
                                                         : 'bg-white dark:bg-ios-dark-gray4 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
                                                     }`}
