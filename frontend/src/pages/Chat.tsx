@@ -768,10 +768,11 @@ export default function Chat() {
                         </motion.div>
                     ) : (
                         <div 
-                            className="relative flex flex-col items-center justify-between bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-[24px] p-1 cursor-pointer w-[48px] shrink-0 transition-colors"
-                            style={{ height: '88px' }}
+                            className="relative bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-[24px] cursor-pointer shrink-0 transition-colors"
+                            style={{ width: '48px', height: '88px' }}
                             onClick={() => setChatMode(prev => prev === 'general' ? 'project' : 'general')}
                         >
+                            {/* 滑動圓形背景 */}
                             <div 
                                 className="absolute bg-white dark:bg-ios-dark-gray4 rounded-full shadow-sm"
                                 style={{
@@ -779,19 +780,25 @@ export default function Chat() {
                                     height: '40px',
                                     top: '4px',
                                     left: '4px',
-                                    transform: `translateY(${chatMode === 'general' ? '0px' : '39px'})`,
+                                    transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
                                     transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
                                     zIndex: 1
                                 }}
                             />
                             {/* General Mode Icon (Message) */}
-                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}>
+                            <div 
+                                className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
+                                style={{ top: '4px', left: '4px', width: '40px', height: '40px' }}
+                            >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                 </svg>
                             </div>
                             {/* Project Mode Icon (Folder) */}
-                            <div className={`w-10 h-10 flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}>
+                            <div 
+                                className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
+                                style={{ top: '44px', left: '4px', width: '40px', height: '40px' }}
+                            >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                 </svg>
