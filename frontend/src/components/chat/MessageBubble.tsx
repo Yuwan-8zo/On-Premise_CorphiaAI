@@ -50,11 +50,16 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
     // 編輯狀態
     const [isEditing, setIsEditing] = useState(false)
     const [editContent, setEditContent] = useState(message.content)
+    
+    // 複製狀態
+    const [isCopied, setIsCopied] = useState(false)
 
     // 處理複製
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(message.content)
+            setIsCopied(true)
+            setTimeout(() => setIsCopied(false), 2000)
         } catch (err) {
             console.error('複製失敗:', err)
         }
@@ -119,7 +124,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                     {!isEditing && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 dark:text-gray-500 mr-2">
                             <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
-                                <Copy className="w-3.5 h-3.5" />
+                                {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                             </button>
                             <button onClick={() => { setEditContent(message.content); setIsEditing(true); }} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="編輯">
                                 <Edit2 className="w-3.5 h-3.5" />
