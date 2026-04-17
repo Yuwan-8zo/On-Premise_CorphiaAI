@@ -95,6 +95,14 @@ export default {
         today: 'Today',
         yesterday: 'Yesterday',
         previous: 'Previous',
+        promptTemplates: [
+            { title: 'Summarize', prompt: 'Please summarize the key points of the following text using bullet points:\n\n' },
+            { title: 'Translate', prompt: 'Please translate the following text into fluent, natural-sounding English:\n\n' },
+            { title: 'Explain Code', prompt: 'Please explain the logic and purpose of the following code line by line:\n\n' },
+            { title: 'Debug Helper', prompt: 'There is an error in the following code. Please analyze the possible causes and provide a suggested fix:\n\n' },
+            { title: 'Draft Email', prompt: 'Please help me draft a formal business email. The main purpose is:\n\n' },
+            { title: 'Polish wording', prompt: 'Please polish the following text to make the vocabulary more professional and appropriate:\n\n' }
+        ],
     },
 
     // Settings

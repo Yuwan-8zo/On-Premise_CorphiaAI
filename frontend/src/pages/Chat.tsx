@@ -11,7 +11,7 @@ import { conversationsApi } from '../api/conversations'
 import { documentsApi, type DocumentResponse } from '../api/documents'
 import modelsApi, { type ModelItem } from '../api/models'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
-import { MessageBubble, ChatMinimap, ScrollToBottomButton } from '../components/chat'
+import { MessageBubble, ChatMinimap, ScrollToBottomButton, PromptMenu } from '../components/chat'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
 import { CorphiaLogo } from '../components/icons/CorphiaIcons'
@@ -1426,6 +1426,17 @@ export default function Chat() {
                                         </button>
                                     </>
                                 )}
+                                
+                                {/* 提示詞模版選單 */}
+                                <div className="mb-1 shrink-0">
+                                    <PromptMenu 
+                                        disabled={isConnecting || isUploading}
+                                        onSelect={(prompt) => {
+                                            setInput((prev) => prev ? prompt + prev : prompt)
+                                            setTimeout(() => inputRef.current?.focus(), 0)
+                                        }} 
+                                    />
+                                </div>
                                 
                                 <textarea
                                     ref={inputRef}

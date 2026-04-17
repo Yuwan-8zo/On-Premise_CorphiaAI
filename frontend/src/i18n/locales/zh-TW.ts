@@ -95,6 +95,14 @@ export default {
         today: '今天',
         yesterday: '昨天',
         previous: '更早',
+        promptTemplates: [
+            { title: '摘要歸納', prompt: '請幫我摘錄以下內容的重點，並使用條列式呈現：\n\n' },
+            { title: '翻譯助理', prompt: '請將以下文字以流暢、自然的語氣翻譯為繁體中文：\n\n' },
+            { title: '程式原理解釋', prompt: '請幫我逐行解釋以下程式碼的執行邏輯與目的：\n\n' },
+            { title: '除錯助手', prompt: '這段程式碼出現了錯誤，請幫我分析可能的原因並提供修正建議：\n\n' },
+            { title: '撰寫正式 Email', prompt: '請幫我草擬一封正式的商務電子郵件，主要目的是：\n\n' },
+            { title: '語氣潤飾', prompt: '請幫我潤飾以下文字，確保用詞更專業、得體：\n\n' }
+        ],
     },
 
     // 設定
