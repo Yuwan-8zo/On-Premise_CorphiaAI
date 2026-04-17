@@ -39,7 +39,11 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 0 : 1 }}
         >
-            <CorphiaLogo className="w-9 h-9" />
+            {/* 動態重點色 Gradient */}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-black/5 dark:border-white/5 overflow-hidden" 
+                 style={{ background: 'linear-gradient(135deg, rgb(var(--color-ios-accent-dark)) 0%, rgb(var(--color-ios-accent-light)) 100%)' }}>
+                <CorphiaLogo className="w-6 h-6 text-white" />
+            </div>
         </span>
     </div>
 )
