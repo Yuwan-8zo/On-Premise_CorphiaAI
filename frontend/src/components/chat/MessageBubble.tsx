@@ -138,7 +138,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                 </div>
             ) : (
                 // AI 訊息：無背景框，流暢文字排版，包含頭像，靠左
-                <div className="w-full flex items-start gap-3">
+                <div className="w-full flex items-start gap-3 group">
                     {/* 頭像固定靠左，與文字首段齊平 */}
                     <div className="flex-shrink-0">
                         <AIAvatar isStreaming={isStreaming && !message.content} />
@@ -159,6 +159,15 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit }: Messag
                         {message.sources && message.sources.length > 0 && (
                             <div className="mt-4">
                                 <SourceCitations sources={message.sources} />
+                            </div>
+                        )}
+
+                        {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
+                        {message.content && !isStreaming && (
+                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 dark:text-gray-500">
+                                <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
+                                    {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
                             </div>
                         )}
                     </div>
