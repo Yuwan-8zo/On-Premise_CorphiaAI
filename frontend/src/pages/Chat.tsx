@@ -768,16 +768,18 @@ export default function Chat() {
                         </motion.div>
                     ) : (
                         <div 
-                            className="relative flex flex-col items-center justify-between bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-full p-1 cursor-pointer w-12 shrink-0 transition-colors"
-                            style={{ height: '96px' }}
+                            className="relative flex flex-col items-center justify-between bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-[24px] p-1 cursor-pointer w-[48px] shrink-0 transition-colors"
+                            style={{ height: '88px' }}
                             onClick={() => setChatMode(prev => prev === 'general' ? 'project' : 'general')}
                         >
                             <div 
-                                className="absolute bg-white dark:bg-ios-dark-gray4 w-10 h-10 rounded-full shadow-sm"
+                                className="absolute bg-white dark:bg-ios-dark-gray4 rounded-full shadow-sm"
                                 style={{
+                                    width: '40px',
+                                    height: '40px',
                                     top: '4px',
                                     left: '4px',
-                                    transform: `translateY(${chatMode === 'general' ? '0px' : '48px'})`,
+                                    transform: `translateY(${chatMode === 'general' ? '0px' : '39px'})`,
                                     transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
                                     zIndex: 1
                                 }}
