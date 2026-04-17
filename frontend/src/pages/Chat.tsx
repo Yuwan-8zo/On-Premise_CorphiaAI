@@ -1390,7 +1390,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative flex items-end gap-2">
                         {/* 提示詞模版選單 (獨立在左側) */}
-                        <div className="shrink-0 mb-1.5">
+                        <div className="shrink-0 mb-3.5">
                             <PromptMenu 
                                 disabled={isConnecting || isUploading}
                                 onSelect={(prompt) => {
