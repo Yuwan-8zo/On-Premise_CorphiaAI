@@ -75,30 +75,32 @@ def kill_port(port: int):
         return
     try:
         result = subprocess.run(
-            f"netstat -ano | findstr :{port} | findstr LISTENING",
+            "netstat -ano",
             shell=True, capture_output=True, text=True
         )
         if result.stdout:
             for line in result.stdout.strip().split("\n"):
+                if "LISTENING" not in line:
+                    continue
                 parts = line.strip().split()
-                if len(parts) > 4:
-                    pid = parts[-1]
-                    if pid != "0":
-                        subprocess.run(f"taskkill /F /T /PID {pid}", shell=True, capture_output=True)
+                if len(parts) >= 5:
+                    # parts[1] is Local Address like 0.0.0.0:8000
+                    if parts[1].endswith(f":{port}"):
+                        pid = parts[-1]
+                        if pid != "0":
+                            subprocess.run(f"taskkill /F /T /PID {pid}", shell=True, capture_output=True)
     except Exception:
         pass
 
 
-def start_service(title: str, cwd: str, command: str) -> subprocess.Popen:
+def start_service(title: str, cwd: str, command: str | list) -> subprocess.Popen:
     """
-    在新的視窗中啟動服務，並返回程序物件
-    使用 CREATE_NEW_CONSOLE 讓日誌顯示在獨立視窗中
+    啟動服務，並返回程序物件
     """
     proc = subprocess.Popen(
         command,
         cwd=cwd,
-        shell=True,
-        creationflags=subprocess.CREATE_NEW_CONSOLE,
+        shell=isinstance(command, str),
     )
     print(f"  [OK] {title} 已啟動 (PID: {proc.pid})")
     return proc
@@ -188,9 +190,22 @@ def main():
     print("  按下 Ctrl+C 可同時關閉所有服務")
     print("=" * 50)
 
+    # --- 啟動 Docker 容器 (PostgreSQL / 其他服務) ---
+    print("\n[0] 正在啟動基礎環境 (Docker)...")
+    if os.path.exists("docker-compose.yml"):
+        print("  正在確認容器狀態，若尚未啟動將自動在背景啟動...")
+        try:
+            # 加上 -d 讓它在背景執行
+            subprocess.run("docker-compose up -d", shell=True, check=True)
+            print("  [OK] Docker 容器狀態正常")
+        except Exception as e:
+            print(f"  [WARN] Docker 啟動失敗，請確認 Docker 是否已開啟 ({e})")
+    else:
+        print("  [SKIP] 找不到 docker-compose.yml，跳過 Docker 啟動")
+
     # --- 清理可能殘留的 Port ---
-    print("\n[0] 正在清理可能殘留的系統資源...")
-    kill_port(8000)
+    print("\n[1] 正在清理可能殘留的系統資源...")
+    kill_port(8168)
     kill_port(5173)
 
     # --- 自動硬體適配與 AI 引擎配置 ---
@@ -207,11 +222,11 @@ def main():
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
         if os.path.exists(venv_python):
-            backend_cmd = f'"{venv_python}" -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000'
+            backend_cmd = [venv_python, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168"]
         else:
-            backend_cmd = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+            backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168"]
 
-        proc = start_service("Backend (FastAPI :8000)", BACKEND_DIR, backend_cmd)
+        proc = start_service("Backend (FastAPI :8168)", BACKEND_DIR, backend_cmd)
         processes.append(proc)
     else:
         print("  [SKIP] 找不到 backend 資料夾，跳過")
@@ -237,16 +252,16 @@ def main():
     print("\n" + "=" * 50)
     print("  本機存取")
     print(f"    前端: http://localhost:5173")
-    print(f"    後端: http://localhost:8000")
+    print("    後端: http://localhost:8168")
     print("  區域網路存取 (手機/其他裝置)")
     print(f"    前端: http://{local_ip}:5173")
-    print(f"    後端: http://{local_ip}:8000")
+    print(f"    後端: http://{local_ip}:8168")
     if ngrok_url:
         print("  🌍 公開網址 (可分享給任何人)")
         print(f"    前端: {ngrok_url}")
     else:
         print("  ⚠️  未啟動 Ngrok，無公開網址")
-    print(f"  API 文件: http://localhost:8000/docs")
+    print(f"  API 文件: http://localhost:8168/docs")
     print("=" * 50)
     print("\n  服務運行中... 按 Ctrl+C 可關閉所有服務\n")
 

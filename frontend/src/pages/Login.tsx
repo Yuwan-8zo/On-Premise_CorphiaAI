@@ -110,27 +110,52 @@ export default function Login() {
 
     const [error, setError] = useState('')
     const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
+    const [hasInitialConnected, setHasInitialConnected] = useState(false)
+    const [showSkipLoading, setShowSkipLoading] = useState(false)
 
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
     // 檢查後端狀態
     useEffect(() => {
+        let isCancelled = false
         const checkBackend = async () => {
             try {
                 const response = await fetch('/api/v1/health')
                 if (response.ok) {
-                    setBackendStatus('online')
+                    if (!isCancelled) {
+                        setBackendStatus('online')
+                        setHasInitialConnected(true)
+                    }
                 } else {
-                    setBackendStatus('offline')
+                    if (!isCancelled) setBackendStatus('offline')
                 }
             } catch {
-                setBackendStatus('offline')
+                if (!isCancelled) setBackendStatus('offline')
             }
         }
+        
         checkBackend()
-        const interval = setInterval(checkBackend, 30000)
-        return () => clearInterval(interval)
-    }, [])
+        
+        // 啟動期間加快輪詢速度 (每 3 秒)，成功連線後恢復 30 秒輪詢
+        const intervalId = setInterval(() => {
+            checkBackend()
+        }, hasInitialConnected ? 30000 : 3000)
+
+        return () => {
+            isCancelled = true
+            clearInterval(intervalId)
+        }
+    }, [hasInitialConnected])
+
+    // 如果 10 秒後都連不上，顯示「跳過等待」按鈕
+    useEffect(() => {
+        if (!hasInitialConnected) {
+            const timer = setTimeout(() => {
+                setShowSkipLoading(true)
+            }, 10000)
+            return () => clearTimeout(timer)
+        }
+    }, [hasInitialConnected])
 
     // 點擊外部關閉選單
     useEffect(() => {
@@ -220,6 +245,52 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex bg-white dark:bg-ios-dark-gray6 transition-colors duration-300 relative overflow-hidden">
+            {/* ── 全螢幕啟動畫面 Modal ── */}
+            <AnimatePresence>
+                {!hasInitialConnected && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white dark:bg-ios-dark-gray6 backdrop-blur-md"
+                    >
+                        <motion.div
+                            animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.7, 1, 0.7] }}
+                            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                            className="flex flex-col items-center gap-6"
+                        >
+                            <CorphiaLogo className="w-24 h-24 text-ios-blue-light dark:text-ios-blue-dark drop-shadow-lg" />
+                            <div className="flex flex-col items-center gap-2 text-center">
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    Corphia AI 引擎啟動中
+                                </h2>
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    正在喚醒後端服務與加載大語言模型，請稍候...
+                                </p>
+                                <div className="mt-4 flex items-center justify-center gap-2">
+                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
+                            </div>
+                        </motion.div>
+                        
+                        <AnimatePresence>
+                            {showSkipLoading && (
+                                <motion.button
+                                    initial={{ opacity: 0, mt: 0 }}
+                                    animate={{ opacity: 1, mt: 32 }}
+                                    onClick={() => setHasInitialConnected(true)}
+                                    className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
+                                >
+                                    跳過等待，強制進入畫面
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* ── 全螢幕 QR Code 虛化背景 Modal ── */}
             <AnimatePresence>
                 {showQR && (

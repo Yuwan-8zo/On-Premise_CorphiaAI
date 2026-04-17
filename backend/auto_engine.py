@@ -96,8 +96,7 @@ def check_and_optimize(force=False):
                 saved_state = json.load(f)
                 # 若 GPU 組合與 Backend 目標一致，且曾成功或已記錄失敗，則不重複嘗試
                 if saved_state.get("gpus") == current_state["gpus"] and saved_state.get("backend") == current_state["backend"]:
-                    if saved_state.get("failed"):
-                        print(f"\n[AI 引擎管家] 先前切換至 {backend} 模式遇到錯誤，為了不影響啟動已自動跳過。若需重試請加上 --force。")
+                    # 若先前已標記為失敗，則維持靜默跳過，不干擾使用者畫面
                     return False
         except Exception:
             pass
