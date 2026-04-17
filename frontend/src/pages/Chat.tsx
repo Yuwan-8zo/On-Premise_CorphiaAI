@@ -984,7 +984,7 @@ export default function Chat() {
                         className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                     >
                         {/* 圓形頭像框 */}
-                        <div className="w-[32px] h-[32px] rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark flex items-center justify-center shrink-0 border border-ios-blue-light/20 dark:border-ios-blue-dark/20 font-bold text-[14px]">
+                        <div className="w-[32px] h-[32px] rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:bg-[rgb(var(--color-ios-accent-dark))] text-white flex items-center justify-center shrink-0 font-bold text-[14px]">
                             {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         {sidebarOpen && (
@@ -1390,7 +1390,7 @@ export default function Chat() {
                 >
                     <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative">
                         {/* 外層圓角與框限 */}
-                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[30px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors ring-1 ring-black/5 dark:ring-white/5 focus-within:ring-2 focus-within:ring-ios-blue-light/20 dark:focus-within:ring-ios-blue-dark/20">
+                        <div className="relative flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[30px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors focus-within:ring-1 focus-within:border-[rgb(var(--color-ios-accent-light))] dark:focus-within:border-[rgb(var(--color-ios-accent-dark))] focus-within:ring-[rgb(var(--color-ios-accent-light))] dark:focus-within:ring-[rgb(var(--color-ios-accent-dark))]">
                             
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading) && (

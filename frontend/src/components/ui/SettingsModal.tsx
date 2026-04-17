@@ -315,7 +315,7 @@ export default function SettingsModal() {
                                             setMobileView('content')
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
-                                                ? 'md:bg-white md:dark:bg-ios-dark-gray4 text-gray-900 dark:text-gray-200 md:text-ios-blue-light md:dark:text-ios-blue-light md:shadow-sm font-semibold'
+                                                ? 'md:bg-white md:dark:bg-ios-dark-gray4 text-gray-900 dark:text-gray-200 md:text-[rgb(var(--color-ios-accent-light))] md:dark:text-[rgb(var(--color-ios-accent-dark))] md:shadow-sm font-semibold'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 font-medium'
                                             }`}
                                     >
@@ -376,7 +376,7 @@ export default function SettingsModal() {
 
                                     {/* 頭像與資訊 */}
                                     <div className="flex items-center gap-8 mb-10">
-                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-ios-blue-light to-ios-blue-dark flex items-center justify-center text-white text-4xl font-bold shadow-lg shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:bg-[rgb(var(--color-ios-accent-dark))] flex items-center justify-center text-white text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div>
@@ -435,7 +435,7 @@ export default function SettingsModal() {
                                             <p className="text-lg text-gray-500 dark:text-gray-400 mb-3">
                                                 {user?.email}
                                             </p>
-                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light rounded-full">
+                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgba(var(--color-ios-accent-light),0.15)] dark:bg-[rgba(var(--color-ios-accent-dark),0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
                                                 {user?.role}
                                             </span>
                                         </div>
@@ -482,14 +482,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
-                                                    ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-light/10 ring-4 ring-ios-blue-light/20'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] ring-4 ring-[rgba(var(--color-ios-accent-light),0.2)] dark:ring-[rgba(var(--color-ios-accent-dark),0.2)]'
                                                     : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-white border border-gray-200 shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-ios-blue-light' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
@@ -498,14 +498,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
-                                                    ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-light/10 ring-4 ring-ios-blue-light/20'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] ring-4 ring-[rgba(var(--color-ios-accent-light),0.2)] dark:ring-[rgba(var(--color-ios-accent-dark),0.2)]'
                                                     : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-ios-dark-gray6 border border-white/5 shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-ios-blue-light dark:text-ios-blue-light' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {t('settings.themeDark')}
                                             </p>
                                         </button>
