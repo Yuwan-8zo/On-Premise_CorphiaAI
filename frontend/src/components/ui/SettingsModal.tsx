@@ -435,7 +435,7 @@ export default function SettingsModal() {
                                             <p className="text-lg text-gray-500 dark:text-gray-400 mb-3">
                                                 {user?.email}
                                             </p>
-                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgba(var(--color-ios-accent-light),0.15)] dark:bg-[rgba(var(--color-ios-accent-dark),0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
+                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgb(var(--color-ios-accent-light)/0.15)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
                                                 {user?.role}
                                             </span>
                                         </div>
@@ -482,7 +482,7 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] ring-4 ring-[rgba(var(--color-ios-accent-light),0.2)] dark:ring-[rgba(var(--color-ios-accent-dark),0.2)]'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
                                                     : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
@@ -498,7 +498,7 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] ring-4 ring-[rgba(var(--color-ios-accent-light),0.2)] dark:ring-[rgba(var(--color-ios-accent-dark),0.2)]'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
                                                     : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
@@ -559,7 +559,7 @@ export default function SettingsModal() {
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between px-6 py-5 rounded-full transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))]'
+                                                        ? 'bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))]'
                                                         : 'bg-white dark:bg-ios-dark-gray4 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
                                                     }`}
                                             >
