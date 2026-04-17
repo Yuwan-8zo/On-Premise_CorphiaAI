@@ -28,10 +28,10 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     <div className="relative w-9 h-9 flex-shrink-0 -mt-[3px]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
-            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
-            <CorphiaThinkingIcon className="w-6 h-6 text-ios-blue-light dark:text-ios-blue-dark" />
+            <CorphiaThinkingIcon className="w-6 h-6" />
         </span>
 
         {/* 【上層】靜態 Logo — streaming 結束後淡入 */}
@@ -39,11 +39,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 0 : 1 }}
         >
-            {/* 動態重點色 Gradient */}
-            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-black/5 dark:border-white/5 overflow-hidden" 
-                 style={{ background: 'linear-gradient(135deg, rgb(var(--color-ios-accent-dark)) 0%, rgb(var(--color-ios-accent-light)) 100%)' }}>
-                <CorphiaLogo className="w-6 h-6 text-white" />
-            </div>
+            <CorphiaLogo className="w-9 h-9" />
         </span>
     </div>
 )
