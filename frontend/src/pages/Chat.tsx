@@ -97,8 +97,9 @@ export default function Chat() {
     // Mode Toggle (UI Only)
     const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
 
-    // Folder View 狀態
+    // Folder View 相關
     const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
     const [folderDocuments, setFolderDocuments] = useState<DocumentResponse[]>([])
 
     // 檔案上傳相關狀態
@@ -242,13 +243,13 @@ export default function Chat() {
         setNewFolderModal(false)
         setNewFolderInput('')
 
-        // \u5c07\u8cc7\u6599\u593e\u5132\u5b58\u5230 localStorage \u2014\u2014 \u4e0d\u81ea\u52d5\u5efa\u7acb\u5c0d\u8a71\uff0c\u4fdd\u6301\u8cc7\u6599\u593e\u70ba\u7a7a
+        // 將資料夾儲存到 localStorage —— 不自動建立對話，保持資料夾為空
         const updated = savedFolders.includes(folderName)
             ? savedFolders
             : [...savedFolders, folderName]
         persistFolders(updated)
         setChatMode('project')
-        // \u6e05\u7a7a\u76ee\u524d\u9078\u53d6\u7684\u5c0d\u8a71\uff0c\u986f\u793a\u7a7a\u8cc7\u6599\u593e\u5167\u5bb9
+        // 清空目前選取的對話，顯示空資料夾內容
         setCurrentConversation(null)
         setMessages([])
     }
@@ -812,10 +813,10 @@ export default function Chat() {
                     {/* 分類標籤與歷史樹狀結構 */}
                     {chatMode === 'general' ? (
                         <>
-                            <div className="mb-2 pl-2 mt-1">
+                            <div className="mb-2 pl-3 mt-1">
                                 <span className="text-[12px] text-gray-500 tracking-wider font-medium">{t('chat.generalChat')}</span>
                             </div>
-                            <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
+                            <div className="space-y-1 transition-colors px-2">
                                 {(() => {
                                     const filtered = conversations.filter(c => !Boolean(c.settings?.isProject))
                                     if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
@@ -824,12 +825,12 @@ export default function Chat() {
                                         <div
                                             key={conv.id}
                                             onClick={() => selectConversation(conv)}
-                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-full text-[14px] transition-colors group cursor-pointer ${currentConversation?.id === conv.id
+                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversation?.id === conv.id
                                                 ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium'
                                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
                                         >
-                                            <span className="truncate pr-2 pl-1">{conv.title}</span>
+                                            <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                 <button
                                                     onClick={(e) => handleOpenMenu(e, conv.id)}
@@ -848,7 +849,7 @@ export default function Chat() {
                         </>
                     ) : (
                         <>
-                            <div className="mb-2 pl-2 mt-1">
+                            <div className="mb-2 pl-3 mt-1">
                                 <span className="text-[12px] text-gray-400 dark:text-gray-500 tracking-wider font-medium">{t('chat.projectFolderLabel')}</span>
                             </div>
                             {(() => {
@@ -861,7 +862,7 @@ export default function Chat() {
 
                                 if (allFolders.length === 0) {
                                     return (
-                                        <div className="border-l border-gray-200 dark:border-white/5 ml-2 pl-2 space-y-1 transition-colors">
+                                        <div className="px-2 space-y-1 transition-colors">
                                             <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noProjects')}</p>
                                         </div>
                                     )
@@ -876,45 +877,55 @@ export default function Chat() {
                                         grouped[folder].push(conv)
                                     })
 
-                                const folderNames = allFolders  // \u4f7f\u7528 allFolders \u78ba\u4fdd\u7a7a\u8cc7\u6599\u593e\u4e5f\u80fd\u986f\u793a
+                                const folderNames = allFolders
                                 
                                 return (
-                                    <div className="ml-2 pl-1 space-y-2 mt-2">
-                                        {folderNames.map((folderName, index) => {
-                                            const isLastFolder = index === folderNames.length - 1
+                                    <div className="px-2 space-y-2 mt-2">
+                                        {folderNames.map((folderName) => {
+                                            const isExpanded = expandedFolders.has(folderName)
                                             return (
-                                            <div key={folderName} className="relative">
-                                                {/* 主線：連接「專案資料夾」到此資料夾 L型節點 */}
-                                                <div 
-                                                    className="absolute left-[3px] top-[-16px] w-[12px] border-l border-b border-gray-300 dark:border-white/5 rounded-bl-sm"
-                                                    style={{ height: '28px' }}
-                                                />
-                                                {/* 主線的垂直延伸 (如果不是最後一個資料夾，繼續往下畫) */}
-                                                {!isLastFolder && (
-                                                    <div className="absolute left-[3px] top-[12px] bottom-[-8px] border-l border-gray-300 dark:border-white/5" />
-                                                )}
-
+                                            <div key={folderName} className="flex flex-col">
                                                 <div 
                                                     onClick={() => {
                                                         setSelectedFolder(folderName)
                                                         setCurrentConversation(null) // Reset conversation
+                                                        setExpandedFolders(prev => new Set(prev).add(folderName))
                                                         if (window.innerWidth < 768) setSidebarOpen(false)
                                                     }}
-                                                    className={`flex items-center justify-between text-[14px] font-medium pl-[22px] py-1 transition-colors cursor-pointer w-full text-left rounded-md hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 group ${selectedFolder === folderName ? 'text-ios-blue-light dark:text-ios-blue-dark' : 'text-gray-700 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark' : 'hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
                                                 >
-                                                    <span className="truncate pr-2">{folderName}</span>
+                                                    <div className="flex items-center gap-1 min-w-0">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setExpandedFolders(prev => {
+                                                                    const next = new Set(prev)
+                                                                    if (next.has(folderName)) next.delete(folderName)
+                                                                    else next.add(folderName)
+                                                                    return next
+                                                                })
+                                                            }}
+                                                            className={`p-0.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 transition-colors ${isExpanded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}
+                                                        >
+                                                            <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </button>
+                                                        <span className="truncate">{folderName}</span>
+                                                    </div>
+                                                    
                                                     <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                         {/* + 新增對話到此資料夾 */}
                                                         <button
                                                             onClick={(e) => createConvInFolder(folderName, e)}
-                                                            className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-ios-dark-gray4"
+                                                            className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-ios-dark-gray4"
                                                             title="在此資料夾新增對話"
                                                         >
-                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                                                             </svg>
                                                         </button>
-                                                        {/* ... 資料夾選項選單（番前使用刪除按鈕） */}
+                                                        {/* ... 資料夾選項選單（目前使用刪除按鈕） */}
                                                         <button
                                                             onClick={(e) => handleDeleteFolder(folderName, e)}
                                                             className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -926,37 +937,26 @@ export default function Chat() {
                                                 </div>
 
                                                 {/* 次層：聊天清單 */}
-                                                <div className="relative ml-[22px] mt-1 space-y-1">
-                                                    {(grouped[folderName] || []).map((conv, cIndex) => {
-                                                        const isLastConv = cIndex === (grouped[folderName] || []).length - 1
+                                                {isExpanded && (
+                                                <div className="pl-6 pr-1 mt-1 space-y-0.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    {(grouped[folderName] || []).map((conv) => {
                                                         return (
                                                             <div key={conv.id} className="relative">
-                                                                {/* 次層 L 型節點 */}
-                                                                <div 
-                                                                    className="absolute left-[-11px] top-[-10px] w-[12px] border-l border-b border-gray-300 dark:border-white/5 rounded-bl-sm pointer-events-none"
-                                                                    style={{ height: '28px' }}
-                                                                />
-                                                                {/* 次層垂直延伸 */}
-                                                                {!isLastConv && (
-                                                                    <div className="absolute left-[-11px] top-[18px] bottom-[-4px] border-l border-gray-300 dark:border-white/5 pointer-events-none" />
-                                                                )}
-                                                                
                                                                 <div
                                                                     onClick={() => selectConversation(conv)}
-                                                                    className={`relative z-10 w-full flex items-center justify-between text-left px-3 py-1.5 rounded-full text-[13px] transition-colors group cursor-pointer ml-[4px] border border-transparent ${currentConversation?.id === conv.id
+                                                                    className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversation?.id === conv.id
                                                                         ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium border-gray-200 dark:border-white/5'
                                                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3'
                                                                     }`}
-                                                                    style={{ width: 'calc(100% - 4px)' }}
                                                                 >
-                                                                    <span className="truncate pr-2 pl-1">{conv.title}</span>
+                                                                    <span className="truncate pr-2">{conv.title}</span>
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenu?.convId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                         <button
                                                                             onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                            className={`p-1.5 rounded-full hover:bg-gray-200 dark:bg-ios-dark-gray3 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray2 ${activeMenu?.convId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray2 text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                                                             title="選項"
                                                                         >
-                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                                                                             </svg>
                                                                         </button>
