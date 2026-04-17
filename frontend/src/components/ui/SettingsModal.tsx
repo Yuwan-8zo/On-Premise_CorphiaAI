@@ -559,7 +559,7 @@ export default function SettingsModal() {
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between px-6 py-5 rounded-full transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-ios-blue-light/5 dark:bg-ios-blue-light/10 text-ios-blue-light dark:text-ios-blue-light border-ios-blue-light'
+                                                        ? 'bg-[rgba(var(--color-ios-accent-light),0.05)] dark:bg-[rgba(var(--color-ios-accent-dark),0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))]'
                                                         : 'bg-white dark:bg-ios-dark-gray4 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
                                                     }`}
                                             >
