@@ -188,10 +188,10 @@ export default function Chat() {
         setMoveModal({ convId, isProject, folderName })
     }
 
-    const submitMove = async () => {
+    const submitMove = async (targetFolder?: string) => {
         if (!moveModal) return
         try {
-            if (moveModal.isProject) {
+            if (moveModal.isProject && !targetFolder) {
                 // 移回一般聊天
                 const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: false }
                 await conversationsApi.update(moveModal.convId, { settings: newSettings })
@@ -199,7 +199,7 @@ export default function Chat() {
                 setChatMode('general')
             } else {
                 // 移至專案
-                const folderName = moveInput.trim() || '新資料夾'
+                const folderName = (targetFolder || moveInput).trim() || '新資料夾'
                 const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: true, folderName }
                 await conversationsApi.update(moveModal.convId, { settings: newSettings })
                 updateConversation(moveModal.convId, { settings: newSettings })
@@ -1148,7 +1148,7 @@ export default function Chat() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                                            className="absolute right-0 top-full mt-2 w-[220px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
+                                            className="absolute right-0 top-full mt-2 w-[180px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
                                         >
                                             <button 
                                                 onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}
@@ -1628,7 +1628,7 @@ export default function Chat() {
                                         </button>
                                         <div className="w-px bg-gray-100 dark:bg-white/5" />
                                         <button
-                                            onClick={submitMove}
+                                            onClick={() => submitMove()}
                                             className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
                                         >
                                             確定
@@ -1639,7 +1639,28 @@ export default function Chat() {
                                 <>
                                     <div className="px-6 pt-6 pb-4">
                                         <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-4">移至專案</h3>
-                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-3">請輸入專案資料夾名稱</p>
+                                        
+                                        {Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)])).length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-2">選擇現有專案：</p>
+                                                <div className="max-h-[160px] overflow-y-auto space-y-1 -mx-2 px-2 scrollbar-hide">
+                                                    {Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)])).map(folder => (
+                                                        <button 
+                                                            key={folder}
+                                                            onClick={() => { setMoveInput(folder); submitMove(folder); }}
+                                                            className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 transition-colors font-medium text-[15px] flex items-center gap-3 text-gray-700 dark:text-gray-200"
+                                                        >
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                                            </svg>
+                                                            <span className="truncate">{folder}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-3">或輸入新專案名稱：</p>
                                         <input
                                             type="text"
                                             value={moveInput}
@@ -1660,7 +1681,7 @@ export default function Chat() {
                                         </button>
                                         <div className="w-px bg-gray-100 dark:bg-white/5" />
                                         <button
-                                            onClick={submitMove}
+                                            onClick={() => submitMove()}
                                             className="flex-1 py-3.5 text-[16px] text-ios-blue-light dark:text-ios-blue-dark hover:bg-blue-50 dark:hover:bg-ios-blue-dark/10 transition-colors font-semibold"
                                         >
                                             確定
