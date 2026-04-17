@@ -7,8 +7,6 @@
 import React, { memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-// @ts-expect-error - no types available
-import remarkMark from 'remark-mark'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
@@ -124,7 +122,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
         <MarkdownErrorBoundary fallbackContent={safeContent}>
             <div className={`markdown-body ${className}`}>
                 <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkMark]}
+                    remarkPlugins={[remarkGfm]}
                     components={{
                         // 程式碼區塊
                         code({ className, children, ...props }) {
@@ -244,7 +242,17 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 強調
                         strong: ({ children }) => (
-                            <strong className="font-semibold text-slate-800 dark:text-slate-100">{children}</strong>
+                            <strong 
+                                className="font-semibold text-slate-900 dark:text-slate-100 relative whitespace-pre-wrap"
+                                style={{
+                                    backgroundImage: 'linear-gradient(transparent 55%, rgba(250, 204, 21, 0.5) 55%, rgba(250, 204, 21, 0.5) 100%)',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'bottom',
+                                    backgroundSize: '100% 100%',
+                                }}
+                            >
+                                {children}
+                            </strong>
                         ),
                         em: ({ children }) => (
                             <em className="italic">{children}</em>
