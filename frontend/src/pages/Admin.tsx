@@ -794,9 +794,12 @@ export default function Admin() {
                                         />
                                         <button
                                             onClick={handleAuditSearch}
-                                            className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[14px] font-medium rounded-full transition-colors shadow-sm"
+                                            className="px-3 sm:px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[14px] font-medium rounded-full transition-colors shadow-sm flex items-center justify-center"
                                         >
-                                            搜尋
+                                            <span className="hidden sm:inline">搜尋</span>
+                                            <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </div>
@@ -1032,9 +1035,10 @@ export default function Admin() {
                                     <button
                                         onClick={() => handleAuditPageChange(auditPage - 1)}
                                         disabled={auditPage <= 1}
-                                        className="px-4 py-2 text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
                                     >
-                                        ← 上一頁
+                                        <svg className="w-5 h-5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                                        <span className="hidden sm:inline">上一頁</span>
                                     </button>
                                     <div className="flex gap-1">
                                         {Array.from({ length: Math.min(auditTotalPages, 5) }, (_, i) => {
@@ -1066,9 +1070,10 @@ export default function Admin() {
                                     <button
                                         onClick={() => handleAuditPageChange(auditPage + 1)}
                                         disabled={auditPage >= auditTotalPages}
-                                        className="px-4 py-2 text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
                                     >
-                                        下一頁 →
+                                        <span className="hidden sm:inline">下一頁</span>
+                                        <svg className="w-5 h-5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                                     </button>
                                 </div>
                             )}
