@@ -186,7 +186,7 @@ export default function SettingsModal() {
         if (!/[A-Z]/.test(value)) errors.push('需包含大寫字母')
         if (!/[a-z]/.test(value)) errors.push('需包含小寫字母')
         if (!/\d/.test(value)) errors.push('需包含數字')
-        if (!/[!@#$%^&*()\-_=+\[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push('需包含特殊字元')
+        if (!/[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push('需包含特殊字元')
 
         let score = 0
         if (value.length >= 8) score += 20
@@ -195,7 +195,7 @@ export default function SettingsModal() {
         if (/[a-z]/.test(value)) score += 15
         if (/[A-Z]/.test(value)) score += 15
         if (/\d/.test(value)) score += 15
-        if (/[!@#$%^&*()\-_=+\[\]{};:'",.<>?/\\|`~]/.test(value)) score += 15
+        if (/[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(value)) score += 15
         score = Math.min(score, 100)
 
         let level = 'weak'

@@ -895,7 +895,7 @@ export default function Chat() {
                             </div>
                             <div className="space-y-1 transition-colors px-2">
                                 {(() => {
-                                    const filtered = conversations.filter(c => !Boolean(c.settings?.isProject))
+                                    const filtered = conversations.filter(c => !c.settings?.isProject)
                                     if (filtered.length === 0) return <p className="text-gray-400 text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
                                     
                                     return filtered.map((conv) => (

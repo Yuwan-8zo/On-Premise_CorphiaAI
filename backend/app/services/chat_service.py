@@ -444,7 +444,7 @@ class ChatService:
             result = await self.db.execute(select(Message).where(Message.id == resubmit_message_id))
             user_message = result.scalar_one_or_none()
             if not user_message:
-                # FIXME: 訊息不存在（可能是 temp ID），返回錯誤避免無效快取
+                # NOTE: 訊息不存在（可能是 temp ID），返回錯誤避免無效快取
                 yield {"type": "error", "message": "訊息不存在，無法重新生成"}
                 return
             user_message.content = content
