@@ -16,7 +16,7 @@ interface Marker {
 export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps) {
     const [markers, setMarkers] = useState<Marker[]>([])
 
-    const updateMarkers = () => {
+    const updateMarkers = useCallback(() => {
         if (!containerRef.current || messages.length === 0) {
             setMarkers([])
             return
@@ -44,7 +44,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
         }).filter(Boolean) as Marker[]
         
         setMarkers(newMarkers)
-    }
+    }, [messages, containerRef])
 
     useEffect(() => {
         // Debounce update to save performance
@@ -75,7 +75,8 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
             resizeObserver.disconnect()
             mutationObserver.disconnect()
         }
-    }, [messages, containerRef])
+    }, [containerRef, updateMarkers])
+
 
     const scrollToMsg = (id: string) => {
         const el = document.getElementById(`msg-${id}`)

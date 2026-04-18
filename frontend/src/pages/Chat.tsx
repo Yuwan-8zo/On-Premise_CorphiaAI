@@ -395,7 +395,7 @@ export default function Chat() {
         } catch (error) {
             console.error('載入訊息失敗:', error)
         }
-    }, [setCurrentConversation, setMessages, connectWebSocket])
+    }, [setCurrentConversation, setMessages, connectWebSocket, setSidebarOpen])
 
     const loadMoreMessages = useCallback(async () => {
         const convId = useChatStore.getState().currentConversation?.id

@@ -625,9 +625,9 @@ export default function Admin() {
                                                                         await apiClient.delete(`/users/${u.id}`)
                                                                         alert(`已成功刪除 ${u.name}`)
                                                                         loadUsers()
-                                                                    } catch (err: any) {
-                                                                        alert(`刪除失敗: ${err.response?.data?.detail || ''}`)
-                                                                    }
+                                                                        } catch (err: unknown) {
+                                                                            alert(`刪除失敗: ${(err as { response?: { data?: { detail?: string } } }).response?.data?.detail || ''}`)
+                                                                        }
                                                                 }}
                                                                 className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                                                 title="刪除此使用者"
@@ -678,7 +678,7 @@ export default function Admin() {
                                                 <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
                                                 <button onClick={async () => {
                                                     if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return;
-                                                    try { await apiClient.delete(`/users/${u.id}`); alert(`已成功刪除 ${u.name}`); loadUsers(); } catch (err: any) { alert(`刪除失敗: ${err.response?.data?.detail || ''}`); }
+                                                    try { await apiClient.delete(`/users/${u.id}`); alert(`已成功刪除 ${u.name}`); loadUsers(); } catch (err: unknown) { alert(`刪除失敗: ${(err as { response?: { data?: { detail?: string } } }).response?.data?.detail || ''}`); }
                                                 }} className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20">
                                                     刪除
                                                 </button>
