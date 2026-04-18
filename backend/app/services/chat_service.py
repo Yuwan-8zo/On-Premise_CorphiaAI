@@ -5,14 +5,12 @@
 """
 
 import logging
-from typing import Optional, AsyncGenerator
 from datetime import datetime
+from typing import TypedDict, Optional, Any, AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 from langgraph.graph import StateGraph, START, END
-from typing import TypedDict, Optional, Any, AsyncGenerator
-
 from duckduckgo_search import DDGS
 import asyncio
 

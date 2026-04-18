@@ -140,7 +140,7 @@ class DocumentService:
             # 儲存分塊到資料庫
             for i, chunk_content in enumerate(chunks):
                 # 取得向量
-                embedding = rag_service.get_embedding(chunk_content)
+                embedding = await rag_service.get_embedding(chunk_content)
                 
                 chunk = DocumentChunk(
                     document_id=document.id,
@@ -157,7 +157,9 @@ class DocumentService:
             # 更新文件狀態
             document.status = DocumentStatus.COMPLETED.value
             document.chunk_count = len(chunks)
-            document.processed_at = datetime.now().replace(tzinfo=None)
+            # NOTE: 使用 UTC 時間，與系統其他地方保持一致
+            from datetime import timezone
+            document.processed_at = datetime.now(timezone.utc).replace(tzinfo=None)
             
             await self.db.commit()
             

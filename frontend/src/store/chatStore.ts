@@ -25,7 +25,7 @@ interface ChatState {
     setStreaming: (streaming: boolean) => void
     setLoading: (loading: boolean) => void
     appendToLastMessage: (content: string) => void
-    setSourcesToLastMessage: (sources: any[]) => void
+    setSourcesToLastMessage: (sources: MessageSource[]) => void
     clearMessages: () => void
 }
 
@@ -115,7 +115,7 @@ export const useChatStore = create<ChatState>()((set) => ({
                 const lastMessage = messages[messages.length - 1]
                 messages[messages.length - 1] = {
                     ...lastMessage,
-                    sources: sources as MessageSource[],
+                    sources,
                 }
             }
             return { messages }

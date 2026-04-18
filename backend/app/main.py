@@ -33,8 +33,6 @@ from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
 
 
-# 設定日誌
-import logging
 from app.core.logging_config import setup_logging
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -154,8 +152,13 @@ async def global_exception_handler(request: Request, exc: Exception):
     """全域例外處理"""
     logger.error(f"未處理的例外: {exc}", exc_info=True)
     
-    with open("crash.log", "w", encoding="utf-8") as f:
+    with open("crash.log", "a", encoding="utf-8") as f:
         import traceback
+        from datetime import datetime
+        f.write(f"\n\n{'='*60}\n")
+        f.write(f"Crash at: {datetime.now().isoformat()}\n")
+        f.write(f"Request: {request.method} {request.url}\n")
+        f.write(f"{'='*60}\n")
         f.write(traceback.format_exc())
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

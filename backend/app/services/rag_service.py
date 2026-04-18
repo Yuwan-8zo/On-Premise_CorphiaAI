@@ -67,13 +67,13 @@ class RAGService:
         except Exception as e:
             logger.warning(f"Embedding 模型載入失敗: {e}")
     
-    def get_embedding(self, text: str) -> list[float]:
+    async def get_embedding(self, text: str) -> list[float]:
         """
-        取得文字的向量表示
-        
+        取得文字的向量表示（非同步，避免阻塞 event loop）
+
         Args:
             text: 輸入文字
-            
+
         Returns:
             list[float]: 向量
         """
@@ -81,13 +81,16 @@ class RAGService:
             # 使用簡單的雜湊作為回退（長度必須對應資料庫設計的 384 維度）
             import hashlib
             hash_obj = hashlib.sha512(text.encode())
-            # SHA-512 gives 64 bytes -> we need 384 floats. Let's just create a dummy vector of 384 dims
-            base_val = [float(b) / 255.0 for b in hash_obj.digest()] # 64 floats
+            # SHA-512 gives 64 bytes -> we need 384 floats.
+            base_val = [float(b) / 255.0 for b in hash_obj.digest()]  # 64 floats
             return (base_val * 6)[:384]
-        
-        embedding = self.embed_model.encode(text)
+
+        # NOTE: sentence_transformers.encode() 是同步 CPU 密集型操作，
+        # 必須以 asyncio.to_thread() 包裝，避免阻塞 async event loop
+        import asyncio
+        embedding = await asyncio.to_thread(self.embed_model.encode, text)
         return embedding.tolist()
-    
+
     async def search(
         self,
         db: AsyncSession,
@@ -118,7 +121,7 @@ class RAGService:
         
         try:
             # 生成查詢向量
-            query_embedding = self.get_embedding(query)
+            query_embedding = await self.get_embedding(query)
             
             # 建立基本的查詢
             stmt = select(DocumentChunk).join(Document, DocumentChunk.document_id == Document.id)

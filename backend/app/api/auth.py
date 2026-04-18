@@ -302,6 +302,12 @@ async def refresh_token(
             detail="使用者不存在或已停用"
         )
 
+    # 提前取出 user_id 字串，避免 audit commit 後 SQLAlchemy session expire
+    # 導致後續存取 user.id 時觸發 lazy load 崩潰 (MissingGreenlet)
+    resolved_user_id = str(user.id)
+    resolved_user_email = str(user.email)
+    resolved_tenant_id = user.tenant_id
+
     # 撤銷舊的 Refresh Token
     if old_jti:
         old_exp = payload.get("exp")
@@ -309,26 +315,26 @@ async def refresh_token(
         await add_token_to_blacklist(
             db=db,
             jti=old_jti,
-            user_id=user_id,
+            user_id=resolved_user_id,
             token_type="refresh",
             expires_at=expires_at,
             reason="token_refresh",
         )
 
     # 建立新 Token
-    token_data = {"sub": user.id}
+    token_data = {"sub": resolved_user_id}
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
 
-    # Token 刷新審計
+    # Token 刷新審計（使用已提前解析的字串，避免跨 session lazy-load）
     await write_audit_log(
         db=db,
         action=AuditAction.TOKEN_REFRESH,
         resource_type=AuditResource.AUTH,
-        user_id=user.id,
-        user_email=user.email,
-        tenant_id=user.tenant_id,
-        description=f"Token 刷新: {user.email}",
+        user_id=resolved_user_id,
+        user_email=resolved_user_email,
+        tenant_id=resolved_tenant_id,
+        description=f"Token 刷新: {resolved_user_email}",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
     )
@@ -363,7 +369,7 @@ async def change_password(
     if not verify_password(request_body.current_password, current_user.password_hash):
         await write_audit_log(
             db=db,
-            action="password_change_failed",
+            action=AuditAction.PASSWORD_CHANGE_FAILED,
             resource_type=AuditResource.AUTH,
             user_id=current_user.id,
             user_email=current_user.email,
@@ -391,7 +397,7 @@ async def change_password(
     # 密碼修改審計
     await write_audit_log(
         db=db,
-        action="password_change_success",
+        action=AuditAction.PASSWORD_CHANGE_SUCCESS,
         resource_type=AuditResource.AUTH,
         user_id=current_user.id,
         user_email=current_user.email,

@@ -1,4 +1,3 @@
-import sys
 
 # Magic bytes 字典
 MAGIC_BYTES = {
