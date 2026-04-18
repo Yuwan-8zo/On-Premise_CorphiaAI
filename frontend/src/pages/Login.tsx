@@ -170,7 +170,7 @@ export default function Login() {
 
     // 語言選擇處理
     const handleLanguageSelect = (lang: 'zh-TW' | 'en-US' | 'ja-JP') => {
-        setLanguage(lang as any)
+        setLanguage(lang)
         i18n.changeLanguage(lang)
         setIsLangMenuOpen(false)
     }
@@ -217,7 +217,7 @@ export default function Login() {
             } else if (status === 422) {
                 // Pydantic 驗證錯誤 (密碼強度不符合等)
                 // 後端回傳格式: { error: { details: [{ field, message }] } }
-                const details = (data as any)?.error?.details as Array<{ field: string; message: string }> | undefined
+                const details = (data as { error?: { details?: Array<{ field: string; message: string }> } })?.error?.details
                 if (details && details.length > 0) {
                     // 找密碼相關的錯誤
                     const pwdError = details.find(d => d.field?.includes('password'))

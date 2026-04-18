@@ -84,10 +84,11 @@ export default function Register() {
             )
 
             navigate('/')
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('註冊失敗:', err)
-            if (err.response?.data?.detail) {
-                setError(err.response.data.detail)
+            const axiosErr = err as { response?: { data?: { detail?: string } } }
+            if (axiosErr.response?.data?.detail) {
+                setError(axiosErr.response.data.detail)
             } else {
                 setError('註冊失敗，請稍後再試')
             }

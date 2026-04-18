@@ -82,10 +82,10 @@ CodeBlock.displayName = 'CodeBlock'
 
 // 錯誤捕獲邊界，防止 Markdown 解析失敗導致整個畫面黑屏
 class MarkdownErrorBoundary extends React.Component<
-    { children: React.ReactNode; fallbackContent: any },
+    { children: React.ReactNode; fallbackContent: string },
     { hasError: boolean; error: Error | null }
 > {
-    constructor(props: { children: React.ReactNode; fallbackContent: any }) {
+    constructor(props: { children: React.ReactNode; fallbackContent: string }) {
         super(props)
         this.state = { hasError: false, error: null }
     }

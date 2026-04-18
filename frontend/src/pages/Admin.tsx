@@ -31,6 +31,25 @@ interface Stats {
     totalMessages: number
 }
 
+// 後端 API 回傳的使用者原始格式
+interface BackendUserResponse {
+    id: string
+    name: string
+    email: string
+    role: 'engineer' | 'admin' | 'user'
+    is_active: boolean
+    created_at: string
+    last_login_at?: string
+}
+
+// 使用者更新資料（password 為可選欄位）
+interface UpdateUserData {
+    name: string
+    role: string
+    is_active: boolean
+    password?: string
+}
+
 // Icons
 const BackIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,10 +187,10 @@ export default function Admin() {
             }
             setIsTenantModalOpen(false)
             loadTenants()
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('儲存租戶失敗:', err)
-            // 從後端錯誤訊息抓取詳細原因
-            const errorDetail = err.response?.data?.detail || err.message
+            const errorDetail = err instanceof Error ? err.message :
+                (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || '未知錯誤'
             alert(`儲存失敗: ${errorDetail}`)
         } finally {
             setIsSubmittingTenant(false)
@@ -191,9 +210,10 @@ export default function Admin() {
                 await tenantsApi.updateTenant(tenant.id, { is_active: true })
             }
             loadTenants()
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('切換狀態失敗:', err)
-            const errorDetail = err.response?.data?.detail || err.message
+            const errorDetail = err instanceof Error ? err.message :
+                (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || '未知錯誤'
             alert(`切換狀態失敗: ${errorDetail}`)
         }
     }
@@ -204,7 +224,7 @@ export default function Admin() {
         try {
             const response = await apiClient.get('/users?page=1&page_size=100')
             if (response.data && response.data.data) {
-                const fetchedUsers = response.data.data.map((u: any) => ({
+                const fetchedUsers = response.data.data.map((u: BackendUserResponse) => ({
                     id: u.id,
                     name: u.name,
                     email: u.email,
@@ -245,7 +265,7 @@ export default function Admin() {
         setIsSubmittingUser(true)
         try {
             if (currentEditingUser) {
-                const updateData: any = {
+                const updateData: UpdateUserData = {
                     name: userFormData.name,
                     role: userFormData.role,
                     is_active: userFormData.is_active
@@ -257,8 +277,9 @@ export default function Admin() {
             }
             setIsUserModalOpen(false)
             loadUsers()
-        } catch (err: any) {
-            const errorDetail = err.response?.data?.detail || err.message
+        } catch (err: unknown) {
+            const errorDetail = err instanceof Error ? err.message :
+                (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || '未知錯誤'
             alert(`儲存失敗: ${errorDetail}`)
         } finally {
             setIsSubmittingUser(false)

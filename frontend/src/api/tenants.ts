@@ -5,7 +5,7 @@ export interface Tenant {
     name: string;
     slug: string;
     description?: string;
-    settings?: Record<string, any>;
+    settings?: Record<string, unknown>;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -15,7 +15,7 @@ export interface TenantCreate {
     name: string;
     slug: string;
     description?: string;
-    settings?: Record<string, any>;
+    settings?: Record<string, unknown>;
     is_active?: boolean;
 }
 
@@ -23,7 +23,7 @@ export interface TenantUpdate {
     name?: string;
     slug?: string;
     description?: string;
-    settings?: Record<string, any>;
+    settings?: Record<string, unknown>;
     is_active?: boolean;
 }
 

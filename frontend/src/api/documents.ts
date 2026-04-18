@@ -6,7 +6,7 @@ export interface DocumentResponse {
     content_type: string
     size_bytes: number
     status: string
-    doc_metadata?: Record<string, any>
+    doc_metadata?: Record<string, unknown>
     created_at: string
 }
 
@@ -18,7 +18,7 @@ export const documentsApi = {
     },
 
     // 上傳檔案（帶有專案資料夾分離）
-    upload: async (file: File, folderName?: string, onUploadProgress?: (progressEvent: any) => void) => {
+    upload: async (file: File, folderName?: string, onUploadProgress?: (progressEvent: ProgressEvent) => void) => {
         const formData = new FormData()
         formData.append('file', file)
         if (folderName) {
@@ -40,7 +40,7 @@ export const documentsApi = {
     },
     
     // 更新 metadata (例如啟用/停用引用)
-    updateMetadata: async (id: string, metadata: Record<string, any>) => {
+    updateMetadata: async (id: string, metadata: Record<string, unknown>) => {
         const response = await apiClient.patch(`/documents/${id}/metadata`, {
             doc_metadata: metadata
         })

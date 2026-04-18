@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface ScrollToBottomButtonProps {
     containerRef: React.RefObject<HTMLDivElement | null>
-    dependsOn?: any // 用來強制更新的依賴，如 messages
+    dependsOn?: unknown // 用來強制更新的依賴，如 messages
 }
 
 export default function ScrollToBottomButton({ containerRef, dependsOn }: ScrollToBottomButtonProps) {
