@@ -259,8 +259,40 @@ def main():
             except Exception:
                 pass
 
-    # --- 啟動後端 ---
-    print("  [4/5] 啟動後端服務 (Port 8168)...")
+    # --- [4/5] 前端先啟動（速度快，讓瀏覽器可以馬上開啟） ---
+    print("  [4/5] 啟動前端服務 (Port 5173)...")
+    if os.path.exists(FRONTEND_DIR):
+        proc = subprocess.Popen(
+            "npm run dev -- --host --logLevel silent",
+            cwd=FRONTEND_DIR, shell=True,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        processes.append(proc)
+        print(f"  [OK] 前端程序已啟動 (PID: {proc.pid})")
+
+    # 等待 Vite 就緒（通常 2~3 秒）後自動開啟瀏覽器
+    print("  [瀏覽器] 等待前端就緒，即將自動開啟瀏覽器...", end="", flush=True)
+    for _ in range(6):  # 最多等待 3 秒 (6 * 0.5s)
+        time.sleep(0.5)
+        print(".", end="", flush=True)
+        try:
+            r = urllib.request.urlopen("http://127.0.0.1:5173", timeout=1)
+            if r.status < 500:
+                break
+        except Exception:
+            pass
+    print()
+    # 自動開啟瀏覽器
+    if sys.platform == "win32":
+        subprocess.Popen("start http://localhost:5173", shell=True)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", "http://localhost:5173"])
+    else:
+        subprocess.Popen(["xdg-open", "http://localhost:5173"])
+    print("  [OK] 瀏覽器已開啟，前端正在顯示啟動畫面 ✅")
+
+    # --- [5/5] 後端在背景啟動，前端的啟動畫面會一直輪詢直到就緒 ---
+    print("  [5/5] 啟動後端服務 (Port 8168)...")
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
         if os.path.exists(venv_python):
@@ -282,20 +314,6 @@ def main():
             print("  [OK] 後端 API 已就緒 ✅")
         else:
             print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行（Docker 需先啟動）⚠️")
-
-    # --- 啟動前端 ---
-    print("  [5/5] 啟動前端服務 (Port 5173)...")
-    if os.path.exists(FRONTEND_DIR):
-        proc = subprocess.Popen(
-            "npm run dev -- --host --logLevel silent",
-            cwd=FRONTEND_DIR, shell=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        processes.append(proc)
-        print(f"  [OK] 前端程序已啟動 (PID: {proc.pid})")
-
-    # 給前端 Vite 一點時間完成初始化
-    time.sleep(2)
 
     # --- 在背景啟動 Ngrok（不阻塞）---
     ngrok_result = []
