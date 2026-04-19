@@ -14,6 +14,7 @@ import urllib.request
 import urllib.error
 import json
 import shutil
+import threading
 
 # 修正 Windows 終端機編碼問題
 if sys.platform == "win32":
@@ -135,17 +136,19 @@ def find_ngrok() -> str | None:
     return None
 
 
-def start_ngrok(port: int = 5173) -> str | None:
+def start_ngrok_background(port: int = 5173, result_container: list = None):
     """
-    啟動 Ngrok 並取得公開網址
-    回傳格式: https://xxxx.ngrok-free.app 或 None（失敗時）
+    在背景執行緒中啟動 Ngrok 並取得公開網址
+    結果儲存在 result_container[0]，None 表示失敗
     """
     ngrok_path = find_ngrok()
 
     if not ngrok_path:
-        return None
+        if result_container is not None:
+            result_container.append(None)
+        return
 
-    # 先關掉殘留的 ngrok 程序與可能佔用的 4040 api port（避免 port 與 tunnel 衝突）
+    # 先關掉殘留的 ngrok 程序
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
         kill_port(4040)
@@ -153,7 +156,7 @@ def start_ngrok(port: int = 5173) -> str | None:
         kill_port(4042)
         time.sleep(0.5)
 
-    # 啟動 ngrok（在背景，不開新視窗）
+    # 啟動 ngrok
     ngrok_proc = subprocess.Popen(
         f'"{ngrok_path}" http {port}',
         shell=True,
@@ -162,13 +165,12 @@ def start_ngrok(port: int = 5173) -> str | None:
     )
     processes.append(ngrok_proc)
 
-    # 等待 ngrok 啟動（最多 30 秒，因有時網路受阻會需時更久）
+    # 等待 ngrok 啟動（最多 20 秒）
     ngrok_url = None
-    for attempt in range(60):
+    for attempt in range(40):
         time.sleep(0.5)
         for api_port in [4040, 4041, 4042]:
             try:
-                # NOTE: ngrok 的本地管理 API
                 res = urllib.request.urlopen(f"http://127.0.0.1:{api_port}/api/tunnels", timeout=1)
                 data = json.loads(res.read())
                 tunnels = data.get("tunnels", [])
@@ -179,11 +181,30 @@ def start_ngrok(port: int = 5173) -> str | None:
                 if ngrok_url:
                     break
             except Exception:
-                pass  # 這個 port 沒開，找下一個
+                pass
         if ngrok_url:
             break
 
-    return ngrok_url
+    if result_container is not None:
+        result_container.append(ngrok_url)
+
+
+def wait_for_backend(port: int = 8168, timeout: int = 30) -> bool:
+    """
+    等待後端服務啟動（輪詢 health endpoint）
+    回傳 True 表示後端已就緒，False 表示逾時
+    """
+    url = f"http://127.0.0.1:{port}/api/v1/health"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            res = urllib.request.urlopen(url, timeout=2)
+            if res.status == 200:
+                return True
+        except Exception:
+            pass
+        time.sleep(1)
+    return False
 
 
 def main():
@@ -193,46 +214,90 @@ def main():
 
     # --- 啟動 Docker 容器 (背景靜默啟動) ---
     if os.path.exists("docker-compose.yml"):
+        print("  [1/5] 啟動 Docker 容器...")
         try:
-            subprocess.run("docker-compose up -d", shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run("docker-compose up -d", shell=True, check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print("  [OK] Docker 容器已啟動")
         except Exception:
-            pass
+            print("  [跳過] Docker 啟動失敗或未安裝，繼續...")
+    else:
+        print("  [1/5] 未偵測到 docker-compose.yml，跳過 Docker...")
 
     # --- 清理可能殘留的 Port ---
+    print("  [2/5] 清理佔用的 Port 8168, 5173...")
     kill_port(8168)
     kill_port(5173)
 
     # --- 自動硬體適配與 AI 引擎配置 ---
+    print("  [3/5] 偵測硬體環境...")
     if os.path.exists(BACKEND_DIR):
         engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
         if os.path.exists(engine_script):
             venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
             py_exec = venv_python if os.path.exists(venv_python) else sys.executable
-            # 靜默執行引擎偵測
-            subprocess.run([py_exec, engine_script] + sys.argv[1:], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # 靜默執行引擎偵測（設定超時保護，避免卡住）
+            try:
+                subprocess.run(
+                    [py_exec, engine_script] + sys.argv[1:],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=10  # NOTE: 最多等待 10 秒，避免卡住
+                )
+            except subprocess.TimeoutExpired:
+                print("  [跳過] 硬體偵測超時，使用預設設定")
+            except Exception:
+                pass
 
     # --- 啟動後端 ---
+    print("  [4/5] 啟動後端服務 (Port 8168)...")
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
         if os.path.exists(venv_python):
-            backend_cmd = [venv_python, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
+            backend_cmd = [venv_python, "-m", "uvicorn", "app.main:app",
+                           "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
         else:
-            backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
-        
-        proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        processes.append(proc)
+            backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app",
+                           "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"]
 
-    time.sleep(1)
+        proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        processes.append(proc)
+        print(f"  [OK] 後端程序已啟動 (PID: {proc.pid})，正在等待就緒...")
+
+        # 等待後端健康檢查通過（最多 30 秒）
+        backend_ready = wait_for_backend(8168, timeout=30)
+        if backend_ready:
+            print("  [OK] 後端 API 已就緒 ✅")
+        else:
+            print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行 ⚠️")
 
     # --- 啟動前端 ---
+    print("  [5/5] 啟動前端服務 (Port 5173)...")
     if os.path.exists(FRONTEND_DIR):
-        proc = subprocess.Popen("npm run dev -- --host --logLevel silent", cwd=FRONTEND_DIR, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen(
+            "npm run dev -- --host --logLevel silent",
+            cwd=FRONTEND_DIR, shell=True,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
         processes.append(proc)
+        print(f"  [OK] 前端程序已啟動 (PID: {proc.pid})")
 
+    # 給前端 Vite 一點時間完成初始化
     time.sleep(2)
 
-    # --- 啟動 Ngrok ---
-    ngrok_url = start_ngrok(port=5173)
+    # --- 在背景啟動 Ngrok（不阻塞）---
+    ngrok_result = []
+    ngrok_thread = None
+    ngrok_path = find_ngrok()
+    if ngrok_path:
+        print("  [Ngrok] 正在背景取得公開網址...")
+        ngrok_thread = threading.Thread(
+            target=start_ngrok_background,
+            args=(5173, ngrok_result),
+            daemon=True
+        )
+        ngrok_thread.start()
 
     # --- 顯示存取資訊 ---
     local_ip = get_local_ip()
@@ -241,16 +306,23 @@ def main():
     print("-" * 50)
     print("  本機存取")
     print(f"    前端: http://localhost:5173")
-    print("    後端: http://localhost:8168")
+    print(f"    後端: http://localhost:8168")
     print("  區域網路存取 (手機/其他裝置)")
     print(f"    前端: http://{local_ip}:5173")
     print(f"    後端: http://{local_ip}:8168")
-    if ngrok_url:
-        print("  🌍 公開網址 (可分享給任何人)")
-        print(f"    前端: {ngrok_url}")
-    else:
-        print("  ⚠️  未啟動 Ngrok，(可能因重啟過快被伺服器阻擋，請稍候重試)")
     print(f"  API 文件: http://localhost:8168/docs")
+    print("-" * 50)
+
+    if ngrok_thread:
+        # 最多再等 15 秒讓 ngrok 完成
+        ngrok_thread.join(timeout=15)
+        if ngrok_result and ngrok_result[0]:
+            print(f"  🌍 公開網址 (Ngrok): {ngrok_result[0]}")
+        else:
+            print("  ⚠️  Ngrok 公開網址尚未就緒（可能需要更多時間或 Ngrok 帳號設定）")
+    else:
+        print("  ℹ️  未安裝 Ngrok，無法提供公開存取網址")
+
     print("-" * 50)
     print("  🛑 按下 Ctrl+C 可隨時關閉所有服務")
     print("=" * 50 + "\n")
