@@ -293,8 +293,8 @@ async def delete_user(
             detail="使用者不存在"
         )
     
-    # 軟刪除（停用帳號）
-    user.is_active = False
+    # 實際刪除使用者 (硬刪除)，這會觸發 cascade 刪除該使用者的所有關聯資料 (對話、文件等)
+    await db.delete(user)
     await db.commit()
     
     # 審計日誌
@@ -306,12 +306,12 @@ async def delete_user(
         user_id=current_user.id,
         user_email=current_user.email,
         tenant_id=current_user.tenant_id,
-        description=f"管理員停用使用者: {user.email}",
+        description=f"管理員刪除使用者: {user.email}",
         ip_address=get_client_ip(request) if request else None,
         user_agent=get_user_agent(request) if request else None,
     )
     
-    return {"message": "使用者已停用"}
+    return {"message": "使用者已永久刪除"}
 
 
 @router.post("/{user_id}/activate")
