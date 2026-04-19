@@ -2,6 +2,12 @@
 Corphia AI - 一鍵啟動腳本
 執行方式: python start.py
 按下 Ctrl+C 可同時關閉前端、後端與 Ngrok
+
+功能：
+  - 自動啟動 Docker / 後端 / 前端 / Ngrok
+  - 瀏覽器自動開啟並顯示「引擎啟動中」畫面
+  - 優先沿用現有 Ngrok 通道（URL 保持不變）
+  - 最後顯示本機 / 區網 / 公開 三合一網址
 """
 
 import subprocess
@@ -27,6 +33,10 @@ BACKEND_DIR = os.path.join(BASE_DIR, "backend")
 processes: list[subprocess.Popen] = []
 
 
+# ─────────────────────────────────────────────────────────────
+#  工具函數
+# ─────────────────────────────────────────────────────────────
+
 def get_local_ip() -> str:
     """取得本機區網 IP"""
     try:
@@ -36,11 +46,11 @@ def get_local_ip() -> str:
         s.close()
         return ip
     except Exception:
-        return "無法取得 IP"
+        return "無法取得"
 
 
 def kill_process_tree(pid: int):
-    """強制終止 Windows 上的整個程序樹（包含子程序）"""
+    """強制終止 Windows 上的整個程序樹"""
     subprocess.run(
         ["taskkill", "/F", "/T", "/PID", str(pid)],
         capture_output=True
@@ -48,7 +58,7 @@ def kill_process_tree(pid: int):
 
 
 def shutdown(sig=None, frame=None):
-    """Ctrl+C 或訊號觸發時，關閉所有服務"""
+    """Ctrl+C 觸發時，關閉所有服務"""
     print("\n\n  正在關閉所有服務...")
     for proc in processes:
         try:
@@ -73,27 +83,23 @@ def kill_port(port: int):
         result = subprocess.run(
             "netstat -ano", shell=True, capture_output=True, text=True
         )
-        if result.stdout:
-            for line in result.stdout.strip().split("\n"):
-                if "LISTENING" not in line:
-                    continue
-                parts = line.strip().split()
-                if len(parts) >= 5 and parts[1].endswith(f":{port}"):
-                    pid = parts[-1]
-                    if pid != "0":
-                        subprocess.run(
-                            f"taskkill /F /T /PID {pid}",
-                            shell=True, capture_output=True
-                        )
+        for line in result.stdout.strip().split("\n"):
+            if "LISTENING" not in line:
+                continue
+            parts = line.strip().split()
+            if len(parts) >= 5 and parts[1].endswith(f":{port}"):
+                pid = parts[-1]
+                if pid != "0":
+                    subprocess.run(
+                        f"taskkill /F /T /PID {pid}",
+                        shell=True, capture_output=True
+                    )
     except Exception:
         pass
 
 
 def find_ngrok() -> str | None:
-    """
-    尋找 ngrok 執行檔位置
-    搜尋順序: 系統 PATH → 專案根目錄 → 常見安裝位置
-    """
+    """尋找 ngrok 執行檔"""
     ngrok_in_path = shutil.which("ngrok")
     if ngrok_in_path:
         return ngrok_in_path
@@ -136,9 +142,8 @@ def _query_ngrok_url() -> str | None:
 def start_ngrok_background(port: int = 5173, result_container: list = None):
     """
     在背景執行緒中啟動 Ngrok 並取得公開網址
-    結果儲存在 result_container[0]，None 表示失敗
-
-    優先沿用現有的 ngrok 通道（避免每次重啟 URL 改變）
+    優先沿用現有的 ngrok 通道（URL 保持不變，不重複取得新網址）
+    結果儲存在 result_container[0]
     """
     ngrok_path = find_ngrok()
     if not ngrok_path:
@@ -146,14 +151,14 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
             result_container.append(None)
         return
 
-    # ── 優先沿用現有通道，URL 保持不變 ──
+    # ── 優先沿用現有通道 ──
     existing_url = _query_ngrok_url()
     if existing_url:
         if result_container is not None:
             result_container.append(existing_url)
         return
 
-    # ── 沒有可用通道才關舊的然後重新啟動 ──
+    # ── 無可用通道，才關掉舊的並重新啟動 ──
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
         kill_port(4040)
@@ -169,9 +174,9 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
     )
     processes.append(ngrok_proc)
 
-    # 等待 ngrok 啟動（最多 20 秒）
+    # 等待 ngrok 啟動（最多 30 秒）
     ngrok_url = None
-    for _ in range(40):
+    for _ in range(60):
         time.sleep(0.5)
         ngrok_url = _query_ngrok_url()
         if ngrok_url:
@@ -185,7 +190,6 @@ def wait_for_backend(port: int = 8168, timeout: int = 60) -> bool:
     """
     等待後端服務啟動（輪詢 health endpoint）
     顯示動態進度點讓使用者知道程式在運行中
-    回傳 True 表示後端已就緒，False 表示逾時
     """
     url = f"http://127.0.0.1:{port}/api/v1/health"
     deadline = time.time() + timeout
@@ -208,12 +212,16 @@ def wait_for_backend(port: int = 8168, timeout: int = 60) -> bool:
     return False
 
 
-def main():
-    print("=" * 50)
-    print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
-    print("=" * 50)
+# ─────────────────────────────────────────────────────────────
+#  主程序
+# ─────────────────────────────────────────────────────────────
 
-    # --- [1/5] 啟動 Docker 容器 ---
+def main():
+    print("=" * 52)
+    print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
+    print("=" * 52)
+
+    # ── [1/5] Docker ──────────────────────────────────────────
     if os.path.exists("docker-compose.yml"):
         print("  [1/5] 啟動 Docker 容器...")
         try:
@@ -227,12 +235,25 @@ def main():
     else:
         print("  [1/5] 未偵測到 docker-compose.yml，跳過 Docker...")
 
-    # --- [2/5] 清理可能殘留的 Port ---
-    print("  [2/5] 清理佔用的 Port 8168, 5173...")
+    # ── [2/5] 清理 Port + 提前啟動 Ngrok（趁後端加載時取得網址）──
+    print("  [2/5] 清理佔用的 Port，並在背景啟動 Ngrok...")
     kill_port(8168)
     kill_port(5173)
 
-    # --- [3/5] 自動硬體適配與 AI 引擎配置 ---
+    ngrok_result: list = []
+    ngrok_thread: threading.Thread | None = None
+    if find_ngrok():
+        ngrok_thread = threading.Thread(
+            target=start_ngrok_background,
+            args=(5173, ngrok_result),
+            daemon=True
+        )
+        ngrok_thread.start()
+        print("  [OK] Ngrok 已在背景啟動（趁後端加載期間取得公開網址）")
+    else:
+        print("  [略過] 未找到 ngrok 執行檔，公開網址功能停用")
+
+    # ── [3/5] 硬體偵測 ────────────────────────────────────────
     print("  [3/5] 偵測硬體環境...")
     if os.path.exists(BACKEND_DIR):
         engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
@@ -244,14 +265,14 @@ def main():
                     [py_exec, engine_script] + sys.argv[1:],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    timeout=10  # NOTE: 最多等待 10 秒，避免卡住
+                    timeout=10
                 )
             except subprocess.TimeoutExpired:
                 print("  [跳過] 硬體偵測超時，使用預設設定")
             except Exception:
                 pass
 
-    # --- [4/5] 前端先啟動（速度快，讓瀏覽器可以馬上開啟）---
+    # ── [4/5] 前端先啟動 → 瀏覽器自動開啟 ──────────────────────
     print("  [4/5] 啟動前端服務 (Port 5173)...")
     if os.path.exists(FRONTEND_DIR):
         proc = subprocess.Popen(
@@ -262,9 +283,9 @@ def main():
         processes.append(proc)
         print(f"  [OK] 前端程序已啟動 (PID: {proc.pid})")
 
-    # 等待 Vite 就緒（通常 2~3 秒）後自動開啟瀏覽器
+    # 等待 Vite 就緒後自動開啟瀏覽器
     print("  [瀏覽器] 等待前端就緒，即將自動開啟瀏覽器...", end="", flush=True)
-    for _ in range(6):  # 最多等待 3 秒 (6 * 0.5s)
+    for _ in range(6):
         time.sleep(0.5)
         print(".", end="", flush=True)
         try:
@@ -274,17 +295,15 @@ def main():
         except Exception:
             pass
     print()
-
-    # 自動開啟瀏覽器（讓使用者看到「Corphia AI 引擎啟動中」的畫面）
     if sys.platform == "win32":
         subprocess.Popen("start http://localhost:5173", shell=True)
     elif sys.platform == "darwin":
         subprocess.Popen(["open", "http://localhost:5173"])
     else:
         subprocess.Popen(["xdg-open", "http://localhost:5173"])
-    print("  [OK] 瀏覽器已開啟，前端正在顯示啟動畫面 ✅")
+    print("  [OK] 瀏覽器已開啟（顯示「Corphia AI 引擎啟動中」畫面）✅")
 
-    # --- [5/5] 後端在背景啟動，前端的啟動畫面會一直輪詢直到就緒 ---
+    # ── [5/5] 後端啟動，前端持續輪詢直到就緒 ────────────────────
     print("  [5/5] 啟動後端服務 (Port 8168)...")
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
@@ -307,52 +326,50 @@ def main():
         print(f"  [OK] 後端程序已啟動 (PID: {proc.pid})")
         print("  [等待] 後端 API 就緒中（LLM 模型載入可能需要 1~2 分鐘）：")
 
-        backend_ready = wait_for_backend(8168, timeout=60)
+        backend_ready = wait_for_backend(8168, timeout=120)
         if backend_ready:
             print("  [OK] 後端 API 已就緒 ✅")
         else:
             print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行（Docker 需先啟動）⚠️")
 
-    # --- Ngrok：背景取得公開網址（優先沿用現有通道）---
-    ngrok_result = []
-    ngrok_thread = None
-    if find_ngrok():
-        print("  [Ngrok] 正在背景取得公開網址（優先沿用現有通道）...")
-        ngrok_thread = threading.Thread(
-            target=start_ngrok_background,
-            args=(5173, ngrok_result),
-            daemon=True
-        )
-        ngrok_thread.start()
+    # ── 等待 Ngrok 結果（後端加載期間 ngrok 早應完成）────────────
+    if ngrok_thread and ngrok_thread.is_alive():
+        # 最多再等 10 秒（通常 ngrok 幾秒內就好了）
+        ngrok_thread.join(timeout=10)
 
-    # --- 顯示存取資訊 ---
+    # 取得公開網址（若 ngrok_result 仍空，再查詢一次）
+    public_url = (ngrok_result[0] if ngrok_result else None) or _query_ngrok_url()
+
+    # ── 顯示完整服務資訊 ──────────────────────────────────────
     local_ip = get_local_ip()
-    print("\n" + "=" * 50)
-    print("  🟢 服務已全面啟動完成")
-    print("-" * 50)
-    print("  本機存取")
-    print(f"    前端: http://localhost:5173")
-    print(f"    後端: http://localhost:8168")
-    print("  區域網路存取 (手機/其他裝置)")
-    print(f"    前端: http://{local_ip}:5173")
-    print(f"    後端: http://{local_ip}:8168")
-    print(f"  API 文件: http://localhost:8168/docs")
-    print("-" * 50)
-
-    if ngrok_thread:
-        # 非阻塞：若 ngrok 已完成就顯示，否則繼續
-        ngrok_thread.join(timeout=0.1)
-        if ngrok_result and ngrok_result[0]:
-            print(f"  🌍 公開網址 (Ngrok): {ngrok_result[0]}")
-        else:
-            print("  ⏳ Ngrok 公開網址正在背景取得中...")
-            print("  💡 若需要新網址，請另開終端執行: python ngrok_reset.py")
+    print()
+    print("=" * 52)
+    print("  🟢 Corphia AI Platform 已全面啟動！")
+    print("=" * 52)
+    print()
+    print("  📍 本機存取")
+    print(f"     前端: http://localhost:5173")
+    print(f"     後端: http://localhost:8168")
+    print(f"     文件: http://localhost:8168/docs")
+    print()
+    print(f"  📡 區域網路（手機 / 其他裝置）")
+    print(f"     前端: http://{local_ip}:5173")
+    print(f"     後端: http://{local_ip}:8168")
+    print()
+    if public_url:
+        print(f"  🌍 公開網址（Ngrok）")
+        print(f"     前端: {public_url}")
+        print(f"     後端: {public_url.replace(':5173', ':8168') if ':5173' in public_url else public_url + ' → port 5173'}")
+        print()
+        print(f"  💡 想換新公開網址？執行: python ngrok_reset.py")
     else:
-        print("  ℹ️  未安裝 Ngrok，無法提供公開存取網址")
-
-    print("-" * 50)
+        print(f"  🌍 公開網址（Ngrok）")
+        print(f"     ⚠️  Ngrok 連線失敗或未安裝")
+        print(f"     💡 嘗試重設：python ngrok_reset.py")
+    print()
     print("  🛑 按下 Ctrl+C 可隨時關閉所有服務")
-    print("=" * 50 + "\n")
+    print("=" * 52)
+    print()
 
     # 持續等待，直到 Ctrl+C
     while True:
