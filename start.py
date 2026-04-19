@@ -189,21 +189,31 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
         result_container.append(ngrok_url)
 
 
-def wait_for_backend(port: int = 8168, timeout: int = 30) -> bool:
+def wait_for_backend(port: int = 8168, timeout: int = 60) -> bool:
     """
     等待後端服務啟動（輪詢 health endpoint）
+    顯示動態進度點讓使用者知道程式在運行中
     回傳 True 表示後端已就緒，False 表示逾時
     """
     url = f"http://127.0.0.1:{port}/api/v1/health"
     deadline = time.time() + timeout
+    dots = 0
+    print("  ", end="", flush=True)
     while time.time() < deadline:
         try:
             res = urllib.request.urlopen(url, timeout=2)
             if res.status == 200:
+                print(" 就緒！", flush=True)
                 return True
         except Exception:
             pass
+        # 每秒印一個點，每 20 個點換行
+        print(".", end="", flush=True)
+        dots += 1
+        if dots % 20 == 0:
+            print(f"\n  ", end="", flush=True)
         time.sleep(1)
+    print(" 逾時", flush=True)
     return False
 
 
@@ -263,14 +273,15 @@ def main():
         proc = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, shell=False,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         processes.append(proc)
-        print(f"  [OK] 後端程序已啟動 (PID: {proc.pid})，正在等待就緒...")
+        print(f"  [OK] 後端程序已啟動 (PID: {proc.pid})")
+        print("  [等待] 後端 API 就緒中（LLM 模型載入可能需要 1~2 分鐘）：")
 
-        # 等待後端健康檢查通過（最多 30 秒）
-        backend_ready = wait_for_backend(8168, timeout=30)
+        # 等待後端健康檢查通過（最多 60 秒，LLM 模型載入需時）
+        backend_ready = wait_for_backend(8168, timeout=60)
         if backend_ready:
             print("  [OK] 後端 API 已就緒 ✅")
         else:
-            print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行 ⚠️")
+            print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行（Docker 需先啟動）⚠️")
 
     # --- 啟動前端 ---
     print("  [5/5] 啟動前端服務 (Port 5173)...")
@@ -314,12 +325,12 @@ def main():
     print("-" * 50)
 
     if ngrok_thread:
-        # 最多再等 15 秒讓 ngrok 完成
-        ngrok_thread.join(timeout=15)
+        # 非阻塞：若 ngrok 已完成就顯示，否則在後台繼續嘗試
+        ngrok_thread.join(timeout=0.1)
         if ngrok_result and ngrok_result[0]:
             print(f"  🌍 公開網址 (Ngrok): {ngrok_result[0]}")
         else:
-            print("  ⚠️  Ngrok 公開網址尚未就緒（可能需要更多時間或 Ngrok 帳號設定）")
+            print("  ⏳ Ngrok 公開網址正在背景取得中，請稍候...")
     else:
         print("  ℹ️  未安裝 Ngrok，無法提供公開存取網址")
 
