@@ -14,6 +14,7 @@ export const apiClient = axios.create({
     timeout: 120000, // NOTE: 提高至 120s，支援重型 LLM 的非串流推論
     headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // 加入此 header 以避開 ngrok 畫面
     },
 })
 
