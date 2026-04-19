@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
@@ -1277,8 +1278,9 @@ export default function Admin() {
                 )}
 
         {/* 租戶表單 Modal */}
-        <AnimatePresence>
-            {isTenantModalOpen && (
+        {createPortal(
+            <AnimatePresence>
+                {isTenantModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <motion.div 
                         initial={{ opacity: 0 }}
@@ -1378,11 +1380,14 @@ export default function Admin() {
                     </motion.div>
                 </div>
             )}
-        </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+        )}
 
         {/* 使用者新增/編輯 Modal */}
-        <AnimatePresence>
-            {isUserModalOpen && (
+        {createPortal(
+            <AnimatePresence>
+                {isUserModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -1499,11 +1504,14 @@ export default function Admin() {
                     </motion.div>
                 </div>
             )}
-        </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+        )}
 
         {/* 刪除使用者確認 Modal */}
-        <AnimatePresence>
-            {isDeleteUserModalOpen && userToDelete && (
+        {createPortal(
+            <AnimatePresence>
+                {isDeleteUserModalOpen && userToDelete && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -1560,7 +1568,9 @@ export default function Admin() {
                     </motion.div>
                 </div>
             )}
-        </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+        )}
             </div>
         </div>
     )
