@@ -124,6 +124,9 @@ export default function Admin() {
     // 使用者 Modal state
     const [isUserModalOpen, setIsUserModalOpen] = useState(false)
     const [isSubmittingUser, setIsSubmittingUser] = useState(false)
+    const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState(false)
+    const [userToDelete, setUserToDelete] = useState<UserData | null>(null)
+    const [isDeletingUser, setIsDeletingUser] = useState(false)
     const [currentEditingUser, setCurrentEditingUser] = useState<UserData | null>(null)
     const [userFormData, setUserFormData] = useState({ name: '', email: '', password: '', role: 'user', is_active: true })
     // 檢查權限
@@ -246,6 +249,26 @@ export default function Admin() {
         setCurrentEditingUser(null)
         setUserFormData({ name: '', email: '', password: '', role: 'user', is_active: true })
         setIsUserModalOpen(true)
+    }
+
+    const handleDeleteUserClick = (u: UserData) => {
+        setUserToDelete(u)
+        setIsDeleteUserModalOpen(true)
+    }
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return
+        setIsDeletingUser(true)
+        try {
+            await apiClient.delete(`/users/${userToDelete.id}`)
+            loadUsers()
+            setIsDeleteUserModalOpen(false)
+            setUserToDelete(null)
+        } catch (err: unknown) {
+            alert(`刪除失敗: ${(err as { response?: { data?: { detail?: string } } }).response?.data?.detail || ''}`)
+        } finally {
+            setIsDeletingUser(false)
+        }
     }
 
     const handleEditUser = (u: UserData) => {
@@ -619,16 +642,7 @@ export default function Admin() {
                                                                 編輯
                                                             </button>
                                                             <button
-                                                                onClick={async () => {
-                                                                    if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return
-                                                                    try {
-                                                                        await apiClient.delete(`/users/${u.id}`)
-                                                                        alert(`已成功刪除 ${u.name}`)
-                                                                        loadUsers()
-                                                                        } catch (err: unknown) {
-                                                                            alert(`刪除失敗: ${(err as { response?: { data?: { detail?: string } } }).response?.data?.detail || ''}`)
-                                                                        }
-                                                                }}
+                                                                onClick={() => handleDeleteUserClick(u)}
                                                                 className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                                                 title="刪除此使用者"
                                                             >
@@ -676,10 +690,10 @@ export default function Admin() {
                                             </div>
                                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/5">
                                                 <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
-                                                <button onClick={async () => {
-                                                    if (!confirm(`確定要刪除使用者「${u.name}」嗎？\n此操作無法復原，並會撤銷該使用者所有已發放的 Token。`)) return;
-                                                    try { await apiClient.delete(`/users/${u.id}`); alert(`已成功刪除 ${u.name}`); loadUsers(); } catch (err: unknown) { alert(`刪除失敗: ${(err as { response?: { data?: { detail?: string } } }).response?.data?.detail || ''}`); }
-                                                }} className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20">
+                                                <button 
+                                                    onClick={() => handleDeleteUserClick(u)} 
+                                                    className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20"
+                                                >
                                                     刪除
                                                 </button>
                                             </div>
@@ -1482,6 +1496,67 @@ export default function Admin() {
                                 </button>
                             </div>
                         </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+
+        {/* 刪除使用者確認 Modal */}
+        <AnimatePresence>
+            {isDeleteUserModalOpen && userToDelete && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-md"
+                        onClick={() => !isDeletingUser && setIsDeleteUserModalOpen(false)}
+                    />
+                    <motion.div 
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-sm border border-gray-100 dark:border-white/5"
+                    >
+                        <div className="text-center">
+                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 mb-4">
+                                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                                確定要刪除使用者？
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                                您即將刪除「<span className="font-semibold text-gray-900 dark:text-gray-300">{userToDelete.name}</span>」。此操作無法復原，並會撤銷該使用者所有已發放的 Token。
+                            </p>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsDeleteUserModalOpen(false)}
+                                disabled={isDeletingUser}
+                                className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 disabled:opacity-50 rounded-full transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDeleteUser}
+                                disabled={isDeletingUser}
+                                className="flex-1 px-4 py-2.5 text-white font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors flex items-center justify-center shadow-sm shadow-red-600/20"
+                            >
+                                {isDeletingUser ? (
+                                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : (
+                                    '確定刪除'
+                                )}
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}
