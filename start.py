@@ -7,7 +7,7 @@ Corphia AI - 一鍵啟動腳本
   - 自動啟動 Docker / 後端 / 前端 / Ngrok
   - 瀏覽器自動開啟並顯示「引擎啟動中」畫面
   - 優先沿用現有 Ngrok 通道（URL 保持不變）
-  - 最後顯示本機 / 區網 / 公開 三合一網址
+  - 最後顯示 本機 / 區網 / 公開 三合一網址
 """
 
 import subprocess
@@ -128,7 +128,7 @@ def _query_ngrok_url() -> str | None:
     for api_port in [4040, 4041, 4042]:
         try:
             res = urllib.request.urlopen(
-                f"http://127.0.0.1:{api_port}/api/tunnels", timeout=1
+                f"http://127.0.0.1:{api_port}/api/tunnels", timeout=2
             )
             data = json.loads(res.read())
             for tunnel in data.get("tunnels", []):
@@ -142,8 +142,7 @@ def _query_ngrok_url() -> str | None:
 def start_ngrok_background(port: int = 5173, result_container: list = None):
     """
     在背景執行緒中啟動 Ngrok 並取得公開網址
-    優先沿用現有的 ngrok 通道（URL 保持不變，不重複取得新網址）
-    結果儲存在 result_container[0]
+    優先沿用現有通道（URL 保持不變），無通道才重新啟動
     """
     ngrok_path = find_ngrok()
     if not ngrok_path:
@@ -151,14 +150,22 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
             result_container.append(None)
         return
 
-    # ── 優先沿用現有通道 ──
-    existing_url = _query_ngrok_url()
+    # ── 先等待 3 秒，給現有 ngrok 一點啟動時間 ──
+    # （避免在 ngrok API 還沒就緒時就誤判為「無通道」）
+    existing_url = None
+    for _ in range(6):  # 最多等 3 秒 (6 * 0.5s)
+        existing_url = _query_ngrok_url()
+        if existing_url:
+            break
+        time.sleep(0.5)
+
     if existing_url:
+        # 沿用現有通道，URL 保持不變
         if result_container is not None:
             result_container.append(existing_url)
         return
 
-    # ── 無可用通道，才關掉舊的並重新啟動 ──
+    # ── 沒有可用通道，才關掉舊的並重新啟動 ──
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
         kill_port(4040)
@@ -174,9 +181,9 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
     )
     processes.append(ngrok_proc)
 
-    # 等待 ngrok 啟動（最多 30 秒）
+    # 等待 ngrok 建立通道（最多 30 秒）
     ngrok_url = None
-    for _ in range(60):
+    for _ in range(60):  # 60 * 0.5s = 30s
         time.sleep(0.5)
         ngrok_url = _query_ngrok_url()
         if ngrok_url:
@@ -186,7 +193,7 @@ def start_ngrok_background(port: int = 5173, result_container: list = None):
         result_container.append(ngrok_url)
 
 
-def wait_for_backend(port: int = 8168, timeout: int = 60) -> bool:
+def wait_for_backend(port: int = 8168, timeout: int = 120) -> bool:
     """
     等待後端服務啟動（輪詢 health endpoint）
     顯示動態進度點讓使用者知道程式在運行中
@@ -235,7 +242,7 @@ def main():
     else:
         print("  [1/5] 未偵測到 docker-compose.yml，跳過 Docker...")
 
-    # ── [2/5] 清理 Port + 提前啟動 Ngrok（趁後端加載時取得網址）──
+    # ── [2/5] 清理 Port + 提前啟動 Ngrok ──────────────────────
     print("  [2/5] 清理佔用的 Port，並在背景啟動 Ngrok...")
     kill_port(8168)
     kill_port(5173)
@@ -332,15 +339,31 @@ def main():
         else:
             print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行（Docker 需先啟動）⚠️")
 
-    # ── 等待 Ngrok 結果（後端加載期間 ngrok 早應完成）────────────
-    if ngrok_thread and ngrok_thread.is_alive():
-        # 最多再等 10 秒（通常 ngrok 幾秒內就好了）
-        ngrok_thread.join(timeout=10)
+    # ── 等待 Ngrok 公開網址（帶進度點，最多再候 25 秒）───────────
+    # NOTE: 後端加載通常 10~60 秒，Ngrok 通常 3~5 秒就好
+    #       若此時仍在等，代表網路較慢，給足 25 秒確保取到網址
+    public_url: str | None = None
+    if ngrok_thread:
+        print("  [Ngrok] 等待公開網址就緒...", end="", flush=True)
+        deadline = time.time() + 25
+        while time.time() < deadline:
+            # 優先從執行緒結果讀；同時也直接查詢 API 作為備用
+            if ngrok_result and ngrok_result[0]:
+                public_url = ngrok_result[0]
+                break
+            url = _query_ngrok_url()
+            if url:
+                public_url = url
+                break
+            print(".", end="", flush=True)
+            time.sleep(1)
+        print()  # 換行
+        if public_url:
+            print(f"  [OK] Ngrok 公開網址已就緒 ✅")
+        else:
+            print("  [略過] Ngrok 通道未就緒，請執行 python ngrok_reset.py")
 
-    # 取得公開網址（若 ngrok_result 仍空，再查詢一次）
-    public_url = (ngrok_result[0] if ngrok_result else None) or _query_ngrok_url()
-
-    # ── 顯示完整服務資訊 ──────────────────────────────────────
+    # ── 最終：顯示三合一服務資訊 ─────────────────────────────────
     local_ip = get_local_ip()
     print()
     print("=" * 52)
@@ -356,16 +379,15 @@ def main():
     print(f"     前端: http://{local_ip}:5173")
     print(f"     後端: http://{local_ip}:8168")
     print()
+    print(f"  🌍 公開網址（Ngrok）")
     if public_url:
-        print(f"  🌍 公開網址（Ngrok）")
         print(f"     前端: {public_url}")
-        print(f"     後端: {public_url.replace(':5173', ':8168') if ':5173' in public_url else public_url + ' → port 5173'}")
+        print(f"     後端: {public_url} → port 8168")
         print()
         print(f"  💡 想換新公開網址？執行: python ngrok_reset.py")
     else:
-        print(f"  🌍 公開網址（Ngrok）")
-        print(f"     ⚠️  Ngrok 連線失敗或未安裝")
-        print(f"     💡 嘗試重設：python ngrok_reset.py")
+        print(f"     ⚠️  Ngrok 通道未啟動")
+        print(f"     💡 執行: python ngrok_reset.py  取得公開網址")
     print()
     print("  🛑 按下 Ctrl+C 可隨時關閉所有服務")
     print("=" * 52)
