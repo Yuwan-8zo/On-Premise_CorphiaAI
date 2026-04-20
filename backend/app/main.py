@@ -160,7 +160,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """
     import uuid
     import traceback
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     error_id = uuid.uuid4().hex[:12]
     logger.error(
@@ -173,7 +173,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         with open("crash.log", "a", encoding="utf-8") as f:
             f.write(f"\n\n{'=' * 60}\n")
             f.write(f"Error ID: {error_id}\n")
-            f.write(f"Crash at: {datetime.utcnow().isoformat()}Z\n")
+            f.write(f"Crash at: {datetime.now(timezone.utc).isoformat()}Z\n")
             f.write(f"Request:  {request.method} {request.url}\n")
             f.write(f"{'=' * 60}\n")
             f.write(traceback.format_exc())

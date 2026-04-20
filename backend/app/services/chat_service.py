@@ -5,7 +5,7 @@
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TypedDict, Optional, Any, AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -412,7 +412,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=Conversation.message_count + 2,
-                updated_at=datetime.now().replace(tzinfo=None),
+                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
         )
         
@@ -589,7 +589,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=Conversation.message_count + 2,
-                updated_at=datetime.now().replace(tzinfo=None),
+                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
         )
         
@@ -606,7 +606,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=actual_count,
-                updated_at=datetime.now().replace(tzinfo=None),
+                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
         )
         await self.db.commit()
