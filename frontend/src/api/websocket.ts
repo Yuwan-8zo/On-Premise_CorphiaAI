@@ -17,16 +17,36 @@ export interface WebSocketMessage {
 }
 
 export interface StreamResponse {
-    type: 'stream' | 'done' | 'error' | 'sources' | 'pong'
+    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning'
     content?: string
     messageId?: string
     sources?: Array<{
         chunkId: string
         content: string
         score: number
+        distance?: number
+        document_id?: string
+        document_name?: string
         metadata: Record<string, unknown>
     }>
     message?: string
+    /** A1: PII 遮罩對照表 */
+    mask_map?: Array<{
+        original_preview: string
+        masked: string
+        type: string
+        label: string
+    }>
+    /** A2: Prompt Injection 風險等級 */
+    risk_level?: string
+    matched_patterns?: string[]
+    /** C2: RAG 除錯資訊 */
+    debug?: {
+        route: string
+        context_length: number
+        prompt_length: number
+        chunks_count: number
+    }
 }
 
 type MessageHandler = (data: StreamResponse) => void

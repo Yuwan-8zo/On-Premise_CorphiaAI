@@ -98,6 +98,7 @@ class RAGService:
         tenant_id: Optional[str] = None,
         n_results: int = 5,
         document_ids: Optional[list[str]] = None,
+        similarity_threshold: float = 0.3,
     ) -> list[dict]:
         """
         搜尋相關文件 (基於 pgvector)
@@ -108,6 +109,7 @@ class RAGService:
             tenant_id: 租戶 ID（用於過濾）
             n_results: 回傳結果數量
             document_ids: 指定要搜尋的文件 ID 列表
+            similarity_threshold: 最低相似度門檻（0~1），低於此值的結果會被過濾
             
         Returns:
             list[dict]: 搜尋結果
@@ -123,8 +125,14 @@ class RAGService:
             # 生成查詢向量
             query_embedding = await self.get_embedding(query)
             
-            # 建立基本的查詢
-            stmt = select(DocumentChunk).join(Document, DocumentChunk.document_id == Document.id)
+            # 計算 cosine distance 並用 add_columns 取回數值
+            cosine_dist = DocumentChunk.embedding.cosine_distance(query_embedding)
+            
+            # 建立查詢，包含 distance 欄位
+            stmt = (
+                select(DocumentChunk, cosine_dist.label("distance"))
+                .join(Document, DocumentChunk.document_id == Document.id)
+            )
             
             # 加入過濾條件
             if tenant_id:
@@ -132,25 +140,30 @@ class RAGService:
             if document_ids:
                 stmt = stmt.where(DocumentChunk.document_id.in_(document_ids))
             
-            # 使用 pgvector 的 cosine_distance 進行排序
-            # L2 distance: DocumentChunk.embedding.l2_distance(query_embedding)
-            # Cosine distance: DocumentChunk.embedding.cosine_distance(query_embedding)
-            stmt = stmt.order_by(DocumentChunk.embedding.cosine_distance(query_embedding)).limit(n_results)
+            # 按 cosine distance 排序（越小越相似）
+            stmt = stmt.order_by(cosine_dist).limit(n_results)
             
             # 執行搜尋
             result = await db.execute(stmt)
-            chunks = result.scalars().all()
+            rows = result.all()
             
-            # 整理結果
+            # 整理結果，將 cosine distance 轉為相似度分數 (1 - distance)
             search_results = []
-            for chunk in chunks:
-                # 這裡暫時沒有精確的 distance 值如果我們只抓 scalars
-                # 但順序是按照最相似排列的
+            for row in rows:
+                chunk = row[0]
+                distance = float(row[1])
+                similarity = round(1.0 - distance, 4)
+                
+                # 過濾低相似度結果
+                if similarity < similarity_threshold:
+                    continue
+                
                 search_results.append({
                     "chunk_id": chunk.id,
                     "content": chunk.content,
                     "metadata": chunk.chunk_metadata or {},
-                    "score": 1.0, # 假設為高相對分數
+                    "score": similarity,
+                    "distance": round(distance, 4),
                 })
             
             return search_results

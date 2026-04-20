@@ -149,6 +149,48 @@ export default {
         copyright: '© 2024 Corphia AI. MIT License.',
     },
 
+    // セキュリティ機能 (A1/A2)
+    security: {
+        piiDetected: '機密情報を検出し、自動的にマスクしました',
+        piiDescription: 'AIモデルにはマスク済みのコンテンツのみが送信されます。元の機密データはモデルには入りません。',
+        injectionDetected: '不審な Prompt Injection パターンを検出しました',
+        injectionDescription: '危険なトークンは除去され、このイベントは監査ログに記録されました。',
+        riskLevel: 'リスクレベル',
+        matchedPatterns: '検出されたパターン',
+        offlineMode: '✅ データ主権保証：完全オフライン運用',
+        onlineWarning: '⚠️ 外部ネットワーク接続を検出',
+    },
+
+    // システムモニター (C4)
+    systemMonitor: {
+        title: 'システムモニター',
+        cpu: 'CPU',
+        cpuUsage: 'CPU使用率',
+        memory: 'メモリ',
+        gpu: 'GPU',
+        gpuUsage: 'GPU使用率',
+        vram: 'VRAM',
+        noGpu: 'GPUが検出されません — CPUモードで実行中',
+        llmModel: 'LLMモデル',
+        modelLoaded: 'ロード済み',
+        simulationMode: 'シミュレーションモード',
+        contextSize: 'コンテキストサイズ',
+        gpuLayers: 'GPUレイヤー',
+    },
+
+    // RAGデバッグ (C2)
+    ragDebug: {
+        title: 'RAGデバッグ',
+        route: 'ルーティング判定',
+        contextLength: 'コンテキスト長',
+        promptLength: 'プロンプト長',
+        chunksCount: '取得チャンク数',
+        similarity: '類似度',
+        ragRoute: 'ナレッジベース検索',
+        webRoute: 'ウェブ検索',
+        chatRoute: '一般チャット',
+    },
+
     // 使用説明 (Guide)
     guide: {
         title: 'システム利用ガイド',

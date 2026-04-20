@@ -14,6 +14,7 @@ from app.api.audit_logs import router as audit_logs_router
 from app.api.tenants import router as tenants_router
 from app.api.models import router as models_router
 from app.api.folders import router as folders_router
+from app.api.system_monitor import router as system_monitor_router
 
 __all__ = [
     "auth_router",
@@ -28,4 +29,5 @@ __all__ = [
     "tenants_router",
     "models_router",
     "folders_router",
+    "system_monitor_router",
 ]

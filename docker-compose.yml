@@ -1,3 +1,16 @@
+# ============================================================
+# Corphia AI Platform - Docker Compose
+# ============================================================
+# 開發預設：只跑 postgres，backend 和 frontend 在本機開
+#   docker compose up -d postgres
+#
+# 完整部署：三個 service 一起起來
+#   docker compose --profile full up -d
+#
+# 生產部署請用實際的 ENV 檔：
+#   docker compose --env-file .env.production --profile full up -d
+# ============================================================
+
 version: '3.8'
 
 services:
@@ -5,14 +18,83 @@ services:
     image: pgvector/pgvector:pg16
     container_name: corphia_postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: corphia
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-corphia}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    restart: always
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-corphia}"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - corphia_net
+
+  backend:
+    profiles: ["full"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: corphia_backend
+    env_file:
+      - ./backend/.env
+    environment:
+      # 覆寫 .env 裡的 DATABASE_URL（container 間用 service name，不用 127.0.0.1）
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-corphia}
+    ports:
+      - "${BACKEND_PORT:-8168}:8168"
+    volumes:
+      # 模型檔以 host 掛載進來，避免把 5GB+ 的 GGUF 塞進 image
+      - ./ai_model:/app/ai_model:ro
+      # 上傳檔案持久化
+      - ./backend/uploads:/app/uploads
+      # log 持久化
+      - ./backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8168/api/v1/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - corphia_net
+    # 若要啟用 GPU 推論，解除下列註解並確保已裝 nvidia-container-toolkit
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  frontend:
+    profiles: ["full"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: corphia_frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - corphia_net
 
 volumes:
   pgdata:
+
+networks:
+  corphia_net:
+    driver: bridge

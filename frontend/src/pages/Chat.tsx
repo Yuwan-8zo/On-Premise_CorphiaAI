@@ -356,6 +356,31 @@ export default function Chat() {
                 if (data.sources) {
                     setSourcesToLastMessage(data.sources)
                 }
+                // C2: 儲存 RAG debug 資訊
+                if (data.debug) {
+                    useChatStore.getState().setRAGDebug(data.debug)
+                }
+                break
+            // A1: PII 遮罩警告
+            case 'pii_warning':
+                useChatStore.getState().addSecurityWarning({
+                    type: 'pii',
+                    message: data.message || '偵測到敏感資訊已自動遮罩',
+                    data: { mask_map: data.mask_map || [] },
+                    timestamp: Date.now(),
+                })
+                break
+            // A2: Prompt Injection 偵測警告
+            case 'injection_warning':
+                useChatStore.getState().addSecurityWarning({
+                    type: 'injection',
+                    message: data.message || '偵測到可疑的 Prompt Injection 模式',
+                    data: {
+                        risk_level: data.risk_level || 'medium',
+                        matched_patterns: data.matched_patterns || [],
+                    },
+                    timestamp: Date.now(),
+                })
                 break
         }
     }, [appendToLastMessage, setStreaming, setSourcesToLastMessage])

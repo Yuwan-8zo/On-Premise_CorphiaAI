@@ -149,6 +149,48 @@ export default {
         copyright: '© 2024 Corphia AI. MIT License.',
     },
 
+    // Security Features (A1/A2)
+    security: {
+        piiDetected: 'Sensitive information detected and auto-masked',
+        piiDescription: 'The AI model receives masked content only. Original sensitive data never enters the model.',
+        injectionDetected: 'Suspicious Prompt Injection pattern detected',
+        injectionDescription: 'Dangerous tokens have been sanitized and this event has been logged for audit.',
+        riskLevel: 'Risk Level',
+        matchedPatterns: 'Detected Patterns',
+        offlineMode: '✅ Data Sovereignty: Fully Offline Operation',
+        onlineWarning: '⚠️ External network connection detected',
+    },
+
+    // System Monitor (C4)
+    systemMonitor: {
+        title: 'System Monitor',
+        cpu: 'CPU',
+        cpuUsage: 'CPU Usage',
+        memory: 'Memory',
+        gpu: 'GPU',
+        gpuUsage: 'GPU Usage',
+        vram: 'VRAM',
+        noGpu: 'No GPU detected — model running on CPU',
+        llmModel: 'LLM Model',
+        modelLoaded: 'Loaded',
+        simulationMode: 'Simulation Mode',
+        contextSize: 'Context Size',
+        gpuLayers: 'GPU Layers',
+    },
+
+    // RAG Debug (C2)
+    ragDebug: {
+        title: 'RAG Debug',
+        route: 'Route Decision',
+        contextLength: 'Context Length',
+        promptLength: 'Prompt Length',
+        chunksCount: 'Retrieved Chunks',
+        similarity: 'Similarity',
+        ragRoute: 'Knowledge Base Retrieval',
+        webRoute: 'Web Search',
+        chatRoute: 'General Chat',
+    },
+
     // Guide
     guide: {
         title: 'System Guide',

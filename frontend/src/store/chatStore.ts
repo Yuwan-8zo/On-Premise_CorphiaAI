@@ -5,6 +5,20 @@
 import { create } from 'zustand'
 import type { Conversation, Message, MessageSource } from '../types/chat'
 
+interface SecurityWarning {
+    type: 'pii' | 'injection'
+    message: string
+    data: Record<string, unknown>
+    timestamp: number
+}
+
+interface RAGDebugInfo {
+    route: string
+    context_length: number
+    prompt_length: number
+    chunks_count: number
+}
+
 interface ChatState {
     // 狀態
     conversations: Conversation[]
@@ -12,6 +26,10 @@ interface ChatState {
     messages: Message[]
     isStreaming: boolean
     isLoading: boolean
+    /** A1/A2: 當前對話的安全警告 */
+    securityWarnings: SecurityWarning[]
+    /** C2: 最近一次 RAG 除錯資訊 */
+    ragDebug: RAGDebugInfo | null
 
     // 動作
     setConversations: (conversations: Conversation[]) => void
@@ -27,6 +45,9 @@ interface ChatState {
     appendToLastMessage: (content: string) => void
     setSourcesToLastMessage: (sources: MessageSource[]) => void
     clearMessages: () => void
+    addSecurityWarning: (warning: SecurityWarning) => void
+    clearSecurityWarnings: () => void
+    setRAGDebug: (debug: RAGDebugInfo | null) => void
 }
 
 export const useChatStore = create<ChatState>()((set) => ({
@@ -36,6 +57,8 @@ export const useChatStore = create<ChatState>()((set) => ({
     messages: [],
     isStreaming: false,
     isLoading: false,
+    securityWarnings: [],
+    ragDebug: null,
 
     // 設定對話列表
     setConversations: (conversations) => set({ conversations }),
@@ -123,4 +146,16 @@ export const useChatStore = create<ChatState>()((set) => ({
 
     // 清除訊息
     clearMessages: () => set({ messages: [] }),
+
+    // A1/A2: 新增安全警告
+    addSecurityWarning: (warning) =>
+        set((state) => ({
+            securityWarnings: [...state.securityWarnings, warning],
+        })),
+
+    // 清除安全警告（切換對話時）
+    clearSecurityWarnings: () => set({ securityWarnings: [] }),
+
+    // C2: 設定 RAG 除錯資訊
+    setRAGDebug: (debug) => set({ ragDebug: debug }),
 }))

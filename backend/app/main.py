@@ -28,6 +28,7 @@ from app.api import (
     tenants_router,
     models_router,
     folders_router,
+    system_monitor_router,
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
@@ -149,26 +150,51 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """全域例外處理"""
-    logger.error(f"未處理的例外: {exc}", exc_info=True)
-    
-    with open("crash.log", "a", encoding="utf-8") as f:
-        import traceback
-        from datetime import datetime
-        f.write(f"\n\n{'='*60}\n")
-        f.write(f"Crash at: {datetime.now().isoformat()}\n")
-        f.write(f"Request: {request.method} {request.url}\n")
-        f.write(f"{'='*60}\n")
-        f.write(traceback.format_exc())
+    """
+    全域例外處理
+
+    設計原則：
+    - 永不對外暴露內部 exception 訊息、stack trace 或程式結構
+    - 給每次例外配一組 error_id，使用者回報時可據此查日誌
+    - 生產環境 (APP_ENV=production) 連 debug detail 都不給
+    """
+    import uuid
+    import traceback
+    from datetime import datetime
+
+    error_id = uuid.uuid4().hex[:12]
+    logger.error(
+        f"[ERROR_ID={error_id}] 未處理的例外 at {request.method} {request.url}: {exc}",
+        exc_info=True,
+    )
+
+    # 寫一份到 crash.log（只給維運看，不對外）
+    try:
+        with open("crash.log", "a", encoding="utf-8") as f:
+            f.write(f"\n\n{'=' * 60}\n")
+            f.write(f"Error ID: {error_id}\n")
+            f.write(f"Crash at: {datetime.utcnow().isoformat()}Z\n")
+            f.write(f"Request:  {request.method} {request.url}\n")
+            f.write(f"{'=' * 60}\n")
+            f.write(traceback.format_exc())
+    except Exception:
+        # 寫檔失敗不能讓 exception handler 再拋例外
+        pass
+
+    # 對外的回應：在 debug 開啟時給錯誤類型協助除錯，否則只給 error_id
+    payload = {
+        "error": {
+            "code": "INTERNAL_ERROR",
+            "message": "伺服器發生錯誤，請回報給系統管理員",
+            "error_id": error_id,
+        }
+    }
+    if settings.debug:
+        payload["error"]["type"] = type(exc).__name__
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": {
-                "code": "INTERNAL_ERROR",
-                "message": f"伺服器內部錯誤: {str(exc)}",
-                "details": []
-            }
-        }
+        content=payload,
     )
 
 
@@ -184,6 +210,7 @@ app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
 app.include_router(folders_router, prefix="/api/v1")
+app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 

@@ -2,10 +2,11 @@
  * App 根組件 - 路由設定
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
+import { bootstrapAuth } from './lib/bootstrapAuth'
 
 import { lazy, Suspense } from 'react'
 
@@ -33,9 +34,18 @@ const FallbackLoader = () => (
 )
 
 export default function App() {
-    const { isAuthenticated } = useAuthStore()
+    const { isAuthenticated, isBootstrapped } = useAuthStore()
     const { theme, setTheme, accentColor } = useUIStore()
     const location = useLocation()
+
+    // ── 啟動時的 Token 復原流程 ──────────────────────────────────
+    // 頁面重新整理後 accessToken 已從記憶體消失，
+    // 這裡用 refreshToken 向後端換一張新的 accessToken
+    useEffect(() => {
+        if (!isBootstrapped) {
+            bootstrapAuth()
+        }
+    }, [isBootstrapped])
 
     // 監聽系統主題變化（當使用者在 iPhone 設定切換深色/淺色模式時）
     // 同步 App 主題，確保 Safari 底部工具列與 App 保持一致
@@ -108,6 +118,11 @@ export default function App() {
         })
         return () => cancelAnimationFrame(raf)
     }, [theme, accentColor, location.pathname])
+
+    // ── 等待 bootstrapAuth 完成才渲染路由，避免閃爍 ──────────────
+    if (!isBootstrapped) {
+        return <FallbackLoader />
+    }
 
     return (
         <>

@@ -107,11 +107,29 @@ async def websocket_chat(
             return
         
         # 建立一個變數來追蹤當前的生成任務
-        current_generation_task = None
+        current_generation_task: Optional[asyncio.Task] = None
 
-        async def _generate_and_send(conv_id, text, r_flag, temp, m_token, lang):
-            try:
-                # 串流回應
+        # 單次生成最長時長（秒）；超過則自動中斷，避免 llama-cpp 卡死拖垮整條 WS
+        GENERATION_TIMEOUT_SEC = 300
+
+        async def _generate_and_send(
+            conv_id: str,
+            text: str,
+            r_flag: bool,
+            temp: float,
+            m_token: int,
+            lang: str,
+            resubmit_message_id: Optional[str] = None,
+        ) -> None:
+            """
+            統一的串流生成與送訊邏輯，包含：
+            - 總時長超時保護（asyncio.wait_for 圍起整個 stream 迴圈）
+            - CancelledError 對應「使用者按停止」
+            - TimeoutError 對應「生成過久自動終止」
+            - 其他例外不再對外洩漏細節（對應 global_exception_handler 的策略）
+            """
+
+            async def _stream() -> None:
                 async for chunk in chat_service.send_message_stream(
                     conversation_id=conv_id,
                     content=text,
@@ -119,16 +137,42 @@ async def websocket_chat(
                     temperature=temp,
                     max_tokens=m_token,
                     language=lang,
+                    resubmit_message_id=resubmit_message_id,
                 ):
                     await websocket.send_json(chunk)
+
+            try:
+                await asyncio.wait_for(_stream(), timeout=GENERATION_TIMEOUT_SEC)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"生成逾時（> {GENERATION_TIMEOUT_SEC}s），自動中斷: {connection_id}"
+                )
+                await websocket.send_json({
+                    "type": "error",
+                    "code": "GENERATION_TIMEOUT",
+                    "message": f"生成時間超過 {GENERATION_TIMEOUT_SEC} 秒，已自動停止。",
+                })
+                await websocket.send_json({"type": "done", "content": "\n[逾時已停止]"})
             except asyncio.CancelledError:
                 logger.info(f"生成任務已中斷: {connection_id}")
                 await websocket.send_json({"type": "done", "content": "\n[已停止生成]"})
+                raise  # 讓 task 正常結束
+            except WebSocketDisconnect:
+                # 使用者關掉頁面，不用回任何東西
+                logger.info(f"生成中 WebSocket 已斷線: {connection_id}")
             except Exception as e:
-                logger.error(f"生成發生錯誤: {e}")
-                # 避免在 WebSocketDisconnect 時再送 error
-                if not isinstance(e, WebSocketDisconnect):
-                    await websocket.send_json({"type": "error", "message": str(e)})
+                import uuid as _uuid
+                err_id = _uuid.uuid4().hex[:12]
+                logger.error(f"[ERROR_ID={err_id}] 生成發生錯誤: {e}", exc_info=True)
+                try:
+                    await websocket.send_json({
+                        "type": "error",
+                        "code": "GENERATION_FAILED",
+                        "message": "生成失敗，請稍後再試。",
+                        "error_id": err_id,
+                    })
+                except Exception:
+                    pass
 
         # 訊息處理迴圈
         while True:
@@ -172,42 +216,29 @@ async def websocket_chat(
                     temperature = data.get("temperature", 0.7)
                     max_tokens = data.get("max_tokens", 2048)
                     language = data.get("language", "zh-TW")
-                    
+
                     if not content or not message_id:
                         await websocket.send_json({
                             "type": "error",
                             "message": "訊息內容或ID不能為空"
                         })
                         continue
-                        
+
                     if current_generation_task and not current_generation_task.done():
                         await websocket.send_json({
                             "type": "error",
                             "message": "前一個請求正在處理中，請先停止"
                         })
                         continue
-                        
-                    async def _resubmit_and_send():
-                        try:
-                            async for chunk in chat_service.send_message_stream(
-                                conversation_id=conversation_id,
-                                content=content,
-                                use_rag=use_rag,
-                                temperature=temperature,
-                                max_tokens=max_tokens,
-                                language=language,
-                                resubmit_message_id=message_id,
-                            ):
-                                await websocket.send_json(chunk)
-                        except asyncio.CancelledError:
-                            logger.info(f"生成任務已中斷: {connection_id}")
-                            await websocket.send_json({"type": "done", "content": "\n[已停止生成]"})
-                        except Exception as e:
-                            logger.error(f"生成發生錯誤: {e}")
-                            if not isinstance(e, WebSocketDisconnect):
-                                await websocket.send_json({"type": "error", "message": str(e)})
 
-                    current_generation_task = asyncio.create_task(_resubmit_and_send())
+                    # 共用統一的 _generate_and_send，差別只在 resubmit_message_id
+                    current_generation_task = asyncio.create_task(
+                        _generate_and_send(
+                            conversation_id, content, use_rag,
+                            temperature, max_tokens, language,
+                            resubmit_message_id=message_id,
+                        )
+                    )
                 
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})

@@ -149,6 +149,48 @@ export default {
         copyright: '© 2024 Corphia AI. MIT License.',
     },
 
+    // 資安功能 (A1/A2 差異化)
+    security: {
+        piiDetected: '偵測到敏感資訊已自動遮罩',
+        piiDescription: '送入 AI 模型的是遮罩後的內容，原始敏感資訊不會進入模型。',
+        injectionDetected: '偵測到可疑的 Prompt Injection 模式',
+        injectionDescription: '系統已自動清除危險標記，並記錄此事件於審計日誌。',
+        riskLevel: '風險等級',
+        matchedPatterns: '偵測到的模式',
+        offlineMode: '✅ 資料主權保證：完全離線運行',
+        onlineWarning: '⚠️ 偵測到外部網路連線',
+    },
+
+    // 系統監控 (C4 差異化)
+    systemMonitor: {
+        title: '系統監控',
+        cpu: 'CPU',
+        cpuUsage: 'CPU 使用率',
+        memory: '記憶體',
+        gpu: 'GPU',
+        gpuUsage: 'GPU 使用率',
+        vram: 'VRAM',
+        noGpu: '未偵測到 GPU — 模型以 CPU 模式運行',
+        llmModel: 'LLM 模型',
+        modelLoaded: '已載入',
+        simulationMode: '模擬模式',
+        contextSize: 'Context Size',
+        gpuLayers: 'GPU Layers',
+    },
+
+    // RAG 除錯 (C2 差異化)
+    ragDebug: {
+        title: 'RAG Debug',
+        route: '路由決策',
+        contextLength: 'Context 長度',
+        promptLength: 'Prompt 長度',
+        chunksCount: '檢索 Chunks 數',
+        similarity: '相似度',
+        ragRoute: '知識庫檢索',
+        webRoute: '網路搜尋',
+        chatRoute: '一般對話',
+    },
+
     // 使用說明
     guide: {
         title: '系統使用說明書',

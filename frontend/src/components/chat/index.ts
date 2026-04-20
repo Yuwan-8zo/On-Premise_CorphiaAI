@@ -7,5 +7,7 @@ export { default as SourceCitations } from './SourceCitations'
 export { default as MessageBubble } from './MessageBubble'
 export { default as ChatMinimap } from './ChatMinimap'
 export { default as ScrollToBottomButton } from './ScrollToBottomButton'
+export { default as RAGDebugPanel } from './RAGDebugPanel'
 
 export * from './PromptMenu'
+export * from './SecurityBanners'

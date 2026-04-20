@@ -19,6 +19,8 @@ from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
+from app.services.pii_masking_service import mask_pii
+from app.services.prompt_guard_service import check_prompt_injection
 
 logger = logging.getLogger(__name__)
 
@@ -464,6 +466,31 @@ class ChatService:
             self.db.add(user_message)
             await self.db.commit()
         
+        # ── A1: PII 敏感資訊自動遮罩 ──────────────────────────────
+        pii_result = mask_pii(content)
+        safe_content = pii_result["masked_text"]
+
+        if pii_result["has_pii"]:
+            # 通知前端哪些位置被遮罩
+            yield {
+                "type": "pii_warning",
+                "mask_map": pii_result["mask_map"],
+                "message": f"偵測到 {len(pii_result['mask_map'])} 筆敏感資訊已自動遮罩",
+            }
+
+        # ── A2: Prompt Injection 偵測 ──────────────────────────────
+        injection_result = check_prompt_injection(content)
+
+        if injection_result["is_suspicious"]:
+            yield {
+                "type": "injection_warning",
+                "risk_level": injection_result["risk_level"],
+                "matched_patterns": injection_result["matched_patterns"],
+                "message": f"偵測到可疑的 Prompt Injection 模式 (風險等級: {injection_result['risk_level']})",
+            }
+            # 使用清理後的文字（移除 ChatML 標籤等）
+            safe_content = check_prompt_injection(safe_content)["sanitized_text"]
+
         # 取得對話歷史
         messages = await self.get_messages(conversation_id)
         
@@ -480,13 +507,13 @@ class ChatService:
             for m in messages[-10:]
         ]
         
-        # 執行 LangGraph 路由
+        # 執行 LangGraph 路由（使用遮罩後的安全內容）
         initial_state: AgentState = {
             "conversation_id": conversation_id,
             "tenant_id": tenant_id,
             "folder_name": folder_name,
             "use_rag": use_rag,
-            "query": content,
+            "query": safe_content,
             "chat_history": chat_history,
             "route": "",
             "context": "",
@@ -499,7 +526,7 @@ class ChatService:
         sources = final_state.get("sources", [])
         route = final_state.get("route", "chat")
         
-        chat_history.append({"role": "user", "content": content})
+        chat_history.append({"role": "user", "content": safe_content})
         
         if final_state.get("folder_name"):
             system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
@@ -519,11 +546,17 @@ class ChatService:
             context=context if context else None,
         )
         
-        # 先發送來源資訊
+        # ── C2: 先發送來源資訊 + RAG 除錯資料 ──────────────────────
         if sources:
             yield {
                 "type": "sources",
                 "sources": sources,
+                "debug": {
+                    "route": route,
+                    "context_length": len(context),
+                    "prompt_length": len(prompt),
+                    "chunks_count": len(sources),
+                },
             }
         
         # 串流生成回應
