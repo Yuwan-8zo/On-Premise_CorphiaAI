@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 import { motion, AnimatePresence } from 'framer-motion'
-import { QrCode } from 'lucide-react'
+import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
 import { CorphiaLogo, CorphiaTextLogo } from '../components/icons/CorphiaIcons'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -351,18 +351,37 @@ export default function Login() {
                         </p>
 
                         {/* 功能列表 */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature1')}</span>
+                        <div className="space-y-6 mt-8">
+                            <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                    <MessageSquare className="w-6 h-6 text-corphia-bronze" />
+                                    <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[1.1rem] font-medium text-corphia-ink dark:text-corphia-ivory transition-colors leading-tight mb-1">{t('auth.feature1')}</span>
+                                    <span className="text-sm text-corphia-warm-gray transition-colors">{t('auth.feature1Desc')}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature2')}</span>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
+                                    <FileText className="w-6 h-6 text-corphia-bronze" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[1.1rem] font-medium text-corphia-ink dark:text-corphia-ivory transition-colors leading-tight mb-1">{t('auth.feature2')}</span>
+                                    <span className="text-sm text-corphia-warm-gray transition-colors">{t('auth.feature2Desc')}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature3')}</span>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                    <Shield className="w-6 h-6 text-corphia-bronze" />
+                                    <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[1.1rem] font-medium text-corphia-ink dark:text-corphia-ivory transition-colors leading-tight mb-1">{t('auth.feature3')}</span>
+                                    <span className="text-sm text-corphia-warm-gray transition-colors">{t('auth.feature3Desc')}</span>
+                                </div>
                             </div>
                         </div>
 
