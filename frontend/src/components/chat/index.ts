@@ -11,3 +11,7 @@ export { default as RAGDebugPanel } from './RAGDebugPanel'
 
 export * from './PromptMenu'
 export * from './SecurityBanners'
+
+// D2: 拆分元件
+export { default as ChatSidebar } from './ChatSidebar'
+export { ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal } from './ChatModals'
