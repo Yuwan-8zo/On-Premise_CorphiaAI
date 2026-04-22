@@ -256,3 +256,27 @@ html.dark .markdown-body strong {
   color: rgb(var(--color-ios-accent-dark));
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
+
+/* Tailwind JIT Bypass Classes (For Immediate Rendering without Vite Restart) */
+.bg-corphia-ivory { background-color: #F6F5F3 !important; }
+.bg-corphia-obsidian { background-color: #1E1A18 !important; }
+.bg-corphia-espresso { background-color: #2D2824 !important; }
+.bg-corphia-beige { background-color: #E0D9D3 !important; }
+.bg-corphia-bronze { background-color: #94785A !important; }
+
+.text-corphia-ink { color: #2D2824 !important; }
+.text-corphia-ivory { color: #F6F5F3 !important; }
+.text-corphia-bronze { color: #94785A !important; }
+
+.dark \.dark\:bg-corphia-ivory { background-color: #F6F5F3 !important; }
+.dark \.dark\:bg-corphia-obsidian { background-color: #1E1A18 !important; }
+.dark \.dark\:bg-corphia-espresso { background-color: #2D2824 !important; }
+.dark \.dark\:bg-corphia-beige { background-color: #E0D9D3 !important; }
+.dark \.dark\:bg-corphia-bronze { background-color: #94785A !important; }
+
+.dark \.dark\:text-corphia-ink { color: #2D2824 !important; }
+.dark \.dark\:text-corphia-ivory { color: #F6F5F3 !important; }
+.dark \.dark\:text-corphia-bronze { color: #94785A !important; }
+
+.focus\:ring-corphia-bronze:focus { --tw-ring-color: #94785A !important; }
+

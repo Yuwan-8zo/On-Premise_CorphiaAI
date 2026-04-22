@@ -64,7 +64,7 @@ export default function App() {
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
-        const bg = isDark ? '#1c1c1e' : '#ffffff'
+        const bg = isDark ? '#1E1A18' : '#F6F5F3'
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
