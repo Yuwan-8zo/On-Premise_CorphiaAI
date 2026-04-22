@@ -584,24 +584,23 @@ export default function Login() {
 
                         {/* ── Confirm Password（始終在 DOM，同步動畫） ── */}
                         <motion.div
-                            className="w-full overflow-hidden shrink-0"
+                            className="w-full shrink-0"
                             animate={{
                                 height: activeTab === 'register' ? 'auto' : 0,
                                 opacity: activeTab === 'register' ? 1 : 0,
                             }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            style={{ pointerEvents: activeTab === 'register' ? 'auto' : 'none' }}
                         >
-                            {/* 靜態 paddingTop 給浮動標籤與 border 留出空間，避免被 overflow:hidden 裁切 */}
-                            <div style={{ paddingTop: 16 }}>
-                                <FloatingInput
-                                    id="confirm-password"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required={activeTab === 'register'}
-                                    label={t('auth.confirmPassword')}
-                                />
-                            </div>
+                            <FloatingInput
+                                id="confirm-password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required={activeTab === 'register'}
+                                label={t('auth.confirmPassword')}
+                                tabIndex={activeTab === 'register' ? 0 : -1}
+                            />
                         </motion.div>
 
                         {/* ── Spacer C (底部視覺補償 1.15) ── */}
