@@ -53,7 +53,8 @@ async def check_user_quota(db: AsyncSession, user_id: str) -> QuotaCheckResult:
             message="使用者不存在",
         )
 
-    limit = user.daily_message_limit
+    # 根據您的要求，我們直接將 limit 設為 0，表示全域關閉每日訊息上限
+    limit = 0
 
     # limit = 0 表示無限制
     if limit == 0:
