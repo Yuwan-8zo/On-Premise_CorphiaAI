@@ -43,17 +43,19 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
             />
             <motion.label
                 htmlFor={id}
-                animate={{
-                    top: isFloating ? 0 : '50%',
-                    scale: isFloating ? 0.85 : 1,
-                    color: isFloating ? '#94785A' : '#8E8E93',
+                animate={isFloating ? {
+                    top: 0,
+                    scale: 0.85,
+                    color: '#94785A',
+                    backgroundColor: 'var(--label-bg, #F0ECE7)',
+                } : {
+                    top: '50%',
+                    scale: 1,
+                    color: '#8E8E93',
+                    backgroundColor: 'transparent',
                 }}
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                className={`absolute left-5 pointer-events-none rounded-full px-3 py-0.5 origin-left whitespace-nowrap transition-colors duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                    isFloating
-                        ? 'bg-corphia-sand dark:bg-corphia-espresso'
-                        : 'bg-transparent'
-                }`}
+                className="absolute left-5 pointer-events-none rounded-full px-3 py-0.5 origin-left whitespace-nowrap dark:[--label-bg:#1C1815]"
                 style={{ y: '-50%' }}
             >
                 {label}
@@ -586,6 +588,7 @@ export default function Login() {
                             animate={{
                                 height: activeTab === 'register' ? 'auto' : 0,
                                 opacity: activeTab === 'register' ? 1 : 0,
+                                paddingTop: activeTab === 'register' ? 12 : 0,
                             }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                         >
