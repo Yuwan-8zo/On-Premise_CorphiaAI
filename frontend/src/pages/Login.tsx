@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
 import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo } from '../components/icons/CorphiaIcons'
 
@@ -495,6 +495,7 @@ export default function Login() {
                         onSubmit={handleSubmit}
                         className="w-full max-w-[360px] bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
                     >
+                    <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
                             className="relative flex rounded-full select-none cursor-pointer bg-[#EFECE7] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
@@ -563,7 +564,7 @@ export default function Login() {
                         </motion.div>
 
                         {/* ── Spacer B2 + Confirm（註冊模式才出現） ── */}
-                        <AnimatePresence initial={false}>
+                        <AnimatePresence initial={false} mode="popLayout">
                             {activeTab === 'register' && (
                                 <>
                                     <motion.div
@@ -642,6 +643,7 @@ export default function Login() {
                                     )}
                                 </button>
                         </div>
+                    </LayoutGroup>
                     </form>
                 </div>
             </div>
