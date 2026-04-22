@@ -505,7 +505,7 @@ export default function Login() {
                                 className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-white dark:bg-[#2A2420] shadow-sm rounded-full border border-gray-100 dark:border-white/5"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
-                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
                                 style={{ left: '5px', zIndex: 1 }}
                             />
                             {/* 登入 */}
