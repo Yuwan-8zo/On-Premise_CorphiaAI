@@ -1,805 +1,32 @@
-/**
- * 對話主頁面（Corphia Custom 特製版）
- */
-
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '../store/authStore'
-import { useChatStore } from '../store/chatStore'
-import { useUIStore } from '../store/uiStore'
-import { conversationsApi } from '../api/conversations'
-import { documentsApi, type DocumentResponse } from '../api/documents'
-import modelsApi, { type ModelItem } from '../api/models'
-import { foldersApi } from '../api/folders'
-import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
-import { MessageBubble, ChatMinimap, ScrollToBottomButton, PromptMenu, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal } from '../components/chat'
-import { useToastStore } from '../store/toastStore'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { Message } from '../types/chat'
-import { CorphiaLogo } from '../components/icons/CorphiaIcons'
-
-// D2: 拆出的元件和 Hooks
-import { PlusIcon, SendDotBtn, StopIcon, SidebarIcon } from '../components/chat/ChatIcons'
-import { useChatWebSocket, useInfiniteScroll, useConversationSelect } from '../hooks/useChatHooks'
-
-// 預設資料夾名稱常數（集中定義，避免字元編碼問題）
-const DEFAULT_FOLDER = '新資料夾'
+import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '../components/chat'
+import { PlusIcon } from '../components/chat/ChatIcons'
+import { useChatLogic } from '../hooks/useChatLogic'
 
 export default function Chat() {
-    const { t } = useTranslation()
-    const toast = useToastStore()
-    const { user } = useAuthStore()
-    const {
-        conversations,
-        currentConversation,
-        messages,
-        isStreaming,
-        setConversations,
-        addConversation,
-        updateConversation,
-        setCurrentConversation,
-        setMessages,
-        addMessage,
-        setStreaming,
-        appendToLastMessage,
-        setSourcesToLastMessage,
-        deleteConversation
-    } = useChatStore()
-    const { sidebarOpen, toggleSidebar, setSidebarOpen, showConfirm, setSettingsOpen, language, ragDebugMode } = useUIStore()
-
-    const [input, setInput] = useState('')
-    const [isConnecting, setIsConnecting] = useState(false)
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const scrollContainerRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLTextAreaElement>(null)
-    const wsRef = useRef<ChatWebSocket | null>(null)
-    
-    // GGUF Model Dropdown State
-    const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
-    const [availableModels, setAvailableModels] = useState<ModelItem[]>([])
-    const [selectedModel, setSelectedModel] = useState<ModelItem | null>(null)
-
-    // Header Options Menu State
-    const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
-    const [isModelLoading, setIsModelLoading] = useState(false)
-
-    // Sidebar Logo Hover State
-    const [isSidebarHovered, setIsSidebarHovered] = useState(false)
-
-    // Mode Toggle (UI Only)
-    const [chatMode, setChatMode] = useState<'general' | 'project'>('general')
-
-    // Folder View 相關
-    const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
-    const [folderDocuments, setFolderDocuments] = useState<DocumentResponse[]>([])
-
-    // 檔案上傳相關狀態
-    const fileInputRef = useRef<HTMLInputElement>(null)
-    const [isUploading, setIsUploading] = useState(false)
-    const [uploadProgress, setUploadProgress] = useState(0)
-    const [uploadedFiles, setUploadedFiles] = useState<{name: string}[]>([])
-
-    // Dropdown Menu 狀態
-    const [activeMenu, setActiveMenu] = useState<{ convId: string, x: number, y: number } | null>(null)
-    const menuRef = useRef<HTMLDivElement>(null)
-
-    // 重新命名 Modal 狀態
-    const [renameModal, setRenameModal] = useState<{ convId: string, title: string } | null>(null)
-    const [renameInput, setRenameInput] = useState('')
-    const renameInputRef = useRef<HTMLInputElement>(null)
-
-    // 移至專案 Modal 狀態
-    const [moveModal, setMoveModal] = useState<{ convId: string, isProject: boolean, folderName: string } | null>(null)
-    const [moveInput, setMoveInput] = useState('')
-
-    // 新建資料夾 Modal 狀態
-    const [newFolderModal, setNewFolderModal] = useState(false)
-    const [newFolderInput, setNewFolderInput] = useState('')
-    const newFolderInputRef = useRef<HTMLInputElement>(null)
-
-    // 持久化儲存的資料夾清單（從後端 API 取得）
-    const [savedFolders, setSavedFolders] = useState<string[]>([])
-    
-    // UI 相關：無限捲動
-    const [hasMoreMessages, setHasMoreMessages] = useState(false)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const topObserverRef = useRef<HTMLDivElement>(null)
-
-    // 載入資料夾
-    const loadFolders = useCallback(async () => {
-        try {
-            const data = await foldersApi.list()
-            setSavedFolders(data.map(f => f.name))
-        } catch (error) {
-            console.error('Failed to load folders:', error)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadFolders()
-    }, [loadFolders])
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setActiveMenu(null)
-            }
-        }
-        // 使用 capture 階段確保比其他 onClick 先觸發
-        document.addEventListener('mousedown', handleClickOutside, true)
-        return () => document.removeEventListener('mousedown', handleClickOutside, true)
-    }, [])
-
-    const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
-        e.stopPropagation()
-        const rect = e.currentTarget.getBoundingClientRect()
-        // 浮動選單放置在按鈕正下方
-        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 })
-    }
-
-    const handleRenameConversation = (convId: string) => {
-        const conv = conversations.find(c => c.id === convId)
-        if (!conv) return
-        setRenameInput(conv.title)
-        setRenameModal({ convId, title: conv.title })
-        // 等 modal render 後 focus
-        setTimeout(() => renameInputRef.current?.focus(), 100)
-    }
-
-    const submitRename = async () => {
-        if (!renameModal) return
-        const newTitle = renameInput.trim()
-        if (!newTitle || newTitle === renameModal.title) { setRenameModal(null); return }
-        try {
-            await conversationsApi.update(renameModal.convId, { title: newTitle })
-            updateConversation(renameModal.convId, { title: newTitle })
-        } catch (error) {
-            console.error('Rename failed:', error)
-        }
-        setRenameModal(null)
-    }
-
-    const handleMoveToProject = (convId: string) => {
-        const conv = conversations.find(c => c.id === convId)
-        if (!conv) return
-        const isProject = Boolean(conv.settings?.isProject)
-        const folderName = (conv.settings?.folderName as string) || '新資料夾'
-        setMoveInput(isProject ? '' : folderName)
-        setMoveModal({ convId, isProject, folderName })
-    }
-
-    const submitMove = async (targetFolder?: string) => {
-        if (!moveModal) return
-        try {
-            if (moveModal.isProject && !targetFolder) {
-                // 移回一般聊天
-                const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: false }
-                await conversationsApi.update(moveModal.convId, { settings: newSettings })
-                updateConversation(moveModal.convId, { settings: newSettings })
-                setChatMode('general')
-            } else {
-                // 移至專案
-                const folderName = (targetFolder || moveInput).trim() || '新資料夾'
-                const newSettings = { ...conversations.find(c => c.id === moveModal.convId)?.settings, isProject: true, folderName }
-                await conversationsApi.update(moveModal.convId, { settings: newSettings })
-                updateConversation(moveModal.convId, { settings: newSettings })
-                setChatMode('project')
-            }
-        } catch (error) {
-            console.error('Move failed:', error)
-        }
-        setMoveModal(null)
-    }
-
-    const handleShareConversation = async (convId: string) => {
-        const link = `${window.location.origin}/share/${convId}`
-        try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(link)
-            } else {
-                const textArea = document.createElement("textarea")
-                textArea.value = link
-                textArea.style.position = "absolute"
-                textArea.style.left = "-999999px"
-                document.body.appendChild(textArea)
-                textArea.select()
-                try {
-                    document.execCommand('copy')
-                } catch (error) {
-                    console.error('Fallback copy failed', error)
-                } finally {
-                    textArea.remove()
-                }
-            }
-            toast.success('已成功複製對話分享連結！')
-        } catch {
-            toast.error('複製失敗，請手動複製連結：' + link)
-        }
-    }
-
-    const submitNewFolder = async () => {
-        const folderName = newFolderInput.trim() || DEFAULT_FOLDER
-        setNewFolderModal(false)
-        setNewFolderInput('')
-
-        // 將資料夾儲存到後端
-        try {
-            await foldersApi.create(folderName)
-            await loadFolders()
-        } catch (err) {
-            console.error('Failed to create folder:', err)
-            toast.error('建立資料夾失敗')
-        }
-        
-        setChatMode('project')
-        // 清空目前選取的對話，顯示空資料夾內容
-        setCurrentConversation(null)
-        setMessages([])
-    }
-    const loadFolderDocuments = useCallback(async (folderName: string) => {
-        try {
-            const res = await documentsApi.list()
-            const docs = res.data.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
-            setFolderDocuments(docs)
-        } catch (error) {
-            console.error('Failed to load documents:', error)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (selectedFolder) {
-            loadFolderDocuments(selectedFolder)
-        }
-    }, [selectedFolder, loadFolderDocuments])
-
-    const loadModels = useCallback(async () => {
-        try {
-            const res = await modelsApi.getModels()
-            setAvailableModels(res.models)
-            
-            // Set current model from API if exists
-            if (res.current_model) {
-                const current = res.models.find((m) => m.name === res.current_model)
-                if (current) setSelectedModel(current)
-                else if (res.models.length > 0) setSelectedModel(res.models[0])
-            } else if (res.models.length > 0) {
-                setSelectedModel(res.models[0])
-            }
-        } catch (error) {
-            console.error('Failed to load models:', error)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadModels()
-    }, [loadModels])
-
-
-    useEffect(() => {
-        const loadConversations = async () => {
-            try {
-                const result = await conversationsApi.list()
-                setConversations(result.data)
-            } catch (error) {
-                console.error('載入對話列表失敗:', error)
-            }
-        }
-        loadConversations()
-    }, [setConversations])
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
-
-    useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.style.height = 'auto'
-            inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`
-        }
-    }, [input])
-
-    const handleWebSocketMessage = useCallback((data: StreamResponse) => {
-        switch (data.type) {
-            case 'stream':
-                if (data.content) {
-                    appendToLastMessage(data.content)
-                }
-                break
-            case 'done': {
-                setStreaming(false)
-                // 重新載入訊息以取得剛建立的 message 的真實 UUID，這樣編輯重新生成才能正常運作
-                const currentConvId = useChatStore.getState().currentConversation?.id
-                if (currentConvId) {
-                    conversationsApi.getMessages(currentConvId)
-                        .then(msgs => useChatStore.getState().setMessages(msgs))
-                        .catch(err => console.error('同步訊息失敗:', err))
-                }
-                break
-            }
-            case 'error':
-                console.error('WebSocket 錯誤:', data.message)
-                setStreaming(false)
-                break
-            case 'sources':
-                if (data.sources) {
-                    setSourcesToLastMessage(data.sources)
-                }
-                // C2: 儲存 RAG debug 資訊
-                if (data.debug) {
-                    useChatStore.getState().setRAGDebug(data.debug)
-                }
-                break
-            // A1: PII 遮罩警告
-            case 'pii_warning':
-                useChatStore.getState().addSecurityWarning({
-                    type: 'pii',
-                    message: data.message || '偵測到敏感資訊已自動遮罩',
-                    data: { mask_map: data.mask_map || [] },
-                    timestamp: Date.now(),
-                })
-                break
-            // A2: Prompt Injection 偵測警告
-            case 'injection_warning':
-                useChatStore.getState().addSecurityWarning({
-                    type: 'injection',
-                    message: data.message || '偵測到可疑的 Prompt Injection 模式',
-                    data: {
-                        risk_level: data.risk_level || 'medium',
-                        matched_patterns: data.matched_patterns || [],
-                    },
-                    timestamp: Date.now(),
-                })
-                break
-            // A3: DLP 黑名單命中 → 後端已攔阻，不會有 stream 內容
-            case 'dlp_block':
-                setStreaming(false)
-                useChatStore.getState().addSecurityWarning({
-                    type: 'dlp',
-                    message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',
-                    data: {
-                        matched_terms_count: data.matched_terms_count || 0,
-                    },
-                    timestamp: Date.now(),
-                })
-                toast.error(data.message || '訊息已被 DLP 策略攔阻')
-                break
-        }
-    }, [appendToLastMessage, setStreaming, setSourcesToLastMessage, toast])
-
-    const connectWebSocket = useCallback(async (conversationId: string) => {
-        if (wsRef.current) {
-            wsRef.current.disconnect()
-        }
-
-        const ws = createChatWebSocket(conversationId)
-        ws.onMessage(handleWebSocketMessage)
-        ws.onClose(() => console.log('WebSocket 已斷開'))
-
-        try {
-            setIsConnecting(true)
-            await ws.connect()
-            wsRef.current = ws
-        } catch (error) {
-            console.error('WebSocket 連接失敗:', error)
-        } finally {
-            setIsConnecting(false)
-        }
-    }, [handleWebSocketMessage])
-
-    const selectConversation = useCallback(async (conversation: typeof currentConversation) => {
-        if (!conversation) return
-        setCurrentConversation(conversation)
-        setSelectedFolder(null)
-        if (window.innerWidth < 768) {
-            setSidebarOpen(false)
-        }
-        try {
-            const msgs = await conversationsApi.getMessages(conversation.id)
-            setMessages(msgs)
-            setHasMoreMessages(msgs.length === 50)
-            await connectWebSocket(conversation.id)
-        } catch (error) {
-            console.error('載入訊息失敗:', error)
-        }
-    }, [setCurrentConversation, setMessages, connectWebSocket, setSidebarOpen])
-
-    const loadMoreMessages = useCallback(async () => {
-        const convId = useChatStore.getState().currentConversation?.id
-        const currentMsgs = useChatStore.getState().messages
-        if (!convId || currentMsgs.length === 0 || isLoadingMore || !hasMoreMessages) return
-
-        try {
-            setIsLoadingMore(true)
-            const firstMsgId = currentMsgs[0].id
-            const olderMsgs = await conversationsApi.getMessages(convId, { beforeId: firstMsgId })
-            
-            if (olderMsgs.length > 0) {
-                // 保存捲動高度
-                const scrollContainer = scrollContainerRef.current
-                const oldScrollHeight = scrollContainer?.scrollHeight || 0
-                
-                useChatStore.getState().setMessages([...olderMsgs, ...currentMsgs])
-                setHasMoreMessages(olderMsgs.length === 50)
-                
-                // 恢復捲動位置
-                requestAnimationFrame(() => {
-                    if (scrollContainer) {
-                        scrollContainer.scrollTop = scrollContainer.scrollHeight - oldScrollHeight
-                    }
-                })
-            } else {
-                setHasMoreMessages(false)
-            }
-        } catch (error) {
-            console.error('載入舊訊息失敗:', error)
-        } finally {
-            setIsLoadingMore(false)
-        }
-    }, [isLoadingMore, hasMoreMessages])
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    loadMoreMessages()
-                }
-            },
-            { root: scrollContainerRef.current, threshold: 0.1 }
-        )
-        const target = topObserverRef.current
-        if (target) observer.observe(target)
-        return () => observer.disconnect()
-    }, [loadMoreMessages])
-
-    // --- 檔案上傳處理 ---
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        setIsUploading(true)
-        setUploadProgress(0)
-
-        const targetFolder = selectedFolder || (currentConversation?.settings?.folderName as string) || '新資料夾'
-
-        try {
-            await documentsApi.upload(file, targetFolder, (progressEvent) => {
-                const progress = progressEvent.total
-                    ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    : 0
-                setUploadProgress(progress)
-            })
-            
-            if (selectedFolder) {
-                await loadFolderDocuments(selectedFolder)
-            } else {
-                setUploadedFiles(prev => [...prev, { name: file.name }])
-            }
-        } catch (err) {
-            console.error('上傳失敗:', err)
-        } finally {
-            setIsUploading(false)
-            setUploadProgress(0)
-            if (fileInputRef.current) fileInputRef.current.value = ''
-        }
-    }
-
-    const handleToggleDocActive = async (doc: DocumentResponse) => {
-        const isActive = doc.doc_metadata?.isActive ?? true
-        try {
-            await documentsApi.updateMetadata(doc.id, {
-                ...doc.doc_metadata,
-                isActive: !isActive
-            })
-            if (selectedFolder) {
-                loadFolderDocuments(selectedFolder)
-            }
-        } catch (e) {
-            console.error('Failed to toggle doc metadata:', e)
-        }
-    }
-
-    const createNewConversation = async () => {
-        if (chatMode === 'project') {
-            // 專案模式：開啟新建資料夾 Modal
-            setNewFolderInput('')
-            setNewFolderModal(true)
-            setTimeout(() => newFolderInputRef.current?.focus(), 100)
-        } else {
-            // 一般模式：建立新對話
-            try {
-                const conversation = await conversationsApi.create({ 
-                    title: '新對話',
-                    settings: { isProject: false }
-                })
-                addConversation(conversation)
-                setUploadedFiles([])
-                await selectConversation(conversation)
-            } catch (error) {
-                console.error('建立對話失敗:', error)
-            }
-        }
-    }
-
-    /** 在指定資料夾內新增對話 */
-    const createConvInFolder = async (folderName: string, e: React.MouseEvent) => {
-        e.stopPropagation()
-        try {
-            const conversation = await conversationsApi.create({
-                title: '新對話',
-                settings: { isProject: true, folderName }
-            })
-            addConversation(conversation)
-            setUploadedFiles([])
-            await selectConversation(conversation)
-
-            // 偵測資料夾是否有文件，若無檔案則自動模擬 AI 回覆
-            const res = await documentsApi.list()
-            const docList = Array.isArray(res) ? res : (res.data || [])
-            const folderDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName && (d.doc_metadata?.isActive ?? true))
-            if (folderDocs.length === 0) {
-                // 此資料夾內尚無檢索文件，自動提示上傳
-                const promptMsg: Message = {
-                    id: `auto-${Date.now()}`,
-                    role: 'assistant',
-                    content: `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要芳您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`,
-                    tokens: 0,
-                    createdAt: new Date().toISOString(),
-                }
-                addMessage(promptMsg)
-            }
-        } catch (error) {
-            console.error('新增對話失敗:', error)
-        }
-    }
-
-    const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation()
-
-        showConfirm(t('common.confirmDelete'), async () => {
-            try {
-                if (!id.startsWith('temp-')) {
-                    await conversationsApi.delete(id)
-                }
-                deleteConversation(id)
-                if (currentConversation?.id === id) {
-                    setCurrentConversation(null)
-                    setMessages([])
-                }
-            } catch (error) {
-                console.error('刪除對話失敗:', error)
-            }
-        })
-    }
-
-    const handleDeleteFolder = async (folderName: string, e: React.MouseEvent) => {
-        e.stopPropagation()
-
-        showConfirm(t('common.confirmDelete'), async () => {
-            try {
-                const relatedConvs = conversations.filter(c => Boolean(c.settings?.isProject) && ((c.settings?.folderName as string) || DEFAULT_FOLDER) === folderName)
-                for (const conv of relatedConvs) {
-                    if (!conv.id.startsWith('temp-')) {
-                        await conversationsApi.delete(conv.id)
-                    }
-                    deleteConversation(conv.id)
-                    if (currentConversation?.id === conv.id) {
-                        setCurrentConversation(null)
-                        setMessages([])
-                    }
-                }
-
-                const res = await documentsApi.list()
-                const docList = Array.isArray(res) ? res : (res.data || [])
-                const relatedDocs = docList.filter((d: DocumentResponse) => ((d.doc_metadata?.folderName as string) || DEFAULT_FOLDER) === folderName)
-                for (const doc of relatedDocs) {
-                    await documentsApi.delete(doc.id)
-                }
-
-                // 從後端資料庫刪除資料夾
-                try {
-                    await foldersApi.delete(folderName)
-                    await loadFolders()
-                } catch (err) {
-                    console.error('刪除資料夾失敗:', err)
-                    toast.error('無法刪除資料夾')
-                }
-                if (selectedFolder === folderName) {
-                    setSelectedFolder(null)
-                    setFolderDocuments([])
-                }
-            } catch (error) {
-                console.error('刪除資料夾失敗:', error)
-            }
-        })
-    }
-
-    const handleSend = async (overrideValue?: string) => {
-        const text = overrideValue ?? input
-        if (!text.trim() || isStreaming || isConnecting) return
-
-        const userMessage = text.trim()
-        if (!overrideValue) setInput('')
-
-        let conversationId = currentConversation?.id
-        if (!conversationId) {
-            try {
-                const conversation = await conversationsApi.create({ 
-                    title: userMessage.slice(0, 50),
-                    settings: { isProject: chatMode === 'project' }
-                })
-                addConversation(conversation)
-                setCurrentConversation(conversation)
-                conversationId = conversation.id
-                await connectWebSocket(conversationId)
-            } catch (error) {
-                console.error('建立對話失敗:', error)
-                // For UI testing even backend offline:
-                // We won't block UI logic to show the "move up" action, so we still push UI state below if failed.
-            }
-        }
-
-        const tempUserMessage: Message = {
-            id: `temp-${Date.now()}`,
-            role: 'user',
-            content: userMessage,
-            tokens: 0,
-            createdAt: new Date().toISOString(),
-        }
-        addMessage(tempUserMessage)
-
-        const tempAssistantMessage: Message = {
-            id: `temp-${Date.now() + 1}`,
-            role: 'assistant',
-            content: '',
-            tokens: 0,
-            createdAt: new Date().toISOString(),
-        }
-        addMessage(tempAssistantMessage)
-        setStreaming(true)
-
-        const shouldUseRag = chatMode === 'project'
-
-        if (wsRef.current?.isConnected) {
-            wsRef.current.sendMessage(userMessage, shouldUseRag, 0.7, language)
-        } else {
-            // Frontend fallback flow
-            try {
-                if (conversationId) {
-                    const response = await conversationsApi.sendMessage(conversationId, {
-                        content: userMessage,
-                        useRag: shouldUseRag,
-                    })
-                    useChatStore.setState((state) => {
-                        const newMessages = [...state.messages]
-                        newMessages[newMessages.length - 1] = response
-                        return { messages: newMessages }
-                    })
-                }
-            } catch (error) {
-                console.error('發送訊息失敗:', error)
-                // Remove the typing indicator if backend totally failed
-                useChatStore.setState((state) => ({
-                    messages: state.messages.slice(0, -1)
-                }))
-            } finally {
-                setStreaming(false)
-            }
-        }
-    }
-
-    const handleResubmit = async (messageId: string, editedContent: string) => {
-        if (isStreaming) return
-
-        // 1. Truncate local message state
-        useChatStore.setState((state) => {
-            const index = state.messages.findIndex(m => m.id === messageId)
-            if (index === -1) return state
-            const newMessages = state.messages.slice(0, index + 1)
-            newMessages[index] = { ...newMessages[index], content: editedContent }
-            
-            // Add temp assistant message
-            const tempAssistantMessage: Message = {
-                id: `temp-${Date.now()}`,
-                role: 'assistant',
-                content: '',
-                tokens: 0,
-                createdAt: new Date().toISOString(),
-            }
-            return { messages: [...newMessages, tempAssistantMessage] }
-        })
-        
-        setStreaming(true)
-
-        // 2. Call backend via WebSocket
-        const shouldUseRag = chatMode === 'project'
-        if (wsRef.current?.isConnected) {
-            wsRef.current.sendResubmit(messageId, editedContent, shouldUseRag, 0.7, language)
-        } else {
-            console.error('WebSocket 未連接，無法使用重新生成功能')
-            setStreaming(false)
-        }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSend()
-        }
-    }
-
-    const handleStop = () => {
-        if (wsRef.current) wsRef.current.stop()
-        setStreaming(false)
-    }
-
-
-    useEffect(() => {
-        return () => wsRef.current?.disconnect()
-    }, [])
+    const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
         <div className="flex fixed inset-0 w-full h-[100dvh] bg-white dark:bg-ios-dark-gray6 text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
-            {sidebarOpen && (
+            {sidebarProps.sidebarOpen && (
                 <div 
                     className="fixed inset-0 bg-transparent backdrop-blur-md z-40 md:hidden transition-opacity"
-                    onClick={toggleSidebar}
+                    onClick={sidebarProps.toggleSidebar}
                 />
             )}
 
-            {/* --- 左側邊欄 Sidebar --- */}
-            <ChatSidebar
-                conversations={conversations}
-                currentConversationId={currentConversation?.id ?? null}
-                chatMode={chatMode}
-                setChatMode={setChatMode}
-                savedFolders={savedFolders}
-                selectedFolder={selectedFolder}
-                expandedFolders={expandedFolders}
-                setExpandedFolders={setExpandedFolders}
-                selectConversation={selectConversation}
-                createNewConversation={createNewConversation}
-                createConvInFolder={createConvInFolder}
-                handleDeleteFolder={handleDeleteFolder}
-                handleOpenMenu={handleOpenMenu}
-                setSelectedFolder={setSelectedFolder}
-                setCurrentConversation={() => setCurrentConversation(null)}
-                openNewFolderModal={() => {
-                    setNewFolderInput('')
-                    setNewFolderModal(true)
-                    setTimeout(() => newFolderInputRef.current?.focus(), 100)
-                }}
-                activeMenuConvId={activeMenu?.convId ?? null}
-            />
+            {/* 左側邊欄 Sidebar */}
+            <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section --- */}
             <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6">
                 {/* 固定的頂部 Header (Top Bar) */}
-                <ChatHeader
-                    sidebarOpen={sidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                    modelDropdownOpen={modelDropdownOpen}
-                    setModelDropdownOpen={setModelDropdownOpen}
-                    isModelLoading={isModelLoading}
-                    setIsModelLoading={setIsModelLoading}
-                    selectedModel={selectedModel}
-                    setSelectedModel={setSelectedModel}
-                    availableModels={availableModels}
-                    setAvailableModels={setAvailableModels}
-                    headerMenuOpen={headerMenuOpen}
-                    setHeaderMenuOpen={setHeaderMenuOpen}
-                    currentConversation={currentConversation}
-                    handleShareConversation={handleShareConversation}
-                    handleRenameConversation={handleRenameConversation}
-                    handleMoveToProject={handleMoveToProject}
-                    handleDeleteConversation={handleDeleteConversation}
-                />
+                <ChatHeader {...headerProps} />
 
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
-                {selectedFolder ? (
+                {mainProps.selectedFolder ? (
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full pb-8">
                         <div className="mb-8 pl-2 shrink-0">
@@ -807,16 +34,16 @@ export default function Chat() {
                                 <svg className="w-8 h-8 text-ios-blue-light dark:text-ios-blue-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
-                                {selectedFolder}
+                                {mainProps.selectedFolder}
                             </h2>
                             <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
                         <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 flex flex-col flex-1 min-h-0">
                             <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-ios-dark-gray6/50 shrink-0">
-                                <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({folderDocuments.length})</h3>
+                                <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() => mainProps.fileInputRef.current?.click()}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white rounded-full transition-all shadow-sm shadow-ios-blue-light/20 hover:shadow-ios-blue-light/40 text-sm font-medium"
                                 >
                                     <PlusIcon /> <span className="mr-1">新增來源</span>
@@ -824,7 +51,7 @@ export default function Chat() {
                             </div>
                             
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {folderDocuments.length === 0 ? (
+                                {mainProps.folderDocuments.length === 0 ? (
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
@@ -834,7 +61,7 @@ export default function Chat() {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-gray-100 dark:divide-white/5">
-                                    {folderDocuments.map((doc) => (
+                                    {mainProps.folderDocuments.map((doc: any) => (
                                         <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors group">
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <label className="relative flex cursor-pointer items-center rounded-full" htmlFor={`checkbox-${doc.id}`}>
@@ -843,7 +70,7 @@ export default function Chat() {
                                                         id={`checkbox-${doc.id}`}
                                                         className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-ios-blue-light checked:bg-ios-blue-light checked:before:bg-ios-blue-light dark:checked:border-ios-blue-dark dark:checked:bg-ios-blue-dark dark:checked:before:bg-ios-blue-dark hover:before:opacity-10 dark:border-white/20 dark:bg-ios-dark-gray6"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
-                                                        onChange={() => handleToggleDocActive(doc)}
+                                                        onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
                                                     <div className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
@@ -872,10 +99,10 @@ export default function Chat() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
-                                                        showConfirm(t('common.confirmDelete'), async () => {
+                                                        mainProps.showConfirm(mainProps.t('common.confirmDelete'), async () => {
                                                             try {
-                                                                await documentsApi.delete(doc.id)
-                                                                if (selectedFolder) loadFolderDocuments(selectedFolder)
+                                                                await mainProps.documentsApi.delete(doc.id)
+                                                                if (mainProps.selectedFolder) mainProps.loadFolderDocuments(mainProps.selectedFolder)
                                                             } catch (error) {
                                                                 console.error('刪除文件失敗', error)
                                                             }
@@ -895,75 +122,59 @@ export default function Chat() {
                         </div>
                         
                         {/* 專案上傳進度 */}
-                        {isUploading && selectedFolder && (
+                        {mainProps.isUploading && mainProps.selectedFolder && (
                             <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-ios-blue-light/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-ios-blue-light dark:border-ios-blue-dark border-t-transparent animate-spin" />
                                     <span className="text-ios-blue-light dark:text-ios-blue-dark text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
                                 </div>
-                                <span className="text-ios-blue-light dark:text-ios-blue-dark font-semibold">{uploadProgress}%</span>
+                                <span className="text-ios-blue-light dark:text-ios-blue-dark font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
                         )}
                         
                         {/* New Chat Button at exactly Folder View */}
                         <div className="mt-8 flex justify-center shrink-0">
                             <button
-                                onClick={async () => {
-                                    // Start a chat automatically linked to this folder
-                                    try {
-                                        const conversation = await conversationsApi.create({ 
-                                            title: '新對話',
-                                            settings: { 
-                                                isProject: true,
-                                                folderName: selectedFolder
-                                            } 
-                                        })
-                                        addConversation(conversation)
-                                        setUploadedFiles([])
-                                        await selectConversation(conversation) // will clear selectedFolder and enter chat view automatically
-                                    } catch (error) {
-                                        console.error('建立對話失敗:', error)
-                                    }
-                                }}
+                                onClick={mainProps.createNewConversation}
                                 className="flex items-center gap-2 px-6 py-3 bg-gray-900 border-gray-900 border dark:bg-white text-white dark:text-gray-900 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
                             >
-                                {t('chat.askFromSource')}
+                                {mainProps.t('chat.askFromSource')}
                             </button>
                         </div>
                     </div>
                 ) : (
                 <div className="relative flex-1 overflow-hidden h-full flex flex-col">
                     {/* 右側小地圖與置底按鈕 */}
-                    <ChatMinimap messages={messages} containerRef={scrollContainerRef} />
-                    <ScrollToBottomButton containerRef={scrollContainerRef} dependsOn={messages} />
+                    <ChatMinimap messages={mainProps.messages} containerRef={mainProps.scrollContainerRef} />
+                    <ScrollToBottomButton containerRef={mainProps.scrollContainerRef} dependsOn={mainProps.messages} />
                     
-                    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
+                    <div ref={mainProps.scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
-                        <div ref={topObserverRef} className="w-full h-px opacity-0" />
-                        {isLoadingMore && (
+                        <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
+                        {mainProps.isLoadingMore && (
                             <div className="flex justify-center items-center py-2 text-gray-500">
                                 <span className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-gray-800 dark:border-gray-500 dark:border-t-gray-200"></span>
                             </div>
                         )}
-                        {messages.length === 0 ? (
+                        {mainProps.messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                                 {/* Greeting */}
                                 <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
-                                    {t('chat.emptyGreeting', { name: user?.name || 'User' })}
+                                    {mainProps.t('chat.emptyGreeting', { name: mainProps.user?.name || 'User' })}
                                 </h2>
 
                                 {/* Suggested Prompts */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
-                                    {((t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
+                                    {((mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
                                         { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
                                         { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
                                         { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
                                         { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
-                                    ]).map((item, index) => (
+                                    ]).map((item: any, index: number) => (
                                         <button 
                                             key={index}
-                                            onClick={() => setInput(item.desc)}
+                                            onClick={() => mainProps.setInput(item.desc)}
                                             className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                         >
                                             <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[rgb(var(--color-ios-accent-light))] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
@@ -975,82 +186,68 @@ export default function Chat() {
                         ) : (
                             // 聊天紀錄
                             <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
-                                {messages.map((message, index) => {
+                                {mainProps.messages.map((message: any, index: number) => {
                                     const isLastAssistant =
                                         message.role === 'assistant' &&
-                                        index === messages.length - 1
+                                        index === mainProps.messages.length - 1
                                     return (
                                         <MessageBubble
                                             key={message.id}
                                             message={message}
-                                            isStreaming={isStreaming && isLastAssistant}
-                                            onResubmit={handleResubmit}
-                                            showRAGDebug={ragDebugMode && isLastAssistant && !isStreaming}
+                                            isStreaming={mainProps.isStreaming && isLastAssistant}
+                                            onResubmit={mainProps.handleResubmit}
+                                            showRAGDebug={mainProps.ragDebugMode && isLastAssistant && !mainProps.isStreaming}
                                         />
                                     )
                                 })}
-                                <div ref={messagesEndRef} />
+                                <div ref={mainProps.messagesEndRef} />
                             </div>
                         )}
                     </div>
                 </div>
                 )}
 
-                {/* 固定的底部輸入框區（不管有沒有訊息都在最底下） */}
                 {/* 底部輸入區 Chat Input Area */}
-                <ChatInputArea
-                    selectedFolder={selectedFolder}
-                    chatMode={chatMode}
-                    isConnecting={isConnecting}
-                    isUploading={isUploading}
-                    uploadProgress={uploadProgress}
-                    uploadedFiles={uploadedFiles}
-                    isStreaming={isStreaming}
-                    input={input}
-                    setInput={setInput}
-                    inputRef={inputRef}
-                    fileInputRef={fileInputRef}
-                    handleKeyDown={handleKeyDown}
-                    handleStop={handleStop}
-                    handleSend={handleSend}
-                    handleFileUpload={handleFileUpload}
-                />
+                <ChatInputArea {...inputProps} />
             </main>
             {/* --- 彈出視窗 Modals --- */}
             <ConversationContextMenu
-                activeMenu={activeMenu}
-                menuRef={menuRef}
-                handleRenameConversation={handleRenameConversation}
-                handleMoveToProject={handleMoveToProject}
-                handleShareConversation={handleShareConversation}
-                handleDeleteConversation={handleDeleteConversation}
+                activeMenu={modalProps.activeMenu}
+                menuRef={modalProps.menuRef}
+                conversations={sidebarProps.conversations}
+                onRename={modalProps.handleRenameConversation}
+                onMove={modalProps.handleMoveToProject}
+                onShare={modalProps.handleShareConversation}
+                onDelete={modalProps.handleDeleteConversation}
+                onClose={() => modalProps.activeMenu && sidebarProps.handleOpenMenu({ stopPropagation: () => {} } as any, '')}
             />
 
             <RenameModal
-                renameModal={renameModal}
-                renameInput={renameInput}
-                renameInputRef={renameInputRef}
-                setRenameInput={setRenameInput}
-                setRenameModal={setRenameModal}
-                submitRename={submitRename}
+                renameModal={modalProps.renameModal}
+                renameInput={modalProps.renameInput}
+                renameInputRef={modalProps.renameInputRef}
+                setRenameInput={modalProps.setRenameInput}
+                submitRename={modalProps.submitRename}
+                onClose={() => modalProps.setRenameModal(null)}
             />
 
             <MoveToProjectModal
-                moveModal={moveModal}
-                moveInput={moveInput}
-                savedFolders={savedFolders}
-                setMoveInput={setMoveInput}
-                setMoveModal={setMoveModal}
-                submitMove={submitMove}
+                moveModal={modalProps.moveModal}
+                moveInput={modalProps.moveInput}
+                savedFolders={modalProps.savedFolders}
+                conversations={sidebarProps.conversations}
+                setMoveInput={modalProps.setMoveInput}
+                submitMove={modalProps.submitMove}
+                onClose={() => modalProps.setMoveModal(null)}
             />
 
             <NewFolderModal
-                newFolderModal={newFolderModal}
-                newFolderInput={newFolderInput}
-                newFolderInputRef={newFolderInputRef}
-                setNewFolderInput={setNewFolderInput}
-                setNewFolderModal={setNewFolderModal}
-                submitNewFolder={submitNewFolder}
+                show={modalProps.newFolderModal}
+                input={modalProps.newFolderInput}
+                inputRef={modalProps.newFolderInputRef}
+                setInput={modalProps.setNewFolderInput}
+                onSubmit={modalProps.submitNewFolder}
+                onClose={() => modalProps.setNewFolderModal(false)}
             />
         </div>
     )

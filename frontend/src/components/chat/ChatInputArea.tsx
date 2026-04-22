@@ -6,7 +6,7 @@ import { PromptMenu } from './PromptMenu'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
-    chatMode: 'normal' | 'project'
+    chatMode: 'general' | 'project'
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -44,7 +44,7 @@ export default function ChatInputArea({
                 className="shrink-0 pt-2 pb-6 md:pb-8 w-full z-20"
             >
                 <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative flex items-end gap-2">
-                    {/* 提示詞模版選單 (獨立在左側) */}
+                    {/* ?�示詞模?�選??(?��??�左?? */}
                     <div className="shrink-0 mb-3.5">
                         <PromptMenu 
                             disabled={isConnecting || isUploading}
@@ -55,7 +55,7 @@ export default function ChatInputArea({
                         />
                     </div>
 
-                    {/* 外層圓角與框限 */}
+                    {/* 外層?��??��???*/}
                     <div className="relative flex-1 flex flex-col bg-white dark:bg-ios-dark-gray4 border border-ios-light-gray5 dark:border-white/5 rounded-[30px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-colors focus-within:ring-4 focus-within:border-[rgb(var(--color-ios-accent-light))] dark:focus-within:border-[rgb(var(--color-ios-accent-dark))] focus-within:ring-[rgb(var(--color-ios-accent-light)/0.15)] dark:focus-within:ring-[rgb(var(--color-ios-accent-dark)/0.15)]">
                         
                         {/* Tags / Files Row */}
@@ -70,7 +70,7 @@ export default function ChatInputArea({
                                 {isUploading && (
                                     <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full text-[13px] text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                                         <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-                                        <span>上傳中 {uploadProgress}%</span>
+                                        <span>上傳�?{uploadProgress}%</span>
                                     </div>
                                 )}
                             </div>
@@ -84,7 +84,7 @@ export default function ChatInputArea({
                                         onClick={() => fileInputRef.current?.click()} 
                                         disabled={isConnecting || isUploading}
                                         className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-ios-blue-light dark:hover:text-ios-blue-dark mb-1 disabled:opacity-50"
-                                        title="上傳專案文件 (NotebookLM 模式)"
+                                        title="上傳專�??�件 (NotebookLM 模�?)"
                                     >
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
