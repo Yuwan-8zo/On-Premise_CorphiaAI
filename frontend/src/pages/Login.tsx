@@ -33,7 +33,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-white dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 text-black dark:text-corphia-ivory text-[15px] outline-none focus:border-corphia-bronze focus:ring-0 dark:focus:border-corphia-bronze transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -41,9 +41,9 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 htmlFor={id}
                 className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-corphia-sand dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
+                        ? 'top-0 scale-[0.85] bg-white dark:bg-corphia-obsidian text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
                         : 'top-1/2 scale-100 bg-transparent text-corphia-warm-gray dark:text-gray-400 py-0'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-sand dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
+                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-white dark:peer-focus:bg-corphia-obsidian peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
                 `}
             >
                 {label}
@@ -495,33 +495,15 @@ export default function Login() {
                         onSubmit={handleSubmit}
                         className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
-                        {/* ── Pill Tab 切換（滑動背景） ── */}
-                        <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-corphia-sand dark:bg-corphia-obsidian transition-colors shrink-0"
-                            style={{ padding: '5px' }}
-                        >
-                            {/* 滑動背景 Pill */}
-                            <div
-                                className="bg-corphia-ivory dark:bg-corphia-espresso shadow-sm border border-transparent dark:border-white/5"
-                                style={{
-                                    position: 'absolute',
-                                    top: '5px',
-                                    left: activeTab === 'login' ? '5px' : 'calc(50% + 0px)',
-                                    width: 'calc(50% - 5px)',
-                                    height: 'calc(100% - 10px)',
-                                    borderRadius: '999px',
-                                    transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
-                                    zIndex: 1,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                }}
-                            />
+                        {/* ── Pill Tab 切換 ── */}
+                        <div className="relative flex select-none cursor-pointer border-b border-gray-200 dark:border-white/10 shrink-0 mb-4">
                             {/* 登入 */}
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('login')}
-                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-3 text-center text-sm font-semibold transition-colors duration-300 border-b-2 -mb-[1px] ${
+                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory border-corphia-bronze' : 'text-corphia-warm-gray dark:text-gray-400 border-transparent hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -530,9 +512,9 @@ export default function Login() {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('register')}
-                                style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
+                                className={`flex-1 py-3 text-center text-sm font-semibold transition-colors duration-300 border-b-2 -mb-[1px] ${
+                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory border-corphia-bronze' : 'text-corphia-warm-gray dark:text-gray-400 border-transparent hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.register')}
@@ -609,15 +591,10 @@ export default function Login() {
                                 </AnimatePresence>
 
                                 {/* 提交按鈕 - Native iOS Solid Style */}
-                                <motion.button
-                                    layout
-                                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                                    type="submit"
-                                    disabled={isLoading}
                                     className="w-full py-2.5 mt-1 bg-corphia-bronze hover:bg-opacity-90 text-white font-medium rounded-full text-[15px]
                                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory dark:focus:ring-offset-corphia-obsidian focus:ring-corphia-bronze
                                            disabled:opacity-50 disabled:cursor-not-allowed
-                                           transition-all shrink-0 border border-transparent shadow-sm"
+                                           transition-all shrink-0 border border-transparent shadow-none"
                                 >
                                     {isLoading ? (
                                         <span className="flex items-center justify-center">
