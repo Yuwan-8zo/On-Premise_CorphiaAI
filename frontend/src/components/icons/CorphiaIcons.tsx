@@ -25,7 +25,7 @@ export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> =
     </svg>
 );
 
-const CorphiaLogoPaths = ({ color = "white" }: { color?: string }) => (
+const CorphiaLogoPaths = ({ color = "white", sparkColor = "#94785A" }: { color?: string, sparkColor?: string }) => (
     <>
         {/* 幾何 C 字 */}
         <path d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5" 
@@ -35,7 +35,7 @@ const CorphiaLogoPaths = ({ color = "white" }: { color?: string }) => (
         
         {/* AI 代表性的小星芒 (Spark) */}
         <path d="M18 9C18 10 19 11 20 11C19 11 18 12 18 13C18 12 17 11 16 11C17 11 18 10 18 9Z" 
-              fill={color} />
+              fill={sparkColor} />
     </>
 );
 
