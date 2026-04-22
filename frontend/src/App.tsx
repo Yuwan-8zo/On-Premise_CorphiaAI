@@ -71,12 +71,7 @@ export default function App() {
         // 設定重點色
         html.setAttribute('data-accent', accentColor)
 
-        // ── 關鍵優化：切換前先停用所有 transition ──────────────────
-        // 加上 no-transition → 切換 dark class → 下一幀移除 no-transition
-        // 這讓背景色、文字色、邊框色同步即時生效，無 300ms 延遲
-        html.classList.add('no-transition')
-
-        // dark class 切換（必須在 no-transition 加上後才做）
+        // dark class 切換
         if (isDark) {
             html.classList.add('dark')
         } else {
@@ -108,15 +103,6 @@ export default function App() {
         metaColorScheme.setAttribute('content', csOnly)
         document.head.appendChild(metaColorScheme)
 
-        // ── 下一個繪製幀後恢復 transition ──────────────────────────
-        // requestAnimationFrame 保證瀏覽器已完成本次重繪後才恢復
-        // 雙層 rAF 確保 iOS Safari 也能正確觸發
-        const raf = requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                html.classList.remove('no-transition')
-            })
-        })
-        return () => cancelAnimationFrame(raf)
     }, [theme, accentColor, location.pathname])
 
     // ── 等待 bootstrapAuth 完成才渲染路由，避免閃爍 ──────────────
