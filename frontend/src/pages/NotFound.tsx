@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CorphiaTextLogo } from '../components/icons/CorphiaIcons'
+import { CorphiaBrandLogo } from '../components/icons/CorphiaIcons'
 import { Home, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
@@ -11,10 +11,7 @@ export default function NotFound() {
         <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-[#FAFAF8] dark:bg-corphia-obsidian relative overflow-hidden transition-colors">
             {/* 頂部 Logo */}
             <div className="absolute top-8 left-8 flex items-center gap-1.5 select-none">
-                <CorphiaTextLogo className="w-7 h-7 text-corphia-ink dark:text-white" />
-                <span className="font-bold text-[22px] tracking-tight text-corphia-ink dark:text-white" style={{ fontFamily: 'sans-serif' }}>
-                    orphia
-                </span>
+                <CorphiaBrandLogo className="w-auto h-8 text-corphia-ink dark:text-white" />
             </div>
 
             <div className="flex flex-col items-center justify-center z-10 w-full px-6 mt-[-5dvh]">
