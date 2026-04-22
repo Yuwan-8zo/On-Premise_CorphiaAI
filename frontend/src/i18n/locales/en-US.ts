@@ -197,7 +197,7 @@ export default {
     // Guide
     guide: {
         title: 'System Guide',
-        subtitle: 'Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system's resources and exclusive features.',
+        subtitle: "Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system's resources and exclusive features.",
         auth: {
             title: 'Identity and Access Management',
             engineer: 'System highest access, can create and assign all "Tenants", and access full logs.',
