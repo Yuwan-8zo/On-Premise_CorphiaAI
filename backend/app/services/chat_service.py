@@ -5,8 +5,10 @@
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import TypedDict, Optional, Any, AsyncGenerator
+
+from app.core.config import settings
+from app.core.time_utils import utc_now_naive
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
@@ -21,6 +23,7 @@ from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
 from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
+from app.services.hash_chain_service import stamp_message
 
 logger = logging.getLogger(__name__)
 
@@ -181,12 +184,15 @@ class ChatService:
                 if metadata.get("folderName") == folder_name and metadata.get("isActive", True):
                     document_ids.append(doc.id)
                     
-        search_results = await self.rag_service.search(
+        # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
+        # 提高中文專有名詞與代號（例如 SOP 編號、人名）的命中率。
+        search_results = await self.rag_service.hybrid_search(
             db=self.db,
             query=state.get("query", ""),
             tenant_id=state.get("tenant_id"),
-            n_results=3,
+            n_results=settings.rag_top_k,
             document_ids=document_ids,
+            similarity_threshold=settings.rag_similarity_threshold,
         )
         
         if search_results:
@@ -412,7 +418,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=Conversation.message_count + 2,
-                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                updated_at=utc_now_naive(),
             )
         )
         
@@ -464,6 +470,10 @@ class ChatService:
                 content=content,
             )
             self.db.add(user_message)
+            await self.db.commit()
+            await self.db.refresh(user_message)
+            # B2: 對使用者訊息蓋上 hash stamp
+            await stamp_message(self.db, user_message, conversation_id)
             await self.db.commit()
         
         # ── A1: PII 敏感資訊自動遮罩 ──────────────────────────────
@@ -582,19 +592,11 @@ class ChatService:
             sources=sources if sources else None,
         )
         self.db.add(assistant_message)
-        
-        # 更新對話
-        await self.db.execute(
-            update(Conversation)
-            .where(Conversation.id == conversation_id)
-            .values(
-                message_count=Conversation.message_count + 2,
-                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
-            )
-        )
-        
         await self.db.commit()
         await self.db.refresh(assistant_message)
+        # B2: 對助手訊息蓋上 hash stamp
+        await stamp_message(self.db, assistant_message, conversation_id)
+        await self.db.commit()
         
         # 依據實際 DB 訊息數量更新對話統計（resubmit 後新增數可能不是 +2）
         msg_count_result = await self.db.execute(
@@ -606,7 +608,7 @@ class ChatService:
             .where(Conversation.id == conversation_id)
             .values(
                 message_count=actual_count,
-                updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                updated_at=utc_now_naive(),
             )
         )
         await self.db.commit()

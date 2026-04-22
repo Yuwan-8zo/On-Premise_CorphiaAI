@@ -5,6 +5,7 @@
 import { memo, useState, useEffect } from 'react'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
+import RAGDebugPanel from './RAGDebugPanel'
 import type { Message } from '../../types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '../icons/CorphiaIcons'
 import { Copy, Edit2, Check, X } from 'lucide-react'
@@ -16,6 +17,11 @@ interface MessageBubbleProps {
     isStreaming?: boolean
     onResubmit?: (messageId: string, content: string) => void
     hideActions?: boolean
+    /**
+     * C2: 是否顯示 RAG 除錯面板（通常僅在「最後一則 AI 訊息」且開啟 Debug Mode 時為 true）。
+     * 除錯資訊來自 chatStore.ragDebug，僅反映最近一次回應。
+     */
+    showRAGDebug?: boolean
 }
 
 /**
@@ -45,8 +51,10 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActions = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
+    // C2: 從 store 取得 RAG 除錯資訊（僅反映最近一次回應，配合 showRAGDebug 使用）
+    const ragDebug = useChatStore((s) => s.ragDebug)
     
     // 編輯狀態
     const [isEditing, setIsEditing] = useState(false)
@@ -165,6 +173,20 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                             <div className="mt-4">
                                 <SourceCitations sources={message.sources} />
                             </div>
+                        )}
+
+                        {/* C2: RAG 除錯面板 — 僅在最後一則 AI 訊息且開啟 Debug Mode 時顯示 */}
+                        {showRAGDebug && message.sources && message.sources.length > 0 && (
+                            <RAGDebugPanel
+                                sources={message.sources.map((s) => ({
+                                    chunk_id: s.chunk_id,
+                                    content: s.content,
+                                    score: s.score,
+                                    document_id: s.document_id,
+                                    document_name: s.document_name,
+                                }))}
+                                debug={ragDebug}
+                            />
                         )}
 
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}

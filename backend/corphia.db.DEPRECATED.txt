@@ -1,0 +1,9 @@
+corphia.db 是早期使用 SQLite 時留下的空殼檔案。
+目前後端已全面切換到 PostgreSQL + pgvector（詳見 .env 與 docker-compose.yml）。
+
+該 SQLite 檔案：
+- 已在 2026-04-21 被清空為 0 bytes。
+- 系統不再讀寫該檔。
+- 可以直接手動刪除：`rm backend/corphia.db` 或在檔案總管中移除。
+
+此說明檔僅作為歷史記錄，看到後也可一併刪除。

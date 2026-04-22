@@ -156,3 +156,81 @@ async def get_system_info(
             "memory_usage_percent": memory.percent
         }
     }
+
+
+# ── B2: Hash 鏈驗證 API ─────────────────────────────────────────
+
+
+@router.get(
+    "/conversations/{conversation_id}/verify-chain",
+    summary="驗證對話訊息 Hash 鏈完整性",
+)
+async def verify_conversation_hash_chain(
+    conversation_id: str,
+    db: AsyncSession = Depends(get_db),
+    _ = RequireAdmin,
+) -> Dict[str, Any]:
+    """
+    驗證某對話中所有訊息的 SHA-256 Hash Chain 是否完整。
+
+    回傳：
+    - valid: 鏈是否完整
+    - total_messages: 訊息總數
+    - first_broken_index: 第一個斷裂點的索引 (0-based)
+    - first_broken_message_id: 斷裂訊息的 ID
+    """
+    from app.services.hash_chain_service import verify_chain
+
+    result = await verify_chain(db, conversation_id)
+    return {"status": "success", "data": result}
+
+
+# ── B1: 配額概覽 API ────────────────────────────────────────────
+
+
+@router.get("/quota/overview", summary="取得所有使用者配額使用概覽")
+async def get_quota_overview(
+    db: AsyncSession = Depends(get_db),
+    _ = RequireAdmin,
+) -> Dict[str, Any]:
+    """
+    列出所有使用者的每日配額設定與今日使用量（僅限管理員）
+    """
+    from app.core.time_utils import utc_now_naive
+
+    now = utc_now_naive()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 取所有使用者
+    users_result = await db.execute(
+        select(User.id, User.email, User.name, User.role, User.daily_message_limit)
+    )
+    users = users_result.all()
+
+    overview = []
+    for uid, email, name, role, limit in users:
+        # 計算今日訊息數
+        from app.models.conversation import Conversation as Conv
+        count_result = await db.execute(
+            select(func.count(Message.id))
+            .join(Conv, Message.conversation_id == Conv.id)
+            .where(
+                Conv.user_id == uid,
+                Message.role == "user",
+                Message.created_at >= today_start,
+            )
+        )
+        used = count_result.scalar() or 0
+
+        overview.append({
+            "user_id": uid,
+            "email": email,
+            "name": name,
+            "role": role,
+            "daily_limit": limit,
+            "used_today": used,
+            "remaining": max(0, limit - used) if limit > 0 else -1,
+        })
+
+    return {"status": "success", "data": overview}
+

@@ -24,6 +24,7 @@ from app.api import (
     websocket_router,
     users_router,
     admin_router,
+    admin_replay_router,
     audit_logs_router,
     tenants_router,
     models_router,
@@ -160,7 +161,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """
     import uuid
     import traceback
-    from datetime import datetime, timezone
+    from app.core.time_utils import utc_now_iso
 
     error_id = uuid.uuid4().hex[:12]
     logger.error(
@@ -173,7 +174,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         with open("crash.log", "a", encoding="utf-8") as f:
             f.write(f"\n\n{'=' * 60}\n")
             f.write(f"Error ID: {error_id}\n")
-            f.write(f"Crash at: {datetime.now(timezone.utc).isoformat()}Z\n")
+            f.write(f"Crash at: {utc_now_iso()}\n")
             f.write(f"Request:  {request.method} {request.url}\n")
             f.write(f"{'=' * 60}\n")
             f.write(traceback.format_exc())
@@ -206,6 +207,7 @@ app.include_router(documents_router, prefix="/api/v1")
 app.include_router(messages_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(admin_replay_router, prefix="/api/v1")
 app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")

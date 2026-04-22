@@ -5,12 +5,13 @@ Token 黑名單服務模組
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
+from app.core.time_utils import utc_now_naive, utc_now_naive_plus
 from app.models.token_blacklist import TokenBlacklist
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,9 @@ async def add_token_to_blacklist(
         TokenBlacklist: 新建立的黑名單記錄
     """
     # 如果未提供過期時間，使用 24 小時後
+    # NOTE: 使用 naive UTC，與 DB TIMESTAMP WITHOUT TIME ZONE 欄位一致
     if expires_at is None:
-        from datetime import timedelta
-        # NOTE: 使用 naive datetime，與 DB TIMESTAMP WITHOUT TIME ZONE 欄位一致
-        expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).replace(tzinfo=None)
+        expires_at = utc_now_naive_plus(hours=24)
 
     blacklist_entry = TokenBlacklist(
         jti=jti,
@@ -123,7 +123,7 @@ async def revoke_all_user_tokens(
     user = result.scalar_one_or_none()
 
     if user:
-        user.token_revoked_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        user.token_revoked_at = utc_now_naive()
         await db.commit()
         logger.info(
             f"已撤銷使用者所有 Token: user={user_id}, "
@@ -146,7 +146,8 @@ async def cleanup_expired_blacklist(db: AsyncSession) -> int:
     Returns:
         int: 清理的記錄數量
     """
-    now = datetime.now(timezone.utc)
+    # DB 欄位為 naive UTC，這裡比對時一律走 naive 語意
+    now = utc_now_naive()
     result = await db.execute(
         delete(TokenBlacklist).where(TokenBlacklist.expires_at < now)
     )

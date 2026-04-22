@@ -60,6 +60,12 @@ class Message(Base):
     # 使用者評分 (1-5)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     
+    # B2: 審計 Hash 鏈 — 不可否認性
+    # content_hash = sha256(prev_hash || role || content || created_at_iso)
+    # 任何事後竄改都會導致鏈斷裂，可供合規稽核驗證
+    content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    prev_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

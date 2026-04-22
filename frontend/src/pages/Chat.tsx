@@ -45,7 +45,7 @@ export default function Chat() {
         setSourcesToLastMessage,
         deleteConversation
     } = useChatStore()
-    const { sidebarOpen, toggleSidebar, setSidebarOpen, showConfirm, setSettingsOpen, language } = useUIStore()
+    const { sidebarOpen, toggleSidebar, setSidebarOpen, showConfirm, setSettingsOpen, language, ragDebugMode } = useUIStore()
 
     const [input, setInput] = useState('')
     const [isConnecting, setIsConnecting] = useState(false)
@@ -351,8 +351,21 @@ export default function Chat() {
                     timestamp: Date.now(),
                 })
                 break
+            // A3: DLP 黑名單命中 → 後端已攔阻，不會有 stream 內容
+            case 'dlp_block':
+                setStreaming(false)
+                useChatStore.getState().addSecurityWarning({
+                    type: 'dlp',
+                    message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',
+                    data: {
+                        matched_terms_count: data.matched_terms_count || 0,
+                    },
+                    timestamp: Date.now(),
+                })
+                toast.error(data.message || '訊息已被 DLP 策略攔阻')
+                break
         }
-    }, [appendToLastMessage, setStreaming, setSourcesToLastMessage])
+    }, [appendToLastMessage, setStreaming, setSourcesToLastMessage, toast])
 
     const connectWebSocket = useCallback(async (conversationId: string) => {
         if (wsRef.current) {
@@ -1441,14 +1454,20 @@ export default function Chat() {
                         ) : (
                             // 聊天紀錄
                             <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
-                                {messages.map((message, index) => (
-                                    <MessageBubble
-                                        key={message.id}
-                                        message={message}
-                                        isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-                                        onResubmit={handleResubmit}
-                                    />
-                                ))}
+                                {messages.map((message, index) => {
+                                    const isLastAssistant =
+                                        message.role === 'assistant' &&
+                                        index === messages.length - 1
+                                    return (
+                                        <MessageBubble
+                                            key={message.id}
+                                            message={message}
+                                            isStreaming={isStreaming && isLastAssistant}
+                                            onResubmit={handleResubmit}
+                                            showRAGDebug={ragDebugMode && isLastAssistant && !isStreaming}
+                                        />
+                                    )
+                                })}
                                 <div ref={messagesEndRef} />
                             </div>
                         )}

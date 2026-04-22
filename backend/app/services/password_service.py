@@ -236,10 +236,9 @@ async def check_login_lockout(
 
     # 檢查是否已被鎖定
     if user.locked_until:
-        now = datetime.now(timezone.utc)
-        locked_until = user.locked_until
-        if locked_until.tzinfo is None:
-            locked_until = locked_until.replace(tzinfo=timezone.utc)
+        from app.core.time_utils import utc_now, to_aware_utc
+        now = utc_now()
+        locked_until = to_aware_utc(user.locked_until)
 
         if now < locked_until:
             remaining = (locked_until - now).total_seconds() / 60
@@ -296,9 +295,8 @@ async def record_login_failure(
     user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
 
     if user.failed_login_attempts >= LOGIN_MAX_ATTEMPTS:
-        user.locked_until = (datetime.now(timezone.utc) + timedelta(
-            minutes=LOGIN_LOCKOUT_MINUTES
-        )).replace(tzinfo=None)
+        from app.core.time_utils import utc_now_naive_plus
+        user.locked_until = utc_now_naive_plus(minutes=LOGIN_LOCKOUT_MINUTES)
         await db.commit()
         logger.warning(
             f"帳號已鎖定: {email}, "

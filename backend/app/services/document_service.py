@@ -7,7 +7,6 @@
 import logging
 import os
 import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, BinaryIO
 
@@ -54,6 +53,9 @@ class DocumentService:
     ) -> Document:
         """
         上傳並儲存文件
+
+        支援版本化：同一租戶內重新上傳相同原始檔名的文件時，
+        舊版會被標記 superseded_by → 新版 ID，新版 version 自動遞增。
         
         Args:
             file: 檔案物件
@@ -81,6 +83,20 @@ class DocumentService:
         with open(file_path, "wb") as f:
             f.write(content)
         
+        # B3: 查詢同名舊版本（同一租戶、同原始檔名、尚未被取代的最新版）
+        prev_result = await self.db.execute(
+            select(Document)
+            .where(
+                Document.tenant_id == tenant_id,
+                Document.original_filename == filename,
+                Document.superseded_by.is_(None),  # 只找「當前版本」
+            )
+            .order_by(Document.version.desc())
+            .limit(1)
+        )
+        prev_doc = prev_result.scalar_one_or_none()
+        new_version = (prev_doc.version + 1) if prev_doc else 1
+        
         # 建立資料庫記錄
         document = Document(
             tenant_id=tenant_id,
@@ -91,13 +107,22 @@ class DocumentService:
             file_size=file_size,
             file_path=str(file_path),
             status=DocumentStatus.PENDING.value,
+            version=new_version,
         )
         
         self.db.add(document)
         await self.db.commit()
         await self.db.refresh(document)
         
-        logger.info(f"已上傳文件: {filename} -> {unique_filename}")
+        # B3: 標記舊版被取代
+        if prev_doc:
+            prev_doc.superseded_by = document.id
+            await self.db.commit()
+            logger.info(
+                f"文件版本更新: {filename} v{prev_doc.version} → v{new_version}"
+            )
+        
+        logger.info(f"已上傳文件: {filename} → {unique_filename} (v{new_version})")
         
         return document
     
@@ -157,9 +182,9 @@ class DocumentService:
             # 更新文件狀態
             document.status = DocumentStatus.COMPLETED.value
             document.chunk_count = len(chunks)
-            # NOTE: 使用 UTC 時間，與系統其他地方保持一致
-            from datetime import timezone
-            document.processed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            # NOTE: 使用 naive UTC，與系統其他地方保持一致
+            from app.core.time_utils import utc_now_naive
+            document.processed_at = utc_now_naive()
             
             await self.db.commit()
             

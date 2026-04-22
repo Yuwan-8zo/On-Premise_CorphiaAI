@@ -72,6 +72,20 @@ class Document(Base):
     # 元資料
     doc_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     
+    # B3: 文件版本控制
+    # 重新上傳同名文件時自動 bump version；舊版標記 superseded_by 但不刪除
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+        server_default="1",
+    )
+    superseded_by: Mapped[Optional[str]] = mapped_column(
+        String(36),
+        ForeignKey("documents.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

@@ -80,6 +80,13 @@ class User(Base):
     )
     locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
+    # B1: 每日訊息配額（0 = 無限制）
+    daily_message_limit: Mapped[int] = mapped_column(
+        default=100,
+        nullable=False,
+        server_default="100",
+    )
+    
     # 時間戳
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

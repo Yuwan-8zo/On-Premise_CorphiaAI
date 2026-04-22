@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import type { Conversation, Message, MessageSource } from '../types/chat'
 
 interface SecurityWarning {
-    type: 'pii' | 'injection'
+    type: 'pii' | 'injection' | 'dlp'
     message: string
     data: Record<string, unknown>
     timestamp: number

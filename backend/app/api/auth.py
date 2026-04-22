@@ -151,7 +151,8 @@ async def login(
     await reset_login_attempts(db, user)
 
     # 更新最後登入時間
-    user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    from app.core.time_utils import utc_now_naive
+    user.last_login_at = utc_now_naive()
     await db.commit()
 
     # 建立 Token

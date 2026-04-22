@@ -43,11 +43,28 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
-    
+
+    # 差異化資安功能旗標（Phase 2）
+    enable_pii_masking: bool = True            # A1: 自動遮罩身分證/信用卡/手機/email
+    enable_prompt_injection_guard: bool = True  # A2: 偵測 Prompt Injection 攻擊
+    enable_dlp: bool = True                    # A3: 關鍵字黑名單阻擋
+    # DLP 黑名單，逗號分隔；可從環境變數覆寫
+    dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret"
+
+    # RAG 可調參數（Phase 3 預留）
+    rag_top_k: int = 5
+    rag_similarity_threshold: float = 0.25
+    rag_bm25_weight: float = 0.3
+
     @property
     def cors_origins_list(self) -> List[str]:
         """取得 CORS 來源列表"""
         return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    @property
+    def dlp_blocklist_terms(self) -> List[str]:
+        """取得 DLP 黑名單字串列表（全部小寫化以便不分大小寫比對）"""
+        return [term.strip().lower() for term in self.dlp_blocklist.split(",") if term.strip()]
     
     class Config:
         env_file = ".env"

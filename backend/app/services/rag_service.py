@@ -5,10 +5,11 @@ RAG 服務模組
 """
 
 import logging
+import re
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_, func
 
 from app.core.config import settings
 from app.models.document_chunk import DocumentChunk
@@ -18,6 +19,49 @@ logger = logging.getLogger(__name__)
 
 # 全域 Embedding 模型
 _embedding_model = None
+
+
+# ── 關鍵字斷詞輔助（粗糙但零依賴）─────────────────────────────
+# 支援中英混排：
+#   英文 → 以空白 / 標點斷開
+#   中文 → 連續 CJK 字元整塊保留 + 二字 bigram 拆分
+# 2024+ 的向量模型早已能處理中文，但 hybrid 用關鍵字 re-rank 時，
+# 光靠整句子當 token 會命中率 0；這裡給一個實用的中間解。
+_CJK_RE = re.compile(r"[\u4e00-\u9fff]+")
+_ASCII_WORD_RE = re.compile(r"[A-Za-z0-9_\-]+")
+
+
+def _tokenize_query(query: str, min_len: int = 2, max_tokens: int = 32) -> list[str]:
+    """把 query 斷成若干 token（小寫化、去重、長度過濾）。"""
+    q = query.strip()
+    if not q:
+        return []
+
+    tokens: list[str] = []
+
+    # 英文 / 數字詞
+    for m in _ASCII_WORD_RE.findall(q):
+        if len(m) >= min_len:
+            tokens.append(m.lower())
+
+    # 中文：整塊 + bigram
+    for cjk in _CJK_RE.findall(q):
+        if len(cjk) >= min_len:
+            tokens.append(cjk)
+        # bigram 補漏，讓「資料主權」也能命中「資料」「料主」「主權」
+        for i in range(len(cjk) - 1):
+            tokens.append(cjk[i : i + 2])
+
+    # 去重並保留順序
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for t in tokens:
+        if t not in seen:
+            seen.add(t)
+            uniq.append(t)
+        if len(uniq) >= max_tokens:
+            break
+    return uniq
 
 class RAGService:
     """RAG 檢索服務"""
@@ -172,6 +216,116 @@ class RAGService:
             logger.error(f"搜尋失敗: {e}")
             return []
     
+    async def hybrid_search(
+        self,
+        db: AsyncSession,
+        query: str,
+        tenant_id: Optional[str] = None,
+        n_results: int = 5,
+        document_ids: Optional[list[str]] = None,
+        similarity_threshold: float = 0.25,
+        bm25_weight: Optional[float] = None,
+    ) -> list[dict]:
+        """
+        混合檢索 (Hybrid Search) = 向量相似度 + 關鍵字（BM25-ish）
+
+        差異化：純向量檢索容易把「意思接近但關鍵字不同」的片段排上去，
+              偶爾會漏掉文件裡明明有的專有名詞（例如「SOP 編號 A-123」）。
+              這裡對每個候選 chunk 同時算：
+                - vec_score  = 1 - cosine_distance
+                - kw_score   = 歸一化後的關鍵字 token 命中率
+              最後以 bm25_weight 做線性組合。
+
+        設計取捨：
+        - 我們不依賴 PostgreSQL 全文索引（tsvector），因為中文斷詞成本高
+          且中小企業 DB 通常未配置 ts_config。
+        - 採用應用層 token 命中計數，準確度略輸 BM25 但零外部依賴。
+
+        Args:
+            bm25_weight: 0~1，預設由 settings.rag_bm25_weight 控制。
+                         0 = 全靠向量；1 = 全靠關鍵字。
+        """
+        if bm25_weight is None:
+            bm25_weight = settings.rag_bm25_weight
+        bm25_weight = max(0.0, min(1.0, bm25_weight))
+        vec_weight = 1.0 - bm25_weight
+
+        # 候選召回：先拿向量 Top-K*3，再用關鍵字 re-rank
+        oversample = max(n_results * 3, n_results + 5)
+
+        # ── 1) 向量召回 ─────────────────────────────────────
+        vector_hits = await self.search(
+            db=db,
+            query=query,
+            tenant_id=tenant_id,
+            n_results=oversample,
+            document_ids=document_ids,
+            similarity_threshold=0.0,  # 下面自己過濾
+        )
+
+        if not vector_hits:
+            return []
+
+        # ── 2) 關鍵字召回（補漏）──────────────────────────
+        # 這段可選：如果向量已足夠就跳過。為保險起見仍額外抓 5 個關鍵字命中。
+        tokens = _tokenize_query(query)
+        keyword_hits: list[dict] = []
+        if tokens:
+            try:
+                conditions = [
+                    DocumentChunk.content.ilike(f"%{t}%") for t in tokens
+                ]
+                kw_stmt = (
+                    select(DocumentChunk)
+                    .join(Document, DocumentChunk.document_id == Document.id)
+                    .where(or_(*conditions))
+                )
+                if tenant_id:
+                    kw_stmt = kw_stmt.where(Document.tenant_id == tenant_id)
+                if document_ids:
+                    kw_stmt = kw_stmt.where(DocumentChunk.document_id.in_(document_ids))
+                kw_stmt = kw_stmt.limit(oversample)
+
+                result = await db.execute(kw_stmt)
+                for chunk in result.scalars().all():
+                    keyword_hits.append({
+                        "chunk_id": chunk.id,
+                        "content": chunk.content,
+                        "metadata": chunk.chunk_metadata or {},
+                        "score": 0.0,
+                        "distance": None,
+                    })
+            except Exception as e:
+                logger.warning(f"關鍵字召回失敗（fallback 純向量）: {e}")
+
+        # ── 3) 合併 + re-rank ─────────────────────────────
+        merged: dict[str, dict] = {}
+        for hit in vector_hits + keyword_hits:
+            cid = hit["chunk_id"]
+            if cid not in merged:
+                merged[cid] = dict(hit)
+
+        # 關鍵字分數：token 命中數 / token 總數
+        for hit in merged.values():
+            content_lower = hit["content"].lower()
+            if tokens:
+                matched = sum(1 for t in tokens if t in content_lower)
+                hit["kw_score"] = round(matched / len(tokens), 4)
+            else:
+                hit["kw_score"] = 0.0
+            hit["vec_score"] = hit.get("score", 0.0)
+            hit["hybrid_score"] = round(
+                vec_weight * hit["vec_score"] + bm25_weight * hit["kw_score"],
+                4,
+            )
+
+        # 排序並過濾
+        ranked = sorted(
+            merged.values(), key=lambda x: x["hybrid_score"], reverse=True
+        )
+        ranked = [r for r in ranked if r["hybrid_score"] >= similarity_threshold]
+        return ranked[:n_results]
+
     def build_context(
         self,
         search_results: list[dict],

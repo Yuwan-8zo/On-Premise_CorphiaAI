@@ -5,14 +5,19 @@ WebSocket 對話 API
 import json
 import logging
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import decode_token
 from app.services.chat_service import ChatService
+from app.services.pii_masking_service import mask_pii
+from app.services.prompt_guard_service import check_prompt_injection
+from app.services.dlp_service import check_dlp
+from app.services.quota_service import check_user_quota
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +117,62 @@ async def websocket_chat(
         # 單次生成最長時長（秒）；超過則自動中斷，避免 llama-cpp 卡死拖垮整條 WS
         GENERATION_TIMEOUT_SEC = 300
 
+        async def _security_gate(raw_text: str) -> Optional[str]:
+            """
+            安全閘道：DLP → Injection → PII。
+
+            - DLP 命中 → 送 dlp_block 事件 + 回傳 None（呼叫端應 continue 不送 LLM）
+            - Injection 命中 → 送 injection_warning，但不阻斷（僅提醒 + 使用 sanitized_text）
+            - PII 命中 → 送 pii_warning + 使用 masked_text 餵給 LLM
+
+            回傳：要送進 LLM 的（可能已淨化／遮罩過的）文字；若為 None 表示已攔阻。
+            """
+            processed = raw_text
+
+            # A3: DLP — 命中就攔阻，不送模型
+            dlp_result = check_dlp(processed)
+            if dlp_result["blocked"]:
+                await websocket.send_json({
+                    "type": "dlp_block",
+                    "message": dlp_result["reason"],
+                    "matched_terms_count": len(dlp_result["matched_terms"]),
+                })
+                return None
+
+            # A2: Prompt Injection — 警告 + 淨化（仍允許繼續生成）
+            if settings.enable_prompt_injection_guard:
+                guard_result = check_prompt_injection(processed)
+                if guard_result["is_suspicious"]:
+                    await websocket.send_json({
+                        "type": "injection_warning",
+                        "message": "偵測到可疑的 Prompt Injection 模式，已自動淨化。",
+                        "risk_level": guard_result["risk_level"],
+                        "matched_patterns": guard_result["matched_patterns"],
+                    })
+                    processed = guard_result["sanitized_text"]
+
+            # A1: PII Masking — 遮罩後再送模型
+            if settings.enable_pii_masking:
+                mask_result = mask_pii(processed)
+                if mask_result["has_pii"]:
+                    # 只回傳遮罩版的對照表，避免洩漏原值
+                    await websocket.send_json({
+                        "type": "pii_warning",
+                        "message": f"已自動遮罩 {len(mask_result['mask_map'])} 項敏感資訊。",
+                        "mask_map": [
+                            {
+                                "original_preview": m["original_preview"],
+                                "masked": m["masked"],
+                                "type": m["type"],
+                                "label": m["label"],
+                            }
+                            for m in mask_result["mask_map"]
+                        ],
+                    })
+                    processed = mask_result["masked_text"]
+
+            return processed
+
         async def _generate_and_send(
             conv_id: str,
             text: str,
@@ -203,7 +264,29 @@ async def websocket_chat(
                             "message": "前一個請求正在處理中，請先停止"
                         })
                         continue
-                    
+
+                    # B1: 每日訊息配額前置檢查
+                    quota = await check_user_quota(db, user_id)
+                    if not quota.allowed:
+                        await websocket.send_json({
+                            "type": "error",
+                            "code": "QUOTA_EXCEEDED",
+                            "message": quota.message,
+                            "quota": {
+                                "daily_limit": quota.daily_limit,
+                                "used_today": quota.used_today,
+                                "remaining": quota.remaining,
+                            },
+                        })
+                        continue
+
+                    # Phase 2 安全閘道（DLP → Injection → PII）
+                    sanitized = await _security_gate(content)
+                    if sanitized is None:
+                        # DLP 已攔阻
+                        continue
+                    content = sanitized
+
                     # 啟動非同步生成任務
                     current_generation_task = asyncio.create_task(
                         _generate_and_send(conversation_id, content, use_rag, temperature, max_tokens, language)
@@ -230,6 +313,27 @@ async def websocket_chat(
                             "message": "前一個請求正在處理中，請先停止"
                         })
                         continue
+
+                    # B1: 每日訊息配額前置檢查
+                    quota = await check_user_quota(db, user_id)
+                    if not quota.allowed:
+                        await websocket.send_json({
+                            "type": "error",
+                            "code": "QUOTA_EXCEEDED",
+                            "message": quota.message,
+                            "quota": {
+                                "daily_limit": quota.daily_limit,
+                                "used_today": quota.used_today,
+                                "remaining": quota.remaining,
+                            },
+                        })
+                        continue
+
+                    # Phase 2 安全閘道（DLP → Injection → PII）
+                    sanitized = await _security_gate(content)
+                    if sanitized is None:
+                        continue
+                    content = sanitized
 
                     # 共用統一的 _generate_and_send，差別只在 resubmit_message_id
                     current_generation_task = asyncio.create_task(
@@ -265,11 +369,16 @@ async def websocket_chat(
     except WebSocketDisconnect:
         logger.info(f"WebSocket 斷開連接: {connection_id}")
     except Exception as e:
-        logger.error(f"WebSocket 錯誤: {e}")
+        import uuid as _uuid
+        err_id = _uuid.uuid4().hex[:12]
+        logger.error(f"[ERROR_ID={err_id}] WebSocket 錯誤: {e}", exc_info=True)
         try:
+            # 不對外洩漏 exception 訊息；只給 error_id 方便維運排查
             await websocket.send_json({
                 "type": "error",
-                "message": str(e)
+                "code": "INTERNAL_ERROR",
+                "message": "連線發生錯誤，請回報給系統管理員",
+                "error_id": err_id,
             })
         except Exception as send_err:
             logger.warning(f"WebSocket 無法送出錯誤訊息: {send_err}")

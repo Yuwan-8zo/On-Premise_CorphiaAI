@@ -25,6 +25,44 @@ class LLMService:
         self.context_size = settings.llama_context_size
         self.n_gpu_layers = settings.llama_n_gpu_layers
         self._initialized = False
+
+        # ── C4: tokens/sec 即時統計 ─────────────────────────
+        # 保留最近 10 次生成的 (tokens, elapsed_sec)，用於 /system/health/detailed
+        from collections import deque
+        self._recent_runs: deque[tuple[int, float]] = deque(maxlen=10)
+        self._last_tokens_per_sec: float = 0.0
+        self._total_tokens_generated: int = 0
+        self._total_generations: int = 0
+
+    def record_generation(self, tokens: int, elapsed_sec: float) -> None:
+        """登記一次完成的生成，讓監控面板能讀到 tokens/sec。"""
+        if elapsed_sec <= 0 or tokens <= 0:
+            return
+        self._recent_runs.append((tokens, elapsed_sec))
+        self._last_tokens_per_sec = round(tokens / elapsed_sec, 2)
+        self._total_tokens_generated += tokens
+        self._total_generations += 1
+
+    def get_throughput_stats(self) -> dict:
+        """回傳 tokens/sec 統計。供 /system/health/detailed 使用。"""
+        if not self._recent_runs:
+            return {
+                "last_tokens_per_sec": 0.0,
+                "avg_tokens_per_sec": 0.0,
+                "total_generations": self._total_generations,
+                "total_tokens_generated": self._total_tokens_generated,
+                "sample_size": 0,
+            }
+        total_tokens = sum(t for t, _ in self._recent_runs)
+        total_elapsed = sum(e for _, e in self._recent_runs)
+        avg = round(total_tokens / total_elapsed, 2) if total_elapsed > 0 else 0.0
+        return {
+            "last_tokens_per_sec": self._last_tokens_per_sec,
+            "avg_tokens_per_sec": avg,
+            "total_generations": self._total_generations,
+            "total_tokens_generated": self._total_tokens_generated,
+            "sample_size": len(self._recent_runs),
+        }
     
     async def initialize(self) -> bool:
         """
@@ -108,6 +146,7 @@ class LLMService:
         
         try:
             import asyncio
+            import time
             def _run():
                 return self.model(
                     prompt,
@@ -117,11 +156,26 @@ class LLMService:
                     stop=stop or [],
                     echo=False,
                 )
-            
+
+            start = time.perf_counter()
             output = await asyncio.to_thread(_run)
-            
+            elapsed = time.perf_counter() - start
+
+            # 嘗試從 usage 抓 token 數；llama-cpp 通常會回 completion_tokens
+            tokens = 0
+            try:
+                usage = output.get("usage") or {}
+                tokens = int(usage.get("completion_tokens") or 0)
+            except Exception:
+                tokens = 0
+            if tokens <= 0:
+                # 粗估：回傳文字長度除以 4（英文）或直接用字元數（中文）
+                text = output["choices"][0].get("text", "") or ""
+                tokens = max(1, len(text) // 3)
+            self.record_generation(tokens, elapsed)
+
             return output["choices"][0]["text"]
-            
+
         except Exception as e:
             logger.error(f"LLM 生成失敗: {e}")
             raise
@@ -166,22 +220,31 @@ class LLMService:
                 echo=False,
                 stream=True,
             )
-            
+
             import asyncio
+            import time
             def get_next():
                 try:
                     return next(stream)
                 except StopIteration:
                     return None
 
-            while True:
-                output = await asyncio.to_thread(get_next)
-                if output is None:
-                    break
-                text = output["choices"][0]["text"]
-                if text:
-                    yield text
-                    
+            start = time.perf_counter()
+            token_count = 0
+            try:
+                while True:
+                    output = await asyncio.to_thread(get_next)
+                    if output is None:
+                        break
+                    text = output["choices"][0]["text"]
+                    if text:
+                        token_count += 1  # 每個 chunk 估 1 token；雖不精準但趨勢正確
+                        yield text
+            finally:
+                elapsed = time.perf_counter() - start
+                if token_count > 0 and elapsed > 0:
+                    self.record_generation(token_count, elapsed)
+
         except Exception as e:
             logger.error(f"LLM 串流生成失敗: {e}")
             raise

@@ -5,13 +5,14 @@ JWT Token 與密碼處理
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Optional, Any
 
 from jose import jwt, JWTError
 import bcrypt
 
 from app.core.config import settings
+from app.core.time_utils import utc_now
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -66,17 +67,16 @@ def create_access_token(
         str: JWT Token
     """
     to_encode = data.copy()
-    
+    now = utc_now()
+
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.jwt_expire_minutes
-        )
-    
+        expire = now + timedelta(minutes=settings.jwt_expire_minutes)
+
     to_encode.update({
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": now,
         "type": "access",
         "jti": str(uuid.uuid4()),
     })
@@ -105,17 +105,16 @@ def create_refresh_token(
         str: JWT Refresh Token
     """
     to_encode = data.copy()
-    
+    now = utc_now()
+
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            days=settings.jwt_refresh_expire_days
-        )
-    
+        expire = now + timedelta(days=settings.jwt_refresh_expire_days)
+
     to_encode.update({
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": now,
         "type": "refresh",
         "jti": str(uuid.uuid4()),
     })

@@ -75,6 +75,15 @@ export function useChatWebSocket() {
                     timestamp: Date.now(),
                 })
                 break
+            case 'dlp_block':
+                setStreaming(false)
+                useChatStore.getState().addSecurityWarning({
+                    type: 'dlp',
+                    message: data.message || '訊息已被 DLP 策略攔阻',
+                    data: { matched_terms_count: data.matched_terms_count || 0 },
+                    timestamp: Date.now(),
+                })
+                break
         }
     }, [appendToLastMessage, setStreaming, setSourcesToLastMessage])
 

@@ -8,7 +8,7 @@
 import logging
 import platform
 import asyncio
-from datetime import datetime, timezone
+from app.core.time_utils import utc_now_iso
 
 from fastapi import APIRouter, Depends
 
@@ -102,6 +102,19 @@ async def _get_llm_stats() -> dict:
         except Exception:
             pass
 
+    # ── C4: 即時 tokens/sec 統計 ─────────────────────────
+    try:
+        stats["throughput"] = llm.get_throughput_stats()
+    except Exception as e:
+        logger.debug(f"throughput stats 無法取得: {e}")
+        stats["throughput"] = {
+            "last_tokens_per_sec": 0.0,
+            "avg_tokens_per_sec": 0.0,
+            "total_generations": 0,
+            "total_tokens_generated": 0,
+            "sample_size": 0,
+        }
+
     return stats
 
 
@@ -122,7 +135,7 @@ async def detailed_health(
     )
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": utc_now_iso(),
         "platform": {
             "system": platform.system(),
             "machine": platform.machine(),

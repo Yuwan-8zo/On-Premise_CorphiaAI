@@ -6,13 +6,15 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
+from app.schemas.jsonb import SafeJsonDict
+
 
 class ConversationCreate(BaseModel):
     """建立對話 Schema"""
     title: str = Field(default="新對話", max_length=255)
     model: str = Field(default="default", max_length=50)
     folder_id: Optional[str] = None
-    settings: dict = Field(default_factory=dict)
+    settings: SafeJsonDict = Field(default_factory=dict)
 
 
 class ConversationUpdate(BaseModel):
@@ -22,7 +24,7 @@ class ConversationUpdate(BaseModel):
     folder_id: Optional[str] = None
     is_pinned: Optional[bool] = None
     is_archived: Optional[bool] = None
-    settings: Optional[dict] = None
+    settings: SafeJsonDict = None
 
 
 class ConversationResponse(BaseModel):

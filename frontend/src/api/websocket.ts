@@ -17,7 +17,7 @@ export interface WebSocketMessage {
 }
 
 export interface StreamResponse {
-    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning'
+    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'dlp_block'
     content?: string
     messageId?: string
     sources?: Array<{
@@ -30,6 +30,10 @@ export interface StreamResponse {
         metadata: Record<string, unknown>
     }>
     message?: string
+    /** 錯誤代碼 (例如 GENERATION_TIMEOUT / INTERNAL_ERROR) */
+    code?: string
+    /** 內部錯誤追蹤 ID（由後端 global_exception_handler 產生） */
+    error_id?: string
     /** A1: PII 遮罩對照表 */
     mask_map?: Array<{
         original_preview: string
@@ -40,6 +44,8 @@ export interface StreamResponse {
     /** A2: Prompt Injection 風險等級 */
     risk_level?: string
     matched_patterns?: string[]
+    /** A3: DLP 命中計數（不回傳原始字詞） */
+    matched_terms_count?: number
     /** C2: RAG 除錯資訊 */
     debug?: {
         route: string

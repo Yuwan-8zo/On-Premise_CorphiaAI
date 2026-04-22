@@ -99,7 +99,11 @@ type SettingSection = 'profile' | 'appearance' | 'language' | 'monitor' | 'guide
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
     const { user, clearAuth, updateUser } = useAuthStore()
-    const { theme, toggleTheme, accentColor, setAccentColor, isSettingsOpen, setSettingsOpen } = useUIStore()
+    const {
+        theme, toggleTheme, accentColor, setAccentColor,
+        isSettingsOpen, setSettingsOpen,
+        ragDebugMode, setRAGDebugMode,
+    } = useUIStore()
 
     const navigate = useNavigate()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
@@ -551,6 +555,38 @@ export default function SettingsModal() {
                                                 )
                                             })}
                                         </div>
+                                    </div>
+
+                                    {/* C2: RAG Debug Mode 開關 */}
+                                    <div className="mt-12 max-w-md">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                                            {t('settings.ragDebug', 'RAG 除錯模式')}
+                                        </h3>
+                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
+                                            {t('settings.ragDebugHint', '開啟後，每次 AI 回應下方會顯示命中的知識片段、相似度分數與路由決策，方便追蹤檢索品質。')}
+                                        </p>
+                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-white/5 cursor-pointer">
+                                            <span className="text-[15px] font-semibold text-gray-700 dark:text-gray-200">
+                                                🔍 {t('settings.ragDebugToggle', '顯示 RAG Debug 面板')}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={ragDebugMode}
+                                                onClick={() => setRAGDebugMode(!ragDebugMode)}
+                                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                                                    ragDebugMode
+                                                        ? 'bg-[rgb(var(--color-ios-accent-light))] dark:bg-[rgb(var(--color-ios-accent-dark))]'
+                                                        : 'bg-gray-300 dark:bg-ios-dark-gray2'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                                        ragDebugMode ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </label>
                                     </div>
                                 </motion.div>
                             )}

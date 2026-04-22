@@ -22,6 +22,8 @@ interface UIState {
     sidebarOpen: boolean
     sidebarWidth: number
     confirmConfig: ConfirmConfig | null
+    /** C2: 是否開啟 RAG Debug 模式，打開後會在最後一則 AI 訊息下方顯示除錯面板 */
+    ragDebugMode: boolean
 
     // 動作
     setTheme: (theme: Theme) => void
@@ -35,6 +37,8 @@ interface UIState {
     closeConfirm: () => void
     isSettingsOpen: boolean
     setSettingsOpen: (open: boolean) => void
+    setRAGDebugMode: (enabled: boolean) => void
+    toggleRAGDebugMode: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -87,6 +91,11 @@ export const useUIStore = create<UIState>()(
             // 設定彈窗
             isSettingsOpen: false,
             setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+
+            // C2: RAG Debug Mode（預設關閉，由使用者於設定中開啟）
+            ragDebugMode: false,
+            setRAGDebugMode: (enabled) => set({ ragDebugMode: enabled }),
+            toggleRAGDebugMode: () => set((s) => ({ ragDebugMode: !s.ragDebugMode })),
         }),
         {
             name: 'ui-storage',
@@ -95,6 +104,7 @@ export const useUIStore = create<UIState>()(
                 language: state.language,
                 accentColor: state.accentColor,
                 sidebarWidth: state.sidebarWidth,
+                ragDebugMode: state.ragDebugMode,
             }),
         }
     )
