@@ -15,4 +15,5 @@ export * from './SecurityBanners'
 // D2: 拆分元件
 export { default as ChatSidebar } from './ChatSidebar'
 export { default as ChatHeader } from './ChatHeader'
+export { default as ChatInputArea } from './ChatInputArea'
 export { ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal } from './ChatModals'
