@@ -41,9 +41,9 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 htmlFor={id}
                 className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-black dark:bg-corphia-ivory text-white dark:text-black font-semibold py-0.5' 
-                        : 'top-1/2 scale-100 bg-transparent text-ios-light-gray1 dark:text-ios-dark-gray1 py-0'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-ios-blue-light dark:peer-focus:bg-ios-blue-dark peer-focus:text-white dark:peer-focus:text-white peer-focus:font-semibold peer-focus:py-0.5
+                        ? 'top-0 scale-[0.85] bg-corphia-beige dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
+                        : 'top-1/2 scale-100 bg-transparent text-gray-500 dark:text-gray-400 py-0'}
+                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-beige dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
                 `}
             >
                 {label}
@@ -502,7 +502,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
+                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -513,7 +513,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
+                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.register')}
@@ -595,9 +595,8 @@ export default function Login() {
                                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-2.5 mt-1 bg-ios-blue-light dark:bg-ios-blue-dark hover:bg-opacity-90 dark:hover:bg-opacity-90
-                                           text-white font-medium rounded-full text-[15px]
-                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-ios-dark-gray5 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark
+                                    className="w-full py-2.5 mt-1 bg-corphia-bronze hover:bg-opacity-90 text-white font-medium rounded-full text-[15px]
+                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory dark:focus:ring-offset-corphia-obsidian focus:ring-corphia-bronze
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all shrink-0 border border-transparent shadow-sm"
                                 >

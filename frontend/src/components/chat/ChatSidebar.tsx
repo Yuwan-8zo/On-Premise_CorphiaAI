@@ -252,7 +252,7 @@ export default function ChatSidebar({
                                                         setExpandedFolders(prev => new Set(prev).add(folderName))
                                                         if (window.innerWidth < 768) setSidebarOpen(false)
                                                     }}
-                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-ios-blue-dark' : 'hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-corphia-bronze' : 'hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     <div className="flex items-center gap-1 min-w-0">
                                                         <button onClick={(e) => { e.stopPropagation(); setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next }) }}
