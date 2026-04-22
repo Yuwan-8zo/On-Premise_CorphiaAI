@@ -533,7 +533,7 @@ export default function Login() {
                         </div>
 
                         {/* 輸入欄位群組 - 垂直置中且保持固定間距 */}
-                        <motion.div layout className="w-full flex flex-col flex-1 justify-center gap-5 relative">
+                        <motion.div layout className="w-full flex flex-col justify-center gap-5 relative my-auto">
                             <motion.div layout className="w-full shrink-0 z-10">
                                 <FloatingInput
                                     id="email"
