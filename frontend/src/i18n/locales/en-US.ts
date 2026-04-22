@@ -47,12 +47,12 @@ export default {
         welcomeTitle: 'Welcome to',
         subtitle: 'Your Intelligent Enterprise Assistant',
         engineDesc: 'Enterprise-grade RAG & GGUF Analysis Engine',
-        feature1: 'Smart Q&A System',
-        feature1Desc: \'Intelligent Q&A based on enterprise knowledge base',
+        feature1: 'Intelligent Q&A',
+        feature1Desc: 'Intelligent Q&A based on enterprise knowledge base',
         feature2: 'Deep Document Analysis',
-        feature2Desc: \'Multi-dimensional analysis of document content and associations',
-        feature3: 'Local Deployment Privacy',
-        feature3Desc: \'Controllable data security, guaranteed privacy',
+        feature2Desc: 'Multi-dimensional analysis of document content and associations',
+        feature3: 'On-Premise Privacy',
+        feature3Desc: 'Controllable data security, guaranteed privacy',
         passwordMismatch: 'Passwords do not match',
         privacy: 'Privacy',
         terms: 'Terms of Service',
@@ -197,7 +197,7 @@ export default {
     // Guide
     guide: {
         title: 'System Guide',
-        subtitle: 'Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system\'s resources and exclusive features.',
+        subtitle: 'Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system's resources and exclusive features.',
         auth: {
             title: 'Identity and Access Management',
             engineer: 'System highest access, can create and assign all "Tenants", and access full logs.',
