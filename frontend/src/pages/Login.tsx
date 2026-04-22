@@ -493,11 +493,11 @@ export default function Login() {
                     {/* 卡片本體：強制 1:1 正方形，上下元素固定於邊緣，中間輸入框緊密群聚 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFECE7] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0 mb-4"
+                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFECE7] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
@@ -532,8 +532,11 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* 輸入欄位群組 - 絕對置中，完全不受外層排版引擎或動畫影響 */}
-                        <div className="absolute top-1/2 left-5 right-5 -translate-y-1/2 flex flex-col justify-center gap-5">
+                        {/* Spacer A: 頂部彈性空間 (1等分) */}
+                        <div className="flex-1 min-h-[10px]" />
+
+                        {/* 輸入欄位群組 - 緊密群聚以避免切換時大幅跳動 */}
+                        <div className="w-full flex flex-col justify-center gap-5 shrink-0 z-10">
                             <motion.div layout className="w-full shrink-0 z-10">
                                 <FloatingInput
                                     id="email"
@@ -580,6 +583,9 @@ export default function Login() {
                                 )}
                             </AnimatePresence>
                         </div>
+
+                        {/* Spacer C: 底部彈性空間 (1.15等分，視覺補償：為厚重按鈕預留稍微多一點空間) */}
+                        <div className="flex-[1.15] min-h-[10px]" />
 
                         {/* 底層按鈕與錯誤提示區塊 */}
                         <div className="w-full flex flex-col gap-3 shrink-0">
