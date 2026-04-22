@@ -257,5 +257,10 @@ html.dark .markdown-body strong {
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
 
-
-
+/* 手機版移除顏色過渡動畫，確保切換深淺色瞬間完成 */
+@media (max-width: 767px) {
+  .transition-colors,
+  .transition-all {
+    transition-property: none !important;
+  }
+}
