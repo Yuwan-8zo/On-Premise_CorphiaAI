@@ -33,7 +33,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-beige dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -41,9 +41,9 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 htmlFor={id}
                 className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-corphia-beige dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
-                        : 'top-1/2 scale-100 bg-transparent text-gray-500 dark:text-gray-400 py-0'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-beige dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
+                        ? 'top-0 scale-[0.85] bg-corphia-sand dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
+                        : 'top-1/2 scale-100 bg-transparent text-corphia-warm-gray dark:text-gray-400 py-0'}
+                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-sand dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
                 `}
             >
                 {label}
@@ -264,7 +264,7 @@ export default function Login() {
                                 <h2 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory">
                                     Corphia AI 引擎啟動中
                                 </h2>
-                                <p className="text-gray-500 dark:text-gray-400">
+                                <p className="text-corphia-warm-gray dark:text-gray-400">
                                     正在喚醒後端服務與加載大語言模型，請稍候...
                                 </p>
                                 <div className="mt-4 flex items-center justify-center gap-2">
@@ -327,7 +327,7 @@ export default function Login() {
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Backend:</span>
+                    <span className="text-sm text-corphia-warm-gray dark:text-gray-400">Backend:</span>
                     <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
                         backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
                         }`}>
@@ -346,7 +346,7 @@ export default function Login() {
                             <CorphiaTextLogo className="h-[52px] w-auto mr-[2px]" />
                             orphia
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-500 mb-10 transition-colors">
+                        <p className="text-gray-600 dark:text-corphia-warm-gray mb-10 transition-colors">
                             {t('auth.engineDesc')}
                         </p>
 
@@ -387,7 +387,7 @@ export default function Login() {
                         <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                             backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></span>
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Backend:</span>
+                        <span className="text-xs font-medium text-corphia-warm-gray dark:text-gray-400">Backend:</span>
                         <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
                             backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
                             }`}>
@@ -399,7 +399,7 @@ export default function Login() {
                     <div className="flex gap-2 ml-auto">
                         <button
                         onClick={toggleTheme}
-                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white transition-colors"
+                        className="p-2 text-gray-400 dark:text-corphia-warm-gray hover:text-gray-600 dark:hover:text-white transition-colors"
                         title={t('settings.theme')}
                     >
                         {theme === 'dark' ? (
@@ -416,7 +416,7 @@ export default function Login() {
                     <div className="relative" ref={langMenuRef}>
                         <button
                             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-corphia-ink dark:text-corphia-ivory bg-gray-100 dark:bg-corphia-espresso' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4'}`}
+                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-corphia-ink dark:text-corphia-ivory bg-gray-100 dark:bg-corphia-espresso' : 'text-gray-400 dark:text-corphia-warm-gray hover:text-gray-600 dark:hover:text-white hover:bg-corphia-sand dark:hover:bg-ios-dark-gray4'}`}
                             title={t('settings.language')}
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -435,19 +435,19 @@ export default function Login() {
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         English
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('ja-JP')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         日本語
                                     </button>
@@ -466,7 +466,7 @@ export default function Login() {
                         <CorphiaLogo className="w-12 h-12" />
                         Corphia
                     </h1>
-                    <p className="text-gray-500 text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
+                    <p className="text-corphia-warm-gray text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
                 </div>
 
                 {/* 登入卡片容器 - 居中 */}
@@ -478,7 +478,7 @@ export default function Login() {
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-corphia-obsidian transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-corphia-sand dark:bg-corphia-obsidian transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
@@ -502,7 +502,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -513,7 +513,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.register')}

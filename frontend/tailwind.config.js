@@ -12,6 +12,8 @@ export default {
                 corphia: {
                     bronze: '#94785A',    // 鈦金棕 (Primary Accent)
                     beige: '#E0D9D3',     // 燕麥奶灰 (Cards/Secondary Light)
+                    sand: '#F0EDE6',      // 淺沙色 (Inputs/Tabs Light)
+                    'warm-gray': '#8A847F',// 暖灰色 (Secondary Text Light)
                     ivory: '#F6F5F3',     // 珍珠白 (Background Light)
                     obsidian: '#1E1A18',  // 黑曜岩 (Background Dark)
                     espresso: '#2D2824',  // 深咖啡灰 (Cards/Secondary Dark)
