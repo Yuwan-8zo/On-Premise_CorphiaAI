@@ -611,6 +611,20 @@ export function useChatLogic() {
         })
     }
 
+    const handleVerifyChain = async (convId: string) => {
+        try {
+            const res = await conversationsApi.verifyChain(convId)
+            if (res.valid) {
+                toast.success(`對話完整性驗證通過！\n共 ${res.total_messages} 則訊息皆未被竄改。`)
+            } else {
+                toast.error(`對話紀錄遭竄改！\n在第 ${res.first_broken_index} 則訊息發生斷鏈\n(ID: ${res.first_broken_message_id})`)
+            }
+        } catch (err) {
+            console.error('驗證失敗', err)
+            toast.error('無法進行對話完整性驗證')
+        }
+    }
+
     const handleSend = async (overrideValue?: string) => {
         const text = overrideValue ?? input
         if (!text.trim() || isStreaming || isConnecting) return
@@ -789,6 +803,7 @@ export function useChatLogic() {
             handleShareConversation, 
             handleRenameConversation, 
             handleMoveToProject, 
+            handleVerifyChain,
             handleDeleteConversation
         },
         inputProps: {

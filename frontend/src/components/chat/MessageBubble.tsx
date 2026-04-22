@@ -8,7 +8,7 @@ import SourceCitations from './SourceCitations'
 import RAGDebugPanel from './RAGDebugPanel'
 import type { Message } from '../../types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '../icons/CorphiaIcons'
-import { Copy, Edit2, Check, X } from 'lucide-react'
+import { Copy, Edit2, Check, X, ShieldCheck } from 'lucide-react'
 import { conversationsApi } from '../../api/conversations'
 import { useChatStore } from '../../store/chatStore'
 
@@ -137,7 +137,6 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                             message.content
                         )}
                     </div>
-                    {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 dark:text-gray-500 mr-2">
                             <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
@@ -146,6 +145,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                             <button onClick={() => { setEditContent(message.content); setIsEditing(true); }} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="編輯">
                                 <Edit2 className="w-3.5 h-3.5" />
                             </button>
+                            {message.content_hash && (
+                                <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
+                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                    <div className="absolute right-0 bottom-full mb-2 hidden group-hover/hash:block bg-gray-900 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg">
+                                        Verified: {message.content_hash.substring(0, 16)}...
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -195,6 +202,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                                 <button onClick={handleCopy} className="p-1 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors" title="複製">
                                     {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                                 </button>
+                                {message.content_hash && (
+                                    <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
+                                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover/hash:block bg-gray-900 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg z-10">
+                                            Verified: {message.content_hash.substring(0, 16)}...
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

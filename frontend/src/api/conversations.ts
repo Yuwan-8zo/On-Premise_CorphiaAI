@@ -95,6 +95,14 @@ export const conversationsApi = {
         })
         return mapMessage(response.data)
     },
+
+    /**
+     * 驗證對話完整性
+     */
+    verifyChain: async (conversationId: string): Promise<{ valid: boolean; total_messages: number; first_broken_index: number | null }> => {
+        const response = await apiClient.get(`/conversations/${conversationId}/verify-chain`)
+        return response.data
+    },
 }
 
 // 轉換函數
@@ -122,6 +130,8 @@ function mapMessage(data: Record<string, unknown>): Message {
         tokens: data.tokens as number,
         sources: data.sources as Message['sources'],
         rating: data.rating as number | undefined,
+        content_hash: data.content_hash as string | undefined,
+        prev_hash: data.prev_hash as string | undefined,
         createdAt: data.created_at as string,
     }
 }

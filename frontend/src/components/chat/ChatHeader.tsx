@@ -28,6 +28,7 @@ interface ChatHeaderProps {
     handleShareConversation: (id: string) => void
     handleRenameConversation: (id: string) => void
     handleMoveToProject: (id: string) => void
+    handleVerifyChain: (id: string) => void
     handleDeleteConversation: (id: string, e: React.MouseEvent) => void
 }
 
@@ -40,7 +41,7 @@ export default function ChatHeader({
     headerMenuOpen, setHeaderMenuOpen,
     currentConversation,
     handleShareConversation, handleRenameConversation,
-    handleMoveToProject, handleDeleteConversation
+    handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     return (
         <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 md:border-b-0 transition-colors">
@@ -214,6 +215,16 @@ export default function ChatHeader({
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                         <span className="font-medium text-[15px]">移至專案</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleVerifyChain(currentConversation.id) }}
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 active:bg-emerald-100 dark:active:bg-emerald-500/20"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                            <path d="M9 12l2 2 4-4"></path>
+                                        </svg>
+                                        <span className="font-medium text-[15px]">驗證防篡改鏈</span>
                                     </button>
                                     <div className="my-1 border-t border-ios-light-gray5 dark:border-white/5" />
                                     <button 

@@ -79,6 +79,8 @@ class MessageResponse(BaseModel):
     tokens: int
     sources: Optional[List[MessageSource]] = None
     rating: Optional[int] = None
+    content_hash: Optional[str] = None
+    prev_hash: Optional[str] = None
     created_at: datetime
     
     class Config:

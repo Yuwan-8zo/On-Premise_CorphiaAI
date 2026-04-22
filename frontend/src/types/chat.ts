@@ -31,6 +31,8 @@ export interface Message {
     tokens: number
     sources?: MessageSource[]
     rating?: number
+    content_hash?: string
+    prev_hash?: string
     createdAt: string
 }
 

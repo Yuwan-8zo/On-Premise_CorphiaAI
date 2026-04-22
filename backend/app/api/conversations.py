@@ -271,3 +271,28 @@ async def list_messages(
     messages = list(reversed(result.scalars().all()))
     
     return [MessageResponse.model_validate(m) for m in messages]
+
+
+@router.get("/{conversation_id}/verify-chain")
+async def verify_conversation_chain(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """
+    驗證對話歷史完整性 (Hash防篡改鏈)
+    """
+    result = await db.execute(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == current_user.id
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="對話不存在"
+        )
+
+    from app.services.hash_chain_service import verify_chain
+    return await verify_chain(db, conversation_id)
