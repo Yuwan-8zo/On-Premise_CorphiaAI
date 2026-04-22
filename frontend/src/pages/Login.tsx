@@ -497,23 +497,16 @@ export default function Login() {
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-corphia-sand dark:bg-corphia-obsidian transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFECE7] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0 mb-4"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
-                            <div
-                                className="bg-corphia-ivory dark:bg-corphia-espresso shadow-sm border border-transparent dark:border-white/5"
-                                style={{
-                                    position: 'absolute',
-                                    top: '5px',
-                                    left: activeTab === 'login' ? '5px' : 'calc(50% + 0px)',
-                                    width: 'calc(50% - 5px)',
-                                    height: 'calc(100% - 10px)',
-                                    borderRadius: '999px',
-                                    transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
-                                    zIndex: 1,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                }}
+                            <motion.div
+                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-white dark:bg-[#2A2420] shadow-sm rounded-full border border-gray-100 dark:border-white/5"
+                                initial={false}
+                                animate={{ x: activeTab === 'login' ? 0 : '100%' }}
+                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                style={{ left: '5px', zIndex: 1 }}
                             />
                             {/* 登入 */}
                             <button
@@ -521,7 +514,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                    activeTab === 'login' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-500 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -532,7 +525,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-400 hover:text-corphia-ink dark:hover:text-gray-300'
+                                    activeTab === 'register' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-corphia-warm-gray dark:text-gray-500 hover:text-corphia-ink dark:hover:text-gray-300'
                                 }`}
                             >
                                 {t('auth.register')}
