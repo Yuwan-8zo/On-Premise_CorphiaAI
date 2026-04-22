@@ -588,18 +588,20 @@ export default function Login() {
                             animate={{
                                 height: activeTab === 'register' ? 'auto' : 0,
                                 opacity: activeTab === 'register' ? 1 : 0,
-                                paddingTop: activeTab === 'register' ? 12 : 0,
                             }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                         >
-                            <FloatingInput
-                                id="confirm-password"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required={activeTab === 'register'}
-                                label={t('auth.confirmPassword')}
-                            />
+                            {/* 靜態 paddingTop 給浮動標籤與 border 留出空間，避免被 overflow:hidden 裁切 */}
+                            <div style={{ paddingTop: 16 }}>
+                                <FloatingInput
+                                    id="confirm-password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required={activeTab === 'register'}
+                                    label={t('auth.confirmPassword')}
+                                />
+                            </div>
                         </motion.div>
 
                         {/* ── Spacer C (底部視覺補償 1.15) ── */}
