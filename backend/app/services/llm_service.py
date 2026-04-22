@@ -1,12 +1,15 @@
 """
 LLM 服務模組
 
-使用 llama.cpp 進行本地模型推論
+使用 Ollama 微服務架構進行本地模型推論
 """
 
 import logging
+import json
+import time
+import httpx
 from typing import AsyncGenerator, Optional
-from pathlib import Path
+from collections import deque
 
 from app.core.config import settings
 
@@ -17,18 +20,18 @@ _llm_instance = None
 
 
 class LLMService:
-    """LLM 推論服務"""
+    """LLM 推論服務 (基於 Ollama 微服務架構)"""
     
     def __init__(self):
-        self.model = None
-        self.model_path = settings.llama_model_path
-        self.context_size = settings.llama_context_size
-        self.n_gpu_layers = settings.llama_n_gpu_layers
+        self.base_url = settings.ollama_base_url
+        self.model = settings.ollama_model
         self._initialized = False
+        
+        # httpx client 會在 initialize 時建立
+        self.client: Optional[httpx.AsyncClient] = None
 
         # ── C4: tokens/sec 即時統計 ─────────────────────────
         # 保留最近 10 次生成的 (tokens, elapsed_sec)，用於 /system/health/detailed
-        from collections import deque
         self._recent_runs: deque[tuple[int, float]] = deque(maxlen=10)
         self._last_tokens_per_sec: float = 0.0
         self._total_tokens_generated: int = 0
@@ -66,56 +69,40 @@ class LLMService:
     
     async def initialize(self) -> bool:
         """
-        初始化 LLM 模型
-        
-        Returns:
-            bool: 是否初始化成功
+        初始化 Ollama 連線並檢查模型是否存在
         """
         if self._initialized:
             return True
         
-        # NOTE: 若 model_path 是相對路徑，則解析為相對於 backend/ 目錄的絕對路徑
-        # 這樣不管從哪個 CWD 啟動，路徑都能正確解析
-        raw_path = self.model_path
-        if not Path(raw_path).is_absolute():
-            # __file__ = backend/app/services/llm_service.py
-            # parent.parent.parent = backend/
-            backend_dir = Path(__file__).parent.parent.parent
-            model_path = (backend_dir / raw_path).resolve()
-        else:
-            model_path = Path(raw_path)
-        
-        if not model_path.exists():
-            logger.warning(f"LLM 模型檔案不存在: {model_path}")
-            logger.info("系統將以模擬模式運行")
-            self._initialized = True
-            return True
+        # 建立 httpx AsyncClient
+        self.client = httpx.AsyncClient(timeout=30.0)
         
         try:
-            from llama_cpp import Llama
+            logger.info(f"正在連線至 Ollama 服務: {self.base_url}")
+            response = await self.client.get(f"{self.base_url}/api/tags")
+            response.raise_for_status()
             
-            logger.info(f"正在載入 LLM 模型: {model_path}")
+            # 檢查模型是否在清單中
+            tags = response.json().get("models", [])
+            model_names = [m["name"] for m in tags]
             
-            self.model = Llama(
-                model_path=str(model_path),
-                n_ctx=self.context_size,
-                n_gpu_layers=self.n_gpu_layers,
-                verbose=False,
-            )
-            
-            self._initialized = True
-            logger.info("✅ LLM 模型載入完成")
-            return True
-            
-        except ImportError:
-            logger.warning("llama-cpp-python 未安裝，系統將以模擬模式運行")
+            if self.model not in model_names and f"{self.model}:latest" not in model_names:
+                logger.warning(f"Ollama 中未找到指定模型: {self.model}，請先執行 `ollama run {self.model}`")
+                logger.info("系統將以模擬模式運行")
+                self.client = None
+            else:
+                logger.info(f"✅ Ollama 模型載入完成 ({self.model})")
+                
             self._initialized = True
             return True
+            
         except Exception as e:
-            logger.error(f"LLM 模型載入失敗: {e}")
+            logger.warning(f"Ollama 連線失敗或未啟動: {e}，請確認 {self.base_url} 可用。")
+            logger.info("系統將以模擬模式運行")
+            self.client = None
             self._initialized = True
-            return False
-    
+            return True
+            
     async def generate(
         self,
         prompt: str,
@@ -124,62 +111,48 @@ class LLMService:
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
     ) -> str:
-        """
-        生成回應（非串流）
-        
-        Args:
-            prompt: 輸入提示
-            max_tokens: 最大輸出 Token 數
-            temperature: 溫度參數
-            top_p: Top-p 取樣
-            stop: 停止符號列表
-            
-        Returns:
-            str: 生成的文字
-        """
+        """生成回應（非串流）"""
         if not self._initialized:
             await self.initialize()
-        
-        if self.model is None:
-            # 模擬模式
+            
+        if self.client is None:
             return self._simulate_response(prompt)
-        
+            
+        start = time.perf_counter()
         try:
-            import asyncio
-            import time
-            def _run():
-                return self.model(
-                    prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                    stop=stop or [],
-                    echo=False,
-                )
-
-            start = time.perf_counter()
-            output = await asyncio.to_thread(_run)
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "raw": True,
+                "options": {
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "stop": stop or [],
+                    "num_predict": max_tokens
+                }
+            }
+            
+            # 非串流生成可能需要較長時間，設置 300 秒 timeout
+            response = await self.client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+                timeout=300.0
+            )
+            response.raise_for_status()
+            data = response.json()
+            
             elapsed = time.perf_counter() - start
-
-            # 嘗試從 usage 抓 token 數；llama-cpp 通常會回 completion_tokens
-            tokens = 0
-            try:
-                usage = output.get("usage") or {}
-                tokens = int(usage.get("completion_tokens") or 0)
-            except Exception:
-                tokens = 0
-            if tokens <= 0:
-                # 粗估：回傳文字長度除以 4（英文）或直接用字元數（中文）
-                text = output["choices"][0].get("text", "") or ""
-                tokens = max(1, len(text) // 3)
-            self.record_generation(tokens, elapsed)
-
-            return output["choices"][0]["text"]
-
+            tokens = data.get("eval_count", 0)
+            if tokens > 0:
+                self.record_generation(tokens, elapsed)
+                
+            return data.get("response", "")
+            
         except Exception as e:
-            logger.error(f"LLM 生成失敗: {e}")
+            logger.error(f"Ollama 生成失敗: {e}")
             raise
-    
+            
     async def generate_stream(
         self,
         prompt: str,
@@ -188,67 +161,58 @@ class LLMService:
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
     ) -> AsyncGenerator[str, None]:
-        """
-        串流生成回應
-        
-        Args:
-            prompt: 輸入提示
-            max_tokens: 最大輸出 Token 數
-            temperature: 溫度參數
-            top_p: Top-p 取樣
-            stop: 停止符號列表
-            
-        Yields:
-            str: 生成的文字片段
-        """
+        """串流生成回應"""
         if not self._initialized:
             await self.initialize()
-        
-        if self.model is None:
-            # 模擬模式
+            
+        if self.client is None:
             async for chunk in self._simulate_stream(prompt):
                 yield chunk
             return
-        
+            
+        start = time.perf_counter()
+        token_count = 0
         try:
-            stream = self.model(
-                prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                stop=stop or [],
-                echo=False,
-                stream=True,
-            )
-
-            import asyncio
-            import time
-            def get_next():
-                try:
-                    return next(stream)
-                except StopIteration:
-                    return None
-
-            start = time.perf_counter()
-            token_count = 0
-            try:
-                while True:
-                    output = await asyncio.to_thread(get_next)
-                    if output is None:
-                        break
-                    text = output["choices"][0]["text"]
-                    if text:
-                        token_count += 1  # 每個 chunk 估 1 token；雖不精準但趨勢正確
-                        yield text
-            finally:
-                elapsed = time.perf_counter() - start
-                if token_count > 0 and elapsed > 0:
-                    self.record_generation(token_count, elapsed)
-
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": True,
+                "raw": True,
+                "options": {
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "stop": stop or [],
+                    "num_predict": max_tokens
+                }
+            }
+            
+            async with self.client.stream(
+                "POST", 
+                f"{self.base_url}/api/generate", 
+                json=payload,
+                timeout=httpx.Timeout(300.0, connect=5.0)
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if "response" in data:
+                            token_count += 1
+                            yield data["response"]
+                        if data.get("done", False):
+                            # Ollama 會在 done 為 True 時提供 eval_count，這是精準的 token 數量
+                            eval_count = data.get("eval_count", token_count)
+                            elapsed = time.perf_counter() - start
+                            self.record_generation(eval_count, elapsed)
+                    except json.JSONDecodeError:
+                        continue
+                        
         except Exception as e:
-            logger.error(f"LLM 串流生成失敗: {e}")
+            logger.error(f"Ollama 串流生成失敗: {e}")
             raise
-    
+            
     async def generate_structured(
         self,
         prompt: str,
@@ -257,26 +221,11 @@ class LLMService:
         temperature: float = 0.1,
         top_p: float = 0.9,
     ) -> dict:
-        """
-        生成結構化 JSON 回應 (基於 Pydantic Schema 的 JSON Schema)
-        
-        Args:
-            prompt: 輸入提示
-            schema_dict: JSON Schema 定義字典
-            max_tokens: 最大輸出 Token 數
-            temperature: 溫度參數 (強制較低以求穩定)
-            top_p: Top-p 取樣
-            
-        Returns:
-            dict: 解析後的 JSON 資料
-        """
-        import json
-        
+        """生成結構化 JSON 回應"""
         if not self._initialized:
             await self.initialize()
             
-        if self.model is None:
-            # 模擬模式：嘗試讀取 schema properties 給出基本的模擬回應
+        if self.client is None:
             try:
                 properties = schema_dict.get("properties", {})
                 simulated_result = {}
@@ -292,39 +241,41 @@ class LLMService:
                 return {}
 
         try:
-            import asyncio
-            def _run():
-                return self.model(
-                    prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                    echo=False,
-                    response_format={
-                        "type": "json_object",
-                        "schema": schema_dict
-                    }
-                )
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "raw": True,
+                "format": schema_dict,
+                "options": {
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "num_predict": max_tokens
+                }
+            }
             
-            output = await asyncio.to_thread(_run)
-            
-            result_str = output["choices"][0]["text"]
+            response = await self.client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+                timeout=120.0
+            )
+            response.raise_for_status()
+            data = response.json()
+            result_str = data.get("response", "{}")
             return json.loads(result_str)
             
         except Exception as e:
-            logger.error(f"LLM 結構化生成失敗: {e}")
-            # 原本若無法解析，會引發錯誤。
+            logger.error(f"Ollama 結構化生成失敗: {e}")
             raise
-    
+            
     def _simulate_response(self, prompt: str) -> str:
-        """模擬回應（無模型時使用）"""
         return f"""這是一個模擬的 AI 回應。
 
 您的問題是關於：「{prompt[:100]}...」
 
-**注意**: 目前系統以模擬模式運行，因為未載入 LLM 模型。
+**注意**: 目前系統以模擬模式運行，因為 Ollama 模型未啟動或連線失敗。
 
-請將 GGUF 模型檔案放入 `ai_model/` 目錄，並更新 `.env` 中的 `LLAMA_MODEL_PATH` 設定。
+請確認您已經安裝 Ollama 並執行了對應模型（例如 `ollama run qwen2.5:14b`），且確認 `.env` 中的 `OLLAMA_BASE_URL` 與 `OLLAMA_MODEL` 設定正確。
 
 ---
 
@@ -338,11 +289,8 @@ class LLMService:
 """
     
     async def _simulate_stream(self, prompt: str) -> AsyncGenerator[str, None]:
-        """模擬串流回應（無模型時使用）"""
         import asyncio
-        
         response = self._simulate_response(prompt)
-        
         for char in response:
             yield char
             await asyncio.sleep(0.01)
@@ -354,40 +302,25 @@ class LLMService:
         context: Optional[str] = None,
     ) -> str:
         """
-        建構對話 Prompt
-        
-        Args:
-            messages: 對話歷史 [{"role": "user/assistant", "content": "..."}]
-            system_prompt: 系統提示
-            context: RAG 上下文
-            
-        Returns:
-            str: 格式化的 Prompt
+        建構對話 Prompt (維持 ChatML 格式，無縫接軌 Ollama raw=True)
         """
-        # 使用 ChatML 格式
         prompt_parts = []
-        
-        # 系統提示
         if system_prompt or context:
             system_content = system_prompt or "你是一個有幫助的 AI 助手。"
             if context:
                 system_content += f"\n\n### 參考資料\n{context}"
             prompt_parts.append(f"<|im_start|>system\n{system_content}<|im_end|>")
         
-        # 對話歷史
         for msg in messages:
             role = msg["role"]
             content = msg["content"]
             prompt_parts.append(f"<|im_start|>{role}\n{content}<|im_end|>")
-        
-        # 助手回應開頭
+            
         prompt_parts.append("<|im_start|>assistant\n")
-        
         return "\n".join(prompt_parts)
 
 
 def get_llm_service() -> LLMService:
-    """取得 LLM 服務單例"""
     global _llm_instance
     if _llm_instance is None:
         _llm_instance = LLMService()
