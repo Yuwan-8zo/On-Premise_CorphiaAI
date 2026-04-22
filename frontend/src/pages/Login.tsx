@@ -563,40 +563,31 @@ export default function Login() {
                             />
                         </motion.div>
 
-                        {/* ── Spacer B2 + Confirm（註冊模式才出現） ── */}
-                        <AnimatePresence initial={false} mode="popLayout">
-                            {activeTab === 'register' && (
-                                <>
-                                    <motion.div
-                                        key="spacer-b2"
-                                        layout
-                                        className="flex-1"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                    />
-                                    <motion.div
-                                        key="confirm-input"
-                                        layout
-                                        className="shrink-0 w-full"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                    >
-                                        <FloatingInput
-                                            id="confirm-password"
-                                            type="password"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            required={activeTab === 'register'}
-                                            label={t('auth.confirmPassword')}
-                                        />
-                                    </motion.div>
-                                </>
-                            )}
-                        </AnimatePresence>
+                        {/* ── Spacer B2（始終在 DOM，同步動畫 flexGrow） ── */}
+                        <motion.div
+                            animate={{ flexGrow: activeTab === 'register' ? 1 : 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            style={{ flexShrink: 0, flexBasis: 0, minHeight: 0 }}
+                        />
+
+                        {/* ── Confirm Password（始終在 DOM，同步動畫） ── */}
+                        <motion.div
+                            className="w-full overflow-hidden shrink-0"
+                            animate={{
+                                height: activeTab === 'register' ? 'auto' : 0,
+                                opacity: activeTab === 'register' ? 1 : 0,
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                            <FloatingInput
+                                id="confirm-password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required={activeTab === 'register'}
+                                label={t('auth.confirmPassword')}
+                            />
+                        </motion.div>
 
                         {/* ── Spacer C (底部視覺補償 1.15) ── */}
                         <motion.div layout className="flex-[1.15]" />
