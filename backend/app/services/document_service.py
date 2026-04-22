@@ -311,6 +311,8 @@ class DocumentService:
         """
         將文字分塊
         
+        ISSUE-03 修正：使用字元數切割，支援中文文本（中文無空白分隔詞）。
+        
         Args:
             text: 原始文字
             
@@ -336,19 +338,16 @@ class DocumentService:
                     chunks.append(current_chunk)
                     current_chunk = ""
                 
-                # 分割長段落
-                words = para.split()
-                temp_chunk = ""
-                for word in words:
-                    if len(temp_chunk) + len(word) + 1 > self.CHUNK_SIZE:
-                        if temp_chunk:
-                            chunks.append(temp_chunk)
-                        temp_chunk = word
-                    else:
-                        temp_chunk = temp_chunk + " " + word if temp_chunk else word
-                
-                if temp_chunk:
-                    current_chunk = temp_chunk
+                # ISSUE-03 修正：使用字元切割，而非 split()（空白斷詞對中文無效）
+                # 以 CHUNK_SIZE 個字元為單位切割，加入 CHUNK_OVERLAP 字元的重疊避免語意截斷
+                start = 0
+                while start < len(para):
+                    end = min(start + self.CHUNK_SIZE, len(para))
+                    chunk_part = para[start:end]
+                    if chunk_part.strip():
+                        chunks.append(chunk_part)
+                    # 下一段起點往回退 CHUNK_OVERLAP 個字元，保留語意連貫性
+                    start = end - self.CHUNK_OVERLAP if end < len(para) else end
             else:
                 # 嘗試合併段落
                 if len(current_chunk) + len(para) + 2 > self.CHUNK_SIZE:

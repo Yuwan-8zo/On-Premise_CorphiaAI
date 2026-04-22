@@ -76,6 +76,14 @@ async def lifespan(app: FastAPI):
     yield
     
     # 關閉時執行
+    # ISSUE-04 修正：確保 httpx AsyncClient 正確關閉，避免連接池洩漏
+    try:
+        if llm_service.client is not None:
+            await llm_service.client.aclose()
+            logger.info("✅ LLM httpx client 已正確關閉")
+    except Exception as e:
+        logger.warning(f"關閉 LLM client 時發生錯誤（可忽略）: {e}")
+    
     await close_db()
     logger.info("👋 應用程式已關閉")
 

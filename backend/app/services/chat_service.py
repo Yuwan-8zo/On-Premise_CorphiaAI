@@ -12,8 +12,8 @@ from app.core.time_utils import utc_now_naive
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
-from langgraph.graph import StateGraph, START, END
-from duckduckgo_search import DDGS
+# QUALITY-01 修正：langgraph 和 duckduckgo_search 改為懶惰 import（在使用點 import）
+# 避免這些套件未安裝時阻斷整個模組載入，提升系統啟動可靠性
 import asyncio
 
 from app.models.conversation import Conversation
@@ -99,6 +99,8 @@ class ChatService:
         self.agent_graph = self._build_agent_graph()
         
     def _build_agent_graph(self):
+        # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
+        from langgraph.graph import StateGraph, START, END
         workflow = StateGraph(AgentState)
         
         workflow.add_node("router", self._router_node)
@@ -213,6 +215,8 @@ class ChatService:
         context = ""
         sources = []
         try:
+            # QUALITY-01 修正：懶惰 import duckduckgo_search，避免套件未安裝時阻斷啟動
+            from duckduckgo_search import DDGS
             # DuckDuckGo 搜尋 (以 thread 非同步執行避免阻塞)
             # NOTE: 加入 15 秒 timeout 保護，防止搜尋阻塞整個請求
             def _sync_search():
