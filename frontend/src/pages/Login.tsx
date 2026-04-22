@@ -532,52 +532,58 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* ── Spacer A (flex-1) ── */}
+                        {/* ── Spacer A ── */}
                         <div className="flex-1" />
 
-                        {/* ── 輸入欄位群組 (shrink-0，不參與 flex 彈性分配) ── */}
-                        <div className="w-full flex flex-col gap-5 shrink-0">
-                            <FloatingInput
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                label={t('auth.account')}
-                            />
-                            <FloatingInput
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                label={t('auth.password')}
-                            />
-                            {/* 確認密碼：高度動畫，不會推擠 spacer */}
-                            <AnimatePresence initial={false}>
-                                {activeTab === 'register' && (
-                                    <motion.div
-                                        key="confirm"
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                        style={{ overflow: 'hidden' }}
-                                    >
-                                        <FloatingInput
-                                            id="confirm-password"
-                                            type="password"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            required={activeTab === 'register'}
-                                            label={t('auth.confirmPassword')}
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {/* ── Email 欄位 ── */}
+                        <FloatingInput
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            label={t('auth.account')}
+                        />
 
-                        {/* ── Spacer C (flex-[1.15]，底部視覺補償) ── */}
+                        {/* ── Spacer B ── */}
+                        <div className="flex-1" />
+
+                        {/* ── Password 欄位 ── */}
+                        <FloatingInput
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            label={t('auth.password')}
+                        />
+
+                        {/* ── 確認密碼（註冊模式：高度動畫展開，帶自己的 Spacer） ── */}
+                        <AnimatePresence initial={false}>
+                            {activeTab === 'register' && (
+                                <motion.div
+                                    key="confirm-block"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                    style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flexShrink: 0 }}
+                                >
+                                    {/* Spacer between Password and Confirm */}
+                                    <div style={{ flex: 1, minHeight: '12px' }} />
+                                    <FloatingInput
+                                        id="confirm-password"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required={activeTab === 'register'}
+                                        label={t('auth.confirmPassword')}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* ── Spacer C (底部視覺補償 1.15) ── */}
                         <div className="flex-[1.15]" />
 
                         {/* 底層按鈕與錯誤提示區塊 */}
