@@ -591,7 +591,11 @@ export default function Login() {
                                 </AnimatePresence>
 
                                 {/* 提交按鈕 - Native iOS Solid Style */}
-                                    className="w-full py-2.5 mt-1 bg-corphia-bronze hover:bg-opacity-90 text-white font-medium rounded-full text-[15px]
+                                <motion.button
+                                    whileTap={{ scale: 0.98 }}
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full py-2.5 mt-1 bg-corphia-bronze hover:bg-opacity-90 text-white font-medium rounded-[14px] text-[15px]
                                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory dark:focus:ring-offset-corphia-obsidian focus:ring-corphia-bronze
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all shrink-0 border border-transparent shadow-none"
