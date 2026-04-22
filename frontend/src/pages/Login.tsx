@@ -20,34 +20,46 @@ interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement>
     id?: string;
 }
 
-const FloatingInput = ({ label, delayClass, id, value, className, type = 'text', ...props }: FloatingInputProps) => {
+const FloatingInput = ({ label, delayClass, id, value, className, type = 'text', onFocus, onBlur, ...props }: FloatingInputProps) => {
     const isFilled = Boolean(value && value.toString().length > 0);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
     const isPasswordType = type === 'password';
+    const isFloating = isFilled || isFocused;
     
     const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type;
     
     return (
-        <div className={`relative w-full shrink-0 animate-fade-in ${delayClass || ''}`}>
+        <div className={`relative w-full shrink-0 ${delayClass || ''}`}>
             <input
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
+                onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
+                className={`w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-shadow placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
-            <label
+            <motion.label
                 htmlFor={id}
-                className={`absolute left-5 -translate-y-1/2 transition-all duration-300 ease-in-out pointer-events-none rounded-full px-3 py-0.5 origin-left whitespace-nowrap will-change-transform
-                    ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-corphia-sand dark:bg-corphia-espresso text-corphia-bronze dark:text-corphia-bronze' 
-                        : 'top-1/2 scale-100 bg-transparent text-corphia-warm-gray dark:text-gray-400'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-sand dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze
-                `}
+                animate={isFloating ? {
+                    top: 0,
+                    scale: 0.85,
+                    color: '#94785A',
+                    backgroundColor: 'var(--label-bg, #F0ECE7)',
+                } : {
+                    top: '50%',
+                    scale: 1,
+                    color: '#8E8E93',
+                    backgroundColor: 'transparent',
+                }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute left-5 pointer-events-none rounded-full px-3 py-0.5 origin-left whitespace-nowrap dark:[--label-bg:#1C1815]"
+                style={{ y: '-50%' }}
             >
                 {label}
-            </label>
+            </motion.label>
 
             {isPasswordType && (
                 <AnimatePresence>
