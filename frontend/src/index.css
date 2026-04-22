@@ -257,10 +257,10 @@ html.dark .markdown-body strong {
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
 
-/* 統一桌面版顏色過渡動畫時間，確保文字與背景完全同步 */
+/* 統一桌面版顏色過渡動畫，確保所有元素(背景、文字、邊框)完美同步 */
 @media (min-width: 768px) {
-  .transition-colors {
-    transition-duration: 300ms !important;
+  html, body, #root, * {
+    transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, fill 300ms ease, stroke 300ms ease !important;
   }
 }
 
