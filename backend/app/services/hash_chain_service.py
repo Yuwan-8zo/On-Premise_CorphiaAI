@@ -60,6 +60,7 @@ async def get_latest_hash(
     result = await db.execute(
         select(Message.content_hash)
         .where(Message.conversation_id == conversation_id)
+        .where(Message.content_hash.isnot(None))
         .order_by(desc(Message.created_at))
         .limit(1)
     )
