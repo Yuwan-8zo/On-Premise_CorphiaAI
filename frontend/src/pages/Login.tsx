@@ -24,26 +24,39 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
     const isFilled = Boolean(value && value.toString().length > 0);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const isPasswordType = type === 'password';
+    const [isFocused, setIsFocused] = useState(false);
     
     const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type;
+    const isFloated = isFilled || isFocused;
     
     return (
-        <div className={`relative w-full shrink-0 animate-fade-in ${delayClass || ''}`}>
+        <div className={`relative w-full shrink-0 ${delayClass || ''}`}>
             <input
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso
+                    border-2 transition-colors duration-300 outline-none
+                    ${isFocused
+                        ? 'border-corphia-bronze/70 dark:border-corphia-bronze/60'
+                        : 'border-transparent dark:border-ios-dark-gray3/60'}
+                    text-black dark:text-corphia-ivory text-[15px]
+                    placeholder:text-transparent
+                    ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
             <label
                 htmlFor={id}
-                className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
-                    ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-corphia-sand dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-semibold py-0.5' 
-                        : 'top-1/2 scale-100 bg-transparent text-corphia-warm-gray dark:text-gray-400 py-0'}
-                    peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-corphia-sand dark:peer-focus:bg-corphia-espresso peer-focus:text-corphia-bronze dark:peer-focus:text-corphia-bronze peer-focus:font-semibold peer-focus:py-0.5
+                className={`absolute left-5 -translate-y-1/2 pointer-events-none rounded-full px-2 origin-left whitespace-nowrap font-medium
+                    transition-all duration-300 ease-in-out
+                    ${isFloated
+                        ? `top-0 scale-[0.82] py-0.5
+                           bg-corphia-sand dark:bg-corphia-espresso
+                           ${isFocused ? 'text-corphia-bronze dark:text-corphia-bronze' : 'text-corphia-ink dark:text-corphia-ivory'}`
+                        : 'top-1/2 scale-100 py-0 bg-transparent text-corphia-warm-gray dark:text-gray-400'}
                 `}
             >
                 {label}
@@ -89,6 +102,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
         </div>
     );
 };
+
 
 export default function Login() {
     const { t, i18n } = useTranslation()
