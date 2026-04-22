@@ -6,11 +6,11 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useChatStore } from '../../store/chatStore'
-import { conversationsApi } from '../../api/conversations'
-import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../../api/websocket'
-import { useUIStore } from '../../store/uiStore'
-import type { Message } from '../../types/chat'
+import { useChatStore } from '../store/chatStore'
+import { conversationsApi } from '../api/conversations'
+import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
+import { useUIStore } from '../store/uiStore'
+import type { Message } from '../types/chat'
 
 /**
  * WebSocket 連線與訊息處理 Hook
