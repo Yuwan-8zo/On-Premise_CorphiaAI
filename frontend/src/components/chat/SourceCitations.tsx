@@ -64,14 +64,14 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
             {isExpanded && (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
                     {sources.map((source, index) => (
-                        <div key={source.chunk_id} className="bg-white dark:bg-slate-900">
+                        <div key={source.chunk_id} className="bg-corphia-ivory dark:bg-slate-900">
                             {/* 來源標題 */}
                             <button
                                 onClick={() => toggleItem(source.chunk_id)}
                                 className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                             >
                                 <div className="flex items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark rounded text-xs font-medium">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-ios-blue-dark rounded text-xs font-medium">
                                         {index + 1}
                                     </span>
                                     <span className="text-slate-700 dark:text-slate-300 truncate">

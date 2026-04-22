@@ -49,7 +49,7 @@ export default function AboutSection() {
                     Corphia AI Platform
                 </h3>
                 <div className="flex items-center justify-center gap-2">
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-gray-100 dark:bg-ios-dark-gray4 text-gray-600 dark:text-gray-300 rounded-lg">
+                    <span className="px-2.5 py-1 text-xs font-semibold bg-gray-100 dark:bg-corphia-espresso text-gray-600 dark:text-gray-300 rounded-lg">
                         {t('about.version')} 2.2.0
                     </span>
                     <span className="px-2.5 py-1 text-xs font-semibold bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg flex items-center gap-1.5">
@@ -65,7 +65,7 @@ export default function AboutSection() {
             </motion.p>
 
             {/* 技術棧標籤卡塊 */}
-            <motion.div variants={itemVariants} className="w-full bg-gray-50/50 dark:bg-ios-dark-gray6/30 border border-gray-100 dark:border-white/5 rounded-[24px] p-6 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="w-full bg-corphia-beige/50 dark:bg-corphia-obsidian/30 border border-gray-100 dark:border-white/5 rounded-[24px] p-6 backdrop-blur-sm">
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                     <motion.div variants={badgeVariants} className="flex flex-col">
                         <span className="text-[12px] font-medium text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wider">{t('about.frontend')}</span>

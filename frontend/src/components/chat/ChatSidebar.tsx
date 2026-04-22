@@ -78,7 +78,7 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                } overflow-hidden bg-ios-light-gray6 dark:bg-ios-dark-gray5 rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-[0_2px_20px_rgba(0,0,0,0.04)] dark:md:shadow-none`}
+                } overflow-hidden bg-corphia-beige dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-[0_2px_20px_rgba(0,0,0,0.04)] dark:md:shadow-none`}
         >
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
@@ -90,7 +90,7 @@ export default function ChatSidebar({
                     onMouseEnter={() => setIsSidebarHovered(true)}
                     onMouseLeave={() => setIsSidebarHovered(false)}
                     title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                    className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 items-center justify-center ${
+                    className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-corphia-ivory/10 transition-all duration-200 shrink-0 items-center justify-center ${
                         (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
                     }`}
                 >
@@ -113,9 +113,9 @@ export default function ChatSidebar({
                             createNewConversation()
                         }
                     }}
-                    className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-white transition-colors overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-corphia-ivory/5 text-gray-800 dark:text-corphia-ivory transition-colors overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                 >
-                    <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-ios-dark-gray4">
+                    <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-corphia-espresso">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -133,11 +133,11 @@ export default function ChatSidebar({
                     <motion.div
                         layout
                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-ios-dark-gray6 transition-colors shrink-0 w-full"
+                        className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-corphia-obsidian transition-colors shrink-0 w-full"
                         style={{ padding: '4px' }}
                     >
                         <div
-                            className="bg-white dark:bg-ios-dark-gray4 shadow-sm border-transparent dark:border-white/5 border"
+                            className="bg-corphia-ivory dark:bg-corphia-espresso shadow-sm border-transparent dark:border-white/5 border"
                             style={{
                                 position: 'absolute', top: '4px',
                                 left: chatMode === 'general' ? '4px' : 'calc(50% + 0px)',
@@ -149,31 +149,31 @@ export default function ChatSidebar({
                         />
                         <button type="button" onClick={() => setChatMode('general')}
                             style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'general' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'}`}
+                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'general' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'}`}
                         >{t('chat.general')}</button>
                         <button type="button" onClick={() => setChatMode('project')}
                             style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'project' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'}`}
+                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'project' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'}`}
                         >{t('chat.project')}</button>
                     </motion.div>
                 ) : (
                     <div 
-                        className="relative bg-ios-light-gray5 dark:bg-ios-dark-gray6 rounded-[24px] cursor-pointer shrink-0 transition-colors"
+                        className="relative bg-ios-light-gray5 dark:bg-corphia-obsidian rounded-[24px] cursor-pointer shrink-0 transition-colors"
                         style={{ width: '48px', height: '88px' }}
                         onClick={() => setChatMode(chatMode === 'general' ? 'project' : 'general')}
                     >
-                        <div className="absolute bg-white dark:bg-ios-dark-gray4 rounded-full shadow-sm"
+                        <div className="absolute bg-corphia-ivory dark:bg-corphia-espresso rounded-full shadow-sm"
                             style={{
                                 width: '40px', height: '40px', top: '4px', left: '4px',
                                 transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
                                 transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)', zIndex: 1,
                             }}
                         />
-                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
+                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
                             style={{ top: '4px', left: '4px', width: '40px', height: '40px' }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         </div>
-                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
+                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-500 dark:text-ios-dark-gray1'}`}
                             style={{ top: '44px', left: '4px', width: '40px', height: '40px' }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                         </div>
@@ -195,13 +195,13 @@ export default function ChatSidebar({
                                 return filtered.map((conv) => (
                                     <div key={conv.id} onClick={() => selectConversation(conv)}
                                         className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                            ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                                            ? 'bg-gray-100 dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-medium'
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5 hover:text-corphia-ink dark:hover:text-gray-200'}`}
                                     >
                                         <span className="truncate pr-2">{conv.title}</span>
                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                             <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenuConvId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                className={`p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 ${activeMenuConvId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray3 text-corphia-ink dark:text-corphia-ivory' : 'text-gray-400'}`}
                                                 title="選項">
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                                             </button>
@@ -252,11 +252,11 @@ export default function ChatSidebar({
                                                         setExpandedFolders(prev => new Set(prev).add(folderName))
                                                         if (window.innerWidth < 768) setSidebarOpen(false)
                                                     }}
-                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark' : 'hover:bg-gray-50 dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-ios-blue-dark' : 'hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     <div className="flex items-center gap-1 min-w-0">
                                                         <button onClick={(e) => { e.stopPropagation(); setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next }) }}
-                                                            className={`p-0.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 transition-colors ${isExpanded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                            className={`p-0.5 rounded-md hover:bg-gray-200 dark:hover:bg-corphia-ivory/10 transition-colors ${isExpanded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                             <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                                                         </button>
                                                         <span className="truncate">{folderName}</span>
@@ -277,13 +277,13 @@ export default function ChatSidebar({
                                                             <div key={conv.id} className="relative">
                                                                 <div onClick={() => selectConversation(conv)}
                                                                     className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                        ? 'bg-gray-100 dark:bg-ios-dark-gray4 text-gray-900 dark:text-white font-medium border-gray-200 dark:border-white/5'
-                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-ios-dark-gray3'}`}
+                                                                        ? 'bg-gray-100 dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-medium border-gray-200 dark:border-white/5'
+                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray3'}`}
                                                                 >
                                                                     <span className="truncate pr-2">{conv.title}</span>
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                         <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                            className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray2 ${activeMenuConvId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray2 text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                                                            className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-ios-dark-gray2 ${activeMenuConvId === conv.id ? 'bg-gray-200 dark:bg-ios-dark-gray2 text-corphia-ink dark:text-corphia-ivory' : 'text-gray-400'}`}
                                                                             title="選項">
                                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                                                                         </button>
@@ -315,7 +315,7 @@ export default function ChatSidebar({
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 truncate text-left m-0 leading-snug">{user?.name || 'Local User'}</p>
+                            <p className="font-semibold text-[14px] text-corphia-ink dark:text-gray-100 truncate text-left m-0 leading-snug">{user?.name || 'Local User'}</p>
                         </div>
                     )}
                 </button>

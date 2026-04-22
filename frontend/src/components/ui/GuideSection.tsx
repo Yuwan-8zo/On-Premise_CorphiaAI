@@ -25,7 +25,7 @@ export default function GuideSection() {
             className="space-y-6 pb-8"
         >
             <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{t('guide.title')}</h3>
+                <h3 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-2 tracking-tight">{t('guide.title')}</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
                     {t('guide.subtitle')}
                 </p>
@@ -34,14 +34,14 @@ export default function GuideSection() {
             {/* 一、權限管理與角色 */}
             <motion.section variants={itemVariants} className="space-y-3">
                 <h4 className="text-[16px] font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                    <span className="p-1 bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-ios-blue-light dark:text-ios-blue-dark rounded-md">
+                    <span className="p-1 bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-ios-blue-dark rounded-md">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </span>
                     {t('guide.auth.title')}
                 </h4>
-                <div className="bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/5 rounded-[20px] p-4 text-[14px]">
+                <div className="bg-corphia-ivory dark:bg-corphia-espresso border border-gray-200 dark:border-white/5 rounded-[20px] p-4 text-[14px]">
                     <ul className="space-y-4">
                         <li className="flex flex-col sm:flex-row sm:gap-3 gap-1">
                             <span className="w-auto sm:w-20 font-medium text-gray-700 dark:text-gray-300 shrink-0">Engineer</span>
@@ -69,11 +69,11 @@ export default function GuideSection() {
                     </span>
                     {t('guide.project.title')}
                 </h4>
-                <div className="bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/5 rounded-[20px] p-5 text-[14px] space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
-                    <p>{t('guide.project.descStart')} <strong className="text-black dark:text-white">{t('guide.project.mode')}</strong>{t('guide.project.descEnd')}</p>
+                <div className="bg-corphia-ivory dark:bg-corphia-espresso border border-gray-200 dark:border-white/5 rounded-[20px] p-5 text-[14px] space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p>{t('guide.project.descStart')} <strong className="text-black dark:text-corphia-ivory">{t('guide.project.mode')}</strong>{t('guide.project.descEnd')}</p>
                     <ol className="list-decimal pl-5 space-y-2">
                         <li>{t('guide.project.step1')}</li>
-                        <li>{t('guide.project.step2Start')} <strong className="text-black dark:text-white">{t('guide.project.step2Types')}</strong> {t('guide.project.step2End')}</li>
+                        <li>{t('guide.project.step2Start')} <strong className="text-black dark:text-corphia-ivory">{t('guide.project.step2Types')}</strong> {t('guide.project.step2End')}</li>
                         <li>{t('guide.project.step3')}</li>
                         <li>{t('guide.project.step4')}</li>
                     </ol>
@@ -90,18 +90,18 @@ export default function GuideSection() {
                     </span>
                     {t('guide.chat.title')}
                 </h4>
-                <div className="bg-white dark:bg-ios-dark-gray4 border border-gray-200 dark:border-white/5 rounded-[20px] p-5 text-[14px] space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
+                <div className="bg-corphia-ivory dark:bg-corphia-espresso border border-gray-200 dark:border-white/5 rounded-[20px] p-5 text-[14px] space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
                     <ul className="list-disc pl-5 space-y-3">
                         <li>
-                            <strong className="text-black dark:text-white font-medium block mb-1">{t('guide.chat.minimapTitle')}</strong>
-                            {t('guide.chat.minimapDescStart')}<strong className="text-ios-blue-light dark:text-ios-blue-dark">{t('guide.chat.minimapDescHighlight')}</strong> {t('guide.chat.minimapDescEnd')}
+                            <strong className="text-black dark:text-corphia-ivory font-medium block mb-1">{t('guide.chat.minimapTitle')}</strong>
+                            {t('guide.chat.minimapDescStart')}<strong className="text-corphia-bronze dark:text-ios-blue-dark">{t('guide.chat.minimapDescHighlight')}</strong> {t('guide.chat.minimapDescEnd')}
                         </li>
                         <li>
-                            <strong className="text-black dark:text-white font-medium block mb-1">{t('guide.chat.scrollBottomTitle')}</strong>
+                            <strong className="text-black dark:text-corphia-ivory font-medium block mb-1">{t('guide.chat.scrollBottomTitle')}</strong>
                             {t('guide.chat.scrollBottomDesc')}
                         </li>
                         <li>
-                            <strong className="text-black dark:text-white font-medium block mb-1">{t('guide.chat.renameTitle')}</strong>
+                            <strong className="text-black dark:text-corphia-ivory font-medium block mb-1">{t('guide.chat.renameTitle')}</strong>
                             {t('guide.chat.renameDesc')}
                         </li>
                     </ul>

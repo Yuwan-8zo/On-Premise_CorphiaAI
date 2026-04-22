@@ -7,7 +7,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-white dark:bg-ios-dark-gray6 text-gray-900 dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-corphia-ivory dark:bg-corphia-obsidian text-corphia-ink dark:text-corphia-ivory overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarProps.sidebarOpen && (
@@ -21,7 +21,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-white dark:bg-ios-dark-gray6">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-corphia-ivory dark:bg-corphia-obsidian">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -31,7 +31,7 @@ export default function Chat() {
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full pb-8">
                         <div className="mb-8 pl-2 shrink-0">
                             <h2 className="text-[22px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
-                                <svg className="w-8 h-8 text-ios-blue-light dark:text-ios-blue-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-8 h-8 text-corphia-bronze dark:text-ios-blue-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
                                 {mainProps.selectedFolder}
@@ -39,8 +39,8 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 flex flex-col flex-1 min-h-0">
-                            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-ios-dark-gray6/50 shrink-0">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] shadow-sm border border-gray-200 dark:border-white/5 flex flex-col flex-1 min-h-0">
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-corphia-beige/50 dark:bg-corphia-obsidian/50 shrink-0">
                                 <h3 className="font-semibold text-gray-700 dark:text-gray-200">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
@@ -53,7 +53,7 @@ export default function Chat() {
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {mainProps.folderDocuments.length === 0 ? (
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
-                                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-corphia-ivory/20 mb-4 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                     </svg>
                                     <p className="text-[17px] font-semibold text-gray-600 dark:text-gray-300 mb-1">尚無文獻來源</p>
@@ -62,13 +62,13 @@ export default function Chat() {
                             ) : (
                                 <div className="divide-y divide-gray-100 dark:divide-white/5">
                                     {mainProps.folderDocuments.map((doc: any) => (
-                                        <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 transition-colors group">
+                                        <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4 transition-colors group">
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <label className="relative flex cursor-pointer items-center rounded-full" htmlFor={`checkbox-${doc.id}`}>
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-ios-blue-light checked:bg-ios-blue-light checked:before:bg-ios-blue-light dark:checked:border-ios-blue-dark dark:checked:bg-ios-blue-dark dark:checked:before:bg-ios-blue-dark hover:before:opacity-10 dark:border-white/20 dark:bg-ios-dark-gray6"
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-corphia-bronze checked:bg-ios-blue-light checked:before:bg-ios-blue-light dark:checked:border-ios-blue-dark dark:checked:bg-ios-blue-dark dark:checked:before:bg-ios-blue-dark hover:before:opacity-10 dark:border-white/20 dark:bg-corphia-obsidian"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
@@ -123,12 +123,12 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {mainProps.isUploading && mainProps.selectedFolder && (
-                            <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-ios-blue-light/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
+                            <div className="mt-6 p-4 bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 rounded-[20px] border border-corphia-bronze/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full border-2 border-ios-blue-light dark:border-ios-blue-dark border-t-transparent animate-spin" />
-                                    <span className="text-ios-blue-light dark:text-ios-blue-dark text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze dark:border-ios-blue-dark border-t-transparent animate-spin" />
+                                    <span className="text-corphia-bronze dark:text-ios-blue-dark text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
                                 </div>
-                                <span className="text-ios-blue-light dark:text-ios-blue-dark font-semibold">{mainProps.uploadProgress}%</span>
+                                <span className="text-corphia-bronze dark:text-ios-blue-dark font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
                         )}
                         
@@ -136,7 +136,7 @@ export default function Chat() {
                         <div className="mt-8 flex justify-center shrink-0">
                             <button
                                 onClick={mainProps.createNewConversation}
-                                className="flex items-center gap-2 px-6 py-3 bg-gray-900 border-gray-900 border dark:bg-white text-white dark:text-gray-900 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
+                                className="flex items-center gap-2 px-6 py-3 bg-gray-900 border-gray-900 border dark:bg-corphia-ivory text-white dark:text-corphia-ink rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
                             >
                                 {mainProps.t('chat.askFromSource')}
                             </button>
@@ -175,7 +175,7 @@ export default function Chat() {
                                         <button 
                                             key={index}
                                             onClick={() => mainProps.setInput(item.desc)}
-                                            className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-ios-light-gray6 dark:bg-ios-dark-gray5 hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                            className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/5 bg-corphia-beige dark:bg-corphia-obsidian hover:bg-ios-light-gray5 dark:hover:bg-ios-dark-gray4 shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                         >
                                             <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[rgb(var(--color-ios-accent-light))] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
                                             <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>

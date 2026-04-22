@@ -167,7 +167,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 螢光筆/標記文字 (==文字==)
                         mark: ({ children }) => (
-                            <mark className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-ios-blue-light dark:text-ios-blue-dark rounded font-medium">
+                            <mark className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-corphia-bronze dark:text-ios-blue-dark rounded font-medium">
                                 {children}
                             </mark>
                         ),
@@ -196,7 +196,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 引用
                         blockquote: ({ children }) => (
-                            <blockquote className="my-4 pl-4 border-l-4 border-ios-blue-light dark:border-ios-blue-dark bg-slate-50 dark:bg-slate-800/50 py-2 italic text-slate-600 dark:text-slate-400">
+                            <blockquote className="my-4 pl-4 border-l-4 border-corphia-bronze dark:border-ios-blue-dark bg-slate-50 dark:bg-slate-800/50 py-2 italic text-slate-600 dark:text-slate-400">
                                 {children}
                             </blockquote>
                         ),

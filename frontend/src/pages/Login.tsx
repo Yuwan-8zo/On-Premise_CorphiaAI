@@ -33,7 +33,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 id={id}
                 type={inputType}
                 value={value}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-ios-light-gray6 dark:bg-ios-dark-gray4 border border-transparent dark:border-ios-dark-gray3 text-black dark:text-white text-[15px] outline-none focus:ring-1 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-beige dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -41,7 +41,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 htmlFor={id}
                 className={`absolute left-5 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-3 origin-left whitespace-nowrap
                     ${isFilled 
-                        ? 'top-0 scale-[0.85] bg-black dark:bg-white text-white dark:text-black font-semibold py-0.5' 
+                        ? 'top-0 scale-[0.85] bg-black dark:bg-corphia-ivory text-white dark:text-black font-semibold py-0.5' 
                         : 'top-1/2 scale-100 bg-transparent text-ios-light-gray1 dark:text-ios-dark-gray1 py-0'}
                     peer-focus:top-0 peer-focus:scale-[0.85] peer-focus:bg-ios-blue-light dark:peer-focus:bg-ios-blue-dark peer-focus:text-white dark:peer-focus:text-white peer-focus:font-semibold peer-focus:py-0.5
                 `}
@@ -244,7 +244,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white dark:bg-ios-dark-gray6 transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-corphia-ivory dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
             {/* ── 全螢幕啟動畫面 Modal ── */}
             <AnimatePresence>
                 {!hasInitialConnected && (
@@ -252,16 +252,16 @@ export default function Login() {
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white dark:bg-ios-dark-gray6 backdrop-blur-md"
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-corphia-ivory dark:bg-corphia-obsidian backdrop-blur-md"
                     >
                         <motion.div
                             animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.7, 1, 0.7] }}
                             transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                             className="flex flex-col items-center gap-6"
                         >
-                            <CorphiaLogo className="w-24 h-24 text-ios-blue-light dark:text-ios-blue-dark drop-shadow-lg" />
+                            <CorphiaLogo className="w-24 h-24 text-corphia-bronze dark:text-ios-blue-dark drop-shadow-lg" />
                             <div className="flex flex-col items-center gap-2 text-center">
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <h2 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory">
                                     Corphia AI 引擎啟動中
                                 </h2>
                                 <p className="text-gray-500 dark:text-gray-400">
@@ -308,7 +308,7 @@ export default function Login() {
                             exit={{ scale: 0.9, y: 20, opacity: 0 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white p-6 rounded-[32px] shadow-2xl flex flex-col items-center"
+                            className="bg-corphia-ivory p-6 rounded-[32px] shadow-2xl flex flex-col items-center"
                         >
                             <img 
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
@@ -323,7 +323,7 @@ export default function Login() {
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
                 {/* 後端狀態指示器 */}
-                <div className="flex items-center gap-2 bg-white dark:bg-ios-dark-gray5 border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
+                <div className="flex items-center gap-2 bg-corphia-ivory dark:bg-corphia-obsidian border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
@@ -339,10 +339,10 @@ export default function Login() {
                 {/* 品牌內容 - 垂直水平絕對置中 */}
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
-                        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
+                        <h2 className="text-4xl font-bold text-corphia-ink dark:text-corphia-ivory mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-[64px] font-extrabold text-gray-900 dark:text-white mb-6 transition-colors flex items-center tracking-tight gap-[1px]">
+                        <h1 className="text-[64px] font-extrabold text-corphia-ink dark:text-corphia-ivory mb-6 transition-colors flex items-center tracking-tight gap-[1px]">
                             <CorphiaTextLogo className="h-[52px] w-auto mr-[2px]" />
                             orphia
                         </h1>
@@ -354,15 +354,15 @@ export default function Login() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-white transition-colors">{t('auth.feature1')}</span>
+                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature1')}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-white transition-colors">{t('auth.feature2')}</span>
+                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature2')}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="w-2.5 h-2.5 rounded-full bg-ios-blue-light dark:bg-ios-blue-dark"></span>
-                                <span className="text-black dark:text-white transition-colors">{t('auth.feature3')}</span>
+                                <span className="text-black dark:text-corphia-ivory transition-colors">{t('auth.feature3')}</span>
                             </div>
                         </div>
 
@@ -373,7 +373,7 @@ export default function Login() {
                 <button
                     onClick={() => setShowQR(true)}
                     title="掃描條碼體驗行動版"
-                    className="absolute bottom-8 left-8 flex items-center justify-center w-12 h-12 bg-white/70 dark:bg-ios-dark-gray5/70 backdrop-blur-lg border border-gray-200/50 dark:border-white/10 rounded-full shadow-sm hover:scale-105 hover:bg-white dark:hover:bg-ios-dark-gray4 transition-all group z-10"
+                    className="absolute bottom-8 left-8 flex items-center justify-center w-12 h-12 bg-corphia-ivory/70 dark:bg-corphia-obsidian/70 backdrop-blur-lg border border-gray-200/50 dark:border-white/10 rounded-full shadow-sm hover:scale-105 hover:bg-corphia-ivory dark:hover:bg-ios-dark-gray4 transition-all group z-10"
                 >
                     <QrCode className="w-[22px] h-[22px] text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform" />
                 </button>
@@ -383,7 +383,7 @@ export default function Login() {
             <div className="w-full lg:w-1/2 flex flex-col">
                 {/* 頂部區塊 (手機版顯示左側狀態與右側按鈕，桌面版只顯示右側按鈕) */}
                 <div className="flex justify-between items-center p-6 w-full">
-                    <div className="lg:hidden flex items-center gap-2 bg-white dark:bg-ios-dark-gray5 border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
+                    <div className="lg:hidden flex items-center gap-2 bg-corphia-ivory dark:bg-corphia-obsidian border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
                         <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                             backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></span>
@@ -416,7 +416,7 @@ export default function Login() {
                     <div className="relative" ref={langMenuRef}>
                         <button
                             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-ios-dark-gray4' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-ios-dark-gray4'}`}
+                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-corphia-ink dark:text-corphia-ivory bg-gray-100 dark:bg-corphia-espresso' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4'}`}
                             title={t('settings.language')}
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -431,23 +431,23 @@ export default function Login() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute right-0 mt-2 w-28 bg-white dark:bg-ios-dark-gray5 border border-gray-100 dark:border-white/5 shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
+                                    className="absolute right-0 mt-2 w-28 bg-corphia-ivory dark:bg-corphia-obsidian border border-gray-100 dark:border-white/5 shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-ios-blue-light dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-ios-light-gray6 dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-ios-blue-light dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-ios-light-gray6 dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         English
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('ja-JP')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-ios-blue-light dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-ios-light-gray6 dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray5'}`}
                                     >
                                         日本語
                                     </button>
@@ -459,10 +459,10 @@ export default function Login() {
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
+                    <h2 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-[40px] font-extrabold text-gray-900 dark:text-white mb-3 transition-colors flex items-center justify-center gap-4">
+                    <h1 className="text-[40px] font-extrabold text-corphia-ink dark:text-corphia-ivory mb-3 transition-colors flex items-center justify-center gap-4">
                         <CorphiaLogo className="w-12 h-12" />
                         Corphia
                     </h1>
@@ -474,16 +474,16 @@ export default function Login() {
                     {/* 卡片本體：強制 1:1 正方形，上下元素固定於邊緣，中間輸入框緊密群聚 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-white dark:bg-ios-dark-gray5 shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-ios-dark-gray6 transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-ios-light-gray5 dark:bg-corphia-obsidian transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
                             <div
-                                className="bg-white dark:bg-ios-dark-gray4 shadow-sm border border-transparent dark:border-white/5"
+                                className="bg-corphia-ivory dark:bg-corphia-espresso shadow-sm border border-transparent dark:border-white/5"
                                 style={{
                                     position: 'absolute',
                                     top: '5px',
@@ -502,7 +502,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
+                                    activeTab === 'login' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
                                 {t('auth.login')}
@@ -513,7 +513,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-black dark:text-white' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
+                                    activeTab === 'register' ? 'text-black dark:text-corphia-ivory' : 'text-ios-light-gray1 dark:text-ios-dark-gray1 hover:text-black dark:hover:text-ios-light-gray6'
                                 }`}
                             >
                                 {t('auth.register')}
@@ -597,7 +597,7 @@ export default function Login() {
                                     disabled={isLoading}
                                     className="w-full py-2.5 mt-1 bg-ios-blue-light dark:bg-ios-blue-dark hover:bg-opacity-90 dark:hover:bg-opacity-90
                                            text-white font-medium rounded-full text-[15px]
-                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-ios-dark-gray5 focus:ring-ios-blue-light dark:focus:ring-ios-blue-dark
+                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-ios-dark-gray5 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all shrink-0 border border-transparent shadow-sm"
                                 >

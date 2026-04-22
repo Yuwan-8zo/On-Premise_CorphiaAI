@@ -449,13 +449,13 @@ export default function Admin() {
     }
 
     const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
-        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
+        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
             <div className="flex items-center gap-5">
                 <div className={`w-14 h-14 rounded-[16px] ${color} flex items-center justify-center text-white shadow-sm`}>
                     {icon}
                 </div>
                 <div>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">{value.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-corphia-ink dark:text-corphia-ivory mb-1 tracking-tight">{value.toLocaleString()}</p>
                     <p className="text-[15px] font-medium text-gray-500 dark:text-gray-400">{label}</p>
                 </div>
             </div>
@@ -466,7 +466,7 @@ export default function Admin() {
         const styles = {
             admin: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20',
             engineer: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20',
-            user: 'bg-gray-50 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20',
+            user: 'bg-corphia-beige dark:bg-corphia-beige0/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20',
         }
         return (
             <span className={`px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase rounded-full ${styles[role]}`}>
@@ -476,18 +476,18 @@ export default function Admin() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-ios-dark-gray6 transition-colors duration-300">
+        <div className="min-h-screen bg-corphia-ivory dark:bg-corphia-obsidian transition-colors duration-300">
             {/* 頂部導覽列 */}
-            <header className="h-[80px] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-4 md:px-8 bg-white dark:bg-ios-dark-gray6 sticky top-0 z-30 transition-colors">
+            <header className="h-[80px] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-4 md:px-8 bg-corphia-ivory dark:bg-corphia-obsidian sticky top-0 z-30 transition-colors">
                 <div className="flex items-center">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-ios-dark-gray4 rounded-full mr-2 md:mr-4 transition-colors"
+                        className="p-2 text-gray-500 hover:text-corphia-ink hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-ios-dark-gray4 rounded-full mr-2 md:mr-4 transition-colors"
                     >
                         <BackIcon />
                     </button>
-                    <h1 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white tracking-wide flex items-center gap-2">
-                        <svg className="w-5 h-5 md:w-6 md:h-6 text-ios-blue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <h1 className="text-lg md:text-xl font-semibold text-corphia-ink dark:text-corphia-ivory tracking-wide flex items-center gap-2">
+                        <svg className="w-5 h-5 md:w-6 md:h-6 text-corphia-bronze" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                         </svg>
                         {t('nav.admin')}
@@ -497,15 +497,15 @@ export default function Admin() {
 
             <div className="max-w-6xl mx-auto p-4 pt-2 md:p-8 md:pt-4">
                 {/* 分頁標籤 */}
-                <div className="sticky top-[80px] z-20 backdrop-blur-xl bg-white/90 dark:bg-ios-dark-gray6/90 py-4 -mx-4 px-4 md:-mx-8 md:px-8 mb-6 md:mb-8 border-b border-gray-200/50 dark:border-white/5 transition-colors">
+                <div className="sticky top-[80px] z-20 backdrop-blur-xl bg-corphia-ivory/90 dark:bg-corphia-obsidian/90 py-4 -mx-4 px-4 md:-mx-8 md:px-8 mb-6 md:mb-8 border-b border-gray-200/50 dark:border-white/5 transition-colors">
                     <div className="flex gap-2 md:gap-3 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x">
                         {(['overview', 'users', 'models', 'audit', 'system', 'tenants'] as AdminSection[]).map((section) => (
                             <button
                                 key={section}
                                 onClick={() => setActiveSection(section)}
                                 className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap shrink-0 transition-colors border ${activeSection === section
-                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm'
-                                    : 'bg-white dark:bg-ios-dark-gray5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/50 border-gray-200 dark:border-white/5'
+                                    ? 'bg-gray-900 dark:bg-corphia-ivory text-white dark:text-corphia-ink border-gray-900 dark:border-white shadow-sm'
+                                    : 'bg-corphia-ivory dark:bg-corphia-obsidian text-gray-600 dark:text-gray-400 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4/50 border-gray-200 dark:border-white/5'
                                     }`}
                             >
                                 {section === 'overview' && '總覽'}
@@ -561,11 +561,11 @@ export default function Admin() {
                         </div>
 
                         {/* 最近活動 */}
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors mt-8">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors mt-8">
+                            <h2 className="text-xl font-semibold text-corphia-ink dark:text-corphia-ivory mb-6">
                                 最近活動
                             </h2>
-                            <div className="text-gray-500 dark:text-gray-400 text-center py-10 font-medium bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20">
+                            <div className="text-gray-500 dark:text-gray-400 text-center py-10 font-medium bg-corphia-beige dark:bg-corphia-obsidian/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20">
                                 暫無活動記錄
                             </div>
                         </div>
@@ -574,9 +574,9 @@ export default function Admin() {
 
                 {/* 使用者管理 */}
                 {activeSection === 'users' && (
-                    <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                    <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
                         <div className="px-8 py-5 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
-                            <h2 className="font-semibold text-gray-900 dark:text-white">
+                            <h2 className="font-semibold text-corphia-ink dark:text-corphia-ivory">
                                 使用者列表 ({users.length})
                             </h2>
                             <button onClick={handleAddUser} className="px-4 py-2 bg-ios-blue-light hover:bg-ios-blue-light/90 text-white text-[15px] font-medium rounded-full transition-colors shadow-sm shadow-ios-blue-light/20">
@@ -591,7 +591,7 @@ export default function Admin() {
                                 {/* 桌面版：傳統表格 */}
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full whitespace-nowrap">
-                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                        <thead className="bg-corphia-beige dark:bg-corphia-obsidian">
                                             <tr>
                                                 <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     使用者
@@ -612,14 +612,14 @@ export default function Admin() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                                             {users.map((u) => (
-                                                <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                <tr key={u.id} className="hover:bg-corphia-beige/50 dark:hover:bg-ios-dark-gray4 transition-colors">
                                                     <td className="px-8 py-4">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark font-semibold text-sm">
+                                                            <div className="w-10 h-10 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-corphia-bronze dark:text-ios-blue-dark font-semibold text-sm">
                                                                 {u.name.charAt(0).toUpperCase()}
                                                             </div>
                                                             <div>
-                                                                <p className="font-medium text-gray-900 dark:text-white mb-0.5">{u.name}</p>
+                                                                <p className="font-medium text-corphia-ink dark:text-corphia-ivory mb-0.5">{u.name}</p>
                                                                 <p className="text-[13px] text-gray-500 dark:text-gray-400">{u.email}</p>
                                                             </div>
                                                         </div>
@@ -630,7 +630,7 @@ export default function Admin() {
                                                     <td className="px-8 py-4">
                                                         <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'
                                                             }`}>
-                                                            <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                            <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-corphia-beige0'}`} />
                                                             {u.isActive ? '啟用' : '停用'}
                                                         </span>
                                                     </td>
@@ -639,7 +639,7 @@ export default function Admin() {
                                                     </td>
                                                     <td className="px-8 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                            <button onClick={() => handleEditUser(u)} className="text-corphia-bronze hover:text-corphia-bronze/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
                                                                 編輯
                                                             </button>
                                                             <button
@@ -663,34 +663,34 @@ export default function Admin() {
                                 {/* 手機版：卡片清單 */}
                                 <div className="grid grid-cols-1 gap-4 md:hidden">
                                     {users.map((u) => (
-                                        <div key={u.id} className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors">
+                                        <div key={u.id} className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors">
                                             <div className="flex items-center gap-4 mb-4">
-                                                <div className="w-11 h-11 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-ios-blue-light dark:text-ios-blue-dark font-semibold text-sm shrink-0">
+                                                <div className="w-11 h-11 rounded-full bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 flex items-center justify-center text-corphia-bronze dark:text-ios-blue-dark font-semibold text-sm shrink-0">
                                                     {u.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-gray-900 dark:text-white mb-0.5 truncate">{u.name}</p>
+                                                    <p className="font-semibold text-corphia-ink dark:text-corphia-ivory mb-0.5 truncate">{u.name}</p>
                                                     <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
                                                 </div>
                                                 <RoleBadge role={u.role} />
                                             </div>
-                                            <div className="bg-gray-50/50 dark:bg-ios-dark-gray4/50 rounded-xl p-3 mb-4 flex divide-x divide-gray-200 dark:divide-white/5 text-[13px]">
+                                            <div className="bg-corphia-beige/50 dark:bg-corphia-espresso/50 rounded-xl p-3 mb-4 flex divide-x divide-gray-200 dark:divide-white/5 text-[13px]">
                                                 <div className="flex-1 px-3 pl-1">
                                                     <p className="text-gray-500 dark:text-gray-400 mb-1">狀態</p>
                                                     <span className={`inline-flex items-center gap-1.5 font-medium ${u.isActive ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                        <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                        <span className={`w-2 h-2 rounded-full ${u.isActive ? 'bg-green-500' : 'bg-gray-400 dark:bg-corphia-beige0'}`} />
                                                         {u.isActive ? '啟用' : '停用'}
                                                     </span>
                                                 </div>
                                                 <div className="flex-1 px-3">
                                                     <p className="text-gray-500 dark:text-gray-400 mb-1">最後登入</p>
-                                                    <p className="text-gray-900 dark:text-gray-200 truncate">
+                                                    <p className="text-corphia-ink dark:text-gray-200 truncate">
                                                         {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/5">
-                                                <button onClick={() => handleEditUser(u)} className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
+                                                <button onClick={() => handleEditUser(u)} className="text-corphia-bronze hover:text-corphia-bronze/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">編輯</button>
                                                 <button 
                                                     onClick={() => handleDeleteUserClick(u)} 
                                                     className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border border-transparent dark:border-red-500/20"
@@ -709,17 +709,17 @@ export default function Admin() {
                 {/* 模型管理 */}
                 {activeSection === 'models' && (
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                 <div>
-                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                        <svg className="w-6 h-6 text-ios-blue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <h2 className="text-xl font-semibold text-corphia-ink dark:text-corphia-ivory flex items-center gap-2">
+                                        <svg className="w-6 h-6 text-corphia-bronze" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
                                         </svg>
                                         LLM 模型
                                     </h2>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        目錄: <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-ios-dark-gray6 font-mono text-[13px] break-all">{modelsDir}</code>
+                                        目錄: <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-corphia-obsidian font-mono text-[13px] break-all">{modelsDir}</code>
                                     </p>
                                 </div>
                                 <button
@@ -741,7 +741,7 @@ export default function Admin() {
                             {isLoadingModels ? (
                                 <div className="text-center py-10 text-gray-500 dark:text-gray-400">載入中...</div>
                             ) : models.length === 0 ? (
-                                <div className="text-center py-10 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20">
+                                <div className="text-center py-10 bg-corphia-beige dark:bg-corphia-obsidian/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20">
                                     <p className="text-gray-600 dark:text-gray-300 font-medium">
                                         未找到 GGUF 模型檔案
                                     </p>
@@ -755,14 +755,14 @@ export default function Admin() {
                                         <div
                                             key={model.name}
                                             className={`p-5 rounded-[20px] border transition-colors ${model.is_current
-                                                ? 'border-ios-blue-light bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 shadow-sm'
-                                                : 'border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4/30 hover:border-gray-300 dark:hover:border-white/20'
+                                                ? 'border-corphia-bronze bg-ios-blue-light/5 dark:bg-ios-blue-dark/10 shadow-sm'
+                                                : 'border-gray-200 dark:border-white/5 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4/30 hover:border-gray-300 dark:hover:border-white/20'
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                                        <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white break-words">
+                                                        <h3 className="text-[15px] font-semibold text-corphia-ink dark:text-corphia-ivory break-words">
                                                             {model.name}
                                                         </h3>
                                                         {model.is_current && (
@@ -771,7 +771,7 @@ export default function Admin() {
                                                             </span>
                                                         )}
                                                         {model.quantization && (
-                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 rounded-full font-mono shrink-0 whitespace-nowrap">
+                                                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-corphia-obsidian border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 rounded-full font-mono shrink-0 whitespace-nowrap">
                                                                 {model.quantization}
                                                             </span>
                                                         )}
@@ -784,7 +784,7 @@ export default function Admin() {
                                                 {!model.is_current && (
                                                     <button
                                                         onClick={() => handleSelectModel(model.name)}
-                                                        className="px-5 py-2 bg-gray-100 dark:bg-ios-dark-gray6 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors shrink-0 whitespace-nowrap"
+                                                        className="px-5 py-2 bg-gray-100 dark:bg-corphia-obsidian text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors shrink-0 whitespace-nowrap"
                                                     >
                                                         選擇
                                                     </button>
@@ -796,13 +796,13 @@ export default function Admin() {
                             )}
                         </div>
 
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-lg font-semibold text-corphia-ink dark:text-corphia-ivory mb-4">
                                 如何添加新模型
                             </h2>
                             <ol className="list-decimal list-inside space-y-3 text-[15px] text-gray-600 dark:text-gray-400">
                                 <li>從 Hugging Face 下載 GGUF 格式的模型</li>
-                                <li>將檔案放入 <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-ios-dark-gray6 rounded font-mono text-[13px]">ai_model/</code> 目錄</li>
+                                <li>將檔案放入 <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-corphia-obsidian rounded font-mono text-[13px]">ai_model/</code> 目錄</li>
                                 <li>點擊「重新掃描」按鈕</li>
                                 <li>選擇要使用的模型</li>
                             </ol>
@@ -814,7 +814,7 @@ export default function Admin() {
                 {activeSection === 'audit' && (
                     <div className="space-y-6">
                         {/* 篩選列 */}
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-6 shadow-sm dark:shadow-none transition-colors">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-6 shadow-sm dark:shadow-none transition-colors">
                             <div className="flex flex-wrap gap-3 items-end">
                                 {/* 搜尋框 */}
                                 <div className="flex-1 min-w-[200px]">
@@ -826,7 +826,7 @@ export default function Admin() {
                                             onChange={(e) => setAuditSearchInput(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleAuditSearch()}
                                             placeholder="搜尋描述或 Email..."
-                                            className="flex-1 px-4 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors"
+                                            className="flex-1 px-4 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-corphia-beige dark:bg-corphia-obsidian text-[14px] text-corphia-ink dark:text-corphia-ivory placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-corphia-bronze dark:focus:border-ios-blue-dark transition-colors"
                                         />
                                         <button
                                             onClick={handleAuditSearch}
@@ -846,7 +846,7 @@ export default function Admin() {
                                     <select
                                         value={auditFilter.action || ''}
                                         onChange={(e) => handleAuditFilterChange('action', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors appearance-none"
+                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-corphia-beige dark:bg-corphia-obsidian text-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:border-corphia-bronze dark:focus:border-ios-blue-dark transition-colors appearance-none"
                                     >
                                         <option value="">全部</option>
                                         <option value="login_success">登入成功</option>
@@ -868,7 +868,7 @@ export default function Admin() {
                                     <select
                                         value={auditFilter.resource_type || ''}
                                         onChange={(e) => handleAuditFilterChange('resource_type', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ios-dark-gray6 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-ios-blue-light dark:focus:border-ios-blue-dark transition-colors appearance-none"
+                                        className="w-full px-3 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-corphia-beige dark:bg-corphia-obsidian text-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:border-corphia-bronze dark:focus:border-ios-blue-dark transition-colors appearance-none"
                                     >
                                         <option value="">全部</option>
                                         <option value="auth">認證</option>
@@ -908,11 +908,11 @@ export default function Admin() {
                         </div>
 
                         {/* 日誌列表 */}
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
                             <div className="px-6 md:px-8 py-3 md:py-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between gap-4">
-                                <h2 className="font-semibold text-gray-900 dark:text-white text-base md:text-lg flex items-center gap-2">
+                                <h2 className="font-semibold text-corphia-ink dark:text-corphia-ivory text-base md:text-lg flex items-center gap-2">
                                     審計日誌
-                                    <span className="text-gray-400 dark:text-gray-500 font-normal text-[13px] md:text-sm bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                                    <span className="text-gray-400 dark:text-gray-500 font-normal text-[13px] md:text-sm bg-corphia-beige dark:bg-corphia-ivory/5 px-2 py-0.5 rounded-full">
                                         {auditTotal.toLocaleString()}
                                     </span>
                                 </h2>
@@ -920,11 +920,11 @@ export default function Admin() {
                                     <span className="text-[13px] text-gray-500 dark:text-gray-400 hidden sm:inline-block mr-1">
                                         第 {auditPage} / {auditTotalPages || 1} 頁
                                     </span>
-                                    <div className="flex items-center p-1 bg-gray-100/80 dark:bg-ios-dark-gray6 rounded-full border border-gray-200/50 dark:border-white/5">
+                                    <div className="flex items-center p-1 bg-gray-100/80 dark:bg-corphia-obsidian rounded-full border border-gray-200/50 dark:border-white/5">
                                         <button
                                             onClick={() => handleAuditPageChange(auditPage - 1)}
                                             disabled={auditPage <= 1}
-                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-ios-blue-light dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
+                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-corphia-ivory dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-corphia-bronze dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
                                         >
                                             <svg className="w-4 h-4 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                                         </button>
@@ -934,7 +934,7 @@ export default function Admin() {
                                         <button
                                             onClick={() => handleAuditPageChange(auditPage + 1)}
                                             disabled={auditPage >= auditTotalPages}
-                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-ios-blue-light dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
+                                            className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-corphia-ivory dark:hover:bg-ios-dark-gray5 hover:shadow-sm hover:text-corphia-bronze dark:hover:text-ios-blue-dark disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:text-gray-600 dark:disabled:hover:text-gray-400 transition-all"
                                         >
                                             <svg className="w-4 h-4 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                                         </button>
@@ -953,7 +953,7 @@ export default function Admin() {
                             <>
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full min-w-[800px] whitespace-nowrap">
-                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                        <thead className="bg-corphia-beige dark:bg-corphia-obsidian">
                                             <tr>
                                                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">時間</th>
                                                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
@@ -970,7 +970,7 @@ export default function Admin() {
                                                 const isDelete = log.action.includes('delete')
 
                                                 return (
-                                                    <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                    <tr key={log.id} className="hover:bg-corphia-beige/50 dark:hover:bg-ios-dark-gray4 transition-colors">
                                                         <td className="px-5 py-3 text-[13px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                             {new Date(log.created_at).toLocaleString('zh-TW', {
                                                                 month: '2-digit',
@@ -988,7 +988,7 @@ export default function Admin() {
                                                                         ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20'
                                                                         : isAuth
                                                                             ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
-                                                                            : 'bg-gray-50 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20'
+                                                                            : 'bg-corphia-beige dark:bg-corphia-beige0/10 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-500/20'
                                                             }`}>
                                                                 {ACTION_LABELS[log.action] || log.action}
                                                             </span>
@@ -1022,7 +1022,7 @@ export default function Admin() {
                                         const isDelete = log.action.includes('delete')
                                         
                                         return (
-                                            <div key={log.id} className="bg-gray-50/50 dark:bg-ios-dark-gray4/30 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
+                                            <div key={log.id} className="bg-corphia-beige/50 dark:bg-corphia-espresso/30 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
                                                 <div className="flex items-start justify-between mb-3 gap-2">
                                                     <div className="flex flex-col gap-1.5">
                                                         <span className={`inline-flex px-2 py-0.5 text-[11px] font-bold tracking-wide rounded-md w-max ${
@@ -1032,7 +1032,7 @@ export default function Admin() {
                                                                     ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400'
                                                                     : isAuth
                                                                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                                                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300'
+                                                                        : 'bg-gray-200 text-gray-700 dark:bg-corphia-beige0/20 dark:text-gray-300'
                                                         }`}>
                                                             {ACTION_LABELS[log.action] || log.action}
                                                         </span>
@@ -1040,7 +1040,7 @@ export default function Admin() {
                                                             {new Date(log.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
-                                                    <span className="text-[12px] font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-ios-dark-gray5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10 shrink-0">
+                                                    <span className="text-[12px] font-medium text-gray-600 dark:text-gray-300 bg-corphia-ivory dark:bg-corphia-obsidian px-2 py-1 rounded-md border border-gray-200 dark:border-white/10 shrink-0">
                                                         {RESOURCE_LABELS[log.resource_type] || log.resource_type}
                                                     </span>
                                                 </div>
@@ -1054,7 +1054,7 @@ export default function Admin() {
                                                         <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                                         <span className="text-[12px] text-gray-600 dark:text-gray-400 truncate">{log.user_email || log.user_id || '系統'}</span>
                                                     </div>
-                                                    <span className="text-[11px] font-mono text-gray-400 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                                    <span className="text-[11px] font-mono text-gray-400 bg-black/5 dark:bg-corphia-ivory/5 px-1.5 py-0.5 rounded shrink-0">
                                                         {log.ip_address || '-'}
                                                     </span>
                                                 </div>
@@ -1071,7 +1071,7 @@ export default function Admin() {
                                     <button
                                         onClick={() => handleAuditPageChange(auditPage - 1)}
                                         disabled={auditPage <= 1}
-                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
+                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
                                     >
                                         <svg className="w-5 h-5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                                         <span className="hidden sm:inline">上一頁</span>
@@ -1106,7 +1106,7 @@ export default function Admin() {
                                     <button
                                         onClick={() => handleAuditPageChange(auditPage + 1)}
                                         disabled={auditPage >= auditTotalPages}
-                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
+                                        className="p-2 sm:px-4 sm:py-2 flex items-center justify-center text-[14px] font-medium rounded-full border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[36px]"
                                     >
                                         <span className="hidden sm:inline">下一頁</span>
                                         <svg className="w-5 h-5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -1120,47 +1120,47 @@ export default function Admin() {
                 {/* 系統資訊 */}
                 {activeSection === 'system' && (
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-xl font-semibold text-corphia-ink dark:text-corphia-ivory mb-6">
                                 系統資訊
                             </h2>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-[15px]">
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">版本</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium">2.2.0</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium">2.2.0</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">後端</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium">FastAPI</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium">FastAPI</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">LLM Engine</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium">llama.cpp</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium">llama.cpp</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">向量資料庫</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium">ChromaDB</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium">ChromaDB</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">資料庫</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium">SQLite</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium">SQLite</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">Python</p>
-                                    <p className="text-gray-900 dark:text-gray-100 font-medium tracking-wide">3.10+</p>
+                                    <p className="text-corphia-ink dark:text-gray-100 font-medium tracking-wide">3.10+</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                        <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 p-8 shadow-sm dark:shadow-none transition-colors">
+                            <h2 className="text-xl font-semibold text-corphia-ink dark:text-corphia-ivory mb-6">
                                 維護操作
                             </h2>
                             <div className="flex gap-4">
-                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-ios-dark-gray6 text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-corphia-obsidian text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors">
                                     清除快取
                                 </button>
-                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-ios-dark-gray6 text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                <button className="px-5 py-2.5 bg-gray-100 dark:bg-corphia-obsidian text-gray-700 dark:text-gray-300 font-medium rounded-full border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-ios-dark-gray4 transition-colors">
                                     重建索引
                                 </button>
                                 <button className="px-5 py-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 font-medium rounded-full hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors ml-auto">
@@ -1173,9 +1173,9 @@ export default function Admin() {
 
                 {/* 租戶管理 */}
                 {activeSection === 'tenants' && (
-                    <div className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                    <div className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-colors">
                         <div className="px-8 py-5 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
-                            <h2 className="font-semibold text-gray-900 dark:text-white">
+                            <h2 className="font-semibold text-corphia-ink dark:text-corphia-ivory">
                                 租戶列表 ({tenants.length})
                             </h2>
                             <button 
@@ -1188,14 +1188,14 @@ export default function Admin() {
                         {isLoadingTenants ? (
                             <div className="p-10 text-center text-gray-500 dark:text-gray-400">載入中...</div>
                         ) : tenants.length === 0 ? (
-                            <div className="text-center py-10 bg-gray-50 dark:bg-ios-dark-gray6/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20 m-6">
+                            <div className="text-center py-10 bg-corphia-beige dark:bg-corphia-obsidian/50 rounded-[20px] border border-dashed border-gray-200 dark:border-white/20 m-6">
                                 <p className="text-gray-600 dark:text-gray-300 font-medium">暫無租戶</p>
                             </div>
                         ) : (
                             <>
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full whitespace-nowrap">
-                                        <thead className="bg-gray-50 dark:bg-ios-dark-gray6">
+                                        <thead className="bg-corphia-beige dark:bg-corphia-obsidian">
                                             <tr>
                                                 <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">名稱 / Slug</th>
                                                 <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">狀態</th>
@@ -1205,14 +1205,14 @@ export default function Admin() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                                             {tenants.map(t => (
-                                                <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-ios-dark-gray4 transition-colors">
+                                                <tr key={t.id} className="hover:bg-corphia-beige/50 dark:hover:bg-ios-dark-gray4 transition-colors">
                                                     <td className="px-8 py-4">
-                                                        <p className="font-medium text-gray-900 dark:text-white mb-0.5">{t.name}</p>
-                                                        <p className="text-[13px] text-gray-500 font-mono bg-black/5 dark:bg-white/5 inline-block px-1.5 py-0.5 rounded">{t.slug}</p>
+                                                        <p className="font-medium text-corphia-ink dark:text-corphia-ivory mb-0.5">{t.name}</p>
+                                                        <p className="text-[13px] text-gray-500 font-mono bg-black/5 dark:bg-corphia-ivory/5 inline-block px-1.5 py-0.5 rounded">{t.slug}</p>
                                                     </td>
                                                     <td className="px-8 py-4">
                                                         <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.is_active ? 'text-green-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                            <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                            <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-corphia-beige0'}`} />
                                                             {t.is_active ? '啟用' : '停用'}
                                                         </span>
                                                     </td>
@@ -1233,7 +1233,7 @@ export default function Admin() {
                                                             </button>
                                                             <button 
                                                                 onClick={() => handleEditTenant(t)}
-                                                                className="text-ios-blue-light hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
+                                                                className="text-corphia-bronze hover:text-corphia-bronze/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-ios-blue-light/5 dark:hover:bg-ios-blue-dark/10 transition-colors">
                                                                 編輯
                                                             </button>
                                                         </div>
@@ -1247,14 +1247,14 @@ export default function Admin() {
                                 {/* 手機版：卡片清單 */}
                                 <div className="grid grid-cols-1 gap-4 md:hidden">
                                     {tenants.map(t => (
-                                        <div key={t.id} className="bg-white dark:bg-ios-dark-gray5 rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors flex flex-col">
+                                        <div key={t.id} className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] p-5 border border-gray-100 dark:border-white/5 shadow-sm transition-colors flex flex-col">
                                             <div className="flex items-start justify-between gap-3 mb-3">
                                                 <div className="flex-1 min-w-0 pr-2">
-                                                    <p className="font-semibold text-[16px] text-gray-900 dark:text-white mb-1.5 truncate">{t.name}</p>
-                                                    <p className="text-[13px] text-gray-500 font-mono bg-gray-100 dark:bg-white/10 inline-flex items-center px-2 py-0.5 rounded-md">{t.slug}</p>
+                                                    <p className="font-semibold text-[16px] text-corphia-ink dark:text-corphia-ivory mb-1.5 truncate">{t.name}</p>
+                                                    <p className="text-[13px] text-gray-500 font-mono bg-gray-100 dark:bg-corphia-ivory/10 inline-flex items-center px-2 py-0.5 rounded-md">{t.slug}</p>
                                                 </div>
-                                                <span className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${t.is_active ? 'text-green-600 bg-green-50 border-green-100 dark:bg-green-500/10 dark:border-green-500/20 dark:text-emerald-400' : 'text-gray-500 bg-gray-50 border-gray-200 dark:border-white/5 dark:bg-white/5 dark:text-gray-400'}`}>
-                                                    <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
+                                                <span className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${t.is_active ? 'text-green-600 bg-green-50 border-green-100 dark:bg-green-500/10 dark:border-green-500/20 dark:text-emerald-400' : 'text-gray-500 bg-corphia-beige border-gray-200 dark:border-white/5 dark:bg-corphia-ivory/5 dark:text-gray-400'}`}>
+                                                    <span className={`w-2 h-2 rounded-full ${t.is_active ? 'bg-green-500' : 'bg-gray-400 dark:bg-corphia-beige0'}`} />
                                                     {t.is_active ? '啟用' : '停用'}
                                                 </span>
                                             </div>
@@ -1265,7 +1265,7 @@ export default function Admin() {
                                                 <button onClick={() => handleToggleTenantStatus(t)} className={`text-[14px] font-medium px-5 py-2 rounded-full transition-colors border ${t.is_active ? 'text-orange-600 border-transparent hover:border-orange-200 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-500/10' : 'text-green-600 border-transparent hover:border-green-200 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-500/10'}`}>
                                                     {t.is_active ? '停用' : '啟用'}
                                                 </button>
-                                                <button onClick={() => handleEditTenant(t)} className="text-ios-blue-light bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 hover:text-ios-blue-light/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/20 dark:hover:bg-ios-blue-dark/40 transition-colors">
+                                                <button onClick={() => handleEditTenant(t)} className="text-corphia-bronze bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 hover:text-corphia-bronze/90 dark:text-ios-blue-dark dark:hover:text-ios-blue-dark/90 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-ios-blue-light/20 dark:hover:bg-ios-blue-dark/40 transition-colors">
                                                     編輯
                                                 </button>
                                             </div>
@@ -1293,9 +1293,9 @@ export default function Admin() {
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.95, opacity: 0 }}
-                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
+                        className="relative bg-corphia-ivory dark:bg-corphia-obsidian rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
                     >
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        <h3 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-6">
                             {currentEditingTenant ? '編輯租戶' : '新增租戶'}
                         </h3>
                         
@@ -1308,7 +1308,7 @@ export default function Admin() {
                                     value={tenantFormData.name}
                                     onChange={e => setTenantFormData(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="例如：Acme Corp"
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow"
                                 />
                             </div>
                             
@@ -1320,7 +1320,7 @@ export default function Admin() {
                                     value={tenantFormData.slug}
                                     onChange={e => setTenantFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
                                     placeholder="例如：acme-corp"
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow font-mono text-sm"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow font-mono text-sm"
                                 />
                                 <p className="mt-1 text-[12px] text-gray-500">僅限小寫英數字與連字號，將作為登入網址區隔使用。</p>
                             </div>
@@ -1332,7 +1332,7 @@ export default function Admin() {
                                     onChange={e => setTenantFormData(prev => ({ ...prev, description: e.target.value }))}
                                     rows={3}
                                     placeholder="簡短描述這個租戶的用途..."
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow resize-none"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow resize-none"
                                 />
                             </div>
 
@@ -1342,11 +1342,11 @@ export default function Admin() {
                                     type="button"
                                     onClick={() => setTenantFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
                                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                        tenantFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-white/20'
+                                        tenantFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-corphia-ivory/20'
                                     }`}
                                 >
                                     <span
-                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                        className={`inline-block h-5 w-5 transform rounded-full bg-corphia-ivory transition-transform ${
                                             tenantFormData.is_active ? 'translate-x-5' : 'translate-x-1'
                                         }`}
                                     />
@@ -1357,7 +1357,7 @@ export default function Admin() {
                                 <button
                                     type="button"
                                     onClick={() => setIsTenantModalOpen(false)}
-                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
+                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-corphia-obsidian dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
                                 >
                                     取消
                                 </button>
@@ -1400,9 +1400,9 @@ export default function Admin() {
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.95, opacity: 0 }}
-                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
+                        className="relative bg-corphia-ivory dark:bg-corphia-obsidian rounded-[24px] shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-white/5"
                     >
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        <h3 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-6">
                             {currentEditingUser ? '編輯使用者' : '新增使用者'}
                         </h3>
                         
@@ -1415,7 +1415,7 @@ export default function Admin() {
                                     value={userFormData.name}
                                     onChange={e => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="例如：王小明"
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow"
                                 />
                             </div>
                             
@@ -1428,7 +1428,7 @@ export default function Admin() {
                                     onChange={e => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
                                     placeholder="例如：user@example.com"
                                     disabled={!!currentEditingUser}
-                                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow ${currentEditingUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow ${currentEditingUser ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                             
@@ -1443,7 +1443,7 @@ export default function Admin() {
                                     onChange={e => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
                                     placeholder={currentEditingUser ? "留空表示不修改" : "請輸入密碼 (至少8碼)"}
                                     minLength={8}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow"
                                 />
                             </div>
 
@@ -1452,7 +1452,7 @@ export default function Admin() {
                                 <select
                                     value={userFormData.role}
                                     onChange={e => setUserFormData(prev => ({ ...prev, role: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-ios-dark-gray6 border border-gray-200 dark:border-white/10 rounded-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ios-blue-light/50 transition-shadow"
+                                    className="w-full px-4 py-2.5 bg-corphia-beige dark:bg-corphia-obsidian border border-gray-200 dark:border-white/10 rounded-[14px] text-corphia-ink dark:text-corphia-ivory focus:outline-none focus:ring-2 focus:ring-corphia-bronze/50 transition-shadow"
                                 >
                                     <option value="user">一般使用者 (User)</option>
                                     <option value="engineer">工程師 (Engineer)</option>
@@ -1466,11 +1466,11 @@ export default function Admin() {
                                     type="button"
                                     onClick={() => setUserFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
                                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                        userFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-white/20'
+                                        userFormData.is_active ? 'bg-ios-blue-light' : 'bg-gray-200 dark:bg-corphia-ivory/20'
                                     }`}
                                 >
                                     <span
-                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                        className={`inline-block h-5 w-5 transform rounded-full bg-corphia-ivory transition-transform ${
                                             userFormData.is_active ? 'translate-x-5' : 'translate-x-1'
                                         }`}
                                     />
@@ -1481,7 +1481,7 @@ export default function Admin() {
                                 <button
                                     type="button"
                                     onClick={() => setIsUserModalOpen(false)}
-                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
+                                    className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-corphia-obsidian dark:hover:bg-ios-dark-gray4 rounded-full transition-colors"
                                 >
                                     取消
                                 </button>
@@ -1524,7 +1524,7 @@ export default function Admin() {
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.95, opacity: 0 }}
-                        className="relative bg-white dark:bg-ios-dark-gray5 rounded-[24px] shadow-2xl p-6 w-full max-w-sm border border-gray-100 dark:border-white/5"
+                        className="relative bg-corphia-ivory dark:bg-corphia-obsidian rounded-[24px] shadow-2xl p-6 w-full max-w-sm border border-gray-100 dark:border-white/5"
                     >
                         <div className="text-center">
                             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 mb-4">
@@ -1532,11 +1532,11 @@ export default function Admin() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                            <h3 className="text-lg font-bold text-corphia-ink dark:text-corphia-ivory mb-2">
                                 確定要刪除使用者？
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                您即將刪除「<span className="font-semibold text-gray-900 dark:text-gray-300">{userToDelete.name}</span>」。此操作無法復原，並會撤銷該使用者所有已發放的 Token。
+                                您即將刪除「<span className="font-semibold text-corphia-ink dark:text-gray-300">{userToDelete.name}</span>」。此操作無法復原，並會撤銷該使用者所有已發放的 Token。
                             </p>
                         </div>
                         
@@ -1545,7 +1545,7 @@ export default function Admin() {
                                 type="button"
                                 onClick={() => setIsDeleteUserModalOpen(false)}
                                 disabled={isDeletingUser}
-                                className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-ios-dark-gray6 dark:hover:bg-ios-dark-gray4 disabled:opacity-50 rounded-full transition-colors"
+                                className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 font-medium bg-gray-100/80 hover:bg-gray-200 dark:bg-corphia-obsidian dark:hover:bg-ios-dark-gray4 disabled:opacity-50 rounded-full transition-colors"
                             >
                                 取消
                             </button>

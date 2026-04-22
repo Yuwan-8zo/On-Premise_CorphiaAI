@@ -116,7 +116,7 @@ export function SystemMonitorPanel() {
     if (loading) {
         return (
             <div className="p-4 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-ios-blue-light/20 border-t-ios-blue-light animate-spin" />
+                <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze/20 border-t-ios-blue-light animate-spin" />
             </div>
         )
     }

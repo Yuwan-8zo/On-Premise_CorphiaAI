@@ -44,7 +44,7 @@ export default function ChatHeader({
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     return (
-        <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-white dark:bg-ios-dark-gray6 border-b border-gray-100 dark:border-white/5 md:border-b-0 transition-colors">
+        <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-corphia-ivory dark:bg-corphia-obsidian border-b border-gray-100 dark:border-white/5 md:border-b-0 transition-colors">
             <div className="flex items-center gap-3">
                 <button
                     onClick={toggleSidebar}
@@ -104,7 +104,7 @@ export default function ChatHeader({
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[340px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 w-[340px] bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-2"
                                 >
                                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                         {availableModels.length === 0 ? (
@@ -126,19 +126,19 @@ export default function ChatHeader({
                                                             setIsModelLoading(false);
                                                         }
                                                     }}
-                                                    className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-gray-50 dark:bg-ios-dark-gray4' : 'hover:bg-gray-50 dark:hover:bg-ios-dark-gray4'}`}
+                                                    className={`w-full text-left px-4 py-3 mb-1 rounded-full flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-corphia-beige dark:bg-corphia-espresso' : 'hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4'}`}
                                                 >
                                                     <div className="flex flex-col min-w-0 pr-3">
-                                                        <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
+                                                        <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-corphia-ink dark:text-corphia-ivory' : 'text-gray-700 dark:text-gray-300'}`}>{model.name}</span>
                                                         <span className="text-[12px] text-gray-500 mt-1 flex items-center gap-2">
                                                             <span>{model.size_gb.toFixed(1)} GB</span>
                                                             {model.quantization && (
-                                                                <span className="bg-gray-200/50 dark:bg-ios-dark-gray6 px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
+                                                                <span className="bg-gray-200/50 dark:bg-corphia-obsidian px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
                                                             )}
                                                         </span>
                                                     </div>
                                                     {selectedModel?.name === model.name && (
-                                                        <svg className="w-5 h-5 ml-2 text-ios-blue-light dark:text-ios-blue-dark shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                        <svg className="w-5 h-5 ml-2 text-corphia-bronze dark:text-ios-blue-dark shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
                                                     )}
                                                 </button>
                                             ))
@@ -159,7 +159,7 @@ export default function ChatHeader({
                                                     setIsModelLoading(false);
                                                 }
                                             }}
-                                            className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-400 group"
+                                            className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-400 group"
                                         >
                                             <svg className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                             <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
@@ -175,7 +175,7 @@ export default function ChatHeader({
                 <div className="relative">
                     <button 
                         onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                        className={`p-2 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-white bg-gray-100 dark:bg-ios-dark-gray4' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                        className={`p-2 hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 rounded-full transition-colors ${headerMenuOpen ? 'text-gray-800 dark:text-corphia-ivory bg-gray-100 dark:bg-corphia-espresso' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
@@ -193,25 +193,25 @@ export default function ChatHeader({
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[180px] bg-white dark:bg-ios-dark-gray5 rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
+                                    className="absolute right-0 top-full mt-2 w-[180px] bg-corphia-ivory dark:bg-corphia-obsidian rounded-[20px] shadow-xl border border-ios-light-gray5 dark:border-white/5 overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-black dark:text-gray-200"
                                 >
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-corphia-ivory/10"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                         <span className="font-medium text-[15px]">分享</span>
                                     </button>
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleRenameConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-corphia-ivory/10"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                         <span className="font-medium text-[15px]">重新命名</span>
                                     </button>
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleMoveToProject(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-white/10"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-gray-100 dark:hover:bg-ios-dark-gray4 active:bg-gray-200 dark:active:bg-corphia-ivory/10"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                         <span className="font-medium text-[15px]">移至專案</span>

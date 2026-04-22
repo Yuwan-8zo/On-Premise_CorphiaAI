@@ -39,7 +39,7 @@ function ToastItem({ toast }: { toast: Toast }) {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => remove(toast.id)}
             className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
-                bg-white/90 dark:bg-ios-dark-gray4/90 backdrop-blur-xl
+                bg-corphia-ivory/90 dark:bg-corphia-espresso/90 backdrop-blur-xl
                 border ${borderColors[toast.type]}
                 shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]`}
         >

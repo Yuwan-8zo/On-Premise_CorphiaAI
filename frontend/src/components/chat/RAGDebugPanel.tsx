@@ -83,7 +83,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
 
             {/* 展開的除錯面板 */}
             {isExpanded && (
-                <div className="mt-2 space-y-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                <div className="mt-2 space-y-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-corphia-beige/50 dark:bg-gray-800/50 backdrop-blur-sm">
                     {/* 統計概覽 */}
                     {debug && (
                         <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">

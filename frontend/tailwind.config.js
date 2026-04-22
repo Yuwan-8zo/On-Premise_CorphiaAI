@@ -8,13 +8,22 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Corphia AI Brand Palette
+                corphia: {
+                    bronze: '#94785A',    // 鈦金棕 (Primary Accent)
+                    beige: '#E0D9D3',     // 燕麥奶灰 (Cards/Secondary Light)
+                    ivory: '#F6F5F3',     // 珍珠白 (Background Light)
+                    obsidian: '#1E1A18',  // 黑曜岩 (Background Dark)
+                    espresso: '#2D2824',  // 深咖啡灰 (Cards/Secondary Dark)
+                    ink: '#2D2824',       // 深咖啡黑 (Primary Text)
+                },
                 primary: {
                     50: '#f0f9ff',
                     100: '#e0f2fe',
                     200: '#bae6fd',
                     300: '#7dd3fc',
                     400: '#38bdf8',
-                    500: '#0ea5e9',
+                    500: '#94785A', // Overriding 500 to our bronze for any stray components
                     600: '#0284c7',
                     700: '#0369a1',
                     800: '#075985',

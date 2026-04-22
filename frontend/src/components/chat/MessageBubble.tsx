@@ -115,17 +115,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
                 <div className="flex flex-col items-end max-w-[75%] group">
-                    <div className="bg-gray-100 dark:bg-ios-dark-gray5 text-gray-900 dark:text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
+                    <div className="bg-gray-100 dark:bg-corphia-obsidian text-corphia-ink dark:text-gray-100 rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
                         {isEditing ? (
                             <div className="flex flex-col gap-2 min-w-[250px]">
                                 <textarea
                                     value={editContent}
                                     onChange={(e) => setEditContent(e.target.value)}
-                                    className="w-full bg-white dark:bg-ios-dark-gray4 text-gray-900 dark:text-gray-100 rounded-lg p-2 outline-none resize-none border border-gray-200 dark:border-gray-700 focus:border-ios-blue-light focus:ring-1 focus:ring-ios-blue-light"
+                                    className="w-full bg-corphia-ivory dark:bg-corphia-espresso text-corphia-ink dark:text-gray-100 rounded-lg p-2 outline-none resize-none border border-gray-200 dark:border-gray-700 focus:border-corphia-bronze focus:ring-1 focus:ring-corphia-bronze"
                                     rows={Math.min(5, editContent.split('\n').length || 1)}
                                 />
                                 <div className="flex justify-end gap-2 mt-1">
-                                    <button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-200 dark:bg-ios-dark-gray4 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full transition-colors flex items-center justify-center shadow-sm" title="取消">
+                                    <button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-200 dark:bg-corphia-espresso hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full transition-colors flex items-center justify-center shadow-sm" title="取消">
                                         <X className="w-4 h-4" />
                                     </button>
                                     <button onClick={handleSaveEdit} className="p-1.5 text-white bg-ios-blue-light dark:bg-ios-blue-dark hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm" title="儲存修改">
@@ -165,7 +165,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-gray-900 dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-corphia-ink dark:text-gray-100 text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-gray-100 dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-white/5 max-w-none [&_.markdown-body>*:first-child]:!mt-0">
                                 <MarkdownRenderer content={message.content} />
