@@ -177,7 +177,8 @@ async def login(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=30 * 60  # 30 分鐘
+        # ISSUE-01 修正：從 settings 讀取，確保與環境變數 JWT_EXPIRE_MINUTES 一致
+        expires_in=settings.jwt_expire_minutes * 60
     )
 
 
@@ -344,7 +345,8 @@ async def refresh_token(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=30 * 60
+        # ISSUE-01 修正：從 settings 讀取，確保與環境變數 JWT_EXPIRE_MINUTES 一致
+        expires_in=settings.jwt_expire_minutes * 60
     )
 
 

@@ -13,7 +13,6 @@ import modelsApi, { type ModelItem } from '../api/models'
 import { foldersApi } from '../api/folders'
 import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '../api/websocket'
 import { useToastStore } from '../store/toastStore'
-import { motion, AnimatePresence } from 'framer-motion'
 import type { Message } from '../types/chat'
 
 // D2: 拆出的元件和 Hooks
@@ -236,6 +235,7 @@ export function useChatLogic() {
     }
     const loadFolderDocuments = useCallback(async (folderName: string) => {
         try {
+            // BUG-09 修正：documentsApi.list() 固定回傳 {data: [], total}
             const res = await documentsApi.list()
             const docs = res.data.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName)
             setFolderDocuments(docs)
@@ -531,8 +531,9 @@ export function useChatLogic() {
             await selectConversation(conversation)
 
             // 偵測資料夾是否有文件，若無檔案則自動模擬 AI 回覆
+            // BUG-09 修正：documentsApi.list() 固定回傳 {data: [], total}
             const res = await documentsApi.list()
-            const docList = Array.isArray(res) ? res : (res.data || [])
+            const docList = res.data
             const folderDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName && (d.doc_metadata?.isActive ?? true))
             if (folderDocs.length === 0) {
                 // 此資料夾內尚無檢索文件，自動提示上傳
@@ -586,8 +587,9 @@ export function useChatLogic() {
                     }
                 }
 
+                // BUG-09 修正：documentsApi.list() 固定回傳 {data: [], total}
                 const res = await documentsApi.list()
-                const docList = Array.isArray(res) ? res : (res.data || [])
+                const docList = res.data
                 const relatedDocs = docList.filter((d: DocumentResponse) => ((d.doc_metadata?.folderName as string) || DEFAULT_FOLDER) === folderName)
                 for (const doc of relatedDocs) {
                     await documentsApi.delete(doc.id)

@@ -21,8 +21,8 @@ from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
-from app.services.pii_masking_service import mask_pii
-from app.services.prompt_guard_service import check_prompt_injection
+# NOTE: PII masking 與 Prompt Injection 檢測已由上層 websocket.py 的 _security_gate() 統一處理
+# 在 send_message_stream 中不再重複執行（見jBUG-07 修正）
 from app.services.hash_chain_service import stamp_message
 
 logger = logging.getLogger(__name__)
@@ -476,30 +476,11 @@ class ChatService:
             await stamp_message(self.db, user_message, conversation_id)
             await self.db.commit()
         
-        # ── A1: PII 敏感資訊自動遮罩 ──────────────────────────────
-        pii_result = mask_pii(content)
-        safe_content = pii_result["masked_text"]
-
-        if pii_result["has_pii"]:
-            # 通知前端哪些位置被遮罩
-            yield {
-                "type": "pii_warning",
-                "mask_map": pii_result["mask_map"],
-                "message": f"偵測到 {len(pii_result['mask_map'])} 筆敏感資訊已自動遮罩",
-            }
-
-        # ── A2: Prompt Injection 偵測 ──────────────────────────────
-        injection_result = check_prompt_injection(content)
-
-        if injection_result["is_suspicious"]:
-            yield {
-                "type": "injection_warning",
-                "risk_level": injection_result["risk_level"],
-                "matched_patterns": injection_result["matched_patterns"],
-                "message": f"偵測到可疑的 Prompt Injection 模式 (風險等級: {injection_result['risk_level']})",
-            }
-            # 使用清理後的文字（移除 ChatML 標籤等）
-            safe_content = check_prompt_injection(safe_content)["sanitized_text"]
+        # ── A1/A2 安全閘道由上層 websocket.py 的 _security_gate() 統一處理 ────────
+        # BUG-07 修正：此處不再重複執行 PII masking / Prompt Injection 偵測，
+        # 避免對已遮罩的文字再次遮罩，以及重複發送 warning 事件給前端。
+        # 直接使用 content（外部已完成安全處理的版本）作為 safe_content。
+        safe_content = content
 
         # 取得對話歷史
         messages = await self.get_messages(conversation_id)

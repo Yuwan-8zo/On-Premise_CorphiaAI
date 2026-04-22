@@ -11,9 +11,10 @@ export interface DocumentResponse {
 }
 
 export const documentsApi = {
-    // 列表
-    list: async () => {
+    // 列表 - 回傳 { data: DocumentResponse[], total: number }，與後端 DocumentListResponse schema 一致
+    list: async (): Promise<{ data: DocumentResponse[], total: number }> => {
         const response = await apiClient.get('/documents')
+        // BUG-09 修正：後端固定回傳 {data: [], total: number}，此處不需要條件判斷
         return response.data
     },
 

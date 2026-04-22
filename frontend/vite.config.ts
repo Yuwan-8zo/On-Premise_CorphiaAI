@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [react()],
     resolve: {
         alias: {
@@ -25,9 +25,8 @@ export default defineConfig({
         minify: 'esbuild',
         target: 'esnext'
     },
-    esbuild: {
-        drop: ['console', 'debugger']
-    },
+    // BUG-06 修正：僅在 production build 時移除 console/debugger，開發模式保留完整 debug 輸出
+    esbuild: mode === 'production' ? { drop: ['console', 'debugger'] } : {},
     server: {
         port: 5173,
         allowedHosts: true,
@@ -42,4 +41,4 @@ export default defineConfig({
             },
         },
     },
-})
+}))
