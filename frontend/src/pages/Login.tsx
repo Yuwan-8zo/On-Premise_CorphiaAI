@@ -493,7 +493,7 @@ export default function Login() {
                     {/* 卡片本體：強制 1:1 正方形，上下元素固定於邊緣，中間輸入框緊密群聚 */}
                     <motion.form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col justify-between transition-colors aspect-square overflow-hidden"
+                        className="w-full max-w-[360px] relative bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 grid grid-rows-[auto_1fr_auto] transition-colors aspect-square overflow-hidden"
                     >
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
@@ -533,7 +533,7 @@ export default function Login() {
                         </div>
 
                         {/* 輸入欄位群組 - 垂直置中且保持固定間距 */}
-                        <div className="w-full flex flex-col flex-1 justify-center gap-5 relative">
+                        <div className="w-full flex flex-col justify-center gap-5 relative">
                             <motion.div layout className="w-full shrink-0 z-10">
                                 <FloatingInput
                                     id="email"
