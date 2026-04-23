@@ -181,6 +181,116 @@ def wait_for_backend(port: int = 8168, timeout: int = 120) -> bool:
 
 
 # ─────────────────────────────────────────────────────────────
+#  自動喚醒 Docker Desktop 與 Ollama
+# ─────────────────────────────────────────────────────────────
+
+def is_docker_running() -> bool:
+    """偵測 Docker daemon 是否已就緒"""
+    try:
+        result = subprocess.run(
+            ["docker", "info"],
+            capture_output=True, timeout=5
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def ensure_docker_desktop_running():
+    """若 Docker Desktop 未啟動，自動喚醒並等待就緒"""
+    if is_docker_running():
+        return  # 已就緒，直接跳過
+
+    print("  [啟動] Docker Desktop 尚未執行，正在自動開啟...", flush=True)
+
+    # 常見安裝路徑
+    docker_desktop_paths = [
+        os.path.join(os.environ.get("PROGRAMFILES", r"C:\Program Files"),
+                     "Docker", "Docker", "Docker Desktop.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""),
+                     "Docker", "Docker", "Docker Desktop.exe"),
+    ]
+    launched = False
+    for path in docker_desktop_paths:
+        if os.path.exists(path):
+            subprocess.Popen([path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            launched = True
+            break
+
+    if not launched:
+        print("  [警告] 找不到 Docker Desktop，請手動開啟後再執行。")
+        return
+
+    # 等待 Docker daemon 就緒（最多 90 秒）
+    print("  [等待] Docker Desktop 啟動中", end="", flush=True)
+    deadline = time.time() + 90
+    while time.time() < deadline:
+        time.sleep(2)
+        print(".", end="", flush=True)
+        if is_docker_running():
+            print(" 就緒！", flush=True)
+            return
+    print(" 逾時，繼續嘗試...", flush=True)
+
+
+def is_ollama_running() -> bool:
+    """偵測 Ollama 是否已在監聽 11434"""
+    try:
+        urllib.request.urlopen("http://127.0.0.1:11434", timeout=2)
+        return True
+    except Exception:
+        # 即使回傳 404/非 200 也代表服務已啟動
+        try:
+            s = socket.create_connection(("127.0.0.1", 11434), timeout=2)
+            s.close()
+            return True
+        except Exception:
+            return False
+
+
+def ensure_ollama_running():
+    """若 Ollama 未啟動，自動開啟並等待就緒"""
+    if is_ollama_running():
+        return  # 已就緒
+
+    print("  [啟動] Ollama 尚未執行，正在自動開啟...", flush=True)
+
+    # 嘗試直接呼叫 ollama serve
+    ollama_exe = shutil.which("ollama")
+    common_ollama_paths = [
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Ollama", "ollama.exe"),
+        r"C:\Program Files\Ollama\ollama.exe",
+        os.path.join(os.environ.get("USERPROFILE", ""), "AppData", "Local", "Programs", "Ollama", "ollama.exe"),
+    ]
+    if not ollama_exe:
+        for path in common_ollama_paths:
+            if os.path.exists(path):
+                ollama_exe = path
+                break
+
+    if not ollama_exe:
+        print("  [警告] 找不到 Ollama，若系統需要請手動開啟。")
+        return
+
+    subprocess.Popen(
+        [ollama_exe, "serve"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    )
+
+    # 等待 Ollama 就緒（最多 30 秒）
+    print("  [等待] Ollama 啟動中", end="", flush=True)
+    deadline = time.time() + 30
+    while time.time() < deadline:
+        time.sleep(1)
+        print(".", end="", flush=True)
+        if is_ollama_running():
+            print(" 就緒！", flush=True)
+            return
+    print(" 逾時，繼續...", flush=True)
+
+
+# ─────────────────────────────────────────────────────────────
 #  主程序
 # ─────────────────────────────────────────────────────────────
 
@@ -188,6 +298,12 @@ def main():
     print("=" * 52)
     print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
     print("=" * 52)
+
+    # ── [0/5] 自動喚醒 Docker Desktop + Ollama ────────────────
+    print("  [0/5] 檢查 Docker Desktop 與 Ollama...")
+    ensure_docker_desktop_running()
+    ensure_ollama_running()
+    print()
 
     # ── [1/5] Docker ──────────────────────────────────────────
     if os.path.exists("docker-compose.yml"):
