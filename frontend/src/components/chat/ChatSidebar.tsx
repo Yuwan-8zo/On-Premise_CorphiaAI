@@ -78,7 +78,7 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                } overflow-hidden bg-corphia-sand dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-[0_2px_20px_rgba(0,0,0,0.04)] dark:md:shadow-none`}
+                } overflow-hidden bg-corphia-sand dark:bg-[#0F0F0F] rounded-r-[20px] md:rounded-card-xl md:border border-transparent dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-lg md:shadow-[0_2px_20px_rgba(0,0,0,0.04)] dark:md:shadow-none`}
         >
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
@@ -90,7 +90,7 @@ export default function ChatSidebar({
                     onMouseEnter={() => setIsSidebarHovered(true)}
                     onMouseLeave={() => setIsSidebarHovered(false)}
                     title={sidebarOpen ? "收合側邊欄" : "開啟側邊欄"}
-                    className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-corphia-ivory/10 transition-all duration-200 shrink-0 items-center justify-center ${
+                    className={`hidden md:flex rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-200 shrink-0 items-center justify-center ${
                         (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
                     }`}
                 >
@@ -113,10 +113,10 @@ export default function ChatSidebar({
                             createNewConversation()
                         }
                     }}
-                    className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-corphia-ivory/5 text-gray-800 dark:text-corphia-ivory transition-colors overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    className={`relative flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-800 dark:text-corphia-ivory transition-colors overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                 >
-                    <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-corphia-espresso">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300">
+                    <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 bg-corphia-bronze text-white shadow-sm transition-transform group-hover:scale-105">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
