@@ -166,21 +166,31 @@ export default function Chat() {
 
                                 {/* Suggested Prompts */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
-                                    {((mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
-                                        { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
-                                        { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
-                                        { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
-                                        { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
-                                    ]).map((item: any, index: number) => (
-                                        <button 
-                                            key={index}
-                                            onClick={() => mainProps.setInput(item.desc)}
-                                            className="text-left p-4 rounded-[20px] bg-[#FFFFFF] border border-[#E6E2DC] shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:border-white/10 dark:bg-[#282828] hover:border-[#8B7355] dark:hover:bg-[#383838] hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
-                                        >
-                                            <div className="font-semibold text-[13px] mb-1.5 text-[#2B2B2B] dark:text-gray-200 group-hover:text-[#8B7355] transition-colors">{item.title}</div>
-                                            <div className="text-[12px] text-[#6B6B6B] dark:text-gray-400 group-hover:text-[#2B2B2B] dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
-                                        </button>
-                                    ))}
+                                    {(() => {
+                                        const suggestions = (mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
+                                            { title: "摘要文件", desc: "幫我整理出一份簡單的重點摘要" },
+                                            { title: "翻譯內容", desc: "將這段文字翻譯成通順的在地語言" },
+                                            { title: "撰寫 Email", desc: "以專業用語撰寫一封商務合作信件" },
+                                            { title: "說明程式碼", desc: "幫我詳細解釋這段程式碼的邏輯" }
+                                        ];
+                                        const icons = [
+                                            <svg className="w-5 h-5 text-[#8B7355] mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+                                            <svg className="w-5 h-5 text-[#8B7355] mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 15h2.498M15 15l2.498-5L20 15" /></svg>,
+                                            <svg className="w-5 h-5 text-[#8B7355] mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+                                            <svg className="w-5 h-5 text-[#8B7355] mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                        ];
+                                        return suggestions.map((item: any, index: number) => (
+                                            <button 
+                                                key={index}
+                                                onClick={() => mainProps.setInput(item.desc)}
+                                                className="text-left p-4 rounded-[20px] bg-[#FFFFFF] border border-[#E6E2DC] shadow-[0_10px_30px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-[#282828] hover:border-[#8B7355] dark:hover:bg-[#383838] hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
+                                            >
+                                                {icons[index % icons.length]}
+                                                <div className="font-semibold text-[13px] mb-1.5 text-[#2B2B2B] dark:text-gray-200 group-hover:text-[#8B7355] transition-colors">{item.title}</div>
+                                                <div className="text-[12px] text-[#6B6B6B] dark:text-gray-400 group-hover:text-[#2B2B2B] dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
+                                            </button>
+                                        ));
+                                    })()}
                                 </div>
                             </div>
                         ) : (

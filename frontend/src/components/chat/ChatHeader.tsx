@@ -54,7 +54,7 @@ export default function ChatHeader({
                 </button>
                 
                 {/* 左側：Corphia Logo 與文字 */}
-                <h1 className={`text-[20px] font-semibold text-[#2B2B2B] dark:text-gray-200 tracking-[0.5px] flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
+                <h1 className={`text-[20px] font-semibold text-[#2B2B2B] dark:text-gray-200 tracking-[0.3px] flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
                     Corphia
                 </h1>
             </div>
