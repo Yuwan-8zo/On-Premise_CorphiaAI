@@ -175,9 +175,9 @@ export default function Chat() {
                                         <button 
                                             key={index}
                                             onClick={() => mainProps.setInput(item.desc)}
-                                            className="text-left p-4 rounded-[20px] border border-[#E3DFD9] dark:border-white/10 bg-[#F9F8F6] dark:bg-[#282828] hover:border-[#8B7355] dark:hover:bg-[#383838] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
+                                            className="text-left p-4 rounded-[20px] bg-[#FFFFFF] border border-[#E6E2DC] shadow-[0_6px_18px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-[#282828] hover:border-[#D6CEC3] dark:hover:bg-[#383838] hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
                                         >
-                                            <div className="font-semibold text-[13px] mb-1.5 text-[#2B2B2B] dark:text-gray-200 group-hover:text-[#8B7355] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
+                                            <div className="font-semibold text-[13px] mb-1.5 text-[#2B2B2B] dark:text-gray-200 group-hover:text-[#8B7355] transition-colors">{item.title}</div>
                                             <div className="text-[12px] text-[#6B6B6B] dark:text-gray-400 group-hover:text-[#2B2B2B] dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
                                         </button>
                                     ))}

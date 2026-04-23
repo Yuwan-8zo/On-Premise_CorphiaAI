@@ -65,9 +65,9 @@ export default function ChatHeader({
                     <button 
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                         disabled={isModelLoading}
-                        className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-ios-dark-gray4 text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-ios-dark-gray3 disabled:opacity-50"
+                        className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-gray-100/80 dark:hover:bg-ios-dark-gray4 text-[#6B6B6B] hover:text-[#2B2B2B] dark:text-[#9A9A9A] dark:hover:text-gray-200 border border-transparent hover:border-gray-200 dark:hover:border-white/5 active:bg-gray-200 dark:active:bg-ios-dark-gray3 disabled:opacity-50"
                     >
-                        <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                        <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none transition-colors flex items-center gap-2">
                             {isModelLoading ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
