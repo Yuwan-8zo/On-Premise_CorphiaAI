@@ -78,7 +78,7 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                } overflow-hidden bg-corphia-main dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-[38px] md:border-r border-gray-200 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-sm dark:shadow-2xl dark:shadow-black`}
+                } overflow-hidden bg-[#F4F2EE] dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-[38px] md:border-r border-gray-200 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-sm dark:shadow-2xl dark:shadow-black`}
         >
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
@@ -195,8 +195,8 @@ export default function ChatSidebar({
                                 return filtered.map((conv) => (
                                     <div key={conv.id} onClick={() => selectConversation(conv)}
                                         className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                            ? 'bg-gray-100 dark:bg-corphia-espresso text-[#2B2B2B] dark:text-corphia-ivory font-medium'
-                                            : 'text-[#6B6B6B] dark:text-gray-400 hover:bg-[#EFEAE4] dark:hover:bg-ios-dark-gray5 hover:text-[#2B2B2B] dark:hover:text-gray-200'}`}
+                                            ? 'bg-[#EFEAE4] dark:bg-corphia-espresso text-[#8B7355] dark:text-corphia-ivory font-medium'
+                                            : 'text-[#6B6B6B] dark:text-gray-400 hover:bg-[#EFEAE4] dark:hover:bg-ios-dark-gray5 hover:text-[#8B7355] dark:hover:text-gray-200'}`}
                                     >
                                         <span className="truncate pr-2">{conv.title}</span>
                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
@@ -252,7 +252,7 @@ export default function ChatSidebar({
                                                         setExpandedFolders(prev => new Set(prev).add(folderName))
                                                         if (window.innerWidth < 768) setSidebarOpen(false)
                                                     }}
-                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-corphia-bronze' : 'hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5 text-gray-700 dark:text-gray-300'}`}
+                                                    className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-[#EFEAE4] dark:bg-ios-blue-dark/20 text-[#8B7355] dark:text-corphia-bronze' : 'hover:bg-[#EFEAE4] dark:hover:bg-ios-dark-gray5 text-[#6B6B6B] hover:text-[#8B7355] dark:text-gray-300'}`}
                                                 >
                                                     <div className="flex items-center gap-1 min-w-0">
                                                         <button onClick={(e) => { e.stopPropagation(); setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next }) }}
@@ -277,8 +277,8 @@ export default function ChatSidebar({
                                                             <div key={conv.id} className="relative">
                                                                 <div onClick={() => selectConversation(conv)}
                                                                     className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                        ? 'bg-gray-100 dark:bg-corphia-espresso text-corphia-ink dark:text-corphia-ivory font-medium border-gray-200 dark:border-white/5'
-                                                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray3'}`}
+                                                                        ? 'bg-[#EFEAE4] dark:bg-corphia-espresso text-[#8B7355] dark:text-corphia-ivory font-medium border-transparent'
+                                                                        : 'text-[#6B6B6B] dark:text-gray-400 hover:text-[#8B7355] dark:hover:text-gray-200 hover:bg-[#EFEAE4] dark:hover:bg-ios-dark-gray3'}`}
                                                                 >
                                                                     <span className="truncate pr-2">{conv.title}</span>
                                                                     <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
