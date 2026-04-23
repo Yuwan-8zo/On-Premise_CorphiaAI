@@ -37,7 +37,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 value={value}
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-corphia-sand dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-shadow placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-[#F9F8F6] dark:bg-corphia-espresso border border-[#E3DFD9] dark:border-ios-dark-gray3 text-[#2B2B2B] dark:text-corphia-ivory text-[15px] outline-none focus:border-[#8B7355] focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0 dark:focus:border-[#8B7355] transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -46,8 +46,8 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 animate={isFloating ? {
                     top: 0,
                     scale: 0.85,
-                    color: '#94785A',
-                    backgroundColor: 'var(--label-bg, #F0ECE7)',
+                    color: '#8B7355',
+                    backgroundColor: 'var(--label-bg, #F9F8F6)',
                 } : {
                     top: '50%',
                     scale: 1,
@@ -256,7 +256,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-corphia-ivory dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-[#F7F6F4] dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
             {/* ── 全螢幕啟動畫面 Modal ── */}
             <AnimatePresence>
                 {!hasInitialConnected && (
@@ -365,7 +365,7 @@ export default function Login() {
                         {/* 功能列表 */}
                         <div className="space-y-6 mt-8">
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
                                 </div>
@@ -376,7 +376,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-corphia-bronze" />
                                 </div>
                                 <div className="flex flex-col">
@@ -386,7 +386,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-sand dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
                                     <Shield className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
                                 </div>
@@ -505,12 +505,12 @@ export default function Login() {
                     {/* 卡片本體：1:1 正方形，flex spacer 精準垂直分配 */}
                     <form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] bg-corphia-ivory dark:bg-corphia-obsidian shadow-xl dark:shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
+                        className="w-full max-w-[360px] bg-[#FFFFFF] dark:bg-corphia-obsidian shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-2xl dark:shadow-black border border-transparent dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFECE7] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFEAE4] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}

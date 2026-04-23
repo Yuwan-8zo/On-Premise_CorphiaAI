@@ -7,7 +7,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#F6F5F3] dark:bg-[#1C1815] text-corphia-ink dark:text-corphia-ivory overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-[#F7F6F4] dark:bg-[#1C1815] text-[#2B2B2B] dark:text-white overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarProps.sidebarOpen && (
@@ -21,7 +21,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-corphia-ivory dark:bg-[#1C1815]">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-[#FFFFFF] dark:bg-[#1C1815] shadow-[0_8px_24px_rgba(0,0,0,0.06)] z-10">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -160,7 +160,7 @@ export default function Chat() {
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                                 {/* Greeting */}
-                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-gray-800 dark:text-gray-100 tracking-tight text-center leading-snug">
+                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-[#2B2B2B] dark:text-gray-100 tracking-tight text-center leading-snug">
                                     {mainProps.t('chat.emptyGreeting', { name: mainProps.user?.name || 'User' })}
                                 </h2>
 
@@ -175,10 +175,10 @@ export default function Chat() {
                                         <button 
                                             key={index}
                                             onClick={() => mainProps.setInput(item.desc)}
-                                            className="text-left p-4 rounded-[20px] border border-transparent dark:border-white/10 bg-corphia-sand dark:bg-[#282828] hover:bg-[#EAE4DD] dark:hover:bg-[#383838] shadow-none hover:shadow-sm transition-all duration-200 group active:scale-[0.98]"
+                                            className="text-left p-4 rounded-[20px] border border-[#E3DFD9] dark:border-white/10 bg-[#F9F8F6] dark:bg-[#282828] hover:border-[#8B7355] dark:hover:bg-[#383838] shadow-sm hover:shadow-md transition-all duration-200 group active:scale-[0.98]"
                                         >
-                                            <div className="font-semibold text-[13px] mb-1.5 text-gray-800 dark:text-gray-200 group-hover:text-[rgb(var(--color-ios-accent-light))] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
-                                            <div className="text-[12px] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
+                                            <div className="font-semibold text-[13px] mb-1.5 text-[#2B2B2B] dark:text-gray-200 group-hover:text-[#8B7355] dark:group-hover:text-[rgb(var(--color-ios-accent-dark))] transition-colors">{item.title}</div>
+                                            <div className="text-[12px] text-[#6B6B6B] dark:text-gray-400 group-hover:text-[#2B2B2B] dark:group-hover:text-gray-300 leading-relaxed">{item.desc}</div>
                                         </button>
                                     ))}
                                 </div>

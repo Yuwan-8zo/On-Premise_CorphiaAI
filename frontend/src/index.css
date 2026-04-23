@@ -4,10 +4,10 @@
 
 /* 全域樣式 */
 :root {
-  --color-primary: #94785A;
-  /* 預設(鈦金棕) #94785A */
-  --color-ios-accent-light: 148 120 90;
-  --color-ios-accent-dark: 148 120 90;
+  --color-primary: #8B7355;
+  /* 預設(鈦金棕) #8B7355 */
+  --color-ios-accent-light: 139 115 85;
+  --color-ios-accent-dark: 139 115 85;
 }
 
 /* 重點色設定 */
@@ -43,7 +43,7 @@ html[data-accent="green"] {
 
 html {
   font-size: 14px;  /* 對齊 ChatGPT / Gemini / Claude 視覺密度（競品皆為緊湊佈局） */
-  background-color: #F6F5F3;
+  background-color: #F7F6F4;
   /* 'only light' 阻止瀏覽器以系統深色模式覆蓋頁面（參考 Gemini 實作） */
   color-scheme: only light;
   height: 100%;

@@ -10,14 +10,31 @@ export default {
             colors: {
                 // Corphia AI Brand Palette
                 corphia: {
-                    bronze: '#94785A',    // 鈦金棕 (Primary Accent)
-                    beige: '#E0D9D3',     // 燕麥奶灰 (Cards/Secondary Light)
-                    sand: '#F0EDE6',      // 淺沙色 (Inputs/Tabs Light)
-                    'warm-gray': '#8A847F',// 暖灰色 (Secondary Text Light)
-                    ivory: '#F6F5F3',     // 珍珠白 (Background Light)
-                    obsidian: '#1E1A18',  // 黑曜岩 (Background Dark)
-                    espresso: '#2D2824',  // 深咖啡灰 (Cards/Secondary Dark)
-                    ink: '#2D2824',       // 深咖啡黑 (Primary Text)
+                    // --- New Enterprise Palette ---
+                    // Primary
+                    bronze: '#8B7355',
+                    'bronze-hover': '#7A6348',
+                    'bronze-active': '#6B563E',
+                    // Backgrounds
+                    main: '#F7F6F4',
+                    card: '#FFFFFF',
+                    sidebar: '#F1EEE9',
+                    // Inputs
+                    'input-bg': '#F9F8F6',
+                    'input-border': '#E3DFD9',
+                    // Icons
+                    'icon-bg': '#EFEAE4',
+                    // Text
+                    ink: '#2B2B2B',
+                    'text-body': '#6B6B6B',
+                    'text-helper': '#9A9A9A',
+
+                    // --- Legacy Dark Mode / Fallbacks ---
+                    beige: '#E0D9D3',
+                    sand: '#F9F8F6',
+                    ivory: '#FFFFFF',
+                    obsidian: '#1E1A18',
+                    espresso: '#2D2824',
                 },
                 primary: {
                     50: '#f0f9ff',
