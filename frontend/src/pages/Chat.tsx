@@ -7,7 +7,7 @@ export default function Chat() {
 
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-corphia-ivory dark:bg-corphia-obsidian text-corphia-ink dark:text-corphia-ivory overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
+        <div className="flex fixed inset-0 w-full h-[100dvh] bg-corphia-ivory dark:bg-[#1C1815] text-corphia-ink dark:text-corphia-ivory overflow-hidden font-sans selection:bg-ios-blue-light/30 relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
             {sidebarProps.sidebarOpen && (
@@ -21,7 +21,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-corphia-ivory dark:bg-corphia-obsidian">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-corphia-ivory dark:bg-[#1C1815]">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
