@@ -78,7 +78,7 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' : 'w-0 -translate-x-full md:w-[72px] md:translate-x-0'
-                } overflow-hidden bg-[#F9F7F5] dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-[38px] md:border-r border-gray-100 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-none dark:shadow-2xl dark:shadow-black`}
+                } overflow-hidden bg-[#F6F5F3] dark:bg-corphia-obsidian rounded-r-[20px] md:rounded-[38px] md:border-r border-gray-100 dark:border-white/5 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-none dark:shadow-2xl dark:shadow-black`}
         >
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
