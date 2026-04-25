@@ -619,7 +619,7 @@ export function useChatLogic() {
             if (res.valid) {
                 toast.success(`對話完整性驗證通過！\n共 ${res.total_messages} 則訊息皆未被竄改。`)
             } else {
-                toast.error(`對話紀錄遭竄改！\n在第 ${res.first_broken_index} 則訊息發生斷鏈\n(ID: ${res.first_broken_message_id})`)
+                toast.error(`對話紀錄遭竄改！\n在第 ${res.first_broken_index} 則訊息發生斷鏈\n(ID: ${(res as any).first_broken_message_id})`)
             }
         } catch (err) {
             console.error('驗證失敗', err)
@@ -774,7 +774,7 @@ export function useChatLogic() {
             }, 
             savedFolders, 
             createNewConversation, 
-            selectConversation,
+            selectConversation: selectConversation as any,
             setCurrentConversation: () => setCurrentConversation(null),
             handleRenameConversation, 
             handleOpenMenu, 
@@ -814,7 +814,7 @@ export function useChatLogic() {
             isConnecting, 
             isUploading, 
             uploadProgress, 
-            uploadedFiles, 
+            uploadedFiles: uploadedFiles as any, 
             isStreaming,
             input, 
             setInput, 

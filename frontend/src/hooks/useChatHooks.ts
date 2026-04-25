@@ -50,7 +50,7 @@ export function useChatWebSocket() {
                 break
             case 'sources':
                 if (data.sources) {
-                    setSourcesToLastMessage(data.sources)
+                    setSourcesToLastMessage(data.sources as any)
                 }
                 if (data.debug) {
                     useChatStore.getState().setRAGDebug(data.debug)

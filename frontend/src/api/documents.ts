@@ -1,4 +1,5 @@
 import apiClient from './client'
+import { AxiosProgressEvent } from 'axios'
 
 export interface DocumentResponse {
     id: string
@@ -19,7 +20,7 @@ export const documentsApi = {
     },
 
     // 上傳檔案（帶有專案資料夾分離）
-    upload: async (file: File, folderName?: string, onUploadProgress?: (progressEvent: ProgressEvent) => void) => {
+    upload: async (file: File, folderName?: string, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void) => {
         const formData = new FormData()
         formData.append('file', file)
         if (folderName) {
