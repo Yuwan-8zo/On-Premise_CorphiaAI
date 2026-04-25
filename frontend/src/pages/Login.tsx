@@ -47,7 +47,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                     top: 0,
                     scale: 0.85,
                     color: '#8B7355',
-                    backgroundColor: 'var(--label-bg, #EBE8E2)',
+                    backgroundColor: 'var(--label-bg, #FFFFFF)',
                 } : {
                     top: '50%',
                     scale: 1,
@@ -302,8 +302,8 @@ export default function Login() {
                         <AnimatePresence>
                             {showSkipLoading && (
                                 <motion.button
-                                    initial={{ opacity: 0, mt: 0 }}
-                                    animate={{ opacity: 1, mt: 32 }}
+                                    initial={{ opacity: 0, marginTop: 0 }}
+                                    animate={{ opacity: 1, marginTop: 32 }}
                                     onClick={() => setHasInitialConnected(true)}
                                     className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
                                 >
@@ -531,7 +531,7 @@ export default function Login() {
                         >
                             {/* 滑動背景 Pill */}
                             <motion.div
-                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-corphia-input-bg dark:bg-[#2A2420] shadow-sm rounded-full border border-corphia-input-border/30 dark:border-white/5"
+                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-white dark:bg-[#2A2420] shadow-sm rounded-full border border-gray-100 dark:border-white/5"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
                                 transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
