@@ -17,13 +17,13 @@ export default {
                     'bronze-active': '#6B563E',
                     // Backgrounds
                     main: '#EBE8E2',
-                    card: '#F4F2EC',
+                    card: '#EBE8E2', // Same as main to blend in, matching dark mode
                     sidebar: '#E2DED6',
                     // Inputs
-                    'input-bg': '#EDEAE4',
-                    'input-border': '#D6D2CA',
+                    'input-bg': '#F5F3EE', // Lighter to pop out
+                    'input-border': '#DCD7CE',
                     // Icons
-                    'icon-bg': '#E2DED6',
+                    'icon-bg': '#DFDCD4', // Darker to look inset
                     // Text
                     ink: '#36312D',
                     'text-body': '#6D6761',
