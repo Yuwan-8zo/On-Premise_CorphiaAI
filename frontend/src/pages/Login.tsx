@@ -412,17 +412,15 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* 左下角：顯示 QR Code 按鈕 (圖示+文字，仿照設計圖) */}
+                {/* 左下角：顯示 QR Code 按鈕 (僅圖示) */}
                 <button
                     onClick={() => setShowQR(true)}
-                    className="absolute bottom-8 left-8 flex items-center gap-3 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-full py-1.5 pl-1.5 pr-4 shadow-sm hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] transition-all group z-10"
+                    className="absolute bottom-8 left-8 flex items-center justify-center bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-full p-1.5 shadow-sm hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] transition-all group z-10"
+                    title={t('auth.scanToDownload', '掃碼下載行動版')}
                 >
                     <div className="w-8 h-8 rounded-full bg-corphia-icon-bg dark:bg-ios-dark-gray4 flex items-center justify-center group-hover:bg-corphia-card dark:group-hover:bg-gray-600 transition-colors">
                         <QrCode className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300" />
                     </div>
-                    <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">
-                        {t('auth.scanToDownload', '掃碼下載行動版')}
-                    </span>
                 </button>
             </div>
 
