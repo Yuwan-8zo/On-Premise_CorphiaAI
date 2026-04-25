@@ -257,6 +257,18 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex bg-[#F7F6F4] dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
+            {/* ── 波浪背景設計 ── */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* 第一層大波浪 */}
+                    <path className="fill-white dark:fill-white opacity-40 dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
+                    {/* 第二層大波浪 */}
+                    <path className="fill-white dark:fill-white opacity-60 dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
+                    {/* 第三層柔和波浪 */}
+                    <path className="fill-white dark:fill-white opacity-30 dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
+                </svg>
+            </div>
+
             {/* ── 全螢幕啟動畫面 Modal ── */}
             <AnimatePresence>
                 {!hasInitialConnected && (
@@ -333,7 +345,7 @@ export default function Login() {
             </AnimatePresence>
 
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
-            <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
+            <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
                 {/* 後端狀態指示器 */}
                 <div className="flex items-center gap-2 bg-corphia-ivory dark:bg-corphia-obsidian border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
@@ -400,18 +412,22 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* 左下角：顯示 QR Code 按鈕 (僅圖示) */}
+                {/* 左下角：顯示 QR Code 按鈕 (圖示+文字，仿照設計圖) */}
                 <button
                     onClick={() => setShowQR(true)}
-                    title="掃描條碼體驗行動版"
-                    className="absolute bottom-8 left-8 flex items-center justify-center w-12 h-12 bg-corphia-ivory/70 dark:bg-corphia-obsidian/70 backdrop-blur-lg border border-gray-200/50 dark:border-white/10 rounded-full shadow-sm hover:scale-105 hover:bg-corphia-ivory dark:hover:bg-ios-dark-gray4 transition-all group z-10"
+                    className="absolute bottom-8 left-8 flex items-center gap-3 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-full py-1.5 pl-1.5 pr-4 shadow-sm hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] transition-all group z-10"
                 >
-                    <QrCode className="w-[22px] h-[22px] text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform" />
+                    <div className="w-8 h-8 rounded-full bg-[#EFECE8] dark:bg-ios-dark-gray4 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors">
+                        <QrCode className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300" />
+                    </div>
+                    <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">
+                        {t('auth.scanToDownload', '掃碼下載行動版')}
+                    </span>
                 </button>
             </div>
 
             {/* ── 右側：登入表單 (桌面 50%，手機 100%) ── */}
-            <div className="w-full lg:w-1/2 flex flex-col">
+            <div className="w-full lg:w-1/2 flex flex-col z-10">
                 {/* 頂部區塊 (手機版顯示左側狀態與右側按鈕，桌面版只顯示右側按鈕) */}
                 <div className="flex justify-between items-center p-6 w-full">
                     <div className="lg:hidden flex items-center gap-2 bg-corphia-ivory dark:bg-corphia-obsidian border border-gray-200 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
