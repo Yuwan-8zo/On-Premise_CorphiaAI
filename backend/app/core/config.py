@@ -26,9 +26,12 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 30
     jwt_refresh_expire_days: int = 7
     
-    # LLM (Ollama)
+    # LLM (Ollama & Llama.cpp)
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:14b"
+    llama_model_path: str = "Qwen2.5-7B-Instruct-Q5_K_M.gguf"
+    llama_context_size: int = 4096
+    llama_n_gpu_layers: int = 0
     
     # 上傳
     upload_directory: str = "./uploads"
