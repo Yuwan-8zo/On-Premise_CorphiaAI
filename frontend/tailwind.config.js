@@ -16,18 +16,18 @@ export default {
                     'bronze-hover': '#7A6348',
                     'bronze-active': '#6B563E',
                     // Backgrounds
-                    main: '#F7F6F4',
-                    card: '#FFFFFF',
-                    sidebar: '#F1EEE9',
+                    main: '#EBE8E2',
+                    card: '#F4F2EC',
+                    sidebar: '#E2DED6',
                     // Inputs
-                    'input-bg': '#F9F8F6',
-                    'input-border': '#E3DFD9',
+                    'input-bg': '#EDEAE4',
+                    'input-border': '#D6D2CA',
                     // Icons
-                    'icon-bg': '#EFEAE4',
+                    'icon-bg': '#E2DED6',
                     // Text
-                    ink: '#2B2B2B',
-                    'text-body': '#6B6B6B',
-                    'text-helper': '#9A9A9A',
+                    ink: '#36312D',
+                    'text-body': '#6D6761',
+                    'text-helper': '#9E9790',
 
                     // --- Legacy Dark Mode / Fallbacks ---
                     beige: '#E0D9D3',
