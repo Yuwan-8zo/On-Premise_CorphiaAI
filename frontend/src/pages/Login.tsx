@@ -37,7 +37,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 value={value}
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-[#F9F8F6] dark:bg-corphia-espresso border border-[#E3DFD9] dark:border-ios-dark-gray3 text-[#2B2B2B] dark:text-corphia-ivory text-[15px] outline-none focus:border-[#8B7355] focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0 dark:focus:border-[#8B7355] transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-corphia-input-bg dark:bg-corphia-espresso border border-corphia-input-border dark:border-ios-dark-gray3 text-corphia-ink dark:text-corphia-ivory text-[15px] outline-none focus:border-corphia-bronze focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0 dark:focus:border-corphia-bronze transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -47,11 +47,11 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                     top: 0,
                     scale: 0.85,
                     color: '#8B7355',
-                    backgroundColor: 'var(--label-bg, #F9F8F6)',
+                    backgroundColor: 'var(--label-bg, #F4F2EC)',
                 } : {
                     top: '50%',
                     scale: 1,
-                    color: '#8E8E93',
+                    color: '#9E9790',
                     backgroundColor: 'transparent',
                 }}
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
@@ -256,7 +256,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#F7F6F4] dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-corphia-main dark:bg-corphia-obsidian transition-colors duration-300 relative overflow-hidden">
             {/* ── 波浪背景設計 ── */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -377,7 +377,7 @@ export default function Login() {
                         {/* 功能列表 */}
                         <div className="space-y-6 mt-8">
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
                                 </div>
@@ -388,7 +388,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-corphia-bronze" />
                                 </div>
                                 <div className="flex flex-col">
@@ -398,7 +398,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-[#EFEAE4] dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
                                     <Shield className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
                                 </div>
@@ -417,7 +417,7 @@ export default function Login() {
                     onClick={() => setShowQR(true)}
                     className="absolute bottom-8 left-8 flex items-center gap-3 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-full py-1.5 pl-1.5 pr-4 shadow-sm hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] transition-all group z-10"
                 >
-                    <div className="w-8 h-8 rounded-full bg-[#EFECE8] dark:bg-ios-dark-gray4 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-corphia-icon-bg dark:bg-ios-dark-gray4 flex items-center justify-center group-hover:bg-corphia-card dark:group-hover:bg-gray-600 transition-colors">
                         <QrCode className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300" />
                     </div>
                     <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">
@@ -521,17 +521,17 @@ export default function Login() {
                     {/* 卡片本體：1:1 正方形，flex spacer 精準垂直分配 */}
                     <form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] bg-[#FFFFFF] dark:bg-corphia-obsidian shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-2xl dark:shadow-black border border-transparent dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
+                        className="w-full max-w-[360px] bg-corphia-card dark:bg-corphia-obsidian shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-2xl dark:shadow-black border border-transparent dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-[#EFEAE4] dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-corphia-icon-bg dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
                             <motion.div
-                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-white dark:bg-[#2A2420] shadow-sm rounded-full border border-gray-100 dark:border-white/5"
+                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-corphia-card dark:bg-[#2A2420] shadow-sm rounded-full border border-corphia-input-border/30 dark:border-white/5"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
                                 transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
