@@ -11,6 +11,11 @@
 }
 
 /* 重點色設定 */
+html[data-accent="default"] {
+  /* 預設(鈦金棕) #896E53 */
+  --color-ios-accent-light: 137 110 83;
+  --color-ios-accent-dark: 137 110 83;
+}
 html[data-accent="blue"] {
   /* #3f8ef7 */
   --color-ios-accent-light: 63 142 247;
