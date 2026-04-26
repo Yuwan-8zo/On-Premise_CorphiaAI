@@ -108,9 +108,11 @@ export default function SettingsModal() {
     const navigate = useNavigate()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
-    // 撖Ⅳ靽格???    const [showPasswordForm, setShowPasswordForm] = useState(false)
+    // 密碼修改狀態
+    const [showPasswordForm, setShowPasswordForm] = useState(false)
 
-    // QR Code 敶????    const [showQR, setShowQR] = useState(false)
+    // QR Code 顯示狀態
+    const [showQR, setShowQR] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
@@ -120,7 +122,8 @@ export default function SettingsModal() {
     const [passwordStrength, setPasswordStrength] = useState<{
         score: number; level: string; errors: string[]; is_valid: boolean
     } | null>(null)
-    // ?迂靽格???    const [isEditingName, setIsEditingName] = useState(false)
+    // 名稱修改狀態
+    const [isEditingName, setIsEditingName] = useState(false)
     const [editName, setEditName] = useState(user?.name || '')
     const [isUpdatingName, setIsUpdatingName] = useState(false)
 
@@ -190,8 +193,9 @@ export default function SettingsModal() {
             return
         }
 
-        // ?砍?單?撽?嚗??憭?API 隢?嚗?        const errors: string[] = []
-        if (value.length < 8) errors.push('?喳? 8 ????)
+        // 密碼規則驗證
+        const errors: string[] = []
+        if (value.length < 8) errors.push('至少 8 個字元')
         if (!/[A-Z]/.test(value)) errors.push('??憭批神摮?')
         if (!/[a-z]/.test(value)) errors.push('??撠神摮?')
         if (!/\d/.test(value)) errors.push('???詨?')
@@ -223,7 +227,7 @@ export default function SettingsModal() {
         setPasswordSuccess('')
 
         if (!currentPassword) {
-            setPasswordError('隢撓?亦??蝣?)
+            setPasswordError('請輸入目前密碼')
             return
         }
         if (!newPassword) {
@@ -231,7 +235,7 @@ export default function SettingsModal() {
             return
         }
         if (newPassword !== confirmNewPassword) {
-            setPasswordError('?啣?蝣潸?蝣箄?撖Ⅳ銝???)
+            setPasswordError('確認密碼不符')
             return
         }
         if (passwordStrength && !passwordStrength.is_valid) {
@@ -242,7 +246,7 @@ export default function SettingsModal() {
         setIsChangingPassword(true)
         try {
             await authApi.changePassword(currentPassword, newPassword)
-            setPasswordSuccess('撖Ⅳ靽格??嚗?)
+            setPasswordSuccess('密碼修改成功')
             setCurrentPassword('')
             setNewPassword('')
             setConfirmNewPassword('')
@@ -271,10 +275,10 @@ export default function SettingsModal() {
     }
     const getStrengthLabel = (level: string) => {
         switch (level) {
-            case 'very_strong': return '?虜撘?
-            case 'strong': return '撘?
-            case 'medium': return '銝剔?'
-            default: return '撘?
+            case 'very_strong': return '非常強'
+            case 'strong': return '強'
+            case 'medium': return '中等'
+            default: return '弱'
         }
     }
 
@@ -298,7 +302,7 @@ export default function SettingsModal() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type:"spring", stiffness: 300, damping: 30 }}
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 /95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle"
                     >
                         {/* Close button */}
                         <button
@@ -309,7 +313,7 @@ export default function SettingsModal() {
                         </button>
 
                         {/* ?湧??詨 */}
-                        <div className={`md:w-64 bg-bg-base/50 /30 border-r border-border-subtle/50 /5 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div className={`md:w-64 bg-bg-base/50 border-r border-border-subtle/50 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-text-primary tracking-wide">
                                     {t('settings.title')}
@@ -385,7 +389,7 @@ export default function SettingsModal() {
 
                                     {/* ?剖???閮?*/}
                                     <div className="flex items-center gap-8 mb-10">
-                                        <div className="w-24 h-24 rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] flex items-center justify-center text-text-primary text-4xl font-bold shadow-lg shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] flex items-center justify-center text-text-primary text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div>
@@ -444,7 +448,7 @@ export default function SettingsModal() {
                                             <p className="text-lg text-text-secondary mb-3">
                                                 {user?.email}
                                             </p>
-                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgb(var(--color-ios-accent-light)/0.15)] (var(--color-ios-accent-dark)/0.15)] text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] rounded-full">
+                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgb(var(--color-ios-accent-light)/0.15] dark:bg-[rgb(var(--color-ios-accent-dark)/0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
                                                 {user?.role}
                                             </span>
                                         </div>
@@ -491,14 +495,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] (var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] (var(--color-ios-accent-dark)/0.2)]'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
                                                     : 'border-border-subtle  hover:border-border-subtle '
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-bg-base border border-border-subtle shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
@@ -507,14 +511,14 @@ export default function SettingsModal() {
                                         <button
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] (var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] (var(--color-ios-accent-dark)/0.2)]'
+                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
                                                     : 'border-border-subtle  hover:border-border-subtle '
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-bg-surface border border-border-subtle shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
                                                 {t('settings.themeDark')}
                                             </p>
                                         </button>
@@ -560,7 +564,7 @@ export default function SettingsModal() {
                                             {t('settings.ragDebug', 'RAG ?日璅∪?')}
                                         </h3>
                                         <p className="text-[13px] text-text-secondary mb-4 leading-relaxed">
-                                            {t('settings.ragDebugHint', '??敺?瘥活 AI ??銝?＊蝷箏銝剔??亥??挾?隡澆漲??楝?望捱蝑??嫣噶餈質馱瑼Ｙ揣?釭??)}
+                                            {t('settings.ragDebugHint', '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。')}
                                         </p>
                                         <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-bg-base border border-transparent cursor-pointer">
                                             <span className="text-[15px] font-semibold text-text-primary">
@@ -573,7 +577,7 @@ export default function SettingsModal() {
                                                 onClick={() => setRAGDebugMode(!ragDebugMode)}
                                                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
                                                     ragDebugMode
-                                                        ? 'bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]'
+                                                        ? 'bg-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]'
                                                         : 'bg-bg-surface '
                                                 }`}
                                             >
@@ -601,7 +605,7 @@ export default function SettingsModal() {
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between p-5 rounded-[20px] transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-[rgb(var(--color-ios-accent-light)/0.05)] (var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]'
+                                                        ? 'bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]'
                                                         : 'bg-bg-base  hover:bg-bg-base  text-text-primary  border-transparent shadow-sm'
                                                     }`}
                                             >
@@ -686,11 +690,11 @@ export default function SettingsModal() {
                                 <div className="flex-1 bg-bg-base rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-transparent">
                                     <p className="font-semibold text-text-primary text-[14px] mb-2">撖Ⅳ摰閬?</p>
                                     {[
-                                        '?喳? 8 ????,
-                                        '?憭批神摮? (A-Z)',
-                                        '?撠神摮? (a-z)',
-                                        '??詨? (0-9)',
-                                        '??寞?摮?',
+                                        '至少 8 個字元',
+                                        '包含大寫字母 (A-Z)',
+                                        '包含小寫字母 (a-z)',
+                                        '包含數字 (0-9)',
+                                        '包含特殊字元',
                                     ].map((rule, i) => {
                                         const passed = passwordStrength
                                             ? !passwordStrength.errors.some(e => e.includes(rule.split(' ')[1] || rule))
@@ -709,7 +713,7 @@ export default function SettingsModal() {
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 ) : (
-                                                    <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">??/span>
+                                                    <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">-</span>
                                                 )}
                                                 <span>{rule}</span>
                                             </div>
@@ -751,14 +755,14 @@ export default function SettingsModal() {
                                 <div className="flex-1 flex flex-col justify-evenly">
                                     {/* ?嗅?撖Ⅳ */}
                                     <PwdFloatingInput
-                                        label="?嗅?撖Ⅳ"
+                                        label="目前密碼"
                                         value={currentPassword}
                                         onChange={v => { setCurrentPassword(v); setPasswordError('') }}
                                     />
 
                                     {/* ?啣?蝣?*/}
                                     <PwdFloatingInput
-                                        label="?啣?蝣?
+                                        label="新密碼"
                                         value={newPassword}
                                         onChange={handleNewPasswordChange}
                                     />
@@ -766,7 +770,7 @@ export default function SettingsModal() {
                                     {/* 蝣箄??啣?蝣?*/}
                                     <div>
                                         <PwdFloatingInput
-                                            label="蝣箄??啣?蝣?
+                                            label="確認新密碼"
                                             value={confirmNewPassword}
                                             onChange={v => { setConfirmNewPassword(v); setPasswordError('') }}
                                         />

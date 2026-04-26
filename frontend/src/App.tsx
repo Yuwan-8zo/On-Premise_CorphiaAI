@@ -19,6 +19,9 @@ const Admin = lazy(() => import('./pages/Admin'))
 const Share = lazy(() => import('./pages/Share'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
+// 僅在開發環境載入 Component Sandbox
+const ComponentsTest = lazy(() => import('./pages/ComponentsTest'))
+
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/ui/SettingsModal'
 import { ToastContainer } from './components/ui/Toast'
@@ -139,6 +142,14 @@ export default function App() {
                             path="/share/:conversationId"
                             element={<Share />}
                         />
+                        
+                        {/* 元件測試沙盒 (僅開發環境可見) */}
+                        {import.meta.env.DEV && (
+                            <Route
+                                path="/test-components"
+                                element={<ComponentsTest />}
+                            />
+                        )}
 
                         {/* 受保護路由 */}
                         <Route

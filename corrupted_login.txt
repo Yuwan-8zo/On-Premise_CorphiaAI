@@ -1,0 +1,104 @@
+2: * ?餃/閮餃??
+4: * 蝎曄Ⅱ敺拙?冽閮剛?嚗?:1 甇?敶Ｗ??
+19: delayClass?: string;
+20: id?: string;
+30: const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type;
+38: onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
+39: onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
+40: className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border border-border-subtle text-text-primary text-[15px] outline-none focus:border-corphia-bronze focus:shadow-md focus:ring-0 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+46: animate={isFloating ? {
+79: key={isPasswordVisible ? 'visible' : 'hidden'}
+85: {isPasswordVisible ? (
+114: const [showQR, setShowQR] = useState(false) // ?啣? QR Modal ???
+117: // ?梁?撓?亦???
+120: // 閮餃?撠?Ⅱ隤?蝣潛???
+128: const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
+130: // 瑼Ｘ敺垢???
+151: // ?????翰頛芾岷?漲 (瘥?3 蝘?嚗????敺敺?30 蝘憚閰?
+154: }, hasInitialConnected ? 30000 : 3000)
+162: // 憒? 10 蝘??賡??銝?憿舐內?歲??敺???
+172: // 暺?憭???詨
+183: // 隤??豢???
+205: // ?∟??餃?酉?????賢銵??
+214: response?: {
+215: status?: number
+216: data?: {
+217: detail?: string
+218: error?: { message?: string; code?: string }
+219: errors?: Array<{ field: string; message: string }>
+223: const status = axiosError?.response?.status
+224: const data = axiosError?.response?.data
+227: // ???嚗?蝡臬?????detail ??error.message
+228: setError(data?.detail || data?.error?.message || '隢???餌?嚗?蝔??岫')
+230: // Pydantic 撽??航炊 (撖Ⅳ撘瑕漲銝泵??)
+231: // 敺垢??澆?: { error: { details: [{ field, message }] } }
+232: const details = (data as { error?: { details?: Array<{ field: string; message: string }> } })?.error?.details
+234: // ?曉?蝣潛???航炊
+235: const pwdError = details.find(d => d.field?.includes('password'))
+237: // msg ?澆???Value error, 撖Ⅳ?瑕漲?喳?...; 撖Ⅳ??..."
+244: setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+246: } else if (data?.detail) {
+248: } else if (data?.error?.message) {
+251: setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+260: {/* ?? 瘜Ｘ答?閮剛? ?? */}
+263: {/* 蝚砌?撅文之瘜Ｘ答 */}
+265: {/* 蝚砌?撅文之瘜Ｘ答 */}
+267: {/* 蝚砌?撅斗??郭瘚?*/}
+272: {/* ?? ?刻撟????Modal ?? */}
+289: Corphia AI 撘???銝?
+292: 甇???敺垢????頛之隤?璅∪?嚗?蝔?..
+310: 頝喲?蝑?嚗撥?園脣?恍
+318: {/* ?? ?刻撟?QR Code ??? Modal ?? */}
+338: src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(window.location.origin)}`}
+347: {/* ?? 撌血嚗???蝝?(獢 50%) ?? */}
+349: {/* 敺垢???蝷箏 */}
+351: <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
+352: backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+355: <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 ' :
+356: backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
+358: {backendStatus === 'online' ? 'Online' :
+359: backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+363: {/* ???批捆 - ?瘞游像蝯?蝵桐葉 */}
+377: {/* ??” */}
+415: {/* 撌虫?閫?憿舐內 QR Code ?? (??蝷? */}
+427: {/* ?? ?喳嚗?亥”??(獢 50%嚗?璈?100%) ?? */}
+429: {/* ??憛?(???＊蝷箏椰?渡????喳??嚗??Ｙ??芷＊蝷箏?湔??? */}
+432: <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
+433: backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+436: <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 ' :
+437: backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
+439: {backendStatus === 'online' ? 'Online' :
+440: backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+450: {theme === 'dark' ? (
+464: className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-text-primary  bg-bg-surface ' : 'text-text-muted  hover:text-text-secondary  hover:bg-bg-base '}`}
+483: className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+485: 蝜?銝剜?
+489: className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+495: className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+497: ?交隤?
+505: {/* ??????憿?(?銵?鋆蔭憿舐內) */}
+517: {/* ?餃?∠?摰孵 - 撅葉 */}
+519: {/* ?∠??祇?嚗?:1 甇?敶ｇ?flex spacer 蝎暹???? */}
+525: {/* ?? Pill Tab ??嚗????荔? ?? */}
+530: {/* 皛?? Pill */}
+534: animate={{ x: activeTab === 'login' ? 0 : '100%' }}
+538: {/* ?餃 */}
+544: activeTab === 'login' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '
+549: {/* 閮餃? */}
+555: activeTab === 'register' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '
+562: {/* ?? Spacer A ?? */}
+565: {/* ?? Email 甈? ?? */}
+577: {/* ?? Spacer B ?? */}
+580: {/* ?? Password 甈? ?? */}
+592: {/* ?? Spacer B2嚗?蝯 DOM嚗?甇亙???flexGrow嚗??? */}
+594: animate={{ flexGrow: activeTab === 'register' ? 1 : 0 }}
+599: {/* ?? Confirm Password嚗?蝯 DOM嚗?甇亙??恬? ?? */}
+603: height: activeTab === 'register' ? 'auto' : 0,
+604: opacity: activeTab === 'register' ? 1 : 0,
+607: style={{ pointerEvents: activeTab === 'register' ? 'auto' : 'none' }}
+616: tabIndex={activeTab === 'register' ? 0 : -1}
+620: {/* ?? Spacer C (摨閬死鋆? 1.15) ?? */}
+623: {/* 摨惜???隤斗?蝷箏?憛?*/}
+643: {/* ?漱?? */}
+652: {isLoading ? (
+661: activeTab === 'login' ? t('auth.login') : t('auth.register')
