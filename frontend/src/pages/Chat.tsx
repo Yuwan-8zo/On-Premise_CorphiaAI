@@ -229,7 +229,7 @@ export default function Chat() {
                 onMove={modalProps.handleMoveToProject}
                 onShare={modalProps.handleShareConversation}
                 onDelete={modalProps.handleDeleteConversation}
-                onClose={() => modalProps.activeMenu && sidebarProps.handleOpenMenu({ stopPropagation: () => {} } as any, '')}
+                onClose={modalProps.closeMenu}
             />
 
             <RenameModal

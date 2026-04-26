@@ -134,6 +134,8 @@ export function useChatLogic() {
         setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 })
     }
 
+    const closeMenu = () => setActiveMenu(null)
+
     const handleRenameConversation = (convId: string) => {
         const conv = conversations.find(c => c.id === convId)
         if (!conv) return
@@ -828,6 +830,7 @@ export function useChatLogic() {
         modalProps: {
             activeMenu, 
             menuRef, 
+            closeMenu,
             handleRenameConversation, 
             handleMoveToProject, 
             handleShareConversation, 
