@@ -17,7 +17,7 @@ export const PlusIcon = () => (
 
 /** 發送按鈕（藍色圓形 + 向上箭頭） */
 export const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-bg-surface ' : 'bg-accent bg-accent  /90'}`}>
+    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all duration-200 shadow-sm ${disabled ? 'bg-bg-surface opacity-60' : 'bg-accent hover:opacity-90 shadow-accent/20 hover:shadow-accent/40'}`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
             <line x1="12" y1="19" x2="12" y2="5"></line>
             <polyline points="5 12 12 5 19 12"></polyline>

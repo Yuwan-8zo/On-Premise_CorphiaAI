@@ -65,7 +65,7 @@ export default function ChatHeader({
                     <button 
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                         disabled={isModelLoading}
-                        className="flex items-center gap-2 transition-opacity px-3 py-1.5 rounded-full hover:bg-bg-surface/80 text-text-secondary text-text-primary border border-transparent hover:border-border-subtle active:bg-bg-surface disabled:opacity-50"
+                        className="flex items-center gap-2 transition-all px-3 py-1.5 rounded-full bg-bg-base border border-border-subtle hover:bg-bg-surface text-text-primary shadow-sm active:scale-[0.98] disabled:opacity-50"
                     >
                         <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none transition-colors flex items-center gap-2">
                             {isModelLoading ? (

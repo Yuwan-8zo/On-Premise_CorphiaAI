@@ -32,8 +32,7 @@ const CopyButton = ({ code }: { code: string }) => {
     return (
         <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 px-2 py-1 text-xs text-slate-400 text-text-primary 
- bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+            className="absolute top-2 right-2 px-2 py-1 text-xs text-text-secondary bg-bg-surface hover:bg-bg-elevated rounded transition-colors"
         >
             {copied ? '已複製 ✓' : '複製'}
         </button>
@@ -52,7 +51,7 @@ const CodeBlock = memo(({
         <div className="relative group my-4">
             {/* 語言標籤 */}
             {language && (
-                <div className="absolute top-0 left-0 px-2 py-1 text-xs text-slate-400 bg-slate-800 rounded-tl rounded-br">
+                <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-bg-surface rounded-tl rounded-br">
                     {language}
                 </div>
             )}
@@ -101,9 +100,9 @@ class MarkdownErrorBoundary extends React.Component<
     render() {
         if (this.state.hasError) {
             return (
-                <div className="text-red-500 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="text-red-500 p-4 bg-red-500/10 rounded-lg border border-red-500/20">
                     <p className="font-bold mb-2">解析訊息內容時發生錯誤</p>
-                    <div className="text-sm font-mono whitespace-pre-wrap text-slate-800">
+                    <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}
                     </div>
                 </div>
@@ -132,8 +131,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             if (isInline) {
                                 return (
                                     <code
-                                        className="px-1.5 py-0.5 bg-slate-100 text-primary-600 
- rounded text-sm font-mono"
+                                        className="px-1.5 py-0.5 bg-bg-elevated text-accent rounded text-sm font-mono"
                                         {...props}
                                     >
                                         {children}
@@ -150,43 +148,43 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 標題
                         h1: ({ children }) => (
-                            <h1 className="text-2xl font-bold text-slate-800 mt-6 mb-4 border-b border-slate-200 pb-2">
+                            <h1 className="text-2xl font-bold text-text-primary mt-6 mb-4 border-b border-border-subtle pb-2">
                                 {children}
                             </h1>
                         ),
                         h2: ({ children }) => (
-                            <h2 className="text-xl font-bold text-slate-800 mt-5 mb-3">
+                            <h2 className="text-xl font-bold text-text-primary mt-5 mb-3">
                                 {children}
                             </h2>
                         ),
                         h3: ({ children }) => (
-                            <h3 className="text-lg font-semibold text-slate-800 mt-4 mb-2">
+                            <h3 className="text-lg font-semibold text-text-primary mt-4 mb-2">
                                 {children}
                             </h3>
                         ),
 
                         // 螢光筆/標記文字 (==文字==)
                         mark: ({ children }) => (
-                            <mark className="px-1.5 py-0.5 bg-slate-100 text-corphia-bronze rounded font-medium">
+                            <mark className="px-1.5 py-0.5 bg-bg-elevated text-accent rounded font-medium">
                                 {children}
                             </mark>
                         ),
 
                         // 段落
                         p: ({ children }) => (
-                            <p className="my-3 leading-relaxed text-slate-700">
+                            <p className="my-3 leading-relaxed text-text-primary">
                                 {children}
                             </p>
                         ),
 
                         // 列表
                         ul: ({ children }) => (
-                            <ul className="my-3 pl-6 list-disc text-slate-700 space-y-1">
+                            <ul className="my-3 pl-6 list-disc text-text-primary space-y-1">
                                 {children}
                             </ul>
                         ),
                         ol: ({ children }) => (
-                            <ol className="my-3 pl-6 list-decimal text-slate-700 space-y-1">
+                            <ol className="my-3 pl-6 list-decimal text-text-primary space-y-1">
                                 {children}
                             </ol>
                         ),
@@ -196,7 +194,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 引用
                         blockquote: ({ children }) => (
-                            <blockquote className="my-4 pl-4 border-l-4 border-corphia-bronze bg-slate-50 py-2 italic text-slate-600">
+                            <blockquote className="my-4 pl-4 border-l-4 border-accent bg-bg-surface py-2 italic text-text-secondary">
                                 {children}
                             </blockquote>
                         ),
@@ -207,7 +205,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary-600 hover:underline"
+                                className="text-accent hover:underline"
                             >
                                 {children}
                             </a>
@@ -216,28 +214,28 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         // 表格
                         table: ({ children }) => (
                             <div className="my-4 overflow-x-auto">
-                                <table className="min-w-full border border-slate-200">
+                                <table className="min-w-full border border-border-subtle">
                                     {children}
                                 </table>
                             </div>
                         ),
                         thead: ({ children }) => (
-                            <thead className="bg-slate-100">{children}</thead>
+                            <thead className="bg-bg-surface">{children}</thead>
                         ),
                         th: ({ children }) => (
-                            <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">
+                            <th className="px-4 py-2 text-left text-sm font-semibold text-text-primary border-b border-border-subtle">
                                 {children}
                             </th>
                         ),
                         td: ({ children }) => (
-                            <td className="px-4 py-2 text-sm text-slate-600 border-b border-slate-200">
+                            <td className="px-4 py-2 text-sm text-text-secondary border-b border-border-subtle">
                                 {children}
                             </td>
                         ),
 
                         // 分隔線
                         hr: () => (
-                            <hr className="my-6 border-slate-200" />
+                            <hr className="my-6 border-border-subtle" />
                         ),
 
                         // 強調 (改由 index.css 統一由 --color-ios-accent 控制顏色與螢光筆效果)
