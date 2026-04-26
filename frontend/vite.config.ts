@@ -10,6 +10,16 @@ export default defineConfig(({ mode }) => ({
             '@': path.resolve(__dirname, './src'),
         },
     },
+    // Vitest 測試配置
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: ['./src/test/setup.ts'],
+        css: false,
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        },
+    },
     build: {
         rollupOptions: {
             output: {
