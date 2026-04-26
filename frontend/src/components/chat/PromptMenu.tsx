@@ -46,7 +46,7 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className="flex items-center justify-center w-[42px] h-[42px] shrink-0 rounded-full transition-colors bg-light-bg-primary dark:bg-dark-bg-secondary border border-ios-light-gray5 dark:border-white/5 shadow-sm text-light-text-secondary hover:text-light-text-primary dark:text-light-text-muted dark:hover:text-gray-200 hover:bg-corphia-beige dark:hover:bg-[rgb(var(--color-ios-accent-dark)/0.15)] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-ios-accent-light)/0.3)] dark:focus:ring-[rgb(var(--color-ios-accent-dark)/0.3)]"
+                className="flex items-center justify-center w-[42px] h-[42px] shrink-0 rounded-full transition-colors bg-bg-base border border-border-subtle shadow-sm text-text-secondary hover:text-text-primary hover:bg-bg-base (var(--color-ios-accent-dark)/0.15)] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-ios-accent-light)/0.3)] (var(--color-ios-accent-dark)/0.3)]"
                 title={t('chat.promptTemplatesTitle') || '提示詞模版'}
             >
                 {/* 閃亮圖示 (Sparkles) */}
@@ -57,9 +57,9 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
 
             {/* 下拉選單 */}
             {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-48 sm:w-56 bg-light-bg-primary dark:bg-dark-bg-primary rounded-2xl shadow-xl border border-light-border-secondary/50 dark:border-white/10 overflow-hidden transform-gpu z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="absolute bottom-full left-0 mb-2 w-48 sm:w-56 bg-bg-base rounded-2xl shadow-xl border border-border-subtle/50 /10 overflow-hidden transform-gpu z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <div className="py-2 flex flex-col">
-                        <div className="px-3 md:px-4 py-2 text-xs font-semibold text-light-text-muted dark:text-light-text-secondary uppercase tracking-wider">
+                        <div className="px-3 md:px-4 py-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
                             提示詞模版
                         </div>
                         {templates.map((item, index) => (
@@ -69,7 +69,7 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
                                     onSelect(item.prompt)
                                     setIsOpen(false)
                                 }}
-                                className="w-full text-left px-3 md:px-4 py-2.5 text-sm font-medium text-light-text-primary dark:text-dark-text-primary transition-colors hover:bg-[rgb(var(--color-ios-accent-light)/0.1)] dark:hover:bg-[rgb(var(--color-ios-accent-dark)/0.15)] hover:text-[rgb(var(--color-ios-accent-light))] dark:hover:text-[rgb(var(--color-ios-accent-dark))]"
+                                className="w-full text-left px-3 md:px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-[rgb(var(--color-ios-accent-light)/0.1)] (var(--color-ios-accent-dark)/0.15)] hover:text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]"
                             >
                                 {item.title}
                             </button>

@@ -35,7 +35,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     <div className="relative w-9 h-9 flex-shrink-0 -mt-[3px]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
-            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]"
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
             <CorphiaThinkingIcon className="w-6 h-6" />
@@ -115,20 +115,20 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
                 <div className="flex flex-col items-end max-w-[75%] group">
-                    <div className="bg-light-bg-secondary dark:bg-dark-bg-primary text-light-text-primary dark:text-dark-text-primary rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
+                    <div className="bg-bg-surface text-text-primary rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
                         {isEditing ? (
                             <div className="flex flex-col gap-2 min-w-[250px]">
                                 <textarea
                                     value={editContent}
                                     onChange={(e) => setEditContent(e.target.value)}
-                                    className="w-full bg-light-bg-primary dark:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary rounded-lg p-2 outline-none resize-none border border-light-border-secondary dark:border-dark-border-primary focus:border-corphia-bronze focus:ring-1 focus:ring-corphia-bronze"
+                                    className="w-full bg-bg-base text-text-primary rounded-lg p-2 outline-none resize-none border border-border-subtle focus:border-corphia-bronze focus:ring-1 focus:ring-corphia-bronze"
                                     rows={Math.min(5, editContent.split('\n').length || 1)}
                                 />
                                 <div className="flex justify-end gap-2 mt-1">
-                                    <button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-light-text-secondary hover:text-light-text-primary dark:hover:text-gray-300 bg-light-bg-tertiary dark:bg-dark-bg-secondary hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full transition-colors flex items-center justify-center shadow-sm" title="取消">
+                                    <button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-text-secondary hover:text-text-primary bg-bg-surface bg-bg-surface rounded-full transition-colors flex items-center justify-center shadow-sm" title="取消">
                                         <X className="w-4 h-4" />
                                     </button>
-                                    <button onClick={handleSaveEdit} className="p-1.5 text-white bg-ios-blue-light dark:bg-ios-blue-dark hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm" title="儲存修改">
+                                    <button onClick={handleSaveEdit} className="p-1.5 text-text-primary bg-accent hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm" title="儲存修改">
                                         <Check className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -138,17 +138,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                         )}
                     </div>
                     {!isEditing && !hideActions && (
-                        <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-light-text-muted dark:text-light-text-secondary mr-2">
-                            <button onClick={handleCopy} className="p-1 hover:text-light-text-secondary dark:hover:text-gray-300 rounded transition-colors" title="複製">
+                        <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
+                            <button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors" title="複製">
                                 {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                             </button>
-                            <button onClick={() => { setEditContent(message.content); setIsEditing(true); }} className="p-1 hover:text-light-text-secondary dark:hover:text-gray-300 rounded transition-colors" title="編輯">
+                            <button onClick={() => { setEditContent(message.content); setIsEditing(true); }} className="p-1 hover:text-text-secondary rounded transition-colors" title="編輯">
                                 <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             {message.content_hash && (
                                 <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                    <div className="absolute right-0 bottom-full mb-2 hidden group-hover/hash:block bg-gray-900 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg">
+                                    <div className="absolute right-0 bottom-full mb-2 hidden group-hover/hash:block bg-bg-surface text-text-primary text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg">
                                         Verified: {message.content_hash.substring(0, 16)}...
                                     </div>
                                 </div>
@@ -165,9 +165,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-light-text-primary dark:text-dark-text-primary text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-text-primary text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
-                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-light-bg-secondary dark:prose-pre:bg-ios-dark-gray6 prose-pre:rounded-[12px] prose-pre:border prose-pre:border-light-border-secondary dark:prose-pre:border-white/5 max-w-none [&_.markdown-body>*:first-child]:!mt-0">
+                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-bg-surface dark:prose-pre:bg-bg-surface prose-pre:rounded-[12px] prose-pre:border prose-pre:border-border-subtle dark:prose-pre:border-border-subtle max-w-none [&_.markdown-body>*:first-child]:!mt-0">
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
@@ -198,14 +198,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
 
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                         {message.content && !isStreaming && !hideActions && (
-                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-light-text-muted dark:text-light-text-secondary">
-                                <button onClick={handleCopy} className="p-1 hover:text-light-text-secondary dark:hover:text-gray-300 rounded transition-colors" title="複製">
+                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
+                                <button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors" title="複製">
                                     {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                                 </button>
                                 {message.content_hash && (
                                     <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover/hash:block bg-gray-900 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg z-10">
+                                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover/hash:block bg-bg-surface text-text-primary text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg z-10">
                                             Verified: {message.content_hash.substring(0, 16)}...
                                         </div>
                                     </div>

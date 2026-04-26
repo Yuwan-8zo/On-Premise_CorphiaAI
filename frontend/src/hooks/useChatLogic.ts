@@ -196,8 +196,8 @@ export function useChatLogic() {
             } else {
                 const textArea = document.createElement("textarea")
                 textArea.value = link
-                textArea.style.position = "absolute"
-                textArea.style.left = "-999999px"
+                textArea.style.position ="absolute"
+                textArea.style.left ="-999999px"
                 document.body.appendChild(textArea)
                 textArea.select()
                 try {
@@ -648,7 +648,7 @@ export function useChatLogic() {
             } catch (error) {
                 console.error('建立對話失敗:', error)
                 // For UI testing even backend offline:
-                // We won't block UI logic to show the "move up" action, so we still push UI state below if failed.
+                // We won't block UI logic to show the"move up" action, so we still push UI state below if failed.
             }
         }
 

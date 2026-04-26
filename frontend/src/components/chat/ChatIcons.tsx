@@ -17,7 +17,7 @@ export const PlusIcon = () => (
 
 /** 發送按鈕（藍色圓形 + 向上箭頭） */
 export const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-ios-dark-gray2 dark:bg-ios-dark-gray3' : 'bg-ios-blue-light hover:bg-ios-blue-light/90 dark:bg-ios-blue-dark dark:hover:bg-ios-blue-dark/90'}`}>
+    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors shadow-sm ${disabled ? 'bg-bg-surface ' : 'bg-accent bg-accent  /90'}`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${disabled ? 'opacity-30' : 'opacity-100'}`}>
             <line x1="12" y1="19" x2="12" y2="5"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
@@ -36,7 +36,7 @@ export const StopIcon = () => (
 
 /** 側邊欄收合 Icon */
 export const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-200 transition-colors" {...props}>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted hover:text-text-secondary transition-colors" {...props}>
         <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
         <line x1="9" y1="3" x2="9" y2="21"></line>
     </svg>

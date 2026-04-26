@@ -47,13 +47,13 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     }
 
     return (
-        <div className="mt-3 border border-slate-200 dark:border-slate-700 rounded-[20px] overflow-hidden">
+        <div className="mt-3 border border-slate-200 rounded-[20px] overflow-hidden">
             {/* 標題列 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-colors"
             >
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
                     <DocumentIcon />
                     <span>參考來源 ({sources.length})</span>
                 </div>
@@ -64,20 +64,20 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
             {isExpanded && (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
                     {sources.map((source, index) => (
-                        <div key={source.chunk_id} className="bg-light-bg-primary dark:bg-slate-900">
+                        <div key={source.chunk_id} className="bg-bg-base">
                             {/* 來源標題 */}
                             <button
                                 onClick={() => toggleItem(source.chunk_id)}
-                                className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
                             >
                                 <div className="flex items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-ios-blue-light/10 dark:bg-ios-blue-dark/20 text-corphia-bronze dark:text-ios-blue-dark rounded text-xs font-medium">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent text-corphia-bronze rounded text-xs font-medium">
                                         {index + 1}
                                     </span>
-                                    <span className="text-slate-700 dark:text-slate-300 truncate">
-                                        {source.document_name || "未知文件"}
+                                    <span className="text-slate-700 truncate">
+                                        {source.document_name ||"未知文件"}
                                     </span>
-                                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                                    <span className="text-xs text-slate-400">
                                         ({Math.round(source.score * 100)}% 相關)
                                     </span>
                                 </div>
@@ -87,7 +87,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                             {/* 來源內容 */}
                             {expandedItems.has(source.chunk_id) && (
                                 <div className="px-3 pb-3">
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-[12px] text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    <div className="p-3 bg-slate-50 rounded-[12px] text-sm text-slate-600 leading-relaxed">
                                         {source.content}
                                     </div>
                                 </div>

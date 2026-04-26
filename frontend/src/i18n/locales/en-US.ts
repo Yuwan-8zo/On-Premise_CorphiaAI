@@ -40,7 +40,7 @@ export default {
         loginFailed: 'Login failed. Please check your credentials.',
         registerSuccess: 'Registration successful',
         registerFailed: 'Registration failed. Please try again.',
-        noAccount: "Don't have an account?",
+        noAccount:"Don't have an account?",
         hasAccount: 'Already have an account?',
         welcomeBack: 'Welcome back',
         createAccount: 'Create account',
@@ -66,10 +66,10 @@ export default {
         inputPlaceholder: 'Message Corphia AI...',
         projectInputPlaceholder: 'Send a message or upload documents...',
         suggestions: [
-            { title: "Summarize Document", desc: "Help me organize a simple key summary" },
-            { title: "Translate Content", desc: "Translate this text into fluent local language" },
-            { title: "Write an Email", desc: "Write a business cooperation email using professional terms" },
-            { title: "Explain Code", desc: "Help me explain the logic of this code in detail" }
+            { title:"Summarize Document", desc:"Help me organize a simple key summary" },
+            { title:"Translate Content", desc:"Translate this text into fluent local language" },
+            { title:"Write an Email", desc:"Write a business cooperation email using professional terms" },
+            { title:"Explain Code", desc:"Help me explain the logic of this code in detail" }
         ],
         newChat: 'New Chat',
         newFolder: 'New Folder',
@@ -78,7 +78,7 @@ export default {
         generalChat: 'General Chat',
         moveToGeneralChat: 'Move to General Chat',
         moveToProject: 'Move to Project',
-        confirmMoveToGeneral: 'Are you sure you want to move this chat to General Chat? It will be removed from the "{{folder}}" folder.',
+        confirmMoveToGeneral: 'Are you sure you want to move this chat to General Chat? It will be removed from the"{{folder}}" folder.',
         sendMessage: 'Send Message',
         thinking: 'Thinking...',
         stopGeneration: 'Stop',
@@ -197,10 +197,10 @@ export default {
     // Guide
     guide: {
         title: 'System Guide',
-        subtitle: "Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system's resources and exclusive features.",
+        subtitle:"Welcome to Corphia AI Platform! This guide will help you quickly familiarize yourself with the system's resources and exclusive features.",
         auth: {
             title: 'Identity and Access Management',
-            engineer: 'System highest access, can create and assign all "Tenants", and access full logs.',
+            engineer: 'System highest access, can create and assign all"Tenants", and access full logs.',
             admin: 'Tenant exclusive admin, can manage internal tenant members and basic data environment settings.',
             user: 'General user, can use general chat, view projects and create personalized knowledge extraction projects.'
         },
@@ -209,12 +209,12 @@ export default {
             descStart: 'You can switch the interface from the top left to ',
             mode: 'Project Mode',
             descEnd: ', which will open an independent knowledge base folder structure:',
-            step1: 'Click the New Project icon on the left to name a folder for your research or project (e.g., "Financial Report Analysis").',
+            step1: 'Click the New Project icon on the left to name a folder for your research or project (e.g.,"Financial Report Analysis").',
             step2Start: 'Enter the folder and click the upload button, supporting ',
             step2Types: '.txt, .md, .csv or .pdf',
             step2End: ' files.',
             step3: 'The system backend will automatically send files to chunking and write to the enterprise vector database (ChromaDB).',
-            step4: 'Once processed, click "Ask questions based on this source", and AI will answer and trace sources accurately based on your documents.'
+            step4: 'Once processed, click"Ask questions based on this source", and AI will answer and trace sources accurately based on your documents.'
         },
         chat: {
             title: 'Efficient Chat and Navigation',
@@ -225,7 +225,7 @@ export default {
             scrollBottomTitle: 'Floating Scroll-to-Bottom Button',
             scrollBottomDesc: 'If you are scrolling up through past records, a downward arrow will quietly emerge at the bottom right after some distance. Clicking it will drop you back to the latest response in one second.',
             renameTitle: 'Rename and Global Delete',
-            renameDesc: 'Hover over any chat in the left navigation to display a popup menu, where you can "Edit Title", "Move Project Directory" or immediately "Delete Entire Chat Record".'
+            renameDesc: 'Hover over any chat in the left navigation to display a popup menu, where you can"Edit Title","Move Project Directory" or immediately"Delete Entire Chat Record".'
         }
     },
 }

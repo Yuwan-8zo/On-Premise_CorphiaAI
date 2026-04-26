@@ -37,7 +37,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 value={value}
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-corphia-input-bg dark:bg-dark-bg-secondary border border-corphia-input-border dark:border-ios-dark-gray3 text-light-text-primary dark:text-dark-text-primary text-[15px] outline-none focus:border-corphia-bronze focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0 dark:focus:border-corphia-bronze transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface  border border-border-subtle  text-text-primary  text-[15px] outline-none focus:border-corphia-bronze focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0  transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -65,13 +65,13 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 <AnimatePresence>
                     {isFilled && (
                         <motion.button
-                            initial={{ opacity: 0, scale: 0.8, y: "-50%" }}
-                            animate={{ opacity: 1, scale: 1, y: "-50%" }}
-                            exit={{ opacity: 0, scale: 0.8, y: "-50%" }}
+                            initial={{ opacity: 0, scale: 0.8, y:"-50%" }}
+                            animate={{ opacity: 1, scale: 1, y:"-50%" }}
+                            exit={{ opacity: 0, scale: 0.8, y:"-50%" }}
                             transition={{ duration: 0.2 }}
                             type="button"
                             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            className="absolute right-4 top-1/2 p-2 text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-200 transition-colors focus:outline-none"
+                            className="absolute right-4 top-1/2 p-2 text-text-muted hover:text-text-secondary transition-colors focus:outline-none"
                             tabIndex={-1}
                         >
                             <AnimatePresence mode="wait" initial={false}>
@@ -234,7 +234,7 @@ export default function Login() {
                     // 找密碼相關的錯誤
                     const pwdError = details.find(d => d.field?.includes('password'))
                     if (pwdError) {
-                        // msg 格式為 "Value error, 密碼長度至少...; 密碼需包含..."
+                        // msg 格式為"Value error, 密碼長度至少...; 密碼需包含..."
                         const cleaned = pwdError.message.replace(/^Value error,\s*/i, '')
                         setError(cleaned)
                     } else {
@@ -256,7 +256,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-light-bg-primary dark:bg-transparent transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden">
             {/* ── 波浪背景設計 ── */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -275,26 +275,26 @@ export default function Login() {
                     <motion.div
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-light-bg-primary dark:bg-dark-bg-primary backdrop-blur-md"
+                        transition={{ duration: 0.8, ease:"easeInOut" }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-bg-base backdrop-blur-md"
                     >
                         <motion.div
                             animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.7, 1, 0.7] }}
-                            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                            transition={{ repeat: Infinity, duration: 2.5, ease:"easeInOut" }}
                             className="flex flex-col items-center gap-6"
                         >
-                            <CorphiaLogo className="w-24 h-24 text-corphia-bronze dark:text-ios-blue-dark drop-shadow-lg" />
+                            <CorphiaLogo className="w-24 h-24 text-corphia-bronze drop-shadow-lg" />
                             <div className="flex flex-col items-center gap-2 text-center">
-                                <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                                <h2 className="text-2xl font-bold text-text-primary">
                                     Corphia AI 引擎啟動中
                                 </h2>
-                                <p className="text-light-text-secondary dark:text-light-text-muted">
+                                <p className="text-text-secondary">
                                     正在喚醒後端服務與加載大語言模型，請稍候...
                                 </p>
                                 <div className="mt-4 flex items-center justify-center gap-2">
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-2 h-2 bg-ios-blue-light dark:bg-ios-blue-dark rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                 </div>
                             </div>
                         </motion.div>
@@ -305,7 +305,7 @@ export default function Login() {
                                     initial={{ opacity: 0, marginTop: 0 }}
                                     animate={{ opacity: 1, marginTop: 32 }}
                                     onClick={() => setHasInitialConnected(true)}
-                                    className="text-sm text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-300 underline transition-colors"
+                                    className="text-sm text-text-muted hover:text-text-secondary underline transition-colors"
                                 >
                                     跳過等待，強制進入畫面
                                 </motion.button>
@@ -323,16 +323,16 @@ export default function Login() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-bg-main backdrop-blur-md p-4"
                         onClick={() => setShowQR(false)}
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20, opacity: 0 }}
                             animate={{ scale: 1, y: 0, opacity: 1 }}
                             exit={{ scale: 0.9, y: 20, opacity: 0 }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            transition={{ type:"spring", damping: 25, stiffness: 300 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-light-bg-primary p-6 rounded-[32px] shadow-2xl flex flex-col items-center"
+                            className="bg-bg-base p-6 rounded-[32px] shadow-2xl flex flex-col items-center"
                         >
                             <img 
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
@@ -347,13 +347,13 @@ export default function Login() {
             {/* ── 左側：品牌介紹 (桌面 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
                 {/* 後端狀態指示器 */}
-                <div className="flex items-center gap-2 bg-light-bg-primary dark:bg-dark-bg-primary border border-light-border-secondary dark:border-white/5 px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
+                <div className="flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                         }`}></span>
-                    <span className="text-sm text-light-text-secondary dark:text-light-text-muted">Backend:</span>
-                    <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
-                        backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+                    <span className="text-sm text-text-secondary">Backend:</span>
+                    <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 ' :
+                        backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
                         }`}>
                         {backendStatus === 'online' ? 'Online' :
                             backendStatus === 'offline' ? 'Offline' : 'Checking...'}
@@ -363,48 +363,48 @@ export default function Login() {
                 {/* 品牌內容 - 垂直水平絕對置中 */}
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
-                        <h2 className="text-4xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1 transition-colors">
+                        <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-[64px] font-extrabold text-light-text-primary dark:text-dark-text-primary mb-6 transition-colors flex items-center tracking-tight gap-[1px]">
+                        <h1 className="text-[64px] font-extrabold text-text-primary mb-6 transition-colors flex items-center tracking-tight gap-[1px]">
                             <CorphiaTextLogo className="h-[52px] w-auto mr-[2px]" />
                             orphia
                         </h1>
-                        <p className="text-light-text-secondary dark:text-light-text-secondary mb-10 transition-colors">
+                        <p className="text-text-secondary mb-10 transition-colors">
                             {t('auth.engineDesc')}
                         </p>
 
                         {/* 功能列表 */}
                         <div className="space-y-6 mt-8">
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-light-text-primary dark:text-dark-text-primary transition-colors leading-tight mb-1">{t('auth.feature1')}</span>
-                                    <span className="text-sm text-light-text-secondary transition-colors">{t('auth.feature1Desc')}</span>
+                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature1')}</span>
+                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature1Desc')}</span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-corphia-bronze" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-light-text-primary dark:text-dark-text-primary transition-colors leading-tight mb-1">{t('auth.feature2')}</span>
-                                    <span className="text-sm text-light-text-secondary transition-colors">{t('auth.feature2Desc')}</span>
+                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature2')}</span>
+                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature2Desc')}</span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-corphia-icon-bg dark:bg-transparent border border-transparent dark:border-corphia-bronze/40 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
                                     <Shield className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-light-text-primary dark:text-dark-text-primary transition-colors leading-tight mb-1">{t('auth.feature3')}</span>
-                                    <span className="text-sm text-light-text-secondary transition-colors">{t('auth.feature3Desc')}</span>
+                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature3')}</span>
+                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature3Desc')}</span>
                                 </div>
                             </div>
                         </div>
@@ -415,11 +415,11 @@ export default function Login() {
                 {/* 左下角：顯示 QR Code 按鈕 (僅圖示) */}
                 <button
                     onClick={() => setShowQR(true)}
-                    className="absolute bottom-8 left-8 flex items-center justify-center bg-light-bg-primary/60 dark:bg-light-bg-primary/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-full p-1.5 shadow-sm hover:bg-light-bg-primary/80 dark:hover:bg-light-bg-primary/10 hover:scale-[1.02] transition-all group z-10"
+                    className="absolute bottom-8 left-8 flex items-center justify-center bg-bg-base/60 /5 backdrop-blur-md border border-border-subtle rounded-full p-1.5 shadow-sm hover:bg-bg-base/80 /10 hover:scale-[1.02] transition-all group z-10"
                     title={t('auth.scanToDownload', '掃碼下載行動版')}
                 >
-                    <div className="w-8 h-8 rounded-full bg-corphia-icon-bg dark:bg-ios-dark-gray4 flex items-center justify-center group-hover:bg-corphia-card dark:group-hover:bg-gray-600 transition-colors">
-                        <QrCode className="w-[18px] h-[18px] text-light-text-primary dark:text-dark-text-secondary" />
+                    <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center group-hover:bg-corphia-card transition-colors">
+                        <QrCode className="w-[18px] h-[18px] text-text-primary" />
                     </div>
                 </button>
             </div>
@@ -428,13 +428,13 @@ export default function Login() {
             <div className="w-full lg:w-1/2 flex flex-col z-10">
                 {/* 頂部區塊 (手機版顯示左側狀態與右側按鈕，桌面版只顯示右側按鈕) */}
                 <div className="flex justify-between items-center p-6 w-full">
-                    <div className="lg:hidden flex items-center gap-2 bg-light-bg-primary dark:bg-dark-bg-primary border border-light-border-secondary dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
+                    <div className="lg:hidden flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
                         <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                             backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></span>
-                        <span className="text-xs font-medium text-light-text-secondary dark:text-light-text-muted">Backend:</span>
-                        <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 dark:text-green-400' :
-                            backendStatus === 'offline' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+                        <span className="text-xs font-medium text-text-secondary">Backend:</span>
+                        <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 ' :
+                            backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
                             }`}>
                             {backendStatus === 'online' ? 'Online' :
                                 backendStatus === 'offline' ? 'Offline' : 'Checking...'}
@@ -444,7 +444,7 @@ export default function Login() {
                     <div className="flex gap-2 ml-auto">
                         <button
                         onClick={toggleTheme}
-                        className="p-2 text-light-text-muted dark:text-light-text-secondary hover:text-light-text-secondary dark:hover:text-dark-text-primary transition-colors"
+                        className="p-2 text-text-muted hover:text-text-secondary transition-colors"
                         title={t('settings.theme')}
                     >
                         {theme === 'dark' ? (
@@ -461,7 +461,7 @@ export default function Login() {
                     <div className="relative" ref={langMenuRef}>
                         <button
                             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-light-text-primary dark:text-dark-text-primary bg-light-bg-secondary dark:bg-dark-bg-secondary' : 'text-light-text-muted dark:text-light-text-secondary hover:text-light-text-secondary dark:hover:text-dark-text-primary hover:bg-corphia-sand dark:hover:bg-ios-dark-gray4'}`}
+                            className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-text-primary  bg-bg-surface ' : 'text-text-muted  hover:text-text-secondary  hover:bg-bg-base '}`}
                             title={t('settings.language')}
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -476,23 +476,23 @@ export default function Login() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute right-0 mt-2 w-28 bg-light-bg-primary dark:bg-dark-bg-primary border border-gray-100 dark:border-white/5 shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
+                                    className="absolute right-0 mt-2 w-28 bg-bg-base border border-border-subtle shadow-xl rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-light-text-secondary dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-light-text-secondary dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         English
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('ja-JP')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze dark:text-ios-blue-dark font-semibold bg-ios-blue-light/10 dark:bg-ios-blue-dark/20' : 'text-light-text-secondary dark:text-ios-dark-gray1 hover:bg-corphia-sand dark:hover:bg-ios-dark-gray5'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         日本語
                                     </button>
@@ -504,14 +504,14 @@ export default function Login() {
                 </div>
                 {/* 手機版品牌標題 (僅在行動裝置顯示) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
-                    <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1 transition-colors">
+                    <h2 className="text-xl font-bold text-text-primary mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-[40px] font-extrabold text-light-text-primary dark:text-dark-text-primary mb-3 transition-colors flex items-center justify-center gap-4">
+                    <h1 className="text-[40px] font-extrabold text-text-primary mb-3 transition-colors flex items-center justify-center gap-4">
                         <CorphiaLogo className="w-12 h-12" />
                         Corphia
                     </h1>
-                    <p className="text-light-text-secondary text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
+                    <p className="text-text-secondary text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
                 </div>
 
                 {/* 登入卡片容器 - 居中 */}
@@ -519,20 +519,20 @@ export default function Login() {
                     {/* 卡片本體：1:1 正方形，flex spacer 精準垂直分配 */}
                     <form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] bg-light-bg-primary/60 dark:bg-dark-bg-secondary/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/60 dark:border-white/10 rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[360px] bg-bg-base/60 /60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-corphia-icon-bg dark:bg-[#120E0B] border border-transparent dark:border-white/5 transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-bg-elevated ] border border-transparent transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             {/* 滑動背景 Pill */}
                             <motion.div
-                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-light-bg-primary dark:bg-[#2A2420] shadow-sm rounded-full border border-gray-100 dark:border-white/5"
+                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-base ] shadow-sm rounded-full border border-border-subtle"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
-                                transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+                                transition={{ type:"tween", duration: 0.3, ease:"easeInOut" }}
                                 style={{ left: '5px', zIndex: 1 }}
                             />
                             {/* 登入 */}
@@ -541,7 +541,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('login')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'login' ? 'text-light-text-primary dark:text-dark-text-primary' : 'text-light-text-secondary dark:text-light-text-secondary hover:text-light-text-primary dark:hover:text-gray-300'
+                                    activeTab === 'login' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '
                                 }`}
                             >
                                 {t('auth.login')}
@@ -552,7 +552,7 @@ export default function Login() {
                                 onClick={() => setActiveTab('register')}
                                 style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                 className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    activeTab === 'register' ? 'text-light-text-primary dark:text-dark-text-primary' : 'text-light-text-secondary dark:text-light-text-secondary hover:text-light-text-primary dark:hover:text-gray-300'
+                                    activeTab === 'register' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '
                                 }`}
                             >
                                 {t('auth.register')}
@@ -630,7 +630,7 @@ export default function Login() {
                                             exit={{ opacity: 0, scale: 0.95, height: 0, marginTop: 0 }}
                                             className="w-full text-center overflow-hidden"
                                         >
-                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium border border-red-200 dark:border-red-500/30 shadow-sm transition-colors">
+                                            <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 text-red-600 rounded-full text-sm font-medium border border-red-200 shadow-sm transition-colors">
                                                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                 </svg>
@@ -644,10 +644,10 @@ export default function Login() {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-white font-medium rounded-full text-[15px]
-                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory dark:focus:ring-offset-corphia-obsidian focus:ring-corphia-bronze
-                                           disabled:opacity-50 disabled:cursor-not-allowed
-                                           transition-all border border-transparent shadow-sm"
+                                    className="w-full py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-text-primary font-medium rounded-full text-[15px]
+ focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory focus:ring-corphia-bronze
+ disabled:opacity-50 disabled:cursor-not-allowed
+ transition-all border border-transparent shadow-sm"
                                 >
                                     {isLoading ? (
                                         <span className="flex items-center justify-center">

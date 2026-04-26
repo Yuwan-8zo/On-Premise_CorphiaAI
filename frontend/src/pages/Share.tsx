@@ -53,15 +53,15 @@ export default function Share() {
 
     if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-corphia-beige dark:bg-dark-bg-primary p-6">
-                <div className="max-w-md w-full bg-light-bg-primary dark:bg-dark-bg-secondary rounded-[20px] p-8 shadow-xl text-center">
-                    <h2 className="text-xl font-bold mb-4 text-ios-black dark:text-ios-white">需要登入</h2>
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary mb-8">
+            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
+                <div className="max-w-md w-full bg-bg-base rounded-[20px] p-8 shadow-xl text-center">
+                    <h2 className="text-xl font-bold mb-4 text-text-primary">需要登入</h2>
+                    <p className="text-text-secondary mb-8">
                         請先登入 Corphia AI 以查看該分享對話的內容。
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full h-[50px] rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:bg-[rgb(var(--color-ios-accent-dark))] text-white font-semibold"
+                        className="w-full h-[50px] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary font-semibold"
                     >
                         前往登入
                     </button>
@@ -72,20 +72,20 @@ export default function Share() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[100dvh] bg-light-bg-primary dark:bg-ios-dark-bg">
-                <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 border-t-ios-blue-light animate-spin" />
+            <div className="flex items-center justify-center min-h-[100dvh] bg-bg-base">
+                <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 border-t-accent animate-spin" />
             </div>
         )
     }
 
     if (error || !conversation) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-light-bg-primary dark:bg-ios-dark-bg p-6 text-center">
-                <h2 className="text-xl font-bold mb-2 text-ios-black dark:text-ios-white">載入失敗</h2>
-                <p className="text-light-text-secondary dark:text-light-text-muted mb-6">{error}</p>
+            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6 text-center">
+                <h2 className="text-xl font-bold mb-2 text-text-primary">載入失敗</h2>
+                <p className="text-text-secondary mb-6">{error}</p>
                 <button
                     onClick={() => navigate('/')}
-                    className="px-6 py-2.5 rounded-full bg-ios-light-gray5 dark:bg-dark-bg-primary text-ios-black dark:text-ios-white hover:bg-ios-light-gray4 dark:hover:bg-ios-dark-gray4"
+                    className="px-6 py-2.5 rounded-full bg-bg-surface text-text-primary hover:bg-bg-surface"
                 >
                     回首頁
                 </button>
@@ -94,23 +94,23 @@ export default function Share() {
     }
 
     return (
-        <div className={`flex flex-col h-[100dvh] bg-light-bg-primary dark:bg-ios-dark-bg ${theme === 'dark' ? 'dark' : ''}`}>
+        <div className={`flex flex-col h-[100dvh] bg-bg-base  ${theme === 'dark' ? 'dark' : ''}`}>
             {/* Header */}
-            <header className="shrink-0 h-[60px] flex items-center justify-between px-4 border-b border-ios-light-gray5 dark:border-ios-dark-gray5 bg-light-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-xl z-10">
+            <header className="shrink-0 h-[60px] flex items-center justify-between px-4 border-b border-border-subtle bg-bg-base/80 /80 backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 -ml-2 rounded-full text-light-text-secondary hover:text-light-text-primary dark:text-light-text-muted dark:hover:text-gray-100 hover:bg-corphia-beige dark:hover:bg-ios-dark-gray4 transition-colors"
+                        className="p-2 -ml-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-base transition-colors"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                     </button>
                     <div>
-                        <h1 className="font-semibold text-ios-black dark:text-ios-white text-[15px]">
+                        <h1 className="font-semibold text-text-primary text-[15px]">
                             {conversation.title}
                         </h1>
-                        <p className="text-[12px] text-light-text-secondary dark:text-light-text-muted">分享的對話 (唯讀)</p>
+                        <p className="text-[12px] text-text-secondary">分享的對話 (唯讀)</p>
                     </div>
                 </div>
             </header>

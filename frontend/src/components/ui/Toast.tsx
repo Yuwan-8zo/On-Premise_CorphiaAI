@@ -10,13 +10,13 @@ import { useToastStore, type Toast } from '../../store/toastStore'
 const icons = {
     success: <Check className="w-4 h-4 text-emerald-500" />,
     error: <X className="w-4 h-4 text-red-500" />,
-    info: <Info className="w-4 h-4 text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]" />,
+    info: <Info className="w-4 h-4 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]" />,
 }
 
 const borderColors = {
     success: 'border-emerald-500/30',
     error: 'border-red-500/30',
-    info: 'border-[rgb(var(--color-ios-accent-light)/0.3)] dark:border-[rgb(var(--color-ios-accent-dark)/0.3)]',
+    info: 'border-[rgb(var(--color-ios-accent-light)/0.3)] (var(--color-ios-accent-dark)/0.3)]',
 }
 
 function ToastItem({ toast }: { toast: Toast }) {
@@ -39,15 +39,15 @@ function ToastItem({ toast }: { toast: Toast }) {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => remove(toast.id)}
             className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
-                bg-light-bg-primary/90 dark:bg-dark-bg-secondary/90 backdrop-blur-xl
+                bg-bg-base/90 /90 backdrop-blur-xl
                 border ${borderColors[toast.type]}
                 shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]`}
         >
             <span className="shrink-0 mt-0.5">{icons[toast.type]}</span>
-            <p className="text-[14px] leading-snug text-light-text-primary dark:text-dark-text-primary flex-1 pr-1">
+            <p className="text-[14px] leading-snug text-text-primary flex-1 pr-1">
                 {toast.message}
             </p>
-            <button onClick={() => remove(toast.id)} className="shrink-0 text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-200 transition-colors">
+            <button onClick={() => remove(toast.id)} className="shrink-0 text-text-muted hover:text-text-secondary transition-colors">
                 <X className="w-3.5 h-3.5" />
             </button>
             {/* 底部進度條 */}

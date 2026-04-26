@@ -108,15 +108,15 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 }}
             >
                 {/* Visual track background */}
-                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-light-bg-tertiary/50 dark:bg-dark-bg-tertiary/50 rounded-full" />
+                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-bg-surface/50 /50 rounded-full" />
                 
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
                         className={`absolute right-[5px] w-[14px] rounded-full transition-all duration-300 hover:w-[18px] hover:right-[3px] ${
                             marker.role === 'user' 
-                                ? 'bg-gray-400 dark:bg-corphia-beige0' 
-                                : 'bg-[rgb(var(--color-ios-accent-light))] dark:bg-[rgb(var(--color-ios-accent-dark))]'
+                                ? 'bg-bg-surface ' 
+                                : 'bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]'
                         }`}
                         style={{ 
                             top: `${marker.top}%`, 

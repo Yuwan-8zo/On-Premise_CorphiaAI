@@ -32,18 +32,26 @@ export default {
                     950: '#202022',
                 },
                 bg: {
-                    base: '#202022',
-                    surface: '#28282A',
-                    elevated: '#2C2C2E',
+                    base: 'rgb(var(--bg-base) / <alpha-value>)',
+                    main: 'rgb(var(--bg-main) / <alpha-value>)',
+                    surface: 'rgb(var(--bg-surface) / <alpha-value>)',
+                    elevated: 'rgb(var(--bg-elevated) / <alpha-value>)',
                 },
                 text: {
-                    primary: '#F6F4F0',
-                    secondary: '#C7C2BB',
-                    muted: '#807C76',
+                    primary: 'rgb(var(--text-primary) / <alpha-value>)',
+                    secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+                    muted: 'rgb(var(--text-muted) / <alpha-value>)',
+                    disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
                 },
                 border: {
-                    subtle: '#3A3A3C',
-                    strong: '#4A4A4D',
+                    subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
+                    strong: 'rgb(var(--border-strong) / <alpha-value>)',
+                },
+                accent: {
+                    DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+                    hover: 'rgb(var(--accent-hover) / <alpha-value>)',
+                    active: 'rgb(var(--accent-active) / <alpha-value>)',
+                    soft: 'rgb(var(--accent-soft))',
                 },
                 ios: {
                     blue: {
