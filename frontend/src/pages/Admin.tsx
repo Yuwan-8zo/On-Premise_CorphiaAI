@@ -521,7 +521,7 @@ export default function Admin() {
     return (
         <div className="min-h-screen overflow-hidden bg-corphia-ivory text-corphia-ink dark:bg-corphia-obsidian dark:text-corphia-ivory">
             <div className="pointer-events-none fixed inset-0 opacity-80">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_12%,rgb(var(--color-ios-accent-light)/0.16),transparent_32%),linear-gradient(145deg,#F6F5F3_0%,#F0EDE6_42%,#E0D9D3_100%)] dark:bg-[radial-gradient(circle_at_70%_12%,rgb(var(--color-ios-accent-dark)/0.18),transparent_32%),linear-gradient(145deg,#1E1A18_0%,#2D2824_42%,#1E1A18_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_12%,rgb(var(--color-ios-accent-light)/0.13),transparent_32%),linear-gradient(145deg,#F6F4F0_0%,#ECE8E1_42%,#DDD8D0_100%)] dark:bg-[radial-gradient(circle_at_70%_12%,rgb(var(--color-ios-accent-dark)/0.15),transparent_32%),linear-gradient(145deg,#1F2125_0%,#2A2D33_44%,#17191C_100%)]" />
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(45,40,36,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(45,40,36,0.035)_1px,transparent_1px)] bg-[size:72px_72px] dark:bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)]" />
                 <div className="absolute left-[8%] top-[18%] h-[48rem] w-[58rem] rotate-[-10deg] rounded-[42%] border border-corphia-ink/[0.05] dark:border-white/[0.035]" />
                 <div className="absolute right-[8%] top-[6%] h-[34rem] w-[34rem] rotate-12 rounded-[36%] border border-ios-blue-light/10 dark:border-ios-blue-dark/10" />

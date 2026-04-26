@@ -8,33 +8,15 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Corphia AI Brand Palette
                 corphia: {
-                    // --- New Enterprise Palette ---
-                    // Primary
-                    bronze: '#8B7355',
-                    'bronze-hover': '#7A6348',
-                    'bronze-active': '#6B563E',
-                    // Backgrounds
-                    main: '#EBE8E2',
-                    card: '#FFFFFF', // Solid white to contrast with main
-                    sidebar: '#E2DED6',
-                    // Inputs
-                    'input-bg': '#F9F8F6',
-                    'input-border': '#DCD7CE',
-                    // Icons
-                    'icon-bg': '#E6E2D8', // Visible track color
-                    // Text
-                    ink: '#36312D',
-                    'text-body': '#6D6761',
-                    'text-helper': '#9E9790',
-
-                    // --- Legacy Dark Mode / Fallbacks ---
-                    beige: '#E0D9D3',
-                    sand: '#F9F8F6',
-                    ivory: '#FFFFFF',
-                    obsidian: '#1E1A18',
-                    espresso: '#2D2824',
+                    bronze: '#896E53',
+                    beige: '#DDD8D0',
+                    sand: '#ECE8E1',
+                    'warm-gray': '#807C76',
+                    ivory: '#F6F4F0',
+                    obsidian: '#28282A',
+                    espresso: '#2A2D33',
+                    ink: '#2A2722',
                 },
                 primary: {
                     50: '#f0f9ff',
@@ -42,37 +24,34 @@ export default {
                     200: '#bae6fd',
                     300: '#7dd3fc',
                     400: '#38bdf8',
-                    500: '#94785A', // Overriding 500 to our bronze for any stray components
+                    500: '#896E53',
                     600: '#0284c7',
                     700: '#0369a1',
                     800: '#075985',
                     900: '#0c4a6e',
                     950: '#082f49',
                 },
-                // Apple iOS System Palette
                 ios: {
                     blue: {
                         light: 'rgb(var(--color-ios-accent-light) / <alpha-value>)',
                         dark: 'rgb(var(--color-ios-accent-dark) / <alpha-value>)',
                     },
-                    // 淺色模式系統灰
                     light: {
-                        gray1: '#8e8e93', // 142,142,147
-                        gray2: '#aeaeb2', // 174,174,178
-                        gray3: '#c7c7cc', // 199,199,204
-                        gray4: '#d1d1d6', // 209,209,214
-                        gray5: '#e5e5ea', // 229,229,234
-                        gray6: '#f2f2f7', // 242,242,247
+                        gray1: '#8e8e93',
+                        gray2: '#aeaeb2',
+                        gray3: '#c7c7cc',
+                        gray4: '#d1d1d6',
+                        gray5: '#e5e5ea',
+                        gray6: '#f2f2f7',
                     },
-                    // 深色模式系統灰
                     dark: {
-                        gray1: '#8e8e93', // 142,142,147
-                        gray2: '#636366', // 99,99,102
-                        gray3: '#48484a', // 72,72,74
-                        gray4: '#3a3a3c', // 58,58,60
-                        gray5: '#2c2c2e', // 44,44,46
-                        gray6: '#1c1c1e', // 28,28,30
-                        black: '#000000', // OLED Black
+                        gray1: '#8e8e93',
+                        gray2: '#636366',
+                        gray3: '#48484a',
+                        gray4: '#3a3a3c',
+                        gray5: '#2c2c2e',
+                        gray6: '#1c1c1e',
+                        black: '#000000',
                     }
                 },
             },

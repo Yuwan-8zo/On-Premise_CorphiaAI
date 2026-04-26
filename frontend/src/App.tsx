@@ -2,7 +2,7 @@
  * App 根組件 - 路由設定
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
@@ -28,7 +28,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
 const FallbackLoader = () => (
-    <div className="flex items-center justify-center h-[100dvh] w-full bg-corphia-beige dark:bg-corphia-obsidian">
+    <div className="flex items-center justify-center h-[100dvh] w-full bg-corphia-ivory dark:bg-corphia-obsidian">
         <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 dark:border-ios-blue-dark/20 border-t-ios-blue-light dark:border-t-ios-blue-dark animate-spin"></div>
     </div>
 )
@@ -64,7 +64,7 @@ export default function App() {
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
-        const bg = isDark ? '#1E1A18' : '#F6F5F3'
+        const bg = isDark ? '#28282A' : '#F6F4F0'
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 

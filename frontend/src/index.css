@@ -4,13 +4,19 @@
 
 /* 全域樣式 */
 :root {
-  --color-primary: #8B7355;
-  /* 預設(鈦金棕) #8B7355 */
-  --color-ios-accent-light: 139 115 85;
-  --color-ios-accent-dark: 139 115 85;
+  --color-primary: #896E53;
+  /* 預設(鈦金棕) #94785A */
+  --color-ios-accent-light: 137 110 83;
+  --color-ios-accent-dark: 137 110 83;
 }
 
 /* 重點色設定 */
+html[data-accent="blue"] {
+  /* #3f8ef7 */
+  --color-ios-accent-light: 63 142 247;
+  --color-ios-accent-dark: 63 142 247;
+}
+
 html[data-accent="purple"] {
   /* #DB37F4 */
   --color-ios-accent-light: 219 55 244;
@@ -43,7 +49,7 @@ html[data-accent="green"] {
 
 html {
   font-size: 14px;  /* 對齊 ChatGPT / Gemini / Claude 視覺密度（競品皆為緊湊佈局） */
-  background-color: #EBE8E2;
+  background-color: #F6F4F0;
   /* 'only light' 阻止瀏覽器以系統深色模式覆蓋頁面（參考 Gemini 實作） */
   color-scheme: only light;
   height: 100%;
@@ -56,8 +62,8 @@ body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #EBE8E2;
-  color: #36312D;
+  background-color: #F6F4F0;
+  color: #2A2722;
   overscroll-behavior-y: none;
   height: 100%;
   /* 背景色不加 transition，確保 iOS Safari 底部工具列能即時讀到新顏色 */
@@ -75,13 +81,13 @@ body {
 
 html.dark {
   color-scheme: only dark;
-  background-color: #1E1A18;
-  color: #F6F5F3;
+  background-color: #28282A;
+  color: #F6F4F0;
 }
 
 html.dark body {
-  background-color: #1E1A18;
-  color: #F6F5F3;
+  background-color: #28282A;
+  color: #F6F4F0;
 }
 
 /* 滾動條樣式 - 預設隱藏，滾動時才顯示 */

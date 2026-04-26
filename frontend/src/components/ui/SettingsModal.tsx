@@ -530,9 +530,10 @@ export default function SettingsModal() {
                                             {t('settings.accentColor', '重點顏色')}
                                         </h3>
                                         <div className="flex flex-wrap gap-4">
-                                            {(['blue', 'purple', 'pink', 'orange', 'green'] as const).map((color) => {
+                                            {(['default', 'blue', 'purple', 'pink', 'orange', 'green'] as const).map((color) => {
                                                 const bgColors: Record<string, string> = {
-                                                    blue: 'bg-corphia-bronze',
+                                                    default: 'bg-corphia-bronze',
+                                                    blue: 'bg-[#3f8ef7]',
                                                     purple: 'bg-[#DB37F4]',
                                                     pink: 'bg-[#F64066]',
                                                     orange: 'bg-[#FB8D2D]',

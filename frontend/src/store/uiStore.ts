@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
-export type AccentColorType = 'blue' | 'purple' | 'pink' | 'orange' | 'green'
+export type AccentColorType = 'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'green'
 
 interface ConfirmConfig {
     message: string
@@ -51,7 +51,7 @@ export const useUIStore = create<UIState>()(
                 ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                 : 'light',
             language: 'zh-TW',
-            accentColor: 'blue',
+            accentColor: 'default',
             // 手機版預設收起，桌機版預設展開
             sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             sidebarWidth: 280,
