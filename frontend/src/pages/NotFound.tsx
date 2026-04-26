@@ -24,7 +24,7 @@ export default function NotFound() {
                     </div>
 
                     {/* 中央拱門插畫 (0) */}
-                    <div className="w-[90px] h-[140px] md:w-[120px] md:h-[180px] rounded-t-[900px] bg-gradient-to-b from-transparent to-transparent ] relative overflow-hidden flex-shrink-0 shadow-[inset_0_2px_15px_rgba(0,0,0,0.03)] border-b border-border-subtle">
+                    <div className="w-[90px] h-[140px] md:w-[120px] md:h-[180px] rounded-t-[900px] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-border-subtle">
                         
                         {/* 內部光暈/漸層填色 */}
                         <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
@@ -73,7 +73,7 @@ export default function NotFound() {
                     {/* 回到首頁 */}
                     <Link
                         to="/"
-                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-accent hover:bg-accent text-text-primary text-[14px] font-medium transition-all active:scale-[0.98] shadow-[0_2px_8px_rgba(148,120,90,0.2)]"
+                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-accent hover:bg-accent text-text-primary text-[14px] font-medium transition-all active:scale-[0.98] shadow-md shadow-accent/20"
                     >
                         <Home className="w-[18px] h-[18px]" />
                         <span>回到首頁</span>

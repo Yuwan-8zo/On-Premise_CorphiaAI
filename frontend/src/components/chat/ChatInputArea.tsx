@@ -55,7 +55,7 @@ export default function ChatInputArea({
                         />
                     </div>
 
-                    <div className="relative flex-1 flex flex-col bg-bg-base border border-border-subtle /10 rounded-[30px] shadow-[0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] transition-all duration-300 focus-within:border-accent dark:focus-within:border-accent focus-within:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus-within:ring-0 dark:focus-within:ring-0">
+                    <div className="relative flex-1 flex flex-col bg-bg-base border border-border-subtle rounded-[30px] shadow-md dark:shadow-black/40 transition-all duration-300 focus-within:border-accent dark:focus-within:border-accent focus-within:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus-within:ring-0 dark:focus-within:ring-0">
                         
                         {/* Tags / Files Row */}
                         {(uploadedFiles.length > 0 || isUploading) && (

@@ -41,7 +41,7 @@ function ToastItem({ toast }: { toast: Toast }) {
             className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
                 bg-bg-base/90 /90 backdrop-blur-xl
                 border ${borderColors[toast.type]}
-                shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]`}
+                shadow-lg dark:shadow-black/40`}
         >
             <span className="shrink-0 mt-0.5">{icons[toast.type]}</span>
             <p className="text-[14px] leading-snug text-text-primary flex-1 pr-1">

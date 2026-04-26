@@ -37,7 +37,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 value={value}
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface  border border-border-subtle  text-text-primary  text-[15px] outline-none focus:border-corphia-bronze focus:shadow-[0_0_0_2px_rgba(139,115,85,0.15)] focus:ring-0  transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border border-border-subtle text-text-primary text-[15px] outline-none focus:border-corphia-bronze focus:shadow-md focus:ring-0 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -519,7 +519,7 @@ export default function Login() {
                     {/* 卡片本體：1:1 正方形，flex spacer 精準垂直分配 */}
                     <form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] bg-bg-base/60 /60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-2xl dark:shadow-black/50 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}

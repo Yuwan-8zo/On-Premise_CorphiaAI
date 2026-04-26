@@ -105,7 +105,7 @@ function formatDate(value?: string) {
 
 function Panel({ className = '', children }: { className?: string; children: React.ReactNode }) {
     return (
-        <section className={`rounded-[28px] border border-border-subtle/70 bg-bg-base/78 shadow-[0_30px_90px_rgba(45,40,36,0.12)] backdrop-blur-2xl /10 /78 dark:shadow-[0_30px_90px_rgba(0,0,0,0.38)] ${className}`}>
+        <section className={`rounded-[28px] border border-border-subtle/70 bg-bg-base/78 shadow-2xl backdrop-blur-2xl dark:shadow-black/40 ${className}`}>
             {children}
         </section>
     )
@@ -528,7 +528,7 @@ export default function Admin() {
             </div>
 
             <div className="relative mx-auto flex min-h-screen max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
-                <header className="mb-5 flex flex-col gap-4 rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-4 shadow-[0_24px_80px_rgba(45,40,36,0.12)] backdrop-blur-2xl /10 /78 dark:shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:flex-row md:items-center md:justify-between">
+                <header className="mb-5 flex flex-col gap-4 rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-4 shadow-xl backdrop-blur-2xl dark:shadow-black/40 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/')}
@@ -552,7 +552,7 @@ export default function Admin() {
                 </header>
 
                 <main className="grid flex-1 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                    <aside className="rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-3 shadow-[0_30px_80px_rgba(45,40,36,0.12)] backdrop-blur-2xl /10 /78 dark:shadow-[0_30px_80px_rgba(0,0,0,0.28)] lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
+                    <aside className="rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-3 shadow-2xl backdrop-blur-2xl dark:shadow-black/40 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
                         <div className="mb-4 rounded-[24px] border border-border-subtle/70 bg-bg-base/55 p-4 /10">
                             <div className="mb-6 flex items-center justify-between">
                                 <div>

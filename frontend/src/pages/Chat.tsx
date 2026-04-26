@@ -183,7 +183,7 @@ export default function Chat() {
                                             <button 
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
-                                                className="text-left p-4 rounded-[20px] bg-bg-base border border-border-subtle shadow-[0_10px_30px_rgba(0,0,0,0.06)] border-accent hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
+                                                className="text-left p-4 rounded-[20px] bg-bg-base border border-border-subtle shadow-lg border-accent hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
                                             >
                                                 {icons[index % icons.length]}
                                                 <div className="font-semibold text-[13px] mb-1.5 text-text-primary text-accent transition-colors">{item.title}</div>
