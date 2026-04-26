@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
@@ -44,7 +44,7 @@ export default function ChatInputArea({
                 className="shrink-0 pt-2 pb-6 md:pb-8 w-full z-20"
             >
                 <div className="max-w-3xl mx-auto px-4 md:px-0 w-full relative flex items-end gap-2">
-                    {/* 顯示提示詞選擇器 (固定在左側) */}
+                    {/* ???堊等??????(?????豢什?? */}
                     <div className="shrink-0 mb-3.5">
                         <PromptMenu 
                             disabled={isConnecting || isUploading}
@@ -69,7 +69,7 @@ export default function ChatInputArea({
                                 {isUploading && (
                                     <div className="flex items-center gap-2 bg-bg-surface px-3 py-1.5 rounded-full text-[13px] text-light-accent border border-border-subtle">
                                         <div className="w-3.5 h-3.5 rounded-full border-2 border-border-subtle border-t-transparent animate-spin" />
-                                        <span>上傳中... {uploadProgress}%</span>
+                                        <span>??蹌阡??{uploadProgress}%</span>
                                     </div>
                                 )}
                             </div>
@@ -83,7 +83,7 @@ export default function ChatInputArea({
                                         onClick={() => fileInputRef.current?.click()} 
                                         disabled={isConnecting || isUploading}
                                         className="p-2 transition-transform active:scale-95 text-text-muted hover:text-corphia-bronze mb-1 disabled:opacity-50"
-                                        title="上傳專案文件 (NotebookLM 模式)"
+                                        title="??蹌行?????刻麾 (NotebookLM ??)"
                                     >
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />

@@ -127,7 +127,7 @@ export default function Login() {
 
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
-    // 瑼Ｘ敺垢???
+    // 檢查後端狀態
     useEffect(() => {
         let isCancelled = false
         const checkBackend = async () => {
@@ -587,10 +587,10 @@ export default function Login() {
                             />
                         </motion.div>
 
-                        {/* ?? Spacer C (摨閬死鋆? 1.15) ?? */}
+                        {/* ── Spacer C (底部留白比例 1.15) ── */}
                         <motion.div layout className="flex-[1.15]" />
 
-                        {/* 摨惜???隤斗?蝷箏?憛?*/}
+                        {/* 底部按鈕與錯誤提示區塊 */}
                         <div className="w-full flex flex-col gap-3 shrink-0">
                                 <AnimatePresence>
                                     {error && (
@@ -610,7 +610,7 @@ export default function Login() {
                                     )}
                                 </AnimatePresence>
 
-                                {/* ?漱?? */}
+                                {/* 處理按鈕 */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}

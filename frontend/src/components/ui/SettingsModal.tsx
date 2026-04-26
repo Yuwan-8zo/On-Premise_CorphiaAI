@@ -196,10 +196,10 @@ export default function SettingsModal() {
         // 密碼規則驗證
         const errors: string[] = []
         if (value.length < 8) errors.push('至少 8 個字元')
-        if (!/[A-Z]/.test(value)) errors.push('??憭批神摮?')
-        if (!/[a-z]/.test(value)) errors.push('??撠神摮?')
-        if (!/\d/.test(value)) errors.push('???詨?')
-        if (!/[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push('???寞?摮?')
+        if (!/[A-Z]/.test(value)) errors.push('必須包含大寫字母')
+        if (!/[a-z]/.test(value)) errors.push('必須包含小寫字母')
+        if (!/\d/.test(value)) errors.push('必須包含數字')
+        if (!/[!@#$%^&*()\-_=+[\]{};:'\",.<>?/\\|`~]/.test(value)) errors.push('必須包含特殊字元')
 
         let score = 0
         if (value.length >= 8) score += 20
@@ -338,7 +338,7 @@ export default function SettingsModal() {
                                 ))}
                             </nav>
 
-                            {/* 摨??? */}
+                            {/* 底部按鈕區 */}
                             <div className="p-3 border-t border-border-subtle space-y-0.5">
                                 {/* 管理後台入口：僅 admin / engineer 可見 */}
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
@@ -871,7 +871,7 @@ export default function SettingsModal() {
     )
 }
 
-// ?? 撖Ⅳ頛詨獢?隞輻?仿? FloatingInput 憸冽嚗???
+// ── 密碼輸入框：套用登入頁的 FloatingInput 樣式 ──
 interface PwdFloatingInputProps {
     label: string
     value: string
