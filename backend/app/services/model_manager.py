@@ -28,6 +28,14 @@ class ModelManager:
             # project_root/ai_model
             project_root = Path(__file__).parent.parent.parent.parent
             models_dir = str(project_root / "ai_model")
+            
+            # Check if there are actually gguf files here, if not, try the local Desktop path (bypassing OneDrive)
+            primary_path = Path(models_dir)
+            if primary_path.exists() and not any(primary_path.glob("*.gguf")):
+                alt_path = Path(r"C:\Users\ngu94\Desktop\Antigravity\on-premise_CorphiaAI\ai_model")
+                if alt_path.exists() and any(alt_path.glob("*.gguf")):
+                    models_dir = str(alt_path)
+                    logger.info(f"Fallback to alternative model path: {models_dir}")
         
         self.models_dir = Path(models_dir)
         self._models: Dict[str, ModelInfo] = {}
