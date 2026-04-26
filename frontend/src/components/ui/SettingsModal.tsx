@@ -1,5 +1,5 @@
 /**
- * 閮剖?? (Modal)
+ * 設定頁面 (Modal)
  */
 
 import { useState } from 'react'
@@ -51,14 +51,14 @@ const BookIcon = () => (
     </svg>
 )
 
-/** 銝駁?嚗?芋撘?Icon */
+/** 亮色模式 Icon */
 const SunIcon = () => (
     <svg className="w-10 h-10 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M3 12h2m14 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7z" />
     </svg>
 )
 
-/** 銝駁?嚗??芋撘?Icon */
+/** 深色模式 Icon */
 const MoonIcon = () => (
     <svg className="w-10 h-10 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -73,7 +73,7 @@ const LockIcon = () => (
     </svg>
 )
 
-/** ?曄? Icon ??蝞∠?敺?亙 */
+/** 盾牌 Icon 用於管理後台入口 */
 const ShieldIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
@@ -87,7 +87,7 @@ const QrCodeIcon = () => (
     </svg>
 )
 
-/** ?? Icon ??蝟餌絞?? */
+/** 脈搏 Icon 用於系統監控 */
 const PulseIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l5.47-5.47a.75.75 0 011.06 0l3.44 3.44a.75.75 0 001.06 0l5.47-5.47M3.75 17.25h16.5" />
@@ -154,7 +154,7 @@ export default function SettingsModal() {
         try {
             await authApi.logout()
         } catch {
-            // ?喃蝙 API 憭望?銋匱蝥??斗??Token
+            // 即使 API 失敗也清除本地 Token
         }
         clearAuth()
         setSettingsOpen(false)
@@ -173,15 +173,15 @@ export default function SettingsModal() {
             updateUser(updatedUser)
             setIsEditingName(false)
         } catch (error) {
-            console.error('?湔?迂憭望?:', error)
-            // ?舫嚗???toast ?內
+            console.error('更新名稱失敗:', error)
+            // 可選：加入 toast 提示
         } finally {
             setIsUpdatingName(false)
         }
     }
 
     /**
-     * ?單?瑼Ｘ撖Ⅳ撘瑕漲
+     * 單獨檢查密碼強度
      */
     const handleNewPasswordChange = async (value: string) => {
         setNewPassword(value)
@@ -220,7 +220,7 @@ export default function SettingsModal() {
     }
 
     /**
-     * ?漱撖Ⅳ靽格
+     * 處理密碼修改
      */
     const handleChangePassword = async () => {
         setPasswordError('')
@@ -231,7 +231,7 @@ export default function SettingsModal() {
             return
         }
         if (!newPassword) {
-            setPasswordError('隢撓?交撖Ⅳ')
+            setPasswordError('請輸入新密碼')
             return
         }
         if (newPassword !== confirmNewPassword) {
@@ -239,7 +239,7 @@ export default function SettingsModal() {
             return
         }
         if (passwordStrength && !passwordStrength.is_valid) {
-            setPasswordError('?啣?蝣潔?蝚血?摰閬?')
+            setPasswordError('新密碼不符合安全要求')
             return
         }
 
@@ -251,20 +251,20 @@ export default function SettingsModal() {
             setNewPassword('')
             setConfirmNewPassword('')
             setPasswordStrength(null)
-            // 3 蝘??嗉絲銵典
+            // 3 秒後關閉表單
             setTimeout(() => {
                 setShowPasswordForm(false)
                 setPasswordSuccess('')
             }, 3000)
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } }
-            setPasswordError(error?.response?.data?.detail || '撖Ⅳ靽格憭望?')
+            setPasswordError(error?.response?.data?.detail || '密碼修改失敗')
         } finally {
             setIsChangingPassword(false)
         }
     }
 
-    /** 撖Ⅳ撘瑕漲?內?券???*/
+    /** 密碼強度顯示顏色與文字 */
     const getStrengthColor = (level: string) => {
         switch (level) {
             case 'very_strong': return 'bg-green-500'
@@ -312,7 +312,7 @@ export default function SettingsModal() {
                             <CloseIcon />
                         </button>
 
-                        {/* ?湧??詨 */}
+                        {/* 側邊導航 */}
                         <div className={`md:w-64 bg-bg-base/50 border-r border-border-subtle/50 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-text-primary tracking-wide">
@@ -340,17 +340,17 @@ export default function SettingsModal() {
 
                             {/* 摨??? */}
                             <div className="p-3 border-t border-border-subtle space-y-0.5">
-                                {/* 蝞∠?敺?亙嚗? admin / engineer ?航? */}
+                                {/* 管理後台入口：僅 admin / engineer 可見 */}
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                        title="??蝞∠?敺"
+                                        title="進入管理後台"
                                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-text-secondary bg-bg-main hover:text-text-primary transition-all font-medium text-sm group"
                                     >
                                         <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:scale-110 transition-transform">
                                             <ShieldIcon />
                                         </span>
-                                        <span>蝞∠?敺</span>
+                                        <span>管理後台</span>
                                         <svg className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                         </svg>
@@ -358,7 +358,7 @@ export default function SettingsModal() {
                                 )}
                                 <button
                                     onClick={() => setShowQR(true)}
-                                    title="?? QR Code ?冽?璈???"
+                                    title="顯示 QR Code 在手機上登入"
                                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-text-secondary bg-bg-main hover:text-text-primary transition-all font-medium text-sm"
                                 >
                                     <QrCodeIcon />
@@ -370,7 +370,7 @@ export default function SettingsModal() {
                         {/* ?批捆???*/}
                         <div className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
                             <div className="p-6 md:p-10 min-h-full">
-                                {/* 銵???????*/}
+                                {/* 手機版返回導航*/}
                                 <button 
                                     className="md:hidden mb-6 flex items-center text-corphia-bronze font-medium hover:opacity-80 transition-opacity"
                                     onClick={() => setMobileView('menu')}
@@ -378,16 +378,16 @@ export default function SettingsModal() {
                                     <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                                     </svg>
-                                    {t('common.cancel', '餈?')}
+                                    {t('common.cancel', '取消')}
                                 </button>
-                                {/* ?犖鞈? */}
+                                {/* 個人資料 */}
                                 {activeSection === 'profile' && (
                                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
                                         <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
                                             {t('settings.profile')}
                                         </h2>
 
-                                    {/* ?剖???閮?*/}
+                                    {/* 頭像與名稱*/}
                                     <div className="flex items-center gap-8 mb-10">
                                         <div className="w-24 h-24 rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] flex items-center justify-center text-text-primary text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
@@ -425,7 +425,7 @@ export default function SettingsModal() {
                                                             disabled={isUpdatingName}
                                                             className="p-1 px-2 text-sm bg-bg-surface text-text-primary rounded-md flex-shrink-0"
                                                         >
-                                                            {t('common.cancel', '??')}
+                                                            {t('common.cancel', '取消')}
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -454,7 +454,7 @@ export default function SettingsModal() {
                                         </div>
                                     </div>
 
-                                    {/* 靽格撖Ⅳ?憛?*/}
+                                    {/* 修改密碼?憛?*/}
                                     <div className="mb-8">
                                         <button
                                             onClick={() => {
@@ -468,7 +468,7 @@ export default function SettingsModal() {
                                             }}
                                             className="flex items-center gap-2 px-5 py-3 bg-bg-surface hover:bg-bg-surface text-text-primary font-semibold rounded-full transition-colors"
                                         >
-                                            <LockIcon /> {t('auth.changePassword', '靽格撖Ⅳ')}
+                                            <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
                                     </div>
 
@@ -483,7 +483,7 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
-                            {/* 憭?閮剖? */}
+                            {/* 外觀設定 */}
                             {activeSection === 'appearance' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
                                     <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
@@ -491,7 +491,7 @@ export default function SettingsModal() {
                                     </h2>
 
                                     <div className="flex gap-6 max-w-md">
-                                        {/* ?仿?璅∪? */}
+                                        {/* 亮色模式 */}
                                         <button
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
@@ -507,7 +507,7 @@ export default function SettingsModal() {
                                             </p>
                                         </button>
 
-                                        {/* 憭?璅∪? */}
+                                        {/* 深色模式 */}
                                         <button
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
@@ -524,10 +524,10 @@ export default function SettingsModal() {
                                         </button>
                                     </div>
 
-                                    {/* ???脰身摰?*/}
+                                    {/* 強調色設定*/}
                                     <div className="mt-12">
                                         <h3 className="text-xl font-bold text-text-primary mb-6">
-                                            {t('settings.accentColor', '??憿')}
+                                            {t('settings.accentColor', '強調顏色')}
                                         </h3>
                                         <div className="flex flex-wrap gap-4">
                                             {(['default', 'blue', 'purple', 'pink', 'orange', 'green'] as const).map((color) => {
@@ -558,17 +558,17 @@ export default function SettingsModal() {
                                         </div>
                                     </div>
 
-                                    {/* C2: RAG Debug Mode ?? */}
+                                    {/* C2: RAG Debug Mode 開關 */}
                                     <div className="mt-12 max-w-md">
                                         <h3 className="text-xl font-bold text-text-primary mb-3">
-                                            {t('settings.ragDebug', 'RAG ?日璅∪?')}
+                                            {t('settings.ragDebug', 'RAG 除錯模式')}
                                         </h3>
                                         <p className="text-[13px] text-text-secondary mb-4 leading-relaxed">
                                             {t('settings.ragDebugHint', '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。')}
                                         </p>
                                         <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-bg-base border border-transparent cursor-pointer">
                                             <span className="text-[15px] font-semibold text-text-primary">
-                                                ?? {t('settings.ragDebugToggle', '憿舐內 RAG Debug ?Ｘ')}
+                                                ?? {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
                                             </span>
                                             <button
                                                 type="button"
@@ -592,7 +592,7 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
-                            {/* 隤?閮剖? */}
+                            {/* 語言設定 */}
                             {activeSection === 'language' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
                                     <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
@@ -621,7 +621,7 @@ export default function SettingsModal() {
                                 </motion.div>
                             )}
 
-                            {/* 雿輻隤芣? */}
+                            {/* 使用指南 */}
                             {activeSection === 'guide' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
                                     <GuideSection />
@@ -661,7 +661,7 @@ export default function SettingsModal() {
                             className="absolute inset-0 bg-black/50 backdrop-blur-md"
                         />
 
-                        {/* Card ??隞輻?仿?甇?敶Ｗ?◢??*/}
+                        {/* Card 內排版改為靈活設計：1:1 正方形 */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 16 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -680,15 +680,15 @@ export default function SettingsModal() {
                             {/* Title */}
                             <div>
                                 <h3 className="text-[22px] font-bold text-text-primary tracking-tight">
-                                    {t('auth.changePassword', '靽格撖Ⅳ')}
+                                    {t('auth.changePassword', '修改密碼')}
                                 </h3>
                             </div>
 
-                            {/* ?拇?撘?蝣潸???+ 頛詨甈? */}
+                            {/* 左右分欄排版：密碼規則 + 輸入區域 */}
                             <div className="flex gap-6">
-                                {/* 撌行?嚗?蝣潸???*/}
+                                {/* 左側：密碼規則 */}
                                 <div className="flex-1 bg-bg-base rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-transparent">
-                                    <p className="font-semibold text-text-primary text-[14px] mb-2">撖Ⅳ摰閬?</p>
+                                    <p className="font-semibold text-text-primary text-[14px] mb-2">密碼安全要求</p>
                                     {[
                                         '至少 8 個字元',
                                         '包含大寫字母 (A-Z)',
@@ -720,7 +720,7 @@ export default function SettingsModal() {
                                         )
                                     })}
 
-                                    {/* 撖Ⅳ撘瑕漲璇???蝵格撌行?摨 */}
+                                    {/* 密碼強度評估：固定於左側底部 */}
                                     <AnimatePresence>
                                         {passwordStrength && (
                                             <motion.div
@@ -730,7 +730,7 @@ export default function SettingsModal() {
                                                 className="pt-3 mt-1 border-t border-border-subtle/60 /10 overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[11px] text-text-secondary">撘瑕漲</span>
+                                                    <span className="text-[11px] text-text-secondary">強度</span>
                                                     <span className={`text-[11px] font-semibold ml-auto ${
                                                         passwordStrength.level === 'very_strong' ? 'text-green-600 ' :
                                                         passwordStrength.level === 'strong' ? 'text-light-accent ' :
@@ -751,23 +751,23 @@ export default function SettingsModal() {
                                     </AnimatePresence>
                                 </div>
 
-                                {/* ?單?嚗撓?交?雿?*/}
+                                {/* 右側：輸入欄位 */}
                                 <div className="flex-1 flex flex-col justify-evenly">
-                                    {/* ?嗅?撖Ⅳ */}
+                                    {/* 目前密碼 */}
                                     <PwdFloatingInput
                                         label="目前密碼"
                                         value={currentPassword}
                                         onChange={v => { setCurrentPassword(v); setPasswordError('') }}
                                     />
 
-                                    {/* ?啣?蝣?*/}
+                                    {/* 新密碼 */}
                                     <PwdFloatingInput
                                         label="新密碼"
                                         value={newPassword}
                                         onChange={handleNewPasswordChange}
                                     />
 
-                                    {/* 蝣箄??啣?蝣?*/}
+                                    {/* 確認新密碼 */}
                                     <div>
                                         <PwdFloatingInput
                                             label="確認新密碼"
@@ -782,14 +782,14 @@ export default function SettingsModal() {
                                                     exit={{ opacity: 0, height: 0 }}
                                                     className="mt-1 pl-3 text-[11px] font-medium text-red-500 overflow-hidden"
                                                 >
-                                                    撖Ⅳ銝???                                                </motion.p>
+                                                    密碼不一致                                                </motion.p>
                                             )}
                                         </AnimatePresence>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 閮 */}
+                            {/* 關閉按鈕 */}
                             <AnimatePresence>
                                 {(passwordError || passwordSuccess) && (
                                     <motion.div
@@ -817,7 +817,7 @@ export default function SettingsModal() {
                                 )}
                             </AnimatePresence>
 
-                            {/* ?漱?? ??隞輻?仿??????? */}
+                            {/* 處理按鈕：使用與登入頁面相同的設計 */}
                             <button
                                 onClick={handleChangePassword}
                                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
@@ -829,16 +829,16 @@ export default function SettingsModal() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        靽格銝?..
+                                        修改中...
                                     </span>
-                                ) : '蝣箄?靽格撖Ⅳ'}
+                                ) : '蝣箄?修改密碼'}
                             </button>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
-            {/* QR Code 敶? */}
+            {/* QR Code 視窗 */}
             <AnimatePresence>
                 {showQR && (
                     <motion.div
@@ -857,7 +857,7 @@ export default function SettingsModal() {
                             onClick={e => e.stopPropagation()}
                             className="bg-bg-base p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
                         >
-                            {/* QR Code ?? */}
+                            {/* QR Code 圖片 */}
                             <img
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(window.location.origin)}`}
                                 alt="Mobile Access QR Code"

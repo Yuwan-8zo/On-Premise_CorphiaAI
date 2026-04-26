@@ -8,7 +8,7 @@
 
 import '@testing-library/jest-dom'
 import { server } from './mocks/server'
-import { vi } from 'vitest'
+import { vi, beforeAll, afterEach, afterAll } from 'vitest'
 
 // ── MSW 生命週期 ──────────────────────────────────────────────
 // 在所有測試開始前啟動 mock server

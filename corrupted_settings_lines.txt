@@ -1,0 +1,85 @@
+2: * 設定頁面 (Modal)
+54: /** 亮色模式 Icon */
+61: /** 深色模式 Icon */
+76: /** 盾牌 Icon 用於管理後台入口 */
+90: /** 脈搏 Icon 用於系統監控 */
+111: // 密碼修改狀態
+114: // QR Code 顯示狀態
+125: // 名稱修改狀態
+143: { code: 'zh-TW', label: '繁體中文' },
+145: { code: 'ja-JP', label: '日本語' },
+157: // 即使 API 失敗也清除本地 Token
+176: console.error('更新名稱失敗:', error)
+177: // 可選：加入 toast 提示
+184: * 單獨檢查密碼強度
+196: // 密碼規則驗證
+198: if (value.length < 8) errors.push('至少 8 個字元')
+199: if (!/[A-Z]/.test(value)) errors.push('??憭批神摮?')
+200: if (!/[a-z]/.test(value)) errors.push('??撠神摮?')
+201: if (!/\d/.test(value)) errors.push('???詨?')
+202: if (!/[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push('???寞?摮?')
+223: * 處理密碼修改
+230: setPasswordError('請輸入目前密碼')
+234: setPasswordError('請輸入新密碼')
+238: setPasswordError('確認密碼不符')
+242: setPasswordError('新密碼不符合安全要求')
+249: setPasswordSuccess('密碼修改成功')
+254: // 3 秒後關閉表單
+261: setPasswordError(error?.response?.data?.detail || '密碼修改失敗')
+267: /** 密碼強度顯示顏色與文字 */
+278: case 'very_strong': return '非常強'
+279: case 'strong': return '強'
+280: case 'medium': return '中等'
+281: default: return '弱'
+315: {/* 側邊導航 */}
+341: {/* 摨??? */}
+343: {/* 管理後台入口：僅 admin / engineer 可見 */}
+347: title="進入管理後台"
+353: <span>管理後台</span>
+361: title="顯示 QR Code 在手機上登入"
+370: {/* ?批捆???*/}
+373: {/* 手機版返回導航*/}
+381: {t('common.cancel', '取消')}
+383: {/* 個人資料 */}
+390: {/* 頭像與名稱*/}
+428: {t('common.cancel', '取消')}
+457: {/* 靽格撖Ⅳ?憛?*/}
+471: <LockIcon /> {t('auth.changePassword', '靽格撖Ⅳ')}
+486: {/* 外觀設定 */}
+494: {/* 亮色模式 */}
+510: {/* 深色模式 */}
+527: {/* 強調色設定*/}
+530: {t('settings.accentColor', '強調顏色')}
+561: {/* C2: RAG Debug Mode 開關 */}
+564: {t('settings.ragDebug', 'RAG 除錯模式')}
+567: {t('settings.ragDebugHint', '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。')}
+571: ?? {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
+595: {/* 語言設定 */}
+624: {/* 使用指南 */}
+664: {/* Card ??隞輻?仿?甇?敶Ｗ?◢??*/}
+683: {t('auth.changePassword', '靽格撖Ⅳ')}
+687: {/* ?拇?撘?蝣潸???+ 頛詨甈? */}
+689: {/* 左側：密碼規則 */}
+691: <p className="font-semibold text-text-primary text-[14px] mb-2">撖Ⅳ摰閬?</p>
+693: '至少 8 個字元',
+694: '包含大寫字母 (A-Z)',
+695: '包含小寫字母 (a-z)',
+696: '包含數字 (0-9)',
+697: '包含特殊字元',
+723: {/* 撖Ⅳ撘瑕漲璇???蝵格撌行?摨 */}
+733: <span className="text-[11px] text-text-secondary">撘瑕漲</span>
+754: {/* 右側：輸入欄位 */}
+756: {/* ?嗅?撖Ⅳ */}
+758: label="目前密碼"
+763: {/* ?啣?蝣?*/}
+765: label="新密碼"
+770: {/* 蝣箄??啣?蝣?*/}
+773: label="確認新密碼"
+785: 密碼不一致                                                </motion.p>
+792: {/* 閮 */}
+820: {/* ?漱?? ??隞輻?仿??????? */}
+832: 靽格銝?..
+834: ) : '蝣箄?靽格撖Ⅳ'}
+841: {/* QR Code 敶? */}
+860: {/* QR Code ?? */}
+874: // ?? 撖Ⅳ頛詨獢?隞輻?仿? FloatingInput 憸冽嚗???

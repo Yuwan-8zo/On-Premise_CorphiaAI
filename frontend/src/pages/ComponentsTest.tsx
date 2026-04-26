@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useToastStore } from '../store/toastStore'
 import { useUIStore } from '../store/uiStore'
 import { useTranslation } from 'react-i18next'
-import { MessageBubble } from '../components/chat/MessageBubble'
+import MessageBubble from '../components/chat/MessageBubble'
 import { AlertCircle, CheckCircle2, MessageSquare, PanelLeftClose, Settings } from 'lucide-react'
 
-export const ComponentsTest: React.FC = () => {
+export default function ComponentsTest() {
     const { t } = useTranslation()
     const { toasts, add, remove } = useToastStore()
     const { showConfirm } = useUIStore()
@@ -104,10 +104,10 @@ export const ComponentsTest: React.FC = () => {
                                 id: 'test-msg-1',
                                 role: 'assistant',
                                 content: bubbleContent,
-                                created_at: new Date().toISOString()
+                                createdAt: new Date().toISOString(),
+                                tokens: 0,
                             }}
                             isStreaming={isStreaming}
-                            onCopy={() => logEvent('Copied message content')}
                         />
                     </div>
                 </section>
