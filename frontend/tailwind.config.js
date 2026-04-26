@@ -64,6 +64,15 @@ export default {
                 'card-lg': '34px',
                 'card-xl': '38px',
             },
+            boxShadow: {
+                'sm': '0 0 4px rgb(0 0 0 / 0.05)',
+                DEFAULT: '0 0 8px rgb(0 0 0 / 0.08)',
+                'md': '0 0 12px rgb(0 0 0 / 0.1)',
+                'lg': '0 0 20px rgb(0 0 0 / 0.12)',
+                'xl': '0 0 30px rgb(0 0 0 / 0.15)',
+                '2xl': '0 0 50px rgb(0 0 0 / 0.25)',
+                'inner': 'inset 0 0 6px rgb(0 0 0 / 0.1)',
+            },
             keyframes: {
                 'typing-bounce': {
                     '0%, 100%': { transform: 'translateY(10%)', opacity: '0.4' },
