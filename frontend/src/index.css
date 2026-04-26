@@ -81,8 +81,8 @@ body {
 
 html.dark {
   color-scheme: only dark;
-  background-color: #28282A; /* Fallback */
-  background-image: linear-gradient(135deg, #28282A 0%, #161618 100%);
+  background-color: #202022; /* Fallback */
+  background-image: linear-gradient(135deg, #202022 0%, #101012 100%);
   background-attachment: fixed;
   color: #F6F4F0;
 }

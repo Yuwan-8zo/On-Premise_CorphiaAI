@@ -80,7 +80,7 @@ export default function App() {
 
         // html/body 背景色即時更新（不依賴 CSS transition）
         if (isDark) {
-            html.style.background = 'linear-gradient(135deg, #28282A 0%, #161618 100%)'
+            html.style.background = 'linear-gradient(135deg, #202022 0%, #101012 100%)'
             document.body.style.background = 'transparent'
             // Safari 需要設定 background-attachment: fixed 才能讓漸層填滿整個 viewport 且不隨滾動延伸
             html.style.backgroundAttachment = 'fixed'

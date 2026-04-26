@@ -14,8 +14,8 @@ export default {
                     sand: '#ECE8E1',
                     'warm-gray': '#807C76',
                     ivory: '#F6F4F0',
-                    obsidian: '#28282A',
-                    espresso: '#323235',
+                    obsidian: '#202022',
+                    espresso: '#28282A',
                     ink: '#2A2722',
                 },
                 primary: {
