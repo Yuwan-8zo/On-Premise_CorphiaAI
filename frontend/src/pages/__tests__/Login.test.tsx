@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import React from 'react'
 import { http, HttpResponse } from 'msw'
-import { server } from '../test/mocks/server'
+import { server } from '@/test/mocks/server'
 
 // ── Mock react-i18next ────────────────────────────────────────
 vi.mock('react-i18next', () => ({
@@ -50,11 +50,23 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 // ── Mock zustand auth store ───────────────────────────────────
 const mockLogin = vi.fn()
+const mockSetAuth = vi.fn()
+const mockSetLoading = vi.fn()
+
+const mockStore = {
+  login: mockLogin,
+  setAuth: mockSetAuth,
+  setLoading: mockSetLoading,
+  isLoading: false,
+  isAuthenticated: false,
+  user: null,
+  accessToken: 'mock-access-token',
+}
+
 vi.mock('@/store/authStore', () => ({
-  useAuthStore: () => ({
-    login: mockLogin,
-    isAuthenticated: false,
-    user: null,
+  useAuthStore: Object.assign(() => mockStore, {
+    setState: (newState: any) => Object.assign(mockStore, newState),
+    getState: () => mockStore,
   }),
 }))
 
@@ -71,8 +83,11 @@ vi.mock('framer-motion', () => ({
       React.createElement('span', props, children),
     p: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
       React.createElement('p', props, children),
+    label: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+      React.createElement('label', props, children),
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+  LayoutGroup: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
 }))
 
 import Login from '@/pages/Login'
@@ -92,15 +107,15 @@ describe('Login 頁面', () => {
   beforeEach(() => {
     mockNavigate.mockClear()
     mockLogin.mockClear()
+    mockSetAuth.mockClear()
+    mockSetLoading.mockClear()
   })
 
   it('應渲染包含 email 和 password 的登入表單', () => {
     renderLogin()
-    // 使用 type 或 placeholder 查找輸入欄位
-    const emailInput = screen.getByRole('textbox', { name: /email/i }) ||
-      document.querySelector('input[type="email"]') ||
-      document.querySelector('input[name="email"]')
-    expect(emailInput || document.querySelector('input[type="email"]')).toBeTruthy()
+    // 使用 querySelector 確保不會因為 a11y role 解析失敗而報錯
+    const emailInput = document.querySelector('input[type="email"]') || document.querySelector('input[name="email"]')
+    expect(emailInput).toBeTruthy()
     expect(document.querySelector('input[type="password"]')).toBeTruthy()
   })
 
@@ -114,14 +129,12 @@ describe('Login 頁面', () => {
   })
 
   it('成功登入後應重導向', async () => {
-    mockLogin.mockResolvedValueOnce(undefined)
     renderLogin()
 
     const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement
     const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement
 
     if (!emailInput || !passwordInput) {
-      // 若元件使用不同選取方式，跳過此測試但記錄原因
       console.warn('無法找到 email/password 輸入欄位，可能因編碼問題導致 DOM 結構異常')
       return
     }
@@ -133,8 +146,8 @@ describe('Login 頁面', () => {
     if (submitBtn) {
       await userEvent.click(submitBtn)
       await waitFor(() => {
-        // 登入成功後應呼叫 navigate 或 mockLogin
-        expect(mockLogin).toHaveBeenCalled()
+        // 登入成功後應呼叫 setAuth
+        expect(mockSetAuth).toHaveBeenCalled()
       })
     }
   })
@@ -147,7 +160,6 @@ describe('Login 頁面', () => {
       )
     )
 
-    mockLogin.mockRejectedValueOnce(new Error('帳號或密碼錯誤'))
     renderLogin()
 
     const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement
@@ -170,8 +182,7 @@ describe('Login 頁面', () => {
           screen.queryByText(/錯誤|失敗|error/i) ||
           document.querySelector('[role="alert"]') ||
           document.querySelector('.error-message')
-        // 只要 mockLogin 被呼叫即視為測試正確執行
-        expect(mockLogin).toHaveBeenCalled()
+        expect(errorMsg).toBeTruthy()
       })
     }
   })
@@ -182,8 +193,8 @@ describe('Login 頁面', () => {
     if (submitBtn && !submitBtn.disabled) {
       // HTML5 required 驗證或 JS 驗證應阻止提交
       await userEvent.click(submitBtn)
-      // mockLogin 不應被呼叫
-      expect(mockLogin).not.toHaveBeenCalled()
+      // mockSetAuth 不應被呼叫
+      expect(mockSetAuth).not.toHaveBeenCalled()
     }
   })
 })

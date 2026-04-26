@@ -1,7 +1,7 @@
-/**
- * ?�入/註�??�面
+﻿/**
+ * ?餃/閮餃??
  * 
- * 精確復刻?�戶設�?�?:1 �?��形卡??
+ * 蝎曄Ⅱ敺拙?冽閮剛?嚗?:1 甇?敶Ｗ??
  */
 
 import { useState, useEffect, useRef } from 'react'
@@ -111,13 +111,13 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
-    const [showQR, setShowQR] = useState(false) // ?��? QR Modal ?�??
+    const [showQR, setShowQR] = useState(false) // ?啣? QR Modal ???
     const langMenuRef = useRef<HTMLDivElement>(null)
     
-    // ?�用?�輸?��???
+    // ?梁?撓?亦???
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    // 註�?專用?�確認�?碼�???
+    // 閮餃?撠?Ⅱ隤?蝣潛???
     const [confirmPassword, setConfirmPassword] = useState('')
 
     const [error, setError] = useState('')
@@ -127,7 +127,7 @@ export default function Login() {
 
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
-    // 檢查後端?�??
+    // 瑼Ｘ敺垢???
     useEffect(() => {
         let isCancelled = false
         const checkBackend = async () => {
@@ -148,7 +148,7 @@ export default function Login() {
         
         checkBackend()
         
-        // ?��??��??�快輪詢?�度 (�?3 �?，�??��??後恢�?30 秒輪�?
+        // ?????翰頛芾岷?漲 (瘥?3 蝘?嚗????敺敺?30 蝘憚閰?
         const intervalId = setInterval(() => {
             checkBackend()
         }, hasInitialConnected ? 30000 : 3000)
@@ -159,7 +159,7 @@ export default function Login() {
         }
     }, [hasInitialConnected])
 
-    // 如�? 10 秒�??��??上�?顯示?�跳?��?待」�???
+    // 憒? 10 蝘??賡??銝?憿舐內?歲??敺???
     useEffect(() => {
         if (!hasInitialConnected) {
             const timer = setTimeout(() => {
@@ -169,7 +169,7 @@ export default function Login() {
         }
     }, [hasInitialConnected])
 
-    // 點�?外部?��??�單
+    // 暺?憭???詨
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
@@ -180,7 +180,7 @@ export default function Login() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // 語�??��??��?
+    // 隤??豢???
     const handleLanguageSelect = (lang: 'zh-TW' | 'en-US' | 'ja-JP') => {
         setLanguage(lang)
         i18n.changeLanguage(lang)
@@ -202,7 +202,7 @@ export default function Login() {
                 await authApi.register({ email, password })
             }
             
-            // ?��??�入?�註?��??��??�執行登??
+            // ?∟??餃?酉?????賢銵??
             const tokens = await authApi.login({ email, password })
             useAuthStore.setState({ accessToken: tokens.accessToken })
             const user = await authApi.me()
@@ -224,21 +224,21 @@ export default function Login() {
             const data = axiosError?.response?.data
 
             if (status === 429) {
-                // ?��??�制：�?端�??��???detail ??error.message
-                setError(data?.detail || data?.error?.message || '請�??�於?��?，�?稍�??�試')
+                // ???嚗?蝡臬?????detail ??error.message
+                setError(data?.detail || data?.error?.message || '隢???餌?嚗?蝔??岫')
             } else if (status === 422) {
-                // Pydantic 驗�??�誤 (密碼強度不符?��?)
-                // 後端?�傳?��?: { error: { details: [{ field, message }] } }
+                // Pydantic 撽??航炊 (撖Ⅳ撘瑕漲銝泵??)
+                // 敺垢??澆?: { error: { details: [{ field, message }] } }
                 const details = (data as { error?: { details?: Array<{ field: string; message: string }> } })?.error?.details
                 if (details && details.length > 0) {
-                    // ?��?碼相?��??�誤
+                    // ?曉?蝣潛???航炊
                     const pwdError = details.find(d => d.field?.includes('password'))
                     if (pwdError) {
-                        // msg ?��???Value error, 密碼?�度?��?...; 密碼?�?�含..."
+                        // msg ?澆???Value error, 撖Ⅳ?瑕漲?喳?...; 撖Ⅳ??..."
                         const cleaned = pwdError.message.replace(/^Value error,\s*/i, '')
                         setError(cleaned)
                     } else {
-                        setError(details.map(d => d.message.replace(/^Value error,\s*/i, '')).join('�?))
+                        setError(details.map(d => d.message.replace(/^Value error,\s*/i, '')).join(', '));
                     }
                 } else {
                     setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
@@ -257,19 +257,19 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden">
-            {/* ?�?� 波浪?�景設�? ?�?� */}
+            {/* ?? 瘜Ｘ答?閮剛? ?? */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* 第�?層大波浪 */}
+                    {/* 蝚砌?撅文之瘜Ｘ答 */}
                     <path className="fill-[#8B7355] dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    {/* 第�?層大波浪 */}
+                    {/* 蝚砌?撅文之瘜Ｘ答 */}
                     <path className="fill-[#8B7355] dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    {/* 第�?層�??�波�?*/}
+                    {/* 蝚砌?撅斗??郭瘚?*/}
                     <path className="fill-[#8B7355] dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
                 </svg>
             </div>
 
-            {/* ?�?� ?�螢幕�??�畫??Modal ?�?� */}
+            {/* ?? ?刻撟????Modal ?? */}
             <AnimatePresence>
                 {!hasInitialConnected && (
                     <motion.div
@@ -286,10 +286,10 @@ export default function Login() {
                             <CorphiaLogo className="w-24 h-24 text-corphia-bronze drop-shadow-lg" />
                             <div className="flex flex-col items-center gap-2 text-center">
                                 <h2 className="text-2xl font-bold text-text-primary">
-                                    Corphia AI 引�??��?�?
+                                    Corphia AI 撘???銝?
                                 </h2>
                                 <p className="text-text-secondary">
-                                    �?��?��?後端?��??��?載大語�?模�?，�?稍�?..
+                                    甇???敺垢????頛之隤?璅∪?嚗?蝔?..
                                 </p>
                                 <div className="mt-4 flex items-center justify-center gap-2">
                                     <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -307,7 +307,7 @@ export default function Login() {
                                     onClick={() => setHasInitialConnected(true)}
                                     className="text-sm text-text-muted hover:text-text-secondary underline transition-colors"
                                 >
-                                    跳�?等�?，強?�進入?�面
+                                    頝喲?蝑?嚗撥?園脣?恍
                                 </motion.button>
                             )}
                         </AnimatePresence>
@@ -315,7 +315,7 @@ export default function Login() {
                 )}
             </AnimatePresence>
 
-            {/* ?�?� ?�螢�?QR Code ?��??�景 Modal ?�?� */}
+            {/* ?? ?刻撟?QR Code ??? Modal ?? */}
             <AnimatePresence>
                 {showQR && (
                     <motion.div
@@ -344,9 +344,9 @@ export default function Login() {
                 )}
             </AnimatePresence>
 
-            {/* ?�?� 左側：�??��?�?(桌面 50%) ?�?� */}
+            {/* ?? 撌血嚗???蝝?(獢 50%) ?? */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
-                {/* 後端?�?��?示器 */}
+                {/* 敺垢???蝷箏 */}
                 <div className="flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
                     <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
@@ -360,7 +360,7 @@ export default function Login() {
                     </span>
                 </div>
 
-                {/* ?��??�容 - ?�直水平絕�?置中 */}
+                {/* ???批捆 - ?瘞游像蝯?蝵桐葉 */}
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
                         <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
@@ -374,7 +374,7 @@ export default function Login() {
                             {t('auth.engineDesc')}
                         </p>
 
-                        {/* ?�能?�表 */}
+                        {/* ??” */}
                         <div className="space-y-6 mt-8">
                             <div className="flex items-center gap-4">
                                 <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
@@ -412,11 +412,11 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* 左�?角�?顯示 QR Code ?��? (?��?�? */}
+                {/* 撌虫?閫?憿舐內 QR Code ?? (??蝷? */}
                 <button
                     onClick={() => setShowQR(true)}
                     className="absolute bottom-8 left-8 flex items-center justify-center bg-bg-base/60 /5 backdrop-blur-md border border-border-subtle rounded-full p-1.5 shadow-sm hover:bg-bg-base/80 /10 hover:scale-[1.02] transition-all group z-10"
-                    title={t('auth.scanToDownload', '?�碼下�?行�???)}
+                    title={t('auth.scanToDownload')}
                 >
                     <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center group-hover:bg-corphia-card transition-colors">
                         <QrCode className="w-[18px] h-[18px] text-text-primary" />
@@ -424,9 +424,9 @@ export default function Login() {
                 </button>
             </div>
 
-            {/* ?�?� ?�側：登?�表??(桌面 50%，�?�?100%) ?�?� */}
+            {/* ?? ?喳嚗?亥”??(獢 50%嚗?璈?100%) ?? */}
             <div className="w-full lg:w-1/2 flex flex-col z-10">
-                {/* ?�部?��?(?��??�顯示左?��??��??�側?��?，�??��??�顯示右?��??? */}
+                {/* ??憛?(???＊蝷箏椰?渡????喳??嚗??Ｙ??芷＊蝷箏?湔??? */}
                 <div className="flex justify-between items-center p-6 w-full">
                     <div className="lg:hidden flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
                         <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
@@ -482,7 +482,7 @@ export default function Login() {
                                         onClick={() => handleLanguageSelect('zh-TW')}
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
-                                        繁�?中�?
+                                        蝜?銝剜?
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
@@ -494,7 +494,7 @@ export default function Login() {
                                         onClick={() => handleLanguageSelect('ja-JP')}
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
-                                        ?�本�?
+                                        ?交隤?
                                     </button>
                                 </motion.div>
                             )}
@@ -502,7 +502,7 @@ export default function Login() {
                     </div>
                     </div>
                 </div>
-                {/* ?��??��??��?�?(?�在行�?裝置顯示) */}
+                {/* ??????憿?(?銵?鋆蔭憿舐內) */}
                 <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
                     <h2 className="text-xl font-bold text-text-primary mb-1 transition-colors">
                         {t('auth.welcomeTitle')}
@@ -514,20 +514,20 @@ export default function Login() {
                     <p className="text-text-secondary text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
                 </div>
 
-                {/* ?�入?��?容器 - 居中 */}
+                {/* ?餃?∠?摰孵 - 撅葉 */}
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    {/* ?��??��?�?:1 �?��形�?flex spacer 精�??�直?��? */}
+                    {/* ?∠??祇?嚗?:1 甇?敶ｇ?flex spacer 蝎暹???? */}
                     <form
                         onSubmit={handleSubmit}
                         className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-2xl dark:shadow-black/50 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
-                        {/* ?�?� Pill Tab ?��?（�??��??��? ?�?� */}
+                        {/* ?? Pill Tab ??嚗????荔? ?? */}
                         <div
                             className="relative flex rounded-full select-none cursor-pointer bg-bg-elevated ] border border-transparent transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
-                            {/* 滑�??�景 Pill */}
+                            {/* 皛?? Pill */}
                             <motion.div
                                 className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-base ] shadow-sm rounded-full border border-border-subtle"
                                 initial={false}
@@ -535,7 +535,7 @@ export default function Login() {
                                 transition={{ type:"tween", duration: 0.3, ease:"easeInOut" }}
                                 style={{ left: '5px', zIndex: 1 }}
                             />
-                            {/* ?�入 */}
+                            {/* ?餃 */}
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('login')}
@@ -546,7 +546,7 @@ export default function Login() {
                             >
                                 {t('auth.login')}
                             </button>
-                            {/* 註�? */}
+                            {/* 閮餃? */}
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('register')}
@@ -559,10 +559,10 @@ export default function Login() {
                             </button>
                         </div>
 
-                        {/* ?�?� Spacer A ?�?� */}
+                        {/* ?? Spacer A ?? */}
                         <motion.div layout className="flex-1" />
 
-                        {/* ?�?� Email 欄�? ?�?� */}
+                        {/* ?? Email 甈? ?? */}
                         <motion.div layout className="shrink-0 w-full">
                             <FloatingInput
                                 id="email"
@@ -574,10 +574,10 @@ export default function Login() {
                             />
                         </motion.div>
 
-                        {/* ?�?� Spacer B ?�?� */}
+                        {/* ?? Spacer B ?? */}
                         <motion.div layout className="flex-1" />
 
-                        {/* ?�?� Password 欄�? ?�?� */}
+                        {/* ?? Password 甈? ?? */}
                         <motion.div layout className="shrink-0 w-full">
                             <FloatingInput
                                 id="password"
@@ -589,14 +589,14 @@ export default function Login() {
                             />
                         </motion.div>
 
-                        {/* ?�?� Spacer B2（�?終在 DOM，�?步�???flexGrow�??�?� */}
+                        {/* ?? Spacer B2嚗?蝯 DOM嚗?甇亙???flexGrow嚗??? */}
                         <motion.div
                             animate={{ flexGrow: activeTab === 'register' ? 1 : 0 }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             style={{ flexShrink: 0, flexBasis: 0, minHeight: 0 }}
                         />
 
-                        {/* ?�?� Confirm Password（�?終在 DOM，�?步�??��? ?�?� */}
+                        {/* ?? Confirm Password嚗?蝯 DOM嚗?甇亙??恬? ?? */}
                         <motion.div
                             className="w-full shrink-0"
                             animate={{
@@ -617,10 +617,10 @@ export default function Login() {
                             />
                         </motion.div>
 
-                        {/* ?�?� Spacer C (底部視覺補�? 1.15) ?�?� */}
+                        {/* ?? Spacer C (摨閬死鋆? 1.15) ?? */}
                         <motion.div layout className="flex-[1.15]" />
 
-                        {/* 底層?��??�錯誤�?示�?�?*/}
+                        {/* 摨惜???隤斗?蝷箏?憛?*/}
                         <div className="w-full flex flex-col gap-3 shrink-0">
                                 <AnimatePresence>
                                     {error && (
@@ -640,7 +640,7 @@ export default function Login() {
                                     )}
                                 </AnimatePresence>
 
-                                {/* ?�交?��? */}
+                                {/* ?漱?? */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}

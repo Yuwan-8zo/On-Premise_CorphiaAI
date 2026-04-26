@@ -8,6 +8,7 @@
 
 import '@testing-library/jest-dom'
 import { server } from './mocks/server'
+import { vi } from 'vitest'
 
 // ── MSW 生命週期 ──────────────────────────────────────────────
 // 在所有測試開始前啟動 mock server
@@ -18,3 +19,18 @@ afterEach(() => server.resetHandlers())
 
 // 所有測試完成後關閉 mock server
 afterAll(() => server.close())
+
+// ── Mock window.matchMedia ────────────────────────────────────
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // Deprecated
+    removeListener: vi.fn(), // Deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})

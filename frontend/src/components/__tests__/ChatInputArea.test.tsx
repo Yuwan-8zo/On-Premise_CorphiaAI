@@ -88,8 +88,6 @@ describe('ChatInputArea', () => {
 
   it('input 為空時送出按鈕應 disabled', () => {
     render(<ChatInputArea {...makeDefaultProps({ input: '' })} />)
-    // SendDotBtn 包在 button 裡，且 disabled={!input.trim() || isConnecting}
-    const sendBtn = screen.getByRole('button', { hidden: true })
     // 找最後一個 button（送出按鈕）
     const buttons = screen.getAllByRole('button', { hidden: true })
     const sendButton = buttons[buttons.length - 1]
