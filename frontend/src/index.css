@@ -4,6 +4,25 @@
 
 /* 全域樣式 */
 :root {
+  /* Light mode tokens (RGB for Tailwind opacity support) */
+  --bg-base: 250 250 248;
+  --bg-main: 247 246 244;
+  --bg-surface: 242 239 234;
+  --bg-elevated: 255 255 255;
+  
+  --text-primary: 43 43 43;
+  --text-secondary: 107 107 107;
+  --text-muted: 140 134 125;
+  --text-disabled: 180 180 180;
+  
+  --border-subtle: 232 228 223;
+  --border-strong: 139 115 85;
+
+  --accent: 137 110 83;
+  --accent-hover: 111 89 67;
+  --accent-active: 87 69 55;
+  --accent-soft: rgba(137, 110, 83, 0.15);
+
   --color-primary: #896E53;
   /* 預設(鈦金棕) #94785A */
   --color-ios-accent-light: 137 110 83;
@@ -90,6 +109,20 @@ html.dark {
   background-image: linear-gradient(135deg, #202022 0%, #101012 100%);
   background-attachment: fixed;
   color: #F6F4F0;
+
+  /* Dark mode tokens (RGB) */
+  --bg-base: 32 32 34;
+  --bg-main: 24 24 22;
+  --bg-surface: 40 40 42;
+  --bg-elevated: 42 39 34;
+  
+  --text-primary: 246 244 240;
+  --text-secondary: 154 154 154;
+  --text-muted: 100 100 100;
+  --text-disabled: 80 80 80;
+  
+  --border-subtle: 58 50 42;
+  --border-strong: 139 115 85;
 }
 
 html.dark body {
