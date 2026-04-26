@@ -256,7 +256,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-corphia-main dark:bg-dark-bg-primary transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-light-bg-primary dark:bg-transparent transition-colors duration-300 relative overflow-hidden">
             {/* ── 波浪背景設計 ── */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -519,7 +519,7 @@ export default function Login() {
                     {/* 卡片本體：1:1 正方形，flex spacer 精準垂直分配 */}
                     <form
                         onSubmit={handleSubmit}
-                        className="w-full max-w-[360px] bg-corphia-card dark:bg-dark-bg-primary shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-2xl dark:shadow-black border border-transparent dark:border-white/5 rounded-[38px] p-5 flex flex-col transition-colors aspect-square"
+                        className="w-full max-w-[360px] bg-light-bg-primary/60 dark:bg-dark-bg-secondary/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/60 dark:border-white/10 rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
