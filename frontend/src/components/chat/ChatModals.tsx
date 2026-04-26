@@ -41,20 +41,20 @@ export function ConversationContextMenu({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.1 }}
-                    className="fixed z-[100] w-[160px] bg-bg-base border border-border-subtle shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-text-primary"
+                    className="fixed z-[100] w-[180px] bg-bg-surface border border-border-subtle shadow-lg dark:shadow-2xl rounded-[16px] overflow-hidden p-1.5 text-[14px] font-medium text-text-primary"
                     style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
                 >
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-bg-base transition-colors text-left"
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-bg-elevated transition-colors text-left text-text-primary"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onShare(id), 50) }}>
                         <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         分享
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-bg-base transition-colors text-left"
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-bg-elevated transition-colors text-left text-text-primary"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
                         <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         重新命名
                     </button>
-                    <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-bg-base transition-colors text-left group"
+                    <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] hover:bg-bg-elevated transition-colors text-left group text-text-primary"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), 50) }}>
                         <div className="flex items-center gap-3">
                             <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
@@ -62,10 +62,10 @@ export function ConversationContextMenu({
                         </div>
                         <svg className="w-4 h-4 opacity-0 group-hover:opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
-                    <div className="h-[1px] bg-bg-surface my-1 mx-3" />
+                    <div className="h-[1px] bg-border-subtle my-1 mx-3" />
                     <button 
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onDelete(id, e as unknown as React.MouseEvent), 50) }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-red-50 text-red-500 transition-colors text-left group">
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] hover:bg-red-500/10 text-red-500 transition-colors text-left group">
                         <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         刪除
                     </button>

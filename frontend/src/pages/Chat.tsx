@@ -21,7 +21,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-bg-surface ] z-10">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-bg-base z-10">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 

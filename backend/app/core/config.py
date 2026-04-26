@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # LLM (Ollama & Llama.cpp)
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:14b"
-    llama_model_path: str = "Qwen2.5-7B-Instruct-Q5_K_M.gguf"
+    llama_model_path: str = "qwen2.5-3b-instruct-q5_k_m.gguf"
     llama_context_size: int = 4096
     llama_n_gpu_layers: int = 0
     
