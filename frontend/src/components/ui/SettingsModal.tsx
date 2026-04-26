@@ -137,9 +137,9 @@ export default function SettingsModal() {
     ]
 
     const languages = [
-        { code: 'zh-TW', label: '蝜?銝剜?' },
+        { code: 'zh-TW', label: '繁體中文' },
         { code: 'en-US', label: 'English' },
-        { code: 'ja-JP', label: '?交隤? },
+        { code: 'ja-JP', label: '日本語' },
     ]
 
     const handleLanguageChange = (langCode: string) => {
