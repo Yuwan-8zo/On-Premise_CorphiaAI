@@ -80,8 +80,8 @@ type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'system' | 'tena
 
 const tabs: Array<{ id: AdminSection; label: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'overview', label: '總覽', icon: Gauge },
-    { id: 'users', label: '使用者', icon: Users },
-    { id: 'models', label: '模型', icon: Cpu },
+    { id: 'users', label: '使用??, icon: Users },
+    { id: 'models', label: '模�?', icon: Cpu },
     { id: 'audit', label: '稽核', icon: FileText },
     { id: 'system', label: '系統', icon: Activity },
     { id: 'tenants', label: '租戶', icon: Building2 },
@@ -90,7 +90,7 @@ const tabs: Array<{ id: AdminSection; label: string; icon: React.ComponentType<{
 function getErrorMessage(err: unknown): string {
     if (err instanceof Error) return err.message
     const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-    return detail || '操作失敗'
+    return detail || '?��?失�?'
 }
 
 function formatDate(value?: string) {
@@ -187,7 +187,7 @@ function ModalFrame({
 }) {
     return createPortal(
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -458,7 +458,7 @@ export default function Admin() {
     }
 
     const handleDeleteUser = async (item: UserData) => {
-        if (!window.confirm(`確定要刪除 ${item.name}？此操作會移除該使用者。`)) return
+        if (!window.confirm(`確�?要刪??${item.name}？此?��??�移?�該使用?�。`)) return
         try {
             await apiClient.delete(`/users/${item.id}`)
             loadUsers()
@@ -500,8 +500,8 @@ export default function Admin() {
     }
 
     const handleToggleTenantStatus = async (item: Tenant) => {
-        const action = item.is_active ? '停用' : '啟用'
-        if (!window.confirm(`確定要${action}租戶 ${item.name}？`)) return
+        const action = item.is_active ? '?�用' : '?�用'
+        if (!window.confirm(`確�?�?{action}租戶 ${item.name}？`)) return
         try {
             if (item.is_active) await tenantsApi.deleteTenant(item.id)
             else await tenantsApi.updateTenant(item.id, { is_active: true })
@@ -538,7 +538,7 @@ export default function Admin() {
                         </button>
                         <div>
                             <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-accent">Corphia Control</p>
-                            <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">管理後台</h1>
+                            <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">管�?後台</h1>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -673,9 +673,9 @@ export default function Admin() {
                         {activeSection === 'users' && (
                             <Panel className="overflow-hidden">
                                 <SectionHeader
-                                    title={`使用者管理 (${users.length})`}
+                                    title={`使用?�管??(${users.length})`}
                                     eyebrow={`${activeUsers} active operators`}
-                                    action={<ActionButton onClick={handleAddUser}><Plus className="h-4 w-4" />新增使用者</ActionButton>}
+                                    action={<ActionButton onClick={handleAddUser}><Plus className="h-4 w-4" />?��?使用??/ActionButton>}
                                 />
                                 <div className="overflow-x-auto">
                                     <table className="w-full min-w-[760px]">
@@ -708,7 +708,7 @@ export default function Admin() {
                                                     <td className="px-6 py-4">
                                                         <div className="flex justify-end gap-2">
                                                             <ActionButton variant="secondary" onClick={() => handleEditUser(item)}><UserRoundCog className="h-4 w-4" />編輯</ActionButton>
-                                                            <ActionButton variant="danger" onClick={() => handleDeleteUser(item)}><Trash2 className="h-4 w-4" />刪除</ActionButton>
+                                                            <ActionButton variant="danger" onClick={() => handleDeleteUser(item)}><Trash2 className="h-4 w-4" />?�除</ActionButton>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -723,9 +723,9 @@ export default function Admin() {
                             <div className="space-y-5">
                                 <Panel>
                                     <SectionHeader
-                                        title="模型管理"
+                                        title="模�?管�?"
                                         eyebrow={modelsDir || 'ai_model'}
-                                        action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />重新掃描</ActionButton>}
+                                        action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />?�新?��?</ActionButton>}
                                     />
                                     <div className="grid gap-4 p-5">
                                         {isLoadingModels ? (
@@ -743,7 +743,7 @@ export default function Admin() {
                                                         <span className="truncate">{model.filename}</span>
                                                     </div>
                                                 </div>
-                                                {!model.is_current && <ActionButton variant="secondary" onClick={() => handleSelectModel(model.name)}>選用模型</ActionButton>}
+                                                {!model.is_current && <ActionButton variant="secondary" onClick={() => handleSelectModel(model.name)}>?�用模�?</ActionButton>}
                                             </div>
                                         ))}
                                     </div>
@@ -758,17 +758,17 @@ export default function Admin() {
                                         <Field label="Search">
                                             <div className="flex gap-2">
                                                 <input className={inputClass} value={auditSearchInput} onChange={(event) => setAuditSearchInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && handleAuditSearch()} placeholder="Email, action, description..." />
-                                                <ActionButton onClick={handleAuditSearch}><Search className="h-4 w-4" />搜尋</ActionButton>
+                                                <ActionButton onClick={handleAuditSearch}><Search className="h-4 w-4" />?��?</ActionButton>
                                             </div>
                                         </Field>
                                         <Field label="Action">
                                             <select className={inputClass} value={auditFilter.action || ''} onChange={(event) => handleAuditFilterChange('action', event.target.value)}>
                                                 <option value="">All actions</option>
-                                                <option value="login_success">登入成功</option>
-                                                <option value="login_failed">登入失敗</option>
-                                                <option value="user_update">使用者更新</option>
-                                                <option value="document_upload">文件上傳</option>
-                                                <option value="document_delete">文件刪除</option>
+                                                <option value="login_success">?�入?��?</option>
+                                                <option value="login_failed">?�入失�?</option>
+                                                <option value="user_update">使用?�更??/option>
+                                                <option value="document_upload">?�件上傳</option>
+                                                <option value="document_delete">?�件?�除</option>
                                             </select>
                                         </Field>
                                         <Field label="Resource">
@@ -789,7 +789,7 @@ export default function Admin() {
                                 </Panel>
                                 <Panel className="overflow-hidden">
                                     <SectionHeader
-                                        title="稽核紀錄"
+                                        title="稽核紀??
                                         eyebrow={`${auditTotal.toLocaleString()} events`}
                                         action={
                                             <div className="flex items-center gap-2">
@@ -836,7 +836,7 @@ export default function Admin() {
                         {activeSection === 'system' && (
                             <div className="grid gap-5 xl:grid-cols-2">
                                 <Panel>
-                                    <SectionHeader title="系統資訊" eyebrow="Runtime" />
+                                    <SectionHeader title="系統資�?" eyebrow="Runtime" />
                                     <div className="grid gap-4 p-5 sm:grid-cols-2">
                                         {[
                                             ['Version', '2.3.0', ShieldCheck],
@@ -858,11 +858,11 @@ export default function Admin() {
                                     </div>
                                 </Panel>
                                 <Panel>
-                                    <SectionHeader title="維運操作" eyebrow="Maintenance" />
+                                    <SectionHeader title="維�??��?" eyebrow="Maintenance" />
                                     <div className="space-y-3 p-5">
-                                        <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />清除快取</ActionButton>
-                                        <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />重新索引向量</ActionButton>
-                                        <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />重啟服務</ActionButton>
+                                        <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />清除快�?</ActionButton>
+                                        <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />?�新索�??��?</ActionButton>
+                                        <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />?��??��?</ActionButton>
                                     </div>
                                 </Panel>
                             </div>
@@ -871,9 +871,9 @@ export default function Admin() {
                         {activeSection === 'tenants' && (
                             <Panel className="overflow-hidden">
                                 <SectionHeader
-                                    title={`租戶管理 (${tenants.length})`}
+                                    title={`租戶管�? (${tenants.length})`}
                                     eyebrow={`${activeTenants} active tenants`}
-                                    action={<ActionButton onClick={handleAddTenant}><Plus className="h-4 w-4" />新增租戶</ActionButton>}
+                                    action={<ActionButton onClick={handleAddTenant}><Plus className="h-4 w-4" />?��?租戶</ActionButton>}
                                 />
                                 <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
                                     {isLoadingTenants ? (
@@ -891,7 +891,7 @@ export default function Admin() {
                                             </div>
                                             <p className="min-h-[44px] text-sm leading-relaxed text-text-secondary">{item.description || 'No description'}</p>
                                             <div className="mt-6 flex justify-end gap-2">
-                                                <ActionButton variant="secondary" onClick={() => handleToggleTenantStatus(item)}>{item.is_active ? '停用' : '啟用'}</ActionButton>
+                                                <ActionButton variant="secondary" onClick={() => handleToggleTenantStatus(item)}>{item.is_active ? '?�用' : '?�用'}</ActionButton>
                                                 <ActionButton onClick={() => handleEditTenant(item)}>編輯</ActionButton>
                                             </div>
                                         </div>
@@ -905,7 +905,7 @@ export default function Admin() {
 
             {isUserModalOpen && (
                 <ModalFrame onClose={() => setIsUserModalOpen(false)}>
-                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? '編輯使用者' : '新增使用者'}</h3>
+                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? '編輯使用?? : '?��?使用??}</h3>
                     <form onSubmit={handleUserSubmit} className="space-y-4">
                         <Field label="Name"><input className={inputClass} required value={userFormData.name} onChange={(event) => setUserFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Email"><input className={inputClass} type="email" required disabled={!!currentEditingUser} value={userFormData.email} onChange={(event) => setUserFormData((prev) => ({ ...prev, email: event.target.value }))} /></Field>
@@ -918,12 +918,12 @@ export default function Admin() {
                             </select>
                         </Field>
                         <label className="flex items-center justify-between rounded-2xl border border-border-subtle/80 bg-bg-base/70 px-4 py-3 text-sm text-text-primary">
-                            啟用帳號
+                            ?�用帳�?
                             <input type="checkbox" checked={userFormData.is_active} onChange={(event) => setUserFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
                         <div className="flex gap-3 pt-4">
-                            <ActionButton variant="secondary" onClick={() => setIsUserModalOpen(false)}>取消</ActionButton>
-                            <ActionButton disabled={isSubmittingUser}>{isSubmittingUser ? '儲存中...' : '儲存'}</ActionButton>
+                            <ActionButton variant="secondary" onClick={() => setIsUserModalOpen(false)}>?��?</ActionButton>
+                            <ActionButton disabled={isSubmittingUser}>{isSubmittingUser ? '?��?�?..' : '?��?'}</ActionButton>
                         </div>
                     </form>
                 </ModalFrame>
@@ -931,18 +931,18 @@ export default function Admin() {
 
             {isTenantModalOpen && (
                 <ModalFrame onClose={() => setIsTenantModalOpen(false)}>
-                    <h3 className="mb-6 text-xl font-semibold">{currentEditingTenant ? '編輯租戶' : '新增租戶'}</h3>
+                    <h3 className="mb-6 text-xl font-semibold">{currentEditingTenant ? '編輯租戶' : '?��?租戶'}</h3>
                     <form onSubmit={handleTenantSubmit} className="space-y-4">
                         <Field label="Name"><input className={inputClass} required value={tenantFormData.name} onChange={(event) => setTenantFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Slug"><input className={inputClass} required value={tenantFormData.slug} onChange={(event) => setTenantFormData((prev) => ({ ...prev, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} /></Field>
                         <Field label="Description"><textarea className={inputClass} rows={3} value={tenantFormData.description} onChange={(event) => setTenantFormData((prev) => ({ ...prev, description: event.target.value }))} /></Field>
                         <label className="flex items-center justify-between rounded-2xl border border-border-subtle/80 bg-bg-base/70 px-4 py-3 text-sm text-text-primary">
-                            啟用租戶
+                            ?�用租戶
                             <input type="checkbox" checked={tenantFormData.is_active} onChange={(event) => setTenantFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
                         <div className="flex gap-3 pt-4">
-                            <ActionButton variant="secondary" onClick={() => setIsTenantModalOpen(false)}>取消</ActionButton>
-                            <ActionButton disabled={isSubmittingTenant}>{isSubmittingTenant ? '儲存中...' : '儲存'}</ActionButton>
+                            <ActionButton variant="secondary" onClick={() => setIsTenantModalOpen(false)}>?��?</ActionButton>
+                            <ActionButton disabled={isSubmittingTenant}>{isSubmittingTenant ? '?��?�?..' : '?��?'}</ActionButton>
                         </div>
                     </form>
                 </ModalFrame>
