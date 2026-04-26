@@ -8,10 +8,10 @@ export default function NotFound() {
     const navigate = useNavigate()
 
     return (
-        <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-[#FAFAF8] dark:bg-corphia-obsidian relative overflow-hidden transition-colors">
+        <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-[#FAFAF8] dark:bg-dark-bg-primary relative overflow-hidden transition-colors">
             {/* 頂部 Logo */}
             <div className="absolute top-8 left-8 flex items-center gap-1.5 select-none">
-                <CorphiaBrandLogo className="w-auto h-8 text-corphia-ink dark:text-white" />
+                <CorphiaBrandLogo className="w-auto h-8 text-light-text-primary dark:text-dark-text-primary" />
             </div>
 
             <div className="flex flex-col items-center justify-center z-10 w-full px-6 mt-[-5dvh]">
@@ -60,10 +60,10 @@ export default function NotFound() {
                 </div>
 
                 {/* 標題與內文 */}
-                <h1 className="text-xl md:text-[22px] font-bold text-corphia-ink dark:text-white mb-4 tracking-wide">
+                <h1 className="text-xl md:text-[22px] font-bold text-light-text-primary dark:text-dark-text-primary mb-4 tracking-wide">
                     找不到你要的頁面
                 </h1>
-                <p className="text-[13px] md:text-[14px] text-[#8C867D] dark:text-gray-400 text-center max-w-[420px] mb-10 leading-relaxed font-medium">
+                <p className="text-[13px] md:text-[14px] text-[#8C867D] dark:text-light-text-muted text-center max-w-[420px] mb-10 leading-relaxed font-medium">
                     抱歉，這個頁面可能已被移除、重新命名或暫時無法使用。<br className="hidden md:block"/>
                     你可以回到首頁，或使用搜尋功能繼續探索 Corphia AI。
                 </p>
@@ -82,7 +82,7 @@ export default function NotFound() {
                     {/* 返回上一頁 */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-transparent border border-[#E5E0D8] dark:border-[#3A322A] hover:bg-[#F2EFEA] dark:hover:bg-[#201B18] text-[#8C867D] dark:text-gray-300 text-[14px] font-medium transition-all active:scale-[0.98]"
+                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-transparent border border-[#E5E0D8] dark:border-[#3A322A] hover:bg-[#F2EFEA] dark:hover:bg-[#201B18] text-[#8C867D] dark:text-dark-text-secondary text-[14px] font-medium transition-all active:scale-[0.98]"
                     >
                         <ArrowLeft className="w-[18px] h-[18px]" />
                         <span>返回上一頁</span>

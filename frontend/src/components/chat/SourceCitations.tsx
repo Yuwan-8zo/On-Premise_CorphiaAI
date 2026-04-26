@@ -64,7 +64,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
             {isExpanded && (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
                     {sources.map((source, index) => (
-                        <div key={source.chunk_id} className="bg-corphia-ivory dark:bg-slate-900">
+                        <div key={source.chunk_id} className="bg-light-bg-primary dark:bg-slate-900">
                             {/* 來源標題 */}
                             <button
                                 onClick={() => toggleItem(source.chunk_id)}

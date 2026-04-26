@@ -50,10 +50,10 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                             <span className="px-1.5 py-0.5 rounded bg-amber-200/60 dark:bg-amber-800/40 text-amber-700 dark:text-amber-300 font-mono">
                                 {item.label}
                             </span>
-                            <span className="text-gray-500 dark:text-gray-400 font-mono">
+                            <span className="text-light-text-secondary dark:text-light-text-muted font-mono">
                                 {item.original_preview}
                             </span>
-                            <span className="text-gray-400">→</span>
+                            <span className="text-light-text-muted">→</span>
                             <span className="text-amber-600 dark:text-amber-400 font-mono">
                                 {item.masked}
                             </span>
@@ -119,7 +119,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
 
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-current/10 space-y-1">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+                    <p className="text-[11px] text-light-text-secondary dark:text-light-text-muted mb-1">
                         偵測到的模式:
                     </p>
                     {matchedPatterns.map((pattern, idx) => (
@@ -130,7 +130,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                             </span>
                         </div>
                     ))}
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+                    <p className="text-[10px] text-light-text-muted dark:text-light-text-secondary mt-2">
                         系統已自動清除危險標記（如 ChatML 標籤），並記錄此事件於審計日誌。
                     </p>
                 </div>

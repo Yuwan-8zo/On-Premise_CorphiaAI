@@ -107,7 +107,7 @@ export default function Register() {
 
             {/* 註冊卡片 */}
             <div className="relative w-full max-w-md">
-                <div className="bg-corphia-ivory/10 backdrop-blur-xl rounded-[20px] shadow-2xl border border-white/20 p-8">
+                <div className="bg-light-bg-primary/10 backdrop-blur-xl rounded-[20px] shadow-2xl border border-white/20 p-8">
                     {/* Logo */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-[16px] bg-gradient-to-br from-primary-500 to-primary-700 mb-4">
@@ -136,7 +136,7 @@ export default function Register() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-corphia-ivory/10 border border-white/20 rounded-full
+                                className="w-full px-4 py-3 bg-light-bg-primary/10 border border-white/20 rounded-full
                          text-white placeholder-slate-400 
                          focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
                          transition-colors"
@@ -154,7 +154,7 @@ export default function Register() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-corphia-ivory/10 border border-white/20 rounded-full
+                                className="w-full px-4 py-3 bg-light-bg-primary/10 border border-white/20 rounded-full
                          text-white placeholder-slate-400 
                          focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
                          transition-colors"
@@ -172,7 +172,7 @@ export default function Register() {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-corphia-ivory/10 border border-white/20 rounded-full
+                                className="w-full px-4 py-3 bg-light-bg-primary/10 border border-white/20 rounded-full
                          text-white placeholder-slate-400 
                          focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
                          transition-colors"
@@ -190,7 +190,7 @@ export default function Register() {
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-corphia-ivory/10 border border-white/20 rounded-full
+                                className="w-full px-4 py-3 bg-light-bg-primary/10 border border-white/20 rounded-full
                          text-white placeholder-slate-400 
                          focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
                          transition-colors"

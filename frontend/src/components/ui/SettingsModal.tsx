@@ -268,7 +268,7 @@ export default function SettingsModal() {
     const getStrengthColor = (level: string) => {
         switch (level) {
             case 'very_strong': return 'bg-green-500'
-            case 'strong': return 'bg-blue-500'
+            case 'strong': return 'bg-light-accent'
             case 'medium': return 'bg-yellow-500'
             default: return 'bg-red-500'
         }
@@ -302,20 +302,20 @@ export default function SettingsModal() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-corphia-ivory/95 dark:bg-corphia-obsidian/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-light-bg-primary/95 dark:bg-dark-bg-primary/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-100 dark:border-white/10"
                     >
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
-                            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-corphia-ink hover:bg-black/5 dark:text-gray-400 dark:hover:text-white dark:hover:bg-corphia-ivory/10 rounded-full transition-colors z-20"
+                            className="absolute top-4 right-4 p-2 text-light-text-secondary hover:text-light-text-primary hover:bg-black/5 dark:text-light-text-muted dark:hover:text-dark-text-primary dark:hover:bg-light-bg-primary/10 rounded-full transition-colors z-20"
                         >
                             <CloseIcon />
                         </button>
 
                         {/* 側邊選單 */}
-                        <div className={`md:w-64 bg-corphia-beige/50 dark:bg-corphia-obsidian/30 border-r border-gray-200/50 dark:border-white/5 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div className={`md:w-64 bg-corphia-beige/50 dark:bg-dark-bg-primary/30 border-r border-light-border-secondary/50 dark:border-white/5 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
-                                <h2 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory tracking-wide">
+                                <h2 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary tracking-wide">
                                     {t('settings.title')}
                                 </h2>
                             </div>
@@ -328,8 +328,8 @@ export default function SettingsModal() {
                                             setMobileView('content')
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
-                                                ? 'md:bg-corphia-ivory md:dark:bg-corphia-espresso text-corphia-ink dark:text-gray-200 md:text-[rgb(var(--color-ios-accent-light))] md:dark:text-[rgb(var(--color-ios-accent-dark))] md:shadow-sm font-semibold'
-                                                : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-corphia-ivory/5 hover:text-corphia-ink dark:hover:text-gray-200 font-medium'
+                                                ? 'md:bg-light-bg-primary md:dark:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary md:text-[rgb(var(--color-ios-accent-light))] md:dark:text-[rgb(var(--color-ios-accent-dark))] md:shadow-sm font-semibold'
+                                                : 'text-light-text-secondary dark:text-light-text-muted hover:bg-black/5 dark:hover:bg-light-bg-primary/5 hover:text-light-text-primary dark:hover:text-gray-200 font-medium'
                                             }`}
                                     >
                                         {item.icon}
@@ -345,9 +345,9 @@ export default function SettingsModal() {
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
                                         title="前往管理後台"
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-corphia-ivory/5 hover:text-gray-700 dark:hover:text-gray-200 transition-all font-medium text-sm group"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-light-text-secondary dark:text-light-text-muted hover:bg-black/5 dark:hover:bg-light-bg-primary/5 hover:text-light-text-primary dark:hover:text-gray-200 transition-all font-medium text-sm group"
                                     >
-                                        <span className="w-5 h-5 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
+                                        <span className="w-5 h-5 flex items-center justify-center text-light-text-secondary dark:text-light-text-muted group-hover:scale-110 transition-transform">
                                             <ShieldIcon />
                                         </span>
                                         <span>管理後台</span>
@@ -359,7 +359,7 @@ export default function SettingsModal() {
                                 <button
                                     onClick={() => setShowQR(true)}
                                     title="掃描 QR Code 在手機上開啟"
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-corphia-ivory/5 hover:text-gray-700 dark:hover:text-gray-200 transition-all font-medium text-sm"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-light-text-secondary dark:text-light-text-muted hover:bg-black/5 dark:hover:bg-light-bg-primary/5 hover:text-light-text-primary dark:hover:text-gray-200 transition-all font-medium text-sm"
                                 >
                                     <QrCodeIcon />
                                     <span>{t('settings.mobileScanner')}</span>
@@ -383,7 +383,7 @@ export default function SettingsModal() {
                                 {/* 個人資料 */}
                                 {activeSection === 'profile' && (
                                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                        <h2 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
+                                        <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                             {t('settings.profile')}
                                         </h2>
 
@@ -400,7 +400,7 @@ export default function SettingsModal() {
                                                             type="text"
                                                             value={editName}
                                                             onChange={(e) => setEditName(e.target.value)}
-                                                            className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory bg-corphia-beige dark:bg-corphia-espresso border border-corphia-bronze/50 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-corphia-bronze w-48"
+                                                            className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary bg-corphia-beige dark:bg-dark-bg-secondary border border-corphia-bronze/50 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-corphia-bronze w-48"
                                                             autoFocus
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') handleUpdateName()
@@ -423,19 +423,19 @@ export default function SettingsModal() {
                                                                 setIsEditingName(false)
                                                             }}
                                                             disabled={isUpdatingName}
-                                                            className="p-1 px-2 text-sm bg-gray-200 dark:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 rounded-md flex-shrink-0"
+                                                            className="p-1 px-2 text-sm bg-light-bg-tertiary dark:bg-ios-dark-gray3 text-light-text-primary dark:text-dark-text-secondary rounded-md flex-shrink-0"
                                                         >
                                                             {t('common.cancel', '取消')}
                                                         </button>
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <h3 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory">
+                                                        <h3 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
                                                             {user?.name}
                                                         </h3>
                                                         <button 
                                                             onClick={() => setIsEditingName(true)}
-                                                            className="text-gray-400 hover:text-corphia-bronze dark:hover:text-ios-blue-dark transition-colors"
+                                                            className="text-light-text-muted hover:text-corphia-bronze dark:hover:text-ios-blue-dark transition-colors"
                                                             title={t('common.changeName')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -445,7 +445,7 @@ export default function SettingsModal() {
                                                     </>
                                                 )}
                                             </div>
-                                            <p className="text-lg text-gray-500 dark:text-gray-400 mb-3">
+                                            <p className="text-lg text-light-text-secondary dark:text-light-text-muted mb-3">
                                                 {user?.email}
                                             </p>
                                             <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgb(var(--color-ios-accent-light)/0.15)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
@@ -466,7 +466,7 @@ export default function SettingsModal() {
                                                 setConfirmNewPassword('')
                                                 setPasswordStrength(null)
                                             }}
-                                            className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-corphia-espresso hover:bg-gray-200 dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 font-semibold rounded-full transition-colors"
+                                            className="flex items-center gap-2 px-5 py-3 bg-light-bg-secondary dark:bg-dark-bg-secondary hover:bg-light-bg-tertiary dark:hover:bg-ios-dark-gray3 text-light-text-primary dark:text-dark-text-secondary font-semibold rounded-full transition-colors"
                                         >
                                             <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
@@ -486,7 +486,7 @@ export default function SettingsModal() {
                             {/* 外觀設定 */}
                             {activeSection === 'appearance' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
+                                    <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.theme')}
                                     </h2>
 
@@ -496,13 +496,13 @@ export default function SettingsModal() {
                                             onClick={() => theme === 'dark' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
                                                     ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
-                                                    : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
+                                                    : 'border-light-border-secondary dark:border-ios-dark-gray3 hover:border-light-border-primary dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
-                                            <div className="w-full h-24 rounded-xl bg-corphia-ivory border border-gray-200 shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
+                                            <div className="w-full h-24 rounded-xl bg-light-bg-primary border border-light-border-secondary shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-light-text-primary dark:text-dark-text-secondary'}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
@@ -512,13 +512,13 @@ export default function SettingsModal() {
                                             onClick={() => theme === 'light' && toggleTheme()}
                                             className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
                                                     ? 'border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2)] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
-                                                    : 'border-gray-200 dark:border-ios-dark-gray3 hover:border-gray-300 dark:hover:border-ios-dark-gray2'
+                                                    : 'border-light-border-secondary dark:border-ios-dark-gray3 hover:border-light-border-primary dark:hover:border-ios-dark-gray2'
                                                 }`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-ios-dark-gray6 border border-white/5 shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-light-text-primary dark:text-dark-text-secondary'}`}>
                                                 {t('settings.themeDark')}
                                             </p>
                                         </button>
@@ -526,7 +526,7 @@ export default function SettingsModal() {
 
                                     {/* 重點色設定 */}
                                     <div className="mt-12">
-                                        <h3 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-6">
+                                        <h3 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary mb-6">
                                             {t('settings.accentColor', '重點顏色')}
                                         </h3>
                                         <div className="flex flex-wrap gap-4">
@@ -560,14 +560,14 @@ export default function SettingsModal() {
 
                                     {/* C2: RAG Debug Mode 開關 */}
                                     <div className="mt-12 max-w-md">
-                                        <h3 className="text-xl font-bold text-corphia-ink dark:text-corphia-ivory mb-3">
+                                        <h3 className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary mb-3">
                                             {t('settings.ragDebug', 'RAG 除錯模式')}
                                         </h3>
-                                        <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
+                                        <p className="text-[13px] text-light-text-secondary dark:text-light-text-muted mb-4 leading-relaxed">
                                             {t('settings.ragDebugHint', '開啟後，每次 AI 回應下方會顯示命中的知識片段、相似度分數與路由決策，方便追蹤檢索品質。')}
                                         </p>
-                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-corphia-beige dark:bg-corphia-espresso border border-transparent dark:border-white/5 cursor-pointer">
-                                            <span className="text-[15px] font-semibold text-gray-700 dark:text-gray-200">
+                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-corphia-beige dark:bg-dark-bg-secondary border border-transparent dark:border-white/5 cursor-pointer">
+                                            <span className="text-[15px] font-semibold text-light-text-primary dark:text-dark-text-primary">
                                                 🔍 {t('settings.ragDebugToggle', '顯示 RAG Debug 面板')}
                                             </span>
                                             <button
@@ -582,7 +582,7 @@ export default function SettingsModal() {
                                                 }`}
                                             >
                                                 <span
-                                                    className={`inline-block h-5 w-5 transform rounded-full bg-corphia-ivory shadow transition-transform ${
+                                                    className={`inline-block h-5 w-5 transform rounded-full bg-light-bg-primary shadow transition-transform ${
                                                         ragDebugMode ? 'translate-x-6' : 'translate-x-1'
                                                     }`}
                                                 />
@@ -595,7 +595,7 @@ export default function SettingsModal() {
                             {/* 語言設定 */}
                             {activeSection === 'language' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-corphia-ink dark:text-corphia-ivory mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
+                                    <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary mb-8 pb-4 border-b border-gray-100 dark:border-white/5">
                                         {t('settings.language')}
                                     </h2>
 
@@ -606,7 +606,7 @@ export default function SettingsModal() {
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between p-5 rounded-[20px] transition-all border-2 ${i18n.language === lang.code
                                                         ? 'bg-[rgb(var(--color-ios-accent-light)/0.05)] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:border-[rgb(var(--color-ios-accent-dark))]'
-                                                        : 'bg-corphia-ivory dark:bg-corphia-espresso hover:bg-corphia-beige dark:hover:bg-ios-dark-gray3 text-gray-700 dark:text-gray-300 border-transparent shadow-sm'
+                                                        : 'bg-light-bg-primary dark:bg-dark-bg-secondary hover:bg-corphia-beige dark:hover:bg-ios-dark-gray3 text-light-text-primary dark:text-dark-text-secondary border-transparent shadow-sm'
                                                     }`}
                                             >
                                                 <span className="font-semibold text-[16px]">{lang.label}</span>
@@ -667,19 +667,19 @@ export default function SettingsModal() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 16 }}
                             transition={{ type: "spring", stiffness: 300, damping: 28 }}
-                            className="relative w-full max-w-[640px] bg-corphia-ivory dark:bg-corphia-obsidian shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden"
+                            className="relative w-full max-w-[640px] bg-light-bg-primary dark:bg-dark-bg-primary shadow-2xl dark:shadow-black border border-ios-light-gray5 dark:border-white/5 rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden"
                         >
                             {/* Close button */}
                             <button
                                 onClick={() => setShowPasswordForm(false)}
-                                className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-corphia-ivory/10 rounded-full transition-colors"
+                                className="absolute top-5 right-5 p-2 text-light-text-muted hover:text-light-text-primary dark:hover:text-dark-text-primary hover:bg-black/5 dark:hover:bg-light-bg-primary/10 rounded-full transition-colors"
                             >
                                 <CloseIcon />
                             </button>
 
                             {/* Title */}
                             <div>
-                                <h3 className="text-[22px] font-bold text-corphia-ink dark:text-corphia-ivory tracking-tight">
+                                <h3 className="text-[22px] font-bold text-light-text-primary dark:text-dark-text-primary tracking-tight">
                                     {t('auth.changePassword', '修改密碼')}
                                 </h3>
                             </div>
@@ -687,8 +687,8 @@ export default function SettingsModal() {
                             {/* 兩欄式密碼規則 + 輸入欄位 */}
                             <div className="flex gap-6">
                                 {/* 左欄：密碼規則 */}
-                                <div className="flex-1 bg-corphia-beige dark:bg-corphia-espresso rounded-[20px] p-5 text-[13px] text-gray-500 dark:text-gray-400 space-y-2.5 border border-transparent dark:border-white/5">
-                                    <p className="font-semibold text-gray-700 dark:text-gray-200 text-[14px] mb-2">密碼安全要求</p>
+                                <div className="flex-1 bg-corphia-beige dark:bg-dark-bg-secondary rounded-[20px] p-5 text-[13px] text-light-text-secondary dark:text-light-text-muted space-y-2.5 border border-transparent dark:border-white/5">
+                                    <p className="font-semibold text-light-text-primary dark:text-dark-text-primary text-[14px] mb-2">密碼安全要求</p>
                                     {[
                                         '至少 8 個字元',
                                         '包含大寫字母 (A-Z)',
@@ -727,20 +727,20 @@ export default function SettingsModal() {
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
                                                 exit={{ opacity: 0, height: 0 }}
-                                                className="pt-3 mt-1 border-t border-gray-200/60 dark:border-white/10 overflow-hidden"
+                                                className="pt-3 mt-1 border-t border-light-border-secondary/60 dark:border-white/10 overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[11px] text-gray-500 dark:text-gray-400">強度</span>
+                                                    <span className="text-[11px] text-light-text-secondary dark:text-light-text-muted">強度</span>
                                                     <span className={`text-[11px] font-semibold ml-auto ${
                                                         passwordStrength.level === 'very_strong' ? 'text-green-600 dark:text-green-400' :
-                                                        passwordStrength.level === 'strong' ? 'text-blue-600 dark:text-blue-400' :
+                                                        passwordStrength.level === 'strong' ? 'text-light-accent dark:text-dark-accent' :
                                                         passwordStrength.level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
                                                         'text-red-600 dark:text-red-400'
                                                     }`}>
                                                         {getStrengthLabel(passwordStrength.level)}
                                                     </span>
                                                 </div>
-                                                <div className="h-2 bg-gray-200 dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
+                                                <div className="h-2 bg-light-bg-tertiary dark:bg-ios-dark-gray3 rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
                                                         style={{ width: `${passwordStrength.score}%` }}
@@ -856,7 +856,7 @@ export default function SettingsModal() {
                             exit={{ scale: 0.9, y: 20, opacity: 0 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={e => e.stopPropagation()}
-                            className="bg-corphia-ivory p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
+                            className="bg-light-bg-primary p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
                         >
                             {/* QR Code 圖片 */}
                             <img
@@ -889,12 +889,12 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={label}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-beige dark:bg-corphia-espresso border border-transparent dark:border-ios-dark-gray3 text-black dark:text-corphia-ivory text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-corphia-beige dark:bg-dark-bg-secondary border border-transparent dark:border-ios-dark-gray3 text-light-text-primary dark:text-dark-text-primary text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze dark:focus:ring-ios-blue-dark transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
             />
             <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-2 origin-left whitespace-nowrap
                 ${isFilled
-                    ? 'top-0 scale-[0.82] bg-black dark:bg-corphia-ivory text-white dark:text-black font-semibold py-0.5'
-                    : 'top-1/2 scale-100 bg-transparent text-ios-light-gray1 dark:text-ios-dark-gray1 py-0'}
+                    ? 'top-0 scale-[0.82] bg-black dark:bg-light-bg-primary text-white dark:text-light-text-primary font-semibold py-0.5'
+                    : 'top-1/2 scale-100 bg-transparent text-light-text-secondary dark:text-ios-dark-gray1 py-0'}
                 peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-ios-blue-light dark:peer-focus:bg-ios-blue-dark peer-focus:text-white peer-focus:font-semibold peer-focus:py-0.5
             `}>
                 {label}
@@ -911,7 +911,7 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                             type="button"
                             tabIndex={-1}
                             onClick={() => setVisible(v => !v)}
-                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            className="p-1 text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-200 transition-colors"
                         >
                             {visible ? (
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

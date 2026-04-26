@@ -61,13 +61,13 @@ export default function ChatInputArea({
                         {(uploadedFiles.length > 0 || isUploading) && (
                             <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                 {uploadedFiles.map((f, i) => (
-                                    <div key={i} className="flex items-center gap-1.5 bg-ios-light-gray5 dark:bg-corphia-obsidian px-3 py-1.5 rounded-full text-[13px] border border-transparent dark:border-white/5 animate-fade-in-up">
-                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                        <span className="truncate max-w-[120px] text-gray-700 dark:text-gray-300">{f.name}</span>
+                                    <div key={i} className="flex items-center gap-1.5 bg-ios-light-gray5 dark:bg-dark-bg-primary px-3 py-1.5 rounded-full text-[13px] border border-transparent dark:border-white/5 animate-fade-in-up">
+                                        <svg className="w-4 h-4 text-light-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        <span className="truncate max-w-[120px] text-light-text-primary dark:text-dark-text-secondary">{f.name}</span>
                                     </div>
                                 ))}
                                 {isUploading && (
-                                    <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full text-[13px] text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                    <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full text-[13px] text-light-accent dark:text-dark-accent border border-blue-100 dark:border-blue-800">
                                         <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
                                         <span>銝銝?{uploadProgress}%</span>
                                     </div>
@@ -82,7 +82,7 @@ export default function ChatInputArea({
                                     <button 
                                         onClick={() => fileInputRef.current?.click()} 
                                         disabled={isConnecting || isUploading}
-                                        className="p-2 transition-transform active:scale-95 text-gray-400 dark:text-gray-300 hover:text-corphia-bronze dark:hover:text-ios-blue-dark mb-1 disabled:opacity-50"
+                                        className="p-2 transition-transform active:scale-95 text-light-text-muted dark:text-dark-text-secondary hover:text-corphia-bronze dark:hover:text-ios-blue-dark mb-1 disabled:opacity-50"
                                         title="銝撠??辣 (NotebookLM 璅∪?)"
                                     >
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
@@ -100,7 +100,7 @@ export default function ChatInputArea({
                                 placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                 rows={1}
                                 disabled={isConnecting}
-                                className="flex-1 resize-none bg-transparent text-corphia-ink dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                                className="flex-1 resize-none bg-transparent text-light-text-primary dark:text-dark-text-primary placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                                 style={{ lineHeight: '1.4' }}
                             />
                             

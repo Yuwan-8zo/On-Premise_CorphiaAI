@@ -61,7 +61,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn }: Scroll
                     exit={{ opacity: 0, y: 15, scale: 0.9 }}
                     transition={{ duration: 0.2 }}
                     onClick={scrollToBottom}
-                    className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 p-2.5 bg-corphia-ivory/90 dark:bg-corphia-espresso/90 backdrop-blur-md rounded-full text-gray-600 dark:text-gray-300 shadow-[0_4px_16px_rgba(0,0,0,0.12)] border border-gray-200/50 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-ios-dark-gray3 hover:text-black dark:hover:text-white transition-colors"
+                    className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 p-2.5 bg-light-bg-primary/90 dark:bg-dark-bg-secondary/90 backdrop-blur-md rounded-full text-light-text-secondary dark:text-dark-text-secondary shadow-[0_4px_16px_rgba(0,0,0,0.12)] border border-light-border-secondary/50 dark:border-white/10 hover:bg-light-bg-secondary dark:hover:bg-ios-dark-gray3 hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors"
                     aria-label="Scroll to bottom"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

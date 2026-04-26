@@ -66,7 +66,7 @@ interface SystemHealth {
 /** 使用率百分比的打條 */
 function UsageBar({ percent, color }: { percent: number; color: string }) {
     return (
-        <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-light-bg-tertiary dark:bg-dark-bg-tertiary overflow-hidden">
             <div
                 className={`h-full rounded-full transition-all duration-500 ${color}`}
                 style={{ width: `${Math.min(percent, 100)}%` }}
@@ -149,7 +149,7 @@ export function SystemMonitorPanel() {
                         </span>
                     </div>
                     {network.latency_ms && (
-                        <p className="text-[10px] text-gray-400 mt-1 ml-7">
+                        <p className="text-[10px] text-light-text-muted mt-1 ml-7">
                             外部延遲: {network.latency_ms}ms
                         </p>
                     )}
@@ -158,20 +158,20 @@ export function SystemMonitorPanel() {
 
             {/* CPU / 記憶體 */}
             {health?.cpu && !health.cpu.error && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+                <div className="rounded-xl border border-light-border-secondary dark:border-dark-border-primary p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-gray-600 dark:text-gray-300">🖥️ CPU</span>
-                        <span className="text-xs font-mono text-gray-500">{health.cpu.cpu_cores} 核心</span>
+                        <span className="font-medium text-xs text-light-text-secondary dark:text-dark-text-secondary">🖥️ CPU</span>
+                        <span className="text-xs font-mono text-light-text-secondary">{health.cpu.cpu_cores} 核心</span>
                     </div>
                     <div>
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex justify-between text-xs text-light-text-secondary mb-1">
                             <span>CPU 使用率</span>
                             <span className="font-mono">{health.cpu.cpu_percent}%</span>
                         </div>
                         <UsageBar percent={health.cpu.cpu_percent} color={percentColor(health.cpu.cpu_percent)} />
                     </div>
                     <div>
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex justify-between text-xs text-light-text-secondary mb-1">
                             <span>記憶體</span>
                             <span className="font-mono">{health.cpu.memory_used_gb} / {health.cpu.memory_total_gb} GB</span>
                         </div>
@@ -182,22 +182,22 @@ export function SystemMonitorPanel() {
 
             {/* GPU */}
             {health?.gpu?.available && health.gpu.devices.map((gpu) => (
-                <div key={gpu.index} className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+                <div key={gpu.index} className="rounded-xl border border-light-border-secondary dark:border-dark-border-primary p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-gray-600 dark:text-gray-300">
+                        <span className="font-medium text-xs text-light-text-secondary dark:text-dark-text-secondary">
                             🎮 GPU #{gpu.index}
                         </span>
-                        <span className="text-xs font-mono text-gray-500 truncate max-w-[160px]">{gpu.name}</span>
+                        <span className="text-xs font-mono text-light-text-secondary truncate max-w-[160px]">{gpu.name}</span>
                     </div>
                     <div>
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex justify-between text-xs text-light-text-secondary mb-1">
                             <span>GPU 使用率</span>
                             <span className="font-mono">{gpu.gpu_utilization}%</span>
                         </div>
                         <UsageBar percent={gpu.gpu_utilization} color={percentColor(gpu.gpu_utilization)} />
                     </div>
                     <div>
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex justify-between text-xs text-light-text-secondary mb-1">
                             <span>VRAM</span>
                             <span className="font-mono">{gpu.vram_used_mb} / {gpu.vram_total_mb} MB</span>
                         </div>
@@ -207,8 +207,8 @@ export function SystemMonitorPanel() {
             ))}
 
             {!health?.gpu?.available && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
-                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+                <div className="rounded-xl border border-light-border-secondary dark:border-dark-border-primary p-3">
+                    <p className="text-xs text-light-text-muted dark:text-light-text-secondary text-center">
                         未偵測到 GPU — 模型以 CPU 模式運行
                     </p>
                 </div>
@@ -216,9 +216,9 @@ export function SystemMonitorPanel() {
 
             {/* LLM 模型狀態 */}
             {health?.llm && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 space-y-1">
+                <div className="rounded-xl border border-light-border-secondary dark:border-dark-border-primary p-3 space-y-1">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-gray-600 dark:text-gray-300">🤖 LLM 模型</span>
+                        <span className="font-medium text-xs text-light-text-secondary dark:text-dark-text-secondary">🤖 LLM 模型</span>
                         <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                             health.llm.model_loaded
                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -227,7 +227,7 @@ export function SystemMonitorPanel() {
                             {health.llm.model_loaded ? '已載入' : '模擬模式'}
                         </span>
                     </div>
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400 space-y-0.5 font-mono">
+                    <div className="text-[11px] text-light-text-secondary dark:text-light-text-muted space-y-0.5 font-mono">
                         <p>Context Size: {health.llm.context_size}</p>
                         <p>GPU Layers: {health.llm.n_gpu_layers}</p>
                         {health.llm.n_vocab && <p>Vocab Size: {health.llm.n_vocab}</p>}
@@ -237,7 +237,7 @@ export function SystemMonitorPanel() {
 
             {/* 平台資訊 */}
             {health?.platform && (
-                <div className="text-[10px] text-gray-400 dark:text-gray-500 text-center font-mono">
+                <div className="text-[10px] text-light-text-muted dark:text-light-text-secondary text-center font-mono">
                     {health.platform.system} {health.platform.machine} · Python {health.platform.python_version}
                 </div>
             )}

@@ -35,7 +35,7 @@ export const ConfirmModal: React.FC = () => {
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 10 }}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        className="bg-corphia-ivory dark:bg-corphia-obsidian rounded-[24px] w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-white/5"
+                        className="bg-light-bg-primary dark:bg-dark-bg-primary rounded-[24px] w-full max-w-sm shadow-xl overflow-hidden border border-zinc-200 dark:border-white/5"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-6">

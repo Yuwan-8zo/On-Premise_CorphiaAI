@@ -108,7 +108,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 }}
             >
                 {/* Visual track background */}
-                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-gray-200/50 dark:bg-gray-700/50 rounded-full" />
+                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-light-bg-tertiary/50 dark:bg-dark-bg-tertiary/50 rounded-full" />
                 
                 {markers.map(marker => (
                     <div 

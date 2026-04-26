@@ -64,7 +64,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
             {/* 收合/展開按鈕 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                className="flex items-center gap-2 text-xs text-light-text-secondary dark:text-light-text-muted hover:text-light-text-primary dark:hover:text-gray-200 transition-colors group"
             >
                 <svg
                     className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -83,11 +83,11 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
 
             {/* 展開的除錯面板 */}
             {isExpanded && (
-                <div className="mt-2 space-y-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-corphia-beige/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                <div className="mt-2 space-y-2 border border-light-border-secondary dark:border-dark-border-primary rounded-xl p-3 bg-corphia-beige/50 dark:bg-dark-bg-secondary/50 backdrop-blur-sm">
                     {/* 統計概覽 */}
                     {debug && (
-                        <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                            <span className="px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-light-border-secondary dark:border-dark-border-primary">
+                            <span className="px-2 py-1 rounded-md bg-light-accent/10 text-light-accent dark:text-dark-accent">
                                 Route: {debug.route}
                             </span>
                             <span className="px-2 py-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
@@ -108,10 +108,10 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                             {/* Header: 分數 + 文件名 */}
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                                    <span className="text-xs font-bold text-light-text-secondary dark:text-dark-text-secondary">
                                         #{index + 1}
                                     </span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
+                                    <span className="text-xs text-light-text-secondary dark:text-light-text-muted truncate max-w-[200px]">
                                         {source.document_name || '未知文件'}
                                     </span>
                                 </div>
@@ -120,7 +120,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                         {(source.score * 100).toFixed(1)}%
                                     </span>
                                     {source.distance !== undefined && (
-                                        <span className="text-[10px] font-mono text-gray-400">
+                                        <span className="text-[10px] font-mono text-light-text-muted">
                                             d={source.distance}
                                         </span>
                                     )}
@@ -128,7 +128,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                             </div>
 
                             {/* Content 預覽 */}
-                            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3">
+                            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary leading-relaxed line-clamp-3">
                                 {source.content}
                             </p>
                         </div>

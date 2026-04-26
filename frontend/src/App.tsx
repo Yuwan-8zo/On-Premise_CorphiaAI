@@ -28,7 +28,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Global UI Components
 const FallbackLoader = () => (
-    <div className="flex items-center justify-center h-[100dvh] w-full bg-corphia-ivory dark:bg-corphia-obsidian">
+    <div className="flex items-center justify-center h-[100dvh] w-full bg-light-bg-primary dark:bg-dark-bg-primary">
         <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 dark:border-ios-blue-dark/20 border-t-ios-blue-light dark:border-t-ios-blue-dark animate-spin"></div>
     </div>
 )

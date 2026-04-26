@@ -39,15 +39,15 @@ function ToastItem({ toast }: { toast: Toast }) {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => remove(toast.id)}
             className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
-                bg-corphia-ivory/90 dark:bg-corphia-espresso/90 backdrop-blur-xl
+                bg-light-bg-primary/90 dark:bg-dark-bg-secondary/90 backdrop-blur-xl
                 border ${borderColors[toast.type]}
                 shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]`}
         >
             <span className="shrink-0 mt-0.5">{icons[toast.type]}</span>
-            <p className="text-[14px] leading-snug text-gray-800 dark:text-gray-100 flex-1 pr-1">
+            <p className="text-[14px] leading-snug text-light-text-primary dark:text-dark-text-primary flex-1 pr-1">
                 {toast.message}
             </p>
-            <button onClick={() => remove(toast.id)} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <button onClick={() => remove(toast.id)} className="shrink-0 text-light-text-muted hover:text-light-text-secondary dark:hover:text-gray-200 transition-colors">
                 <X className="w-3.5 h-3.5" />
             </button>
             {/* 底部進度條 */}
