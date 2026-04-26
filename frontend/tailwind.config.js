@@ -15,7 +15,7 @@ export default {
                     'warm-gray': '#807C76',
                     ivory: '#F6F4F0',
                     obsidian: '#28282A',
-                    espresso: '#2A2D33',
+                    espresso: '#323235',
                     ink: '#2A2722',
                 },
                 primary: {

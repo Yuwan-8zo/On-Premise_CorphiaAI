@@ -79,9 +79,16 @@ export default function App() {
         }
 
         // html/body 背景色即時更新（不依賴 CSS transition）
-        // 讓 iOS Safari 底部工具列能立刻偵測到新的頁面背景色
-        html.style.backgroundColor = bg
-        document.body.style.backgroundColor = bg
+        if (isDark) {
+            html.style.background = 'linear-gradient(135deg, #28282A 0%, #161618 100%)'
+            document.body.style.background = 'transparent'
+            // Safari 需要設定 background-attachment: fixed 才能讓漸層填滿整個 viewport 且不隨滾動延伸
+            html.style.backgroundAttachment = 'fixed'
+        } else {
+            html.style.background = bg
+            document.body.style.background = bg
+            html.style.backgroundAttachment = 'fixed'
+        }
 
         // color-scheme 更新（控制鍵盤、scrollbar 等原生 UI）
         html.style.colorScheme = csOnly
