@@ -108,20 +108,19 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 }}
             >
                 {/* Visual track background */}
-                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-bg-surface/50 /50 rounded-full" />
+                <div className="absolute inset-y-0 right-[11px] w-[2px] bg-border-subtle rounded-full" />
                 
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
-                        className={`absolute rounded-full transition-all duration-300 ${
-                            marker.role === 'user' 
-                                ? 'right-[12px] w-[6px] hover:w-[8px] hover:right-[11px] bg-text-secondary opacity-70' 
-                                : 'right-[4px] w-[6px] hover:w-[8px] hover:right-[3px] bg-[rgba(var(--accent),0.6)]'
+                        className={`absolute right-[7px] w-[10px] h-[10px] rounded-full border-[2.5px] bg-bg-main transition-all duration-300 hover:scale-125 ${
+                            marker.role === 'assistant' 
+                                ? 'border-accent shadow-[0_0_8px_rgba(var(--accent),0.3)]' 
+                                : 'border-text-muted'
                         }`}
                         style={{ 
-                            top: `${marker.top}%`, 
-                            height: `${Math.max(marker.height, 1)}%`, // 至少給 1% 高度確保可見
-                            minHeight: '4px'
+                            top: `${marker.top + (marker.height / 2)}%`, 
+                            transform: 'translateY(-50%)'
                         }}
                         onClick={(e) => {
                             e.stopPropagation()
