@@ -105,7 +105,7 @@ function formatDate(value?: string) {
 
 function Panel({ className = '', children }: { className?: string; children: React.ReactNode }) {
     return (
-        <section className={`rounded-[28px] border border-border-subtle/70 bg-bg-base/78 shadow-2xl backdrop-blur-2xl dark:shadow-black/40 ${className}`}>
+        <section className={`rounded-[20px] border border-border-subtle bg-bg-surface shadow-sm ${className}`}>
             {children}
         </section>
     )
@@ -121,9 +121,9 @@ function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-4 border-b border-border-subtle/70 px-5 py-5 /10 md:flex-row md:items-center md:justify-between md:px-7">
+        <div className="flex flex-col gap-4 border-b border-border-subtle px-6 py-5 md:flex-row md:items-center md:justify-between">
             <div>
-                {eyebrow && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-accent">{eyebrow}</p>}
+                {eyebrow && <p className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-accent">{eyebrow}</p>}
                 <h2 className="text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
             </div>
             {action}
@@ -143,15 +143,15 @@ function ActionButton({
     disabled?: boolean
 }) {
     const variants = {
-        primary: 'border-accent bg-accent text-text-primary bg-accent',
-        secondary: 'border-border-subtle/80 bg-bg-base/70 text-text-primary hover:bg-bg-base /[0.07]  /[0.11]',
-        danger: 'border-red-400/30 bg-red-500/14 text-red-200 hover:bg-red-500/22',
+        primary: 'bg-accent text-white hover:bg-accent/90 shadow-sm',
+        secondary: 'border border-border-subtle bg-bg-base text-text-primary hover:bg-bg-base/80',
+        danger: 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20',
     }
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${variants[variant]}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
         >
             {children}
         </button>
@@ -160,8 +160,8 @@ function ActionButton({
 
 function StatusPill({ active }: { active: boolean }) {
     return (
-        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${active ? 'border-accent bg-accent text-accent ' : 'border-border-subtle/80 bg-bg-base/70 text-text-secondary /[0.06] '}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent ' : 'bg-border-subtle '}`} />
+        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${active ? 'border-accent/20 bg-accent/10 text-accent' : 'border-border-subtle bg-bg-surface text-text-secondary'}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent' : 'bg-text-secondary'}`} />
             {active ? 'Active' : 'Disabled'}
         </span>
     )
@@ -169,9 +169,9 @@ function StatusPill({ active }: { active: boolean }) {
 
 function RoleBadge({ role }: { role: UserData['role'] }) {
     const styles = {
-        admin: 'border-accent bg-accent text-accent ',
-        engineer: 'border-corphia-bronze/30 bg-corphia-bronze/12 text-corphia-bronze ',
-        user: 'border-border-subtle/80 bg-bg-base/70 text-text-secondary /[0.06] ',
+        admin: 'border-accent/20 bg-accent/10 text-accent',
+        engineer: 'border-accent/20 bg-accent/10 text-accent',
+        user: 'border-border-subtle bg-bg-surface text-text-secondary',
     }
     return <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[role]}`}>{role}</span>
 }
@@ -187,23 +187,26 @@ function ModalFrame({
 }) {
     return createPortal(
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-bg-surface/40 backdrop-blur-md /70"
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+                <div
+                    className="absolute inset-0 bg-black/40 backdrop-blur-md"
                     onClick={onClose}
                 />
                 <motion.div
                     initial={{ opacity: 0, y: 16, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                    className={`relative w-full ${maxWidth} rounded-[28px] border border-border-subtle/80 bg-bg-base p-6 text-text-primary shadow-2xl /10  `}
+                    className={`relative w-full ${maxWidth} rounded-[20px] border border-border-subtle bg-bg-surface p-6 text-text-primary shadow-xl`}
                 >
                     {children}
                 </motion.div>
-            </div>
+            </motion.div>
         </AnimatePresence>,
         document.body
     )
@@ -218,7 +221,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     )
 }
 
-const inputClass = 'w-full rounded-2xl border border-border-subtle/80 bg-bg-base/70 px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary border-accent focus:bg-bg-base /25  dark:placeholder:text-text-secondary  /35'
+const inputClass = 'w-full rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-text-secondary'
 
 export default function Admin() {
     const navigate = useNavigate()
@@ -520,49 +523,43 @@ export default function Admin() {
 
     return (
         <div className="min-h-screen overflow-hidden bg-bg-base text-text-primary">
-            <div className="pointer-events-none fixed inset-0 opacity-80">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_12%,rgb(var(--color-ios-accent-light)/0.13),transparent_32%),linear-gradient(145deg,#F6F4F0_0%,#ECE8E1_42%,#DDD8D0_100%)] (circle_at_70%_12%,rgb(var(--color-ios-accent-dark)/0.15),transparent_32%),linear-gradient(145deg,#1F2125_0%,#2A2D33_44%,#17191C_100%)]" />
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(45,40,36,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(45,40,36,0.035)_1px,transparent_1px)] bg-[size:72px_72px] (rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)]" />
-                <div className="absolute left-[8%] top-[18%] h-[48rem] w-[58rem] rotate-[-10deg] rounded-[42%] border border-border-strong/[0.05] /[0.035]" />
-                <div className="absolute right-[8%] top-[6%] h-[34rem] w-[34rem] rotate-12 rounded-[36%] border border-accent /10" />
-            </div>
 
             <div className="relative mx-auto flex min-h-screen max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
-                <header className="mb-5 flex flex-col gap-4 rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-4 shadow-xl backdrop-blur-2xl dark:shadow-black/40 md:flex-row md:items-center md:justify-between">
+                <header className="mb-5 flex flex-col gap-4 rounded-[20px] border border-border-subtle bg-bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/')}
-                            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-subtle/80 bg-bg-base/70 text-text-secondary transition hover:bg-bg-base hover:text-text-primary /[0.06] /[0.11]"
+                            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-subtle bg-bg-base text-text-secondary transition hover:bg-bg-surface hover:text-text-primary"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </button>
                         <div>
-                            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-accent">Corphia Control</p>
+                            <p className="text-[12px] font-bold uppercase tracking-wider text-accent">Corphia Control</p>
                             <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">管理後台</h1>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="hidden rounded-full border border-accent bg-accent px-4 py-2 text-sm font-semibold text-accent /10 sm:flex">
+                        <div className="hidden rounded-full border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent sm:flex">
                             Backend Online
                         </div>
-                        <div className="rounded-full border border-border-subtle/80 bg-bg-base/70 px-4 py-2 text-sm text-text-secondary /[0.06]">
+                        <div className="rounded-full border border-border-subtle bg-bg-surface px-4 py-2 text-sm text-text-secondary">
                             {user?.name || 'Operator'}
                         </div>
                     </div>
                 </header>
 
                 <main className="grid flex-1 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                    <aside className="rounded-[30px] border border-border-subtle/70 bg-bg-base/78 p-3 shadow-2xl backdrop-blur-2xl dark:shadow-black/40 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
-                        <div className="mb-4 rounded-[24px] border border-border-subtle/70 bg-bg-base/55 p-4 /10">
+                    <aside className="rounded-[20px] border border-border-subtle bg-bg-surface p-3 shadow-sm lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
+                        <div className="mb-4 rounded-[16px] border border-border-subtle bg-bg-base p-4">
                             <div className="mb-6 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[11px] uppercase tracking-[0.22em] text-text-secondary">Current Model</p>
+                                    <p className="text-[12px] uppercase tracking-wider text-text-secondary">Current Model</p>
                                     <p className="mt-1 truncate text-sm font-semibold text-text-primary">{currentModel?.name || 'Standby'}</p>
                                 </div>
                                 <Sparkles className="h-5 w-5 text-accent" />
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-bg-base/70 /[0.08]">
-                                <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-accent via-corphia-bronze to-corphia-warm-gray dark:via-corphia-bronze" />
+                            <div className="h-2 overflow-hidden rounded-full bg-border-subtle/50">
+                                <div className="h-full w-[72%] rounded-full bg-accent" />
                             </div>
                         </div>
 
@@ -574,10 +571,10 @@ export default function Admin() {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveSection(tab.id)}
-                                        className={`flex min-w-max items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition lg:min-w-0 ${
+                                        className={`flex min-w-max items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm font-semibold transition lg:min-w-0 ${
                                             active
-                                                ? 'border-accent bg-accent text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] /40 /16 '
-                                                : 'border-transparent text-text-secondary hover:border-border-subtle/80 hover:bg-bg-base/70 hover:text-text-primary  /10 /[0.06] '
+                                                ? 'bg-accent/10 text-accent'
+                                                : 'text-text-secondary hover:bg-bg-base hover:text-text-primary'
                                         }`}
                                     >
                                         <Icon className={`h-4 w-4 ${active ? 'text-accent ' : ''}`} />
@@ -595,14 +592,18 @@ export default function Admin() {
                                     {metricCards.map((item) => {
                                         const Icon = item.icon
                                         return (
-                                            <Panel key={item.label} className="overflow-hidden p-5">
-                                                <div className={`mb-7 h-20 rounded-[22px] bg-gradient-to-br ${item.accent} p-4`}>
-                                                    <Icon className="h-6 w-6 text-text-primary" />
+                                            <Panel key={item.label} className="overflow-hidden p-5 flex flex-col justify-between h-40">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10">
+                                                        <Icon className="h-6 w-6 text-accent" />
+                                                    </div>
                                                 </div>
-                                                <p className="text-4xl font-light tracking-tight text-text-primary">{item.value.toLocaleString()}</p>
-                                                <div className="mt-2 flex items-center justify-between text-sm">
-                                                    <span className="font-medium text-text-primary/80 /80">{item.label}</span>
-                                                    <span className="text-text-secondary">{item.detail}</span>
+                                                <div>
+                                                    <p className="text-4xl font-light tracking-tight text-text-primary">{item.value.toLocaleString()}</p>
+                                                    <div className="mt-2 flex items-center justify-between text-sm">
+                                                        <span className="font-medium text-text-primary/80">{item.label}</span>
+                                                        <span className="text-text-secondary">{item.detail}</span>
+                                                    </div>
                                                 </div>
                                             </Panel>
                                         )
@@ -610,25 +611,24 @@ export default function Admin() {
                                 </section>
 
                                 <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-                                    <Panel className="overflow-hidden">
+                                    <Panel className="overflow-hidden flex flex-col">
                                         <SectionHeader title="Operational Map" eyebrow="System pulse" />
-                                        <div className="relative min-h-[430px] overflow-hidden p-5">
-                                            <div className="absolute inset-0 opacity-70">
-                                                <div className="absolute left-[-8%] top-[16%] h-56 w-[115%] rotate-[-8deg] border-y border-dashed border-border-subtle/20 /12" />
-                                                <div className="absolute left-[12%] top-[28%] h-64 w-64 rounded-full border border-dashed border-border-subtle/20 /15" />
-                                                <div className="absolute bottom-10 right-10 h-64 w-96 rotate-[-16deg] rounded-[42px] border border-accent /12" />
-                                            </div>
-                                            <div className="relative grid h-full gap-4 md:grid-cols-2">
-                                                <div className="rounded-[26px] border border-border-subtle/70 bg-bg-base/55 p-5 backdrop-blur-xl /10">
-                                                    <p className="text-sm text-text-secondary">Operational Efficiency</p>
-                                                    <p className="mt-4 text-6xl font-extralight tracking-tight text-text-primary">78.3<span className="text-2xl text-text-secondary">%</span></p>
-                                                    <div className="mt-8 h-32 rounded-2xl border border-border-subtle/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.5),rgba(255,255,255,0.18))] p-4 /8 (180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))]">
-                                                        <div className="mt-12 h-px bg-gradient-to-r from-transparent via-corphia-warm-gray/55 to-transparent dark:via-white/55" />
-                                                        <div className="-mt-8 ml-8 h-12 w-32 rounded-[50%] border-t border-accent" />
+                                        <div className="flex-1 p-5">
+                                            <div className="grid h-full gap-4 md:grid-cols-2">
+                                                <div className="rounded-[16px] border border-border-subtle bg-bg-base p-5 flex flex-col justify-between">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-text-secondary">Operational Efficiency</p>
+                                                        <p className="mt-4 text-6xl font-light tracking-tight text-text-primary">78.3<span className="text-2xl text-text-secondary ml-1">%</span></p>
+                                                    </div>
+                                                    <div className="mt-8 flex justify-center py-4 relative">
+                                                        {/* Simple visual indicator */}
+                                                        <div className="w-full h-1 bg-border-subtle rounded-full overflow-hidden">
+                                                            <div className="h-full bg-accent w-[78.3%]" />
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="space-y-4">
-                                                    <div className="rounded-[26px] border border-red-300/12 bg-red-500/10 p-5 backdrop-blur-xl">
+                                                <div className="space-y-4 flex flex-col">
+                                                    <div className="rounded-[16px] border border-red-500/20 bg-red-500/10 p-5">
                                                         <div className="flex items-start justify-between">
                                                             <div>
                                                                 <p className="text-sm text-red-100/70">Capacity Issues</p>
@@ -637,10 +637,12 @@ export default function Admin() {
                                                             <CircleAlert className="h-5 w-5 text-red-200" />
                                                         </div>
                                                     </div>
-                                                    <div className="rounded-[26px] border border-border-subtle/70 bg-bg-base/55 p-5 backdrop-blur-xl /10 /[0.06]">
-                                                        <p className="text-sm text-text-secondary">Live Passenger Volume</p>
-                                                        <p className="mt-3 text-4xl font-light tracking-tight text-text-primary">142,580</p>
-                                                        <div className="mt-5 grid grid-cols-4 gap-2 text-xs text-text-secondary">
+                                                    <div className="rounded-[16px] border border-border-subtle bg-bg-base p-5 flex-1 flex flex-col justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-text-secondary">Live Passenger Volume</p>
+                                                            <p className="mt-3 text-4xl font-light tracking-tight text-text-primary">142,580</p>
+                                                        </div>
+                                                        <div className="mt-5 grid grid-cols-4 gap-2 text-xs font-medium text-text-secondary">
                                                             <span>06:00</span><span>12:00</span><span>18:00</span><span>21:00</span>
                                                         </div>
                                                     </div>
@@ -653,8 +655,8 @@ export default function Admin() {
                                         <SectionHeader title="Recent Access" eyebrow="Operators" />
                                         <div className="space-y-3 p-5">
                                             {users.slice(0, 6).map((item) => (
-                                                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border-subtle/70 bg-bg-base/55 p-3 /8 /[0.045]">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent">
+                                                <div key={item.id} className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-bg-base p-3 transition hover:bg-bg-base/80">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-sm font-bold text-accent">
                                                         {item.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -679,7 +681,7 @@ export default function Admin() {
                                 />
                                 <div className="overflow-x-auto">
                                     <table className="w-full min-w-[760px]">
-                                        <thead className="border-b border-border-subtle/70 text-left text-xs uppercase tracking-[0.18em] text-text-secondary">
+                                        <thead className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
                                             <tr>
                                                 <th className="px-6 py-4">User</th>
                                                 <th className="px-6 py-4">Role</th>
@@ -688,11 +690,11 @@ export default function Admin() {
                                                 <th className="px-6 py-4 text-right">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border-subtle/70 dark:divide-border-subtle">
+                                        <tbody className="divide-y divide-border-subtle">
                                             {isLoading ? (
                                                 <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>Loading users...</td></tr>
                                             ) : users.map((item) => (
-                                                <tr key={item.id} className="transition hover:bg-bg-base/45 /[0.035]">
+                                                <tr key={item.id} className="transition hover:bg-bg-base">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent">{item.name.charAt(0).toUpperCase()}</div>
@@ -731,12 +733,12 @@ export default function Admin() {
                                         {isLoadingModels ? (
                                             <div className="py-10 text-center text-text-secondary">Loading models...</div>
                                         ) : models.map((model) => (
-                                            <div key={model.name} className="flex flex-col gap-4 rounded-[24px] border border-border-subtle/70 bg-bg-base/55 p-5 /10 /[0.045] md:flex-row md:items-center md:justify-between">
+                                            <div key={model.name} className="flex flex-col gap-4 rounded-[16px] border border-border-subtle bg-bg-base p-5 md:flex-row md:items-center md:justify-between">
                                                 <div className="min-w-0">
                                                     <div className="flex flex-wrap items-center gap-3">
                                                         <p className="truncate text-lg font-semibold text-text-primary">{model.name}</p>
-                                                        {model.is_current && <span className="rounded-full border border-accent bg-accent px-3 py-1 text-xs font-bold text-accent /12">CURRENT</span>}
-                                                        {model.quantization && <span className="rounded-full border border-border-subtle/80 px-3 py-1 text-xs font-mono text-text-secondary">{model.quantization}</span>}
+                                                        {model.is_current && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">CURRENT</span>}
+                                                        {model.quantization && <span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-mono text-text-secondary">{model.quantization}</span>}
                                                     </div>
                                                     <div className="mt-3 flex flex-wrap gap-4 text-sm text-text-secondary">
                                                         <span className="inline-flex items-center gap-2"><HardDrive className="h-4 w-4" />{model.size_gb} GB</span>
@@ -801,7 +803,7 @@ export default function Admin() {
                                     />
                                     <div className="overflow-x-auto">
                                         <table className="w-full min-w-[900px]">
-                                            <thead className="border-b border-border-subtle/70 text-left text-xs uppercase tracking-[0.18em] text-text-secondary">
+                                        <thead className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
                                                 <tr>
                                                     <th className="px-5 py-4">Time</th>
                                                     <th className="px-5 py-4">Action</th>
@@ -811,16 +813,16 @@ export default function Admin() {
                                                     <th className="px-5 py-4">IP</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-border-subtle/70 dark:divide-border-subtle">
+                                            <tbody className="divide-y divide-border-subtle">
                                                 {isLoadingAudit ? (
                                                     <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>Loading audit log...</td></tr>
                                                 ) : auditLogs.length === 0 ? (
                                                     <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>No audit events</td></tr>
                                                 ) : auditLogs.map((log) => (
-                                                    <tr key={log.id} className="transition hover:bg-bg-base/45 /[0.035]">
+                                                    <tr key={log.id} className="transition hover:bg-bg-base">
                                                         <td className="px-5 py-4 text-sm text-text-secondary">{formatDate(log.created_at)}</td>
-                                                        <td className="px-5 py-4"><span className="rounded-full border border-border-subtle/80 bg-bg-base/70 px-3 py-1 text-xs font-semibold text-text-primary /[0.06]">{ACTION_LABELS[log.action] || log.action}</span></td>
-                                                        <td className="px-5 py-4 text-sm text-text-primary/80 /80">{RESOURCE_LABELS[log.resource_type] || log.resource_type}</td>
+                                                        <td className="px-5 py-4"><span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-semibold text-text-primary">{ACTION_LABELS[log.action] || log.action}</span></td>
+                                                        <td className="px-5 py-4 text-sm text-text-primary">{RESOURCE_LABELS[log.resource_type] || log.resource_type}</td>
                                                         <td className="max-w-[180px] truncate px-5 py-4 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
                                                         <td className="max-w-[300px] truncate px-5 py-4 text-sm text-text-secondary">{log.description || '-'}</td>
                                                         <td className="px-5 py-4 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
@@ -848,9 +850,9 @@ export default function Admin() {
                                         ].map(([label, value, Icon]) => {
                                             const IconComp = Icon as React.ComponentType<{ className?: string }>
                                             return (
-                                                <div key={label as string} className="rounded-[24px] border border-border-subtle/70 bg-bg-base/55 p-5 /10 /[0.045]">
+                                                <div key={label as string} className="rounded-[16px] border border-border-subtle bg-bg-base p-5">
                                                     <IconComp className="mb-5 h-5 w-5 text-accent" />
-                                                    <p className="text-xs uppercase tracking-[0.18em] text-text-secondary">{label as string}</p>
+                                                    <p className="text-xs uppercase tracking-wider text-text-secondary">{label as string}</p>
                                                     <p className="mt-2 text-lg font-semibold text-text-primary">{value as string}</p>
                                                 </div>
                                             )
@@ -881,11 +883,11 @@ export default function Admin() {
                                     ) : tenants.length === 0 ? (
                                         <div className="col-span-full py-10 text-center text-text-secondary">No tenants</div>
                                     ) : tenants.map((item) => (
-                                        <div key={item.id} className="rounded-[24px] border border-border-subtle/70 bg-bg-base/55 p-5 /10 /[0.045]">
+                                        <div key={item.id} className="rounded-[16px] border border-border-subtle bg-bg-base p-5">
                                             <div className="mb-5 flex items-start justify-between gap-3">
                                                 <div className="min-w-0">
                                                     <p className="truncate text-lg font-semibold text-text-primary">{item.name}</p>
-                                                    <p className="mt-1 inline-flex rounded-full bg-bg-base/70 px-3 py-1 font-mono text-xs text-text-secondary">{item.slug}</p>
+                                                    <p className="mt-1 inline-flex rounded-full border border-border-subtle bg-bg-surface px-3 py-1 font-mono text-xs text-text-secondary">{item.slug}</p>
                                                 </div>
                                                 <StatusPill active={item.is_active} />
                                             </div>
@@ -917,7 +919,7 @@ export default function Admin() {
                                 <option value="admin">Admin</option>
                             </select>
                         </Field>
-                        <label className="flex items-center justify-between rounded-2xl border border-border-subtle/80 bg-bg-base/70 px-4 py-3 text-sm text-text-primary">
+                        <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
                             啟用帳號
                             <input type="checkbox" checked={userFormData.is_active} onChange={(event) => setUserFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
@@ -936,7 +938,7 @@ export default function Admin() {
                         <Field label="Name"><input className={inputClass} required value={tenantFormData.name} onChange={(event) => setTenantFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Slug"><input className={inputClass} required value={tenantFormData.slug} onChange={(event) => setTenantFormData((prev) => ({ ...prev, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} /></Field>
                         <Field label="Description"><textarea className={inputClass} rows={3} value={tenantFormData.description} onChange={(event) => setTenantFormData((prev) => ({ ...prev, description: event.target.value }))} /></Field>
-                        <label className="flex items-center justify-between rounded-2xl border border-border-subtle/80 bg-bg-base/70 px-4 py-3 text-sm text-text-primary">
+                        <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
                             啟用租戶
                             <input type="checkbox" checked={tenantFormData.is_active} onChange={(event) => setTenantFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
