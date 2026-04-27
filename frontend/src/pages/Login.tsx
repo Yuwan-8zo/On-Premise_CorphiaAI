@@ -39,7 +39,7 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
                 className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${
-                    error ? 'border-red-500 focus:border-red-500 pr-28' : 'border-border-subtle focus:border-corphia-bronze focus:shadow-md focus:ring-0'
+                    error ? 'border-red-500 focus:border-red-500' : 'border-border-subtle focus:border-corphia-bronze focus:shadow-md focus:ring-0'
                 } ${className || ''}`}
                 placeholder={label}
                 {...props}
@@ -65,9 +65,14 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
             </motion.label>
 
             {error && (
-                <span className={`absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-red-500 pointer-events-none ${isPasswordType && isFilled ? 'right-12' : 'right-5'}`}>
-                    {error}
-                </span>
+                <div className={`absolute top-[2px] bottom-[2px] flex items-center pointer-events-none z-10 ${isPasswordType && isFilled ? 'right-10' : 'right-[2px]'}`}>
+                    <div className="w-8 h-full bg-gradient-to-r from-transparent to-bg-surface" />
+                    <div className="bg-bg-surface h-full flex items-center pr-4 pl-1 rounded-r-full">
+                        <span className="text-xs font-semibold text-red-500 whitespace-nowrap">
+                            {error}
+                        </span>
+                    </div>
+                </div>
             )}
 
             {isPasswordType && (
