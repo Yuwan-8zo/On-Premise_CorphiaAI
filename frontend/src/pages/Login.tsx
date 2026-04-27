@@ -12,7 +12,7 @@ import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
-import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo } from '../components/icons/CorphiaIcons'
+import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -349,9 +349,8 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="text-[64px] font-extrabold text-text-primary mb-6 transition-colors flex items-center tracking-tight gap-[1px]">
-                            <CorphiaTextLogo className="h-[52px] w-auto mr-[2px]" />
-                            orphia
+                        <h1 className="mb-6">
+                            <CorphiaWordmark className="h-[56px] w-auto" />
                         </h1>
                         <p className="text-text-secondary mb-10 transition-colors">
                             {t('auth.engineDesc')}

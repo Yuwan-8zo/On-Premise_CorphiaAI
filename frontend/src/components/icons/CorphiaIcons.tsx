@@ -25,6 +25,55 @@ export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> =
     </svg>
 );
 
+/**
+ * Corphia 完整品牌字標
+ * 將 C 字型、四芒星與 orphia 文字整合為單一 SVG 元件
+ * 使用 Inter 字體確保與全站字型一致
+ */
+export const CorphiaWordmark: React.FC<{ className?: string; color?: string }> = ({
+    className = 'h-14 w-auto',
+    color = 'currentColor',
+}) => (
+    <svg
+        viewBox="0 0 268 64"
+        className={className}
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Corphia"
+        fill="none"
+    >
+        {/* ── C 字型 + 四芒星：原始路徑放大 4x，平移至原點 ── */}
+        {/* transform: 先平移使左上角對齊原點，再放大4倍 */}
+        <g transform="scale(4) translate(-5.5, -5.5)">
+            {/* 幾何 C 字（半圓弧） */}
+            <path
+                d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5"
+                stroke={color}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+            />
+            {/* 四芒星（品牌主色，置於 C 缺口右側） */}
+            <path
+                d="M18 9C18 10 19 11 20 11C19 11 18 12 18 13C18 12 17 11 16 11C17 11 18 10 18 9Z"
+                fill="var(--color-primary)"
+            />
+        </g>
+        {/* ── orphia 文字（與全站 Inter 字體對齊） ── */}
+        <text
+            x="66"
+            y="50"
+            fontFamily="Inter, 'Noto Sans TC', system-ui, -apple-system, sans-serif"
+            fontWeight="800"
+            fontSize="52"
+            fill={color}
+            letterSpacing="-1"
+        >
+            orphia
+        </text>
+    </svg>
+);
+
+
+
 const CorphiaLogoPaths = ({ color = "white", sparkColor = "var(--color-primary)" }: { color?: string, sparkColor?: string }) => (
     <>
         {/* 幾何 C 字 */}
