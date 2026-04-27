@@ -460,19 +460,19 @@ export default function Login() {
                                 >
                                     <button 
                                         onClick={() => handleLanguageSelect('zh-TW')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-white font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         繁體中文
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('en-US')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-white font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         English
                                     </button>
                                     <button 
                                         onClick={() => handleLanguageSelect('ja-JP')}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-corphia-bronze  font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-white font-semibold bg-accent' : 'text-text-secondary  hover:bg-bg-base '}`}
                                     >
                                         日本語
                                     </button>
