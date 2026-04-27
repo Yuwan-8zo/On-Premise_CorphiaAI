@@ -113,15 +113,15 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
-                        className={`absolute right-[7px] w-[18px] rounded-full transition-all duration-300 hover:w-[24px] hover:right-[4px] ${
+                        className={`absolute right-[7px] w-[18px] min-h-[18px] rounded-full transition-all duration-300 hover:w-[24px] hover:min-h-[24px] hover:right-[4px] ${
                             marker.role === 'user' 
                                 ? 'bg-accent opacity-80 hover:opacity-100 shadow-sm'
                                 : 'bg-text-muted opacity-60 hover:opacity-100' 
                         }`}
                         style={{ 
-                            top: `${marker.top}%`, 
+                            top: `${marker.top + (marker.height / 2)}%`, 
                             height: `${Math.max(marker.height, 1)}%`, // 至少給 1% 高度確保可見
-                            minHeight: '8px'
+                            transform: 'translateY(-50%)'
                         }}
                         onClick={(e) => {
                             e.stopPropagation()
