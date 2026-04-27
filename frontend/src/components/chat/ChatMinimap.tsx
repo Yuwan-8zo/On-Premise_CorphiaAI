@@ -92,7 +92,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
     if (markers.length === 0) return null
 
     return (
-        <div className="absolute right-1 top-4 bottom-4 w-6 z-10 pointer-events-none group hidden md:block">
+        <div className="absolute right-1 top-4 bottom-4 w-8 z-10 pointer-events-none group hidden md:block">
             <div 
                 className="relative w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
                 onClick={(e) => {
@@ -108,20 +108,20 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 }}
             >
                 {/* Visual track background */}
-                <div className="absolute inset-y-0 right-[7px] w-[10px] bg-black/5 dark:bg-white/5 rounded-full" />
+                <div className="absolute inset-y-0 right-[9px] w-[14px] bg-black/5 dark:bg-white/5 rounded-full" />
                 
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
-                        className={`absolute right-[5px] w-[14px] rounded-full transition-all duration-300 hover:w-[18px] hover:right-[3px] ${
+                        className={`absolute right-[7px] w-[18px] rounded-full transition-all duration-300 hover:w-[24px] hover:right-[4px] ${
                             marker.role === 'user' 
-                                ? 'bg-text-muted opacity-60 hover:opacity-100' 
-                                : 'bg-accent opacity-80 hover:opacity-100 shadow-sm'
+                                ? 'bg-accent opacity-80 hover:opacity-100 shadow-sm'
+                                : 'bg-text-muted opacity-60 hover:opacity-100' 
                         }`}
                         style={{ 
                             top: `${marker.top}%`, 
                             height: `${Math.max(marker.height, 1)}%`, // 至少給 1% 高度確保可見
-                            minHeight: '4px'
+                            minHeight: '8px'
                         }}
                         onClick={(e) => {
                             e.stopPropagation()
