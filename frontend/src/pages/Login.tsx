@@ -501,11 +501,11 @@ export default function Login() {
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
                         <div
-                            className="relative flex rounded-full select-none cursor-pointer bg-white/[0.07] border border-white/[0.06] transition-colors shrink-0"
+                            className="relative flex rounded-full select-none cursor-pointer bg-bg-base border border-border-subtle transition-colors shrink-0"
                             style={{ padding: '5px' }}
                         >
                             <motion.div
-                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-white/[0.13] shadow-sm rounded-full border border-white/[0.08]"
+                                className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
                                 transition={{ type:"tween", duration: 0.3, ease:"easeInOut" }}
