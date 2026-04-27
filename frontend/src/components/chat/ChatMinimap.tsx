@@ -115,8 +115,8 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                         key={marker.id}
                         className={`absolute right-[5px] w-[14px] rounded-full transition-all duration-300 hover:w-[18px] hover:right-[3px] ${
                             marker.role === 'user' 
-                                ? 'bg-border-strong' 
-                                : 'bg-[rgba(var(--accent),0.5)]'
+                                ? 'bg-text-secondary opacity-70' 
+                                : 'bg-[rgba(var(--accent),0.6)]'
                         }`}
                         style={{ 
                             top: `${marker.top}%`, 
