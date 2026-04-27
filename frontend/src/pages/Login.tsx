@@ -349,9 +349,10 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="mb-6 relative h-[56px] flex items-center">
-                            <CorphiaWordmark className="h-[90px] w-auto object-contain object-left absolute -left-2" />
-                        </h1>
+                        <div className="relative w-full h-[60px] mb-6 mt-1">
+                            {/* 透過絕對定位與垂直置中，強迫突破圖片的透明留白限制，同時不影響外部排版 */}
+                            <CorphiaWordmark className="absolute top-1/2 left-[-24px] -translate-y-1/2 h-[180px] w-auto object-contain object-left pointer-events-none select-none max-w-none" />
+                        </div>
                         <p className="text-text-secondary mb-10 transition-colors">
                             {t('auth.engineDesc')}
                         </p>
