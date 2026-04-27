@@ -113,10 +113,10 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 {markers.map(marker => (
                     <div 
                         key={marker.id}
-                        className={`absolute right-[5px] w-[14px] rounded-full transition-all duration-300 hover:w-[18px] hover:right-[3px] ${
+                        className={`absolute rounded-full transition-all duration-300 ${
                             marker.role === 'user' 
-                                ? 'bg-text-secondary opacity-70' 
-                                : 'bg-[rgba(var(--accent),0.6)]'
+                                ? 'right-[12px] w-[6px] hover:w-[8px] hover:right-[11px] bg-text-secondary opacity-70' 
+                                : 'right-[4px] w-[6px] hover:w-[8px] hover:right-[3px] bg-[rgba(var(--accent),0.6)]'
                         }`}
                         style={{ 
                             top: `${marker.top}%`, 
