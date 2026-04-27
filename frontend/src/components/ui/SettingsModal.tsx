@@ -367,7 +367,7 @@ export default function SettingsModal() {
                             </div>
                         </div>
 
-                        {/* ?批捆???*/}
+                        {/* 主內容區域 */}
                         <div className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
                             <div className="p-6 md:p-10 min-h-full">
                                 {/* 手機版返回導航*/}
@@ -454,7 +454,7 @@ export default function SettingsModal() {
                                         </div>
                                     </div>
 
-                                    {/* 修改密碼?憛?*/}
+                                    {/* 修改密碼區塊 */}
                                     <div className="mb-8">
                                         <button
                                             onClick={() => {

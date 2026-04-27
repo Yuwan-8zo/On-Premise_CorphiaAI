@@ -111,7 +111,7 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
-    const [showQR, setShowQR] = useState(false) // ?啣? QR Modal ???
+    const [showQR, setShowQR] = useState(false) // 控制 QR Modal 顯示狀態
     const langMenuRef = useRef<HTMLDivElement>(null)
     
     // 登入用的輸入狀態
@@ -640,3 +640,4 @@ export default function Login() {
         </div>
     )
 }
+
