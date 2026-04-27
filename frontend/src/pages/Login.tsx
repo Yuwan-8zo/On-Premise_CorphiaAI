@@ -247,7 +247,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden">
+        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden select-none">
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
