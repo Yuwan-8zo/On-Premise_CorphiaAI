@@ -1,6 +1,6 @@
 import React from 'react';
-import CorphiaLogoLight from '../assets/Corphia_LOGO_Light.png';
-import CorphiaLogoDark from '../assets/Corphia_LOGO_Dark.png';
+import CorphiaLogoLight from '../../assets/Corphia_LOGO_Light.png';
+import CorphiaLogoDark from '../../assets/Corphia_LOGO_Dark.png';
 
 // 極簡直球對決：C + AI Spark
 // 保留極高的辨識度，黑底白字，一眼就看出是 Corphia 的「C」與 AI 的結合。
