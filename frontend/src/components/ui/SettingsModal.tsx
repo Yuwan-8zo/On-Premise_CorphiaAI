@@ -649,7 +649,7 @@ export default function SettingsModal() {
                             </div>
                         </div>
                     </motion.div>
-                </div>
+                </motion.div>
             )}
             </AnimatePresence>
 
@@ -841,8 +841,7 @@ export default function SettingsModal() {
                             </button>
                         </motion.div>
                     </div>
-                </motion.div>
-            )}
+                )}
             </AnimatePresence>
 
             {/* QR Code 視窗 */}
