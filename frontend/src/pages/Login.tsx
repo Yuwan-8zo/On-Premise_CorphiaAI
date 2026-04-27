@@ -187,6 +187,17 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+        
+        // Custom manual validation to replace browser's native popup
+        if (!email.trim()) {
+            setError(t('auth.account') + '不能為空')
+            return
+        }
+        if (!password) {
+            setError(t('auth.password') + '不能為空')
+            return
+        }
+
         setLoading(true)
 
         try {
@@ -493,6 +504,7 @@ export default function Login() {
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
                     <form
                         onSubmit={handleSubmit}
+                        noValidate
                         className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-2xl dark:shadow-black/50 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
