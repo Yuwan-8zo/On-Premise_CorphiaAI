@@ -203,13 +203,13 @@ export default function ChatSidebar({
                                     return filtered.map((conv) => (
                                         <div key={conv.id} onClick={() => selectConversation(conv)}
                                             className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                                ? 'bg-bg-surface text-accent font-medium'
-                                                : 'text-text-secondary hover:bg-bg-surface hover:text-accent'}`}
+                                                ? 'bg-bg-elevated shadow-sm text-accent font-medium'
+                                                : 'text-text-secondary hover:bg-bg-elevated hover:text-accent'}`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                 <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                    className={`p-1.5 rounded-full hover:bg-bg-surface ${activeMenuConvId === conv.id ? 'bg-bg-surface text-text-primary' : 'text-text-muted'}`}
+                                                    className={`p-1.5 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}
                                                     title="選項">
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                                                 </button>
@@ -292,13 +292,13 @@ export default function ChatSidebar({
                                                                 <div key={conv.id} className="relative">
                                                                     <div onClick={() => selectConversation(conv)}
                                                                         className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                            ? 'bg-bg-surface text-accent font-medium border-transparent'
-                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-surface'}`}
+                                                                            ? 'bg-bg-elevated shadow-sm text-accent font-medium'
+                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-elevated'}`}
                                                                     >
                                                                         <span className="truncate pr-2">{conv.title}</span>
                                                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                             <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                                className={`p-1 rounded-full hover:bg-bg-surface ${activeMenuConvId === conv.id ? 'bg-bg-surface text-text-primary' : 'text-text-muted'}`}
+                                                                                className={`p-1 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}
                                                                                 title="選項">
                                                                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                                                                             </button>
