@@ -35,41 +35,52 @@ export const CorphiaWordmark: React.FC<{ className?: string; color?: string }> =
     color = 'currentColor',
 }) => (
     <svg
-        viewBox="0 0 268 64"
+        viewBox="0 0 260 64"
         className={className}
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Corphia"
         fill="none"
     >
-        {/* ── C 字型 + 四芒星：原始路徑放大 4x，平移至原點 ── */}
-        {/* transform: 先平移使左上角對齊原點，再放大4倍 */}
-        <g transform="scale(4) translate(-5.5, -5.5)">
-            {/* 幾何 C 字（半圓弧） */}
+        {/* ── 幾何 C 字 (完美繼承品牌曲線，並對齊 Baseline y=50) ── */}
+        <g transform="translate(-10, -15.7) scale(3.6)">
             <path
                 d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5"
                 stroke={color}
                 strokeWidth="2.5"
                 strokeLinecap="round"
             />
-            {/* 四芒星（品牌主色，置於 C 缺口右側） */}
-            <path
-                d="M18 9C18 10 19 11 20 11C19 11 18 12 18 13C18 12 17 11 16 11C17 11 18 10 18 9Z"
-                fill="var(--color-primary)"
-            />
         </g>
-        {/* ── orphia 文字（與全站 Inter 字體對齊） ── */}
+        
+        {/* ── 四芒星 (星芒) - 完美契合在 C 和 o 之間的幾何縫隙 ── */}
+        <path
+            transform="translate(61, 25)"
+            fill="var(--color-primary)"
+            d="M 0 -10 Q 0 0 10 0 Q 0 0 0 10 Q 0 0 -10 0 Q 0 0 0 -10 Z"
+        />
+
+        {/* ── 幾何 o 字 (空心圓，完美對齊 Baseline y=50) ── */}
+        <circle
+            cx="86"
+            cy="36.25"
+            r="9.25"
+            stroke={color}
+            strokeWidth="9"
+            fill="none"
+        />
+
+        {/* ── rphia 文字 (與幾何 C/o 對齊 Baseline y=50) ── */}
         <text
-            x="66"
+            x="105"
             y="50"
             fontFamily="Inter, 'Noto Sans TC', system-ui, -apple-system, sans-serif"
             fontWeight="800"
             fontSize="52"
             fill={color}
-            letterSpacing="-1"
+            letterSpacing="-1.5"
             className="select-none pointer-events-none"
             style={{ userSelect: 'none' }}
         >
-            orphia
+            rphia
         </text>
     </svg>
 );
