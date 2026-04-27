@@ -349,8 +349,8 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-text-primary relative z-10 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <div className="-mt-6 -mb-4 -ml-2 relative z-0 flex items-center">
-                            {/* 利用原生高度放大，並透過外層容器的負邊距 (negative margin) 「吃掉」圖片上下的透明留白，達成完美的垂直居中 */}
+                        <div className="mt-2 -mb-8 -ml-2 relative z-0 flex items-center">
+                            {/* 利用原生高度放大，改用正邊距往下推離標題，並用較大負邊距拉近下方選單 */}
                             <CorphiaWordmark className="h-[130px] w-auto object-contain object-left pointer-events-none select-none" />
                         </div>
 
