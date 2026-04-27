@@ -258,7 +258,7 @@ export default function Login() {
             const data = axiosError?.response?.data
 
             if (status === 429) {
-                setError(data?.detail || data?.error?.message || '請求過於頻繁，或者發生了錯誤')
+                setFieldErrors({ password: data?.detail || data?.error?.message || '請求過於頻繁，或者發生了錯誤' })
             } else if (status === 422) {
                 const details = (data as { error?: { details?: Array<{ field: string; message: string }> } })?.error?.details
                 if (details && details.length > 0) {
