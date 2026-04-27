@@ -614,7 +614,7 @@ export default function Login() {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-text-primary font-medium rounded-full text-[15px]
+                                    className="w-full py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-white font-semibold rounded-full text-[15px]
  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory focus:ring-corphia-bronze
  disabled:opacity-50 disabled:cursor-not-allowed
  transition-all border border-transparent shadow-sm"
