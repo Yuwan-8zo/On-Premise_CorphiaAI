@@ -1,16 +1,24 @@
 """
 LLM 服務模組
 
-支援 Ollama 微服務架構與 llama.cpp (GGUF) 本地模型推論
+使用 Ollama 微服務架構進行本地模型推論
 """
 
 import logging
 import json
 import time
 import httpx
-import asyncio
 from typing import AsyncGenerator, Optional
 from collections import deque
+import threading
+import queue
+import asyncio
+
+try:
+    from llama_cpp import Llama
+    LLAMA_CPP_AVAILABLE = True
+except ImportError:
+    LLAMA_CPP_AVAILABLE = False
 
 from app.core.config import settings
 from app.services.model_manager import get_model_manager
@@ -22,26 +30,28 @@ _llm_instance = None
 
 
 class LLMService:
-    """LLM 推論服務 (支援 Ollama 與 llama_cpp)"""
+    """LLM 推論服務 (基於 Ollama 微服務架構)"""
     
     def __init__(self):
         self.base_url = settings.ollama_base_url
-        self._initialized_ollama = False
+        self.model = settings.ollama_model
+        self._initialized = False
         
         # httpx client 會在 initialize 時建立
         self.client: Optional[httpx.AsyncClient] = None
-
-        # llama_cpp 實例緩存
+        
+        self.use_llama_cpp = False
         self._llama_instance = None
-        self._current_llama_path = None
 
         # ── C4: tokens/sec 即時統計 ─────────────────────────
+        # 保留最近 10 次生成的 (tokens, elapsed_sec)，用於 /system/health/detailed
         self._recent_runs: deque[tuple[int, float]] = deque(maxlen=10)
         self._last_tokens_per_sec: float = 0.0
         self._total_tokens_generated: int = 0
         self._total_generations: int = 0
 
     def record_generation(self, tokens: int, elapsed_sec: float) -> None:
+        """登記一次完成的生成，讓監控面板能讀到 tokens/sec。"""
         if elapsed_sec <= 0 or tokens <= 0:
             return
         self._recent_runs.append((tokens, elapsed_sec))
@@ -50,6 +60,7 @@ class LLMService:
         self._total_generations += 1
 
     def get_throughput_stats(self) -> dict:
+        """回傳 tokens/sec 統計。供 /system/health/detailed 使用。"""
         if not self._recent_runs:
             return {
                 "last_tokens_per_sec": 0.0,
@@ -69,51 +80,70 @@ class LLMService:
             "sample_size": len(self._recent_runs),
         }
     
+    def reload_llama(self) -> None:
+        """重新初始化以重新掛載 GGUF 模型"""
+        self._initialized = False
+        if self._llama_instance is not None:
+            del self._llama_instance
+            self._llama_instance = None
+        self.use_llama_cpp = False
+
     async def initialize(self) -> bool:
-        """初始化 Ollama 連線"""
-        if self._initialized_ollama:
+        """
+        初始化 Ollama 連線並檢查模型是否存在
+        """
+        if self._initialized:
             return True
         
+        # 建立 httpx AsyncClient
         self.client = httpx.AsyncClient(timeout=30.0)
+        
         try:
+            logger.info(f"正在連線至 Ollama 服務: {self.base_url}")
             response = await self.client.get(f"{self.base_url}/api/tags")
             response.raise_for_status()
-            self._initialized_ollama = True
+            
+            # 檢查模型是否在清單中
+            tags = response.json().get("models", [])
+            model_names = [m["name"] for m in tags]
+            
+            if self.model not in model_names and f"{self.model}:latest" not in model_names:
+                logger.warning(f"Ollama 中未找到指定模型: {self.model}，請先執行 `ollama run {self.model}`")
+                raise ValueError("Ollama 模型不存在")
+            else:
+                logger.info(f"✅ Ollama 模型載入完成 ({self.model})")
+                self.use_llama_cpp = False
+                
+            self._initialized = True
             return True
+            
         except Exception as e:
-            logger.warning(f"Ollama 連線失敗或未啟動: {e}")
+            logger.warning(f"Ollama 連線失敗或未啟動: {e}。將嘗試使用本地 GGUF 模型...")
             self.client = None
-            self._initialized_ollama = True
+            
+            manager = get_model_manager()
+            if LLAMA_CPP_AVAILABLE and manager.current_model_path:
+                logger.info(f"準備掛載 GGUF 模型: {manager.current_model_path}")
+                try:
+                    def _load_model():
+                        return Llama(
+                            model_path=manager.current_model_path,
+                            n_gpu_layers=settings.llama_n_gpu_layers,
+                            n_ctx=settings.llama_context_size,
+                            verbose=False
+                        )
+                    self._llama_instance = await asyncio.to_thread(_load_model)
+                    self.use_llama_cpp = True
+                    logger.info(f"✅ 成功掛載 GGUF 模型: {manager.current_model_path}")
+                except Exception as llama_e:
+                    logger.error(f"掛載 GGUF 模型失敗: {llama_e}")
+                    logger.info("系統將以模擬模式運行")
+            else:
+                logger.info("未選擇 GGUF 模型或未安裝 llama_cpp，系統將以模擬模式運行")
+                
+            self._initialized = True
             return True
-
-    def _get_llama_instance(self, model_path: str):
-        if self._llama_instance is None or self._current_llama_path != model_path:
-            try:
-                from llama_cpp import Llama
-                logger.info(f"正在載入 GGUF 模型: {model_path}")
-                self._llama_instance = Llama(
-                    model_path=model_path,
-                    n_gpu_layers=settings.llama_n_gpu_layers,
-                    n_ctx=settings.llama_context_size,
-                    verbose=False
-                )
-                self._current_llama_path = model_path
-                logger.info("✅ GGUF 模型載入完成")
-            except ImportError:
-                logger.error("未安裝 llama-cpp-python，無法載入 GGUF 模型")
-                return None
-            except Exception as e:
-                logger.error(f"載入 GGUF 模型失敗: {e}")
-                return None
-        return self._llama_instance
-
-    def _is_gguf_model(self) -> Optional[str]:
-        manager = get_model_manager()
-        current = manager.current_model
-        if current and current.filename.endswith(".gguf"):
-            return current.path
-        return None
-
+            
     async def generate(
         self,
         prompt: str,
@@ -123,23 +153,18 @@ class LLMService:
         stop: Optional[list[str]] = None,
     ) -> str:
         """生成回應（非串流）"""
-        gguf_path = self._is_gguf_model()
-        if gguf_path:
-            return await self._generate_llama(gguf_path, prompt, max_tokens, temperature, top_p, stop)
-        
-        if not self._initialized_ollama:
+        if not self._initialized:
             await self.initialize()
             
         if self.client is None:
+            if self.use_llama_cpp and self._llama_instance:
+                return await self._llama_generate(prompt, max_tokens, temperature, top_p, stop)
             return self._simulate_response(prompt)
             
-        # Ollama 模式
         start = time.perf_counter()
         try:
-            manager = get_model_manager()
-            model_name = manager._current_model if manager._current_model else settings.ollama_model
             payload = {
-                "model": model_name,
+                "model": self.model,
                 "prompt": prompt,
                 "stream": False,
                 "raw": True,
@@ -150,6 +175,8 @@ class LLMService:
                     "num_predict": max_tokens
                 }
             }
+            
+            # 非串流生成可能需要較長時間，設置 300 秒 timeout
             response = await self.client.post(
                 f"{self.base_url}/api/generate",
                 json=payload,
@@ -164,40 +191,11 @@ class LLMService:
                 self.record_generation(tokens, elapsed)
                 
             return data.get("response", "")
+            
         except Exception as e:
             logger.error(f"Ollama 生成失敗: {e}")
-            return self._simulate_response(prompt)
-
-    async def _generate_llama(self, model_path: str, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: Optional[list[str]]) -> str:
-        llm = self._get_llama_instance(model_path)
-        if not llm:
-            return self._simulate_response(prompt)
-        
-        start = time.perf_counter()
-        stop_tokens = stop or []
-        if "<|im_end|>" not in stop_tokens:
-            stop_tokens.append("<|im_end|>")
-
-        def _run():
-            return llm(
-                prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                stop=stop_tokens
-            )
-
-        try:
-            response = await asyncio.to_thread(_run)
-            text = response["choices"][0]["text"]
-            tokens = response["usage"]["completion_tokens"]
-            elapsed = time.perf_counter() - start
-            self.record_generation(tokens, elapsed)
-            return text
-        except Exception as e:
-            logger.error(f"llama_cpp 生成失敗: {e}")
-            return self._simulate_response(prompt)
-
+            raise
+            
     async def generate_stream(
         self,
         prompt: str,
@@ -207,28 +205,23 @@ class LLMService:
         stop: Optional[list[str]] = None,
     ) -> AsyncGenerator[str, None]:
         """串流生成回應"""
-        gguf_path = self._is_gguf_model()
-        if gguf_path:
-            async for chunk in self._generate_stream_llama(gguf_path, prompt, max_tokens, temperature, top_p, stop):
-                yield chunk
-            return
-
-        if not self._initialized_ollama:
+        if not self._initialized:
             await self.initialize()
             
         if self.client is None:
+            if self.use_llama_cpp and self._llama_instance:
+                async for chunk in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop):
+                    yield chunk
+                return
             async for chunk in self._simulate_stream(prompt):
                 yield chunk
             return
             
-        # Ollama 模式
         start = time.perf_counter()
         token_count = 0
         try:
-            manager = get_model_manager()
-            model_name = manager._current_model if manager._current_model else settings.ollama_model
             payload = {
-                "model": model_name,
+                "model": self.model,
                 "prompt": prompt,
                 "stream": True,
                 "raw": True,
@@ -256,65 +249,17 @@ class LLMService:
                             token_count += 1
                             yield data["response"]
                         if data.get("done", False):
+                            # Ollama 會在 done 為 True 時提供 eval_count，這是精準的 token 數量
                             eval_count = data.get("eval_count", token_count)
                             elapsed = time.perf_counter() - start
                             self.record_generation(eval_count, elapsed)
                     except json.JSONDecodeError:
                         continue
+                        
         except Exception as e:
             logger.error(f"Ollama 串流生成失敗: {e}")
-            async for chunk in self._simulate_stream(prompt):
-                yield chunk
-
-    async def _generate_stream_llama(self, model_path: str, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: Optional[list[str]]) -> AsyncGenerator[str, None]:
-        llm = self._get_llama_instance(model_path)
-        if not llm:
-            async for chunk in self._simulate_stream(prompt):
-                yield chunk
-            return
-
-        start = time.perf_counter()
-        stop_tokens = stop or []
-        if "<|im_end|>" not in stop_tokens:
-            stop_tokens.append("<|im_end|>")
-
-        loop = asyncio.get_running_loop()
-        q = asyncio.Queue()
-
-        def _run_stream():
-            try:
-                for chunk in llm(
-                    prompt, 
-                    max_tokens=max_tokens, 
-                    temperature=temperature, 
-                    top_p=top_p, 
-                    stop=stop_tokens, 
-                    stream=True
-                ):
-                    text = chunk["choices"][0]["text"]
-                    if text:
-                        loop.call_soon_threadsafe(q.put_nowait, text)
-                loop.call_soon_threadsafe(q.put_nowait, None)
-            except Exception as e:
-                loop.call_soon_threadsafe(q.put_nowait, e)
-
-        import threading
-        threading.Thread(target=_run_stream, daemon=True).start()
-
-        token_count = 0
-        while True:
-            item = await q.get()
-            if item is None:
-                break
-            if isinstance(item, Exception):
-                logger.error(f"llama_cpp 串流生成失敗: {item}")
-                break
-            token_count += 1
-            yield item
-
-        elapsed = time.perf_counter() - start
-        self.record_generation(token_count, elapsed)
-
+            raise
+            
     async def generate_structured(
         self,
         prompt: str,
@@ -324,44 +269,29 @@ class LLMService:
         top_p: float = 0.9,
     ) -> dict:
         """生成結構化 JSON 回應"""
-        gguf_path = self._is_gguf_model()
-        if gguf_path:
-            # GGUF 結構化生成
-            llm = self._get_llama_instance(gguf_path)
-            if not llm:
-                return self._simulate_structured(schema_dict)
-            try:
-                # 簡單附加格式要求於 prompt
-                json_prompt = prompt + f"\n\n請務必輸出合法的 JSON，格式需符合：\n{json.dumps(schema_dict, ensure_ascii=False)}"
-                def _run():
-                    return llm(json_prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p, stop=["<|im_end|>"])
-                response = await asyncio.to_thread(_run)
-                text = response["choices"][0]["text"]
-                # 嘗試解析 JSON
-                try:
-                    # 尋找 {}
-                    start_idx = text.find('{')
-                    end_idx = text.rfind('}')
-                    if start_idx != -1 and end_idx != -1:
-                        text = text[start_idx:end_idx+1]
-                    return json.loads(text)
-                except json.JSONDecodeError:
-                    return self._simulate_structured(schema_dict)
-            except Exception as e:
-                logger.error(f"llama_cpp 結構化生成失敗: {e}")
-                return self._simulate_structured(schema_dict)
-
-        if not self._initialized_ollama:
+        if not self._initialized:
             await self.initialize()
             
         if self.client is None:
-            return self._simulate_structured(schema_dict)
+            if self.use_llama_cpp and self._llama_instance:
+                return await self._llama_generate_structured(prompt, schema_dict, max_tokens, temperature, top_p)
+            try:
+                properties = schema_dict.get("properties", {})
+                simulated_result = {}
+                for key, prop in properties.items():
+                    if prop.get("type") == "boolean":
+                        simulated_result[key] = False
+                    elif prop.get("type") == "string":
+                        simulated_result[key] = "simulated"
+                    else:
+                        simulated_result[key] = None
+                return simulated_result
+            except Exception:
+                return {}
 
         try:
-            manager = get_model_manager()
-            model_name = manager._current_model if manager._current_model else settings.ollama_model
             payload = {
-                "model": model_name,
+                "model": self.model,
                 "prompt": prompt,
                 "stream": False,
                 "raw": True,
@@ -382,40 +312,114 @@ class LLMService:
             data = response.json()
             result_str = data.get("response", "{}")
             return json.loads(result_str)
+            
         except Exception as e:
             logger.error(f"Ollama 結構化生成失敗: {e}")
-            return self._simulate_structured(schema_dict)
+            raise
+            
+    async def _llama_generate(self, prompt, max_tokens, temperature, top_p, stop):
+        start = time.perf_counter()
+        def _run():
+            return self._llama_instance(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                stop=stop or [],
+                stream=False
+            )
+        response = await asyncio.to_thread(_run)
+        elapsed = time.perf_counter() - start
+        
+        text = response["choices"][0]["text"]
+        token_count = response["usage"]["completion_tokens"]
+        self.record_generation(token_count, elapsed)
+        return text
 
-    def _simulate_structured(self, schema_dict: dict) -> dict:
+    async def _llama_generate_stream(self, prompt, max_tokens, temperature, top_p, stop):
+        start = time.perf_counter()
+        token_count = 0
+        q = queue.Queue()
+        
+        def _run_llama():
+            try:
+                stream = self._llama_instance(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    stop=stop or [],
+                    stream=True
+                )
+                for chunk in stream:
+                    q.put(chunk)
+            except Exception as e:
+                q.put(e)
+            finally:
+                q.put(None)
+                
+        t = threading.Thread(target=_run_llama)
+        t.start()
+        
+        while True:
+            chunk = await asyncio.to_thread(q.get)
+            if chunk is None:
+                break
+            if isinstance(chunk, Exception):
+                logger.error(f"Llama 串流生成失敗: {chunk}")
+                break
+            
+            text = chunk["choices"][0]["text"]
+            if text:
+                token_count += 1
+                yield text
+                
+        elapsed = time.perf_counter() - start
+        self.record_generation(token_count, elapsed)
+
+    async def _llama_generate_structured(self, prompt, schema_dict, max_tokens, temperature, top_p):
+        start = time.perf_counter()
+        import json
+        schema_json = json.dumps(schema_dict, ensure_ascii=False)
+        augmented_prompt = prompt + f"\n\n請務必輸出符合以下 JSON Schema 的純 JSON 格式，不要包含任何其他文字：\n{schema_json}\n\n```json\n"
+        
+        def _run():
+            return self._llama_instance(
+                prompt=augmented_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                stop=["```"],
+                stream=False
+            )
+            
+        response = await asyncio.to_thread(_run)
+        text = response["choices"][0]["text"].strip()
+        elapsed = time.perf_counter() - start
+        token_count = response.get("usage", {}).get("completion_tokens", 0)
+        self.record_generation(token_count, elapsed)
+        
         try:
-            properties = schema_dict.get("properties", {})
-            simulated_result = {}
-            for key, prop in properties.items():
-                if prop.get("type") == "boolean":
-                    simulated_result[key] = False
-                elif prop.get("type") == "string":
-                    simulated_result[key] = "simulated"
-                else:
-                    simulated_result[key] = None
-            return simulated_result
+            return json.loads(text)
         except Exception:
-            return {}
+            properties = schema_dict.get("properties", {})
+            return {k: ("simulated" if prop.get("type") == "string" else False) for k, prop in properties.items()}
 
     def _simulate_response(self, prompt: str) -> str:
         return f"""這是一個模擬的 AI 回應。
 
 您的問題是關於：「{prompt[:100]}...」
 
-**注意**: 目前系統以模擬模式運行，因為 Llama/Ollama 模型未啟動或連線失敗。
+**注意**: 目前系統以模擬模式運行，因為 Ollama 模型未啟動或連線失敗。
 
-請確認您已經下載了 GGUF 模型並放置於 `ai_model` 資料夾中，或啟動了 Ollama。
+請確認您已經安裝 Ollama 並執行了對應模型（例如 `ollama run qwen2.5:14b`），且確認 `.env` 中的 `OLLAMA_BASE_URL` 與 `OLLAMA_MODEL` 設定正確。
 
 ---
 
 ### Corphia AI Platform v2.2
 
 本系統支援以下功能：
-- 🤖 智慧對話 (GGUF / Ollama)
+- 🤖 智慧對話
 - 📚 RAG 知識問答
 - 🏢 多租戶管理
 - 🔐 三層權限控制
@@ -435,7 +439,7 @@ class LLMService:
         context: Optional[str] = None,
     ) -> str:
         """
-        建構對話 Prompt (維持 ChatML 格式，無縫接軌 Ollama raw=True 與 Llama.cpp)
+        建構對話 Prompt (維持 ChatML 格式，無縫接軌 Ollama raw=True)
         """
         prompt_parts = []
         if system_prompt or context:

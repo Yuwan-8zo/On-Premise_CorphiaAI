@@ -25,6 +25,8 @@ async def refresh_models_api() -> Dict[str, Any]:
 async def select_model(request: SelectModelRequest) -> Dict[str, Any]:
     manager = get_model_manager()
     if manager.select_model(request.name):
+        llm = get_llm_service()
+        llm.reload_llama()
         return {"message": f"Successfully selected {request.name}", "current_model": request.name}
     raise HTTPException(status_code=404, detail="Model currently unavailable.")
 
