@@ -42,6 +42,7 @@ import {
 } from '../api/auditLogs'
 import { tenantsApi, type Tenant } from '../api/tenants'
 import SystemMonitorPanel from '../components/system/SystemMonitorPanel'
+import { useTranslation } from 'react-i18next'
 
 interface UserData {
     id: string
@@ -79,13 +80,13 @@ interface UpdateUserData {
 
 type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'system' | 'tenants'
 
-const tabs: Array<{ id: AdminSection; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-    { id: 'overview', label: '總覽', icon: Gauge },
-    { id: 'users', label: '使用者', icon: Users },
-    { id: 'models', label: '模型', icon: Cpu },
-    { id: 'audit', label: '稽核', icon: FileText },
-    { id: 'system', label: '系統', icon: Activity },
-    { id: 'tenants', label: '租戶', icon: Building2 },
+const TABS_CONFIG: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: 'overview', i18nKey: 'admin.tabs.overview', icon: Gauge },
+    { id: 'users', i18nKey: 'admin.tabs.users', icon: Users },
+    { id: 'models', i18nKey: 'admin.tabs.models', icon: Cpu },
+    { id: 'audit', i18nKey: 'admin.tabs.audit', icon: FileText },
+    { id: 'system', i18nKey: 'admin.tabs.system', icon: Activity },
+    { id: 'tenants', i18nKey: 'admin.tabs.tenants', icon: Building2 },
 ]
 
 function getErrorMessage(err: unknown): string {
@@ -160,21 +161,28 @@ function ActionButton({
 }
 
 function StatusPill({ active }: { active: boolean }) {
+    const { t } = useTranslation()
     return (
         <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${active ? 'border-accent/20 bg-accent/10 text-accent' : 'border-border-subtle bg-bg-surface text-text-secondary'}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent' : 'bg-text-secondary'}`} />
-            {active ? 'Active' : 'Disabled'}
+            {active ? t('common.active') : t('common.disabled')}
         </span>
     )
 }
 
 function RoleBadge({ role }: { role: UserData['role'] }) {
+    const { t } = useTranslation()
     const styles = {
         admin: 'border-accent/20 bg-accent/10 text-accent',
         engineer: 'border-accent/20 bg-accent/10 text-accent',
         user: 'border-border-subtle bg-bg-surface text-text-secondary',
     }
-    return <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[role]}`}>{role}</span>
+    const roleLabels = {
+        admin: t('admin.users.role.admin', { defaultValue: 'Admin' }),
+        engineer: t('admin.users.role.engineer', { defaultValue: 'Engineer' }),
+        user: t('admin.users.role.user', { defaultValue: 'User' }),
+    }
+    return <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[role]}`}>{roleLabels[role]}</span>
 }
 
 function ModalFrame({
@@ -229,6 +237,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputClass = 'w-full rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-text-secondary'
 
 export default function Admin() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuthStore()
 
@@ -520,10 +529,10 @@ export default function Admin() {
     }
 
     const metricCards = [
-        { label: 'Users', value: stats.totalUsers, detail: `${activeUsers} active`, icon: Users, accent: 'from-accent/28 to-corphia-beige/45 /30 /30' },
-        { label: 'Conversations', value: stats.totalConversations, detail: 'live workspace', icon: MessageSquare, accent: 'from-corphia-bronze/32 to-corphia-sand/45 /26 /30' },
-        { label: 'Documents', value: stats.totalDocuments, detail: 'indexed sources', icon: Layers3, accent: 'from-corphia-warm-gray/28 to-corphia-beige/45 /24 /30' },
-        { label: 'Messages', value: stats.totalMessages, detail: 'audit trail', icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30' },
+        { label: t('admin.overview.users'), value: stats.totalUsers, detail: t('admin.overview.usersDetail', { active: activeUsers }), icon: Users, accent: 'from-accent/28 to-corphia-beige/45 /30 /30' },
+        { label: t('admin.overview.conversations'), value: stats.totalConversations, detail: t('admin.overview.conversationsDetail'), icon: MessageSquare, accent: 'from-corphia-bronze/32 to-corphia-sand/45 /26 /30' },
+        { label: t('admin.overview.documents'), value: stats.totalDocuments, detail: t('admin.overview.documentsDetail'), icon: Layers3, accent: 'from-corphia-warm-gray/28 to-corphia-beige/45 /24 /30' },
+        { label: t('admin.overview.messages'), value: stats.totalMessages, detail: t('admin.overview.messagesDetail'), icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30' },
     ]
 
     return (
@@ -540,15 +549,15 @@ export default function Admin() {
                         </button>
                         <div>
                             <p className="text-[12px] font-bold uppercase tracking-wider text-accent">Corphia Control</p>
-                            <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">管理後台</h1>
+                            <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">{t('admin.title')}</h1>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="hidden rounded-full border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent sm:flex">
-                            Backend Online
+                            {t('admin.backendOnline')}
                         </div>
                         <div className="rounded-full border border-border-subtle bg-bg-surface px-4 py-2 text-sm text-text-secondary">
-                            {user?.name || 'Operator'}
+                            {user?.name || t('admin.operator')}
                         </div>
                     </div>
                 </header>
@@ -558,8 +567,8 @@ export default function Admin() {
                         <div className="mb-4 rounded-[16px] border border-border-subtle bg-bg-base p-4">
                             <div className="mb-6 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[12px] uppercase tracking-wider text-text-secondary">Current Model</p>
-                                    <p className="mt-1 truncate text-sm font-semibold text-text-primary">{currentModel?.name || 'Standby'}</p>
+                                    <p className="text-[12px] uppercase tracking-wider text-text-secondary">{t('admin.currentModel')}</p>
+                                    <p className="mt-1 truncate text-sm font-semibold text-text-primary">{currentModel?.name || t('admin.standby')}</p>
                                 </div>
                                 <Sparkles className="h-5 w-5 text-accent" />
                             </div>
@@ -569,7 +578,7 @@ export default function Admin() {
                         </div>
 
                         <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-y-auto custom-scrollbar">
-                            {tabs.map((tab) => {
+                            {TABS_CONFIG.map((tab) => {
                                 const Icon = tab.icon
                                 const active = activeSection === tab.id
                                 return (
@@ -583,7 +592,7 @@ export default function Admin() {
                                         }`}
                                     >
                                         <Icon className={`h-4 w-4 ${active ? 'text-accent ' : ''}`} />
-                                        {tab.label}
+                                        {t(tab.i18nKey)}
                                     </button>
                                 )
                             })}
@@ -617,12 +626,12 @@ export default function Admin() {
 
                                 <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                                     <Panel className="overflow-hidden flex flex-col">
-                                        <SectionHeader title="Operational Map" eyebrow="System pulse" />
+                                        <SectionHeader title={t('admin.dashboard.operationalMap')} eyebrow={t('admin.dashboard.systemPulse')} />
                                         <div className="flex-1 p-5">
                                             <div className="grid h-full gap-4 md:grid-cols-2">
                                                 <div className="rounded-[16px] border border-border-subtle bg-bg-base p-5 flex flex-col justify-between">
                                                     <div>
-                                                        <p className="text-sm font-semibold text-text-secondary">Operational Efficiency</p>
+                                                        <p className="text-sm font-semibold text-text-secondary">{t('admin.dashboard.operationalEfficiency')}</p>
                                                         <p className="mt-4 text-6xl font-light tracking-tight text-text-primary">78.3<span className="text-2xl text-text-secondary ml-1">%</span></p>
                                                     </div>
                                                     <div className="mt-8 flex justify-center py-4 relative">
@@ -636,7 +645,7 @@ export default function Admin() {
                                                     <div className="rounded-[16px] border border-red-500/20 bg-red-500/10 p-5">
                                                         <div className="flex items-start justify-between">
                                                             <div>
-                                                                <p className="text-sm text-red-100/70">Capacity Issues</p>
+                                                                <p className="text-sm text-red-100/70">{t('admin.dashboard.capacityIssues')}</p>
                                                                 <p className="mt-2 text-2xl font-light text-text-primary">2 lines</p>
                                                             </div>
                                                             <CircleAlert className="h-5 w-5 text-red-200" />
@@ -644,7 +653,7 @@ export default function Admin() {
                                                     </div>
                                                     <div className="rounded-[16px] border border-border-subtle bg-bg-base p-5 flex-1 flex flex-col justify-between">
                                                         <div>
-                                                            <p className="text-sm font-semibold text-text-secondary">Live Passenger Volume</p>
+                                                            <p className="text-sm font-semibold text-text-secondary">{t('admin.dashboard.livePassengerVolume')}</p>
                                                             <p className="mt-3 text-4xl font-light tracking-tight text-text-primary">142,580</p>
                                                         </div>
                                                         <div className="mt-5 grid grid-cols-4 gap-2 text-xs font-medium text-text-secondary">
@@ -657,7 +666,7 @@ export default function Admin() {
                                     </Panel>
 
                                     <Panel>
-                                        <SectionHeader title="Recent Access" eyebrow="Operators" />
+                                        <SectionHeader title={t('admin.dashboard.recentAccess')} eyebrow={t('admin.dashboard.operators')} />
                                         <div className="space-y-3 p-5">
                                             {users.slice(0, 6).map((item) => (
                                                 <div key={item.id} className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-bg-base p-3 transition hover:bg-bg-base/80">
@@ -680,24 +689,26 @@ export default function Admin() {
                         {activeSection === 'users' && (
                             <Panel className="overflow-hidden">
                                 <SectionHeader
-                                    title={`使用者管理 (${users.length})`}
-                                    eyebrow={`${activeUsers} active operators`}
-                                    action={<ActionButton onClick={handleAddUser}><Plus className="h-4 w-4" />新增使用者</ActionButton>}
+                                    title={t('admin.users.title') + ` (${users.length})`}
+                                    eyebrow={t('admin.users.activeOperators', { active: activeUsers })}
+                                    action={<ActionButton onClick={handleAddUser}><Plus className="h-4 w-4" />{t('admin.users.addUser')}</ActionButton>}
                                 />
                                 <div className="overflow-x-auto">
                                     <table className="w-full min-w-[760px]">
                                         <thead className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
                                             <tr>
-                                                <th className="px-6 py-4">User</th>
-                                                <th className="px-6 py-4">Role</th>
-                                                <th className="px-6 py-4">Status</th>
-                                                <th className="px-6 py-4">Last Login</th>
-                                                <th className="px-6 py-4 text-right">Action</th>
+                                                <th className="px-6 py-4">{t('admin.users.table.user')}</th>
+                                                <th className="px-6 py-4">{t('admin.users.table.role')}</th>
+                                                <th className="px-6 py-4">{t('admin.users.table.status')}</th>
+                                                <th className="px-6 py-4">{t('admin.users.table.lastLogin')}</th>
+                                                <th className="px-6 py-4 text-right">{t('admin.users.table.action')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border-subtle">
                                             {isLoading ? (
-                                                <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>Loading users...</td></tr>
+                                                <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>{t('common.loading')}</td></tr>
+                                            ) : users.length === 0 ? (
+                                                <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>{t('admin.users.noUsers')}</td></tr>
                                             ) : users.map((item) => (
                                                 <tr key={item.id} className="transition hover:bg-bg-base">
                                                     <td className="px-6 py-4">
@@ -714,8 +725,8 @@ export default function Admin() {
                                                     <td className="px-6 py-4 text-sm text-text-secondary">{formatDate(item.lastLoginAt)}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex justify-end gap-2">
-                                                            <ActionButton variant="secondary" onClick={() => handleEditUser(item)}><UserRoundCog className="h-4 w-4" />編輯</ActionButton>
-                                                            <ActionButton variant="danger" onClick={() => handleDeleteUser(item)}><Trash2 className="h-4 w-4" />刪除</ActionButton>
+                                                            <ActionButton variant="secondary" onClick={() => handleEditUser(item)}><UserRoundCog className="h-4 w-4" />{t('common.edit')}</ActionButton>
+                                                            <ActionButton variant="danger" onClick={() => handleDeleteUser(item)}><Trash2 className="h-4 w-4" />{t('common.delete')}</ActionButton>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -730,19 +741,19 @@ export default function Admin() {
                             <div className="space-y-5">
                                 <Panel>
                                     <SectionHeader
-                                        title="模型管理"
+                                        title={t('admin.models.title')}
                                         eyebrow={modelsDir || 'ai_model'}
-                                        action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />重新掃描</ActionButton>}
+                                        action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />{t('admin.models.rescan')}</ActionButton>}
                                     />
                                     <div className="grid gap-4 p-5">
                                         {isLoadingModels ? (
-                                            <div className="py-10 text-center text-text-secondary">Loading models...</div>
+                                            <div className="py-10 text-center text-text-secondary">{t('common.loading')}</div>
                                         ) : models.map((model) => (
                                             <div key={model.name} className="flex flex-col gap-4 rounded-[16px] border border-border-subtle bg-bg-base p-5 md:flex-row md:items-center md:justify-between">
                                                 <div className="min-w-0">
                                                     <div className="flex flex-wrap items-center gap-3">
                                                         <p className="truncate text-lg font-semibold text-text-primary">{model.name}</p>
-                                                        {model.is_current && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">CURRENT</span>}
+                                                        {model.is_current && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{t('admin.models.current')}</span>}
                                                         {model.quantization && <span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-mono text-text-secondary">{model.quantization}</span>}
                                                     </div>
                                                     <div className="mt-3 flex flex-wrap gap-4 text-sm text-text-secondary">
@@ -750,7 +761,7 @@ export default function Admin() {
                                                         <span className="truncate">{model.filename}</span>
                                                     </div>
                                                 </div>
-                                                {!model.is_current && <ActionButton variant="secondary" onClick={() => handleSelectModel(model.name)}>選用模型</ActionButton>}
+                                                {!model.is_current && <ActionButton variant="secondary" onClick={() => handleSelectModel(model.name)}>{t('admin.models.select')}</ActionButton>}
                                             </div>
                                         ))}
                                     </div>
@@ -762,30 +773,30 @@ export default function Admin() {
                             <div className="space-y-5">
                                 <Panel className="p-5">
                                     <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-                                        <Field label="Search">
+                                        <Field label={t('common.search')}>
                                             <div className="flex gap-2">
-                                                <input className={inputClass} value={auditSearchInput} onChange={(event) => setAuditSearchInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && handleAuditSearch()} placeholder="Email, action, description..." />
-                                                <ActionButton onClick={handleAuditSearch}><Search className="h-4 w-4" />搜尋</ActionButton>
+                                                <input className={inputClass} value={auditSearchInput} onChange={(event) => setAuditSearchInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && handleAuditSearch()} placeholder={t('admin.audit.searchPlaceholder')} />
+                                                <ActionButton onClick={handleAuditSearch}><Search className="h-4 w-4" />{t('common.search')}</ActionButton>
                                             </div>
                                         </Field>
-                                        <Field label="Action">
+                                        <Field label={t('admin.audit.action')}>
                                             <select className={inputClass} value={auditFilter.action || ''} onChange={(event) => handleAuditFilterChange('action', event.target.value)}>
-                                                <option value="">All actions</option>
-                                                <option value="login_success">登入成功</option>
-                                                <option value="login_failed">登入失敗</option>
-                                                <option value="user_update">使用者更新</option>
-                                                <option value="document_upload">文件上傳</option>
-                                                <option value="document_delete">文件刪除</option>
+                                                <option value="">{t('admin.audit.allActions')}</option>
+                                                <option value="login_success">{t('admin.audit.actionTypes.login_success')}</option>
+                                                <option value="login_failed">{t('admin.audit.actionTypes.login_failed')}</option>
+                                                <option value="user_update">{t('admin.audit.actionTypes.user_update')}</option>
+                                                <option value="document_upload">{t('admin.audit.actionTypes.document_upload')}</option>
+                                                <option value="document_delete">{t('admin.audit.actionTypes.document_delete')}</option>
                                             </select>
                                         </Field>
-                                        <Field label="Resource">
+                                        <Field label={t('admin.audit.resource')}>
                                             <select className={inputClass} value={auditFilter.resource_type || ''} onChange={(event) => handleAuditFilterChange('resource_type', event.target.value)}>
-                                                <option value="">All resources</option>
-                                                <option value="auth">Auth</option>
-                                                <option value="user">User</option>
-                                                <option value="conversation">Conversation</option>
-                                                <option value="document">Document</option>
-                                                <option value="model">Model</option>
+                                                <option value="">{t('admin.audit.allResources')}</option>
+                                                <option value="auth">{t('admin.audit.resourceTypes.auth')}</option>
+                                                <option value="user">{t('admin.audit.resourceTypes.user')}</option>
+                                                <option value="conversation">{t('admin.audit.resourceTypes.conversation')}</option>
+                                                <option value="document">{t('admin.audit.resourceTypes.document')}</option>
+                                                <option value="model">{t('admin.audit.resourceTypes.model')}</option>
                                             </select>
                                         </Field>
                                         <div className="flex gap-2">
@@ -796,8 +807,8 @@ export default function Admin() {
                                 </Panel>
                                 <Panel className="overflow-hidden">
                                     <SectionHeader
-                                        title="稽核紀錄"
-                                        eyebrow={`${auditTotal.toLocaleString()} events`}
+                                        title={t('admin.audit.title')}
+                                        eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
                                         action={
                                             <div className="flex items-center gap-2">
                                                 <ActionButton variant="secondary" disabled={auditPage <= 1} onClick={() => handleAuditPageChange(auditPage - 1)}><ChevronLeft className="h-4 w-4" /></ActionButton>
@@ -810,24 +821,24 @@ export default function Admin() {
                                         <table className="w-full min-w-[900px]">
                                         <thead className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
                                                 <tr>
-                                                    <th className="px-5 py-4">Time</th>
-                                                    <th className="px-5 py-4">Action</th>
-                                                    <th className="px-5 py-4">Resource</th>
-                                                    <th className="px-5 py-4">User</th>
-                                                    <th className="px-5 py-4">Description</th>
-                                                    <th className="px-5 py-4">IP</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.time')}</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.action')}</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.resource')}</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.user')}</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.description')}</th>
+                                                    <th className="px-5 py-4">{t('admin.audit.table.ip')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-border-subtle">
                                                 {isLoadingAudit ? (
-                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>Loading audit log...</td></tr>
+                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>{t('common.loading')}</td></tr>
                                                 ) : auditLogs.length === 0 ? (
-                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>No audit events</td></tr>
+                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>{t('admin.audit.noEvents')}</td></tr>
                                                 ) : auditLogs.map((log) => (
                                                     <tr key={log.id} className="transition hover:bg-bg-base">
                                                         <td className="px-5 py-4 text-sm text-text-secondary">{formatDate(log.created_at)}</td>
-                                                        <td className="px-5 py-4"><span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-semibold text-text-primary">{ACTION_LABELS[log.action] || log.action}</span></td>
-                                                        <td className="px-5 py-4 text-sm text-text-primary">{RESOURCE_LABELS[log.resource_type] || log.resource_type}</td>
+                                                        <td className="px-5 py-4"><span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-semibold text-text-primary">{t(`admin.audit.actionTypes.${log.action}`, { defaultValue: ACTION_LABELS[log.action] || log.action })}</span></td>
+                                                        <td className="px-5 py-4 text-sm text-text-primary">{t(`admin.audit.resourceTypes.${log.resource_type}`, { defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type })}</td>
                                                         <td className="max-w-[180px] truncate px-5 py-4 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
                                                         <td className="max-w-[300px] truncate px-5 py-4 text-sm text-text-secondary">{log.description || '-'}</td>
                                                         <td className="px-5 py-4 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
@@ -843,7 +854,7 @@ export default function Admin() {
                         {activeSection === 'system' && (
                             <div className="grid gap-5 xl:grid-cols-2">
                                 <Panel>
-                                    <SectionHeader title="系統資訊" eyebrow="Runtime" />
+                                    <SectionHeader title={t('admin.system.systemInfo')} eyebrow={t('admin.system.runtime')} />
                                     <div className="grid gap-4 p-5 sm:grid-cols-2">
                                         {[
                                             ['Version', '2.3.0', ShieldCheck],
@@ -865,11 +876,17 @@ export default function Admin() {
                                     </div>
                                 </Panel>
                                 <Panel>
-                                    <SectionHeader title="維運操作" eyebrow="Maintenance" />
+                                    <SectionHeader title={t('admin.system.maintenance')} eyebrow={t('admin.system.maintenanceSub')} />
                                     <div className="space-y-3 p-5">
-                                        <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />清除快取</ActionButton>
-                                        <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />重新索引向量</ActionButton>
-                                        <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />重啟服務</ActionButton>
+                                        <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />{t('admin.system.clearCache')}</ActionButton>
+                                        <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />{t('admin.system.reindexVector')}</ActionButton>
+                                        <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />{t('admin.system.restartService')}</ActionButton>
+                                    </div>
+                                </Panel>
+                                <Panel className="xl:col-span-2">
+                                    <SectionHeader title={t('admin.system.realTimeHealth')} eyebrow={t('admin.system.realTimeHealthSub')} />
+                                    <div className="p-5">
+                                        <SystemMonitorPanel />
                                     </div>
                                 </Panel>
                                 <Panel className="xl:col-span-2">
@@ -884,15 +901,15 @@ export default function Admin() {
                         {activeSection === 'tenants' && (
                             <Panel className="overflow-hidden">
                                 <SectionHeader
-                                    title={`租戶管理 (${tenants.length})`}
+                                    title={t('admin.tenants.title')}
                                     eyebrow={`${activeTenants} active tenants`}
-                                    action={<ActionButton onClick={handleAddTenant}><Plus className="h-4 w-4" />新增租戶</ActionButton>}
+                                    action={<ActionButton onClick={handleAddTenant}><Plus className="h-4 w-4" />{t('admin.tenants.addTenant')}</ActionButton>}
                                 />
                                 <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
                                     {isLoadingTenants ? (
-                                        <div className="col-span-full py-10 text-center text-text-secondary">Loading tenants...</div>
+                                        <div className="col-span-full py-10 text-center text-text-secondary">{t('common.loading')}</div>
                                     ) : tenants.length === 0 ? (
-                                        <div className="col-span-full py-10 text-center text-text-secondary">No tenants</div>
+                                        <div className="col-span-full py-10 text-center text-text-secondary">{t('admin.tenants.noTenants')}</div>
                                     ) : tenants.map((item) => (
                                         <div key={item.id} className="rounded-[16px] border border-border-subtle bg-bg-base p-5">
                                             <div className="mb-5 flex items-start justify-between gap-3">
@@ -902,10 +919,10 @@ export default function Admin() {
                                                 </div>
                                                 <StatusPill active={item.is_active} />
                                             </div>
-                                            <p className="min-h-[44px] text-sm leading-relaxed text-text-secondary">{item.description || 'No description'}</p>
+                                            <p className="min-h-[44px] text-sm leading-relaxed text-text-secondary">{item.description || t('admin.tenants.noTenants')}</p>
                                             <div className="mt-6 flex justify-end gap-2">
-                                                <ActionButton variant="secondary" onClick={() => handleToggleTenantStatus(item)}>{item.is_active ? '停用' : '啟用'}</ActionButton>
-                                                <ActionButton onClick={() => handleEditTenant(item)}>編輯</ActionButton>
+                                                <ActionButton variant="secondary" onClick={() => handleToggleTenantStatus(item)}>{item.is_active ? t('admin.tenants.actions.disable') : t('admin.tenants.actions.enable')}</ActionButton>
+                                                <ActionButton onClick={() => handleEditTenant(item)}>{t('admin.tenants.actions.edit')}</ActionButton>
                                             </div>
                                         </div>
                                     ))}
@@ -918,7 +935,7 @@ export default function Admin() {
 
             {isUserModalOpen && (
                 <ModalFrame onClose={() => setIsUserModalOpen(false)}>
-                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? '編輯使用者' : '新增使用者'}</h3>
+                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? t('common.edit') : t('common.save')}</h3>
                     <form onSubmit={handleUserSubmit} className="space-y-4">
                         <Field label="Name"><input className={inputClass} required value={userFormData.name} onChange={(event) => setUserFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Email"><input className={inputClass} type="email" required disabled={!!currentEditingUser} value={userFormData.email} onChange={(event) => setUserFormData((prev) => ({ ...prev, email: event.target.value }))} /></Field>
@@ -931,12 +948,12 @@ export default function Admin() {
                             </select>
                         </Field>
                         <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
-                            啟用帳號
+                            {t('admin.tenants.status.active')}
                             <input type="checkbox" checked={userFormData.is_active} onChange={(event) => setUserFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
                         <div className="flex gap-3 pt-4">
-                            <ActionButton variant="secondary" onClick={() => setIsUserModalOpen(false)}>取消</ActionButton>
-                            <ActionButton disabled={isSubmittingUser}>{isSubmittingUser ? '儲存中...' : '儲存'}</ActionButton>
+                            <ActionButton variant="secondary" onClick={() => setIsUserModalOpen(false)}>{t('common.cancel')}</ActionButton>
+                            <ActionButton disabled={isSubmittingUser}>{isSubmittingUser ? t('common.loading') : t('common.save')}</ActionButton>
                         </div>
                     </form>
                 </ModalFrame>
@@ -944,18 +961,18 @@ export default function Admin() {
 
             {isTenantModalOpen && (
                 <ModalFrame onClose={() => setIsTenantModalOpen(false)}>
-                    <h3 className="mb-6 text-xl font-semibold">{currentEditingTenant ? '編輯租戶' : '新增租戶'}</h3>
+                    <h3 className="mb-6 text-xl font-semibold">{currentEditingTenant ? t('admin.tenants.modal.editTitle') : t('admin.tenants.modal.addTitle')}</h3>
                     <form onSubmit={handleTenantSubmit} className="space-y-4">
-                        <Field label="Name"><input className={inputClass} required value={tenantFormData.name} onChange={(event) => setTenantFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
+                        <Field label={t('admin.tenants.modal.name')}><input className={inputClass} required value={tenantFormData.name} onChange={(event) => setTenantFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Slug"><input className={inputClass} required value={tenantFormData.slug} onChange={(event) => setTenantFormData((prev) => ({ ...prev, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} /></Field>
-                        <Field label="Description"><textarea className={inputClass} rows={3} value={tenantFormData.description} onChange={(event) => setTenantFormData((prev) => ({ ...prev, description: event.target.value }))} /></Field>
+                        <Field label={t('admin.tenants.modal.description')}><textarea className={inputClass} rows={3} value={tenantFormData.description} onChange={(event) => setTenantFormData((prev) => ({ ...prev, description: event.target.value }))} /></Field>
                         <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
-                            啟用租戶
+                            {t('admin.tenants.status.active')}
                             <input type="checkbox" checked={tenantFormData.is_active} onChange={(event) => setTenantFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
                         <div className="flex gap-3 pt-4">
-                            <ActionButton variant="secondary" onClick={() => setIsTenantModalOpen(false)}>取消</ActionButton>
-                            <ActionButton disabled={isSubmittingTenant}>{isSubmittingTenant ? '儲存中...' : '儲存'}</ActionButton>
+                            <ActionButton variant="secondary" onClick={() => setIsTenantModalOpen(false)}>{t('admin.tenants.modal.cancel')}</ActionButton>
+                            <ActionButton disabled={isSubmittingTenant}>{isSubmittingTenant ? t('common.loading') : t('admin.tenants.modal.submit')}</ActionButton>
                         </div>
                     </form>
                 </ModalFrame>
