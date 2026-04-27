@@ -18,9 +18,10 @@ interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement>
     label: string;
     delayClass?: string;
     id?: string;
+    error?: string;
 }
 
-const FloatingInput = ({ label, delayClass, id, value, className, type = 'text', onFocus, onBlur, ...props }: FloatingInputProps) => {
+const FloatingInput = ({ label, delayClass, id, value, className, type = 'text', error, onFocus, onBlur, ...props }: FloatingInputProps) => {
     const isFilled = Boolean(value && value.toString().length > 0);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
@@ -37,7 +38,9 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 value={value}
                 onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
                 onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border border-border-subtle text-text-primary text-[15px] outline-none focus:border-corphia-bronze focus:shadow-md focus:ring-0 transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${
+                    error ? 'border-red-500 focus:border-red-500 pr-28' : 'border-border-subtle focus:border-corphia-bronze focus:shadow-md focus:ring-0'
+                } ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -46,12 +49,12 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 animate={isFloating ? {
                     top: 0,
                     scale: 0.85,
-                    color: 'rgb(var(--accent))',
+                    color: error ? '#ef4444' : 'rgb(var(--accent))',
                     backgroundColor: 'var(--label-bg, #FFFFFF)',
                 } : {
                     top: '50%',
                     scale: 1,
-                    color: 'rgb(var(--text-muted))',
+                    color: error ? '#ef4444' : 'rgb(var(--text-muted))',
                     backgroundColor: 'transparent',
                 }}
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
@@ -60,6 +63,12 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
             >
                 {label}
             </motion.label>
+
+            {error && (
+                <span className={`absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-red-500 pointer-events-none ${isPasswordType && isFilled ? 'right-12' : 'right-5'}`}>
+                    {error}
+                </span>
+            )}
 
             {isPasswordType && (
                 <AnimatePresence>
@@ -121,6 +130,7 @@ export default function Login() {
     const [confirmPassword, setConfirmPassword] = useState('')
 
     const [error, setError] = useState('')
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
     const [hasInitialConnected, setHasInitialConnected] = useState(false)
     const [showSkipLoading, setShowSkipLoading] = useState(false)
@@ -187,14 +197,26 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+        setFieldErrors({})
         
-        // Custom manual validation to replace browser's native popup
+        let hasError = false
+        const newFieldErrors: Record<string, string> = {}
+        
         if (!email.trim()) {
-            setError(t('auth.account') + '不能為空')
-            return
+            newFieldErrors.email = t('auth.account') + '不能為空'
+            hasError = true
         }
         if (!password) {
-            setError(t('auth.password') + '不能為空')
+            newFieldErrors.password = t('auth.password') + '不能為空'
+            hasError = true
+        }
+        if (activeTab === 'register' && !confirmPassword) {
+            newFieldErrors.confirmPassword = t('auth.confirmPassword') + '不能為空'
+            hasError = true
+        }
+
+        if (hasError) {
+            setFieldErrors(newFieldErrors)
             return
         }
 
@@ -203,7 +225,7 @@ export default function Login() {
         try {
             if (activeTab === 'register') {
                 if (password !== confirmPassword) {
-                    setError(t('auth.passwordMismatch'))
+                    setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
                     setLoading(false)
                     return
                 }
@@ -549,9 +571,10 @@ export default function Login() {
                                 id="email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => { setEmail(e.target.value); setFieldErrors(prev => ({...prev, email: ''})) }}
                                 required
                                 label={t('auth.account')}
+                                error={fieldErrors.email}
                             />
                         </motion.div>
 
@@ -562,9 +585,10 @@ export default function Login() {
                                 id="password"
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({...prev, password: ''})) }}
                                 required
                                 label={t('auth.password')}
+                                error={fieldErrors.password}
                             />
                         </motion.div>
 
@@ -589,10 +613,11 @@ export default function Login() {
                                 id="confirm-password"
                                 type="password"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors(prev => ({...prev, confirmPassword: ''})) }}
                                 required={activeTab === 'register'}
                                 label={t('auth.confirmPassword')}
                                 tabIndex={activeTab === 'register' ? 0 : -1}
+                                error={fieldErrors.confirmPassword}
                             />
                         </motion.div>
 
