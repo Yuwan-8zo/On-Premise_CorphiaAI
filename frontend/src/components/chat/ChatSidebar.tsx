@@ -203,8 +203,8 @@ export default function ChatSidebar({
                                     return filtered.map((conv) => (
                                         <div key={conv.id} onClick={() => selectConversation(conv)}
                                             className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                                ? 'bg-bg-elevated shadow-sm text-accent font-medium'
-                                                : 'text-text-secondary hover:bg-bg-elevated hover:text-accent'}`}
+                                                ? 'bg-bg-surface text-accent font-medium'
+                                                : 'text-text-secondary hover:bg-bg-surface hover:text-accent'}`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
@@ -292,8 +292,8 @@ export default function ChatSidebar({
                                                                 <div key={conv.id} className="relative">
                                                                     <div onClick={() => selectConversation(conv)}
                                                                         className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                            ? 'bg-bg-elevated shadow-sm text-accent font-medium'
-                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-elevated'}`}
+                                                                            ? 'bg-bg-surface text-accent font-medium border-transparent'
+                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-surface'}`}
                                                                     >
                                                                         <span className="truncate pr-2">{conv.title}</span>
                                                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
