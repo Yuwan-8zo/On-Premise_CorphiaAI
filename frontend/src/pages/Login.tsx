@@ -349,8 +349,8 @@ export default function Login() {
                         <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <h1 className="mb-6">
-                            <CorphiaWordmark className="h-[56px] w-auto" />
+                        <h1 className="mb-6 relative h-[56px] flex items-center">
+                            <CorphiaWordmark className="h-[90px] w-auto object-contain object-left absolute -left-2" />
                         </h1>
                         <p className="text-text-secondary mb-10 transition-colors">
                             {t('auth.engineDesc')}
