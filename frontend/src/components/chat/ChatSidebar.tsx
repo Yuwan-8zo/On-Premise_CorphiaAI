@@ -202,9 +202,9 @@ export default function ChatSidebar({
                                     if (filtered.length === 0) return <p className="text-text-muted text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
                                     return filtered.map((conv) => (
                                         <div key={conv.id} onClick={() => selectConversation(conv)}
-                                            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                                ? 'bg-bg-surface text-accent font-medium'
-                                                : 'text-text-secondary hover:bg-bg-surface hover:text-accent'}`}
+                                            className={`relative w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
+                                                ? 'bg-bg-elevated shadow-sm text-accent font-medium before:absolute before:right-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-1/2 before:bg-accent before:rounded-l-full'
+                                                : 'text-text-secondary hover:bg-bg-elevated hover:text-accent'}`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
@@ -291,9 +291,9 @@ export default function ChatSidebar({
                                                             {(grouped[folderName] || []).map((conv) => (
                                                                 <div key={conv.id} className="relative">
                                                                     <div onClick={() => selectConversation(conv)}
-                                                                        className={`w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                            ? 'bg-bg-surface text-accent font-medium border-transparent'
-                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-surface'}`}
+                                                                        className={`relative w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
+                                                                            ? 'bg-bg-elevated shadow-sm text-accent font-medium before:absolute before:right-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-1/2 before:bg-accent before:rounded-l-full'
+                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-elevated'}`}
                                                                     >
                                                                         <span className="truncate pr-2">{conv.title}</span>
                                                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
