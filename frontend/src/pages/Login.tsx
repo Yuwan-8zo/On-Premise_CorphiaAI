@@ -260,19 +260,19 @@ export default function Login() {
                     const pwdError = details.find(d => d.field?.includes('password'))
                     if (pwdError) {
                         const cleaned = pwdError.message.replace(/^Value error,\s*/i, '')
-                        setError(cleaned)
+                        setFieldErrors({ password: cleaned })
                     } else {
-                        setError(details.map(d => d.message.replace(/^Value error,\s*/i, '')).join(', '));
+                        setFieldErrors({ password: details.map(d => d.message.replace(/^Value error,\s*/i, '')).join(', ') })
                     }
                 } else {
-                    setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+                    setFieldErrors({ password: activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed') })
                 }
             } else if (data?.detail) {
-                setError(data.detail)
+                setFieldErrors({ password: data.detail })
             } else if (data?.error?.message) {
-                setError(data.error.message)
+                setFieldErrors({ password: data.error.message })
             } else {
-                setError(activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed'))
+                setFieldErrors({ password: activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed') })
             }
         } finally {
             setLoading(false)
