@@ -145,37 +145,39 @@ html.dark body {
 
 /* Chrome / Safari / Edge */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background-color: transparent;
 }
 
 /* 預設完全透明（隱藏） */
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background-color: transparent;
+  border: 4px solid transparent;
+  background-clip: padding-box;
   border-radius: 999px;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 /* 滑鼠移入可滾動區域時顯示滾動條 */
 *:hover::-webkit-scrollbar-thumb {
-  background: #2A2A2A;
+  background-color: #4A4A4A;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3a;
+  background-color: #5A5A5A;
 }
 
 /* 淺色模式 - 滾動條顏色稍亮 */
 html:not(.dark) *:hover::-webkit-scrollbar-thumb {
-  background: #c0c0c0;
+  background-color: #D1D1D1;
 }
 
 html:not(.dark) ::-webkit-scrollbar-thumb:hover {
-  background: #a0a0a0;
+  background-color: #A1A1A1;
 }
 
 /* 動畫 */
@@ -301,15 +303,6 @@ html.dark .highlighter-marker {
 html.dark .markdown-body strong {
   color: rgb(var(--color-ios-accent-dark));
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
-}
-
-/* 聊天區文字選取底色 */
-::selection {
-  background-color: rgb(var(--color-ios-accent-light) / 0.3);
-  color: inherit;
-}
-html.dark ::selection {
-  background-color: rgb(var(--color-ios-accent-dark) / 0.3);
 }
 
 /* 統一桌面版顏色過渡動畫，確保所有元素(背景、文字、邊框)完美同步 
