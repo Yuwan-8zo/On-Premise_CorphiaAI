@@ -672,9 +672,9 @@ export default function SettingsModal() {
 
                         {/* Card 內排版改為靈活設計：1:1 正方形 */}
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 16 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                            initial={{ scale: 0.95, y: 16 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 16 }}
                             transition={{ type:"spring", stiffness: 300, damping: 28 }}
                             className="relative w-full max-w-[640px] bg-bg-base shadow-2xl dark:shadow-black border border-border-subtle rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden"
                         >
@@ -859,9 +859,9 @@ export default function SettingsModal() {
                         onClick={() => setShowQR(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9, y: 20, opacity: 0 }}
-                            animate={{ scale: 1, y: 0, opacity: 1 }}
-                            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
                             transition={{ type:"spring", damping: 25, stiffness: 300 }}
                             onClick={e => e.stopPropagation()}
                             className="bg-bg-base p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
