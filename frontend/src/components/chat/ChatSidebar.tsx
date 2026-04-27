@@ -110,11 +110,11 @@ export default function ChatSidebar({
                     <motion.div
                         layout
                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative flex rounded-full select-none cursor-pointer bg-bg-base border border-transparent transition-colors shrink-0 w-full"
+                        className="relative flex rounded-full select-none cursor-pointer bg-black/5 dark:bg-black/20 border border-transparent transition-colors shrink-0 w-full"
                         style={{ padding: '5px' }}
                     >
                         <div
-                            className="bg-bg-base ] shadow-sm rounded-full border border-border-subtle"
+                            className="bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
                             style={{
                                 position: 'absolute', top: '5px',
                                 left: chatMode === 'general' ? '5px' : 'calc(50% + 0px)',
@@ -134,11 +134,11 @@ export default function ChatSidebar({
                     </motion.div>
                 ) : (
                     <div 
-                        className="relative bg-bg-surface rounded-[24px] cursor-pointer shrink-0 transition-colors border border-transparent"
+                        className="relative bg-black/5 dark:bg-black/20 rounded-[24px] cursor-pointer shrink-0 transition-colors border border-transparent"
                         style={{ width: '48px', height: '88px' }}
                         onClick={() => setChatMode(chatMode === 'general' ? 'project' : 'general')}
                     >
-                        <div className="absolute bg-bg-base ] rounded-full shadow-sm border border-border-subtle"
+                        <div className="absolute bg-bg-elevated rounded-full shadow-sm border border-border-subtle"
                             style={{
                                 width: '40px', height: '40px', top: '3px', left: '3px',
                                 transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
