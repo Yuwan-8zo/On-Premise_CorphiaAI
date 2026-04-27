@@ -91,7 +91,7 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
         <AnimatePresence>
             {renameModal && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-bg-main backdrop-blur-sm" onClick={onClose}>
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
                     <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
                         transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                         className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -134,7 +134,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
         <AnimatePresence>
             {moveModal && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-bg-main backdrop-blur-sm" onClick={onClose}>
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
                     <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
                         transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                         className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -212,7 +212,7 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
         <AnimatePresence>
             {show && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-bg-main backdrop-blur-sm" onClick={onClose}>
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
                     <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
                         transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                         className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
