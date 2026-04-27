@@ -303,6 +303,15 @@ html.dark .markdown-body strong {
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
 
+/* 聊天區文字選取底色 */
+::selection {
+  background-color: rgb(var(--color-ios-accent-light) / 0.3);
+  color: inherit;
+}
+html.dark ::selection {
+  background-color: rgb(var(--color-ios-accent-dark) / 0.3);
+}
+
 /* 統一桌面版顏色過渡動畫，確保所有元素(背景、文字、邊框)完美同步 
    已移除 !important，避免覆蓋元件的 layout/transform 動畫 (如側邊欄平移、Framer Motion)
 */
