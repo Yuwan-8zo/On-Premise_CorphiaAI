@@ -67,6 +67,7 @@ export const CorphiaWordmark: React.FC<{ className?: string; color?: string }> =
             fill={color}
             letterSpacing="-1"
             className="select-none pointer-events-none"
+            style={{ userSelect: 'none' }}
         >
             orphia
         </text>
