@@ -25,7 +25,7 @@ export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> =
     </svg>
 );
 
-const CorphiaLogoPaths = ({ color = "white", sparkColor = "rgb(var(--color-primary))" }: { color?: string, sparkColor?: string }) => (
+const CorphiaLogoPaths = ({ color = "white", sparkColor = "var(--color-primary)" }: { color?: string, sparkColor?: string }) => (
     <>
         {/* 幾何 C 字 */}
         <path d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5" 
@@ -94,7 +94,7 @@ export const CorphiaBrandLogo: React.FC<{ className?: string, color?: string }> 
 
         {/* 獨立青銅星星 (在 C 與 o 之間) */}
         <g transform="translate(108 40) scale(1.1)">
-            <use href="#sparkle-star" fill="rgb(var(--color-primary))" />
+            <use href="#sparkle-star" fill="var(--color-primary)" />
         </g>
         
         {/* 獨立 i 頂部的黑色星星 */}
