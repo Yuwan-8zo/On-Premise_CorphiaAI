@@ -346,16 +346,12 @@ export default function Login() {
 
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
-                        <h2 className="text-4xl font-bold text-text-primary mb-1 transition-colors">
+                        <h2 className="text-4xl font-bold text-text-primary mb-4 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <div className="relative w-full h-[60px] mb-6 mt-1">
-                            {/* 透過絕對定位與垂直置中，強迫突破圖片的透明留白限制，同時不影響外部排版 */}
-                            <CorphiaWordmark className="absolute top-1/2 left-[-24px] -translate-y-1/2 h-[180px] w-auto object-contain object-left pointer-events-none select-none max-w-none" />
+                        <div className="mb-10">
+                            <CorphiaWordmark className="h-[70px] w-auto object-contain object-left pointer-events-none select-none transform scale-[1.35] origin-left" />
                         </div>
-                        <p className="text-text-secondary mb-10 transition-colors">
-                            {t('auth.engineDesc')}
-                        </p>
 
                         <div className="space-y-6 mt-8">
                             <div className="flex items-center gap-4">
