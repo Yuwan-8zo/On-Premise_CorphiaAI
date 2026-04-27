@@ -60,7 +60,7 @@ export default function Chat() {
                                     <p className="text-[14px] text-text-muted">點擊右上角新增，建立專案護城河</p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-gray-100 dark:divide-white/5">
+                                <div className="divide-y divide-border-subtle dark:divide-border-subtle">
                                     {mainProps.folderDocuments.map((doc: any) => (
                                         <div key={doc.id} className="p-4 px-6 flex items-center justify-between hover:bg-bg-base transition-colors group">
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -153,7 +153,7 @@ export default function Chat() {
                         <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
                         {mainProps.isLoadingMore && (
                             <div className="flex justify-center items-center py-2 text-text-secondary">
-                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-border-subtle border-t-gray-800"></span>
+                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-border-subtle border-t-text-primary"></span>
                             </div>
                         )}
                         {mainProps.messages.length === 0 ? (

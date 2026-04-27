@@ -688,7 +688,7 @@ export default function Admin() {
                                                 <th className="px-6 py-4 text-right">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-200/70 dark:divide-white/8">
+                                        <tbody className="divide-y divide-border-subtle/70 dark:divide-border-subtle">
                                             {isLoading ? (
                                                 <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>Loading users...</td></tr>
                                             ) : users.map((item) => (
@@ -811,7 +811,7 @@ export default function Admin() {
                                                     <th className="px-5 py-4">IP</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-gray-200/70 dark:divide-white/8">
+                                            <tbody className="divide-y divide-border-subtle/70 dark:divide-border-subtle">
                                                 {isLoadingAudit ? (
                                                     <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>Loading audit log...</td></tr>
                                                 ) : auditLogs.length === 0 ? (

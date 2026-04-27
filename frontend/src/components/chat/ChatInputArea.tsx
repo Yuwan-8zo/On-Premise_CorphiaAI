@@ -100,7 +100,7 @@ export default function ChatInputArea({
                                 placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                 rows={1}
                                 disabled={isConnecting}
-                                className="flex-1 resize-none bg-transparent text-text-primary placeholder-gray-400 dark:placeholder-gray-500 outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                                className="flex-1 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                                 style={{ lineHeight: '1.4' }}
                             />
                             

@@ -46,12 +46,12 @@ const FloatingInput = ({ label, delayClass, id, value, className, type = 'text',
                 animate={isFloating ? {
                     top: 0,
                     scale: 0.85,
-                    color: '#8B7355',
+                    color: 'rgb(var(--accent))',
                     backgroundColor: 'var(--label-bg, #FFFFFF)',
                 } : {
                     top: '50%',
                     scale: 1,
-                    color: '#9E9790',
+                    color: 'rgb(var(--text-muted))',
                     backgroundColor: 'transparent',
                 }}
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
@@ -250,9 +250,9 @@ export default function Login() {
         <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden">
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-[#8B7355] dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    <path className="fill-[#8B7355] dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    <path className="fill-[#8B7355] dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
                 </svg>
             </div>
 

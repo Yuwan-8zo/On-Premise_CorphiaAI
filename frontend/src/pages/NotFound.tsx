@@ -37,7 +37,7 @@ export default function NotFound() {
 
                         {/* 蜿蜒小路 */}
                         <svg className="absolute bottom-0 w-full h-[75%]" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <path d="M35,100 C25,70 55,60 50,45 C47,35 55,25 50,15 L53,15 C58,25 50,35 55,45 C60,60 38,70 45,100 Z" fill="#F9F8F6" className="dark:fill-[#201B18]" opacity="0.9"/>
+                            <path d="M35,100 C25,70 55,60 50,45 C47,35 55,25 50,15 L53,15 C58,25 50,35 55,45 C60,60 38,70 45,100 Z" style={{ fill: 'rgb(var(--bg-main))' }} opacity="0.9"/>
                         </svg>
 
                         {/* 路標 */}

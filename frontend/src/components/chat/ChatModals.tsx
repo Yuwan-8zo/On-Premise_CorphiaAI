@@ -100,7 +100,7 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
                             <input ref={renameInputRef} type="text" value={renameInput}
                                 onChange={e => setRenameInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') onClose() }}
-                                className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder-gray-400 outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
+                                className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder:text-text-muted outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
                                 placeholder="對話名稱" autoComplete="off" />
                         </div>
                         <div className="flex border-t border-border-subtle">
@@ -179,7 +179,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                                     <p className="text-[13px] text-text-secondary mb-3">或輸入新專案名稱：</p>
                                     <input type="text" value={moveInput} onChange={e => setMoveInput(e.target.value)}
                                         onKeyDown={e => { if (e.key === 'Enter') submitMove(); if (e.key === 'Escape') onClose() }}
-                                        className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder-gray-400 outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
+                                        className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder:text-text-muted outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
                                         placeholder="新資料夾" autoFocus autoComplete="off" />
                                 </div>
                                 <div className="flex border-t border-border-subtle">
@@ -222,7 +222,7 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
                             <input ref={inputRef} type="text" value={input}
                                 onChange={e => setInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onClose() }}
-                                className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder-gray-400 outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
+                                className="w-full px-4 py-2.5 bg-bg-base border border-border-subtle rounded-xl text-[15px] text-text-primary placeholder:text-text-muted outline-none focus:border-corphia-bronze focus:ring-2 focus:ring-corphia-bronze/20 transition-all"
                                 placeholder="資料夾名稱" autoComplete="off" />
                         </div>
                         <div className="flex border-t border-border-subtle">

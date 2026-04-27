@@ -7,6 +7,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
 import { bootstrapAuth } from './lib/bootstrapAuth'
+import { THEME_COLORS } from './constants/themeColors'
 
 import { lazy, Suspense } from 'react'
 
@@ -67,7 +68,7 @@ export default function App() {
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
     useEffect(() => {
         const isDark = theme === 'dark'
-        const bg = isDark ? '#202022' : '#F6F4F0'
+        const bg = isDark ? THEME_COLORS.darkBg : THEME_COLORS.lightBg
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
@@ -83,7 +84,7 @@ export default function App() {
 
         // html/body 背景色即時更新（不依賴 CSS transition）
         if (isDark) {
-            html.style.background = 'linear-gradient(135deg, #202022 0%, #101012 100%)'
+            html.style.background = THEME_COLORS.darkBgGradient
             document.body.style.background = 'transparent'
             // Safari 需要設定 background-attachment: fixed 才能讓漸層填滿整個 viewport 且不隨滾動延伸
             html.style.backgroundAttachment = 'fixed'

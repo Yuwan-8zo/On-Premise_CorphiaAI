@@ -287,7 +287,7 @@ export default function Documents() {
                             尚無上傳的文件
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100 dark:divide-white/5">
+                        <div className="divide-y divide-border-subtle dark:divide-border-subtle">
                             {documents.map(doc => (
                                 <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-bg-base transition-colors">
                                     <FileIcon type={doc.fileType} />

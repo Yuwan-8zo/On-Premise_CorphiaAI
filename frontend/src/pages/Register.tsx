@@ -114,7 +114,7 @@ export default function Register() {
                             <span className="text-3xl">🤖</span>
                         </div>
                         <h1 className="text-2xl font-bold text-text-primary">Corphia AI</h1>
-                        <p className="text-slate-300 mt-2">{t('auth.createAccount')}</p>
+                        <p className="text-text-muted mt-2">{t('auth.createAccount')}</p>
                     </div>
 
                     {/* 錯誤訊息 */}
@@ -128,7 +128,7 @@ export default function Register() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* 名稱 */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-text-muted mb-2">
                                 {t('auth.name')}
                             </label>
                             <input
@@ -146,7 +146,7 @@ export default function Register() {
 
                         {/* 電子郵件 */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-text-muted mb-2">
                                 {t('auth.email')}
                             </label>
                             <input
@@ -164,7 +164,7 @@ export default function Register() {
 
                         {/* 密碼 */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-text-muted mb-2">
                                 {t('auth.password')}
                             </label>
                             <input
@@ -182,7 +182,7 @@ export default function Register() {
 
                         {/* 確認密碼 */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-text-muted mb-2">
                                 {t('auth.confirmPassword')}
                             </label>
                             <input
@@ -213,7 +213,7 @@ export default function Register() {
                     </form>
 
                     {/* 登入連結 */}
-                    <p className="mt-6 text-center text-slate-400">
+                    <p className="mt-6 text-center text-text-muted">
                         {t('auth.hasAccount')}{' '}
                         <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
                             {t('auth.login')}

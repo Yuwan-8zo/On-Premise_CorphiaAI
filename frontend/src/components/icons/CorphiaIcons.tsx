@@ -5,7 +5,7 @@ import React from 'react';
 export const CorphiaLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
         {/* 背景大圓角方塊 / 圓形 */}
-        <rect width="24" height="24" rx="12" className="fill-gray-900 dark:fill-ios-dark-gray6" />
+        <rect width="24" height="24" rx="12" className="fill-bg-base dark:fill-bg-elevated" />
         <CorphiaLogoPaths />
     </svg>
 );
@@ -25,7 +25,7 @@ export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> =
     </svg>
 );
 
-const CorphiaLogoPaths = ({ color ="white", sparkColor ="#94785A" }: { color?: string, sparkColor?: string }) => (
+const CorphiaLogoPaths = ({ color = "white", sparkColor = "rgb(var(--color-primary))" }: { color?: string, sparkColor?: string }) => (
     <>
         {/* 幾何 C 字 */}
         <path d="M16 8.5C15 7.5 13.5 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C13.5 17 15 16.5 16 15.5" 
@@ -94,7 +94,7 @@ export const CorphiaBrandLogo: React.FC<{ className?: string, color?: string }> 
 
         {/* 獨立青銅星星 (在 C 與 o 之間) */}
         <g transform="translate(108 40) scale(1.1)">
-            <use href="#sparkle-star" fill="#94785A" />
+            <use href="#sparkle-star" fill="rgb(var(--color-primary))" />
         </g>
         
         {/* 獨立 i 頂部的黑色星星 */}
