@@ -46,7 +46,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
             style={{ opacity: isStreaming ? 0 : 1 }}
         >
-            <CorphiaLogo className="w-9 h-9" />
+            <CorphiaLogo className="w-9 h-9 text-text-primary" />
         </span>
     </div>
 )
@@ -148,7 +148,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                             {message.content_hash && (
                                 <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                    <div className="absolute right-0 bottom-full mb-2 hidden group-hover/hash:block bg-bg-surface text-text-primary text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg">
+                                    <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                         Verified: {message.content_hash.substring(0, 16)}...
                                     </div>
                                 </div>
@@ -205,7 +205,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                                 {message.content_hash && (
                                     <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover/hash:block bg-bg-surface text-text-primary text-[11px] px-2 py-1 rounded whitespace-nowrap shadow-lg z-10">
+                                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                             Verified: {message.content_hash.substring(0, 16)}...
                                         </div>
                                     </div>

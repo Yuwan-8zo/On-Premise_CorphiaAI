@@ -296,16 +296,16 @@ export default function SettingsModal() {
                     {/* Backdrop */}
                     <div
                         onClick={() => setSettingsOpen(false)}
-                        className="absolute inset-0 bg-black/40 backdrop-blur-md"
+                        className="absolute inset-0 z-0 bg-black/40 backdrop-blur-md"
                     />
 
                     {/* Modal Content */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        initial={{ scale: 0.95, y: 10 }}
+                        animate={{ scale: 1, y: 0 }}
+                        exit={{ scale: 0.95, y: 10 }}
                         transition={{ type:"spring", stiffness: 300, damping: 30 }}
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle"
+                        className="relative z-10 w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-text"
                     >
                         {/* Close button */}
                         <button
@@ -508,7 +508,7 @@ export default function SettingsModal() {
                                             <div className="w-full h-24 rounded-xl bg-bg-base border border-border-subtle shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-accent' : 'text-text-primary '}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
@@ -524,7 +524,7 @@ export default function SettingsModal() {
                                             <div className="w-full h-24 rounded-xl bg-bg-surface border border-border-subtle shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-accent' : 'text-text-primary '}`}>
                                                 {t('settings.themeDark')}
                                             </p>
                                         </button>
@@ -583,8 +583,8 @@ export default function SettingsModal() {
                                                 onClick={() => setRAGDebugMode(!ragDebugMode)}
                                                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
                                                     ragDebugMode
-                                                        ? 'bg-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]'
-                                                        : 'bg-bg-surface '
+                                                        ? 'bg-accent'
+                                                        : 'bg-bg-surface border border-border-subtle'
                                                 }`}
                                             >
                                                 <span
@@ -611,8 +611,8 @@ export default function SettingsModal() {
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between p-5 rounded-[20px] transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))]'
-                                                        : 'bg-bg-base  hover:bg-bg-base  text-text-primary  border-transparent shadow-sm'
+                                                        ? 'bg-accent/10 text-accent border-accent ring-1 ring-accent'
+                                                        : 'bg-bg-base hover:bg-bg-surface text-text-primary border-transparent shadow-sm'
                                                     }`}
                                             >
                                                 <span className="font-semibold text-[16px]">{lang.label}</span>

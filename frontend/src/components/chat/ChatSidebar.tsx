@@ -85,7 +85,7 @@ export default function ChatSidebar({
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
                 <div className={`flex items-center overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10 md:px-1' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0 md:px-0'}`}>
-                    <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden" />
+                    <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
                 </div>
                 <button
                     onClick={toggleSidebar}
@@ -99,7 +99,7 @@ export default function ChatSidebar({
                     {sidebarOpen || isSidebarHovered ? (
                         <SidebarIcon className="w-[20px] h-[20px]" />
                     ) : (
-                        <CorphiaLogo className="w-[30px] h-[30px] rounded-[7px]" />
+                        <CorphiaLogo className="w-[30px] h-[30px] rounded-[7px] text-text-primary" />
                     )}
                 </button>
             </div>
@@ -167,9 +167,9 @@ export default function ChatSidebar({
                             createNewConversation()
                         }
                     }}
-                    className={`relative flex items-center bg-accent border border-transparent  text-text-primary transition-all hover:bg-accent overflow-hidden group ${sidebarOpen ? 'w-full px-4 py-2.5 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    className={`relative flex items-center bg-accent border border-transparent text-[#F6F4F0] transition-all hover:bg-accent overflow-hidden group ${sidebarOpen ? 'w-full px-4 py-2.5 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                 >
-                    <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center shrink-0 bg-transparent text-text-primary">
+                    <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[20px] h-[20px]">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -177,7 +177,7 @@ export default function ChatSidebar({
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[15px] truncate text-left m-0 leading-none">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</p>
+                            <p className="font-medium text-[15px] truncate text-left m-0 leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</p>
                         </div>
                     )}
                 </button>
@@ -326,9 +326,9 @@ export default function ChatSidebar({
                 <button 
                     onClick={() => setSettingsOpen(true)}
                     title="前往設定"
-                    className={`relative flex items-center bg-transparent hover:bg-bg-surface  transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    className={`relative flex items-center bg-transparent hover:bg-bg-surface transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                 >
-                    <div className="w-[32px] h-[32px] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary flex items-center justify-center shrink-0 font-bold text-[14px]">
+                    <div className="w-[32px] h-[32px] rounded-full bg-accent text-[#F6F4F0] flex items-center justify-center shrink-0 font-bold text-[14px]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {sidebarOpen && (

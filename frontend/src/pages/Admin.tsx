@@ -522,7 +522,7 @@ export default function Admin() {
     ]
 
     return (
-        <div className="min-h-screen overflow-hidden bg-bg-base text-text-primary">
+        <div className="min-h-screen overflow-hidden bg-[#F6F4F0] dark:bg-[#101012] transition-colors duration-500 text-text-primary">
 
             <div className="relative mx-auto flex min-h-screen max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
                 <header className="mb-5 flex flex-col gap-4 rounded-[20px] border border-border-subtle bg-bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">

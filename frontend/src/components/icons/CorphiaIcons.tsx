@@ -4,11 +4,9 @@ import CorphiaLogoDark from '../../assets/Corphia_LOGO_Dark.png';
 
 // 極簡直球對決：C + AI Spark
 // 保留極高的辨識度，黑底白字，一眼就看出是 Corphia 的「C」與 AI 的結合。
-export const CorphiaLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
+export const CorphiaLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6 text-text-primary' }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-        {/* 背景大圓角方塊 / 圓形 */}
-        <rect width="24" height="24" rx="12" className="fill-bg-base dark:fill-bg-elevated" />
-        <CorphiaLogoPaths />
+        <CorphiaLogoPaths color="currentColor" />
     </svg>
 );
 
