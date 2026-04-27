@@ -657,12 +657,15 @@ export default function SettingsModal() {
 
             <AnimatePresence>
                 {showPasswordForm && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-md">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+                    >
                         {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                        <div
                             onClick={() => setShowPasswordForm(false)}
                             className="absolute inset-0 bg-black/50 backdrop-blur-md"
                         />
@@ -693,7 +696,7 @@ export default function SettingsModal() {
                             {/* 左右分欄排版：密碼規則 + 輸入區域 */}
                             <div className="flex gap-6">
                                 {/* 左側：密碼規則 */}
-                                <div className="flex-1 bg-bg-base rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-transparent">
+                                <div className="flex-1 bg-bg-surface/50 rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-border-subtle/50">
                                     <p className="font-semibold text-text-primary text-[14px] mb-2">密碼安全要求</p>
                                     {[
                                         '至少 8 個字元',
@@ -758,7 +761,7 @@ export default function SettingsModal() {
                                 </div>
 
                                 {/* 右側：輸入欄位 */}
-                                <div className="flex-1 flex flex-col justify-evenly">
+                                <div className="flex-1 flex flex-col gap-4 justify-center">
                                     {/* 目前密碼 */}
                                     <PwdFloatingInput
                                         label="目前密碼"
@@ -827,7 +830,7 @@ export default function SettingsModal() {
                             <button
                                 onClick={handleChangePassword}
                                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-text-primary font-semibold rounded-full transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-[#F6F4F0] font-semibold rounded-[16px] transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                             >
                                 {isChangingPassword ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -840,7 +843,7 @@ export default function SettingsModal() {
                                 ) : t('auth.changePassword', '確認修改密碼')}
                             </button>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -894,13 +897,13 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={label}
-                className={`peer w-full px-5 py-3.5 rounded-[16px] bg-bg-surface border border-border-subtle text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-[16px] bg-transparent border border-border-subtle text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
             />
             <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none px-2 origin-left whitespace-nowrap
                 ${isFilled
-                    ? 'top-0 scale-[0.82] bg-bg-surface text-text-primary font-semibold py-0.5 rounded-full'
+                    ? 'top-0 scale-[0.82] bg-bg-base text-text-primary font-semibold py-0.5 rounded-full'
                     : 'top-1/2 scale-100 bg-transparent text-text-secondary py-0'}
-                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-bg-surface peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
+                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-bg-base peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
             `}>
                 {label}
             </label>
