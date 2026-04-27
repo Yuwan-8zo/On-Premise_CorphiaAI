@@ -657,26 +657,28 @@ export default function SettingsModal() {
 
             <AnimatePresence>
                 {showPasswordForm && (
-                    <motion.div 
+                    <motion.div
+                        key="pwd-backdrop"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+                        onClick={() => setShowPasswordForm(false)}
+                        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
+                    />
+                )}
+                {showPasswordForm && (
+                    <motion.div 
+                        key="pwd-modal"
+                        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                        transition={{ type:"spring", stiffness: 300, damping: 28 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
                     >
-                        {/* Backdrop */}
-                        <div
-                            onClick={() => setShowPasswordForm(false)}
-                            className="absolute inset-0 bg-black/50 backdrop-blur-md"
-                        />
-
                         {/* Card 內排版改為靈活設計：1:1 正方形 */}
-                        <motion.div
-                            initial={{ scale: 0.95, y: 16 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 16 }}
-                            transition={{ type:"spring", stiffness: 300, damping: 28 }}
-                            className="relative w-full max-w-[640px] bg-bg-base shadow-2xl dark:shadow-black border border-border-subtle rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden"
+                        <div
+                            className="relative w-full max-w-[640px] bg-bg-base shadow-2xl dark:shadow-black border border-border-subtle rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden pointer-events-auto"
                         >
                             {/* Close button */}
                             <button
@@ -842,7 +844,7 @@ export default function SettingsModal() {
                                     </span>
                                 ) : t('auth.changePassword', '確認修改密碼')}
                             </button>
-                        </motion.div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -851,20 +853,27 @@ export default function SettingsModal() {
             <AnimatePresence>
                 {showQR && (
                     <motion.div
+                        key="qr-backdrop"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25 }}
-                        className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-md"
                         onClick={() => setShowQR(false)}
+                    />
+                )}
+                {showQR && (
+                    <motion.div
+                        key="qr-modal"
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type:"spring", damping: 25, stiffness: 300 }}
+                        className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none"
                     >
-                        <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
-                            transition={{ type:"spring", damping: 25, stiffness: 300 }}
+                        <div
                             onClick={e => e.stopPropagation()}
-                            className="bg-bg-base p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4"
+                            className="bg-bg-base p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 pointer-events-auto"
                         >
                             {/* QR Code 圖片 */}
                             <img
@@ -872,7 +881,7 @@ export default function SettingsModal() {
                                 alt="Mobile Access QR Code"
                                 className="w-full max-w-[380px] aspect-square object-contain mx-auto rounded-[16px]"
                             />
-                        </motion.div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
