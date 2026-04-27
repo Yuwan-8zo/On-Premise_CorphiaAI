@@ -10,12 +10,12 @@ export default function Chat() {
         <div className="flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors">
             
             {/* --- Mobile Sidebar Overlay --- */}
-            {sidebarProps.sidebarOpen && (
-                <div 
-                    className="fixed inset-0 bg-transparent backdrop-blur-md z-40 md:hidden transition-opacity"
-                    onClick={sidebarProps.toggleSidebar}
-                />
-            )}
+            <div 
+                className={`fixed inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+                    sidebarProps.sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                }`}
+                onClick={sidebarProps.toggleSidebar}
+            />
 
             {/* 左側邊欄 Sidebar */}
             <ChatSidebar {...sidebarProps} />
