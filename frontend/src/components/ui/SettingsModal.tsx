@@ -286,14 +286,17 @@ export default function SettingsModal() {
         <>
             <AnimatePresence>
             {isSettingsOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 bg-black/50 backdrop-blur-md">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12"
+                >
                     {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                    <div
                         onClick={() => setSettingsOpen(false)}
-                        className="absolute inset-0 bg-black/50 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/40 backdrop-blur-md"
                     />
 
                     {/* Modal Content */}
@@ -824,7 +827,7 @@ export default function SettingsModal() {
                             <button
                                 onClick={handleChangePassword}
                                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-text-primary font-semibold rounded-full transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-corphia-bronze focus:ring-offset-2"
+                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-text-primary font-semibold rounded-full transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                             >
                                 {isChangingPassword ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -834,11 +837,12 @@ export default function SettingsModal() {
                                         </svg>
                                         修改中...
                                     </span>
-                                ) : '蝣箄?修改密碼'}
+                                ) : t('auth.changePassword', '確認修改密碼')}
                             </button>
                         </motion.div>
                     </div>
-                )}
+                </motion.div>
+            )}
             </AnimatePresence>
 
             {/* QR Code 視窗 */}
@@ -891,13 +895,13 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={label}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-bg-base  border border-transparent  text-text-primary  text-[15px] outline-none focus:ring-1 focus:ring-corphia-bronze  transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-[16px] bg-bg-surface border border-border-subtle text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
             />
-            <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none rounded-full px-2 origin-left whitespace-nowrap
+            <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none px-2 origin-left whitespace-nowrap
                 ${isFilled
-                    ? 'top-0 scale-[0.82] bg-bg-main  text-text-primary  font-semibold py-0.5'
-                    : 'top-1/2 scale-100 bg-transparent text-text-secondary  py-0'}
-                peer-focus:top-0 peer-focus:scale-[0.82] peer-bg-accent dark:peer-bg-accent peer-text-text-primary peer-focus:font-semibold peer-focus:py-0.5
+                    ? 'top-0 scale-[0.82] bg-bg-surface text-text-primary font-semibold py-0.5 rounded-full'
+                    : 'top-1/2 scale-100 bg-transparent text-text-secondary py-0'}
+                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-bg-surface peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
             `}>
                 {label}
             </label>
