@@ -305,7 +305,7 @@ export default function SettingsModal() {
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.95, y: 10 }}
                         transition={{ type:"spring", stiffness: 300, damping: 30 }}
-                        className="relative z-10 w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-text"
+                        className="relative z-10 w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none"
                     >
                         {/* Close button */}
                         <button
