@@ -346,11 +346,12 @@ export default function Login() {
 
                 <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
                     <div className="w-full">
-                        <h2 className="text-4xl font-bold text-text-primary mb-4 transition-colors">
+                        <h2 className="text-4xl font-bold text-text-primary relative z-10 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <div className="mb-10">
-                            <CorphiaWordmark className="h-[70px] w-auto object-contain object-left pointer-events-none select-none transform scale-[1.35] origin-left" />
+                        <div className="-mt-6 -mb-4 -ml-2 relative z-0 flex items-center">
+                            {/* 利用原生高度放大，並透過外層容器的負邊距 (negative margin) 「吃掉」圖片上下的透明留白，達成完美的垂直居中 */}
+                            <CorphiaWordmark className="h-[130px] w-auto object-contain object-left pointer-events-none select-none" />
                         </div>
 
                         <div className="space-y-6 mt-8">
