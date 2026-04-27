@@ -12,7 +12,6 @@ import { authApi } from '../../api/auth'
 import { usersApi } from '../../api/users'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
-import SystemMonitorPanel from '../system/SystemMonitorPanel'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -86,15 +85,7 @@ const QrCodeIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
     </svg>
 )
-
-/** 脈搏 Icon 用於系統監控 */
-const PulseIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l5.47-5.47a.75.75 0 011.06 0l3.44 3.44a.75.75 0 001.06 0l5.47-5.47M3.75 17.25h16.5" />
-    </svg>
-)
-
-type SettingSection = 'profile' | 'appearance' | 'language' | 'monitor' | 'guide' | 'about'
+type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
@@ -134,7 +125,6 @@ export default function SettingsModal() {
         { id: 'profile' as const, icon: <UserIcon />, label: t('settings.profile') },
         { id: 'appearance' as const, icon: <PaletteIcon />, label: t('settings.theme') },
         { id: 'language' as const, icon: <GlobeIcon />, label: t('settings.language') },
-        { id: 'monitor' as const, icon: <PulseIcon />, label: t('systemMonitor.title') },
         { id: 'guide' as const, icon: <BookIcon />, label: t('settings.guide') },
         { id: 'about' as const, icon: <InfoIcon />, label: t('settings.about') },
     ]
@@ -635,13 +625,6 @@ export default function SettingsModal() {
                                     <GuideSection />
                                 </motion.div>
                             )}
-
-                            {activeSection === 'monitor' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
-                                    <SystemMonitorPanel />
-                                </motion.div>
-                            )}
-
                             {activeSection === 'about' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
                                     <AboutSection />

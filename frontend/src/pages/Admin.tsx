@@ -41,6 +41,7 @@ import {
     type AuditLogQuery,
 } from '../api/auditLogs'
 import { tenantsApi, type Tenant } from '../api/tenants'
+import SystemMonitorPanel from '../components/system/SystemMonitorPanel'
 
 interface UserData {
     id: string
@@ -869,6 +870,12 @@ export default function Admin() {
                                         <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />清除快取</ActionButton>
                                         <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />重新索引向量</ActionButton>
                                         <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />重啟服務</ActionButton>
+                                    </div>
+                                </Panel>
+                                <Panel className="xl:col-span-2">
+                                    <SectionHeader title="即時健康監控" eyebrow="Real-time Health" />
+                                    <div className="p-5">
+                                        <SystemMonitorPanel />
                                     </div>
                                 </Panel>
                             </div>

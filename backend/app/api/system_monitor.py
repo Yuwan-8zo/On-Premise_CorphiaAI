@@ -12,7 +12,7 @@ from app.core.time_utils import utc_now_iso
 
 from fastapi import APIRouter, Depends
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, RequireAdmin
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -84,23 +84,17 @@ async def _get_gpu_info() -> dict:
 async def _get_llm_stats() -> dict:
     """取得 LLM 模型統計資訊"""
     from app.services.llm_service import get_llm_service
+    from app.core.config import settings
     llm = get_llm_service()
 
-    stats: dict = {
-        "model_loaded": llm.model is not None,
-        "model_path": llm.model_path,
-        "context_size": llm.context_size,
-        "n_gpu_layers": llm.n_gpu_layers,
-    }
+    model_loaded = llm._initialized and (llm.client is not None or llm.use_llama_cpp)
 
-    # 如果模型已載入，嘗試讀取更多資訊
-    if llm.model is not None:
-        try:
-            # llama-cpp-python 的 model 物件可提供部分統計
-            stats["n_vocab"] = llm.model.n_vocab()
-            stats["n_ctx_train"] = llm.model.n_ctx()
-        except Exception:
-            pass
+    stats: dict = {
+        "model_loaded": model_loaded,
+        "model_path": llm.model if not llm.use_llama_cpp else "GGUF Model",
+        "context_size": getattr(settings, "llama_context_size", 4096),
+        "n_gpu_layers": getattr(settings, "llama_n_gpu_layers", 0),
+    }
 
     # ── C4: 即時 tokens/sec 統計 ─────────────────────────
     try:
@@ -120,13 +114,13 @@ async def _get_llm_stats() -> dict:
 
 @router.get("/health/detailed")
 async def detailed_health(
-    current_user: User = Depends(get_current_user),
+    _ = RequireAdmin,
 ):
     """
     詳細系統健康狀態
 
     回傳 CPU / GPU / VRAM / LLM 模型的即時監控數據。
-    需要登入才能存取。
+    需要管理員權限才能存取。
     """
     cpu_info, gpu_info, llm_stats = await asyncio.gather(
         _get_cpu_info(),
@@ -149,7 +143,7 @@ async def detailed_health(
 
 @router.get("/network/status")
 async def network_status(
-    current_user: User = Depends(get_current_user),
+    _ = RequireAdmin,
 ):
     """
     網路連線狀態偵測 (A4 離線模式徽章)
