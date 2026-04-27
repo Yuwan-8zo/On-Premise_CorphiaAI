@@ -287,25 +287,27 @@ export default function SettingsModal() {
             <AnimatePresence>
             {isSettingsOpen && (
                 <motion.div 
+                    key="settings-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12"
+                    className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
+                    onClick={() => setSettingsOpen(false)}
+                />
+            )}
+            {isSettingsOpen && (
+                <motion.div
+                    key="settings-modal"
+                    initial={{ scale: 0.95, y: 10 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 10 }}
+                    transition={{ type:"spring", stiffness: 300, damping: 30 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none"
                 >
-                    {/* Backdrop */}
-                    <div
-                        onClick={() => setSettingsOpen(false)}
-                        className="absolute inset-0 z-0 bg-black/40 backdrop-blur-md"
-                    />
-
                     {/* Modal Content */}
-                    <motion.div
-                        initial={{ scale: 0.95, y: 10 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 0.95, y: 10 }}
-                        transition={{ type:"spring", stiffness: 300, damping: 30 }}
-                        className="relative z-10 w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none"
+                    <div
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
@@ -648,7 +650,7 @@ export default function SettingsModal() {
 
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
                 </motion.div>
             )}
             </AnimatePresence>

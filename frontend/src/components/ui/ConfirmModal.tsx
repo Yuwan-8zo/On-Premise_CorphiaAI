@@ -24,18 +24,25 @@ export const ConfirmModal: React.FC = () => {
         <AnimatePresence>
             {confirmConfig && (
                 <motion.div 
+                    key="confirm-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
+                    className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md"
+                />
+            )}
+            {confirmConfig && (
+                <motion.div
+                    key="confirm-modal"
+                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                    transition={{ type:"spring", stiffness: 400, damping: 30 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
-                    <motion.div 
-                        initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                        transition={{ type:"spring", stiffness: 400, damping: 30 }}
-                        className="bg-bg-base rounded-[24px] w-full max-w-sm shadow-xl overflow-hidden border border-border-subtle"
+                    <div 
+                        className="bg-bg-base rounded-[24px] w-full max-w-sm shadow-xl overflow-hidden border border-border-subtle pointer-events-auto"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-6">
@@ -75,7 +82,7 @@ export const ConfirmModal: React.FC = () => {
                                 {t('common.confirm')}
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

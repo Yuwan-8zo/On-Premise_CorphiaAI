@@ -90,11 +90,20 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
     return (
         <AnimatePresence>
             {renameModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
-                    <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                        transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                        className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
+                <motion.div
+                    key="rename-backdrop"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                />
+            )}
+            {renameModal && (
+                <motion.div
+                    key="rename-modal"
+                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
+                >
+                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-6 pt-6 pb-4">
                             <h3 className="text-[17px] font-semibold text-text-primary mb-4">重新命名</h3>
                             <input ref={renameInputRef} type="text" value={renameInput}
@@ -108,7 +117,7 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
                             <div className="w-px bg-bg-surface" />
                             <button onClick={submitRename} className="flex-1 py-3.5 text-[16px] text-corphia-bronze bg-bg-surface transition-colors font-semibold">確定</button>
                         </div>
-                    </motion.div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -133,11 +142,20 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
     return (
         <AnimatePresence>
             {moveModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
-                    <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                        transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                        className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
+                <motion.div
+                    key="move-backdrop"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                />
+            )}
+            {moveModal && (
+                <motion.div
+                    key="move-modal"
+                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
+                >
+                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         {moveModal.isProject ? (
                             <>
                                 <div className="px-6 pt-6 pb-4">
@@ -189,7 +207,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                                 </div>
                             </>
                         )}
-                    </motion.div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -211,11 +229,20 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
     return (
         <AnimatePresence>
             {show && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-md" onClick={onClose}>
-                    <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                        transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                        className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden" onClick={e => e.stopPropagation()}>
+                <motion.div
+                    key="folder-backdrop"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                />
+            )}
+            {show && (
+                <motion.div
+                    key="folder-modal"
+                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
+                >
+                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-6 pt-6 pb-4">
                             <h3 className="text-[17px] font-semibold text-text-primary mb-1">新建資料夾</h3>
                             <p className="text-[13px] text-text-secondary mb-4">建立資料夾並自動加入一筆新對話</p>
@@ -230,7 +257,7 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
                             <div className="w-px bg-bg-surface" />
                             <button onClick={onSubmit} className="flex-1 py-3.5 text-[16px] text-corphia-bronze bg-bg-surface transition-colors font-semibold">建立</button>
                         </div>
-                    </motion.div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

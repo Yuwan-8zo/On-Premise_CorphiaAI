@@ -187,25 +187,29 @@ function ModalFrame({
 }) {
     return createPortal(
         <AnimatePresence>
-            <motion.div 
+            <motion.div
+                key="admin-backdrop"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
+                onClick={onClose}
+            />
+            <motion.div
+                key="admin-modal"
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className="absolute inset-0 bg-black/40 backdrop-blur-md"
-                    onClick={onClose}
-                />
-                <motion.div
-                    initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                    className={`relative w-full ${maxWidth} rounded-[20px] border border-border-subtle bg-bg-surface p-6 text-text-primary shadow-xl`}
+                    className={`relative w-full ${maxWidth} rounded-[20px] border border-border-subtle bg-bg-surface p-6 text-text-primary shadow-xl pointer-events-auto`}
+                    onClick={e => e.stopPropagation()}
                 >
                     {children}
-                </motion.div>
+                </div>
             </motion.div>
         </AnimatePresence>,
         document.body
