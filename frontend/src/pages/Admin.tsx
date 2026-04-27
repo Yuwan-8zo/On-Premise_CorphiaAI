@@ -527,9 +527,9 @@ export default function Admin() {
     ]
 
     return (
-        <div className="min-h-screen overflow-hidden bg-[#F6F4F0] dark:bg-[#101012] transition-colors duration-500 text-text-primary">
+        <div className="h-screen overflow-hidden bg-[#F6F4F0] dark:bg-[#101012] transition-colors duration-500 text-text-primary">
 
-            <div className="relative mx-auto flex min-h-screen max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
+            <div className="relative mx-auto flex h-full max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
                 <header className="mb-5 flex flex-col gap-4 rounded-[20px] border border-border-subtle bg-bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <button
@@ -553,8 +553,8 @@ export default function Admin() {
                     </div>
                 </header>
 
-                <main className="grid flex-1 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                    <aside className="rounded-[20px] border border-border-subtle bg-bg-surface p-3 shadow-sm lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
+                <main className="grid flex-1 min-h-0 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+                    <aside className="flex h-full flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-bg-surface p-3 shadow-sm">
                         <div className="mb-4 rounded-[16px] border border-border-subtle bg-bg-base p-4">
                             <div className="mb-6 flex items-center justify-between">
                                 <div>
@@ -568,7 +568,7 @@ export default function Admin() {
                             </div>
                         </div>
 
-                        <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+                        <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-y-auto custom-scrollbar">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon
                                 const active = activeSection === tab.id
@@ -590,7 +590,7 @@ export default function Admin() {
                         </nav>
                     </aside>
 
-                    <div className="min-w-0 space-y-5 pb-8">
+                    <div className="h-full min-w-0 space-y-5 overflow-y-auto pb-8 pr-2 custom-scrollbar">
                         {activeSection === 'overview' && (
                             <>
                                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
