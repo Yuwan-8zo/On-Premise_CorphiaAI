@@ -319,7 +319,7 @@ export default function SettingsModal() {
                                     {t('settings.title')}
                                 </h2>
                             </div>
-                            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                            <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
                                 {menuItems.map(item => (
                                     <button
                                         key={item.id}
@@ -327,27 +327,30 @@ export default function SettingsModal() {
                                             setActiveSection(item.id)
                                             setMobileView('content')
                                         }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-all ${activeSection === item.id
-                                                ? 'md:bg-bg-base md: text-text-primary  md:text-[rgb(var(--color-ios-accent-light))] md:(var(--color-ios-accent-dark))] md:shadow-sm font-semibold'
-                                                : 'text-text-secondary  bg-bg-main hover:text-text-primary  font-medium'
-                                            }`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all ${
+                                            activeSection === item.id
+                                                ? 'bg-bg-surface text-text-primary shadow-sm font-semibold border border-border-subtle'
+                                                : 'text-text-secondary bg-transparent hover:text-text-primary hover:bg-bg-surface/50 font-medium border border-transparent'
+                                        }`}
                                     >
-                                        {item.icon}
+                                        <div className={`${activeSection === item.id ? 'text-accent' : 'text-text-secondary'}`}>
+                                            {item.icon}
+                                        </div>
                                         <span>{item.label}</span>
                                     </button>
                                 ))}
                             </nav>
 
                             {/* 底部按鈕區 */}
-                            <div className="p-3 border-t border-border-subtle space-y-0.5">
+                            <div className="p-4 border-t border-border-subtle/50 space-y-2">
                                 {/* 管理後台入口：僅 admin / engineer 可見 */}
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
                                         title="進入管理後台"
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-text-secondary bg-bg-main hover:text-text-primary transition-all font-medium text-sm group"
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm group"
                                     >
-                                        <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:scale-110 transition-transform">
+                                        <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
                                             <ShieldIcon />
                                         </span>
                                         <span>管理後台</span>
@@ -359,9 +362,11 @@ export default function SettingsModal() {
                                 <button
                                     onClick={() => setShowQR(true)}
                                     title="顯示 QR Code 在手機上登入"
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-text-secondary bg-bg-main hover:text-text-primary transition-all font-medium text-sm"
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm"
                                 >
-                                    <QrCodeIcon />
+                                    <div className="text-text-secondary">
+                                        <QrCodeIcon />
+                                    </div>
                                     <span>{t('settings.mobileScanner')}</span>
                                 </button>
                             </div>
@@ -388,11 +393,11 @@ export default function SettingsModal() {
                                         </h2>
 
                                     {/* 頭像與名稱*/}
-                                    <div className="flex items-center gap-8 mb-10">
-                                        <div className="w-24 h-24 rounded-full bg-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] flex items-center justify-center text-text-primary text-4xl font-bold shadow-lg shrink-0">
+                                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 mb-10 text-center md:text-left">
+                                        <div className="w-24 h-24 rounded-full bg-accent text-white flex items-center justify-center text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
-                                        <div>
+                                        <div className="flex flex-col items-center md:items-start">
                                             <div className="flex items-center gap-3 mb-1">
                                                 {isEditingName ? (
                                                     <div className="flex items-center gap-2">
@@ -400,7 +405,7 @@ export default function SettingsModal() {
                                                             type="text"
                                                             value={editName}
                                                             onChange={(e) => setEditName(e.target.value)}
-                                                            className="text-xl font-bold text-text-primary bg-bg-base border border-corphia-bronze/50 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-corphia-bronze w-48"
+                                                            className="text-xl font-bold text-text-primary bg-bg-base border border-accent/50 rounded-[12px] px-3 py-1 outline-none focus:ring-2 focus:ring-accent w-48"
                                                             autoFocus
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') handleUpdateName()
@@ -413,7 +418,7 @@ export default function SettingsModal() {
                                                         <button 
                                                             onClick={handleUpdateName}
                                                             disabled={isUpdatingName}
-                                                            className="p-1 px-2 text-sm bg-accent text-text-primary rounded-md flex-shrink-0"
+                                                            className="p-1.5 px-3 text-sm font-medium bg-accent text-white rounded-[12px] flex-shrink-0 hover:bg-accent/90 transition-colors"
                                                         >
                                                             {isUpdatingName ? t('common.loading') : t('common.save')}
                                                         </button>
@@ -423,39 +428,39 @@ export default function SettingsModal() {
                                                                 setIsEditingName(false)
                                                             }}
                                                             disabled={isUpdatingName}
-                                                            className="p-1 px-2 text-sm bg-bg-surface text-text-primary rounded-md flex-shrink-0"
+                                                            className="p-1.5 px-3 text-sm font-medium bg-bg-surface text-text-primary rounded-[12px] flex-shrink-0 hover:bg-bg-surface/80 transition-colors border border-border-subtle"
                                                         >
                                                             {t('common.cancel', '取消')}
                                                         </button>
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <h3 className="text-2xl font-bold text-text-primary">
+                                                        <h3 className="text-[28px] leading-none font-bold text-text-primary tracking-tight">
                                                             {user?.name}
                                                         </h3>
                                                         <button 
                                                             onClick={() => setIsEditingName(true)}
-                                                            className="text-text-muted hover:text-corphia-bronze transition-colors"
+                                                            className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-bg-surface"
                                                             title={t('common.changeName')}
                                                         >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                             </svg>
                                                         </button>
                                                     </>
                                                 )}
                                             </div>
-                                            <p className="text-lg text-text-secondary mb-3">
+                                            <p className="text-[15px] font-medium text-text-secondary mb-3">
                                                 {user?.email}
                                             </p>
-                                            <span className="inline-block px-4 py-1.5 text-sm font-semibold bg-[rgb(var(--color-ios-accent-light)/0.15] dark:bg-[rgb(var(--color-ios-accent-dark)/0.15)] text-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] rounded-full">
+                                            <span className="inline-block px-4 py-1 text-[13px] font-bold bg-accent/10 text-accent rounded-full border border-accent/20 tracking-wide uppercase">
                                                 {user?.role}
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* 修改密碼區塊 */}
-                                    <div className="mb-8">
+                                    {/* 帳號操作區塊 */}
+                                    <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-border-subtle pt-8">
                                         <button
                                             onClick={() => {
                                                 setShowPasswordForm(true)
@@ -466,16 +471,14 @@ export default function SettingsModal() {
                                                 setConfirmNewPassword('')
                                                 setPasswordStrength(null)
                                             }}
-                                            className="flex items-center gap-2 px-5 py-3 bg-bg-surface hover:bg-bg-surface text-text-primary font-semibold rounded-full transition-colors"
+                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-bg-surface hover:bg-bg-surface/80 text-text-primary font-medium rounded-[16px] transition-colors border border-border-subtle"
                                         >
                                             <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
-                                    </div>
 
-                                    <div className="pt-4">
                                         <button
                                             onClick={handleLogout}
-                                            className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-full transition-colors"
+                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-medium rounded-[16px] transition-colors border border-red-500/20"
                                         >
                                             {t('auth.logout')}
                                         </button>
