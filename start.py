@@ -100,25 +100,41 @@ def kill_port(port: int):
 
 
 def find_ngrok() -> str | None:
-    """尋找 ngrok 執行檔"""
-    ngrok_in_path = shutil.which("ngrok")
-    if ngrok_in_path:
-        return ngrok_in_path
+    """
+    尋找 ngrok 執行檔。
+
+    優先順序：
+    1. C:\\ngrok\\ngrok.exe（手動安裝的穩定版）
+    2. 專案目錄下的 ngrok.exe
+    3. 其他常見安裝路徑
+    4. PATH 中的 ngrok（跳過 MSIX/WindowsApps 版，該版本有已知 panic bug）
+    """
+    # 1. 優先：手動安裝到 C:\ngrok 的版本（最穩定）
+    preferred = r"C:\ngrok\ngrok.exe"
+    if os.path.exists(preferred):
+        return preferred
+
+    # 2. 專案目錄旁
     local_ngrok = os.path.join(BASE_DIR, "ngrok.exe")
     if os.path.exists(local_ngrok):
         return local_ngrok
+
+    # 3. 其他常見安裝路徑
     common_paths = [
-        os.path.join(
-            os.environ.get("LOCALAPPDATA", ""),
-            "Microsoft", "WinGet", "Packages", "ngrok.ngrok"
-        ),
-        r"C:\ngrok\ngrok.exe",
         os.path.join(os.environ.get("USERPROFILE", ""), "ngrok.exe"),
         r"C:\Windows\System32\ngrok.exe",
     ]
     for path in common_paths:
         if os.path.exists(path):
             return path
+
+    # 4. PATH 搜尋（跳過 MSIX 版，避免 'panic: disabled updater' 崩潰）
+    ngrok_in_path = shutil.which("ngrok")
+    if ngrok_in_path:
+        # NOTE: MSIX 版（WindowsApps）有已知 panic bug，強制跳過
+        if "WindowsApps" not in ngrok_in_path and "msix" not in ngrok_in_path.lower():
+            return ngrok_in_path
+
     return None
 
 
