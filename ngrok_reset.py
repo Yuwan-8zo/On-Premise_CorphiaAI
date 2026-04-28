@@ -82,10 +82,10 @@ def reset_ngrok() -> str | None:
         print("  請安裝 ngrok：https://ngrok.com/download")
         return None
 
-    # 啟動新 Ngrok（加上 host-header rewrite 確保 Vite 正確識別請求）
+    # 啟動新 Ngrok
     print(f"  [2/3] 啟動新 Ngrok (Forwarding port {NGROK_PORT})...")
     subprocess.Popen(
-        f'"{ngrok_path}" http {NGROK_PORT} --host-header=rewrite',
+        f'"{ngrok_path}" http {NGROK_PORT}',
         shell=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
