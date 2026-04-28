@@ -13,7 +13,7 @@ import { authApi } from '../api/auth'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
 import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
-import CorphiaLogoDark from '../assets/Corphia_LOGO_Dark.png'
+import CorphiaIconDark from '../assets/Corphia_Icon_Dark.png'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -308,9 +308,9 @@ export default function Login() {
                             transition={{ repeat: Infinity, duration: 2.5, ease:"easeInOut" }}
                             className="flex flex-col items-center gap-6"
                         >
-                            {/* 品牌 icon：深色版（白色C+金星），適合深色遮罩背景 */}
+                            {/* 後端等待頁面 icon：使用獨立的品牌圖示（白色C+金星），不影響登入頁LOGO */}
                             <img
-                                src={CorphiaLogoDark}
+                                src={CorphiaIconDark}
                                 alt="Corphia AI"
                                 className="w-28 h-28 object-contain drop-shadow-lg"
                                 draggable={false}
