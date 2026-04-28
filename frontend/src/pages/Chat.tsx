@@ -39,8 +39,8 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
-                        <div className="bg-bg-base rounded-[20px] shadow-sm border border-border-subtle flex flex-col flex-1 min-h-0">
-                            <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-bg-base/50 /50 shrink-0">
+                        <div className="bg-bg-base rounded-[20px] shadow-sm border border-border-subtle flex flex-col flex-1 min-h-0 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-bg-base/50 shrink-0">
                                 <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
