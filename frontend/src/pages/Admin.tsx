@@ -156,7 +156,7 @@ function ActionButton({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
+            className={`inline-flex shrink-0 min-w-max items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
         >
             {children}
         </button>
@@ -768,7 +768,7 @@ export default function Admin() {
                                         <div className="space-y-3 p-5">
                                             {users.slice(0, 6).map((item) => (
                                                 <div key={item.id} className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-bg-base p-3 transition hover:bg-bg-base/80">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-[var(--text-on-accent,#fff)] text-sm font-bold">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-bold" style={{ color: 'var(--text-on-accent, #fff)' }}>
                                                         {item.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -811,7 +811,7 @@ export default function Admin() {
                                                 <tr key={item.id} className="transition hover:bg-bg-base">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-[var(--text-on-accent,#fff)] text-sm font-bold">{item.name.charAt(0).toUpperCase()}</div>
+                                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-sm font-bold" style={{ color: 'var(--text-on-accent, #fff)' }}>{item.name.charAt(0).toUpperCase()}</div>
                                                             <div>
                                                                 <p className="font-semibold text-text-primary">{item.name}</p>
                                                                 <p className="text-sm text-text-secondary">{item.email}</p>
