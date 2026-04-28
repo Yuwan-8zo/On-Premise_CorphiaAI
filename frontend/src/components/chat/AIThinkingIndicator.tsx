@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CorphiaThinkingIcon } from '../icons/CorphiaIcons'
 
 /** 每個步驟顯示的時間（ms） */
 const STEP_DURATION = 1800
@@ -46,11 +47,11 @@ const AIThinkingIndicator = () => {
         <div className="flex flex-col gap-2 py-1 select-none">
             {/* 主狀態列 */}
             <div className="flex items-center gap-2.5">
-                {/* 脈衝圓點 */}
-                <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[rgb(var(--color-ios-accent-light))] opacity-60" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[rgb(var(--color-ios-accent-light))]" />
-                </span>
+                {/* 原廠 CorphiaThinkingIcon — 帶 animate-draw-c 與 animate-pop-spark */}
+                <CorphiaThinkingIcon
+                    className="w-5 h-5"
+                    color="rgb(var(--color-ios-accent-light))"
+                />
 
                 {/* 步驟文字（淡入淡出） */}
                 <span
@@ -64,7 +65,7 @@ const AIThinkingIndicator = () => {
             </div>
 
             {/* 進度條 */}
-            <div className="ml-[22px] h-[2px] w-40 rounded-full bg-bg-elevated overflow-hidden">
+            <div className="ml-[28px] h-[2px] w-40 rounded-full bg-bg-elevated overflow-hidden">
                 <div
                     className="h-full rounded-full bg-gradient-to-r from-[rgb(var(--color-ios-accent-light))] to-transparent"
                     style={{
