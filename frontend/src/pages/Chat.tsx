@@ -132,15 +132,7 @@ export default function Chat() {
                             </div>
                         )}
                         
-                        {/* New Chat Button at exactly Folder View */}
-                        <div className="mt-8 flex justify-center shrink-0">
-                            <button
-                                onClick={mainProps.createNewConversation}
-                                className="flex items-center gap-2 px-6 py-3 bg-bg-surface border-border-subtle border text-text-primary rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all font-semibold"
-                            >
-                                {mainProps.t('chat.askFromSource')}
-                            </button>
-                        </div>
+                    
                     </div>
                 ) : (
                 <div className="relative flex-1 overflow-hidden h-full flex flex-col">
