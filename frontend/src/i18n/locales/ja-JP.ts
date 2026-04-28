@@ -83,6 +83,7 @@ export default {
         confirmMoveToGeneral: 'このチャットを一般チャットに移動しますか？「{{folder}}」フォルダから削除されます。',
         sendMessage: 'メッセージを送信',
         thinking: '考え中...',
+        thinkingSteps: ['処理中', '分析中', '考え中', '生成中'],
         stopGeneration: '生成を停止',
         regenerate: '再生成',
         copyMessage: 'メッセージをコピー',

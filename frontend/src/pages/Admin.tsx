@@ -986,12 +986,6 @@ export default function Admin() {
                                         <SystemMonitorPanel />
                                     </div>
                                 </Panel>
-                                <Panel className="xl:col-span-2">
-                                    <SectionHeader title="即時健康監控" eyebrow="Real-time Health" />
-                                    <div className="p-5">
-                                        <SystemMonitorPanel />
-                                    </div>
-                                </Panel>
                             </div>
                         )}
 
