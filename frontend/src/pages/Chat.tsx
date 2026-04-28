@@ -28,7 +28,7 @@ export default function Chat() {
                 {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
                 {mainProps.selectedFolder ? (
                     // 專案管理頁面 Folder View
-                    <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 mb-8 md:px-10 max-w-4xl mx-auto w-full pb-8">
+                    <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 md:px-10 max-w-4xl mx-auto w-full">
                         <div className="mb-8 pl-2 shrink-0">
                             <h2 className="text-[22px] font-bold text-text-primary flex items-center gap-3">
                                 <svg className="w-8 h-8 text-corphia-bronze" fill="none" viewBox="0 0 24 24" stroke="currentColor">
