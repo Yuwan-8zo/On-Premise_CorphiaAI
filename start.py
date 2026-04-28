@@ -138,23 +138,43 @@ def _query_ngrok_url() -> str | None:
     return None
 
 
-def query_existing_ngrok(result_container: list = None):
+def start_ngrok() -> str | None:
     """
-    查詢現有 ngrok 通道 URL（不嘗試啟動新的 ngrok）。
+    自動啟動 ngrok（關閉舊通道 → 啟動新通道 → 等待 URL）。
 
-    NOTE: start.py 只負責顯示現有通道。
-          啟動/重設 ngrok 請使用 python ngrok_reset.py
+    Returns:
+        公開 HTTPS URL，失敗則回傳 None
     """
-    # 輪詢最多 8 秒，給已運行的 ngrok API 就緒時間
-    url = None
-    for _ in range(16):  # 16 * 0.5s = 8 秒
+    ngrok_path = find_ngrok()
+    if not ngrok_path:
+        return None
+
+    # 1. 關閉舊 ngrok
+    if sys.platform == "win32":
+        subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+        time.sleep(1)
+
+    # 2. 啟動新 ngrok
+    subprocess.Popen(
+        f'"{ngrok_path}" http 5173',
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    # 3. 輪詢等待 URL（最多 20 秒）
+    print("  [等待] Ngrok 建立通道：", end="", flush=True)
+    for attempt in range(40):  # 40 * 0.5s = 20 秒
+        time.sleep(0.5)
+        if attempt % 2 == 0:
+            print(".", end="", flush=True)
         url = _query_ngrok_url()
         if url:
-            break
-        time.sleep(0.5)
+            print(" 就緒！", flush=True)
+            return url
+    print(" 逾時", flush=True)
+    return None
 
-    if result_container is not None:
-        result_container.append(url)
 
 
 def wait_for_backend(port: int = 8168, timeout: int = 120) -> bool:
@@ -298,16 +318,17 @@ def main():
     print("=" * 52)
     print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
     print("=" * 52)
+    has_ngrok = bool(find_ngrok())
 
-    # ── [0/5] 自動喚醒 Docker Desktop + Ollama ────────────────
-    print("  [0/5] 檢查 Docker Desktop 與 Ollama...")
+    # ── [0/6] 自動喚醒 Docker Desktop + Ollama ────────────────
+    print("  [0/6] 檢查 Docker Desktop 與 Ollama...")
     ensure_docker_desktop_running()
     ensure_ollama_running()
     print()
 
-    # ── [1/5] Docker ──────────────────────────────────────────
+    # ── [1/6] Docker ──────────────────────────────────────────
     if os.path.exists("docker-compose.yml"):
-        print("  [1/5] 啟動 Docker 容器...")
+        print("  [1/6] 啟動 Docker 容器...")
         try:
             subprocess.run(
                 "docker-compose up -d", shell=True, check=True,
@@ -317,26 +338,15 @@ def main():
         except Exception:
             print("  [跳過] Docker 啟動失敗或未安裝，繼續...")
     else:
-        print("  [1/5] 未偵測到 docker-compose.yml，跳過 Docker...")
+        print("  [1/6] 未偵測到 docker-compose.yml，跳過 Docker...")
 
-    # ── [2/5] 清理 Port + 背景查詢 Ngrok ─────────────────────
-    print("  [2/5] 清理佔用的 Port...")
+    # ── [2/6] 清理 Port ────────────────────────────────────────
+    print("  [2/6] 清理佔用的 Port...")
     kill_port(8168)
     kill_port(5173)
 
-    # 在背景查詢現有 ngrok 通道（不啟動新通道）
-    ngrok_result: list = []
-    ngrok_thread: threading.Thread | None = None
-    if find_ngrok():
-        ngrok_thread = threading.Thread(
-            target=query_existing_ngrok,
-            args=(ngrok_result,),
-            daemon=True
-        )
-        ngrok_thread.start()
-
-    # ── [3/5] 硬體偵測 ────────────────────────────────────────
-    print("  [3/5] 偵測硬體環境...")
+    # ── [3/6] 硬體偵測 ────────────────────────────────────────
+    print("  [3/6] 偵測硬體環境...")
     if os.path.exists(BACKEND_DIR):
         engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
         if os.path.exists(engine_script):
@@ -354,8 +364,8 @@ def main():
             except Exception:
                 pass
 
-    # ── [4/5] 前端先啟動 → 瀏覽器自動開啟 ──────────────────────
-    print("  [4/5] 啟動前端服務 (Port 5173)...")
+    # ── [4/6] 前端先啟動 → 瀏覽器自動開啟 ──────────────────────
+    print("  [4/6] 啟動前端服務 (Port 5173)...")
     if os.path.exists(FRONTEND_DIR):
         proc = subprocess.Popen(
             "npm run dev -- --host --logLevel silent",
@@ -384,8 +394,8 @@ def main():
         subprocess.Popen(["xdg-open", "http://localhost:5173"])
     print("  [OK] 瀏覽器已開啟（顯示「Corphia AI 引擎啟動中」畫面）✅")
 
-    # ── [5/5] 後端啟動 ───────────────────────────────────────
-    print("  [5/5] 啟動後端服務 (Port 8168)...")
+    # ── [5/6] 後端啟動 ───────────────────────────────────────
+    print("  [5/6] 啟動後端服務 (Port 8168)...")
     if os.path.exists(BACKEND_DIR):
         venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
         if os.path.exists(venv_python):
@@ -413,14 +423,17 @@ def main():
         else:
             print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行⚠️")
 
-    # ── 取得 Ngrok 公開網址（後端加載期間查詢應早已完成）────────
+    # ── [6/6] 啟動 Ngrok 公開通道 ────────────────────────────
     public_url: str | None = None
-    if ngrok_thread:
-        if ngrok_result:
-            public_url = ngrok_result[0]
-        # 備用：直接再查詢一次
-        if not public_url:
-            public_url = _query_ngrok_url()
+    if has_ngrok:
+        print("  [6/6] 啟動 Ngrok 公開通道...")
+        public_url = start_ngrok()
+        if public_url:
+            print("  [OK] Ngrok 通道就緒 ✅")
+        else:
+            print("  [跳過] Ngrok 通道建立失敗（請確認 authtoken 是否已設定）")
+    else:
+        print("  [6/6] 未安裝 Ngrok（跳過，可選安裝：https://ngrok.com/download）")
 
     # ── 最終：顯示三合一服務資訊 ─────────────────────────────────
     local_ip = get_local_ip()
@@ -447,10 +460,12 @@ def main():
         print(f"  ⚡ 架構：前後端共用同一 ngrok URL，透過 Vite Proxy 路由")
         print(f"     /api/* → port 8168 (FastAPI)  /ws/* → port 8168 (WebSocket)")
         print()
-        print(f"  💡 想換新公開網址？執行: python ngrok_reset.py")
+        print(f"  💡 重新取得網址：python ngrok_reset.py")
     else:
-        print(f"     （未偵測到 Ngrok 通道）")
-        print(f"     💡 取得公開網址：python ngrok_reset.py")
+        if has_ngrok:
+            print(f"     （Ngrok 啟動失敗，請確認 authtoken：ngrok config add-authtoken <token>）")
+        else:
+            print(f"     （未安裝 Ngrok，可至 https://ngrok.com/download 下載）")
     print()
     print("  🛑 按下 Ctrl+C 可隨時關閉服務")
     print("=" * 52)
