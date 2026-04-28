@@ -675,6 +675,42 @@ export function useChatLogic() {
 
         const shouldUseRag = chatMode === 'project'
 
+        // ── 專案模式：傳訊前先偵測資料夾是否有可用文件 ──────────────────────
+        // 若資料夾尚無任何已啟用的文件，直接注入提示訊息，不觸發後端 LLM
+        if (shouldUseRag) {
+            const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
+            if (folderName) {
+                try {
+                    const res = await documentsApi.list()
+                    const activeDocs = res.data.filter(
+                        (d: DocumentResponse) =>
+                            d.doc_metadata?.folderName === folderName &&
+                            (d.doc_metadata?.isActive ?? true)
+                    )
+                    if (activeDocs.length === 0) {
+                        // 無可用文件 → 移除 AI 佔位訊息，注入固定提示，停止串流
+                        setStreaming(false)
+                        useChatStore.setState((state) => {
+                            const newMessages = state.messages.slice(0, -1)
+                            const warnMsg: Message = {
+                                id: `auto-noDocs-${Date.now()}`,
+                                role: 'assistant',
+                                content: `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`,
+                                tokens: 0,
+                                createdAt: new Date().toISOString(),
+                            }
+                            return { messages: [...newMessages, warnMsg] }
+                        })
+                        return
+                    }
+                } catch (err) {
+                    // 偵測失敗時繼續正常送出，避免阻塞使用者
+                    console.warn('無法偵測資料夾文件數量，繼續送出訊息:', err)
+                }
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
         if (wsRef.current?.isConnected) {
             wsRef.current.sendMessage(userMessage, shouldUseRag, 0.7, language)
         } else {
