@@ -377,4 +377,15 @@ export default {
             },
         },
     },
+
+    // Share
+    share: {
+        loginRequired: 'Login Required',
+        loginDesc: 'Please login to Corphia AI to view this shared conversation.',
+        goToLogin: 'Go to Login',
+        loadFailed: 'Load Failed',
+        loadError: 'Failed to load shared conversation. It may not exist or has been deleted.',
+        backToHome: 'Back to Home',
+        readonly: 'Shared Conversation (Read-only)',
+    },
 }

@@ -2,12 +2,14 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { conversationsApi } from '../api/conversations'
+import { useTranslation } from 'react-i18next'
 import type { Conversation, Message } from '../types/chat'
 import MessageBubble from '../components/chat/MessageBubble'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 
 export default function Share() {
+    const { t } = useTranslation()
     const { conversationId } = useParams<{ conversationId: string }>()
     const { isAuthenticated } = useAuthStore()
     const { theme } = useUIStore()
@@ -43,7 +45,7 @@ export default function Share() {
                 }, 100)
             } catch (err) {
                 console.error(err)
-                setError('無法載入分享的對話。可能是不存在或已被刪除。')
+                setError(t('share.loadError'))
             } finally {
                 setIsLoading(false)
             }
@@ -55,15 +57,15 @@ export default function Share() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
                 <div className="max-w-md w-full bg-bg-base rounded-[20px] p-8 shadow-xl text-center">
-                    <h2 className="text-xl font-bold mb-4 text-text-primary">需要登入</h2>
+                    <h2 className="text-xl font-bold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
                     <p className="text-text-secondary mb-8">
-                        請先登入 Corphia AI 以查看該分享對話的內容。
+                        {t('share.loginDesc')}
                     </p>
                     <button
                         onClick={() => navigate('/login')}
                         className="w-full h-[50px] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary font-semibold"
                     >
-                        前往登入
+                        {t('share.goToLogin')}
                     </button>
                 </div>
             </div>
@@ -81,13 +83,13 @@ export default function Share() {
     if (error || !conversation) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6 text-center">
-                <h2 className="text-xl font-bold mb-2 text-text-primary">載入失敗</h2>
+                <h2 className="text-xl font-bold mb-2 text-text-primary">{t('share.loadFailed')}</h2>
                 <p className="text-text-secondary mb-6">{error}</p>
                 <button
                     onClick={() => navigate('/')}
                     className="px-6 py-2.5 rounded-full bg-bg-surface text-text-primary hover:bg-bg-surface"
                 >
-                    回首頁
+                    {t('share.backToHome')}
                 </button>
             </div>
         )
@@ -110,7 +112,7 @@ export default function Share() {
                         <h1 className="font-semibold text-text-primary text-[15px]">
                             {conversation.title}
                         </h1>
-                        <p className="text-[12px] text-text-secondary">分享的對話 (唯讀)</p>
+                        <p className="text-[12px] text-text-secondary">{t('share.readonly')}</p>
                     </div>
                 </div>
             </header>

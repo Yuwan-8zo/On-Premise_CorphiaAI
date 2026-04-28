@@ -377,4 +377,15 @@ export default {
             },
         },
     },
+
+    // 分享 (Share)
+    share: {
+        loginRequired: '需要登入',
+        loginDesc: '請先登入 Corphia AI 以查看該分享對話的內容。',
+        goToLogin: '前往登入',
+        loadFailed: '載入失敗',
+        loadError: '無法載入分享的對話。可能是不存在或已被刪除。',
+        backToHome: '回首頁',
+        readonly: '分享的對話 (唯讀)',
+    },
 }

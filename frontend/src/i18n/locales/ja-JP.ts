@@ -377,4 +377,15 @@ export default {
             },
         },
     },
+
+    // 共有 (Share)
+    share: {
+        loginRequired: 'ログインが必要です',
+        loginDesc: '共有されたチャットを表示するには、Corphia AIにログインしてください。',
+        goToLogin: 'ログインへ進む',
+        loadFailed: '読み込みに失敗しました',
+        loadError: '共有チャットを読み込めませんでした。存在しないか削除された可能性があります。',
+        backToHome: 'ホームへ戻る',
+        readonly: '共有チャット（読み取り専用）',
+    },
 }
