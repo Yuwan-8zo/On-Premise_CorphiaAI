@@ -70,3 +70,16 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+
+# ¢w¢w °£¿ù/¼È¦s ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w
+*.tmp
+vite_error.html
+corrupted_*.txt
+clean_*.txt
+temp_*.tsx
+temp_*.py
+fix_*.py
+patch_*.py
+scratch/
+archive_scripts/
