@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
-export type AccentColorType = 'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'green'
+export type AccentColorType = string
 
 interface ConfirmConfig {
     message: string

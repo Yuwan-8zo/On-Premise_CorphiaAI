@@ -156,7 +156,7 @@ function ActionButton({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
         >
             {children}
         </button>
@@ -238,6 +238,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputClass = 'w-full rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-text-secondary'
+const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B6B6B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_1rem_center] bg-no-repeat pr-10`
 
 export default function Admin() {
     const { t } = useTranslation()
@@ -767,7 +768,7 @@ export default function Admin() {
                                         <div className="space-y-3 p-5">
                                             {users.slice(0, 6).map((item) => (
                                                 <div key={item.id} className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-bg-base p-3 transition hover:bg-bg-base/80">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-sm font-bold text-accent">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-[var(--text-on-accent,#fff)] text-sm font-bold">
                                                         {item.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -810,7 +811,7 @@ export default function Admin() {
                                                 <tr key={item.id} className="transition hover:bg-bg-base">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent">{item.name.charAt(0).toUpperCase()}</div>
+                                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-[var(--text-on-accent,#fff)] text-sm font-bold">{item.name.charAt(0).toUpperCase()}</div>
                                                             <div>
                                                                 <p className="font-semibold text-text-primary">{item.name}</p>
                                                                 <p className="text-sm text-text-secondary">{item.email}</p>
@@ -877,7 +878,7 @@ export default function Admin() {
                                             </div>
                                         </Field>
                                         <Field label={t('admin.audit.action')}>
-                                            <select className={inputClass} value={auditFilter.action || ''} onChange={(event) => handleAuditFilterChange('action', event.target.value)}>
+                                            <select className={selectClass} value={auditFilter.action || ''} onChange={(event) => handleAuditFilterChange('action', event.target.value)}>
                                                 <option value="">{t('admin.audit.allActions')}</option>
                                                 <option value="login_success">{t('admin.audit.actionTypes.login_success')}</option>
                                                 <option value="login_failed">{t('admin.audit.actionTypes.login_failed')}</option>
@@ -887,7 +888,7 @@ export default function Admin() {
                                             </select>
                                         </Field>
                                         <Field label={t('admin.audit.resource')}>
-                                            <select className={inputClass} value={auditFilter.resource_type || ''} onChange={(event) => handleAuditFilterChange('resource_type', event.target.value)}>
+                                            <select className={selectClass} value={auditFilter.resource_type || ''} onChange={(event) => handleAuditFilterChange('resource_type', event.target.value)}>
                                                 <option value="">{t('admin.audit.allResources')}</option>
                                                 <option value="auth">{t('admin.audit.resourceTypes.auth')}</option>
                                                 <option value="user">{t('admin.audit.resourceTypes.user')}</option>
@@ -922,7 +923,6 @@ export default function Admin() {
                                                     <th className="px-5 py-4">{t('admin.audit.table.action')}</th>
                                                     <th className="px-5 py-4">{t('admin.audit.table.resource')}</th>
                                                     <th className="px-5 py-4">{t('admin.audit.table.user')}</th>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.description')}</th>
                                                     <th className="px-5 py-4">{t('admin.audit.table.ip')}</th>
                                                 </tr>
                                             </thead>
@@ -937,7 +937,6 @@ export default function Admin() {
                                                         <td className="px-5 py-4"><span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-semibold text-text-primary">{t(`admin.audit.actionTypes.${log.action}`, { defaultValue: ACTION_LABELS[log.action] || log.action })}</span></td>
                                                         <td className="px-5 py-4 text-sm text-text-primary">{t(`admin.audit.resourceTypes.${log.resource_type}`, { defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type })}</td>
                                                         <td className="max-w-[180px] truncate px-5 py-4 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
-                                                        <td className="max-w-[300px] truncate px-5 py-4 text-sm text-text-secondary">{log.description || '-'}</td>
                                                         <td className="px-5 py-4 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
                                                     </tr>
                                                 ))}
@@ -956,7 +955,7 @@ export default function Admin() {
                                         {[
                                             ['Version', '2.3.0', ShieldCheck],
                                             ['Backend', 'FastAPI', Database],
-                                            ['LLM Engine', 'Ollama / GGUF', Cpu],
+                                            ['LLM Engine', currentModel?.name || t('admin.standby', 'Corphia Engine'), Cpu],
                                             ['Vector Store', 'pgvector', Layers3],
                                             ['Database', 'PostgreSQL', HardDrive],
                                             ['Runtime', 'Python 3.12', Activity],
@@ -1032,7 +1031,7 @@ export default function Admin() {
                         <Field label="Email"><input className={inputClass} type="email" required disabled={!!currentEditingUser} value={userFormData.email} onChange={(event) => setUserFormData((prev) => ({ ...prev, email: event.target.value }))} /></Field>
                         <Field label={currentEditingUser ? 'New password' : 'Password'}><input className={inputClass} type="password" required={!currentEditingUser} minLength={8} value={userFormData.password} onChange={(event) => setUserFormData((prev) => ({ ...prev, password: event.target.value }))} /></Field>
                         <Field label="Role">
-                            <select className={inputClass} value={userFormData.role} onChange={(event) => setUserFormData((prev) => ({ ...prev, role: event.target.value }))}>
+                            <select className={selectClass} value={userFormData.role} onChange={(event) => setUserFormData((prev) => ({ ...prev, role: event.target.value }))}>
                                 <option value="user">User</option>
                                 <option value="engineer">Engineer</option>
                                 <option value="admin">Admin</option>

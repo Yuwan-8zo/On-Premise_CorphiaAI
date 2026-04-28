@@ -72,8 +72,33 @@ export default function App() {
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
-        // 設定重點色
-        html.setAttribute('data-accent', accentColor)
+        // 解析 accentColor (Hex -> RGB) 並計算對比色
+        let r = 137, g = 110, b = 83 // default Corphia Bronze
+        if (accentColor.startsWith('#')) {
+            const cleaned = accentColor.replace('#', '')
+            if (cleaned.length === 6) {
+                r = parseInt(cleaned.substring(0, 2), 16)
+                g = parseInt(cleaned.substring(2, 4), 16)
+                b = parseInt(cleaned.substring(4, 6), 16)
+            }
+        }
+        
+        // 亮度公式 (Luminance) 來決定文字該用深色或淺色
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        const textOnAccent = luminance > 0.55 ? '#000000' : '#FFFFFF'
+        const rgbString = `${r} ${g} ${b}`
+
+        // 動態注入 CSS 變數
+        html.style.setProperty('--color-ios-accent-light', rgbString)
+        html.style.setProperty('--color-ios-accent-dark', rgbString)
+        html.style.setProperty('--text-on-accent', textOnAccent)
+        
+        // 保留 data-accent 給一些可能的舊邏輯（如果有的話）
+        if (!accentColor.startsWith('#')) {
+            html.setAttribute('data-accent', accentColor)
+        } else {
+            html.removeAttribute('data-accent')
+        }
 
         // dark class 切換
         if (isDark) {

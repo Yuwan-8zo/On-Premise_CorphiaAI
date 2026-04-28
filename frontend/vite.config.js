@@ -39,6 +39,11 @@ export default defineConfig(({ mode }) => ({
     server: {
         port: 5173,
         allowedHosts: true,
+        hmr: {
+            // NOTE: overlay: false 避免在 ngrok / 遠端存取時因 HMR 連線失敗顯示錯誤彈窗
+            // HMR 本地仍正常運作；ngrok 環境下 HMR 無法作用但不影響應用功能
+            overlay: false,
+        },
         proxy: {
             '/api': {
                 target: 'http://127.0.0.1:8168',
@@ -47,6 +52,7 @@ export default defineConfig(({ mode }) => ({
             '/ws': {
                 target: 'ws://127.0.0.1:8168',
                 ws: true,
+                changeOrigin: true,
             },
         },
     },

@@ -321,5 +321,10 @@ html.dark .markdown-body strong {
   .transition-colors,
   .transition-all {
     transition-property: none !important;
-  }
+}
+
+/* 全域文字反白選取樣式 */
+::selection {
+  background-color: rgb(var(--color-ios-accent-light));
+  color: var(--text-on-accent, #fff);
 }

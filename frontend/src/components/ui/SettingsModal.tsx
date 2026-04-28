@@ -527,32 +527,19 @@ export default function SettingsModal() {
                                         <h3 className="text-xl font-bold text-text-primary mb-6">
                                             {t('settings.accentColor', '強調顏色')}
                                         </h3>
-                                        <div className="flex flex-wrap gap-4">
-                                            {(['default', 'blue', 'purple', 'pink', 'orange', 'green'] as const).map((color) => {
-                                                const bgColors: Record<string, string> = {
-                                                    default: 'bg-corphia-bronze',
-                                                    blue: 'bg-[#3f8ef7]',
-                                                    purple: 'bg-[#DB37F4]',
-                                                    pink: 'bg-[#F64066]',
-                                                    orange: 'bg-[#FB8D2D]',
-                                                    green: 'bg-[#22D9C5]'
-                                                }
-                                                const isActive = accentColor === color
-                                                return (
-                                                    <button
-                                                        key={color}
-                                                        onClick={() => setAccentColor(color)}
-                                                        className={`w-12 h-12 rounded-full ${bgColors[color]} shadow-sm transition-transform hover:scale-110 flex items-center justify-center`}
-                                                        title={t(`settings.color_${color}`, color)}
-                                                    >
-                                                        {isActive && (
-                                                            <svg className="w-6 h-6 text-text-primary drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                        )}
-                                                    </button>
-                                                )
-                                            })}
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-sm hover:scale-105 transition-transform border border-border-subtle cursor-pointer shrink-0">
+                                                <input
+                                                    type="color"
+                                                    value={accentColor.startsWith('#') ? accentColor : '#896E53'}
+                                                    onChange={(e) => setAccentColor(e.target.value)}
+                                                    className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0 outline-none"
+                                                    title={t('settings.customColor', '自訂主題色')}
+                                                />
+                                            </div>
+                                            <span className="text-[14px] text-text-secondary">
+                                                {t('settings.customColorHint', '點擊選擇自訂品牌主題色')}
+                                            </span>
                                         </div>
                                     </div>
 
