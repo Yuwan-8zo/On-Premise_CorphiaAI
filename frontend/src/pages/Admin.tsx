@@ -9,11 +9,14 @@ import {
     ChevronLeft,
     ChevronRight,
     CircleAlert,
+    Clipboard,
+    ClipboardCheck,
     Cpu,
     Database,
     Download,
     FileText,
     Gauge,
+    Globe,
     HardDrive,
     Layers3,
     MessageSquare,
@@ -254,6 +257,16 @@ export default function Admin() {
     const [modelsDir, setModelsDir] = useState('')
     const [isLoadingModels, setIsLoadingModels] = useState(false)
 
+    // ngrok URL 狀態
+    const [ngrokInfo, setNgrokInfo] = useState<{
+        active: boolean
+        url: string | null
+        api_url: string | null
+        ws_url: string | null
+    } | null>(null)
+    const [isLoadingNgrok, setIsLoadingNgrok] = useState(false)
+    const [ngrokCopied, setNgrokCopied] = useState(false)
+
     const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
     const [auditTotal, setAuditTotal] = useState(0)
     const [auditPage, setAuditPage] = useState(1)
@@ -284,6 +297,19 @@ export default function Admin() {
             if (response.data?.status === 'success') setStats(response.data.data)
         } catch (err) {
             console.error('Failed to load admin stats:', err)
+        }
+    }, [])
+
+    const loadNgrokUrl = useCallback(async () => {
+        setIsLoadingNgrok(true)
+        try {
+            const response = await apiClient.get('/system/ngrok-url')
+            setNgrokInfo(response.data)
+        } catch (err) {
+            console.error('Failed to load ngrok URL:', err)
+            setNgrokInfo({ active: false, url: null, api_url: null, ws_url: null })
+        } finally {
+            setIsLoadingNgrok(false)
         }
     }, [])
 
@@ -351,7 +377,8 @@ export default function Admin() {
     useEffect(() => {
         loadStats()
         loadUsers()
-    }, [loadStats, loadUsers])
+        loadNgrokUrl()
+    }, [loadStats, loadUsers, loadNgrokUrl])
 
     useEffect(() => {
         if (activeSection === 'models') loadModels()
@@ -535,6 +562,14 @@ export default function Admin() {
         { label: t('admin.overview.messages'), value: stats.totalMessages, detail: t('admin.overview.messagesDetail'), icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30' },
     ]
 
+    // 一鍵複製 ngrok URL
+    const handleCopyNgrokUrl = async () => {
+        if (!ngrokInfo?.url) return
+        await navigator.clipboard.writeText(ngrokInfo.url)
+        setNgrokCopied(true)
+        setTimeout(() => setNgrokCopied(false), 2000)
+    }
+
     return (
         <div className="h-screen overflow-hidden bg-[#F6F4F0] dark:bg-[#101012] transition-colors duration-500 text-text-primary">
 
@@ -623,6 +658,68 @@ export default function Admin() {
                                         )
                                     })}
                                 </section>
+
+                                {/* ── Ngrok 公開網址卡片 ── */}
+                                <Panel className="overflow-hidden">
+                                    <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10">
+                                                <Globe className="h-4 w-4 text-accent" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-wider text-accent">Remote Access</p>
+                                                <p className="text-sm font-semibold text-text-primary">Ngrok 公開網址</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={loadNgrokUrl}
+                                            disabled={isLoadingNgrok}
+                                            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-base px-3 py-1.5 text-xs font-semibold text-text-secondary transition hover:text-text-primary disabled:opacity-50"
+                                        >
+                                            <RefreshCw className={`h-3.5 w-3.5 ${isLoadingNgrok ? 'animate-spin' : ''}`} />
+                                            重新整理
+                                        </button>
+                                    </div>
+                                    <div className="p-5">
+                                        {isLoadingNgrok ? (
+                                            <div className="flex items-center gap-2 text-sm text-text-secondary">
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                                查詢 ngrok 狀態中...
+                                            </div>
+                                        ) : ngrokInfo?.active ? (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-3 rounded-[14px] border border-accent/20 bg-accent/5 px-4 py-3">
+                                                    <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
+                                                    <span className="flex-1 truncate font-mono text-sm text-text-primary">{ngrokInfo.url}</span>
+                                                    <button
+                                                        onClick={handleCopyNgrokUrl}
+                                                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent transition hover:bg-accent/20"
+                                                    >
+                                                        {ngrokCopied
+                                                            ? <><ClipboardCheck className="h-3.5 w-3.5" />已複製</>  
+                                                            : <><Clipboard className="h-3.5 w-3.5" />複製</>}
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div className="rounded-[12px] border border-border-subtle bg-bg-base px-3 py-2">
+                                                        <p className="text-text-secondary">API</p>
+                                                        <p className="mt-1 truncate font-mono text-text-primary">{ngrokInfo.api_url}</p>
+                                                    </div>
+                                                    <div className="rounded-[12px] border border-border-subtle bg-bg-base px-3 py-2">
+                                                        <p className="text-text-secondary">WebSocket</p>
+                                                        <p className="mt-1 truncate font-mono text-text-primary">{ngrokInfo.ws_url}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-3 rounded-[14px] border border-border-subtle bg-bg-base px-4 py-3">
+                                                <span className="h-2 w-2 rounded-full bg-text-secondary shrink-0" />
+                                                <span className="text-sm text-text-secondary">Ngrok 未啟動 — 請執行 </span>
+                                                <code className="rounded bg-bg-surface px-2 py-0.5 text-xs font-mono text-text-primary">python start.py</code>
+                                            </div>
+                                        )}
+                                    </div>
+                                </Panel>
 
                                 <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                                     <Panel className="overflow-hidden flex flex-col">

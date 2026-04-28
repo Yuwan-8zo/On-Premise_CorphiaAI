@@ -181,3 +181,44 @@ async def network_status(
         "data_sovereignty": not is_online,
         "message": "✅ 資料主權保證：完全離線運行" if not is_online else "⚠️ 偵測到外部網路連線",
     }
+
+
+@router.get("/ngrok-url")
+async def get_ngrok_url(
+    _ = RequireAdmin,
+):
+    """
+    取得當前 ngrok 公開網址
+
+    即時查詢本機 ngrok API（port 4040~4042），回傳目前運作中的 HTTPS 通道。
+    若 ngrok 未啟動則回傳 active: false。
+    """
+    import urllib.request
+    import json as json_lib
+
+    for api_port in [4040, 4041, 4042]:
+        try:
+            res = urllib.request.urlopen(
+                f"http://127.0.0.1:{api_port}/api/tunnels", timeout=2
+            )
+            data = json_lib.loads(res.read())
+            for tunnel in data.get("tunnels", []):
+                if tunnel.get("proto") == "https":
+                    public_url: str = tunnel["public_url"]
+                    return {
+                        "active": True,
+                        "url": public_url,
+                        "api_url": f"{public_url}/api/v1/",
+                        "ws_url": public_url.replace("https://", "wss://") + "/ws/",
+                        "api_port": api_port,
+                    }
+        except Exception:
+            pass
+
+    return {
+        "active": False,
+        "url": None,
+        "api_url": None,
+        "ws_url": None,
+        "api_port": None,
+    }
