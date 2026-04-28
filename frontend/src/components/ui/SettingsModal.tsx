@@ -185,11 +185,11 @@ export default function SettingsModal() {
 
         // 密碼規則驗證
         const errors: string[] = []
-        if (value.length < 8) errors.push('至少 8 個字元')
-        if (!/[A-Z]/.test(value)) errors.push('必須包含大寫字母')
-        if (!/[a-z]/.test(value)) errors.push('必須包含小寫字母')
-        if (!/\d/.test(value)) errors.push('必須包含數字')
-        if (!/[!@#$%^&*()\-_=+[\]{};:'\",.<>?/\\|`~]/.test(value)) errors.push('必須包含特殊字元')
+        if (value.length < 8) errors.push(t('settings.pwdRuleLength'))
+        if (!/[A-Z]/.test(value)) errors.push(t('settings.pwdRuleUpper'))
+        if (!/[a-z]/.test(value)) errors.push(t('settings.pwdRuleLower'))
+        if (!/\d/.test(value)) errors.push(t('settings.pwdRuleNumber'))
+        if (!/[!@#$%^&*()\-_=+[\]{};:'\",.<>?/\\|`~]/.test(value)) errors.push(t('settings.pwdRuleSpecial'))
 
         let score = 0
         if (value.length >= 8) score += 20
@@ -217,26 +217,26 @@ export default function SettingsModal() {
         setPasswordSuccess('')
 
         if (!currentPassword) {
-            setPasswordError('請輸入目前密碼')
+            setPasswordError(t('settings.pwdReqCurrent'))
             return
         }
         if (!newPassword) {
-            setPasswordError('請輸入新密碼')
+            setPasswordError(t('settings.pwdReqNew'))
             return
         }
         if (newPassword !== confirmNewPassword) {
-            setPasswordError('確認密碼不符')
+            setPasswordError(t('settings.pwdReqNotMatch'))
             return
         }
         if (passwordStrength && !passwordStrength.is_valid) {
-            setPasswordError('新密碼不符合安全要求')
+            setPasswordError(t('settings.pwdReqUnsafe'))
             return
         }
 
         setIsChangingPassword(true)
         try {
             await authApi.changePassword(currentPassword, newPassword)
-            setPasswordSuccess('密碼修改成功')
+            setPasswordSuccess(t('settings.pwdChangeSuccess'))
             setCurrentPassword('')
             setNewPassword('')
             setConfirmNewPassword('')
@@ -248,7 +248,7 @@ export default function SettingsModal() {
             }, 3000)
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } }
-            setPasswordError(error?.response?.data?.detail || '密碼修改失敗')
+            setPasswordError(error?.response?.data?.detail || t('settings.pwdChangeFail'))
         } finally {
             setIsChangingPassword(false)
         }
@@ -265,10 +265,10 @@ export default function SettingsModal() {
     }
     const getStrengthLabel = (level: string) => {
         switch (level) {
-            case 'very_strong': return '非常強'
-            case 'strong': return '強'
-            case 'medium': return '中等'
-            default: return '弱'
+            case 'very_strong': return t('settings.pwdStrengthVeryStrong')
+            case 'strong': return t('settings.pwdStrengthStrong')
+            case 'medium': return t('settings.pwdStrengthMedium')
+            default: return t('settings.pwdStrengthWeak')
         }
     }
 
@@ -342,13 +342,13 @@ export default function SettingsModal() {
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                        title="進入管理後台"
+                                        title={t('settings.enterAdmin')}
                                         className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm group"
                                     >
                                         <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
                                             <ShieldIcon />
                                         </span>
-                                        <span>管理後台</span>
+                                        <span>{t('settings.adminLabel')}</span>
                                         <svg className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                         </svg>
@@ -356,7 +356,7 @@ export default function SettingsModal() {
                                 )}
                                 <button
                                     onClick={() => setShowQR(true)}
-                                    title="顯示 QR Code 在手機上登入"
+                                    title={t('settings.showQR')}
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm"
                                 >
                                     <div className="text-text-secondary">
@@ -684,16 +684,16 @@ export default function SettingsModal() {
                             <div className="flex gap-6">
                                 {/* 左側：密碼規則 */}
                                 <div className="flex-1 bg-bg-surface/50 rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-border-subtle/50">
-                                    <p className="font-semibold text-text-primary text-[14px] mb-2">密碼安全要求</p>
+                                    <p className="font-semibold text-text-primary text-[14px] mb-2">{t('settings.pwdRequirements')}</p>
                                     {[
-                                        '至少 8 個字元',
-                                        '包含大寫字母 (A-Z)',
-                                        '包含小寫字母 (a-z)',
-                                        '包含數字 (0-9)',
-                                        '包含特殊字元',
+                                        t('settings.pwdRuleLength'),
+                                        t('settings.pwdRuleUpper'),
+                                        t('settings.pwdRuleLower'),
+                                        t('settings.pwdRuleNumber'),
+                                        t('settings.pwdRuleSpecial'),
                                     ].map((rule, i) => {
                                         const passed = passwordStrength
-                                            ? !passwordStrength.errors.some(e => e.includes(rule.split(' ')[1] || rule))
+                                            ? !passwordStrength.errors.some(e => e === rule)
                                             : null
                                         return (
                                             <div key={i} className={`flex items-center gap-1.5 transition-colors ${
@@ -726,7 +726,7 @@ export default function SettingsModal() {
                                                 className="pt-3 mt-1 border-t border-border-subtle/60 /10 overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[11px] text-text-secondary">強度</span>
+                                                    <span className="text-[11px] text-text-secondary">{t('settings.pwdStrengthLabel')}</span>
                                                     <span className={`text-[11px] font-semibold ml-auto ${
                                                         passwordStrength.level === 'very_strong' ? 'text-green-600 ' :
                                                         passwordStrength.level === 'strong' ? 'text-light-accent ' :
@@ -751,14 +751,14 @@ export default function SettingsModal() {
                                 <div className="flex-1 flex flex-col gap-4 justify-center">
                                     {/* 目前密碼 */}
                                     <PwdFloatingInput
-                                        label="目前密碼"
+                                        label={t('settings.currentPassword')}
                                         value={currentPassword}
                                         onChange={v => { setCurrentPassword(v); setPasswordError('') }}
                                     />
 
                                     {/* 新密碼 */}
                                     <PwdFloatingInput
-                                        label="新密碼"
+                                        label={t('settings.newPassword')}
                                         value={newPassword}
                                         onChange={handleNewPasswordChange}
                                     />
@@ -766,7 +766,7 @@ export default function SettingsModal() {
                                     {/* 確認新密碼 */}
                                     <div>
                                         <PwdFloatingInput
-                                            label="確認新密碼"
+                                            label={t('settings.confirmNewPassword')}
                                             value={confirmNewPassword}
                                             onChange={v => { setConfirmNewPassword(v); setPasswordError('') }}
                                         />
@@ -778,7 +778,7 @@ export default function SettingsModal() {
                                                     exit={{ opacity: 0, height: 0 }}
                                                     className="mt-1 pl-3 text-[11px] font-medium text-red-500 overflow-hidden"
                                                 >
-                                                    密碼不一致                                                </motion.p>
+                                                    {t('settings.pwdMismatch')}                                                </motion.p>
                                             )}
                                         </AnimatePresence>
                                     </div>
