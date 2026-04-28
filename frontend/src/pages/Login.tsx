@@ -13,6 +13,7 @@ import { authApi } from '../api/auth'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
 import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
+import CorphiaLogoDark from '../assets/Corphia_LOGO_Dark.png'
 
 interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -307,18 +308,24 @@ export default function Login() {
                             transition={{ repeat: Infinity, duration: 2.5, ease:"easeInOut" }}
                             className="flex flex-col items-center gap-6"
                         >
-                            <CorphiaLogo className="w-24 h-24 text-corphia-bronze drop-shadow-lg" />
+                            {/* 圖2：深色品牌圖片 icon，在半透明黑色遮罩上清晰可見 */}
+                            <img
+                                src={CorphiaLogoDark}
+                                alt="Corphia AI"
+                                className="w-24 h-24 object-contain drop-shadow-lg"
+                                draggable={false}
+                            />
                             <div className="flex flex-col items-center gap-2 text-center">
-                                <h2 className="text-2xl font-bold text-text-primary">
+                                <h2 className="text-2xl font-bold text-white">
                                     Corphia AI 啟動中...
                                 </h2>
-                                <p className="text-text-secondary">
+                                <p className="text-white/70">
                                     正在連線至後端伺服器，這可能需要幾秒鐘...
                                 </p>
                                 <div className="mt-4 flex items-center justify-center gap-2">
-                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                 </div>
                             </div>
                         </motion.div>
@@ -329,7 +336,7 @@ export default function Login() {
                                     initial={{ opacity: 0, marginTop: 0 }}
                                     animate={{ opacity: 1, marginTop: 32 }}
                                     onClick={() => setHasInitialConnected(true)}
-                                    className="text-sm text-text-muted hover:text-text-secondary underline transition-colors"
+                                    className="text-sm text-white/60 hover:text-white underline transition-colors"
                                 >
                                     跳過等待，直接進入主畫面
                                 </motion.button>
