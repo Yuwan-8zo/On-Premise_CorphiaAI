@@ -440,8 +440,12 @@ def main():
     print()
     print(f"  🌍 公開網址（Ngrok）")
     if public_url:
-        print(f"     前端: {public_url}")
-        print(f"     後端: {public_url} → port 8168")
+        print(f"     前端:       {public_url}")
+        print(f"     後端 API:   {public_url}/api/v1/")
+        print(f"     WebSocket:  {public_url.replace('https://', 'wss://')}/ws/")
+        print()
+        print(f"  ⚡ 架構：前後端共用同一 ngrok URL，透過 Vite Proxy 路由")
+        print(f"     /api/* → port 8168 (FastAPI)  /ws/* → port 8168 (WebSocket)")
         print()
         print(f"  💡 想換新公開網址？執行: python ngrok_reset.py")
     else:

@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => ({
             '/ws': {
                 target: 'ws://127.0.0.1:8168',
                 ws: true,
+                changeOrigin: true,
             },
         },
     },

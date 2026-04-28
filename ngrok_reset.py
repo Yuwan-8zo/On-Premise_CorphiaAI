@@ -82,10 +82,10 @@ def reset_ngrok() -> str | None:
         print("  請安裝 ngrok：https://ngrok.com/download")
         return None
 
-    # 3. 啟動新 Ngrok
+    # 啟動新 Ngrok（加上 host-header rewrite 確保 Vite 正確識別請求）
     print(f"  [2/3] 啟動新 Ngrok (Forwarding port {NGROK_PORT})...")
     subprocess.Popen(
-        f'"{ngrok_path}" http {NGROK_PORT}',
+        f'"{ngrok_path}" http {NGROK_PORT} --host-header=rewrite',
         shell=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -140,9 +140,14 @@ def main():
 
         print("  ✅ Ngrok 重設完成！")
         print("-" * 50)
-        print("  🌍 新公開網址:")
-        print(f"    前端: {ngrok_url}")
-        print(f"    後端: {ngrok_url.replace('5173', '8168')}")
+        print("  🌍 新公開網址 (前端 + 後端 API 共用同一 URL):")
+        print(f"    前端:       {ngrok_url}")
+        print(f"    後端 API:   {ngrok_url}/api/v1/")
+        print(f"    WebSocket:  {ngrok_url.replace('https://', 'wss://')}/ws/")
+        print()
+        print("  ⚡ 架構說明：前後端皆透過 ngrok → Vite Proxy 路由")
+        print("     /api/*  → port 8168 (FastAPI)")
+        print("     /ws/*   → port 8168 (WebSocket)")
         print()
         print("  本機存取（若公開網址無效請改用）:")
         print(f"    前端: http://localhost:5173")
