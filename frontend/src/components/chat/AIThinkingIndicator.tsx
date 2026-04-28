@@ -8,7 +8,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CorphiaThinkingIcon } from '../icons/CorphiaIcons'
 
 /** 每個步驟顯示的時間（ms） */
 const STEP_DURATION = 1800
@@ -47,12 +46,6 @@ const AIThinkingIndicator = () => {
         <div className="flex flex-col gap-2 py-1 select-none">
             {/* 主狀態列 */}
             <div className="flex items-center gap-2.5">
-                {/* 原廠 CorphiaThinkingIcon — 帶 animate-draw-c 與 animate-pop-spark */}
-                <CorphiaThinkingIcon
-                    className="w-5 h-5"
-                    color="rgb(var(--color-ios-accent-light))"
-                />
-
                 {/* 步驟文字（淡入淡出） */}
                 <span
                     className="text-[14px] font-medium text-text-secondary tracking-wide transition-opacity duration-300"
