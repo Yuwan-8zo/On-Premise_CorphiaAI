@@ -83,6 +83,7 @@ export default {
         confirmMoveToGeneral: 'Are you sure you want to move this chat to General Chat? It will be removed from the"{{folder}}" folder.',
         sendMessage: 'Send Message',
         thinking: 'Thinking...',
+        thinkingSteps: ['Processing', 'Analyzing', 'Thinking', 'Generating'],
         stopGeneration: 'Stop',
         regenerate: 'Regenerate',
         copyMessage: 'Copy',

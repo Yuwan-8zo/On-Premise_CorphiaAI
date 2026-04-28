@@ -83,6 +83,7 @@ export default {
         confirmMoveToGeneral: '確定要將此對話移回一般聊天？將會從「{{folder}}」資料夾移除。',
         sendMessage: '發送訊息',
         thinking: '思考中...',
+        thinkingSteps: ['處理中', '分析中', '思考中', '生成中'],
         stopGeneration: '停止生成',
         regenerate: '重新生成',
         copyMessage: '複製訊息',

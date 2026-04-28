@@ -3,6 +3,7 @@
  */
 
 import { memo, useState, useEffect } from 'react'
+import AIThinkingIndicator from './AIThinkingIndicator'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import RAGDebugPanel from './RAGDebugPanel'
@@ -171,8 +172,8 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
-                            // NOTE: 空白佔位，讓動態 icon 撐起高度，避免訊息列高度 = 0
-                            <div className="h-8" />
+                            // NOTE: AI 串流前置期 — 顯示動態狀態提示（Processing / Analyzing / Thinking / Generating）
+                            <AIThinkingIndicator />
                         ) : null}
 
                         {/* 來源引用 */}
