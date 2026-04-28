@@ -676,7 +676,7 @@ export function useChatLogic() {
         const shouldUseRag = chatMode === 'project'
 
         // ── 專案模式：傳訊前先偵測資料夾是否有可用文件 ──────────────────────
-        // 若資料夾尚無任何已啟用的文件，直接注入提示訊息，不觸發後端 LLM
+        // 若資料夾尚無任何已啟用的文件，模擬串流打字效果輸出提示訊息，不觸發後端 LLM
         if (shouldUseRag) {
             const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
             if (folderName) {
@@ -688,19 +688,17 @@ export function useChatLogic() {
                             (d.doc_metadata?.isActive ?? true)
                     )
                     if (activeDocs.length === 0) {
-                        // 無可用文件 → 移除 AI 佔位訊息，注入固定提示，停止串流
+                        // 無可用文件 → 保持串流狀態，逐段 append 提示訊息（模擬打字效果）
+                        const noDocsText = `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`
+                        // 以每 3 字元為單位打字，間距 30ms
+                        const chunkSize = 3
+                        const delay = 30
+                        for (let i = 0; i < noDocsText.length; i += chunkSize) {
+                            const chunk = noDocsText.slice(i, i + chunkSize)
+                            appendToLastMessage(chunk)
+                            await new Promise<void>((resolve) => setTimeout(resolve, delay))
+                        }
                         setStreaming(false)
-                        useChatStore.setState((state) => {
-                            const newMessages = state.messages.slice(0, -1)
-                            const warnMsg: Message = {
-                                id: `auto-noDocs-${Date.now()}`,
-                                role: 'assistant',
-                                content: `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`,
-                                tokens: 0,
-                                createdAt: new Date().toISOString(),
-                            }
-                            return { messages: [...newMessages, warnMsg] }
-                        })
                         return
                     }
                 } catch (err) {
