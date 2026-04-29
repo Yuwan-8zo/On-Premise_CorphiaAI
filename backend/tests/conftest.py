@@ -194,3 +194,11 @@ def engineer_auth_headers(test_engineer: User) -> dict:
     """產生 engineer Bearer Token Headers"""
     token = create_access_token({"sub": test_engineer.id})
     return {"Authorization": f"Bearer {token}"}
+import asyncio
+import pytest
+
+@pytest.fixture(scope='session')
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
