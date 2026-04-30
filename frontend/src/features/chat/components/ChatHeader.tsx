@@ -1,9 +1,9 @@
 ﻿import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { SidebarIcon } from './ChatIcons'
-import { CorphiaLogo } from '../icons/CorphiaIcons'
-import type { ModelItem } from '../../api/models'
-import modelsApi from '../../api/models'
-import type { Conversation } from '../../types/chat'
+import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
+import type { ModelItem } from '@/api/models'
+import modelsApi from '@/api/models'
+import type { Conversation } from '@/types/chat'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean

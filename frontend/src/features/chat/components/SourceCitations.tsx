@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react'
-import type { MessageSource } from '../../types/chat'
+import type { MessageSource } from '@/types/chat'
 
 interface SourceCitationsProps {
     sources: MessageSource[]

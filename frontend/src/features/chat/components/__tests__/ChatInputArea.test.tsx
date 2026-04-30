@@ -45,12 +45,12 @@ vi.mock('@/lib/gsapMotion', () => {
 })
 
 // PromptMenu 不是此測試重點，mock 掉
-vi.mock('@/components/chat/PromptMenu', () => ({
+vi.mock('@/features/chat/components/PromptMenu', () => ({
   PromptMenu: ({ disabled }: { disabled: boolean }) =>
     React.createElement('button', { 'data-testid': 'prompt-menu', disabled }, '範本'),
 }))
 
-import ChatInputArea from '@/components/chat/ChatInputArea'
+import ChatInputArea from '@/features/chat/components/ChatInputArea'
 
 // ── 預設 Props Factory ─────────────────────────────────────────
 

@@ -19,7 +19,7 @@ async def health_check():
     """
     return HealthResponse(
         status="ok",
-        version="2.2.0",
+        version="2.3.0",
         database="connected",
         llm="ready"
     )
@@ -30,6 +30,6 @@ async def root():
     """API 根路徑"""
     return {
         "name": settings.app_name,
-        "version": "2.2.0",
+        "version": "2.3.0",
         "status": "running"
     }

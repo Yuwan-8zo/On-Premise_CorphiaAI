@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { apiClient } from '../../api/client'
+import { systemApi } from '../../api/system'
 
 interface CPUInfo {
     cpu_percent: number
@@ -91,12 +91,12 @@ export function SystemMonitorPanel() {
 
     const fetchData = useCallback(async () => {
         try {
-            const [healthRes, networkRes] = await Promise.all([
-                apiClient.get('/system/health/detailed'),
-                apiClient.get('/system/network/status'),
+            const [healthData, networkData] = await Promise.all([
+                systemApi.getHealthDetailed(),
+                systemApi.getNetworkStatus(),
             ])
-            setHealth(healthRes.data)
-            setNetwork(networkRes.data)
+            setHealth(healthData)
+            setNetwork(networkData)
             setError(null)
         } catch (err) {
             setError('無法取得系統資訊')

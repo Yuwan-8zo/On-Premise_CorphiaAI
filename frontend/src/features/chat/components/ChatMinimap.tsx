@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import type { Message } from '../../types/chat'
+import type { Message } from '@/types/chat'
 
 interface ChatMinimapProps {
     messages: Message[]

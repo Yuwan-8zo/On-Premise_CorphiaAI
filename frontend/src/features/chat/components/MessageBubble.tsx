@@ -7,11 +7,11 @@ import AIThinkingIndicator from './AIThinkingIndicator'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import RAGDebugPanel from './RAGDebugPanel'
-import type { Message } from '../../types/chat'
-import { CorphiaLogo, CorphiaThinkingIcon } from '../icons/CorphiaIcons'
+import type { Message } from '@/types/chat'
+import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
 import { Copy, Edit2, Check, X, ShieldCheck, RefreshCw } from 'lucide-react'
-import { conversationsApi } from '../../api/conversations'
-import { useChatStore } from '../../store/chatStore'
+import { conversationsApi } from '@/api/conversations'
+import { useChatStore } from '@/store/chatStore'
 
 interface MessageBubbleProps {
     message: Message

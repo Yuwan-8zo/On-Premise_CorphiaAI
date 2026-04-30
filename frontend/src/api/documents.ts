@@ -4,18 +4,23 @@ import { AxiosProgressEvent } from 'axios'
 export interface DocumentResponse {
     id: string
     filename: string
-    content_type: string
-    size_bytes: number
-    status: string
+    original_filename: string
+    file_type: string
+    file_size: number
+    status: 'pending' | 'processing' | 'completed' | 'failed'
+    chunk_count: number
+    error_message?: string | null
     doc_metadata?: Record<string, unknown>
+    version?: number
+    superseded_by?: string | null
     created_at: string
+    processed_at?: string | null
 }
 
 export const documentsApi = {
     // 列表 - 回傳 { data: DocumentResponse[], total: number }，與後端 DocumentListResponse schema 一致
     list: async (): Promise<{ data: DocumentResponse[], total: number }> => {
         const response = await apiClient.get('/documents')
-        // BUG-09 修正：後端固定回傳 {data: [], total: number}，此處不需要條件判斷
         return response.data
     },
 

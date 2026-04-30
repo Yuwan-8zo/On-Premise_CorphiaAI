@@ -11,10 +11,10 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '../../store/authStore'
-import { useUIStore } from '../../store/uiStore'
+import { useAuthStore } from '@/store/authStore'
+import { useUIStore } from '@/store/uiStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { CorphiaLogo } from '../icons/CorphiaIcons'
+import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
 
 // 預設資料夾名稱常數

@@ -29,5 +29,6 @@ export interface LoginResponse {
 export interface RegisterRequest {
     email: string
     password: string
+    name?: string
     tenantSlug?: string
 }

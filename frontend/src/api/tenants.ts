@@ -73,12 +73,5 @@ export const tenantsApi = {
      */
     deleteTenant: async (tenantId: string): Promise<void> => {
         await apiClient.delete(`/tenants/${tenantId}`);
-    },
-
-    /**
-     * 啟用租戶
-     */
-    activateTenant: async (tenantId: string): Promise<void> => {
-        await apiClient.post(`/tenants/${tenantId}/activate`);
     }
 };

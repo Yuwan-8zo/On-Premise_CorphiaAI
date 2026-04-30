@@ -83,6 +83,14 @@ temp_*.tsx
 temp_*.py
 fix_*.py
 patch_*.py
+scratch.py
+scratch_*.py
 scratch/
 archive_scripts/
 .runtime/
+
+# Backend 執行階段狀態與錯誤紀錄
+backend/.engine_state.json
+backend/error.txt
+crash.log
+backend/crash.log

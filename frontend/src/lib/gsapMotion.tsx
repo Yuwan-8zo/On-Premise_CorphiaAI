@@ -191,12 +191,13 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
 }
 
 export const motion = {
+    aside: createMotionElement('aside'),
     button: createMotionElement('button'),
     div: createMotionElement('div'),
     label: createMotionElement('label'),
     p: createMotionElement('p'),
     section: createMotionElement('section'),
-} as Record<'button' | 'div' | 'label' | 'p' | 'section', React.ComponentType<AnyMotionProps>>
+} as Record<'aside' | 'button' | 'div' | 'label' | 'p' | 'section', React.ComponentType<AnyMotionProps>>
 
 export function AnimatePresence({ children }: { children?: React.ReactNode; [key: string]: unknown }) {
     return <Fragment>{children}</Fragment>

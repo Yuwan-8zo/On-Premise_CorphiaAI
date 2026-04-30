@@ -167,7 +167,7 @@ export default function App() {
             {/* 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入 */}
             <div
                 key={location.pathname}
-                className="page-transition"
+                className="page-transition h-full overflow-hidden"
             >
                 <Suspense fallback={<FallbackLoader />}>
                     <Routes location={location}>
