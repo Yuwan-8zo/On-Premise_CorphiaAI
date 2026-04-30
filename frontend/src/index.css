@@ -83,7 +83,8 @@ html {
 }
 
 body {
-  font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  /* Apple 系統字優先：Mac/iPhone 直接吃原生 SF Pro，其他平台 fallback Inter */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Noto Sans TC', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #F6F4F0;

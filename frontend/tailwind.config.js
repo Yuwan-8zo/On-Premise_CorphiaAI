@@ -82,19 +82,32 @@ export default {
                 },
             },
             fontFamily: {
-                sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],
+                // Apple 系統字優先：Mac / iPhone 使用者直接拿到原生 SF Pro，
+                // 其他平台 fallback 到 Inter (跟 SF Pro 視覺最接近)，再 fallback 系統字。
+                sans: [
+                    '-apple-system',
+                    'BlinkMacSystemFont',
+                    '"SF Pro Text"',
+                    '"SF Pro Display"',
+                    'Inter',
+                    '"Noto Sans TC"',
+                    'system-ui',
+                    'sans-serif',
+                ],
             },
             // 圓角 / 字級全部從 tokens.js 帶進來，避免雙重維護
             borderRadius: tokens.radius,
             fontSize: tokens.fontSize,
             boxShadow: {
-                'sm': '0 0 4px rgb(0 0 0 / 0.05)',
-                DEFAULT: '0 0 8px rgb(0 0 0 / 0.08)',
-                'md': '0 0 12px rgb(0 0 0 / 0.1)',
-                'lg': '0 0 20px rgb(0 0 0 / 0.12)',
-                'xl': '0 0 30px rgb(0 0 0 / 0.15)',
-                '2xl': '0 0 50px rgb(0 0 0 / 0.25)',
-                'inner': 'inset 0 0 6px rgb(0 0 0 / 0.1)',
+                // Apple 風格陰影：刻意低調、層次靠透明度而非黑度。
+                // 對比舊值整體淡化 ~40%，避免「卡片浮起來太誇張」的感覺。
+                'sm': '0 1px 2px rgb(0 0 0 / 0.04)',
+                DEFAULT: '0 2px 6px rgb(0 0 0 / 0.05)',
+                'md': '0 4px 12px rgb(0 0 0 / 0.06)',
+                'lg': '0 8px 20px rgb(0 0 0 / 0.07)',
+                'xl': '0 12px 28px rgb(0 0 0 / 0.09)',
+                '2xl': '0 20px 40px rgb(0 0 0 / 0.12)',
+                'inner': 'inset 0 1px 3px rgb(0 0 0 / 0.06)',
             },
             keyframes: {
                 'typing-bounce': {

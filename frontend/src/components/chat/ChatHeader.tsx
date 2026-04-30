@@ -44,7 +44,7 @@ export default function ChatHeader({
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     return (
-        <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-bg-surface transition-colors">
+        <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-bg-surface/85 supports-[backdrop-filter]:bg-bg-surface/70 backdrop-blur-xl transition-colors sticky top-0">
             <div className="flex items-center gap-3">
                 <button
                     onClick={toggleSidebar}

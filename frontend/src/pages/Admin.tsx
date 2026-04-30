@@ -2,6 +2,7 @@
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import { spring } from '../lib/motionPresets'
 import {
     Activity,
     ArrowLeft,
@@ -1158,8 +1159,8 @@ export default function Admin() {
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-bg-surface border-l border-border-subtle z-50 overflow-y-auto custom-scrollbar"
+                            transition={spring}
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-bg-surface/90 supports-[backdrop-filter]:bg-bg-surface/70 backdrop-blur-2xl border-l border-border-subtle z-50 overflow-y-auto custom-scrollbar"
                             role="dialog"
                             aria-label="audit detail"
                         >

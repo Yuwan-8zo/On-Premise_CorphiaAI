@@ -334,7 +334,7 @@ export default function Documents() {
                                 key={card.step}
                                 className="rounded-cv-lg border border-border-subtle bg-bg-base p-5 shadow-sm dark:shadow-none"
                             >
-                                <p className="text-xs font-bold tracking-[0.18em] text-accent mb-2">{card.step}</p>
+                                <p className="text-xs font-semibold tracking-[0.18em] text-text-muted mb-2">{card.step}</p>
                                 <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>
                                 <p className="text-[13px] text-text-secondary leading-relaxed">{card.desc}</p>
                             </div>

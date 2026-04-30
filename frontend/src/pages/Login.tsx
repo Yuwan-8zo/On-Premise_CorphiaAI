@@ -14,6 +14,7 @@ import { motion, AnimatePresence, LayoutGroup } from '@/lib/gsapMotion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
 import { CorphiaLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
 import { BackendStatusPill, FloatingInput, QrAccessModal, type BackendStatus } from '../features/auth'
+import { springSnappy } from '../lib/motionPresets'
 
 export default function Login() {
     const { t, i18n } = useTranslation()
@@ -347,7 +348,7 @@ export default function Login() {
                                 className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
                                 initial={false}
                                 animate={{ x: activeTab === 'login' ? 0 : '100%' }}
-                                transition={{ type:"tween", duration: 0.3, ease:"easeInOut" }}
+                                transition={springSnappy}
                                 style={{ left: '5px', zIndex: 1 }}
                             />
                             <button
