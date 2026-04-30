@@ -571,68 +571,70 @@ export default function SettingsModal() {
                                         </div>
                                     </div>
 
-                                    {/* C2: RAG Debug Mode 開關 */}
+                                    {/* iOS Settings 風格群組：把進階開關集中在一個帶髮絲線的容器裡 */}
                                     <div className="mt-12 max-w-md">
-                                        <h3 className="text-xl font-bold text-text-primary mb-3">
-                                            {t('settings.ragDebug', 'RAG 除錯模式')}
+                                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted mb-2 px-1">
+                                            {t('settings.advancedSection', '進階')}
                                         </h3>
-                                        <p className="text-[13px] text-text-secondary mb-4 leading-relaxed">
-                                            {t('settings.ragDebugHint', '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。')}
-                                        </p>
-                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-bg-base border border-transparent cursor-pointer">
-                                            <span className="text-[15px] font-semibold text-text-primary">
-                                                ?? {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={ragDebugMode}
-                                                onClick={() => setRAGDebugMode(!ragDebugMode)}
-                                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                                                    ragDebugMode
-                                                        ? 'bg-accent'
-                                                        : 'bg-bg-surface border border-border-subtle'
-                                                }`}
-                                            >
-                                                <span
-                                                    className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
-                                                        ragDebugMode ? 'translate-x-6' : 'translate-x-1'
+                                        <div className="ios-list">
+                                            {/* RAG Debug */}
+                                            <label className="ios-list-row cursor-pointer">
+                                                <div className="flex flex-col gap-0.5 min-w-0">
+                                                    <span className="text-[15px] font-medium text-text-primary">
+                                                        {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
+                                                    </span>
+                                                    <span className="text-[12px] text-text-secondary leading-snug">
+                                                        {t('settings.ragDebugHint', '每次 AI 回覆下方顯示檢索文件、相似度與來源。')}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={ragDebugMode}
+                                                    onClick={() => setRAGDebugMode(!ragDebugMode)}
+                                                    className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
+                                                        ragDebugMode
+                                                            ? 'bg-accent'
+                                                            : 'bg-bg-surface border border-border-subtle'
                                                     }`}
-                                                />
-                                            </button>
-                                        </label>
-                                    </div>
+                                                >
+                                                    <span
+                                                        className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
+                                                            ragDebugMode ? 'translate-x-6' : 'translate-x-1'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </label>
 
-                                    {/* Demo Mode 開關（對外展示時隱藏絕對路徑） */}
-                                    <div className="mt-8 max-w-md">
-                                        <h3 className="text-xl font-bold text-text-primary mb-3">
-                                            {t('settings.demoMode', 'Demo 模式')}
-                                        </h3>
-                                        <p className="text-[13px] text-text-secondary mb-4 leading-relaxed">
-                                            {t('settings.demoModeHint', '開啟後會在管理後台隱藏伺服器的絕對路徑與其他敏感字串，方便對外展示。')}
-                                        </p>
-                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-bg-base border border-transparent cursor-pointer">
-                                            <span className="text-[15px] font-semibold text-text-primary">
-                                                {t('settings.demoModeToggle', '隱藏敏感資訊')}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={demoMode}
-                                                onClick={() => setDemoMode(!demoMode)}
-                                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                                                    demoMode
-                                                        ? 'bg-accent'
-                                                        : 'bg-bg-surface border border-border-subtle'
-                                                }`}
-                                            >
-                                                <span
-                                                    className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
-                                                        demoMode ? 'translate-x-6' : 'translate-x-1'
+                                            {/* Demo Mode */}
+                                            <label className="ios-list-row cursor-pointer">
+                                                <div className="flex flex-col gap-0.5 min-w-0">
+                                                    <span className="text-[15px] font-medium text-text-primary">
+                                                        {t('settings.demoModeToggle', '隱藏敏感資訊')}
+                                                    </span>
+                                                    <span className="text-[12px] text-text-secondary leading-snug">
+                                                        {t('settings.demoModeHint', '對外展示時隱藏絕對路徑等敏感字串。')}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={demoMode}
+                                                    onClick={() => setDemoMode(!demoMode)}
+                                                    className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
+                                                        demoMode
+                                                            ? 'bg-accent'
+                                                            : 'bg-bg-surface border border-border-subtle'
                                                     }`}
-                                                />
-                                            </button>
-                                        </label>
+                                                >
+                                                    <span
+                                                        className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
+                                                            demoMode ? 'translate-x-6' : 'translate-x-1'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </label>
+                                        </div>
                                     </div>
                                 </motion.div>
                             )}

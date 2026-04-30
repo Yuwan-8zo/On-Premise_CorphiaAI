@@ -152,7 +152,7 @@ export default function Chat() {
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                                 {/* Greeting */}
-                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-2 text-text-primary tracking-tight text-center leading-snug">
+                                <h2 className="text-[28px] md:text-[34px] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-tight">
                                     {mainProps.t('chat.emptyGreeting', {
                                         name:
                                             mainProps.user?.name ||
@@ -185,14 +185,14 @@ export default function Chat() {
                                             <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                                         ];
                                         return suggestions.map((item: any, index: number) => (
-                                            <button 
+                                            <button
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
-                                                className="text-left p-4 rounded-cv-lg bg-bg-base border border-border-subtle shadow-lg border-accent hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
+                                                className="text-left p-4 rounded-cv-lg bg-bg-base border border-border-subtle shadow-sm hover:bg-bg-surface hover:border-border-strong/30 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 group active:scale-[0.98] active:translate-y-0"
                                             >
                                                 {icons[index % icons.length]}
-                                                <div className="font-semibold text-[13px] mb-1.5 text-text-primary text-accent transition-colors">{item.title}</div>
-                                                <div className="text-[12px] text-text-secondary text-text-primary leading-relaxed">{item.desc}</div>
+                                                <div className="font-semibold text-[13px] mb-1.5 text-text-primary transition-colors">{item.title}</div>
+                                                <div className="text-[12px] text-text-secondary leading-relaxed">{item.desc}</div>
                                             </button>
                                         ));
                                     })()}

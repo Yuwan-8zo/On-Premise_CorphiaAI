@@ -151,6 +151,7 @@ export default {
         ragDebug: 'RAG デバッグモード',
         ragDebugHint: 'オンにすると、各AIの応答の下に取得した参考ドキュメント、類似度スコア、ソースパスが表示され、デバッグとチューニングに役立ちます。',
         ragDebugToggle: 'RAG デバッグ情報を表示',
+        advancedSection: '詳細',
         demoMode: 'デモモード',
         demoModeHint: 'オンにすると管理画面でサーバーの絶対パスなど機密情報を伏せ字にします。外部デモ時に便利です。',
         demoModeToggle: '機密情報を非表示',

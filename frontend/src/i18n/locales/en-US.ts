@@ -151,6 +151,7 @@ export default {
         ragDebug: 'RAG Debug Mode',
         ragDebugHint: 'When enabled, the retrieved reference documents, similarity scores, and source paths will be displayed below each AI response to help with debugging and tuning.',
         ragDebugToggle: 'Show RAG Debug Info',
+        advancedSection: 'Advanced',
         demoMode: 'Demo Mode',
         demoModeHint: 'When enabled, the admin console hides absolute server paths and other sensitive strings, making it safer to demo externally.',
         demoModeToggle: 'Hide sensitive info',

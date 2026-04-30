@@ -330,3 +330,92 @@ html.dark .markdown-body strong {
   background-color: rgb(var(--color-ios-accent-light));
   color: var(--text-on-accent, #fff);
 }
+
+/* ──────────────────────────────────────────────────────────────
+   Apple 風格 utility classes
+   ──────────────────────────────────────────────────────────────
+   寫新元件時直接套這幾個 class：
+     .tap         按下去輕微縮小，模擬 iOS 觸覺回饋
+     .glass       一般玻璃霧化（卡片用）
+     .glass-modal modal 等浮起容器專用，霧化更強
+     .ios-list    iOS Settings 群組容器（圓角 + 髮絲線分隔）
+     .ios-list-row  ios-list 裡的單一列
+   配色都走 token，深淺色自動跟著主題。
+   ──────────────────────────────────────────────────────────── */
+
+/* 按下回饋：所有 button / 可點擊元素都可以加這個 class */
+.tap {
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tap:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) {
+  .tap:hover {
+    opacity: 0.92;
+  }
+}
+
+/* 玻璃霧化：卡片底層用 */
+.glass {
+  background-color: rgb(var(--bg-base) / 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+@supports not ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
+  .glass {
+    background-color: rgb(var(--bg-base) / 0.96);
+  }
+}
+
+/* Modal / Drawer / Popover 用的更強玻璃 */
+.glass-modal {
+  background-color: rgb(var(--bg-surface) / 0.78);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+}
+@supports not ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
+  .glass-modal {
+    background-color: rgb(var(--bg-surface) / 0.97);
+  }
+}
+
+/* iOS Settings 群組容器 */
+.ios-list {
+  background-color: rgb(var(--bg-base));
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--border-subtle));
+}
+.ios-list > * + * {
+  border-top: 1px solid rgb(var(--border-subtle) / 0.6);
+}
+
+/* 群組裡的單列 */
+.ios-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  transition: background-color 120ms ease-out;
+}
+@media (hover: hover) {
+  .ios-list-row:hover {
+    background-color: rgb(var(--bg-surface) / 0.6);
+  }
+}
+
+/* iOS 髮絲分隔線 */
+.hairline {
+  height: 1px;
+  background-color: rgb(var(--border-subtle));
+  border: none;
+}
+@media (min-resolution: 2dppx) {
+  .hairline {
+    transform: scaleY(0.5);
+    transform-origin: 50% 0;
+  }
+}

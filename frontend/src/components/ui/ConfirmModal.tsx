@@ -23,26 +23,26 @@ export const ConfirmModal: React.FC = () => {
     return (
         <AnimatePresence>
             {confirmConfig && (
-                <motion.div 
+                <motion.div
                     key="confirm-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md"
+                    transition={{ duration: 0.18 }}
+                    className="fixed inset-0 z-50 bg-black/35 backdrop-blur-md"
                 />
             )}
             {confirmConfig && (
                 <motion.div
                     key="confirm-modal"
-                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    initial={{ scale: 0.94, opacity: 0, y: 12 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                    transition={{ type:"spring", stiffness: 400, damping: 30 }}
+                    exit={{ scale: 0.96, opacity: 0, y: 6 }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
-                    <div 
-                        className="bg-bg-base rounded-cv-xl w-full max-w-sm shadow-xl overflow-hidden border border-border-subtle pointer-events-auto"
+                    <div
+                        className="glass-modal rounded-cv-xl w-full max-w-sm shadow-2xl overflow-hidden border border-border-subtle pointer-events-auto"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-6">
@@ -60,18 +60,18 @@ export const ConfirmModal: React.FC = () => {
                             </p>
                         </div>
                         
-                        <div className="p-4 bg-bg-surface flex justify-end gap-3 border-t border-border-subtle">
+                        <div className="p-4 bg-bg-surface/40 flex justify-end gap-2 border-t border-border-subtle">
                             <button
                                 onClick={closeConfirm}
                                 disabled={isProcessing}
-                                className="px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:bg-bg-elevated transition-colors disabled:opacity-50"
+                                className="tap px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:bg-bg-elevated transition-colors disabled:opacity-50"
                             >
                                 {t('common.cancel')}
                             </button>
                             <button
                                 onClick={handleConfirm}
                                 disabled={isProcessing}
-                                className="px-5 py-2.5 rounded-full text-sm font-medium text-text-primary bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                className="tap px-5 py-2.5 rounded-full text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                             >
                                 {isProcessing && (
                                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

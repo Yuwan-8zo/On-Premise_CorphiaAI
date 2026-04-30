@@ -659,13 +659,13 @@ export default function Admin() {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveSection(tab.id)}
-                                        className={`flex min-w-max items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm font-semibold transition lg:min-w-0 ${
+                                        className={`tap flex min-w-max items-center gap-3 rounded-[14px] px-4 py-2.5 text-left text-sm font-medium lg:min-w-0 ${
                                             active
-                                                ? 'bg-accent/10 text-accent'
-                                                : 'text-text-secondary hover:bg-bg-base hover:text-text-primary'
+                                                ? 'bg-bg-base text-text-primary shadow-sm'
+                                                : 'text-text-secondary hover:bg-bg-base/60 hover:text-text-primary'
                                         }`}
                                     >
-                                        <Icon className={`h-4 w-4 ${active ? 'text-accent ' : ''}`} />
+                                        <Icon className={`h-4 w-4 ${active ? 'text-accent' : 'text-text-muted'}`} />
                                         {t(tab.i18nKey)}
                                     </button>
                                 )
@@ -685,7 +685,7 @@ export default function Admin() {
                                                 key={item.label}
                                                 className={`overflow-hidden p-5 flex flex-col justify-between h-40 transition-shadow ${
                                                     isPrimary
-                                                        ? 'border-accent/40 ring-1 ring-accent/20 bg-gradient-to-br from-accent/10 to-transparent shadow-md'
+                                                        ? 'bg-gradient-to-br from-accent/[0.06] to-transparent ring-1 ring-accent/15'
                                                         : ''
                                                 }`}
                                             >

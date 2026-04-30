@@ -151,6 +151,7 @@ export default {
         ragDebug: 'RAG 除錯模式',
         ragDebugHint: '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。',
         ragDebugToggle: '顯示 RAG Debug 資訊',
+        advancedSection: '進階',
         demoMode: 'Demo 模式',
         demoModeHint: '開啟後會在管理後台隱藏伺服器的絕對路徑與其他敏感字串，方便對外展示。',
         demoModeToggle: '隱藏敏感資訊',

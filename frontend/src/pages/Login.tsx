@@ -194,7 +194,7 @@ export default function Login() {
                 <div className="flex-1 flex items-center justify-center w-full">
                     {/* 用 mx-auto 真正置中，max-w 限制最大寬度，左右留適度白邊 */}
                     <div className="mx-auto max-w-[460px] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                        <h2 className="text-4xl font-bold text-text-primary relative z-10 transition-colors">
+                        <h2 className="text-[44px] xl:text-[52px] font-bold text-text-primary tracking-[-0.025em] leading-tight relative z-10 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
                         <div className="mt-5 -mb-6 relative z-0 flex items-center">
@@ -336,7 +336,7 @@ export default function Login() {
                     <form
                         onSubmit={handleSubmit}
                         noValidate
-                        className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-2xl dark:shadow-black/50 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-lg dark:shadow-black/30 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                     <LayoutGroup>
                         {/* ── Pill Tab 切換（滑動背景） ── */}
