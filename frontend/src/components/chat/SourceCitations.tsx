@@ -47,7 +47,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     }
 
     return (
-        <div className="mt-3 border border-border-subtle rounded-[20px] overflow-hidden">
+        <div className="mt-3 border border-border-subtle rounded-cv-lg overflow-hidden">
             {/* 標題列 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}

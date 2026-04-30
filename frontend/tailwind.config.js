@@ -1,3 +1,7 @@
+// ⚠️ Token 來源：所有設計變數定義在 src/design-system/tokens.js
+// 改色／圓角／字級都去那裡改；不要在這個檔裡直接寫 hex / px 數字。
+import tokens from './src/design-system/tokens.js'
+
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
@@ -80,12 +84,9 @@ export default {
             fontFamily: {
                 sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],
             },
-            borderRadius: {
-                'card-sm': '22px',
-                'card-md': '30px',
-                'card-lg': '34px',
-                'card-xl': '38px',
-            },
+            // 圓角 / 字級全部從 tokens.js 帶進來，避免雙重維護
+            borderRadius: tokens.radius,
+            fontSize: tokens.fontSize,
             boxShadow: {
                 'sm': '0 0 4px rgb(0 0 0 / 0.05)',
                 DEFAULT: '0 0 8px rgb(0 0 0 / 0.08)',

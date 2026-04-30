@@ -41,7 +41,7 @@ export default function GuideSection() {
                     </span>
                     {t('guide.auth.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-[20px] p-4 text-[14px]">
+                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-4 text-[14px]">
                     <ul className="space-y-4">
                         <li className="flex flex-col sm:flex-row sm:gap-3 gap-1">
                             <span className="w-auto sm:w-20 font-medium text-text-primary shrink-0">Engineer</span>
@@ -69,7 +69,7 @@ export default function GuideSection() {
                     </span>
                     {t('guide.project.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-[20px] p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
+                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
                     <p>{t('guide.project.descStart')} <strong className="text-text-primary">{t('guide.project.mode')}</strong>{t('guide.project.descEnd')}</p>
                     <ol className="list-decimal pl-5 space-y-2">
                         <li>{t('guide.project.step1')}</li>
@@ -90,7 +90,7 @@ export default function GuideSection() {
                     </span>
                     {t('guide.chat.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-[20px] p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
+                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
                     <ul className="list-disc pl-5 space-y-3">
                         <li>
                             <strong className="text-text-primary font-medium block mb-1">{t('guide.chat.minimapTitle')}</strong>

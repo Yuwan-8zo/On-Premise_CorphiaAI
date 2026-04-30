@@ -13,16 +13,15 @@ Corphia AI - 一鍵啟動腳本
      首次或想換網址 → python ngrok_reset.py
 """
 
-import subprocess
 import os
-import sys
-import time
+import shutil
 import signal
 import socket
-import urllib.request
-import json
-import shutil
+import subprocess
+import sys
 import threading
+import time
+import urllib.request
 
 # 修正 Windows 終端機編碼問題
 if sys.platform == "win32":
@@ -41,6 +40,25 @@ from app.services.ngrok_service import (  # noqa: E402
     start_ngrok_tunnel,
     start_ngrok_watcher,
 )
+
+
+def find_backend_python() -> str:
+    """
+    找出最適合用來跑後端 uvicorn 的 Python 直譯器。
+
+    優先順序：
+      1. backend/.venv/Scripts/python.exe  ← 推薦寫法（前面有點）
+      2. backend/venv/Scripts/python.exe   ← 舊命名，向下相容
+      3. sys.executable                    ← 跑這個 start.py 的 Python
+    """
+    candidates = [
+        os.path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe"),
+        os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return sys.executable
 
 # 儲存後端與前端程序
 processes: list[subprocess.Popen] = []
@@ -123,66 +141,18 @@ def kill_port(port: int):
 
 
 def find_ngrok() -> str | None:
+    """尋找 ngrok 執行檔。實作委派給 backend/app/services/ngrok_service.find_ngrok_binary。"""
     return find_ngrok_binary(BASE_DIR)
-
-    """
-    尋找 ngrok 執行檔。
-
-    優先順序：
-    1. C:\\ngrok\\ngrok.exe（手動安裝的穩定版）
-    2. 專案目錄下的 ngrok.exe
-    3. 其他常見安裝路徑
-    4. PATH 中的 ngrok（跳過 MSIX/WindowsApps 版，該版本有已知 panic bug）
-    """
-    # 1. 優先：手動安裝到 C:\ngrok 的版本（最穩定）
-    preferred = r"C:\ngrok\ngrok.exe"
-    if os.path.exists(preferred):
-        return preferred
-
-    # 2. 專案目錄旁
-    local_ngrok = os.path.join(BASE_DIR, "ngrok.exe")
-    if os.path.exists(local_ngrok):
-        return local_ngrok
-
-    # 3. 其他常見安裝路徑
-    common_paths = [
-        os.path.join(os.environ.get("USERPROFILE", ""), "ngrok.exe"),
-        r"C:\Windows\System32\ngrok.exe",
-    ]
-    for path in common_paths:
-        if os.path.exists(path):
-            return path
-
-    # 4. PATH 搜尋（跳過 MSIX 版，避免 'panic: disabled updater' 崩潰）
-    ngrok_in_path = shutil.which("ngrok")
-    if ngrok_in_path:
-        # NOTE: MSIX 版（WindowsApps）有已知 panic bug，強制跳過
-        if "WindowsApps" not in ngrok_in_path and "msix" not in ngrok_in_path.lower():
-            return ngrok_in_path
-
-    return None
 
 
 def _query_ngrok_url() -> str | None:
+    """查詢本機 ngrok API 上正在運作的 https 通道 URL。"""
     state = get_ngrok_state(include_stale=False)
     return state.url if state.active else None
 
-    """查詢本機 ngrok API，取得目前正在運作的 https 通道 URL"""
-    for api_port in [4040, 4041, 4042]:
-        try:
-            res = urllib.request.urlopen(
-                f"http://127.0.0.1:{api_port}/api/tunnels", timeout=2
-            )
-            data = json.loads(res.read())
-            for tunnel in data.get("tunnels", []):
-                if tunnel.get("proto") == "https":
-                    return tunnel["public_url"]
-        except Exception:
-            pass
-    return None
-
 
 def start_ngrok() -> str | None:
+    """啟動 ngrok 通道，回傳 HTTPS public URL；失敗回傳 None。"""
     print("  [ngrok] Waiting for public URL...", end="", flush=True)
     process, state = start_ngrok_tunnel(frontend_port=5173, base_dir=BASE_DIR)
     if process:
@@ -192,42 +162,6 @@ def start_ngrok() -> str | None:
         start_ngrok_watcher(stop_event=ngrok_stop_event)
         return state.url
     print(" failed", flush=True)
-    return None
-
-    """
-    自動啟動 ngrok（關閉舊通道 → 啟動新通道 → 等待 URL）。
-
-    Returns:
-        公開 HTTPS URL，失敗則回傳 None
-    """
-    ngrok_path = find_ngrok()
-    if not ngrok_path:
-        return None
-
-    # 1. 關閉舊 ngrok
-    if sys.platform == "win32":
-        subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
-        time.sleep(1)
-
-    # 2. 啟動新 ngrok
-    subprocess.Popen(
-        f'"{ngrok_path}" http 5173',
-        shell=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    # 3. 輪詢等待 URL（最多 20 秒）
-    print("  [等待] Ngrok 建立通道：", end="", flush=True)
-    for attempt in range(40):  # 40 * 0.5s = 20 秒
-        time.sleep(0.5)
-        if attempt % 2 == 0:
-            print(".", end="", flush=True)
-        url = _query_ngrok_url()
-        if url:
-            print(" 就緒！", flush=True)
-            return url
-    print(" 逾時", flush=True)
     return None
 
 
@@ -405,8 +339,7 @@ def main():
     if os.path.exists(BACKEND_DIR):
         engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
         if os.path.exists(engine_script):
-            venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
-            py_exec = venv_python if os.path.exists(venv_python) else sys.executable
+            py_exec = find_backend_python()
             try:
                 subprocess.run(
                     [py_exec, engine_script] + sys.argv[1:],
@@ -446,18 +379,11 @@ def main():
     # ── [5/6] 後端啟動 ───────────────────────────────────────
     print("  [5/6] 啟動後端服務 (Port 8168)...")
     if os.path.exists(BACKEND_DIR):
-        venv_python = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
-        if os.path.exists(venv_python):
-            backend_cmd = [
-                venv_python, "-m", "uvicorn", "app.main:app",
-                "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"
-            ]
-        else:
-            backend_cmd = [
-                sys.executable, "-m", "uvicorn", "app.main:app",
-                "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"
-            ]
-
+        backend_python = find_backend_python()
+        backend_cmd = [
+            backend_python, "-m", "uvicorn", "app.main:app",
+            "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"
+        ]
         proc = subprocess.Popen(
             backend_cmd, cwd=BACKEND_DIR, shell=False,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL

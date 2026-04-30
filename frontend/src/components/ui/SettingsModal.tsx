@@ -91,7 +91,7 @@ type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
  * 主題卡的選中／未選中外觀。獨立成常數避免在 JSX 內重複貼三次同樣的字串，
  * 也順便修掉 `bg-[rgb(...)/0.05]` 缺一個右括號的舊 bug。
  */
-const THEME_CARD_BASE = 'flex-1 p-4 rounded-[20px] transition-all border-2'
+const THEME_CARD_BASE = 'flex-1 p-4 rounded-cv-lg transition-all border-2'
 const THEME_CARD_SELECTED =
     'border-accent ring-4 ring-accent/20 bg-accent/5 dark:bg-accent/10'
 const THEME_CARD_UNSELECTED =
@@ -309,7 +309,7 @@ export default function SettingsModal() {
                 >
                     {/* Modal Content */}
                     <div
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-[20px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none pointer-events-auto"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-cv-lg shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
@@ -649,7 +649,7 @@ export default function SettingsModal() {
                                             <button
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
-                                                className={`w-full flex items-center justify-between p-5 rounded-[20px] transition-all border-2 ${i18n.language === lang.code
+                                                className={`w-full flex items-center justify-between p-5 rounded-cv-lg transition-all border-2 ${i18n.language === lang.code
                                                         ? 'bg-accent/10 text-accent border-accent ring-1 ring-accent'
                                                         : 'bg-bg-base hover:bg-bg-surface text-text-primary border-transparent shadow-sm'
                                                     }`}
@@ -730,7 +730,7 @@ export default function SettingsModal() {
                             {/* 左右分欄排版：密碼規則 + 輸入區域 */}
                             <div className="flex gap-6">
                                 {/* 左側：密碼規則 */}
-                                <div className="flex-1 bg-bg-surface/50 rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5 border border-border-subtle/50">
+                                <div className="flex-1 bg-bg-surface/50 rounded-cv-lg p-5 text-[13px] text-text-secondary space-y-2.5 border border-border-subtle/50">
                                     <p className="font-semibold text-text-primary text-[14px] mb-2">{t('settings.pwdRequirements')}</p>
                                     {[
                                         t('settings.pwdRuleLength'),

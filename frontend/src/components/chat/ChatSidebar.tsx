@@ -136,7 +136,7 @@ export default function ChatSidebar({
                     </motion.div>
                 ) : (
                     <div 
-                        className="relative bg-black/5 dark:bg-black/20 rounded-[24px] cursor-pointer shrink-0 transition-colors border border-transparent"
+                        className="relative bg-black/5 dark:bg-black/20 rounded-cv-xl cursor-pointer shrink-0 transition-colors border border-transparent"
                         style={{ width: '48px', height: '88px' }}
                         onClick={() => setChatMode(chatMode === 'general' ? 'project' : 'general')}
                     >

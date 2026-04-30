@@ -42,7 +42,7 @@ export const ConfirmModal: React.FC = () => {
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
                     <div 
-                        className="bg-bg-base rounded-[24px] w-full max-w-sm shadow-xl overflow-hidden border border-border-subtle pointer-events-auto"
+                        className="bg-bg-base rounded-cv-xl w-full max-w-sm shadow-xl overflow-hidden border border-border-subtle pointer-events-auto"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-6">

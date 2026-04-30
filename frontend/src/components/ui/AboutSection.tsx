@@ -65,7 +65,7 @@ export default function AboutSection() {
             </motion.p>
 
             {/* 技術棧標籤卡塊 */}
-            <motion.div variants={itemVariants} className="w-full bg-bg-base/50 /30 border border-border-subtle rounded-[24px] p-6 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="w-full bg-bg-base/50 /30 border border-border-subtle rounded-cv-xl p-6 backdrop-blur-sm">
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                     <motion.div variants={badgeVariants} className="flex flex-col">
                         <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.frontend')}</span>

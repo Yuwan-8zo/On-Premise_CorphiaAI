@@ -245,7 +245,7 @@ export default function Documents() {
             <div className="max-w-5xl mx-auto p-8 pt-10">
                 {/* 上傳區域 */}
                 <div
-                    className={`relative border-2 border-dashed rounded-[20px] p-10 mb-10 transition-colors bg-bg-base  ${dragActive
+                    className={`relative border-2 border-dashed rounded-cv-lg p-10 mb-10 transition-colors bg-bg-base  ${dragActive
                             ? 'border-corphia-bronze bg-accent /10'
                             : 'border-border-subtle hover:border-corphia-bronze/50 /50'
                         } shadow-sm dark:shadow-none`}
@@ -305,7 +305,7 @@ export default function Documents() {
 
                 {/* 錯誤訊息 */}
                 {error && (
-                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-[20px] text-red-600 shadow-sm">
+                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-cv-lg text-red-600 shadow-sm">
                         {error}
                     </div>
                 )}
@@ -332,7 +332,7 @@ export default function Documents() {
                         ].map((card) => (
                             <div
                                 key={card.step}
-                                className="rounded-[20px] border border-border-subtle bg-bg-base p-5 shadow-sm dark:shadow-none"
+                                className="rounded-cv-lg border border-border-subtle bg-bg-base p-5 shadow-sm dark:shadow-none"
                             >
                                 <p className="text-xs font-bold tracking-[0.18em] text-accent mb-2">{card.step}</p>
                                 <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>
@@ -343,7 +343,7 @@ export default function Documents() {
                 )}
 
                 {/* 文件列表 */}
-                <div className="bg-bg-base rounded-[20px] border border-border-subtle overflow-hidden shadow-sm dark:shadow-none transition-colors">
+                <div className="bg-bg-base rounded-cv-lg border border-border-subtle overflow-hidden shadow-sm dark:shadow-none transition-colors">
                     <div className="px-8 py-4 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                         <h2 className="font-semibold text-text-primary">
                             {t('documents.uploadedTitle', '已上傳文件')} ({visibleDocuments.length}

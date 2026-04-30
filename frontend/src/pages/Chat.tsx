@@ -39,7 +39,7 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
-                        <div className="bg-bg-base rounded-[20px] shadow-sm border border-border-subtle flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <div className="bg-bg-base rounded-cv-lg shadow-sm border border-border-subtle flex flex-col flex-1 min-h-0 overflow-hidden">
                             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-bg-base/50 shrink-0">
                                 <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
@@ -123,7 +123,7 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {mainProps.isUploading && mainProps.selectedFolder && (
-                            <div className="mt-6 p-4 bg-accent /10 rounded-[20px] border border-corphia-bronze/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
+                            <div className="mt-6 p-4 bg-accent /10 rounded-cv-lg border border-corphia-bronze/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze border-t-transparent animate-spin" />
                                     <span className="text-corphia-bronze text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
@@ -188,7 +188,7 @@ export default function Chat() {
                                             <button 
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
-                                                className="text-left p-4 rounded-[20px] bg-bg-base border border-border-subtle shadow-lg border-accent hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
+                                                className="text-left p-4 rounded-cv-lg bg-bg-base border border-border-subtle shadow-lg border-accent hover:-translate-y-[2px] transition-all duration-200 group active:scale-[0.98]"
                                             >
                                                 {icons[index % icons.length]}
                                                 <div className="font-semibold text-[13px] mb-1.5 text-text-primary text-accent transition-colors">{item.title}</div>

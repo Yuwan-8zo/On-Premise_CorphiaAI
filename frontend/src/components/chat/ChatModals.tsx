@@ -103,7 +103,7 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="bg-bg-base rounded-cv-lg shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-6 pt-6 pb-4">
                             <h3 className="text-[17px] font-semibold text-text-primary mb-4">重新命名</h3>
                             <input ref={renameInputRef} type="text" value={renameInput}
@@ -155,7 +155,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="bg-bg-base rounded-cv-lg shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         {moveModal.isProject ? (
                             <>
                                 <div className="px-6 pt-6 pb-4">
@@ -242,7 +242,7 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="bg-bg-base rounded-[20px] shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="bg-bg-base rounded-cv-lg shadow-2xl w-[340px] overflow-hidden pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-6 pt-6 pb-4">
                             <h3 className="text-[17px] font-semibold text-text-primary mb-1">新建資料夾</h3>
                             <p className="text-[13px] text-text-secondary mb-4">建立資料夾並自動加入一筆新對話</p>

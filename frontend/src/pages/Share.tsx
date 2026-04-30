@@ -56,7 +56,7 @@ export default function Share() {
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
-                <div className="max-w-md w-full bg-bg-base rounded-[20px] p-8 shadow-xl text-center">
+                <div className="max-w-md w-full bg-bg-base rounded-cv-lg p-8 shadow-xl text-center">
                     <h2 className="text-xl font-bold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
                     <p className="text-text-secondary mb-8">
                         {t('share.loginDesc')}

@@ -107,7 +107,7 @@ export default function Register() {
 
             {/* 註冊卡片 */}
             <div className="relative w-full max-w-md">
-                <div className="bg-bg-base/10 backdrop-blur-xl rounded-[20px] shadow-2xl border border-border-subtle p-8">
+                <div className="bg-bg-base/10 backdrop-blur-xl rounded-cv-lg shadow-2xl border border-border-subtle p-8">
                     {/* Logo */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-[16px] bg-gradient-to-br from-primary-500 to-primary-700 mb-4">

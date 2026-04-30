@@ -112,7 +112,7 @@ function formatDate(value?: string) {
 
 function Panel({ className = '', children }: { className?: string; children: React.ReactNode }) {
     return (
-        <section className={`rounded-[20px] border border-border-subtle bg-bg-surface shadow-sm ${className}`}>
+        <section className={`rounded-cv-lg border border-border-subtle bg-bg-surface shadow-sm ${className}`}>
             {children}
         </section>
     )
@@ -219,7 +219,7 @@ function ModalFrame({
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className={`relative w-full ${maxWidth} rounded-[20px] border border-border-subtle bg-bg-surface p-6 text-text-primary shadow-xl pointer-events-auto`}
+                    className={`relative w-full ${maxWidth} rounded-cv-lg border border-border-subtle bg-bg-surface p-6 text-text-primary shadow-xl pointer-events-auto`}
                     onClick={e => e.stopPropagation()}
                 >
                     {children}
@@ -612,7 +612,7 @@ export default function Admin() {
         <div className="h-screen overflow-hidden bg-bg-main transition-colors duration-500 text-text-primary">
 
             <div className="relative mx-auto flex h-full max-w-[1480px] flex-col px-4 py-4 md:px-6 lg:px-8">
-                <header className="mb-5 flex flex-col gap-4 rounded-[20px] border border-border-subtle bg-bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+                <header className="mb-5 flex flex-col gap-4 rounded-cv-lg border border-border-subtle bg-bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/')}
@@ -636,7 +636,7 @@ export default function Admin() {
                 </header>
 
                 <main className="grid flex-1 min-h-0 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                    <aside className="flex h-full flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-bg-surface p-3 shadow-sm">
+                    <aside className="flex h-full flex-col overflow-hidden rounded-cv-lg border border-border-subtle bg-bg-surface p-3 shadow-sm">
                         <div className="mb-4 rounded-[16px] border border-border-subtle bg-bg-base p-4">
                             <div className="mb-6 flex items-center justify-between">
                                 <div>

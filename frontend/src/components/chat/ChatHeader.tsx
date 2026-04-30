@@ -104,7 +104,7 @@ export default function ChatHeader({
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[340px] bg-bg-base rounded-[20px] shadow-xl border border-border-subtle overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 w-[340px] bg-bg-base rounded-cv-lg shadow-xl border border-border-subtle overflow-hidden z-50 p-2"
                                 >
                                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                         {availableModels.length === 0 ? (
@@ -193,7 +193,7 @@ export default function ChatHeader({
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[180px] bg-bg-base rounded-[20px] shadow-xl border border-border-subtle overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-text-primary"
+                                    className="absolute right-0 top-full mt-2 w-[180px] bg-bg-base rounded-cv-lg shadow-xl border border-border-subtle overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-text-primary"
                                 >
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}

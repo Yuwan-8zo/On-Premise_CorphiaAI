@@ -118,7 +118,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
                 <div className="flex flex-col items-end max-w-[75%] group">
-                    <div className="bg-bg-elevated text-text-primary rounded-[20px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
+                    <div className="bg-bg-elevated text-text-primary rounded-cv-lg px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative">
                         {isEditing ? (
                             <div className="flex flex-col gap-2 min-w-[250px]">
                                 <textarea
