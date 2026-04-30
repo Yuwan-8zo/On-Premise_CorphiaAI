@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { conversationsApi } from '../api/conversations'
 import { useTranslation } from 'react-i18next'
 import type { Conversation, Message } from '../types/chat'

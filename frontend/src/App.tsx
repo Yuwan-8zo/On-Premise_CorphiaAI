@@ -39,8 +39,13 @@ const FallbackLoader = () => (
 
 export default function App() {
     const { isAuthenticated, isBootstrapped } = useAuthStore()
-    const { theme, setTheme, accentColor } = useUIStore()
+    const { theme, setTheme, accentColor, themePreference } = useUIStore()
     const location = useLocation()
+    const isPublicRoute =
+        location.pathname === '/login' ||
+        location.pathname === '/register' ||
+        location.pathname.startsWith('/share/')
+    const canUseAuthenticatedRedirect = isBootstrapped && isAuthenticated
 
     // ── 啟動時的 Token 復原流程 ──────────────────────────────────
     // 頁面重新整理後 accessToken 已從記憶體消失，
@@ -52,23 +57,33 @@ export default function App() {
     }, [isBootstrapped])
 
     // 監聽系統主題變化（當使用者在 iPhone 設定切換深色/淺色模式時）
-    // 同步 App 主題，確保 Safari 底部工具列與 App 保持一致
+    // 只有當使用者偏好是「跟隨系統」時，才把 App 主題自動同步
+    // 若使用者已明確選擇 light/dark，則尊重該選擇，不被系統覆蓋
     // 注意：iOS Safari 底部工具列永遠跟隨系統主題，這是 Apple 的系統限制
-    //       唯有讓 App 主題與系統主題一致，才能讓頂部與底部同色
     useEffect(() => {
+        if (themePreference !== 'system') return
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        // 進入 system 模式時，先把目前的系統值寫一次
+        setTheme(mediaQuery.matches ? 'dark' : 'light')
         const handleSystemThemeChange = (e: MediaQueryListEvent) => {
             setTheme(e.matches ? 'dark' : 'light')
         }
         mediaQuery.addEventListener('change', handleSystemThemeChange)
         return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
-    }, [setTheme])
+    }, [setTheme, themePreference])
 
     // 主題與重點色同步：更新 html/body 背景色 + meta theme-color + data-accent
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
+    // route-aware：'/' 或 '/chat*' 路徑用 surface 色（跟 sidebar 對齊），其他用 base 色
     useEffect(() => {
         const isDark = theme === 'dark'
-        const bg = isDark ? THEME_COLORS.darkBg : THEME_COLORS.lightBg
+        const path = location.pathname
+        const isChatPath = path === '/' || path.startsWith('/chat')
+        const baseBg = isDark ? THEME_COLORS.darkBg : THEME_COLORS.lightBg
+        const surfaceBg = isDark ? THEME_COLORS.darkSurface : THEME_COLORS.lightSurface
+        // meta[theme-color] 用：使用者實際看到的最頂端那條顏色
+        // chat 頁的 sidebar 是 surface 色，登入頁直接是 base 漸層的最上方
+        const topBarBg = isChatPath ? surfaceBg : baseBg
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
@@ -108,27 +123,28 @@ export default function App() {
         }
 
         // html/body 背景色即時更新（不依賴 CSS transition）
+        // 深色用整片漸層（從 darkBg 漸到 #101012），淺色用單一 baseBg
         if (isDark) {
             html.style.background = THEME_COLORS.darkBgGradient
             document.body.style.background = 'transparent'
-            // Safari 需要設定 background-attachment: fixed 才能讓漸層填滿整個 viewport 且不隨滾動延伸
-            html.style.backgroundAttachment = 'fixed'
         } else {
-            html.style.background = bg
-            document.body.style.background = bg
-            html.style.backgroundAttachment = 'fixed'
+            html.style.background = baseBg
+            document.body.style.background = baseBg
         }
+        // Safari 需要 background-attachment: fixed 漸層才會固定不隨滾動拉長
+        html.style.backgroundAttachment = 'fixed'
 
         // color-scheme 更新（控制鍵盤、scrollbar 等原生 UI）
         html.style.colorScheme = csOnly
 
         // meta[theme-color] 更新（控制 Safari toolbar 顏色）
-        // 先移除再新增才能強制 Safari 重新偵測
-        const existingThemeColor = document.querySelector('meta[name="theme-color"]')
-        if (existingThemeColor) existingThemeColor.remove()
+        // 先把所有 theme-color 移掉再新增單一動態值，強制 Safari 重新偵測
+        // 用 topBarBg 而非 bg —— chat 頁面要對齊 sidebar 的 surface 色，不是 base
+        const existingThemeColors = document.querySelectorAll('meta[name="theme-color"]')
+        existingThemeColors.forEach((m) => m.remove())
         const metaThemeColor = document.createElement('meta')
         metaThemeColor.setAttribute('name', 'theme-color')
-        metaThemeColor.setAttribute('content', bg)
+        metaThemeColor.setAttribute('content', topBarBg)
         document.head.appendChild(metaThemeColor)
 
         // meta[color-scheme] 更新
@@ -142,7 +158,7 @@ export default function App() {
     }, [theme, accentColor, location.pathname])
 
     // ── 等待 bootstrapAuth 完成才渲染路由，避免閃爍 ──────────────
-    if (!isBootstrapped) {
+    if (!isBootstrapped && !isPublicRoute) {
         return <FallbackLoader />
     }
 
@@ -158,11 +174,11 @@ export default function App() {
                         {/* 公開路由 */}
                         <Route
                             path="/login"
-                            element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+                            element={canUseAuthenticatedRedirect ? <Navigate to="/" replace /> : <Login />}
                         />
                         <Route
                             path="/register"
-                            element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+                            element={canUseAuthenticatedRedirect ? <Navigate to="/" replace /> : <Register />}
                         />
                         <Route
                             path="/share/:conversationId"

@@ -1,10 +1,10 @@
-/**
+﻿/**
  * 設定頁面 (Modal)
  */
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
@@ -87,13 +87,25 @@ const QrCodeIcon = () => (
 )
 type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
+/**
+ * 主題卡的選中／未選中外觀。獨立成常數避免在 JSX 內重複貼三次同樣的字串，
+ * 也順便修掉 `bg-[rgb(...)/0.05]` 缺一個右括號的舊 bug。
+ */
+const THEME_CARD_BASE = 'flex-1 p-4 rounded-[20px] transition-all border-2'
+const THEME_CARD_SELECTED =
+    'border-accent ring-4 ring-accent/20 bg-accent/5 dark:bg-accent/10'
+const THEME_CARD_UNSELECTED =
+    'border-border-subtle hover:border-border-strong/40'
+
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
     const { user, clearAuth, updateUser } = useAuthStore()
     const {
-        theme, toggleTheme, accentColor, setAccentColor,
+        theme, accentColor, setAccentColor,
         isSettingsOpen, setSettingsOpen,
         ragDebugMode, setRAGDebugMode,
+        themePreference, setThemePreference,
+        demoMode, setDemoMode,
     } = useUIStore()
 
     const navigate = useNavigate()
@@ -488,36 +500,52 @@ export default function SettingsModal() {
                                         {t('settings.theme')}
                                     </h2>
 
-                                    <div className="flex gap-6 max-w-md">
-                                        {/* 亮色模式 */}
+                                    <div className="flex gap-4 max-w-2xl">
+                                        {/* 淺色模式 */}
                                         <button
-                                            onClick={() => theme === 'dark' && toggleTheme()}
-                                            className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'light'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
-                                                    : 'border-border-subtle  hover:border-border-subtle '
-                                                }`}
+                                            onClick={() => setThemePreference('light')}
+                                            className={`${THEME_CARD_BASE} ${themePreference === 'light' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-bg-base border border-border-subtle shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <SunIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'light' ? 'text-accent' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${themePreference === 'light' ? 'text-accent' : 'text-text-primary'}`}>
                                                 {t('settings.themeLight')}
                                             </p>
                                         </button>
 
                                         {/* 深色模式 */}
                                         <button
-                                            onClick={() => theme === 'light' && toggleTheme()}
-                                            className={`flex-1 p-4 rounded-[20px] transition-all border-2 ${theme === 'dark'
-                                                    ? 'border-[rgb(var(--color-ios-accent-light))] dark:text-[rgb(var(--color-ios-accent-dark))] bg-[rgb(var(--color-ios-accent-light)/0.05] dark:bg-[rgb(var(--color-ios-accent-dark)/0.1)] ring-4 ring-[rgb(var(--color-ios-accent-light)/0.2] dark:ring-[rgb(var(--color-ios-accent-dark)/0.2)]'
-                                                    : 'border-border-subtle  hover:border-border-subtle '
-                                                }`}
+                                            onClick={() => setThemePreference('dark')}
+                                            className={`${THEME_CARD_BASE} ${themePreference === 'dark' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
                                         >
                                             <div className="w-full h-24 rounded-xl bg-bg-surface border border-border-subtle shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
                                                 <MoonIcon />
                                             </div>
-                                            <p className={`text-[15px] font-semibold ${theme === 'dark' ? 'text-accent' : 'text-text-primary '}`}>
+                                            <p className={`text-[15px] font-semibold ${themePreference === 'dark' ? 'text-accent' : 'text-text-primary'}`}>
                                                 {t('settings.themeDark')}
+                                            </p>
+                                        </button>
+
+                                        {/* 跟隨系統 */}
+                                        <button
+                                            onClick={() => setThemePreference('system')}
+                                            className={`${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
+                                            title={t('settings.themeSystemHint')}
+                                        >
+                                            <div className="w-full h-24 rounded-xl mb-4 flex items-center justify-center transition-transform hover:scale-105 overflow-hidden border border-border-subtle">
+                                                {/* 半邊太陽半邊月亮，呼應 prefers-color-scheme */}
+                                                <div className="flex w-full h-full">
+                                                    <div className="flex-1 bg-bg-base flex items-center justify-center">
+                                                        <SunIcon />
+                                                    </div>
+                                                    <div className="flex-1 bg-bg-surface flex items-center justify-center">
+                                                        <MoonIcon />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className={`text-[15px] font-semibold ${themePreference === 'system' ? 'text-accent' : 'text-text-primary'}`}>
+                                                {t('settings.themeSystem')}
                                             </p>
                                         </button>
                                     </div>
@@ -569,6 +597,38 @@ export default function SettingsModal() {
                                                 <span
                                                     className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
                                                         ragDebugMode ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </label>
+                                    </div>
+
+                                    {/* Demo Mode 開關（對外展示時隱藏絕對路徑） */}
+                                    <div className="mt-8 max-w-md">
+                                        <h3 className="text-xl font-bold text-text-primary mb-3">
+                                            {t('settings.demoMode', 'Demo 模式')}
+                                        </h3>
+                                        <p className="text-[13px] text-text-secondary mb-4 leading-relaxed">
+                                            {t('settings.demoModeHint', '開啟後會在管理後台隱藏伺服器的絕對路徑與其他敏感字串，方便對外展示。')}
+                                        </p>
+                                        <label className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-bg-base border border-transparent cursor-pointer">
+                                            <span className="text-[15px] font-semibold text-text-primary">
+                                                {t('settings.demoModeToggle', '隱藏敏感資訊')}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={demoMode}
+                                                onClick={() => setDemoMode(!demoMode)}
+                                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                                                    demoMode
+                                                        ? 'bg-accent'
+                                                        : 'bg-bg-surface border border-border-subtle'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
+                                                        demoMode ? 'translate-x-6' : 'translate-x-1'
                                                     }`}
                                                 />
                                             </button>

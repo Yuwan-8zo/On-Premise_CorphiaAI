@@ -32,8 +32,19 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 BACKEND_DIR = os.path.join(BASE_DIR, "backend")
 
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
+from app.services.ngrok_service import (  # noqa: E402
+    find_ngrok_binary,
+    get_ngrok_state,
+    start_ngrok_tunnel,
+    start_ngrok_watcher,
+)
+
 # 儲存後端與前端程序
 processes: list[subprocess.Popen] = []
+ngrok_stop_event = threading.Event()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -63,6 +74,7 @@ def kill_process_tree(pid: int):
 def shutdown(sig=None, frame=None):
     """Ctrl+C 觸發時，關閉前端與後端服務"""
     print("\n\n  正在關閉前端與後端服務...")
+    ngrok_stop_event.set()
     for proc in processes:
         try:
             kill_process_tree(proc.pid)
@@ -74,6 +86,17 @@ def shutdown(sig=None, frame=None):
 
 signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
+
+
+def open_frontend():
+    """Open the frontend after services have had a chance to come up."""
+    url = "http://localhost:5173"
+    if sys.platform == "win32":
+        subprocess.Popen(f"start {url}", shell=True)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", url])
+    else:
+        subprocess.Popen(["xdg-open", url])
 
 
 def kill_port(port: int):
@@ -100,6 +123,8 @@ def kill_port(port: int):
 
 
 def find_ngrok() -> str | None:
+    return find_ngrok_binary(BASE_DIR)
+
     """
     尋找 ngrok 執行檔。
 
@@ -139,6 +164,9 @@ def find_ngrok() -> str | None:
 
 
 def _query_ngrok_url() -> str | None:
+    state = get_ngrok_state(include_stale=False)
+    return state.url if state.active else None
+
     """查詢本機 ngrok API，取得目前正在運作的 https 通道 URL"""
     for api_port in [4040, 4041, 4042]:
         try:
@@ -155,6 +183,17 @@ def _query_ngrok_url() -> str | None:
 
 
 def start_ngrok() -> str | None:
+    print("  [ngrok] Waiting for public URL...", end="", flush=True)
+    process, state = start_ngrok_tunnel(frontend_port=5173, base_dir=BASE_DIR)
+    if process:
+        processes.append(process)
+    if state.active:
+        print(" ready", flush=True)
+        start_ngrok_watcher(stop_event=ngrok_stop_event)
+        return state.url
+    print(" failed", flush=True)
+    return None
+
     """
     自動啟動 ngrok（關閉舊通道 → 啟動新通道 → 等待 URL）。
 
@@ -402,13 +441,7 @@ def main():
         except Exception:
             pass
     print()
-    if sys.platform == "win32":
-        subprocess.Popen("start http://localhost:5173", shell=True)
-    elif sys.platform == "darwin":
-        subprocess.Popen(["open", "http://localhost:5173"])
-    else:
-        subprocess.Popen(["xdg-open", "http://localhost:5173"])
-    print("  [OK] 瀏覽器已開啟（顯示「Corphia AI 引擎啟動中」畫面）✅")
+    print("  [OK] Frontend is ready; browser will open after backend check.")
 
     # ── [5/6] 後端啟動 ───────────────────────────────────────
     print("  [5/6] 啟動後端服務 (Port 8168)...")
@@ -438,6 +471,9 @@ def main():
             print("  [OK] 後端 API 已就緒 ✅")
         else:
             print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行⚠️")
+
+    open_frontend()
+    print("  [OK] Browser opened: http://localhost:5173")
 
     # ── [6/6] 啟動 Ngrok 公開通道 ────────────────────────────
     public_url: str | None = None

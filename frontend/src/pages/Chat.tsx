@@ -152,9 +152,22 @@ export default function Chat() {
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
                                 {/* Greeting */}
-                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-8 text-text-primary tracking-tight text-center leading-snug">
-                                    {mainProps.t('chat.emptyGreeting', { name: mainProps.user?.name || 'User' })}
+                                <h2 className="text-[22px] md:text-[26px] font-semibold mb-2 text-text-primary tracking-tight text-center leading-snug">
+                                    {mainProps.t('chat.emptyGreeting', {
+                                        name:
+                                            mainProps.user?.name ||
+                                            mainProps.user?.email?.split('@')[0] ||
+                                            mainProps.t('common.user', 'User'),
+                                    })}
                                 </h2>
+                                {mainProps.selectedModel?.name && (
+                                    <p className="text-center text-sm text-text-secondary mb-8">
+                                        {mainProps.t('chat.connectedToModel', {
+                                            model: mainProps.selectedModel.name,
+                                            defaultValue: '已連線本地 {{model}}',
+                                        })}
+                                    </p>
+                                )}
 
                                 {/* Suggested Prompts */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
@@ -198,6 +211,7 @@ export default function Chat() {
                                             message={message}
                                             isStreaming={mainProps.isStreaming && isLastAssistant}
                                             onResubmit={mainProps.handleResubmit}
+                                            onRegenerate={mainProps.handleRegenerate}
                                             showRAGDebug={mainProps.ragDebugMode && isLastAssistant && !mainProps.isStreaming}
                                         />
                                     )

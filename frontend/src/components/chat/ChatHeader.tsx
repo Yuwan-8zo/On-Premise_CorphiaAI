@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+﻿import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { SidebarIcon } from './ChatIcons'
 import { CorphiaLogo } from '../icons/CorphiaIcons'
 import type { ModelItem } from '../../api/models'

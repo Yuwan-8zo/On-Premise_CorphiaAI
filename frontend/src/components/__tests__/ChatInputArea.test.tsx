@@ -22,13 +22,27 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-// framer-motion 在 jsdom 環境下 mock 成簡單 div
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('div', props, children),
-  },
-}))
+// GSAP animation facade is mocked to plain elements in jsdom.
+vi.mock('@/lib/gsapMotion', () => {
+  const stripMotionProps = ({
+    initial,
+    animate,
+    exit,
+    transition,
+    layout,
+    whileHover,
+    whileTap,
+    variants,
+    ...props
+  }: React.PropsWithChildren<Record<string, unknown>>) => props
+
+  return {
+    motion: {
+      div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+        React.createElement('div', stripMotionProps(props), children),
+    },
+  }
+})
 
 // PromptMenu 不是此測試重點，mock 掉
 vi.mock('@/components/chat/PromptMenu', () => ({

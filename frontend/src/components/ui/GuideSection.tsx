@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 
 export default function GuideSection() {

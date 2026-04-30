@@ -737,6 +737,28 @@ export function useChatLogic() {
         }
     }
 
+    /**
+     * 重新生成指定 AI 訊息的回覆。
+     * 找到此 AI 訊息上方最近的一則使用者訊息，並用其內容重新提交。
+     */
+    const handleRegenerate = async (assistantMessageId: string) => {
+        if (isStreaming) return
+        const all = useChatStore.getState().messages
+        const idx = all.findIndex((m) => m.id === assistantMessageId)
+        if (idx === -1) return
+        // 往上找最近的 user 訊息
+        let prevUserIdx = -1
+        for (let i = idx - 1; i >= 0; i -= 1) {
+            if (all[i].role === 'user') {
+                prevUserIdx = i
+                break
+            }
+        }
+        if (prevUserIdx === -1) return
+        const userMsg = all[prevUserIdx]
+        await handleResubmit(userMsg.id, userMsg.content)
+    }
+
     const handleResubmit = async (messageId: string, editedContent: string) => {
         if (isStreaming) return
 
@@ -892,27 +914,29 @@ export function useChatLogic() {
             submitNewFolder
         },
         mainProps: {
-            selectedFolder, 
-            folderDocuments, 
-            handleToggleDocActive, 
-            showConfirm, 
-            t, 
-            isUploading, 
+            selectedFolder,
+            folderDocuments,
+            handleToggleDocActive,
+            showConfirm,
+            t,
+            isUploading,
             uploadProgress,
-            createNewConversation, 
-            user, 
-            setInput, 
-            messages, 
-            isStreaming, 
-            handleResubmit, 
-            ragDebugMode, 
+            createNewConversation,
+            user,
+            setInput,
+            messages,
+            isStreaming,
+            handleResubmit,
+            handleRegenerate,
+            ragDebugMode,
             messagesEndRef,
-            scrollContainerRef, 
-            topObserverRef, 
-            isLoadingMore, 
-            fileInputRef, 
-            documentsApi, 
-            loadFolderDocuments
+            scrollContainerRef,
+            topObserverRef,
+            isLoadingMore,
+            fileInputRef,
+            documentsApi,
+            loadFolderDocuments,
+            selectedModel
         }
     }
 }

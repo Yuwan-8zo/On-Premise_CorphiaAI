@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useUIStore } from '../store/uiStore'
 import apiClient from '../api/client'
 
@@ -74,7 +75,7 @@ const StatusBadge = ({ status }: { status: Document['status'] }) => {
 }
 
 export default function Documents() {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { theme, toggleTheme, showConfirm } = useUIStore()
 
     const [documents, setDocuments] = useState<Document[]>([])
@@ -83,6 +84,22 @@ export default function Documents() {
     const [uploadProgress, setUploadProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
     const [dragActive, setDragActive] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+
+    /** 依當前語系決定要下載的範例檔 */
+    const sampleHref = (() => {
+        const lang = i18n.language || 'zh-TW'
+        if (lang.startsWith('en')) return '/samples/sample-en.md'
+        if (lang.startsWith('ja')) return '/samples/sample-ja.md'
+        return '/samples/sample-zh.md'
+    })()
+
+    /** 依檔名搜尋過濾的結果 */
+    const visibleDocuments = searchQuery.trim()
+        ? documents.filter((d) =>
+              d.originalFilename.toLowerCase().includes(searchQuery.trim().toLowerCase())
+          )
+        : documents
 
     // 載入文件列表
     const loadDocuments = useCallback(async () => {
@@ -194,9 +211,21 @@ export default function Documents() {
         <div className="min-h-screen bg-bg-base transition-colors duration-300">
             {/* 頂部導覽列 */}
             <header className="h-[80px] border-b border-border-subtle flex items-center justify-between px-8 bg-bg-base/95 /95 backdrop-blur-md transition-colors sticky top-0 z-10">
-                <h1 className="text-xl font-semibold text-text-primary tracking-wide">
-                    📁 {t('nav.documents')}
-                </h1>
+                <div className="flex items-center gap-3">
+                    <Link
+                        to="/chat"
+                        aria-label={t('common.backToChat')}
+                        title={t('common.backToChat')}
+                        className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </Link>
+                    <h1 className="text-xl font-semibold text-text-primary tracking-wide">
+                        📁 {t('nav.documents')}
+                    </h1>
+                </div>
                 <button
                     onClick={toggleTheme}
                     className="p-2 text-text-secondary hover:text-text-primary hover:bg-bg-surface rounded-full transition-colors"
@@ -238,11 +267,22 @@ export default function Documents() {
                             <UploadIcon />
                         </div>
                         <p className="text-text-primary font-medium mb-2 text-lg">
-                            拖放文件到此處，或點擊選擇
+                            {t('documents.dropZoneTitle', '拖放文件到此處，或點擊選擇')}
                         </p>
                         <p className="text-sm text-text-secondary">
-                            支援 PDF、Word、Excel、TXT、Markdown
+                            {t('documents.dropZoneSubtitle', '支援 PDF、Word、Excel、TXT、Markdown · 最大 50MB')}
                         </p>
+                        <a
+                            href={sampleHref}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                            </svg>
+                            {t('documents.downloadSample', '下載範例檔試試看')}
+                        </a>
                     </div>
 
                     {/* 上傳進度 */}
@@ -270,25 +310,79 @@ export default function Documents() {
                     </div>
                 )}
 
+                {/* Onboarding：文件數為 0 時顯示三張說明卡 */}
+                {!isLoading && documents.length === 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                        {[
+                            {
+                                step: '01',
+                                title: t('documents.onboard1Title', '上傳什麼檔案'),
+                                desc: t('documents.onboard1Desc', '支援 PDF、Word、Excel、純文字與 Markdown。建議從一份小檔開始試試。'),
+                            },
+                            {
+                                step: '02',
+                                title: t('documents.onboard2Title', '上傳後會發生什麼'),
+                                desc: t('documents.onboard2Desc', '系統會自動切塊、向量化並寫入索引，狀態列會顯示處理中／已完成。'),
+                            },
+                            {
+                                step: '03',
+                                title: t('documents.onboard3Title', '怎麼用 RAG 問答'),
+                                desc: t('documents.onboard3Desc', '切到「專案」對話模式並把檔案加入專案，AI 會自動引用相關段落並標記出處。'),
+                            },
+                        ].map((card) => (
+                            <div
+                                key={card.step}
+                                className="rounded-[20px] border border-border-subtle bg-bg-base p-5 shadow-sm dark:shadow-none"
+                            >
+                                <p className="text-xs font-bold tracking-[0.18em] text-accent mb-2">{card.step}</p>
+                                <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>
+                                <p className="text-[13px] text-text-secondary leading-relaxed">{card.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 {/* 文件列表 */}
                 <div className="bg-bg-base rounded-[20px] border border-border-subtle overflow-hidden shadow-sm dark:shadow-none transition-colors">
-                    <div className="px-8 py-5 border-b border-border-subtle">
+                    <div className="px-8 py-4 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                         <h2 className="font-semibold text-text-primary">
-                            已上傳文件 ({documents.length})
+                            {t('documents.uploadedTitle', '已上傳文件')} ({visibleDocuments.length}
+                            {searchQuery.trim() ? ` / ${documents.length}` : ''})
                         </h2>
+                        {documents.length > 0 && (
+                            <div className="relative max-w-xs w-full">
+                                <svg
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M16 10a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                </svg>
+                                <input
+                                    type="search"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={t('documents.searchPlaceholder', '搜尋檔名…')}
+                                    className="w-full pl-9 pr-3 py-1.5 text-sm rounded-full bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-muted outline-none focus:border-accent"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {isLoading ? (
                         <div className="p-10 text-center text-text-secondary">
-                            載入中...
+                            {t('common.loading', '載入中...')}
                         </div>
-                    ) : documents.length === 0 ? (
+                    ) : visibleDocuments.length === 0 ? (
                         <div className="p-10 text-center text-text-secondary">
-                            尚無上傳的文件
+                            {searchQuery.trim()
+                                ? t('documents.noMatch', '沒有符合搜尋的檔案')
+                                : t('documents.empty', '尚無上傳的文件')}
                         </div>
                     ) : (
                         <div className="divide-y divide-border-subtle dark:divide-border-subtle">
-                            {documents.map(doc => (
+                            {visibleDocuments.map(doc => (
                                 <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-bg-base transition-colors">
                                     <FileIcon type={doc.fileType} />
 

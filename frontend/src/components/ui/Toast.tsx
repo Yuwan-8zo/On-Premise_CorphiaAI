@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Toast 通知元件
  * 固定於右上角，支援 success / error / info 三種樣式
  */
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { Check, X, Info } from 'lucide-react'
 import { useToastStore, type Toast } from '../../store/toastStore'
 

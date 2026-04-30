@@ -30,43 +30,65 @@
     <link rel="canonical" href="https://corphia.ai/" />
     
     <title>Corphia AI - Enterprise LLM Platform</title>
-    <!-- 預設主题色：根據系統 prefers-color-scheme 決定預設顏色 -->
-    <meta id="theme-color-meta" name="theme-color" content="#f0f2f5" />
-    <meta id="color-scheme-meta" name="color-scheme" content="only light" />
     <!--
-      重要：這段同步 script 必須在任何 React 代碼執行前就讀取 localStorage 並設定就好主顔Ꞩ
-      這樣 Safari 在第一次畫面時就能讀到正確的背景色
-      (Gemini 跟 ChatGPT 都是用這個方法解決 Safari 白邊問題)
+      Theme-color：使用兩組 prefers-color-scheme 媒體查詢作為靜態 fallback；
+      下方 boot script 會依使用者偏好 + 當前路徑動態覆寫單一 meta theme-color，
+      確保 Safari 工具列顏色第一次繪製就正確。
+      值與 frontend/src/index.css 的 --bg-base / --bg-surface 同步。
+    -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F4F0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />
+    <meta id="color-scheme-meta" name="color-scheme" content="light dark" />
+    <!-- iOS Safari 狀態列：透明黑、可全螢幕 PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--
+      Boot script — 必須在任何 React/Vite 代碼執行前跑：
+      1. 讀 localStorage 拿出使用者主題偏好（fallback prefers-color-scheme）
+      2. 依當前路徑挑色：'/' 或 '/chat*' 用 surface 色，其他用 base 色
+      3. 寫入 html.style.backgroundColor、colorScheme，並覆寫 meta[theme-color] 為單一動態值
+      這樣 Safari 第一次繪製就能拿到正確背景色，不會閃黑。
     -->
     <script>
       (function() {
         try {
+          var DARK_BASE = '#202022';
+          var DARK_SURFACE = '#28282A';
+          var LIGHT_BASE = '#F6F4F0';
+          var LIGHT_SURFACE = '#F2EFEA';
+
+          // 預設跟系統，若使用者在設定明確選了 light/dark 就覆寫
+          var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           var stored = localStorage.getItem('ui-storage');
-          var theme = 'light';
           if (stored) {
-            var parsed = JSON.parse(stored);
-            if (parsed && parsed.state && parsed.state.theme) {
-              theme = parsed.state.theme;
-            }
-          } else {
-            // 無儲存設定時，跟隨系統主題
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            var state = (JSON.parse(stored) || {}).state || {};
+            var pref = state.themePreference || state.theme; // 後者是舊版相容
+            if (pref === 'light' || pref === 'dark') theme = pref;
           }
+
+          var path = window.location.pathname;
+          var isChat = path === '/' || path.indexOf('/chat') === 0;
+          var bg;
           if (theme === 'dark') {
+            bg = isChat ? DARK_SURFACE : DARK_BASE;
             document.documentElement.classList.add('dark');
-            var currentPath = window.location.pathname;
-            var initialBg = '#1a1a1a';
-            if (currentPath === '/' || currentPath.startsWith('/chat')) { initialBg = '#212121'; }
-            else if (currentPath === '/login' || currentPath === '/register') { initialBg = '#131314'; }
-            
-            document.documentElement.style.backgroundColor = initialBg;
             document.documentElement.style.colorScheme = 'only dark';
-            document.getElementById('theme-color-meta').setAttribute('content', initialBg);
-            document.getElementById('color-scheme-meta').setAttribute('content', 'only dark');
           } else {
-            document.documentElement.style.backgroundColor = '#f0f2f5';
+            bg = isChat ? LIGHT_SURFACE : LIGHT_BASE;
             document.documentElement.style.colorScheme = 'only light';
           }
+          document.documentElement.style.backgroundColor = bg;
+
+          // 移除靜態 prefers-color-scheme 的兩組 meta，改成單一動態值（覆寫 Safari）
+          var staticMetas = document.querySelectorAll('meta[name="theme-color"]');
+          staticMetas.forEach(function(m) { m.parentNode.removeChild(m); });
+          var meta = document.createElement('meta');
+          meta.setAttribute('name', 'theme-color');
+          meta.setAttribute('content', bg);
+          document.head.appendChild(meta);
+
+          var csMeta = document.getElementById('color-scheme-meta');
+          if (csMeta) csMeta.setAttribute('content', theme === 'dark' ? 'only dark' : 'only light');
         } catch(e) {}
       })();
     </script>

@@ -9,7 +9,7 @@ import SourceCitations from './SourceCitations'
 import RAGDebugPanel from './RAGDebugPanel'
 import type { Message } from '../../types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '../icons/CorphiaIcons'
-import { Copy, Edit2, Check, X, ShieldCheck } from 'lucide-react'
+import { Copy, Edit2, Check, X, ShieldCheck, RefreshCw } from 'lucide-react'
 import { conversationsApi } from '../../api/conversations'
 import { useChatStore } from '../../store/chatStore'
 
@@ -17,6 +17,8 @@ interface MessageBubbleProps {
     message: Message
     isStreaming?: boolean
     onResubmit?: (messageId: string, content: string) => void
+    /** 重新生成這則 AI 回覆。會回到上一則 user 訊息並重送一次。 */
+    onRegenerate?: (messageId: string) => void
     hideActions?: boolean
     /**
      * C2: 是否顯示 RAG 除錯面板（通常僅在「最後一則 AI 訊息」且開啟 Debug Mode 時為 true）。
@@ -52,7 +54,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     // C2: 從 store 取得 RAG 除錯資訊（僅反映最近一次回應，配合 showRAGDebug 使用）
     const ragDebug = useChatStore((s) => s.ragDebug)
@@ -146,6 +148,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                             <button onClick={() => { setEditContent(message.content); setIsEditing(true); }} className="p-1 hover:text-text-secondary rounded transition-colors" title="編輯">
                                 <Edit2 className="w-3.5 h-3.5" />
                             </button>
+                            {message.tokens > 0 && (
+                                <span
+                                    className="ml-1 text-[11px] tabular-nums text-text-muted/80"
+                                    title={`本則訊息消耗 ${message.tokens.toLocaleString()} tokens`}
+                                >
+                                    {message.tokens.toLocaleString()} tok
+                                </span>
+                            )}
                             {message.content_hash && (
                                 <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
@@ -203,6 +213,24 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, hideActi
                                 <button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors" title="複製">
                                     {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                                 </button>
+                                {onRegenerate && (
+                                    <button
+                                        onClick={() => onRegenerate(message.id)}
+                                        className="p-1 hover:text-text-secondary rounded transition-colors"
+                                        title="重新生成"
+                                    >
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                                {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
+                                {message.tokens > 0 && (
+                                    <span
+                                        className="ml-1 text-[11px] tabular-nums text-text-muted/80"
+                                        title={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}
+                                    >
+                                        {message.tokens.toLocaleString()} tok
+                                    </span>
+                                )}
                                 {message.content_hash && (
                                     <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
                                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />

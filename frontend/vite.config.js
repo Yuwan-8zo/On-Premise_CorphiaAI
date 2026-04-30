@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
                     vendor: ['react', 'react-dom'],
                     router: ['react-router-dom'],
                     state: ['zustand'],
-                    motion: ['framer-motion'],
+                    motion: ['gsap', '@gsap/react'],
                     markdown: ['react-markdown', 'remark-gfm', 'react-syntax-highlighter']
                 }
             }

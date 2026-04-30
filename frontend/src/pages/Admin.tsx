@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import {
     Activity,
     ArrowLeft,
@@ -29,9 +29,11 @@ import {
     Trash2,
     UserRoundCog,
     Users,
+    X,
 } from 'lucide-react'
 
 import { useAuthStore } from '../store/authStore'
+import { useUIStore } from '../store/uiStore'
 import { apiClient } from '../api/client'
 import { getModels, refreshModels, selectModel, type ModelItem } from '../api/models'
 import {
@@ -244,6 +246,38 @@ export default function Admin() {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuthStore()
+    const demoMode = useUIStore((s) => s.demoMode)
+    /** 把絕對路徑壓縮成最後 1～2 段（demo 模式時用），避免裸露使用者目錄 */
+    const sanitizePath = (p: string) => {
+        if (!p) return ''
+        if (!demoMode) return p
+        const parts = p.split(/[\\/]/).filter(Boolean)
+        return parts.slice(-2).join('/') || p
+    }
+
+    /** 點擊稽核 row 後顯示的 detail drawer（null 代表關閉） */
+    const [auditDrawer, setAuditDrawer] = useState<AuditLogItem | null>(null)
+
+    /**
+     * 依 action 名稱回傳 pill 顏色：
+     * - 危險（刪除 / 停用 / 失敗）→ 紅
+     * - 成功（登入成功 / Token 刷新 / 啟用）→ 綠
+     * - 變更（建立 / 更新）→ 藍
+     * - 其他 → 中性灰
+     */
+    const getActionPillClass = (action: string) => {
+        const a = (action || '').toLowerCase()
+        if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
+            return 'border-red-500/30 bg-red-500/10 text-red-500'
+        }
+        if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
+            return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'
+        }
+        if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
+            return 'border-sky-500/30 bg-sky-500/10 text-sky-500'
+        }
+        return 'border-border-subtle bg-bg-surface text-text-primary'
+    }
 
     const [activeSection, setActiveSection] = useState<AdminSection>('overview')
     const [users, setUsers] = useState<UserData[]>([])
@@ -264,6 +298,8 @@ export default function Admin() {
         url: string | null
         api_url: string | null
         ws_url: string | null
+        updated_at?: string | null
+        source?: string
     } | null>(null)
     const [isLoadingNgrok, setIsLoadingNgrok] = useState(false)
     const [ngrokCopied, setNgrokCopied] = useState(false)
@@ -556,11 +592,12 @@ export default function Admin() {
         }
     }
 
+    // primary: 主要 KPI，給予 accent 高亮以快速吸引目光（其他卡為輔助指標）
     const metricCards = [
-        { label: t('admin.overview.users'), value: stats.totalUsers, detail: t('admin.overview.usersDetail', { active: activeUsers }), icon: Users, accent: 'from-accent/28 to-corphia-beige/45 /30 /30' },
-        { label: t('admin.overview.conversations'), value: stats.totalConversations, detail: t('admin.overview.conversationsDetail'), icon: MessageSquare, accent: 'from-corphia-bronze/32 to-corphia-sand/45 /26 /30' },
-        { label: t('admin.overview.documents'), value: stats.totalDocuments, detail: t('admin.overview.documentsDetail'), icon: Layers3, accent: 'from-corphia-warm-gray/28 to-corphia-beige/45 /24 /30' },
-        { label: t('admin.overview.messages'), value: stats.totalMessages, detail: t('admin.overview.messagesDetail'), icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30' },
+        { label: t('admin.overview.users'), value: stats.totalUsers, detail: t('admin.overview.usersDetail', { active: activeUsers }), icon: Users, accent: 'from-accent/28 to-corphia-beige/45 /30 /30', primary: false },
+        { label: t('admin.overview.conversations'), value: stats.totalConversations, detail: t('admin.overview.conversationsDetail'), icon: MessageSquare, accent: 'from-corphia-bronze/32 to-corphia-sand/45 /26 /30', primary: true },
+        { label: t('admin.overview.documents'), value: stats.totalDocuments, detail: t('admin.overview.documentsDetail'), icon: Layers3, accent: 'from-corphia-warm-gray/28 to-corphia-beige/45 /24 /30', primary: false },
+        { label: t('admin.overview.messages'), value: stats.totalMessages, detail: t('admin.overview.messagesDetail'), icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30', primary: false },
     ]
 
     // 一鍵複製 ngrok URL
@@ -641,17 +678,39 @@ export default function Admin() {
                                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                     {metricCards.map((item) => {
                                         const Icon = item.icon
+                                        const isPrimary = item.primary
                                         return (
-                                            <Panel key={item.label} className="overflow-hidden p-5 flex flex-col justify-between h-40">
+                                            <Panel
+                                                key={item.label}
+                                                className={`overflow-hidden p-5 flex flex-col justify-between h-40 transition-shadow ${
+                                                    isPrimary
+                                                        ? 'border-accent/40 ring-1 ring-accent/20 bg-gradient-to-br from-accent/10 to-transparent shadow-md'
+                                                        : ''
+                                                }`}
+                                            >
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10">
+                                                    <div
+                                                        className={`flex items-center justify-center w-12 h-12 rounded-full ${
+                                                            isPrimary ? 'bg-accent/20' : 'bg-accent/10'
+                                                        }`}
+                                                    >
                                                         <Icon className="h-6 w-6 text-accent" />
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <p className="text-4xl font-light tracking-tight text-text-primary">{item.value.toLocaleString()}</p>
+                                                    <p
+                                                        className={`text-4xl tracking-tight ${
+                                                            isPrimary
+                                                                ? 'font-semibold text-accent'
+                                                                : 'font-light text-text-primary'
+                                                        }`}
+                                                    >
+                                                        {item.value.toLocaleString()}
+                                                    </p>
                                                     <div className="mt-2 flex items-center justify-between text-sm">
-                                                        <span className="font-medium text-text-primary/80">{item.label}</span>
+                                                        <span className={`font-medium ${isPrimary ? 'text-text-primary' : 'text-text-primary/80'}`}>
+                                                            {item.label}
+                                                        </span>
                                                         <span className="text-text-secondary">{item.detail}</span>
                                                     </div>
                                                 </div>
@@ -711,6 +770,12 @@ export default function Admin() {
                                                         <p className="mt-1 truncate font-mono text-text-primary">{ngrokInfo.ws_url}</p>
                                                     </div>
                                                 </div>
+                                                {ngrokInfo.updated_at && (
+                                                    <p className="text-xs text-text-secondary">
+                                                        自動更新：{new Date(ngrokInfo.updated_at).toLocaleString()}
+                                                        {ngrokInfo.source === 'runtime_file' ? '（上次記錄）' : ''}
+                                                    </p>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-3 rounded-[14px] border border-border-subtle bg-bg-base px-4 py-3">
@@ -840,7 +905,7 @@ export default function Admin() {
                                 <Panel>
                                     <SectionHeader
                                         title={t('admin.models.title')}
-                                        eyebrow={modelsDir || 'ai_model'}
+                                        eyebrow={sanitizePath(modelsDir) || 'ai_model'}
                                         action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />{t('admin.models.rescan')}</ActionButton>}
                                     />
                                     <div className="grid gap-4 p-5">
@@ -919,11 +984,11 @@ export default function Admin() {
                                         <table className="w-full min-w-[900px]">
                                         <thead className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
                                                 <tr>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.time')}</th>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.action')}</th>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.resource')}</th>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.user')}</th>
-                                                    <th className="px-5 py-4">{t('admin.audit.table.ip')}</th>
+                                                    <th className="px-5 py-2.5">{t('admin.audit.table.time')}</th>
+                                                    <th className="px-5 py-2.5">{t('admin.audit.table.action')}</th>
+                                                    <th className="px-5 py-2.5">{t('admin.audit.table.resource')}</th>
+                                                    <th className="px-5 py-2.5">{t('admin.audit.table.user')}</th>
+                                                    <th className="px-5 py-2.5">{t('admin.audit.table.ip')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-border-subtle">
@@ -932,12 +997,20 @@ export default function Admin() {
                                                 ) : auditLogs.length === 0 ? (
                                                     <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>{t('admin.audit.noEvents')}</td></tr>
                                                 ) : auditLogs.map((log) => (
-                                                    <tr key={log.id} className="transition hover:bg-bg-base">
-                                                        <td className="px-5 py-4 text-sm text-text-secondary">{formatDate(log.created_at)}</td>
-                                                        <td className="px-5 py-4"><span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-semibold text-text-primary">{t(`admin.audit.actionTypes.${log.action}`, { defaultValue: ACTION_LABELS[log.action] || log.action })}</span></td>
-                                                        <td className="px-5 py-4 text-sm text-text-primary">{t(`admin.audit.resourceTypes.${log.resource_type}`, { defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type })}</td>
-                                                        <td className="max-w-[180px] truncate px-5 py-4 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
-                                                        <td className="px-5 py-4 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
+                                                    <tr
+                                                        key={log.id}
+                                                        className="transition hover:bg-bg-base cursor-pointer"
+                                                        onClick={() => setAuditDrawer(log)}
+                                                    >
+                                                        <td className="px-5 py-2 text-sm text-text-secondary whitespace-nowrap">{formatDate(log.created_at)}</td>
+                                                        <td className="px-5 py-2">
+                                                            <span className={`rounded-full border px-3 py-0.5 text-xs font-semibold ${getActionPillClass(log.action)}`}>
+                                                                {t(`admin.audit.actionTypes.${log.action}`, { defaultValue: ACTION_LABELS[log.action] || log.action })}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-2 text-sm text-text-primary">{t(`admin.audit.resourceTypes.${log.resource_type}`, { defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type })}</td>
+                                                        <td className="max-w-[180px] truncate px-5 py-2 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
+                                                        <td className="px-5 py-2 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1067,6 +1140,72 @@ export default function Admin() {
                     </form>
                 </ModalFrame>
             )}
+
+            {/* 稽核紀錄 detail drawer：點 row 後從右側滑入 */}
+            <AnimatePresence>
+                {auditDrawer && (
+                    <>
+                        <motion.div
+                            key="audit-drawer-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/40 z-40"
+                            onClick={() => setAuditDrawer(null)}
+                        />
+                        <motion.aside
+                            key="audit-drawer"
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-bg-surface border-l border-border-subtle z-50 overflow-y-auto custom-scrollbar"
+                            role="dialog"
+                            aria-label="audit detail"
+                        >
+                            <div className="sticky top-0 bg-bg-surface border-b border-border-subtle px-5 py-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[12px] font-bold uppercase tracking-wider text-accent">{t('admin.audit.detailEyebrow', '稽核細節')}</p>
+                                    <h3 className="mt-0.5 text-base font-semibold text-text-primary">
+                                        {t(`admin.audit.actionTypes.${auditDrawer.action}`, { defaultValue: ACTION_LABELS[auditDrawer.action] || auditDrawer.action })}
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setAuditDrawer(null)}
+                                    className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-base transition-colors"
+                                    aria-label={t('common.close', '關閉')}
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <dl className="px-5 py-4 space-y-3 text-sm">
+                                {[
+                                    [t('admin.audit.table.time'), formatDate(auditDrawer.created_at)],
+                                    [t('admin.audit.table.action'), auditDrawer.action],
+                                    [t('admin.audit.table.resource'), auditDrawer.resource_type + (auditDrawer.resource_id ? ` · ${auditDrawer.resource_id}` : '')],
+                                    [t('admin.audit.table.user'), auditDrawer.user_email || auditDrawer.user_id || '-'],
+                                    [t('admin.audit.table.ip'), auditDrawer.ip_address || '-'],
+                                    [t('admin.audit.detailDescription', '描述'), auditDrawer.description || '-'],
+                                    [t('admin.audit.detailUserAgent', 'User Agent'), auditDrawer.user_agent || '-'],
+                                ].map(([label, value]) => (
+                                    <div key={label} className="grid grid-cols-[120px_1fr] gap-3">
+                                        <dt className="text-text-muted">{label}</dt>
+                                        <dd className="text-text-primary break-all">{value}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            {auditDrawer.details && Object.keys(auditDrawer.details).length > 0 && (
+                                <div className="px-5 pb-6">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">{t('admin.audit.detailPayload', 'Payload')}</p>
+                                    <pre className="p-4 rounded-[12px] border border-border-subtle bg-bg-base text-[12px] text-text-primary overflow-x-auto">
+                                        {JSON.stringify(auditDrawer.details, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

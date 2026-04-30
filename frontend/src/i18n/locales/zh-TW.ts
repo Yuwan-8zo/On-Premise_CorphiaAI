@@ -13,8 +13,10 @@ export default {
         loading: '載入中...',
         search: '搜尋',
         confirm: '確認',
+        user: '使用者',
         confirmDelete: '要刪除嗎？',
         back: '返回',
+        backToChat: '返回聊天',
         close: '關閉',
         error: '錯誤',
         success: '成功',
@@ -47,6 +49,7 @@ export default {
         welcomeBack: '歡迎回來',
         createAccount: '建立帳號',
         welcomeTitle: '歡迎使用',
+        localDeploy: '地端部署',
         subtitle: '您的智能企業助手',
         engineDesc: '企業級 RAG 與 GGUF 分析引擎',
         feature1: '智能問答系統',
@@ -65,6 +68,7 @@ export default {
     // 對話
     chat: {
         emptyGreeting: '有什麼我可以幫忙的，{{name}}？',
+        connectedToModel: '已連線本地 {{model}}',
         inputPlaceholder: '傳送訊息給 Corphia AI...',
         projectInputPlaceholder: '傳送訊息或上傳資料...',
         suggestions: [
@@ -109,6 +113,24 @@ export default {
             { title: '撰寫正式 Email', prompt: '請幫我草擬一封正式的商務電子郵件，主要目的是：\n\n' },
             { title: '語氣潤飾', prompt: '請幫我潤飾以下文字，確保用詞更專業、得體：\n\n' }
         ],
+        promptTemplatesTitle: '提示詞模版',
+    },
+
+    // 文件管理
+    documents: {
+        dropZoneTitle: '拖放文件到此處，或點擊選擇',
+        dropZoneSubtitle: '支援 PDF、Word、Excel、TXT、Markdown · 最大 50MB',
+        downloadSample: '下載範例檔試試看',
+        uploadedTitle: '已上傳文件',
+        searchPlaceholder: '搜尋檔名…',
+        noMatch: '沒有符合搜尋的檔案',
+        empty: '尚無上傳的文件',
+        onboard1Title: '上傳什麼檔案',
+        onboard1Desc: '支援 PDF、Word、Excel、純文字與 Markdown。建議從一份小檔開始試試。',
+        onboard2Title: '上傳後會發生什麼',
+        onboard2Desc: '系統會自動切塊、向量化並寫入索引，狀態列會顯示處理中／已完成。',
+        onboard3Title: '怎麼用 RAG 問答',
+        onboard3Desc: '切到「專案」對話模式並把檔案加入專案，AI 會自動引用相關段落並標記出處。',
     },
 
     // 設定
@@ -117,6 +139,8 @@ export default {
         theme: '主題',
         themeLight: '淺色',
         themeDark: '深色',
+        themeSystem: '跟隨系統',
+        themeSystemHint: '依系統 prefers-color-scheme 自動切換淺色／深色',
         language: '語言',
         profile: '個人資料',
         account: '帳號設定',
@@ -127,6 +151,9 @@ export default {
         ragDebug: 'RAG 除錯模式',
         ragDebugHint: '開啟後，每次 AI 回覆下方會顯示檢索到的參考文件、相似度分數與來源路徑，幫助除錯與調優。',
         ragDebugToggle: '顯示 RAG Debug 資訊',
+        demoMode: 'Demo 模式',
+        demoModeHint: '開啟後會在管理後台隱藏伺服器的絕對路徑與其他敏感字串，方便對外展示。',
+        demoModeToggle: '隱藏敏感資訊',
         pwdRuleLength: '至少 8 個字元',
         pwdRuleUpper: '包含大寫字母 (A-Z)',
         pwdRuleLower: '包含小寫字母 (a-z)',
@@ -358,6 +385,10 @@ export default {
                 description: '描述',
                 ip: 'IP 位址',
             },
+            detailEyebrow: '稽核細節',
+            detailDescription: '描述',
+            detailUserAgent: 'User Agent',
+            detailPayload: 'Payload',
         },
         system: {
             systemInfo: '系統資訊',

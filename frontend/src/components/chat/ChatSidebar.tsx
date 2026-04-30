@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 對話側邊欄元件
  * 
  * 從 Chat.tsx 拆分出來，負責渲染：
@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo } from '../icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
 

@@ -6,6 +6,16 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark'
+/**
+ * 使用者的「主題偏好」：
+ * - 'system'  跟隨系統 prefers-color-scheme
+ * - 'light'   強制淺色
+ * - 'dark'    強制深色
+ *
+ * 實際渲染用的是 `theme`（已解析的 light/dark）。`theme` 由 App.tsx 根據
+ * `themePreference` 與系統設定計算後寫入。
+ */
+type ThemePreference = 'system' | 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
 export type AccentColorType = string
 
@@ -17,6 +27,8 @@ interface ConfirmConfig {
 interface UIState {
     // 狀態
     theme: Theme
+    /** 使用者選擇的主題偏好（持久化）。'system' 代表跟隨系統。 */
+    themePreference: ThemePreference
     language: Language
     accentColor: AccentColorType
     sidebarOpen: boolean
@@ -24,10 +36,14 @@ interface UIState {
     confirmConfig: ConfirmConfig | null
     /** C2: 是否開啟 RAG Debug 模式，打開後會在最後一則 AI 訊息下方顯示除錯面板 */
     ragDebugMode: boolean
+    /** Demo Mode：對外展示時隱藏絕對路徑、租戶 slug 等敏感字串 */
+    demoMode: boolean
 
     // 動作
     setTheme: (theme: Theme) => void
     toggleTheme: () => void
+    /** 設定主題偏好。傳入 'system' 後 theme 會跟隨系統 prefers-color-scheme。 */
+    setThemePreference: (pref: ThemePreference) => void
     setLanguage: (language: Language) => void
     setAccentColor: (color: AccentColorType) => void
     setSidebarOpen: (open: boolean) => void
@@ -39,6 +55,8 @@ interface UIState {
     setSettingsOpen: (open: boolean) => void
     setRAGDebugMode: (enabled: boolean) => void
     toggleRAGDebugMode: () => void
+    setDemoMode: (enabled: boolean) => void
+    toggleDemoMode: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -50,6 +68,8 @@ export const useUIStore = create<UIState>()(
             theme: typeof window !== 'undefined'
                 ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                 : 'light',
+            // 預設「跟隨系統」，這樣 iOS Safari 工具列才會與系統一致
+            themePreference: 'system',
             language: 'zh-TW',
             accentColor: 'default',
             // 手機版預設收起，桌機版預設展開
@@ -59,11 +79,24 @@ export const useUIStore = create<UIState>()(
             // 設定主題
             setTheme: (theme) => set({ theme }),
 
-            // 切換主題
+            // 切換主題（同時把使用者偏好鎖定到目標主題，跳出 system 模式）
             toggleTheme: () =>
-                set((state) => ({
-                    theme: state.theme === 'light' ? 'dark' : 'light',
-                })),
+                set((state) => {
+                    const next: Theme = state.theme === 'light' ? 'dark' : 'light'
+                    return { theme: next, themePreference: next }
+                }),
+
+            // 設定主題偏好；'system' 會立刻把 theme 對齊現在的系統偏好
+            setThemePreference: (pref) =>
+                set(() => {
+                    if (pref === 'system') {
+                        const sysDark =
+                            typeof window !== 'undefined' &&
+                            window.matchMedia('(prefers-color-scheme: dark)').matches
+                        return { themePreference: pref, theme: sysDark ? 'dark' : 'light' }
+                    }
+                    return { themePreference: pref, theme: pref }
+                }),
 
             // 設定語言
             setLanguage: (language) => set({ language }),
@@ -96,15 +129,22 @@ export const useUIStore = create<UIState>()(
             ragDebugMode: false,
             setRAGDebugMode: (enabled) => set({ ragDebugMode: enabled }),
             toggleRAGDebugMode: () => set((s) => ({ ragDebugMode: !s.ragDebugMode })),
+
+            // Demo Mode：對外展示時隱藏絕對路徑等敏感字串
+            demoMode: false,
+            setDemoMode: (enabled) => set({ demoMode: enabled }),
+            toggleDemoMode: () => set((s) => ({ demoMode: !s.demoMode })),
         }),
         {
             name: 'ui-storage',
             partialize: (state) => ({
                 theme: state.theme,
+                themePreference: state.themePreference,
                 language: state.language,
                 accentColor: state.accentColor,
                 sidebarWidth: state.sidebarWidth,
                 ragDebugMode: state.ragDebugMode,
+                demoMode: state.demoMode,
             }),
         }
     )

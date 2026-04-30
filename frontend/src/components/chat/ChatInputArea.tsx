@@ -1,5 +1,5 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+﻿import React from 'react'
+import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
 import { PromptMenu } from './PromptMenu'

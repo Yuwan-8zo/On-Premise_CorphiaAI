@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 登入/註冊頁面
  * 
  * 卡片內排版改為靈活設計：1:1 正方形
@@ -10,112 +10,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { authApi } from '../api/auth'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup } from '@/lib/gsapMotion'
 import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
-import { CorphiaLogo, CorphiaTextLogo, CorphiaBrandLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
-import CorphiaIconDark from '../assets/Corphia_Icon_Dark.png'
-
-interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    label: string;
-    delayClass?: string;
-    id?: string;
-    error?: string;
-}
-
-const FloatingInput = ({ label, delayClass, id, value, className, type = 'text', error, onFocus, onBlur, ...props }: FloatingInputProps) => {
-    const isFilled = Boolean(value && value.toString().length > 0);
-    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
-    const isPasswordType = type === 'password';
-    const isFloating = isFilled || isFocused;
-    
-    const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type;
-    
-    return (
-        <div className={`relative w-full shrink-0 ${delayClass || ''}`}>
-            <input
-                id={id}
-                type={inputType}
-                value={value}
-                onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
-                onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
-                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-border-subtle focus:border-corphia-bronze focus:shadow-md focus:ring-0'
-                } ${className || ''}`}
-                placeholder={label}
-                {...props}
-            />
-            <motion.label
-                htmlFor={id}
-                animate={isFloating ? {
-                    top: 0,
-                    scale: 0.85,
-                    color: error ? '#ef4444' : 'rgb(var(--accent))',
-                    backgroundColor: 'var(--label-bg, #FFFFFF)',
-                } : {
-                    top: '50%',
-                    scale: 1,
-                    color: error ? '#ef4444' : 'rgb(var(--text-muted))',
-                    backgroundColor: 'transparent',
-                }}
-                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute left-5 pointer-events-none rounded-full px-3 py-0.5 origin-left whitespace-nowrap dark:[--label-bg:#1C1815]"
-                style={{ y: '-50%' }}
-            >
-                {label}
-            </motion.label>
-
-            {error && (
-                <div className={`absolute top-[2px] bottom-[2px] flex items-center pointer-events-none z-10 ${isPasswordType && isFilled ? 'right-10' : 'right-[2px]'}`}>
-                    <div className="w-8 h-full bg-gradient-to-r from-transparent to-bg-surface" />
-                    <div className="bg-bg-surface h-full flex items-center pr-4 pl-1 rounded-r-full">
-                        <span className="text-xs font-semibold text-red-500 whitespace-nowrap">
-                            {error}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {isPasswordType && (
-                <AnimatePresence>
-                    {isFilled && (
-                        <motion.button
-                            initial={{ opacity: 0, scale: 0.8, y:"-50%" }}
-                            animate={{ opacity: 1, scale: 1, y:"-50%" }}
-                            exit={{ opacity: 0, scale: 0.8, y:"-50%" }}
-                            transition={{ duration: 0.2 }}
-                            type="button"
-                            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            className="absolute right-4 top-1/2 p-2 text-text-muted hover:text-text-secondary transition-colors focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            <AnimatePresence mode="wait" initial={false}>
-                                <motion.div
-                                    key={isPasswordVisible ? 'visible' : 'hidden'}
-                                    initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                    exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
-                                    transition={{ duration: 0.15 }}
-                                >
-                                    {isPasswordVisible ? (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    )}
-                                </motion.div>
-                            </AnimatePresence>
-                        </motion.button>
-                    )}
-                </AnimatePresence>
-            )}
-        </div>
-    );
-};
+import { CorphiaLogo, CorphiaWordmark } from '../components/icons/CorphiaIcons'
+import { BackendStatusPill, FloatingInput, QrAccessModal, type BackendStatus } from '../features/auth'
 
 export default function Login() {
     const { t, i18n } = useTranslation()
@@ -137,9 +35,8 @@ export default function Login() {
 
     const [error, setError] = useState('')
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-    const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking')
+    const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking')
     const [hasInitialConnected, setHasInitialConnected] = useState(false)
-    const [showSkipLoading, setShowSkipLoading] = useState(false)
 
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
@@ -172,15 +69,6 @@ export default function Login() {
         return () => {
             isCancelled = true
             clearInterval(intervalId)
-        }
-    }, [hasInitialConnected])
-
-    useEffect(() => {
-        if (!hasInitialConnected) {
-            const timer = setTimeout(() => {
-                setShowSkipLoading(true)
-            }, 10000)
-            return () => clearTimeout(timer)
         }
     }, [hasInitialConnected])
 
@@ -286,127 +174,37 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-hidden select-none">
+        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
                 </svg>
+                {/* 知識圖譜背景已移除：保留下方三條微弱漸變波形作為 ambient 即可 */}
             </div>
 
-            <AnimatePresence>
-                {!hasInitialConnected && (
-                    <motion.div
-                        initial={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.8, ease:"easeInOut" }}
-                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/50 backdrop-blur-md"
-                    >
-                        <motion.div
-                            animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.7, 1, 0.7] }}
-                            transition={{ repeat: Infinity, duration: 2.5, ease:"easeInOut" }}
-                            className="flex flex-col items-center gap-6"
-                        >
-                            {/* 後端等待頁面 icon：使用獨立的品牌圖示（白色C+金星），不影響登入頁LOGO */}
-                            <img
-                                src={CorphiaIconDark}
-                                alt="Corphia AI"
-                                className="w-28 h-28 object-contain drop-shadow-lg"
-                                draggable={false}
-                            />
-                            <div className="flex flex-col items-center gap-2 text-center">
-                                <h2 className="text-2xl font-bold text-white">
-                                    Corphia AI 啟動中...
-                                </h2>
-                                <p className="text-white/70">
-                                    正在連線至後端伺服器，這可能需要幾秒鐘...
-                                </p>
-                                <div className="mt-4 flex items-center justify-center gap-2">
-                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                </div>
-                            </div>
-                        </motion.div>
-                        
-                        <AnimatePresence>
-                            {showSkipLoading && (
-                                <motion.button
-                                    initial={{ opacity: 0, marginTop: 0 }}
-                                    animate={{ opacity: 1, marginTop: 32 }}
-                                    onClick={() => setHasInitialConnected(true)}
-                                    className="text-sm text-white/60 hover:text-white underline transition-colors"
-                                >
-                                    跳過等待，直接進入主畫面
-                                </motion.button>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-                {showQR && (
-                    <motion.div
-                        key="qr-backdrop"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md"
-                        onClick={() => setShowQR(false)}
-                    />
-                )}
-                {showQR && (
-                    <motion.div
-                        key="qr-modal"
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type:"spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-                    >
-                        <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-bg-base p-6 rounded-[32px] shadow-2xl flex flex-col items-center pointer-events-auto"
-                        >
-                            <img 
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(window.location.origin)}`} 
-                                alt="Mobile Access QR Code" 
-                                className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-[16px]"
-                            />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <QrAccessModal isOpen={showQR} onClose={() => setShowQR(false)} />
 
             {/* ── 左側：歡迎與特色 (佔滿 50%) ── */}
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
-                <div className="flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full w-fit shadow-sm dark:shadow-none transition-colors">
-                    <span className={`w-2.5 h-2.5 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
-                        backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-                        }`}></span>
-                    <span className="text-sm text-text-secondary">Backend:</span>
-                    <span className={`text-sm ${backendStatus === 'online' ? 'text-green-600 ' :
-                        backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
-                        }`}>
-                        {backendStatus === 'online' ? 'Online' :
-                            backendStatus === 'offline' ? 'Offline' : 'Checking...'}
-                    </span>
-                </div>
+                <BackendStatusPill status={backendStatus} />
 
-                <div className="flex-1 flex flex-col justify-center w-fit mx-auto">
-                    <div className="w-full">
+                <div className="flex-1 flex items-center justify-center w-full">
+                    {/* 用 mx-auto 真正置中，max-w 限制最大寬度，左右留適度白邊 */}
+                    <div className="mx-auto max-w-[460px] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
                         <h2 className="text-4xl font-bold text-text-primary relative z-10 transition-colors">
                             {t('auth.welcomeTitle')}
                         </h2>
-                        <div className="mt-6 -mb-12 -ml-2 relative z-0 flex items-center">
-                            {/* 利用原生高度放大，改用正邊距往下推離標題，並用較大負邊距拉近下方選單 */}
-                            <CorphiaWordmark className="h-[130px] w-auto object-contain object-left pointer-events-none select-none" />
+                        <div className="mt-5 -mb-6 relative z-0 flex items-center">
+                            {/* 字標尺寸縮小到 96px，自然寬度即落在 max-w-[520px] 內，與標題 / feature 對齊 */}
+                            <CorphiaWordmark className="h-[96px] w-auto max-w-full object-contain object-left pointer-events-none select-none" />
                         </div>
+                        <p className="mt-2 mb-10 text-[13px] tracking-[0.18em] uppercase text-text-secondary/80">
+                            Enterprise Knowledge Engine · {t('auth.localDeploy', '地端部署')}
+                        </p>
 
-                        <div className="space-y-6 mt-8">
+                        <div className="space-y-7">
                             <div className="flex items-center gap-4">
                                 <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
@@ -457,17 +255,8 @@ export default function Login() {
             {/* ── 右側：登入表單 (佔滿 50%，手機 100%) ── */}
             <div className="w-full lg:w-1/2 flex flex-col z-10">
                 <div className="flex justify-between items-center p-6 w-full">
-                    <div className="lg:hidden flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-full shadow-sm dark:shadow-none transition-colors">
-                        <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
-                            backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-                            }`}></span>
-                        <span className="text-xs font-medium text-text-secondary">Backend:</span>
-                        <span className={`text-xs font-semibold ${backendStatus === 'online' ? 'text-green-600 ' :
-                            backendStatus === 'offline' ? 'text-red-600 ' : 'text-yellow-600 '
-                            }`}>
-                            {backendStatus === 'online' ? 'Online' :
-                                backendStatus === 'offline' ? 'Offline' : 'Checking...'}
-                        </span>
+                    <div className="lg:hidden">
+                        <BackendStatusPill status={backendStatus} compact />
                     </div>
 
                     <div className="flex gap-2 ml-auto">
@@ -620,13 +409,14 @@ export default function Login() {
 
                         {/* ── Confirm Password：保留在 DOM，但只有註冊可見 ── */}
                         <motion.div
-                            className="w-full shrink-0"
+                            className="w-full shrink-0 overflow-hidden"
                             animate={{
                                 height: activeTab === 'register' ? 'auto' : 0,
                                 opacity: activeTab === 'register' ? 1 : 0,
                             }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             style={{ pointerEvents: activeTab === 'register' ? 'auto' : 'none' }}
+                            aria-hidden={activeTab !== 'register'}
                         >
                             <FloatingInput
                                 id="confirm-password"

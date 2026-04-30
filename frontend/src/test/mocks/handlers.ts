@@ -57,6 +57,10 @@ const MOCK_CONVERSATIONS = [
 // ── API Handlers ──────────────────────────────────────────────
 
 export const handlers = [
+  http.get('/api/v1/health', () => {
+    return HttpResponse.json({ status: 'ok' })
+  }),
+
   // ── 認證 ──────────────────────────────────────────────────
   http.post('/api/v1/auth/login', async ({ request }) => {
     const body = await request.json() as { email: string; password: string }

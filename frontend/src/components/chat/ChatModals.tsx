@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 對話 Modal 集合
  * 
  * 從 Chat.tsx 拆分出來，包含：
@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 
 const DEFAULT_FOLDER = '新資料夾'
 

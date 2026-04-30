@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends
 
 from app.api.deps import get_current_user, RequireAdmin
 from app.models.user import User
+from app.services.ngrok_service import get_ngrok_state
 
 logger = logging.getLogger(__name__)
 
@@ -193,32 +194,4 @@ async def get_ngrok_url(
     即時查詢本機 ngrok API（port 4040~4042），回傳目前運作中的 HTTPS 通道。
     若 ngrok 未啟動則回傳 active: false。
     """
-    import urllib.request
-    import json as json_lib
-
-    for api_port in [4040, 4041, 4042]:
-        try:
-            res = urllib.request.urlopen(
-                f"http://127.0.0.1:{api_port}/api/tunnels", timeout=2
-            )
-            data = json_lib.loads(res.read())
-            for tunnel in data.get("tunnels", []):
-                if tunnel.get("proto") == "https":
-                    public_url: str = tunnel["public_url"]
-                    return {
-                        "active": True,
-                        "url": public_url,
-                        "api_url": f"{public_url}/api/v1/",
-                        "ws_url": public_url.replace("https://", "wss://") + "/ws/",
-                        "api_port": api_port,
-                    }
-        except Exception:
-            pass
-
-    return {
-        "active": False,
-        "url": None,
-        "api_url": None,
-        "ws_url": None,
-        "api_port": None,
-    }
+    return get_ngrok_state().to_dict()

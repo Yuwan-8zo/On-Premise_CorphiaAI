@@ -70,24 +70,48 @@ vi.mock('@/store/authStore', () => ({
   }),
 }))
 
-// ── Mock framer-motion ────────────────────────────────────────
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('div', props, children),
-    form: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('form', props, children),
-    button: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('button', props, children),
-    span: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('span', props, children),
-    p: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('p', props, children),
-    label: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement('label', props, children),
+// ── Mock GSAP animation facade ────────────────────────────────
+vi.mock('@/lib/gsapMotion', () => {
+  const stripMotionProps = ({
+    initial,
+    animate,
+    exit,
+    transition,
+    layout,
+    whileHover,
+    whileTap,
+    variants,
+    ...props
+  }: React.PropsWithChildren<Record<string, unknown>>) => props
+  const motionElement =
+    (tag: keyof React.JSX.IntrinsicElements) =>
+    ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+      React.createElement(tag, stripMotionProps(props), children)
+
+  return {
+    motion: {
+      div: motionElement('div'),
+      form: motionElement('form'),
+      button: motionElement('button'),
+      span: motionElement('span'),
+      p: motionElement('p'),
+      label: motionElement('label'),
+    },
+    AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+    LayoutGroup: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+  }
+})
+
+vi.mock('@/lib/gsap', () => ({
+  gsap: {
+    utils: { toArray: () => [] },
+    set: vi.fn(),
+    to: vi.fn(),
+    timeline: () => ({
+      from: () => ({ from: () => ({ to: () => ({ from: vi.fn() }) }) }),
+    }),
   },
-  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
-  LayoutGroup: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+  useGSAP: vi.fn(),
 }))
 
 import Login from '@/pages/Login'

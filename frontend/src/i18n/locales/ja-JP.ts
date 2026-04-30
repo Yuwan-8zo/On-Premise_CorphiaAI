@@ -13,8 +13,10 @@ export default {
         loading: '読み込み中...',
         search: '検索',
         confirm: '確認',
+        user: 'ユーザー',
         confirmDelete: '本当に削除しますか？',
         back: '戻る',
+        backToChat: 'チャットに戻る',
         close: '閉じる',
         error: 'エラー',
         success: '成功',
@@ -47,6 +49,7 @@ export default {
         welcomeBack: 'おかえりなさい',
         createAccount: 'アカウント作成',
         welcomeTitle: 'ようこそ',
+        localDeploy: 'オンプレミス',
         subtitle: 'あなたのインテリジェント企業アシスタント',
         engineDesc: 'エンタープライズ RAG & GGUF 分析エンジン',
         feature1: 'インテリジェントQ&A',
@@ -65,6 +68,7 @@ export default {
     // 對話 (Chat)
     chat: {
         emptyGreeting: '何かお手伝いしましょうか、{{name}}？',
+        connectedToModel: 'ローカル {{model}} に接続中',
         inputPlaceholder: 'Corphia AI にメッセージを送信...',
         projectInputPlaceholder: 'メッセージを送信するか、資料をアップロードしてください...',
         suggestions: [
@@ -109,6 +113,24 @@ export default {
             { title: 'メール文案', prompt: '正式なビジネスメールの文案を作成してください。主な目的は以下の通りです：\n\n' },
             { title: '文章推敲', prompt: '以下のテキストの表現をより専門的かつ適切になるように推敲してください：\n\n' }
         ],
+        promptTemplatesTitle: 'プロンプトテンプレート',
+    },
+
+    // ドキュメント
+    documents: {
+        dropZoneTitle: 'ファイルをここにドロップ、またはクリックして選択',
+        dropZoneSubtitle: 'PDF、Word、Excel、TXT、Markdown 対応 · 最大 50MB',
+        downloadSample: 'サンプルファイルをダウンロード',
+        uploadedTitle: 'アップロード済み',
+        searchPlaceholder: 'ファイル名で検索…',
+        noMatch: '一致するファイルがありません',
+        empty: 'まだファイルがありません',
+        onboard1Title: 'アップロードできるもの',
+        onboard1Desc: 'PDF、Word、Excel、プレーンテキスト、Markdown 対応。小さなファイルから試すのがおすすめです。',
+        onboard2Title: 'アップロード後の処理',
+        onboard2Desc: '自動でチャンク化・ベクトル化・インデックス化されます。ステータスで進捗が確認できます。',
+        onboard3Title: 'RAG で使う方法',
+        onboard3Desc: 'プロジェクトチャットモードに切り替え、ファイルをプロジェクトに追加。AI が関連箇所を引用付きで回答します。',
     },
 
     // 設定 (Settings)
@@ -117,6 +139,8 @@ export default {
         theme: 'テーマ',
         themeLight: 'ライト',
         themeDark: 'ダーク',
+        themeSystem: 'システムに従う',
+        themeSystemHint: 'システムの prefers-color-scheme に応じて自動的に切替',
         language: '言語',
         profile: 'プロフィール',
         account: 'アカウント設定',
@@ -127,6 +151,9 @@ export default {
         ragDebug: 'RAG デバッグモード',
         ragDebugHint: 'オンにすると、各AIの応答の下に取得した参考ドキュメント、類似度スコア、ソースパスが表示され、デバッグとチューニングに役立ちます。',
         ragDebugToggle: 'RAG デバッグ情報を表示',
+        demoMode: 'デモモード',
+        demoModeHint: 'オンにすると管理画面でサーバーの絶対パスなど機密情報を伏せ字にします。外部デモ時に便利です。',
+        demoModeToggle: '機密情報を非表示',
         pwdRuleLength: '8文字以上',
         pwdRuleUpper: '大文字 (A-Z) を含む',
         pwdRuleLower: '小文字 (a-z) を含む',
@@ -358,6 +385,10 @@ export default {
                 description: '説明',
                 ip: 'IPアドレス',
             },
+            detailEyebrow: '監査ログ詳細',
+            detailDescription: '説明',
+            detailUserAgent: 'User Agent',
+            detailPayload: 'Payload',
         },
         system: {
             systemInfo: 'システム情報',

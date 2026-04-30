@@ -321,6 +321,7 @@ html.dark .markdown-body strong {
   .transition-colors,
   .transition-all {
     transition-property: none !important;
+  }
 }
 
 /* 全域文字反白選取樣式 */

@@ -18,6 +18,16 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.join(BASE_DIR, "backend")
+
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
+from app.services.ngrok_service import (  # noqa: E402
+    find_ngrok_binary,
+    query_ngrok_state,
+    write_ngrok_runtime,
+)
 
 NGROK_PORT = 5173  # 前端 Port
 
@@ -41,6 +51,8 @@ def kill_port(port: int):
 
 
 def find_ngrok() -> str | None:
+    return find_ngrok_binary(BASE_DIR)
+
     """尋找 ngrok 執行檔"""
     ngrok_in_path = shutil.which("ngrok")
     if ngrok_in_path:
@@ -125,6 +137,10 @@ def main():
     print()
 
     ngrok_url = reset_ngrok()
+    if ngrok_url:
+        state = query_ngrok_state()
+        if state.active:
+            write_ngrok_runtime(state)
 
     print()
     print("=" * 50)

@@ -13,8 +13,10 @@ export default {
         loading: 'Loading...',
         search: 'Search',
         confirm: 'Confirm',
+        user: 'User',
         confirmDelete: 'Do you want to delete?',
         back: 'Back',
+        backToChat: 'Back to chat',
         close: 'Close',
         error: 'Error',
         success: 'Success',
@@ -47,6 +49,7 @@ export default {
         welcomeBack: 'Welcome back',
         createAccount: 'Create account',
         welcomeTitle: 'Welcome to',
+        localDeploy: 'On-premise',
         subtitle: 'Your Intelligent Enterprise Assistant',
         engineDesc: 'Enterprise-grade RAG & GGUF Analysis Engine',
         feature1: 'Intelligent Q&A',
@@ -65,6 +68,7 @@ export default {
     // Chat
     chat: {
         emptyGreeting: 'What can I help you with, {{name}}?',
+        connectedToModel: 'Connected to local {{model}}',
         inputPlaceholder: 'Message Corphia AI...',
         projectInputPlaceholder: 'Send a message or upload documents...',
         suggestions: [
@@ -109,6 +113,24 @@ export default {
             { title: 'Draft Email', prompt: 'Please help me draft a formal business email. The main purpose is:\n\n' },
             { title: 'Polish wording', prompt: 'Please polish the following text to make the vocabulary more professional and appropriate:\n\n' }
         ],
+        promptTemplatesTitle: 'Prompt templates',
+    },
+
+    // Documents
+    documents: {
+        dropZoneTitle: 'Drop files here, or click to select',
+        dropZoneSubtitle: 'Supports PDF, Word, Excel, TXT, Markdown · max 50MB',
+        downloadSample: 'Download a sample file',
+        uploadedTitle: 'Uploaded',
+        searchPlaceholder: 'Search filename…',
+        noMatch: 'No matching files',
+        empty: 'No documents uploaded yet',
+        onboard1Title: 'What to upload',
+        onboard1Desc: 'PDF, Word, Excel, plain text, or Markdown. A small file is the best way to start.',
+        onboard2Title: 'What happens next',
+        onboard2Desc: 'The file is chunked, embedded, and indexed automatically. The status badge shows progress.',
+        onboard3Title: 'How to use it with RAG',
+        onboard3Desc: 'Switch to Project chat mode and add the file. The AI will cite the relevant passages with sources.',
     },
 
     // Settings
@@ -117,6 +139,8 @@ export default {
         theme: 'Theme',
         themeLight: 'Light',
         themeDark: 'Dark',
+        themeSystem: 'System',
+        themeSystemHint: 'Follow system prefers-color-scheme automatically',
         language: 'Language',
         profile: 'Profile',
         account: 'Account',
@@ -127,6 +151,9 @@ export default {
         ragDebug: 'RAG Debug Mode',
         ragDebugHint: 'When enabled, the retrieved reference documents, similarity scores, and source paths will be displayed below each AI response to help with debugging and tuning.',
         ragDebugToggle: 'Show RAG Debug Info',
+        demoMode: 'Demo Mode',
+        demoModeHint: 'When enabled, the admin console hides absolute server paths and other sensitive strings, making it safer to demo externally.',
+        demoModeToggle: 'Hide sensitive info',
         pwdRuleLength: 'At least 8 characters',
         pwdRuleUpper: 'Include uppercase letter (A-Z)',
         pwdRuleLower: 'Include lowercase letter (a-z)',
@@ -358,6 +385,10 @@ export default {
                 description: 'Description',
                 ip: 'IP Address',
             },
+            detailEyebrow: 'Audit detail',
+            detailDescription: 'Description',
+            detailUserAgent: 'User Agent',
+            detailPayload: 'Payload',
         },
         system: {
             systemInfo: 'System Info',
