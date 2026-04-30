@@ -1,0 +1,151 @@
+:root {
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-apple-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-pulse: cubic-bezier(0.4, 0, 0.6, 1);
+
+  --duration-press: 120ms;
+  --duration-fast: 150ms;
+  --duration-hover: 180ms;
+  --duration-normal: 250ms;
+  --duration-medium: 300ms;
+  --duration-slow: 600ms;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes typing-bounce {
+  0%, 100% {
+    transform: translateY(15%);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-40%);
+    opacity: 1;
+  }
+}
+
+.animate-typing-bounce {
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s var(--ease-pulse) infinite;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeIn var(--duration-slow) var(--ease-apple) forwards;
+}
+
+.delay-75 {
+  animation-delay: 75ms;
+}
+
+.delay-150 {
+  animation-delay: 150ms;
+}
+
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: pageEnter var(--duration-normal) var(--ease-apple) forwards;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: none;
+}
+
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+  transition: none !important;
+  animation-duration: 0.01ms !important;
+}
+
+@media (min-width: 768px) {
+  .theme-transition * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: var(--ease-standard);
+    transition-duration: var(--duration-medium);
+  }
+}
+
+@media (max-width: 767px) {
+  .transition-colors,
+  .transition-all {
+    transition-property: none !important;
+  }
+}
+
+.tap {
+  transition:
+    transform var(--duration-fast) var(--ease-apple),
+    opacity var(--duration-fast) var(--ease-apple);
+}
+
+.tap:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .tap:hover {
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition,
+  .animate-fade-in,
+  .animate-typing-bounce,
+  .animate-pulse,
+  .animate-spin {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .tap {
+    transition: none;
+  }
+}

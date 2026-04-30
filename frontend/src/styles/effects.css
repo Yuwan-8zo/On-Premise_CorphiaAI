@@ -1,0 +1,62 @@
+.glass {
+  background-color: rgb(var(--bg-base) / 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+@supports not ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
+  .glass {
+    background-color: rgb(var(--bg-base) / 0.96);
+  }
+}
+
+.glass-modal {
+  background-color: rgb(var(--bg-surface) / 0.78);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+}
+
+@supports not ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
+  .glass-modal {
+    background-color: rgb(var(--bg-surface) / 0.97);
+  }
+}
+
+.ios-list {
+  background-color: rgb(var(--bg-base));
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--border-subtle));
+}
+
+.ios-list > * + * {
+  border-top: 1px solid rgb(var(--border-subtle) / 0.6);
+}
+
+.ios-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  transition: background-color var(--duration-press) ease-out;
+}
+
+@media (hover: hover) {
+  .ios-list-row:hover {
+    background-color: rgb(var(--bg-surface) / 0.6);
+  }
+}
+
+.hairline {
+  height: 1px;
+  background-color: rgb(var(--border-subtle));
+  border: none;
+}
+
+@media (min-resolution: 2dppx) {
+  .hairline {
+    transform: scaleY(0.5);
+    transform-origin: 50% 0;
+  }
+}

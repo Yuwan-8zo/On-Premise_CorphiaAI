@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
 import { usersApi } from '../../api/users'
+import { ACCENT_COLORS } from '@/design-system'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
 
@@ -96,6 +97,7 @@ const THEME_CARD_SELECTED =
     'border-accent ring-4 ring-accent/20 bg-accent/5 dark:bg-accent/10'
 const THEME_CARD_UNSELECTED =
     'border-border-subtle hover:border-border-strong/40'
+const ACCENT_OPTIONS = Object.entries(ACCENT_COLORS)
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
@@ -201,7 +203,7 @@ export default function SettingsModal() {
         if (!/[A-Z]/.test(value)) errors.push(t('settings.pwdRuleUpper'))
         if (!/[a-z]/.test(value)) errors.push(t('settings.pwdRuleLower'))
         if (!/\d/.test(value)) errors.push(t('settings.pwdRuleNumber'))
-        if (!/[!@#$%^&*()\-_=+[\]{};:'\",.<>?/\\|`~]/.test(value)) errors.push(t('settings.pwdRuleSpecial'))
+        if (!/[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(value)) errors.push(t('settings.pwdRuleSpecial'))
 
         let score = 0
         if (value.length >= 8) score += 20
@@ -555,17 +557,35 @@ export default function SettingsModal() {
                                         <h3 className="text-xl font-bold text-text-primary mb-6">
                                             {t('settings.accentColor', '強調顏色')}
                                         </h3>
-                                        <div className="flex items-center gap-4">
-                                            <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-sm hover:scale-105 transition-transform border border-border-subtle cursor-pointer shrink-0">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            {ACCENT_OPTIONS.map(([key, color]) => (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={() => setAccentColor(key)}
+                                                    className={`tap h-11 w-11 rounded-full border p-1 transition-all ${
+                                                        accentColor === key
+                                                            ? 'border-accent ring-4 ring-accent/20'
+                                                            : 'border-border-subtle hover:border-border-strong/40'
+                                                    }`}
+                                                    title={color.label}
+                                                >
+                                                    <span
+                                                        className="block h-full w-full rounded-full shadow-sm"
+                                                        style={{ backgroundColor: color.hex }}
+                                                    />
+                                                </button>
+                                            ))}
+                                            <div className="relative h-11 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full border border-border-subtle shadow-sm transition-transform hover:scale-105">
                                                 <input
                                                     type="color"
-                                                    value={accentColor.startsWith('#') ? accentColor : '#896E53'}
+                                                    value={accentColor.startsWith('#') ? accentColor : ACCENT_COLORS.default.hex}
                                                     onChange={(e) => setAccentColor(e.target.value)}
                                                     className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0 outline-none"
                                                     title={t('settings.customColor', '自訂主題色')}
                                                 />
                                             </div>
-                                            <span className="text-[14px] text-text-secondary">
+                                            <span className="basis-full text-[14px] text-text-secondary sm:basis-auto">
                                                 {t('settings.customColorHint', '點擊選擇自訂品牌主題色')}
                                             </span>
                                         </div>

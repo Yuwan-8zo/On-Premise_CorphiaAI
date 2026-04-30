@@ -7,7 +7,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
 import { bootstrapAuth } from './lib/bootstrapAuth'
-import { THEME_COLORS } from './constants/themeColors'
+import { ACCENT_COLORS, THEME_COLORS } from './design-system'
 
 import { lazy, Suspense } from 'react'
 
@@ -88,7 +88,8 @@ export default function App() {
         const html = document.documentElement
 
         // 解析 accentColor (Hex -> RGB) 並計算對比色
-        let r = 137, g = 110, b = 83 // default Corphia Bronze
+        const presetAccent = ACCENT_COLORS[accentColor]
+        let [r, g, b] = (presetAccent || ACCENT_COLORS.default).rgb.split(' ').map(Number)
         if (accentColor.startsWith('#')) {
             const cleaned = accentColor.replace('#', '')
             if (cleaned.length === 6) {

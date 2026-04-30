@@ -1,26 +1,6 @@
-/**
- * Corphia 設計系統 — 單一資料來源 (Single Source of Truth)
- * ==========================================================
- *
- * 這個檔案是「所有 design token 的唯一定義來源」。
- *
- *   tailwind.config.js  ─┐
- *                        ├──▶  從這個檔案 import
- *   TS 程式碼            ─┘    （透過 design-system/index.ts）
- *
- * 為什麼用 .js 而不是 .ts：
- *   tailwind.config.js 是 PostCSS 在 build 時讀的，它沒有 TS compiler；
- *   所以 token 的 source 必須是純 JS。TS 那邊有 design-system/index.ts
- *   做型別封裝，UI 程式碼一律從那邊 import，不直接碰這個檔。
- *
- * 修改規則：
- *   1. 改值就在這裡改，整個 App 視覺會跟著變。
- *   2. **不要在 .tsx 裡面寫 hex 色碼或 px 數值**，永遠用 token。
- *   3. 新增 token 要同步寫進 design-system/README.md 的對照表。
- */
+// Corphia design tokens.
+// Keep shared visual constants here so Tailwind, React, and global CSS agree.
 
-// ── 圓角 ────────────────────────────────────────────────
-// `cv-` 前綴避免跟 Tailwind 內建 rounded-{r,t,b,l}- 衝突。
 export const radius = {
     pill: '9999px',
     'cv-xs': '6px',
@@ -29,15 +9,12 @@ export const radius = {
     'cv-lg': '20px',
     'cv-xl': '24px',
     'cv-2xl': '32px',
-    // 既有 token，向下相容
     'card-sm': '22px',
     'card-md': '30px',
     'card-lg': '34px',
     'card-xl': '38px',
 }
 
-// ── 字級 ────────────────────────────────────────────────
-// [字級, line-height]，line-height 也綁進 token 裡，避免再寫 leading-*
 export const fontSize = {
     caption: ['12px', '16px'],
     'body-sm': ['13px', '18px'],
@@ -48,28 +25,188 @@ export const fontSize = {
     display: ['36px', '44px'],
 }
 
-// ── 主題色（背景 / surface）───────────────────────────────
-// 與 src/index.css 的 --bg-base / --bg-surface 同步。
-// 用於 JS 字串場景（meta[theme-color]、html.style.background…）。
 export const themeColors = {
-    /** 深色主背景，與 --bg-base 同步 */
     darkBg: '#202022',
-    /** 深色 surface，與 --bg-surface 同步 */
     darkSurface: '#28282A',
-    /** 深色背景漸層 */
     darkBgGradient: 'linear-gradient(135deg, #202022 0%, #101012 100%)',
-    /** 淺色主背景，與 --bg-main 同步 */
     lightBg: '#F6F4F0',
-    /** 淺色 surface，與 --bg-surface 同步 */
     lightSurface: '#F2EFEA',
+    textOnLight: '#2A2722',
+    textOnDark: '#F6F4F0',
 }
 
-// ── 品牌色（accent / corphia）────────────────────────────
 export const brandColors = {
     bronze: '#896E53',
     bronzeHover: '#6F5943',
     bronzeActive: '#574537',
 }
 
-// 預設匯出方便 tailwind.config.js 一次取用所有
-export default { radius, fontSize, themeColors, brandColors }
+export const accentColors = {
+    default: { label: 'Titanium Bronze', hex: '#896E53', rgb: '137 110 83' },
+    blue: { label: 'System Blue', hex: '#3F8EF7', rgb: '63 142 247' },
+    purple: { label: 'Electric Purple', hex: '#DB37F4', rgb: '219 55 244' },
+    pink: { label: 'Signal Pink', hex: '#F64066', rgb: '246 64 102' },
+    orange: { label: 'Warm Orange', hex: '#FB8D2D', rgb: '251 141 45' },
+    green: { label: 'Mint Green', hex: '#22D9C5', rgb: '34 217 197' },
+}
+
+export const palette = {
+    corphia: {
+        bronze: brandColors.bronze,
+        beige: '#DDD8D0',
+        sand: '#ECE8E1',
+        'warm-gray': '#807C76',
+        ivory: themeColors.lightBg,
+        obsidian: themeColors.darkBg,
+        espresso: themeColors.darkSurface,
+        ink: themeColors.textOnLight,
+    },
+    primary: {
+        50: '#F7F5F2',
+        100: '#EDE8E2',
+        200: '#D9D0C6',
+        300: '#BFB1A1',
+        400: '#A08C78',
+        500: brandColors.bronze,
+        600: brandColors.bronzeHover,
+        700: brandColors.bronzeActive,
+        800: '#3F342B',
+        900: themeColors.textOnLight,
+        950: themeColors.darkBg,
+    },
+    bg: {
+        canvas: 'rgb(var(--bg-canvas) / <alpha-value>)',
+        base: 'rgb(var(--bg-base) / <alpha-value>)',
+        main: 'rgb(var(--bg-main) / <alpha-value>)',
+        surface: 'rgb(var(--bg-surface) / <alpha-value>)',
+        elevated: 'rgb(var(--bg-elevated) / <alpha-value>)',
+    },
+    text: {
+        primary: 'rgb(var(--text-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+        muted: 'rgb(var(--text-muted) / <alpha-value>)',
+        disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
+    },
+    border: {
+        subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
+        strong: 'rgb(var(--border-strong) / <alpha-value>)',
+    },
+    accent: {
+        DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+        hover: 'rgb(var(--accent-hover) / <alpha-value>)',
+        active: 'rgb(var(--accent-active) / <alpha-value>)',
+        soft: 'rgb(var(--accent-soft) / <alpha-value>)',
+    },
+    ios: {
+        blue: {
+            light: 'rgb(var(--color-ios-accent-light) / <alpha-value>)',
+            dark: 'rgb(var(--color-ios-accent-dark) / <alpha-value>)',
+        },
+        light: {
+            gray1: '#8E8E93',
+            gray2: '#AEAEB2',
+            gray3: '#C7C7CC',
+            gray4: '#D1D1D6',
+            gray5: '#E5E5EA',
+            gray6: '#F2F2F7',
+        },
+        dark: {
+            gray1: '#8E8E93',
+            gray2: '#636366',
+            gray3: '#48484A',
+            gray4: '#3A3A3C',
+            gray5: '#2C2C2E',
+            gray6: '#1C1C1E',
+            black: '#000000',
+        },
+    },
+}
+
+export const boxShadow = {
+    sm: '0 1px 2px rgb(0 0 0 / 0.04)',
+    DEFAULT: '0 2px 6px rgb(0 0 0 / 0.05)',
+    md: '0 4px 12px rgb(0 0 0 / 0.06)',
+    lg: '0 8px 20px rgb(0 0 0 / 0.07)',
+    xl: '0 12px 28px rgb(0 0 0 / 0.09)',
+    '2xl': '0 20px 40px rgb(0 0 0 / 0.12)',
+    inner: 'inset 0 1px 3px rgb(0 0 0 / 0.06)',
+}
+
+export const motion = {
+    duration: {
+        instant: '1ms',
+        press: '120ms',
+        fast: '150ms',
+        normal: '250ms',
+        medium: '300ms',
+        slow: '600ms',
+        spin: '1s',
+        pulse: '2s',
+    },
+    durationSeconds: {
+        press: 0.12,
+        fast: 0.15,
+        hover: 0.18,
+        normal: 0.25,
+        spring: 0.36,
+        slow: 0.6,
+    },
+    easing: {
+        apple: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        appleSoft: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        pulse: 'cubic-bezier(0.4, 0, 0.6, 1)',
+        pop: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    },
+    gsapEase: {
+        default: 'power2.out',
+        in: 'power2.in',
+        out: 'power2.out',
+        inOut: 'power2.inOut',
+    },
+    spring: {
+        default: { type: 'spring', stiffness: 200, damping: 25, mass: 1 },
+        snappy: { type: 'spring', stiffness: 380, damping: 30, mass: 0.9 },
+        gentle: { type: 'spring', stiffness: 120, damping: 22, mass: 1 },
+    },
+    fade: {
+        type: 'tween',
+        duration: 0.18,
+        ease: [0.4, 0, 0.2, 1],
+    },
+    keyframes: {
+        'typing-bounce': {
+            '0%, 100%': { transform: 'translateY(10%)', opacity: '0.4' },
+            '50%': { transform: 'translateY(-60%)', opacity: '1' },
+        },
+        'draw-c-path': {
+            '0%': { strokeDashoffset: '28', opacity: '0' },
+            '10%': { strokeDashoffset: '28', opacity: '1' },
+            '50%': { strokeDashoffset: '0', opacity: '1' },
+            '70%': { strokeDashoffset: '0', opacity: '1' },
+            '100%': { strokeDashoffset: '-28', opacity: '0' },
+        },
+        'pop-spark': {
+            '0%, 40%': { transform: 'scale(0)', opacity: '0' },
+            '50%': { transform: 'scale(1.2)', opacity: '1' },
+            '60%, 75%': { transform: 'scale(1)', opacity: '1' },
+            '100%': { transform: 'scale(0)', opacity: '0' },
+        },
+    },
+    animation: {
+        'typing-bounce': 'typing-bounce 1s infinite',
+        'draw-c': 'draw-c-path 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+        'pop-spark': 'pop-spark 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite',
+    },
+}
+
+export default {
+    radius,
+    fontSize,
+    themeColors,
+    brandColors,
+    accentColors,
+    palette,
+    boxShadow,
+    motion,
+}

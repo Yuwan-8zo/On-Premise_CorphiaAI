@@ -14,7 +14,6 @@ Corphia AI - 一鍵啟動腳本
 """
 
 import os
-import shutil
 import signal
 import socket
 import subprocess
@@ -190,7 +189,7 @@ def wait_for_backend(port: int = 8168, timeout: int = 120) -> bool:
 
 
 # ─────────────────────────────────────────────────────────────
-#  自動喚醒 Docker Desktop 與 Ollama
+#  自動喚醒 Docker Desktop
 # ─────────────────────────────────────────────────────────────
 
 def is_docker_running() -> bool:
@@ -242,63 +241,6 @@ def ensure_docker_desktop_running():
     print(" 逾時，繼續嘗試...", flush=True)
 
 
-def is_ollama_running() -> bool:
-    """偵測 Ollama 是否已在監聽 11434"""
-    try:
-        urllib.request.urlopen("http://127.0.0.1:11434", timeout=2)
-        return True
-    except Exception:
-        # 即使回傳 404/非 200 也代表服務已啟動
-        try:
-            s = socket.create_connection(("127.0.0.1", 11434), timeout=2)
-            s.close()
-            return True
-        except Exception:
-            return False
-
-
-def ensure_ollama_running():
-    """若 Ollama 未啟動，自動開啟並等待就緒"""
-    if is_ollama_running():
-        return  # 已就緒
-
-    print("  [啟動] Ollama 尚未執行，正在自動開啟...", flush=True)
-
-    # 嘗試直接呼叫 ollama serve
-    ollama_exe = shutil.which("ollama")
-    common_ollama_paths = [
-        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Ollama", "ollama.exe"),
-        r"C:\Program Files\Ollama\ollama.exe",
-        os.path.join(os.environ.get("USERPROFILE", ""), "AppData", "Local", "Programs", "Ollama", "ollama.exe"),
-    ]
-    if not ollama_exe:
-        for path in common_ollama_paths:
-            if os.path.exists(path):
-                ollama_exe = path
-                break
-
-    if not ollama_exe:
-        print("  [警告] 找不到 Ollama，若系統需要請手動開啟。")
-        return
-
-    subprocess.Popen(
-        [ollama_exe, "serve"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-    )
-
-    # 等待 Ollama 就緒（最多 30 秒）
-    print("  [等待] Ollama 啟動中", end="", flush=True)
-    deadline = time.time() + 30
-    while time.time() < deadline:
-        time.sleep(1)
-        print(".", end="", flush=True)
-        if is_ollama_running():
-            print(" 就緒！", flush=True)
-            return
-    print(" 逾時，繼續...", flush=True)
-
-
 # ─────────────────────────────────────────────────────────────
 #  主程序
 # ─────────────────────────────────────────────────────────────
@@ -309,10 +251,9 @@ def main():
     print("=" * 52)
     has_ngrok = bool(find_ngrok())
 
-    # ── [0/6] 自動喚醒 Docker Desktop + Ollama ────────────────
-    print("  [0/6] 檢查 Docker Desktop 與 Ollama...")
+    # ── [0/6] 自動喚醒 Docker Desktop ────────────────────────
+    print("  [0/6] 檢查 Docker Desktop...")
     ensure_docker_desktop_running()
-    ensure_ollama_running()
     print()
 
     # ── [1/6] Docker ──────────────────────────────────────────

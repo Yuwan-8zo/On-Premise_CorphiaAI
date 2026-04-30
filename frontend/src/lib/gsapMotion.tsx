@@ -8,6 +8,7 @@ import React, {
     useRef,
 } from 'react'
 import { gsap } from '@/lib/gsap'
+import { MOTION } from '@/design-system'
 
 type GsapVars = Record<string, unknown>
 
@@ -72,18 +73,18 @@ function splitStyle(style?: AnyMotionProps['style']) {
 }
 
 function normalizeEase(ease?: string | number[]) {
-    if (Array.isArray(ease)) return 'power2.out'
-    if (ease === 'easeInOut') return 'power2.inOut'
-    if (ease === 'easeIn') return 'power2.in'
-    if (ease === 'easeOut') return 'power2.out'
-    return ease || 'power2.out'
+    if (Array.isArray(ease)) return MOTION.gsapEase.default
+    if (ease === 'easeInOut') return MOTION.gsapEase.inOut
+    if (ease === 'easeIn') return MOTION.gsapEase.in
+    if (ease === 'easeOut') return MOTION.gsapEase.out
+    return ease || MOTION.gsapEase.default
 }
 
 function transitionVars(transition?: MotionLikeProps['transition']) {
-    if (!transition) return { duration: 0.25, ease: 'power2.out' }
+    if (!transition) return { duration: MOTION.durationSeconds.normal, ease: MOTION.gsapEase.default }
     return {
         delay: transition.delay,
-        duration: transition.duration ?? (transition.type === 'spring' ? 0.36 : 0.25),
+        duration: transition.duration ?? (transition.type === 'spring' ? MOTION.durationSeconds.spring : MOTION.durationSeconds.normal),
         ease: normalizeEase(transition.ease),
     }
 }
@@ -150,7 +151,7 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
 
         const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
             if (whileHover && innerRef.current) {
-                gsap.to(innerRef.current, { ...whileHover, duration: 0.18, ease: 'power2.out', overwrite: 'auto' })
+                gsap.to(innerRef.current, { ...whileHover, duration: MOTION.durationSeconds.hover, ease: MOTION.gsapEase.out, overwrite: 'auto' })
             }
             ;(onMouseEnter as ((event: React.MouseEvent<HTMLElement>) => void) | undefined)?.(event)
         }
@@ -158,14 +159,14 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
         const handleMouseLeave = (event: React.MouseEvent<HTMLElement>) => {
             const animateVars = resolveMotionValue(motionAnimate, motionVariants)
             if ((whileHover || whileTap) && innerRef.current && animateVars) {
-                gsap.to(innerRef.current, { ...animateVars, duration: 0.18, ease: 'power2.out', overwrite: 'auto' })
+                gsap.to(innerRef.current, { ...animateVars, duration: MOTION.durationSeconds.hover, ease: MOTION.gsapEase.out, overwrite: 'auto' })
             }
             ;(onMouseLeave as ((event: React.MouseEvent<HTMLElement>) => void) | undefined)?.(event)
         }
 
         const handleMouseDown = (event: React.MouseEvent<HTMLElement>) => {
             if (whileTap && innerRef.current) {
-                gsap.to(innerRef.current, { ...whileTap, duration: 0.12, ease: 'power2.out', overwrite: 'auto' })
+                gsap.to(innerRef.current, { ...whileTap, duration: MOTION.durationSeconds.press, ease: MOTION.gsapEase.out, overwrite: 'auto' })
             }
             ;(onMouseDown as ((event: React.MouseEvent<HTMLElement>) => void) | undefined)?.(event)
         }
@@ -173,7 +174,7 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
         const handleMouseUp = (event: React.MouseEvent<HTMLElement>) => {
             const animateVars = resolveMotionValue(motionAnimate, motionVariants)
             if ((whileTap || whileHover) && innerRef.current && animateVars) {
-                gsap.to(innerRef.current, { ...animateVars, duration: 0.16, ease: 'power2.out', overwrite: 'auto' })
+                gsap.to(innerRef.current, { ...animateVars, duration: MOTION.durationSeconds.fast, ease: MOTION.gsapEase.out, overwrite: 'auto' })
             }
             ;(onMouseUp as ((event: React.MouseEvent<HTMLElement>) => void) | undefined)?.(event)
         }

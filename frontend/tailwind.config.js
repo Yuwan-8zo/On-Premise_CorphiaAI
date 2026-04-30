@@ -1,89 +1,13 @@
-// ⚠️ Token 來源：所有設計變數定義在 src/design-system/tokens.js
-// 改色／圓角／字級都去那裡改；不要在這個檔裡直接寫 hex / px 數字。
 import tokens from './src/design-system/tokens.js'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-    ],
+    content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
     darkMode: 'class',
     theme: {
         extend: {
-            colors: {
-                corphia: {
-                    bronze: '#896E53',
-                    beige: '#DDD8D0',
-                    sand: '#ECE8E1',
-                    'warm-gray': '#807C76',
-                    ivory: '#F6F4F0',
-                    obsidian: '#202022',
-                    espresso: '#28282A',
-                    ink: '#2A2722',
-                },
-                primary: {
-                    50: '#F7F5F2',
-                    100: '#EDE8E2',
-                    200: '#D9D0C6',
-                    300: '#BFB1A1',
-                    400: '#A08C78',
-                    500: '#896E53',
-                    600: '#6F5943',
-                    700: '#574537',
-                    800: '#3F342B',
-                    900: '#2A2722',
-                    950: '#202022',
-                },
-                bg: {
-                    base: 'rgb(var(--bg-base) / <alpha-value>)',
-                    main: 'rgb(var(--bg-main) / <alpha-value>)',
-                    surface: 'rgb(var(--bg-surface) / <alpha-value>)',
-                    elevated: 'rgb(var(--bg-elevated) / <alpha-value>)',
-                },
-                text: {
-                    primary: 'rgb(var(--text-primary) / <alpha-value>)',
-                    secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
-                    muted: 'rgb(var(--text-muted) / <alpha-value>)',
-                    disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
-                },
-                border: {
-                    subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
-                    strong: 'rgb(var(--border-strong) / <alpha-value>)',
-                },
-                accent: {
-                    DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
-                    hover: 'rgb(var(--accent-hover) / <alpha-value>)',
-                    active: 'rgb(var(--accent-active) / <alpha-value>)',
-                    soft: 'rgb(var(--accent-soft))',
-                },
-                ios: {
-                    blue: {
-                        light: 'rgb(var(--color-ios-accent-light) / <alpha-value>)',
-                        dark: 'rgb(var(--color-ios-accent-dark) / <alpha-value>)',
-                    },
-                    light: {
-                        gray1: '#8e8e93',
-                        gray2: '#aeaeb2',
-                        gray3: '#c7c7cc',
-                        gray4: '#d1d1d6',
-                        gray5: '#e5e5ea',
-                        gray6: '#f2f2f7',
-                    },
-                    dark: {
-                        gray1: '#8e8e93',
-                        gray2: '#636366',
-                        gray3: '#48484a',
-                        gray4: '#3a3a3c',
-                        gray5: '#2c2c2e',
-                        gray6: '#1c1c1e',
-                        black: '#000000',
-                    }
-                },
-            },
+            colors: tokens.palette,
             fontFamily: {
-                // Apple 系統字優先：Mac / iPhone 使用者直接拿到原生 SF Pro，
-                // 其他平台 fallback 到 Inter (跟 SF Pro 視覺最接近)，再 fallback 系統字。
                 sans: [
                     '-apple-system',
                     'BlinkMacSystemFont',
@@ -95,44 +19,24 @@ export default {
                     'sans-serif',
                 ],
             },
-            // 圓角 / 字級全部從 tokens.js 帶進來，避免雙重維護
             borderRadius: tokens.radius,
             fontSize: tokens.fontSize,
-            boxShadow: {
-                // Apple 風格陰影：刻意低調、層次靠透明度而非黑度。
-                // 對比舊值整體淡化 ~40%，避免「卡片浮起來太誇張」的感覺。
-                'sm': '0 1px 2px rgb(0 0 0 / 0.04)',
-                DEFAULT: '0 2px 6px rgb(0 0 0 / 0.05)',
-                'md': '0 4px 12px rgb(0 0 0 / 0.06)',
-                'lg': '0 8px 20px rgb(0 0 0 / 0.07)',
-                'xl': '0 12px 28px rgb(0 0 0 / 0.09)',
-                '2xl': '0 20px 40px rgb(0 0 0 / 0.12)',
-                'inner': 'inset 0 1px 3px rgb(0 0 0 / 0.06)',
+            boxShadow: tokens.boxShadow,
+            transitionDuration: {
+                press: tokens.motion.duration.press,
+                fast: tokens.motion.duration.fast,
+                normal: tokens.motion.duration.normal,
+                medium: tokens.motion.duration.medium,
+                slow: tokens.motion.duration.slow,
             },
-            keyframes: {
-                'typing-bounce': {
-                    '0%, 100%': { transform: 'translateY(10%)', opacity: '0.4' },
-                    '50%': { transform: 'translateY(-60%)', opacity: '1' },
-                },
-                'draw-c-path': {
-                    '0%': { strokeDashoffset: '28', opacity: '0' },
-                    '10%': { strokeDashoffset: '28', opacity: '1' },
-                    '50%': { strokeDashoffset: '0', opacity: '1' },
-                    '70%': { strokeDashoffset: '0', opacity: '1' },
-                    '100%': { strokeDashoffset: '-28', opacity: '0' },
-                },
-                'pop-spark': {
-                    '0%, 40%': { transform: 'scale(0)', opacity: '0' },
-                    '50%': { transform: 'scale(1.2)', opacity: '1' },
-                    '60%, 75%': { transform: 'scale(1)', opacity: '1' },
-                    '100%': { transform: 'scale(0)', opacity: '0' },
-                }
+            transitionTimingFunction: {
+                apple: tokens.motion.easing.apple,
+                'apple-soft': tokens.motion.easing.appleSoft,
+                standard: tokens.motion.easing.standard,
+                pop: tokens.motion.easing.pop,
             },
-            animation: {
-                'typing-bounce': 'typing-bounce 1s infinite',
-                'draw-c': 'draw-c-path 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-                'pop-spark': 'pop-spark 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite',
-            }
+            keyframes: tokens.motion.keyframes,
+            animation: tokens.motion.animation,
         },
     },
     plugins: [],
