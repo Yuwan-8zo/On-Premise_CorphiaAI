@@ -2,10 +2,9 @@
 使用者 API
 """
 
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
-from sqlalchemy import select, func, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.user import User
@@ -101,8 +100,11 @@ async def list_users(
     # 篩選條件
     if search:
         # 跳脫 LIKE 萬用字元 + 限長度
+        # NOTE: 不要在這裡再 import HTTPException —— top-level 已經 import，
+        # 在 function 內部重 import 會讓 HTTPException 變成整個 function 的
+        # local，導致前面 line 91 的 raise HTTPException 變成
+        # UnboundLocalError（ruff F823 抓到的真實 bug）
         if len(search) > 128:
-            from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
         escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         search_filter = f"%{escaped}%"

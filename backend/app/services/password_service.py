@@ -6,11 +6,12 @@
 
 import logging
 import re
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+import time
+from datetime import datetime, timezone
+from threading import Lock
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 
 from app.models.user import User
 
@@ -143,9 +144,6 @@ def get_password_strength_score(password: str) -> dict:
 # 鎖定策略配置
 LOGIN_MAX_ATTEMPTS = 5          # 最大嘗試次數
 LOGIN_LOCKOUT_MINUTES = 15      # 鎖定時間（分鐘）
-
-import time
-from threading import Lock
 
 _mock_lock = Lock()
 _mock_failures: dict[str, dict] = {}

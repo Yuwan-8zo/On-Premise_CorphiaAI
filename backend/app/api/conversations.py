@@ -6,11 +6,10 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from sqlalchemy import select, func, desc
-from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
-from app.models.message import Message, MessageRole
+from app.models.message import Message
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,

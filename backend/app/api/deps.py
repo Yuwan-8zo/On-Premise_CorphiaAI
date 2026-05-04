@@ -2,7 +2,7 @@
 API 依賴注入模組
 """
 
-from typing import Annotated, Optional
+from typing import Annotated
 from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, status

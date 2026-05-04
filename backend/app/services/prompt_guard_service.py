@@ -13,7 +13,6 @@ Prompt Injection / RAG 投毒偵測服務
 import re
 import logging
 from typing import TypedDict
-from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 

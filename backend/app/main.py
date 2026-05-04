@@ -34,6 +34,8 @@ from app.api import (
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
+from app.core.rate_limiter import RateLimitMiddleware
+from app.core.middleware import MaxUploadSizeMiddleware
 
 
 from app.core.logging_config import setup_logging
@@ -148,12 +150,9 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # 速率限制中間件
-from app.core.rate_limiter import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware)
 
-
 # 上傳檔案大小限制中間件
-from app.core.middleware import MaxUploadSizeMiddleware
 app.add_middleware(MaxUploadSizeMiddleware, max_upload_size=settings.max_upload_size_mb * 1024 * 1024)
 
 # 全域例外處理

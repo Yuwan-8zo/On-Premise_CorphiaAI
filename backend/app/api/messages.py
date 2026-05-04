@@ -2,11 +2,9 @@
 訊息 API
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message

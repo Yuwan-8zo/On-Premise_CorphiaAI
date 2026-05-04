@@ -3,14 +3,14 @@
 """
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequireAdmin, get_db, Depends
 from app.models.tenant import Tenant
 from app.schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, TenantListResponse
-from app.services.audit_service import write_audit_log, AuditAction, AuditResource, get_client_ip, get_user_agent
+from app.services.audit_service import write_audit_log, AuditResource, get_client_ip, get_user_agent
 from app.api.deps import CurrentUser
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])

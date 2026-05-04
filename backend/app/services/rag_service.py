@@ -10,7 +10,7 @@ import re
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, or_
 
 from app.core.config import settings
 from app.models.document_chunk import DocumentChunk

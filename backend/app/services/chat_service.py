@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import TypedDict, Optional, Any, AsyncGenerator
+from typing import TypedDict, Optional, AsyncGenerator
 
 from app.core.config import settings
 from app.core.time_utils import utc_now_naive
@@ -636,8 +636,7 @@ class ChatService:
         
         # 串流生成回應
         full_response = ""
-        message_id = None
-        
+
         async for chunk in self.llm_service.generate_stream(
             prompt=prompt,
             temperature=temperature,

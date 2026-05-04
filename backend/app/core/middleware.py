@@ -11,7 +11,6 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from fastapi import status
 
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

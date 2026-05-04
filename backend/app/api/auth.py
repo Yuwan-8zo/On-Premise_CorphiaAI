@@ -44,7 +44,6 @@ from app.services.password_service import (
     record_login_failure,
     reset_login_attempts,
     get_password_strength_score,
-    validate_password_strength,
 )
 
 # Bearer 安全方案（用於取得原始 Token）

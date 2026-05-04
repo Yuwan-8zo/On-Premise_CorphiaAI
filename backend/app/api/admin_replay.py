@@ -10,13 +10,12 @@ B4: Admin 對話重播 API
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, DbSession, RequireAdmin
+from app.api.deps import CurrentUser, DbSession
 from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.message import Message

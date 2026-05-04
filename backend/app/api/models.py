@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 
-from app.services.model_manager import get_model_manager, refresh_models
+from app.services.model_manager import get_model_manager
 from app.services.llm_service import get_llm_service
 
 router = APIRouter(prefix="/models", tags=["Models"])

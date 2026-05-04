@@ -8,7 +8,7 @@ import logging
 import os
 import uuid
 from pathlib import Path
-from typing import Optional, BinaryIO
+from typing import BinaryIO
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

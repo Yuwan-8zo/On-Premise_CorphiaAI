@@ -5,7 +5,7 @@
 """
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from pydantic import BaseModel, Field
 
 from app.api.deps import CurrentUser, DbSession

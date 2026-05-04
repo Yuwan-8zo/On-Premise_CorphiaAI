@@ -11,7 +11,6 @@ B2: 訊息審計 Hash 鏈服務
 
 import hashlib
 import logging
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
