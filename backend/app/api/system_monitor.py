@@ -10,11 +10,25 @@ import platform
 import asyncio
 from app.core.time_utils import utc_now_iso
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, RequireAdmin
+from app.core.database import get_db
 from app.models.user import User
-from app.services.ngrok_service import get_ngrok_state
+from app.services.ngrok_service import (
+    find_ngrok_binary,
+    get_ngrok_state,
+    start_ngrok_tunnel,
+    stop_ngrok_and_clear_runtime,
+)
+from app.services.audit_service import (
+    AuditAction,
+    AuditResource,
+    write_audit_log,
+    get_client_ip,
+    get_user_agent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,14 +99,17 @@ async def _get_gpu_info() -> dict:
 async def _get_llm_stats() -> dict:
     """取得 LLM 模型統計資訊"""
     from app.services.llm_service import get_llm_service
+    from app.services.model_manager import get_model_manager
     from app.core.config import settings
     llm = get_llm_service()
+    manager = get_model_manager()
 
-    model_loaded = llm._initialized and (llm.client is not None or llm.use_llama_cpp)
+    model_loaded = llm._initialized and llm.use_llama_cpp
 
     stats: dict = {
         "model_loaded": model_loaded,
-        "model_path": llm.model if not llm.use_llama_cpp else "GGUF Model",
+        "provider": "llama.cpp" if llm.use_llama_cpp else "simulation",
+        "model_path": manager.current_model_path or "Simulation Mode",
         "context_size": getattr(settings, "llama_context_size", 4096),
         "n_gpu_layers": getattr(settings, "llama_n_gpu_layers", 0),
     }
@@ -195,3 +212,136 @@ async def get_ngrok_url(
     若 ngrok 未啟動則回傳 active: false。
     """
     return get_ngrok_state().to_dict()
+
+
+@router.post("/ngrok/start")
+async def start_ngrok(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _ = RequireAdmin,
+):
+    """
+    啟動 ngrok 公開隧道（admin 用）
+
+    流程：
+      1. 找 ngrok 執行檔 — 沒裝就回 503
+      2. 殺掉舊 process（避免 4040 端口被佔）
+      3. 起新 ngrok http <FRONTEND_PORT>，poll 直到拿到 https URL（或超時）
+      4. 寫 .runtime/ngrok.json + frontend/.env.local
+      5. 寫 audit log（記錄誰在何時何處把公開連結打開）
+
+    SECURITY: 這個端點把 backend / frontend 暴露到公網，必須記錄到 audit log，
+    答辯 / 合規稽核時可回答「公開連結被誰、什麼時間、從哪台機器打開」。
+    """
+    if not find_ngrok_binary():
+        # 503 Service Unavailable — 缺工具，前端會顯示「未安裝」提示
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=503,
+            detail="ngrok 執行檔未找到（需安裝後重啟）",
+        )
+
+    # 在 thread pool 跑 — start_ngrok_tunnel 內含 sleep(1) + 多次 poll，會阻塞最多 ~20s
+    # FIX: 包 wait_for 作為硬上限，ngrok 卡住時 API 不會永遠掛著
+    try:
+        process, state = await asyncio.wait_for(
+            asyncio.to_thread(start_ngrok_tunnel),
+            timeout=25.0,
+        )
+    except asyncio.TimeoutError:
+        from fastapi import HTTPException
+        # 失敗也寫 audit log（管理員嘗試開但失敗了，這也是有價值的紀錄）
+        await write_audit_log(
+            db=db,
+            action=AuditAction.NGROK_START,
+            resource_type=AuditResource.SYSTEM,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=current_user.tenant_id or "default",
+            description="嘗試啟動 ngrok 公開隧道但超時失敗",
+            details={"result": "timeout", "timeout_sec": 25},
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        raise HTTPException(
+            status_code=504,
+            detail="ngrok 啟動超過 25 秒未回應，已放棄。請檢查 authtoken 設定或網路。",
+        )
+
+    if not state.active:
+        from fastapi import HTTPException
+        await write_audit_log(
+            db=db,
+            action=AuditAction.NGROK_START,
+            resource_type=AuditResource.SYSTEM,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=current_user.tenant_id or "default",
+            description="嘗試啟動 ngrok 公開隧道但未取得 URL",
+            details={"result": "no_url", "source": state.source if hasattr(state, "source") else None},
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="ngrok 已啟動但取不到公開 URL（可能 authtoken 未設定）",
+        )
+
+    # 成功：寫入 audit log，紀錄公開 URL（合規稽核需要）
+    await write_audit_log(
+        db=db,
+        action=AuditAction.NGROK_START,
+        resource_type=AuditResource.SYSTEM,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id or "default",
+        description=f"啟動 ngrok 公開隧道：{state.url or '<unknown>'}",
+        details={
+            "result": "success",
+            "public_url": state.url,
+            "api_url": state.api_url,
+        },
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    logger.info(
+        "[ngrok][admin=%s] tunnel started: %s",
+        current_user.email, state.url,
+    )
+
+    return state.to_dict()
+
+
+@router.post("/ngrok/stop")
+async def stop_ngrok(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _ = RequireAdmin,
+):
+    """
+    關閉 ngrok 公開隧道（admin 用）
+
+    用 taskkill / pkill 殺掉所有 ngrok process，
+    然後把 runtime 狀態寫成 inactive，這樣前端下次查詢就拿到 active: false。
+
+    一樣寫 audit log，記錄「誰在何時關閉公開連結」。
+    """
+    state = await asyncio.to_thread(stop_ngrok_and_clear_runtime)
+
+    await write_audit_log(
+        db=db,
+        action=AuditAction.NGROK_STOP,
+        resource_type=AuditResource.SYSTEM,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id or "default",
+        description="關閉 ngrok 公開隧道",
+        details={"result": "success"},
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    logger.info("[ngrok][admin=%s] tunnel stopped", current_user.email)
+
+    return state.to_dict()

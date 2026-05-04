@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { systemApi } from '../../api/system'
+import MaterialIcon from '../icons/MaterialIcon'
 
 interface CPUInfo {
     cpu_percent: number
@@ -135,11 +136,15 @@ export function SystemMonitorPanel() {
             {network && (
                 <div className={`rounded-xl border p-3 ${
                     network.data_sovereignty
-                        ? 'border-green-300/50 /30 bg-green-50/50'
-                        : 'border-yellow-300/50 /30 bg-yellow-50/50'
+                        ? 'border-green-300/50 bg-green-50/50'
+                        : 'border-yellow-300/50 bg-yellow-50/50'
                 }`}>
                     <div className="flex items-center gap-2">
-                        <span className="text-lg">{network.data_sovereignty ? '✅' : '⚠️'}</span>
+                        <MaterialIcon
+                            name={network.data_sovereignty ? 'verified' : 'warning'}
+                            size={20}
+                            className={network.data_sovereignty ? 'text-green-600' : 'text-yellow-600'}
+                        />
                         <span className={`font-medium text-xs ${
                             network.data_sovereignty
                                 ? 'text-green-700 '
@@ -160,7 +165,9 @@ export function SystemMonitorPanel() {
             {health?.cpu && !health.cpu.error && (
                 <div className="rounded-xl border border-border-subtle p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-text-secondary">🖥️ CPU</span>
+                        <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
+                            <MaterialIcon name="memory" size={14} aria-hidden /> CPU
+                        </span>
                         <span className="text-xs font-mono text-text-secondary">{health.cpu.cpu_cores} 核心</span>
                     </div>
                     <div>
@@ -184,8 +191,9 @@ export function SystemMonitorPanel() {
             {health?.gpu?.available && health.gpu.devices.map((gpu) => (
                 <div key={gpu.index} className="rounded-xl border border-border-subtle p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-text-secondary">
-                            🎮 GPU #{gpu.index}
+                        <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
+                            <MaterialIcon name="developer_board" size={14} aria-hidden />
+                            GPU #{gpu.index}
                         </span>
                         <span className="text-xs font-mono text-text-secondary truncate max-w-[160px]">{gpu.name}</span>
                     </div>
@@ -218,7 +226,9 @@ export function SystemMonitorPanel() {
             {health?.llm && (
                 <div className="rounded-xl border border-border-subtle p-3 space-y-1">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs text-text-secondary">🤖 LLM 模型</span>
+                        <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
+                            <MaterialIcon name="smart_toy" size={14} aria-hidden /> LLM 模型
+                        </span>
                         <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                             health.llm.model_loaded
                                 ? 'bg-green-100 text-green-700 '

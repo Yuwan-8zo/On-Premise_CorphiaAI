@@ -31,6 +31,8 @@ class DocumentService:
         ".doc": "application/msword",
         ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ".xls": "application/vnd.ms-excel",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ".ppt": "application/vnd.ms-powerpoint",
         ".txt": "text/plain",
         ".md": "text/markdown",
     }
@@ -70,18 +72,67 @@ class DocumentService:
         ext = Path(filename).suffix.lower()
         if ext not in self.SUPPORTED_TYPES:
             raise ValueError(f"不支援的檔案類型: {ext}")
+
+        # .ppt（舊版二進位 PowerPoint）python-pptx 不支援，
+        # 在這邊就早期拒絕並給清楚的訊息，比讓 process_document 在背景失敗好。
+        # .doc 同理 —— python-docx 可讀但不穩定，先擋掉建議轉新版。
+        if ext == ".ppt":
+            raise ValueError(
+                "舊版 .ppt 格式不支援解析，請另存為 .pptx 後再上傳"
+            )
+        if ext == ".doc":
+            raise ValueError(
+                "舊版 .doc 格式解析不穩定，請另存為 .docx 後再上傳"
+            )
+        if ext == ".xls":
+            raise ValueError(
+                "舊版 .xls 格式不支援解析，請另存為 .xlsx 後再上傳"
+            )
         
         # 生成唯一檔名
+        # SECURITY: tenant_id 直接拼進路徑可能造成路徑遍歷（attacker tenant_id="../../etc"）
+        # 用 uuid + 過濾保險：tenant_id 必須是合法 slug（英數 + dash/底線）
+        import re
+        safe_tenant_id = re.sub(r"[^A-Za-z0-9_-]", "_", str(tenant_id or "default"))
         unique_filename = f"{uuid.uuid4()}{ext}"
-        file_path = self.upload_dir / tenant_id / unique_filename
+        file_path = self.upload_dir / safe_tenant_id / unique_filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # 儲存檔案
         content = file.read()
         file_size = len(content)
-        
-        with open(file_path, "wb") as f:
-            f.write(content)
+
+        # FIX: 加上實際檔案大小驗證，避免 middleware 漏接的 chunked 上傳
+        # （middleware 只看 Content-Length header，chunked encoding 可能繞過）
+        from app.core.config import settings
+        max_bytes = settings.max_upload_size_mb * 1024 * 1024
+        if file_size > max_bytes:
+            raise ValueError(
+                f"檔案大小 {file_size} bytes 超過上限 {max_bytes} bytes "
+                f"({settings.max_upload_size_mb} MB)"
+            )
+        if file_size == 0:
+            raise ValueError("空檔案無法上傳")
+
+        try:
+            with open(file_path, "wb") as f:
+                f.write(content)
+            # FIX: 寫入後驗證磁碟上實際大小，磁碟滿 / 權限不足 / SSD 失敗時
+            # write() 不會 raise 但寫入量可能 < len(content)
+            actual_size = file_path.stat().st_size
+            if actual_size != file_size:
+                # 清理不完整的檔案，避免留下殭屍
+                try:
+                    file_path.unlink()
+                except OSError:
+                    pass
+                raise IOError(
+                    f"檔案寫入不完整：預期 {file_size} bytes，實際 {actual_size} bytes "
+                    "（磁碟可能已滿或權限不足）"
+                )
+        except OSError as e:
+            # 磁碟相關 IO 錯誤，往上 raise 讓上層返回 500
+            raise IOError(f"檔案儲存失敗：{e}") from e
         
         # B3: 查詢同名舊版本（同一租戶、同原始檔名、尚未被取代的最新版）
         prev_result = await self.db.execute(
@@ -163,10 +214,14 @@ class DocumentService:
             rag_service = get_rag_service()
             
             # 儲存分塊到資料庫
+            # FIX: chunk_metadata 補上 chunk_index / total_chunks，
+            # 前端「檢視來源」可定位到「文件第幾段」、做精準引用。
+            # （chunk_index column 本來就有，但只看 column 沒看 metadata 的下游也能拿到。）
+            total_chunks = len(chunks)
             for i, chunk_content in enumerate(chunks):
                 # 取得向量
                 embedding = await rag_service.get_embedding(chunk_content)
-                
+
                 chunk = DocumentChunk(
                     document_id=document.id,
                     chunk_index=i,
@@ -175,17 +230,21 @@ class DocumentService:
                     chunk_metadata={
                         "filename": document.original_filename,
                         "tenant_id": document.tenant_id,
+                        "chunk_index": i,
+                        "total_chunks": total_chunks,
+                        # 約略字元數（給前端顯示「第 X 段（含 N 字）」用，不必精算）
+                        "char_count": len(chunk_content),
                     }
                 )
                 self.db.add(chunk)
-            
+
             # 更新文件狀態
             document.status = DocumentStatus.COMPLETED.value
-            document.chunk_count = len(chunks)
+            document.chunk_count = total_chunks
             # NOTE: 使用 naive UTC，與系統其他地方保持一致
             from app.core.time_utils import utc_now_naive
             document.processed_at = utc_now_naive()
-            
+
             await self.db.commit()
             
             logger.info(f"文件處理完成: {document.original_filename}，共 {len(chunks)} 個分塊")
@@ -215,6 +274,8 @@ class DocumentService:
             return await self._parse_word(file_path)
         elif ext in ["xlsx", "xls"]:
             return await self._parse_excel(file_path)
+        elif ext in ["pptx", "ppt"]:
+            return await self._parse_powerpoint(file_path)
         else:
             raise ValueError(f"不支援的檔案類型: {ext}")
     
@@ -283,14 +344,14 @@ class DocumentService:
     async def _parse_excel(self, file_path: Path) -> str:
         """解析 Excel 檔案"""
         import asyncio
-        
+
         def _process():
             try:
                 from openpyxl import load_workbook
-                
+
                 wb = load_workbook(str(file_path), data_only=True)
                 text_parts = []
-                
+
                 for sheet in wb.worksheets:
                     sheet_text = f"### {sheet.title}\n"
                     for row in sheet.iter_rows(values_only=True):
@@ -298,13 +359,73 @@ class DocumentService:
                         if row_text.strip():
                             sheet_text += row_text + "\n"
                     text_parts.append(sheet_text)
-                
+
                 return "\n\n".join(text_parts)
-                
+
             except ImportError:
                 logger.warning("openpyxl 未安裝，無法解析 Excel")
                 raise
-                
+
+        return await asyncio.to_thread(_process)
+
+    async def _parse_powerpoint(self, file_path: Path) -> str:
+        """
+        解析 PowerPoint (.pptx) 檔案
+        --------------------------------
+        策略：
+          - 每張投影片做為一個段落，標記 ### Slide N
+          - 抓所有 shape 裡 text_frame 的純文字（含 title / body / textbox）
+          - 表格逐 row 用 ' | ' 串接（跟 Excel 一致風格）
+          - 講者備忘 (notes_slide) 若有就附在投影片內容後面
+          - 排除空字串避免噪音
+
+        備註：
+          - .ppt（舊版二進位格式）python-pptx 不支援。要求使用者轉成 .pptx，
+            或後續加 LibreOffice 轉檔流程。目前若 ext=='ppt' 會走到這裡並
+            被 python-pptx 直接擲出例外，process_document 會把狀態標 failed。
+        """
+        import asyncio
+
+        def _process():
+            try:
+                from pptx import Presentation
+            except ImportError:
+                logger.warning("python-pptx 未安裝，無法解析 PowerPoint")
+                raise
+
+            prs = Presentation(str(file_path))
+            slide_blocks: list[str] = []
+
+            for idx, slide in enumerate(prs.slides, start=1):
+                lines: list[str] = [f"### Slide {idx}"]
+
+                for shape in slide.shapes:
+                    # 含表格 → 逐 row 序列化
+                    if shape.has_table:
+                        for row in shape.table.rows:
+                            cells = [cell.text.strip() for cell in row.cells]
+                            row_text = " | ".join(cells)
+                            if row_text.strip("|").strip():
+                                lines.append(row_text)
+                        continue
+
+                    # 一般文字框 / title / body
+                    if shape.has_text_frame:
+                        for para in shape.text_frame.paragraphs:
+                            text = "".join(run.text for run in para.runs).strip()
+                            if text:
+                                lines.append(text)
+
+                # 講者備忘（如果有）
+                if slide.has_notes_slide:
+                    notes = slide.notes_slide.notes_text_frame.text.strip()
+                    if notes:
+                        lines.append(f"[備忘] {notes}")
+
+                slide_blocks.append("\n".join(lines))
+
+            return "\n\n".join(slide_blocks)
+
         return await asyncio.to_thread(_process)
     
     def _chunk_text(self, text: str) -> list[str]:

@@ -14,10 +14,10 @@ jobs:
     # 使用 PostgreSQL 服務做為測試資料庫
     services:
       postgres:
-        image: postgres:15
+        image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: corphia
+          POSTGRES_PASSWORD: corphia123
           POSTGRES_DB: corphia_test
         ports:
           - 5432:5432
@@ -46,7 +46,7 @@ jobs:
     - name: Run Backend Tests
       working-directory: ./backend
       env:
-        TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/corphia_test
+        TEST_DATABASE_URL: postgresql+asyncpg://corphia:corphia123@localhost:5432/corphia_test
         SECRET_KEY: ci-test-secret-key
         APP_ENV: test
       run: |

@@ -68,6 +68,28 @@ async def get_latest_hash(
     return last_hash or "GENESIS"
 
 
+async def _get_latest_hash_locked(
+    db: AsyncSession,
+    conversation_id: str,
+) -> str:
+    """
+    跟 get_latest_hash 一樣，但用 SELECT ... FOR UPDATE 鎖定該列直到 transaction 結束。
+
+    用途：stamp_message 內部使用，防止「兩個並發 stamp 拿到相同 prev_hash」破壞鏈。
+    使用者開兩個 tab 對同一個 conversation 快速送訊息時，這個鎖才會發揮作用。
+    """
+    result = await db.execute(
+        select(Message.content_hash)
+        .where(Message.conversation_id == conversation_id)
+        .where(Message.content_hash.isnot(None))
+        .order_by(desc(Message.created_at))
+        .limit(1)
+        .with_for_update()  # ← row-level lock，並發 stamp 會排隊
+    )
+    last_hash = result.scalar_one_or_none()
+    return last_hash or "GENESIS"
+
+
 async def stamp_message(
     db: AsyncSession,
     message: Message,
@@ -78,12 +100,15 @@ async def stamp_message(
 
     NOTE: 這個函式假設呼叫端會在適當時機 commit session。
 
+    SECURITY: 使用 SELECT ... FOR UPDATE 確保「讀 prev_hash + 寫 new_hash」是原子操作，
+    避免兩個並發請求拿到相同 prev_hash 造成鏈分岔。
+
     Args:
         db: 資料庫 session
         message: 已加入 session 但尚未(或剛)commit 的 Message 實例
         conversation_id: 對話 ID
     """
-    prev_hash = await get_latest_hash(db, conversation_id)
+    prev_hash = await _get_latest_hash_locked(db, conversation_id)
     created_at_iso = message.created_at.isoformat() if message.created_at else ""
     content_hash = compute_message_hash(
         prev_hash=prev_hash,

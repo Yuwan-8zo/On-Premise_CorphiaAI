@@ -9,6 +9,19 @@ from pydantic import BaseModel, Field, field_validator
 from app.services.password_service import validate_password_strength
 
 
+def _validate_email_like(value: str) -> str:
+    """Accept normal emails and local accounts such as admin@local."""
+    local_part, separator, domain_part = value.partition("@")
+    if (
+        not separator
+        or not local_part
+        or not domain_part
+        or any(ch.isspace() for ch in value)
+    ):
+        raise ValueError("invalid email format")
+    return value
+
+
 class LoginRequest(BaseModel):
     """登入請求"""
     email: str  # 允許非標準格式 (如 admin@local)
@@ -20,6 +33,11 @@ class LoginRequest(BaseModel):
         if isinstance(v, str):
             return v.strip()
         return v
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, v: str) -> str:
+        return _validate_email_like(v)
 
 
 class LoginResponse(BaseModel):
@@ -48,6 +66,18 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8)
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     tenant_slug: Optional[str] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email_whitespace(cls, v: str) -> str:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, v: str) -> str:
+        return _validate_email_like(v)
 
     @field_validator("password")
     @classmethod

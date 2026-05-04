@@ -4,6 +4,33 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { flushSync } from 'react-dom'
+
+/**
+ * 主題切換動畫 helper
+ * ──────────────────────────────────────────────────────────────────
+ * 使用 View Transition API（iOS Safari 18+ / Chrome 111+ / Firefox 不支援）
+ * 在 DOM 變動前後拍 snapshot，自動做整頁 cross-fade，連 html background-image
+ * 漸層也能順順過渡（CSS transition 對 background-image 是 step 切換，做不到）。
+ *
+ * flushSync 強制 React 同步處理 set()，確保 startViewTransition 的 callback
+ * 結束時 DOM 已經是新狀態，否則新舊 snapshot 會抓到同一張畫面。
+ *
+ * 不支援的瀏覽器：直接執行 mutator，視覺上跟原本一樣（瞬間切換）。
+ */
+function withViewTransition(mutator: () => void) {
+    // 新版 TS lib 已內建 Document.startViewTransition 型別，所以直接 cast 即可
+    const doc = typeof document !== 'undefined'
+        ? (document as Document & { startViewTransition?: (cb: () => void) => unknown })
+        : undefined
+    if (doc && typeof doc.startViewTransition === 'function') {
+        doc.startViewTransition(() => {
+            flushSync(mutator)
+        })
+    } else {
+        mutator()
+    }
+}
 
 type Theme = 'light' | 'dark'
 /**
@@ -57,6 +84,13 @@ interface UIState {
     toggleRAGDebugMode: () => void
     setDemoMode: (enabled: boolean) => void
     toggleDemoMode: () => void
+    /**
+     * Replay token 給 OnboardingTour 用。+1 一次表示「使用者按了重看引導」，
+     * ChatPage 訂閱這個值，變動時 setShowOnboarding(true) 重新打開 modal。
+     * 不持久化，重整就重置（首次進入由 localStorage 旗標控制，replay token 只是 in-session signal）。
+     */
+    onboardingReplayToken: number
+    triggerOnboardingReplay: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -76,26 +110,33 @@ export const useUIStore = create<UIState>()(
             sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             sidebarWidth: 280,
 
-            // 設定主題
+            // 設定主題（系統 prefers-color-scheme 自動同步用，不需動畫；
+            // 使用者主動切換走 toggleTheme / setThemePreference，那兩個有 view transition）
             setTheme: (theme) => set({ theme }),
 
             // 切換主題（同時把使用者偏好鎖定到目標主題，跳出 system 模式）
+            // 包在 View Transition 裡：整頁 cross-fade 0.4s，包含 html 漸層、文字、邊框
             toggleTheme: () =>
-                set((state) => {
-                    const next: Theme = state.theme === 'light' ? 'dark' : 'light'
-                    return { theme: next, themePreference: next }
+                withViewTransition(() => {
+                    set((state) => {
+                        const next: Theme = state.theme === 'light' ? 'dark' : 'light'
+                        return { theme: next, themePreference: next }
+                    })
                 }),
 
             // 設定主題偏好；'system' 會立刻把 theme 對齊現在的系統偏好
+            // 同樣包在 View Transition 裡（從 system → light/dark 也會 cross-fade）
             setThemePreference: (pref) =>
-                set(() => {
-                    if (pref === 'system') {
-                        const sysDark =
-                            typeof window !== 'undefined' &&
-                            window.matchMedia('(prefers-color-scheme: dark)').matches
-                        return { themePreference: pref, theme: sysDark ? 'dark' : 'light' }
-                    }
-                    return { themePreference: pref, theme: pref }
+                withViewTransition(() => {
+                    set(() => {
+                        if (pref === 'system') {
+                            const sysDark =
+                                typeof window !== 'undefined' &&
+                                window.matchMedia('(prefers-color-scheme: dark)').matches
+                            return { themePreference: pref, theme: sysDark ? 'dark' : 'light' }
+                        }
+                        return { themePreference: pref, theme: pref }
+                    })
                 }),
 
             // 設定語言
@@ -134,6 +175,11 @@ export const useUIStore = create<UIState>()(
             demoMode: false,
             setDemoMode: (enabled) => set({ demoMode: enabled }),
             toggleDemoMode: () => set((s) => ({ demoMode: !s.demoMode })),
+
+            // Onboarding replay 觸發器（不持久化）
+            onboardingReplayToken: 0,
+            triggerOnboardingReplay: () =>
+                set((s) => ({ onboardingReplayToken: s.onboardingReplayToken + 1 })),
         }),
         {
             name: 'ui-storage',

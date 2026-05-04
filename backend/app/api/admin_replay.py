@@ -47,9 +47,19 @@ async def list_users_for_replay(
         query = query.where(User.tenant_id == current_user.tenant_id)
 
     if search:
-        search_filter = f"%{search}%"
+        # FIX: % 與 _ 是 SQL LIKE 萬用字元；使用者輸入 "100%" 期望比對「百分號」
+        # 但會變成「任何字串包含 100」。手動跳脫，並用 escape() 告訴 SQLAlchemy。
+        # 同時限制 search 長度避免被亂塞超長字串。
+        if len(search) > 128:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="搜尋字串過長",
+            )
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_filter = f"%{escaped}%"
         query = query.where(
-            (User.email.ilike(search_filter)) | (User.name.ilike(search_filter))
+            User.email.ilike(search_filter, escape="\\")
+            | User.name.ilike(search_filter, escape="\\")
         )
 
     query = query.order_by(User.created_at)

@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-# Corphia Design System ¡X pre-commit lint gate
-cd frontend
-node scripts/design-lint.mjs

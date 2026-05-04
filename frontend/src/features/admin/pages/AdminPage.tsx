@@ -1,44 +1,38 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { spring } from '@/lib/motionPresets'
+import {
+    ActionButton,
+    ModalFrame,
+    Field,
+    inputClass,
+} from '@/features/admin/components/AdminPrimitives'
+import NgrokSidebarWidget from '@/features/admin/components/NgrokSidebarWidget'
+import NgrokQrModal from '@/features/admin/components/NgrokQrModal'
+import OverviewSection from '@/features/admin/sections/OverviewSection'
+import AuditSection from '@/features/admin/sections/AuditSection'
+import UsersSection from '@/features/admin/sections/UsersSection'
+import ModelsSection from '@/features/admin/sections/ModelsSection'
+import SystemSection from '@/features/admin/sections/SystemSection'
+import TenantsSection from '@/features/admin/sections/TenantsSection'
+// Only icons still used at AdminPage level: tab icons + sidebar logo + back arrow.
+// Section-specific icons live inside each section module.
 import {
     Activity,
     ArrowLeft,
     Building2,
-    ChevronLeft,
-    ChevronRight,
-    CircleAlert,
-    Clipboard,
-    ClipboardCheck,
     Cpu,
-    Database,
-    Download,
     FileText,
     Gauge,
-    Globe,
-    HardDrive,
-    Layers3,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    ShieldCheck,
-    SlidersHorizontal,
     Sparkles,
-    Trash2,
-    UserRoundCog,
     Users,
-    X,
 } from 'lucide-react'
 
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
+import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { getModels, refreshModels, selectModel, type ModelItem } from '@/api/models'
 import {
-    ACTION_LABELS,
-    RESOURCE_LABELS,
     exportAuditLogsCSV,
     exportAuditLogsJSON,
     getAuditLogs,
@@ -49,7 +43,8 @@ import { tenantsApi, type Tenant } from '@/api/tenants'
 import { usersApi, type CreateUserPayload, type UpdateUserPayload } from '@/api/users'
 import { adminApi } from '@/api/admin'
 import { systemApi } from '@/api/system'
-import SystemMonitorPanel from '@/components/system/SystemMonitorPanel'
+import { documentsApi } from '@/api/documents'
+import StyledSelect from '@/components/ui/StyledSelect'
 import { useTranslation } from 'react-i18next'
 
 interface UserData {
@@ -86,153 +81,22 @@ function getErrorMessage(err: unknown): string {
     return detail || '操作失敗'
 }
 
-function formatDate(value?: string) {
-    if (!value) return '-'
-    return new Date(value).toLocaleString('zh-TW', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    })
-}
+// formatDate moved to AdminPrimitives (used by Overview / Audit sections)
 
-function Panel({ className = '', children }: { className?: string; children: React.ReactNode }) {
-    return (
-        <section className={`rounded-[24px] border border-white/40 bg-bg-surface/78 shadow-[0_18px_48px_rgb(0_0_0/0.08)] supports-[backdrop-filter]:bg-bg-surface/68 backdrop-blur-2xl dark:border-white/10 dark:shadow-black/20 ${className}`}>
-            {children}
-        </section>
-    )
-}
-
-function SectionHeader({
-    title,
-    eyebrow,
-    action,
-}: {
-    title: string
-    eyebrow?: string
-    action?: React.ReactNode
-}) {
-    return (
-        <div className="flex flex-col gap-4 border-b border-border-subtle/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
-            <div>
-                {eyebrow && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</p>}
-                <h2 className="text-[18px] font-semibold tracking-tight text-text-primary">{title}</h2>
-            </div>
-            {action}
-        </div>
-    )
-}
-
-function ActionButton({
-    children,
-    onClick,
-    variant = 'primary',
-    disabled,
-}: {
-    children: React.ReactNode
-    onClick?: () => void
-    variant?: 'primary' | 'secondary' | 'danger'
-    disabled?: boolean
-}) {
-    const variants = {
-        primary: 'bg-accent text-white hover:bg-accent/90 shadow-sm shadow-accent/20',
-        secondary: 'border border-border-subtle/80 bg-bg-elevated/80 text-text-primary hover:bg-bg-elevated',
-        danger: 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20',
-    }
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={`inline-flex h-10 shrink-0 min-w-max items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
-        >
-            {children}
-        </button>
-    )
-}
-
-function StatusPill({ active }: { active: boolean }) {
-    const { t } = useTranslation()
-    return (
-        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${active ? 'border-accent/20 bg-accent/10 text-accent' : 'border-border-subtle bg-bg-surface text-text-secondary'}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent' : 'bg-text-secondary'}`} />
-            {active ? t('common.active') : t('common.disabled')}
-        </span>
-    )
-}
-
-function RoleBadge({ role }: { role: UserData['role'] }) {
-    const { t } = useTranslation()
-    const styles = {
-        admin: 'border-accent/20 bg-accent/10 text-accent',
-        engineer: 'border-accent/20 bg-accent/10 text-accent',
-        user: 'border-border-subtle bg-bg-surface text-text-secondary',
-    }
-    const roleLabels = {
-        admin: t('admin.users.role.admin', { defaultValue: 'Admin' }),
-        engineer: t('admin.users.role.engineer', { defaultValue: 'Engineer' }),
-        user: t('admin.users.role.user', { defaultValue: 'User' }),
-    }
-    return <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[role]}`}>{roleLabels[role]}</span>
-}
-
-function ModalFrame({
-    children,
-    onClose,
-    maxWidth = 'max-w-md',
-}: {
-    children: React.ReactNode
-    onClose: () => void
-    maxWidth?: string
-}) {
-    return createPortal(
-        <AnimatePresence>
-            <motion.div
-                key="admin-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
-                onClick={onClose}
-            />
-            <motion.div
-                key="admin-modal"
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-            >
-                <div
-                    className={`relative w-full ${maxWidth} rounded-[26px] border border-white/40 bg-bg-surface/86 p-6 text-text-primary shadow-[0_22px_70px_rgb(0_0_0/0.18)] supports-[backdrop-filter]:bg-bg-surface/74 backdrop-blur-2xl pointer-events-auto dark:border-white/10`}
-                    onClick={e => e.stopPropagation()}
-                >
-                    {children}
-                </div>
-            </motion.div>
-        </AnimatePresence>,
-        document.body
-    )
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-secondary">{label}</span>
-            {children}
-        </label>
-    )
-}
-
-const inputClass = 'w-full rounded-[18px] border border-border-subtle/80 bg-bg-elevated/80 px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-bg-elevated focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
-const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B6B6B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_1rem_center] bg-no-repeat pr-10`
+// Admin shared UI primitives (Panel, SectionHeader, ActionButton, StatusPill,
+// RoleBadge, ModalFrame, Field, inputClass, selectClass) extracted to
+// ./components/AdminPrimitives — see the imports at the top of this file.
 
 export default function Admin() {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
+    const showConfirm = useUIStore((s) => s.showConfirm)
+    // 監聽瀏覽器是否有外網連線，用於 ngrok（公開網址）UI gating。
+    // Corphia AI 主體 100% 地端可用，這旗標只影響「公開網址」這項功能；
+    // 離線時 toggle 仍可顯示但會被攔截，並用 toast 提示使用者。
+    const isOnline = useNetworkStatus()
     /** 把絕對路徑壓縮成最後 1～2 段（demo 模式時用），避免裸露使用者目錄 */
     const sanitizePath = (p: string) => {
         if (!p) return ''
@@ -251,21 +115,41 @@ export default function Admin() {
      * - 變更（建立 / 更新）→ 藍
      * - 其他 → 中性灰
      */
-    const getActionPillClass = (action: string) => {
-        const a = (action || '').toLowerCase()
-        if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
-            return 'border-red-500/30 bg-red-500/10 text-red-500'
-        }
-        if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
-            return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'
-        }
-        if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
-            return 'border-sky-500/30 bg-sky-500/10 text-sky-500'
-        }
-        return 'border-border-subtle bg-bg-surface text-text-primary'
-    }
+    // getActionPillClass moved into AuditSection (only used there).
 
     const [activeSection, setActiveSection] = useState<AdminSection>('overview')
+
+    /**
+     * Tab 切換滑動指示條：
+     * 用 ref Map 記每個 tab button 的 DOM，activeSection 變動後測 left/width/top/height，
+     * 把絕對定位的 pill 滑過去（CSS transition 處理動畫）。
+     */
+    const navRef = useRef<HTMLElement | null>(null)
+    const tabBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+    const [pillRect, setPillRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
+    const [pillReady, setPillReady] = useState(false)
+
+    useEffect(() => {
+        const measure = () => {
+            const btn = tabBtnRefs.current.get(activeSection)
+            const nav = navRef.current
+            if (!btn || !nav) return
+            const navRect = nav.getBoundingClientRect()
+            const btnRect = btn.getBoundingClientRect()
+            // 用 nav 的 scroll 位置算相對座標（手機板 nav 會水平 scroll）
+            setPillRect({
+                left: btnRect.left - navRect.left + nav.scrollLeft,
+                top: btnRect.top - navRect.top + nav.scrollTop,
+                width: btnRect.width,
+                height: btnRect.height,
+            })
+            // 第一次 mount 後 1 frame 才 enable transition，避免進場直接從 (0,0) 滑過去
+            requestAnimationFrame(() => setPillReady(true))
+        }
+        measure()
+        window.addEventListener('resize', measure)
+        return () => window.removeEventListener('resize', measure)
+    }, [activeSection])
     const [users, setUsers] = useState<UserData[]>([])
     const [stats, setStats] = useState<Stats>({
         totalUsers: 0,
@@ -289,6 +173,7 @@ export default function Admin() {
     } | null>(null)
     const [isLoadingNgrok, setIsLoadingNgrok] = useState(false)
     const [ngrokCopied, setNgrokCopied] = useState(false)
+    const [isNgrokQrOpen, setIsNgrokQrOpen] = useState(false)
 
     const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
     const [auditTotal, setAuditTotal] = useState(0)
@@ -297,6 +182,15 @@ export default function Admin() {
     const [isLoadingAudit, setIsLoadingAudit] = useState(false)
     const [auditFilter, setAuditFilter] = useState<AuditLogQuery>({ page: 1, page_size: 15 })
     const [auditSearchInput, setAuditSearchInput] = useState('')
+
+    // Overview dashboard 專用 — 一次抓近 7 天的 logs 給趨勢圖 & 事件分布圖。
+    // 跟 auditLogs（分頁用）分開，避免互相污染：
+    //   - auditLogs: page_size=15，使用者切換 audit 分頁會變動
+    //   - auditSummary: page_size=200 + start_date=7days_ago，僅 mount 時抓一次
+    const [auditSummary, setAuditSummary] = useState<AuditLogItem[]>([])
+
+    // Overview dashboard 用的 documents 列表（給 DocumentTypeDonut / DocumentStatusBar）
+    const [documents, setDocuments] = useState<Array<{ file_type: string; status: string }>>([])
 
     const [tenants, setTenants] = useState<Tenant[]>([])
     const [isLoadingTenants, setIsLoadingTenants] = useState(false)
@@ -331,6 +225,55 @@ export default function Admin() {
         } catch (err) {
             console.error('Failed to load ngrok URL:', err)
             setNgrokInfo({ active: false, url: null, api_url: null, ws_url: null })
+        } finally {
+            setIsLoadingNgrok(false)
+        }
+    }, [])
+
+    /**
+     * 啟動 ngrok：呼叫後端 /system/ngrok/start，後端會 block 最多 20s 拿 URL。
+     * 期間 isLoadingNgrok=true，UI 顯示 spinner。回來時更新 state。
+     *
+     * 離線守門：navigator.onLine === false 時直接擋掉，顯示 toast 給使用者。
+     * 不打 API 是因為 ngrok 建立到外部服務的通道一定要外網；
+     * 讓使用者等 20 秒 timeout 才知道沒網路，UX 很糟。
+     */
+    const handleStartNgrok = useCallback(async () => {
+        if (!isOnline) {
+            // 用 getState() 而非 hook 取 toast，避免讓 store state 變化都重渲整個 admin 頁。
+            useToastStore.getState().error(
+                t('admin.ngrok.offlineHint', '需要連上網際網路才能啟用公開網址，請確認網路連線後再試一次。')
+            )
+            return
+        }
+        setIsLoadingNgrok(true)
+        try {
+            const info = await systemApi.startNgrok()
+            setNgrokInfo(info)
+        } catch (err) {
+            console.error('Failed to start ngrok:', err)
+            // 失敗後重抓一次當前狀態（可能因為 binary 缺失或 authtoken 未設）
+            try {
+                const info = await systemApi.getNgrokUrl()
+                setNgrokInfo(info)
+            } catch {
+                setNgrokInfo({ active: false, url: null, api_url: null, ws_url: null })
+            }
+        } finally {
+            setIsLoadingNgrok(false)
+        }
+    }, [isOnline, t])
+
+    /**
+     * 關閉 ngrok：呼叫 /system/ngrok/stop（taskkill / pkill），更新 state 為 inactive。
+     */
+    const handleStopNgrok = useCallback(async () => {
+        setIsLoadingNgrok(true)
+        try {
+            const info = await systemApi.stopNgrok()
+            setNgrokInfo(info)
+        } catch (err) {
+            console.error('Failed to stop ngrok:', err)
         } finally {
             setIsLoadingNgrok(false)
         }
@@ -397,15 +340,77 @@ export default function Admin() {
         }
     }, [])
 
+    /**
+     * 抓近 7 天的 audit logs 給 Overview dashboard 的趨勢圖 & 分布圖用。
+     * 不跟分頁用的 auditLogs 共用 state，避免使用者翻頁時把 dashboard 資料弄亂。
+     */
+    const loadAuditSummary = useCallback(async () => {
+        try {
+            const sevenDaysAgo = new Date()
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+            // page_size 上限是 100（後端 Query(20, ge=1, le=100)），
+            // 給 100 是 7 天 dashboard 用得到的最大量。
+            //
+            // start_date 故意送 YYYY-MM-DD 純日期字串，不送 toISOString()：
+            // toISOString() 會回傳 "...Z" timezone-aware ISO，後端
+            // datetime.fromisoformat() 解析後是 tz-aware，跟 DB 中 tz-naive
+            // 的 AuditLog.created_at 比較 SQL 會 raise → 500。
+            // 純日期字串解析後是 tz-naive datetime at midnight，可正確比較。
+            const yyyy = sevenDaysAgo.getFullYear()
+            const mm = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')
+            const dd = String(sevenDaysAgo.getDate()).padStart(2, '0')
+            const data = await getAuditLogs({
+                page: 1,
+                page_size: 100,
+                start_date: `${yyyy}-${mm}-${dd}`,
+            })
+            setAuditSummary(data.data)
+        } catch (err) {
+            console.error('Failed to load audit summary:', err)
+        }
+    }, [])
+
+    /**
+     * 拉所有 documents 給 Overview 的「文件類型分布」「文件狀態」圖表用。
+     * 不分頁（每次 mount 拉一次），用 documentsApi.list()。
+     */
+    const loadDocumentsForOverview = useCallback(async () => {
+        try {
+            const data = await documentsApi.list()
+            setDocuments(
+                data.data.map((d) => ({ file_type: d.file_type, status: d.status })),
+            )
+        } catch (err) {
+            console.error('Failed to load documents for overview:', err)
+        }
+    }, [])
+
     useEffect(() => {
         loadStats()
         loadUsers()
         loadNgrokUrl()
-    }, [loadStats, loadUsers, loadNgrokUrl])
+        loadAuditSummary()
+        loadDocumentsForOverview()
+    }, [loadStats, loadUsers, loadNgrokUrl, loadAuditSummary, loadDocumentsForOverview])
+
+    /*
+     * Free-tier ngrok rotates the public subdomain on every reconnect.
+     * Poll /system/ngrok every 30s while the admin page is mounted so the
+     * displayed URL stays current without a manual reload. Backend has its
+     * own watcher that writes runtime files; this is just the UI side.
+     */
+    useEffect(() => {
+        if (activeSection !== 'overview') return
+        const id = window.setInterval(() => {
+            loadNgrokUrl()
+        }, 30_000)
+        return () => window.clearInterval(id)
+    }, [activeSection, loadNgrokUrl])
 
     useEffect(() => {
         if (activeSection === 'models') loadModels()
-        if (activeSection === 'audit') loadAuditLogs()
+        // 'overview' 也要載入 audit logs，因為新版 overview 有「最近活動」區塊。
+        if (activeSection === 'audit' || activeSection === 'overview') loadAuditLogs()
         if (activeSection === 'tenants') loadTenants()
     }, [activeSection, loadAuditLogs, loadModels, loadTenants])
 
@@ -532,15 +537,16 @@ export default function Admin() {
     }
 
     const handleDeleteUser = async (item: UserData) => {
-        if (!window.confirm(`確定要刪除 ${item.name}？此操作會移除該使用者。`)) return
-        try {
-            await usersApi.deleteUser(item.id)
-            loadUsers()
-        } catch (err) {
-            window.alert(getErrorMessage(err))
-        }
+        // 使用專案統一的 ConfirmModal，避免跳出原生 window.confirm。
+        showConfirm(`確定要刪除 ${item.name}？此操作會移除該使用者。`, async () => {
+            try {
+                await usersApi.deleteUser(item.id)
+                loadUsers()
+            } catch (error) {
+                console.error('Failed to delete user', error)
+            }
+        })
     }
-
     const handleAddTenant = () => {
         setCurrentEditingTenant(null)
         setTenantFormData({ name: '', slug: '', description: '', is_active: true })
@@ -575,23 +581,21 @@ export default function Admin() {
 
     const handleToggleTenantStatus = async (item: Tenant) => {
         const action = item.is_active ? '停用' : '啟用'
-        if (!window.confirm(`確定要${action}租戶 ${item.name}？`)) return
-        try {
-            if (item.is_active) await tenantsApi.deleteTenant(item.id)
-            else await tenantsApi.updateTenant(item.id, { is_active: true })
-            loadTenants()
-        } catch (err) {
-            window.alert(getErrorMessage(err))
-        }
+        showConfirm(`確定要${action}租戶 ${item.name}？`, async () => {
+            try {
+                // 修正：原本「停用」呼叫 deleteTenant 會直接從 DB 刪掉租戶，
+                // 但所有 users / conversations / documents 還是 FK 指向它 → 全部 500。
+                // 「停用 / 啟用」應該只切 is_active 旗標，不該真的刪資料。
+                await tenantsApi.updateTenant(item.id, { is_active: !item.is_active })
+                loadTenants()
+            } catch (err) {
+                console.error('Failed to toggle tenant status', err)
+                window.alert(getErrorMessage(err))
+            }
+        })
     }
 
-    // primary: 主要 KPI，給予 accent 高亮以快速吸引目光（其他卡為輔助指標）
-    const metricCards = [
-        { label: t('admin.overview.users'), value: stats.totalUsers, detail: t('admin.overview.usersDetail', { active: activeUsers }), icon: Users, accent: 'from-accent/28 to-corphia-beige/45 /30 /30', primary: false },
-        { label: t('admin.overview.conversations'), value: stats.totalConversations, detail: t('admin.overview.conversationsDetail'), icon: MessageSquare, accent: 'from-corphia-bronze/32 to-corphia-sand/45 /26 /30', primary: true },
-        { label: t('admin.overview.documents'), value: stats.totalDocuments, detail: t('admin.overview.documentsDetail'), icon: Layers3, accent: 'from-corphia-warm-gray/28 to-corphia-beige/45 /24 /30', primary: false },
-        { label: t('admin.overview.messages'), value: stats.totalMessages, detail: t('admin.overview.messagesDetail'), icon: FileText, accent: 'from-corphia-ink/18 to-corphia-sand/45 /30', primary: false },
-    ]
+    // metricCards now live inside OverviewSection (presentational concern).
 
     // 一鍵複製 ngrok URL
     const handleCopyNgrokUrl = async () => {
@@ -602,514 +606,264 @@ export default function Admin() {
     }
 
     return (
-        <div className="relative h-[100dvh] overflow-hidden bg-bg-main text-text-primary transition-colors duration-500">
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgb(var(--bg-base)/0.92)_0%,rgb(var(--bg-main)/1)_56%,rgb(var(--bg-surface)/0.72)_100%)]" />
-
-            <div className="relative mx-auto flex h-full max-w-[1500px] flex-col px-3 py-3 md:px-5 md:py-5 lg:px-7">
-                <header className="mb-4 flex shrink-0 flex-col gap-4 rounded-[28px] border border-white/40 bg-bg-surface/78 p-3 shadow-[0_16px_45px_rgb(0_0_0/0.08)] supports-[backdrop-filter]:bg-bg-surface/68 backdrop-blur-2xl dark:border-white/10 dark:shadow-black/20 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-4">
+        // 與 LoginPage 同款背景：bg-bg-base + 三條弧線 SVG 紋理（亮色 bronze、深色 white，極低 opacity）
+        <div
+            className="relative h-[100dvh] overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
+            style={{
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+        >
+            {/* 背景弧線 SVG —— 同登入頁 */}
+            <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
+                </svg>
+            </div>
+            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col px-3 py-3 md:px-4 md:py-3">
+                {/*
+                  簡化過的 header（壓低 mb / pb 留空間給內容）
+                */}
+                {/* 手機板 header 簡化：title + 工程師 pill 並排同一行，省垂直空間 */}
+                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 border-b border-border-subtle pb-2 md:justify-between">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}
-                            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-subtle/80 bg-bg-elevated/80 text-text-secondary transition hover:bg-bg-elevated hover:text-text-primary active:scale-[0.98]"
+                            className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-bg-base hover:text-text-primary active:scale-[0.98]"
+                            title={t('common.backToChat', '返回聊天')}
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                         </button>
-                        <div className="hidden items-center gap-2 md:flex" aria-hidden="true">
-                            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-                            <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
-                            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-                        </div>
-                        <div>
-                            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">Corphia Control Center</p>
-                            <h1 className="text-[22px] font-semibold tracking-tight text-text-primary md:text-[28px]">{t('admin.title')}</h1>
-                        </div>
+                        <h1 className="text-[16px] md:text-[22px] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="hidden items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent sm:flex">
-                            <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.5)]" />
+                    <div className="flex items-center gap-2 ml-auto">
+                        <div className="hidden items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent sm:flex">
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                             {t('admin.backendOnline')}
                         </div>
-                        <div className="rounded-full border border-border-subtle/80 bg-bg-elevated/70 px-4 py-2 text-sm font-medium text-text-secondary">
+                        <div className="rounded-full border border-border-subtle bg-bg-base px-2.5 md:px-3 py-1 md:py-1.5 text-[11px] md:text-xs font-medium text-text-secondary truncate max-w-[100px] md:max-w-none">
                             {user?.name || t('admin.operator')}
                         </div>
                     </div>
                 </header>
 
-                <main className="grid flex-1 min-h-0 gap-4 lg:grid-cols-[270px_minmax(0,1fr)]">
-                    <aside className="flex h-full flex-col overflow-hidden rounded-[28px] border border-white/40 bg-bg-surface/72 p-3 shadow-[0_18px_48px_rgb(0_0_0/0.08)] supports-[backdrop-filter]:bg-bg-surface/62 backdrop-blur-2xl dark:border-white/10 dark:shadow-black/20">
-                        <div className="mb-4 rounded-[22px] border border-border-subtle/70 bg-bg-elevated/74 p-4 shadow-inner">
-                            <div className="mb-5 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-secondary">{t('admin.currentModel')}</p>
-                                    <p className="mt-1 truncate text-sm font-semibold text-text-primary">{currentModel?.name || t('admin.standby')}</p>
+                {/*
+                  手機板：flex column，aside 自然高度（只剩 nav 列）+ 內容區吃剩。
+                  桌機板（lg+）：回到 sidebar grid 180/rest 兩欄佈局。
+                */}
+                <main className="flex flex-col flex-1 min-h-0 gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
+                    {/*
+                      Sidebar 從 260px 砍到 180px —— 釋出 ~80px 給右側內容區。
+                      內部 padding / 模型卡 / 導航 gap 全部緊縮，配合 Overview dashboard
+                      在 ~1100px CSS 寬度也能塞進單一 viewport。
+                    */}
+                    {/*
+                      手機板：h-auto，aside 只裝水平 nav，content 區拿剩餘高度。
+                      桌機板（lg+）：h-full，aside 撐滿 grid row，wrapper 的 mt-auto 把 widget 推到底。
+                      之前一律 h-full 的版本在手機板把 aside 撐滿整個 main → content 區被擠到 0 高度看不到。
+                    */}
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden rounded-cv-lg border border-white/50 dark:border-white/20 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] p-2">
+                        {/* Model card 在手機板隱藏，騰出空間給內容 */}
+                        <div className="hidden lg:block mb-2 rounded-cv-md border border-white/50 dark:border-white/20 bg-bg-surface/60 supports-[backdrop-filter]:bg-bg-surface/45 backdrop-blur-xl p-2.5">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="text-[9px] uppercase tracking-[0.16em] text-text-secondary">{t('admin.currentModel')}</p>
+                                    <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{currentModel?.name || t('admin.standby')}</p>
                                 </div>
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10">
-                                    <Sparkles className="h-4 w-4 text-accent" />
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                                    <Sparkles className="h-3.5 w-3.5 text-accent" />
                                 </span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-border-subtle/40">
-                                <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_18px_rgb(var(--accent)/0.35)]" />
+                            <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle/40">
+                                <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
                             </div>
                         </div>
 
-                        <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-y-auto custom-scrollbar">
+                        {/*
+                          手機板水平卷但不顯示 scrollbar（仍可手指滑），桌機板垂直 nav。
+                          [&::-webkit-scrollbar]:hidden 等 utility 處理 webkit；
+                          scrollbar-width:none / -ms-overflow-style:none 處理 Firefox / IE。
+                          relative + 內嵌絕對定位 pill 用 transition 滑動到 active button 位置。
+                        */}
+                        <nav
+                            ref={navRef}
+                            /* py-0.5 給 pill 上下一點呼吸空間 —— overflow-x-auto 會在 Y 軸自動 clip，
+                               所以 ring / shadow 會被吃掉，padding 讓它有地方畫。 */
+                            className="relative flex gap-1 py-0.5 overflow-x-auto lg:flex-col lg:overflow-y-auto shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:custom-scrollbar"
+                        >
+                            {/* 滑動 active pill —— 絕對定位、跟著 active button rect。
+                                ring-inset：把 ring 畫在 pill 內部，不會超出 rect 被 nav clip 掉。 */}
+                            {pillRect && (
+                                <div
+                                    aria-hidden
+                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-bg-elevated ring-1 ring-inset ring-white/40 dark:ring-white/10"
+                                    style={{
+                                        left: pillRect.left,
+                                        top: pillRect.top,
+                                        width: pillRect.width,
+                                        height: pillRect.height,
+                                        transition: pillReady
+                                            ? 'left 0.35s cubic-bezier(0.23,1,0.32,1), top 0.35s cubic-bezier(0.23,1,0.32,1), width 0.35s cubic-bezier(0.23,1,0.32,1), height 0.35s cubic-bezier(0.23,1,0.32,1)'
+                                            : 'none',
+                                    }}
+                                />
+                            )}
                             {TABS_CONFIG.map((tab) => {
                                 const Icon = tab.icon
                                 const active = activeSection === tab.id
                                 return (
                                     <button
                                         key={tab.id}
+                                        ref={(el) => {
+                                            if (el) tabBtnRefs.current.set(tab.id, el)
+                                            else tabBtnRefs.current.delete(tab.id)
+                                        }}
                                         onClick={() => setActiveSection(tab.id)}
-                                        className={`tap flex min-w-max items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.99] lg:min-w-0 ${
+                                        /* 移除原本 active 的 bg / ring / shadow（交給 pill 處理），
+                                           只保留 text 顏色切換；relative + z-10 讓 button 內容浮在 pill 之上 */
+                                        className={`tap relative z-10 flex min-w-max items-center gap-2 rounded-[14px] px-3 py-2 text-left text-[13px] font-semibold transition-colors active:scale-[0.99] lg:min-w-0 ${
                                             active
-                                                ? 'bg-bg-elevated text-text-primary shadow-sm ring-1 ring-white/40 dark:ring-white/10'
-                                                : 'text-text-secondary hover:bg-bg-elevated/55 hover:text-text-primary'
+                                                ? 'text-text-primary'
+                                                : 'text-text-secondary hover:text-text-primary'
                                         }`}
                                     >
-                                        <Icon className={`h-4 w-4 ${active ? 'text-accent' : 'text-text-muted'}`} />
+                                        <Icon className={`h-3.5 w-3.5 transition-colors ${active ? 'text-accent' : 'text-text-muted'}`} />
                                         {t(tab.i18nKey)}
                                     </button>
                                 )
                             })}
                         </nav>
+
+                        {/*
+                          Sidebar 底部：Ngrok 公開隧道控制 + QR code。
+                          FIX: mt-auto 必須掛在 flex 子項本身（這個 wrapper div）。
+                          原本只寫在 NgrokSidebarWidget 內部，但因為被這個 wrapper 包住，
+                          flex 看到的子項是 wrapper、不是 widget；wrapper 沒 mt-auto →
+                          widget 不會被推到底，會緊貼 nav 後方。
+                          手機板隱藏（lg+ 才出現），騰出空間給內容。
+                        */}
+                        <div className="hidden lg:block mt-auto">
+                            <NgrokSidebarWidget
+                                info={ngrokInfo}
+                                isLoading={isLoadingNgrok}
+                                copied={ngrokCopied}
+                                isOffline={!isOnline}
+                                onCopyUrl={handleCopyNgrokUrl}
+                                onShowQr={() => setIsNgrokQrOpen(true)}
+                                onStart={handleStartNgrok}
+                                onStop={handleStopNgrok}
+                            />
+                        </div>
                     </aside>
 
-                    <div className="h-full min-w-0 space-y-4 overflow-y-auto pb-8 pr-1 custom-scrollbar md:pr-2">
+                    {/*
+                      內容區：
+                      - Overview 是「滿版 dashboard，不滾動」設計（內部 h-full grid），
+                        在這層加 overflow 為 hidden 會擋到其他 tab，所以改用 overflow-y-auto +
+                        移除 pb-8 / space-y-4，讓 Overview 的 h-full 精準對齊 viewport
+                        （不被 32px padding 壓低）。
+                      - 其他 tab（users / audit / models / 等）內容比較長，
+                        靠這層的 overflow-y-auto 提供滾動。
+                    */}
+                    <div className="flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 custom-scrollbar md:pr-2 lg:h-full lg:flex-none">
                         {activeSection === 'overview' && (
-                            <>
-                                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                    {metricCards.map((item) => {
-                                        const Icon = item.icon
-                                        const isPrimary = item.primary
-                                        return (
-                                            <Panel
-                                                key={item.label}
-                                                className={`overflow-hidden p-5 flex flex-col justify-between h-36 transition-transform hover:-translate-y-0.5 ${
-                                                    isPrimary
-                                                        ? 'bg-gradient-to-br from-accent/[0.09] to-bg-surface/60 ring-1 ring-accent/15'
-                                                        : ''
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div
-                                                        className={`flex items-center justify-center w-11 h-11 rounded-[16px] ${
-                                                            isPrimary ? 'bg-accent/20 shadow-inner' : 'bg-bg-elevated/80'
-                                                        }`}
-                                                    >
-                                                        <Icon className="h-5 w-5 text-accent" />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p
-                                                        className={`text-[34px] tracking-tight ${
-                                                            isPrimary
-                                                                ? 'font-semibold text-accent'
-                                                                : 'font-light text-text-primary'
-                                                        }`}
-                                                    >
-                                                        {item.value.toLocaleString()}
-                                                    </p>
-                                                    <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                                                        <span className={`font-medium ${isPrimary ? 'text-text-primary' : 'text-text-primary/80'}`}>
-                                                            {item.label}
-                                                        </span>
-                                                        <span className="truncate text-text-secondary">{item.detail}</span>
-                                                    </div>
-                                                </div>
-                                            </Panel>
-                                        )
-                                    })}
-                                </section>
-
-                                {/* ── Ngrok 公開網址卡片 ── */}
-                                <Panel className="overflow-hidden">
-                                    <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10">
-                                                <Globe className="h-4 w-4 text-accent" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold uppercase tracking-wider text-accent">Remote Access</p>
-                                                <p className="text-sm font-semibold text-text-primary">Ngrok 公開網址</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={loadNgrokUrl}
-                                            disabled={isLoadingNgrok}
-                                            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-base px-3 py-1.5 text-xs font-semibold text-text-secondary transition hover:text-text-primary disabled:opacity-50"
-                                        >
-                                            <RefreshCw className={`h-3.5 w-3.5 ${isLoadingNgrok ? 'animate-spin' : ''}`} />
-                                            重新整理
-                                        </button>
-                                    </div>
-                                    <div className="p-5">
-                                        {isLoadingNgrok ? (
-                                            <div className="flex items-center gap-2 text-sm text-text-secondary">
-                                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                                查詢 ngrok 狀態中...
-                                            </div>
-                                        ) : ngrokInfo?.active ? (
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-3 rounded-[14px] border border-accent/20 bg-accent/5 px-4 py-3">
-                                                    <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
-                                                    <span className="flex-1 truncate font-mono text-sm text-text-primary">{ngrokInfo.url}</span>
-                                                    <button
-                                                        onClick={handleCopyNgrokUrl}
-                                                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent transition hover:bg-accent/20"
-                                                    >
-                                                        {ngrokCopied
-                                                            ? <><ClipboardCheck className="h-3.5 w-3.5" />已複製</>  
-                                                            : <><Clipboard className="h-3.5 w-3.5" />複製</>}
-                                                    </button>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                                    <div className="rounded-[12px] border border-border-subtle bg-bg-base px-3 py-2">
-                                                        <p className="text-text-secondary">API</p>
-                                                        <p className="mt-1 truncate font-mono text-text-primary">{ngrokInfo.api_url}</p>
-                                                    </div>
-                                                    <div className="rounded-[12px] border border-border-subtle bg-bg-base px-3 py-2">
-                                                        <p className="text-text-secondary">WebSocket</p>
-                                                        <p className="mt-1 truncate font-mono text-text-primary">{ngrokInfo.ws_url}</p>
-                                                    </div>
-                                                </div>
-                                                {ngrokInfo.updated_at && (
-                                                    <p className="text-xs text-text-secondary">
-                                                        自動更新：{new Date(ngrokInfo.updated_at).toLocaleString()}
-                                                        {ngrokInfo.source === 'runtime_file' ? '（上次記錄）' : ''}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-3 rounded-[14px] border border-border-subtle bg-bg-base px-4 py-3">
-                                                <span className="h-2 w-2 rounded-full bg-text-secondary shrink-0" />
-                                                <span className="text-sm text-text-secondary">Ngrok 未啟動 — 請執行 </span>
-                                                <code className="rounded bg-bg-surface px-2 py-0.5 text-xs font-mono text-text-primary">python start.py</code>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Panel>
-
-                                <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-                                    <Panel className="overflow-hidden flex flex-col">
-                                        <SectionHeader title="知識引擎監控" eyebrow="System Pulse" />
-                                        <div className="flex-1 p-5">
-                                            <div className="grid h-full gap-4 md:grid-cols-2">
-                                                <div className="rounded-[22px] border border-border-subtle/70 bg-bg-elevated/72 p-5 flex flex-col justify-between shadow-inner">
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-text-secondary">回答流程穩定度</p>
-                                                        <p className="mt-4 text-6xl font-light tracking-tight text-text-primary">98.3<span className="text-2xl text-text-secondary ml-1">%</span></p>
-                                                    </div>
-                                                    <div className="mt-8 flex justify-center py-4 relative">
-                                                        <div className="w-full h-2 bg-border-subtle/50 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-accent w-[98.3%] shadow-[0_0_18px_rgb(var(--accent)/0.35)]" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-4 flex flex-col">
-                                                    <div className="rounded-[22px] border border-amber-500/20 bg-amber-500/10 p-5">
-                                                        <div className="flex items-start justify-between">
-                                                            <div>
-                                                                <p className="text-sm text-text-secondary">待觀察項目</p>
-                                                                <p className="mt-2 text-2xl font-light text-text-primary">2 checks</p>
-                                                            </div>
-                                                            <CircleAlert className="h-5 w-5 text-amber-400" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="rounded-[22px] border border-border-subtle/70 bg-bg-elevated/72 p-5 flex-1 flex flex-col justify-between shadow-inner">
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-text-secondary">本地知識事件</p>
-                                                            <p className="mt-3 text-4xl font-light tracking-tight text-text-primary">{stats.totalMessages.toLocaleString()}</p>
-                                                        </div>
-                                                        <div className="mt-5 grid grid-cols-4 gap-2 text-xs font-medium text-text-secondary">
-                                                            <span>06:00</span><span>12:00</span><span>18:00</span><span>21:00</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Panel>
-
-                                    <Panel>
-                                        <SectionHeader title="最近操作人員" eyebrow="Operators" />
-                                        <div className="space-y-3 p-5">
-                                            {users.slice(0, 6).map((item) => (
-                                                <div key={item.id} className="flex items-center gap-3 rounded-[18px] border border-border-subtle/70 bg-bg-elevated/72 p-3 transition hover:bg-bg-elevated">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-bold shadow-sm shadow-accent/20" style={{ color: 'var(--text-on-accent, #fff)' }}>
-                                                        {item.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="truncate text-sm font-semibold text-text-primary">{item.name}</p>
-                                                        <p className="truncate text-xs text-text-secondary">{item.email}</p>
-                                                    </div>
-                                                    <StatusPill active={item.isActive} />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </Panel>
-                                </section>
-                            </>
+                            <OverviewSection
+                                stats={stats}
+                                activeUsers={activeUsers}
+                                /* 用 auditSummary（近 7 天，page_size=200）給 Overview 的圖表，
+                                   不要傳 auditLogs（page_size=15）— 那是 audit 分頁用的 */
+                                auditLogs={auditSummary}
+                                users={users}
+                                documents={documents}
+                            />
                         )}
 
                         {activeSection === 'users' && (
-                            <Panel className="overflow-hidden">
-                                <SectionHeader
-                                    title={t('admin.users.title') + ` (${users.length})`}
-                                    eyebrow={t('admin.users.activeOperators', { active: activeUsers })}
-                                    action={<ActionButton onClick={handleAddUser}><Plus className="h-4 w-4" />{t('admin.users.addUser')}</ActionButton>}
-                                />
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[760px]">
-                                        <thead className="border-b border-border-subtle/70 bg-bg-elevated/40 text-left text-xs uppercase tracking-wider text-text-secondary">
-                                            <tr>
-                                                <th className="px-6 py-4">{t('admin.users.table.user')}</th>
-                                                <th className="px-6 py-4">{t('admin.users.table.role')}</th>
-                                                <th className="px-6 py-4">{t('admin.users.table.status')}</th>
-                                                <th className="px-6 py-4">{t('admin.users.table.lastLogin')}</th>
-                                                <th className="px-6 py-4 text-right">{t('admin.users.table.action')}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border-subtle">
-                                            {isLoading ? (
-                                                <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>{t('common.loading')}</td></tr>
-                                            ) : users.length === 0 ? (
-                                                <tr><td className="px-6 py-10 text-center text-text-secondary" colSpan={5}>{t('admin.users.noUsers')}</td></tr>
-                                            ) : users.map((item) => (
-                                                <tr key={item.id} className="transition hover:bg-bg-elevated/55">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-sm font-bold shadow-sm shadow-accent/20" style={{ color: 'var(--text-on-accent, #fff)' }}>{item.name.charAt(0).toUpperCase()}</div>
-                                                            <div>
-                                                                <p className="font-semibold text-text-primary">{item.name}</p>
-                                                                <p className="text-sm text-text-secondary">{item.email}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4"><RoleBadge role={item.role} /></td>
-                                                    <td className="px-6 py-4"><StatusPill active={item.isActive} /></td>
-                                                    <td className="px-6 py-4 text-sm text-text-secondary">{formatDate(item.lastLoginAt)}</td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex justify-end gap-2">
-                                                            <ActionButton variant="secondary" onClick={() => handleEditUser(item)}><UserRoundCog className="h-4 w-4" />{t('common.edit')}</ActionButton>
-                                                            <ActionButton variant="danger" onClick={() => handleDeleteUser(item)}><Trash2 className="h-4 w-4" />{t('common.delete')}</ActionButton>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Panel>
+                            <UsersSection
+                                users={users}
+                                activeUsers={activeUsers}
+                                isLoading={isLoading}
+                                onAddUser={handleAddUser}
+                                onEditUser={handleEditUser}
+                                onDeleteUser={handleDeleteUser}
+                            />
                         )}
 
                         {activeSection === 'models' && (
-                            <div className="space-y-5">
-                                <Panel>
-                                    <SectionHeader
-                                        title={t('admin.models.title')}
-                                        eyebrow={sanitizePath(modelsDir) || 'ai_model'}
-                                        action={<ActionButton onClick={handleRefreshModels} disabled={isLoadingModels}><RefreshCw className="h-4 w-4" />{t('admin.models.rescan')}</ActionButton>}
-                                    />
-                                    <div className="grid gap-4 p-5">
-                                        {isLoadingModels ? (
-                                            <div className="py-10 text-center text-text-secondary">{t('common.loading')}</div>
-                                        ) : models.map((model) => (
-                                            <div key={model.name} className="flex flex-col gap-4 rounded-[22px] border border-border-subtle/70 bg-bg-elevated/72 p-5 md:flex-row md:items-center md:justify-between">
-                                                <div className="min-w-0">
-                                                    <div className="flex flex-wrap items-center gap-3">
-                                                        <p className="truncate text-lg font-semibold text-text-primary">{model.name}</p>
-                                                        {model.is_current && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{t('admin.models.current')}</span>}
-                                                        {model.quantization && <span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-mono text-text-secondary">{model.quantization}</span>}
-                                                    </div>
-                                                    <div className="mt-3 flex flex-wrap gap-4 text-sm text-text-secondary">
-                                                        <span className="inline-flex items-center gap-2"><HardDrive className="h-4 w-4" />{model.size_gb} GB</span>
-                                                        <span className="truncate">{model.filename}</span>
-                                                    </div>
-                                                </div>
-                                                {!model.is_current && <ActionButton variant="secondary" onClick={() => handleSelectModel(model.name)}>{t('admin.models.select')}</ActionButton>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Panel>
-                            </div>
+                            <ModelsSection
+                                models={models}
+                                modelsDir={modelsDir}
+                                isLoadingModels={isLoadingModels}
+                                sanitizePath={sanitizePath}
+                                onRefreshModels={handleRefreshModels}
+                                onSelectModel={handleSelectModel}
+                            />
                         )}
 
                         {activeSection === 'audit' && (
-                            <div className="space-y-5">
-                                <Panel className="p-5">
-                                    <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-                                        <Field label={t('common.search')}>
-                                            <div className="flex gap-2">
-                                                <input className={inputClass} value={auditSearchInput} onChange={(event) => setAuditSearchInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && handleAuditSearch()} placeholder={t('admin.audit.searchPlaceholder')} />
-                                                <ActionButton onClick={handleAuditSearch}><Search className="h-4 w-4" />{t('common.search')}</ActionButton>
-                                            </div>
-                                        </Field>
-                                        <Field label={t('admin.audit.action')}>
-                                            <select className={selectClass} value={auditFilter.action || ''} onChange={(event) => handleAuditFilterChange('action', event.target.value)}>
-                                                <option value="">{t('admin.audit.allActions')}</option>
-                                                <option value="login_success">{t('admin.audit.actionTypes.login_success')}</option>
-                                                <option value="login_failed">{t('admin.audit.actionTypes.login_failed')}</option>
-                                                <option value="user_update">{t('admin.audit.actionTypes.user_update')}</option>
-                                                <option value="document_upload">{t('admin.audit.actionTypes.document_upload')}</option>
-                                                <option value="document_delete">{t('admin.audit.actionTypes.document_delete')}</option>
-                                            </select>
-                                        </Field>
-                                        <Field label={t('admin.audit.resource')}>
-                                            <select className={selectClass} value={auditFilter.resource_type || ''} onChange={(event) => handleAuditFilterChange('resource_type', event.target.value)}>
-                                                <option value="">{t('admin.audit.allResources')}</option>
-                                                <option value="auth">{t('admin.audit.resourceTypes.auth')}</option>
-                                                <option value="user">{t('admin.audit.resourceTypes.user')}</option>
-                                                <option value="conversation">{t('admin.audit.resourceTypes.conversation')}</option>
-                                                <option value="document">{t('admin.audit.resourceTypes.document')}</option>
-                                                <option value="model">{t('admin.audit.resourceTypes.model')}</option>
-                                            </select>
-                                        </Field>
-                                        <div className="flex gap-2">
-                                            <ActionButton variant="secondary" onClick={handleExportCSV}><Download className="h-4 w-4" />CSV</ActionButton>
-                                            <ActionButton variant="secondary" onClick={handleExportJSON}><Download className="h-4 w-4" />JSON</ActionButton>
-                                        </div>
-                                    </div>
-                                </Panel>
-                                <Panel className="overflow-hidden">
-                                    <SectionHeader
-                                        title={t('admin.audit.title')}
-                                        eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
-                                        action={
-                                            <div className="flex items-center gap-2">
-                                                <ActionButton variant="secondary" disabled={auditPage <= 1} onClick={() => handleAuditPageChange(auditPage - 1)}><ChevronLeft className="h-4 w-4" /></ActionButton>
-                                                <span className="text-sm text-text-secondary">{auditPage} / {auditTotalPages || 1}</span>
-                                                <ActionButton variant="secondary" disabled={auditPage >= auditTotalPages} onClick={() => handleAuditPageChange(auditPage + 1)}><ChevronRight className="h-4 w-4" /></ActionButton>
-                                            </div>
-                                        }
-                                    />
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full min-w-[900px]">
-                                        <thead className="border-b border-border-subtle/70 bg-bg-elevated/40 text-left text-xs uppercase tracking-wider text-text-secondary">
-                                                <tr>
-                                                    <th className="px-5 py-2.5">{t('admin.audit.table.time')}</th>
-                                                    <th className="px-5 py-2.5">{t('admin.audit.table.action')}</th>
-                                                    <th className="px-5 py-2.5">{t('admin.audit.table.resource')}</th>
-                                                    <th className="px-5 py-2.5">{t('admin.audit.table.user')}</th>
-                                                    <th className="px-5 py-2.5">{t('admin.audit.table.ip')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border-subtle">
-                                                {isLoadingAudit ? (
-                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>{t('common.loading')}</td></tr>
-                                                ) : auditLogs.length === 0 ? (
-                                                    <tr><td className="px-5 py-10 text-center text-text-secondary" colSpan={6}>{t('admin.audit.noEvents')}</td></tr>
-                                                ) : auditLogs.map((log) => (
-                                                    <tr
-                                                        key={log.id}
-                                                        className="transition hover:bg-bg-elevated/55 cursor-pointer"
-                                                        onClick={() => setAuditDrawer(log)}
-                                                    >
-                                                        <td className="px-5 py-2 text-sm text-text-secondary whitespace-nowrap">{formatDate(log.created_at)}</td>
-                                                        <td className="px-5 py-2">
-                                                            <span className={`rounded-full border px-3 py-0.5 text-xs font-semibold ${getActionPillClass(log.action)}`}>
-                                                                {t(`admin.audit.actionTypes.${log.action}`, { defaultValue: ACTION_LABELS[log.action] || log.action })}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-5 py-2 text-sm text-text-primary">{t(`admin.audit.resourceTypes.${log.resource_type}`, { defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type })}</td>
-                                                        <td className="max-w-[180px] truncate px-5 py-2 text-sm text-text-secondary">{log.user_email || log.user_id || '-'}</td>
-                                                        <td className="px-5 py-2 font-mono text-xs text-text-secondary/70">{log.ip_address || '-'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </Panel>
-                            </div>
+                            <AuditSection
+                                auditSearchInput={auditSearchInput}
+                                setAuditSearchInput={setAuditSearchInput}
+                                auditFilter={auditFilter}
+                                auditLogs={auditLogs}
+                                auditTotal={auditTotal}
+                                auditPage={auditPage}
+                                auditTotalPages={auditTotalPages}
+                                isLoadingAudit={isLoadingAudit}
+                                auditDrawer={auditDrawer}
+                                setAuditDrawer={setAuditDrawer}
+                                onSearch={handleAuditSearch}
+                                onFilterChange={handleAuditFilterChange}
+                                onPageChange={handleAuditPageChange}
+                                onExportCSV={handleExportCSV}
+                                onExportJSON={handleExportJSON}
+                            />
                         )}
 
                         {activeSection === 'system' && (
-                            <div className="grid gap-5 xl:grid-cols-2">
-                                <Panel>
-                                    <SectionHeader title={t('admin.system.systemInfo')} eyebrow={t('admin.system.runtime')} />
-                                    <div className="grid gap-4 p-5 sm:grid-cols-2">
-                                        {[
-                                            ['Version', '2.3.0', ShieldCheck],
-                                            ['Backend', 'FastAPI', Database],
-                                            ['LLM Engine', currentModel?.name || t('admin.standby', 'Corphia Engine'), Cpu],
-                                            ['Vector Store', 'pgvector', Layers3],
-                                            ['Database', 'PostgreSQL', HardDrive],
-                                            ['Runtime', 'Python 3.12', Activity],
-                                        ].map(([label, value, Icon]) => {
-                                            const IconComp = Icon as React.ComponentType<{ className?: string }>
-                                            return (
-                                                <div key={label as string} className="rounded-[22px] border border-border-subtle/70 bg-bg-elevated/72 p-5">
-                                                    <IconComp className="mb-5 h-5 w-5 text-accent" />
-                                                    <p className="text-xs uppercase tracking-wider text-text-secondary">{label as string}</p>
-                                                    <p className="mt-2 text-lg font-semibold text-text-primary">{value as string}</p>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </Panel>
-                                <Panel>
-                                    <SectionHeader title={t('admin.system.maintenance')} eyebrow={t('admin.system.maintenanceSub')} />
-                                    <div className="space-y-3 p-5">
-                                        <ActionButton variant="secondary"><RefreshCw className="h-4 w-4" />{t('admin.system.clearCache')}</ActionButton>
-                                        <ActionButton variant="secondary"><SlidersHorizontal className="h-4 w-4" />{t('admin.system.reindexVector')}</ActionButton>
-                                        <ActionButton variant="danger"><CircleAlert className="h-4 w-4" />{t('admin.system.restartService')}</ActionButton>
-                                    </div>
-                                </Panel>
-                                <Panel className="xl:col-span-2">
-                                    <SectionHeader title={t('admin.system.realTimeHealth')} eyebrow={t('admin.system.realTimeHealthSub')} />
-                                    <div className="p-5">
-                                        <SystemMonitorPanel />
-                                    </div>
-                                </Panel>
-                            </div>
+                            <SystemSection currentModelName={currentModel?.name} />
                         )}
 
                         {activeSection === 'tenants' && (
-                            <Panel className="overflow-hidden">
-                                <SectionHeader
-                                    title={t('admin.tenants.title')}
-                                    eyebrow={`${activeTenants} active tenants`}
-                                    action={<ActionButton onClick={handleAddTenant}><Plus className="h-4 w-4" />{t('admin.tenants.addTenant')}</ActionButton>}
-                                />
-                                <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-                                    {isLoadingTenants ? (
-                                        <div className="col-span-full py-10 text-center text-text-secondary">{t('common.loading')}</div>
-                                    ) : tenants.length === 0 ? (
-                                        <div className="col-span-full py-10 text-center text-text-secondary">{t('admin.tenants.noTenants')}</div>
-                                    ) : tenants.map((item) => (
-                                        <div key={item.id} className="rounded-[22px] border border-border-subtle/70 bg-bg-elevated/72 p-5">
-                                            <div className="mb-5 flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-lg font-semibold text-text-primary">{item.name}</p>
-                                                    <p className="mt-1 inline-flex rounded-full border border-border-subtle bg-bg-surface px-3 py-1 font-mono text-xs text-text-secondary">{item.slug}</p>
-                                                </div>
-                                                <StatusPill active={item.is_active} />
-                                            </div>
-                                            <p className="min-h-[44px] text-sm leading-relaxed text-text-secondary">{item.description || t('admin.tenants.noTenants')}</p>
-                                            <div className="mt-6 flex justify-end gap-2">
-                                                <ActionButton variant="secondary" onClick={() => handleToggleTenantStatus(item)}>{item.is_active ? t('admin.tenants.actions.disable') : t('admin.tenants.actions.enable')}</ActionButton>
-                                                <ActionButton onClick={() => handleEditTenant(item)}>{t('admin.tenants.actions.edit')}</ActionButton>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Panel>
+                            <TenantsSection
+                                tenants={tenants}
+                                activeTenants={activeTenants}
+                                isLoadingTenants={isLoadingTenants}
+                                onAddTenant={handleAddTenant}
+                                onEditTenant={handleEditTenant}
+                                onToggleTenantStatus={handleToggleTenantStatus}
+                            />
                         )}
                     </div>
                 </main>
             </div>
 
+            {/* Ngrok QR Code 大尺寸 modal —— 點 sidebar QR 按鈕後在螢幕中央顯示，純 QR 無文字 */}
+            <NgrokQrModal
+                url={ngrokInfo?.url || null}
+                isOpen={isNgrokQrOpen}
+                onClose={() => setIsNgrokQrOpen(false)}
+            />
+
             {isUserModalOpen && (
                 <ModalFrame onClose={() => setIsUserModalOpen(false)}>
-                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? t('common.edit') : t('common.save')}</h3>
+                    <h3 className="mb-6 text-xl font-semibold">{currentEditingUser ? t('admin.users.editTitle', '編輯使用者') : t('admin.users.addUser', '新增使用者')}</h3>
                     <form onSubmit={handleUserSubmit} className="space-y-4">
                         <Field label="Name"><input className={inputClass} required value={userFormData.name} onChange={(event) => setUserFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Email"><input className={inputClass} type="email" required disabled={!!currentEditingUser} value={userFormData.email} onChange={(event) => setUserFormData((prev) => ({ ...prev, email: event.target.value }))} /></Field>
                         <Field label={currentEditingUser ? 'New password' : 'Password'}><input className={inputClass} type="password" required={!currentEditingUser} minLength={8} value={userFormData.password} onChange={(event) => setUserFormData((prev) => ({ ...prev, password: event.target.value }))} /></Field>
                         <Field label="Role">
-                            <select className={selectClass} value={userFormData.role} onChange={(event) => setUserFormData((prev) => ({ ...prev, role: event.target.value }))}>
-                                <option value="user">User</option>
-                                <option value="engineer">Engineer</option>
-                                <option value="admin">Admin</option>
-                            </select>
+                            <StyledSelect
+                                value={userFormData.role}
+                                onChange={(value) => setUserFormData((prev) => ({ ...prev, role: value }))}
+                                options={[
+                                    { value: 'user', label: 'User' },
+                                    { value: 'engineer', label: 'Engineer' },
+                                    { value: 'admin', label: 'Admin' },
+                                ]}
+                            />
                         </Field>
                         <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
                             {t('admin.tenants.status.active')}
@@ -1142,71 +896,7 @@ export default function Admin() {
                 </ModalFrame>
             )}
 
-            {/* 稽核紀錄 detail drawer：點 row 後從右側滑入 */}
-            <AnimatePresence>
-                {auditDrawer && (
-                    <>
-                        <motion.div
-                            key="audit-drawer-backdrop"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/40 z-40"
-                            onClick={() => setAuditDrawer(null)}
-                        />
-                        <motion.aside
-                            key="audit-drawer"
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-bg-surface/90 supports-[backdrop-filter]:bg-bg-surface/72 backdrop-blur-2xl border-l border-white/30 dark:border-white/10 z-50 overflow-y-auto custom-scrollbar shadow-[0_0_60px_rgb(0_0_0/0.18)]"
-                            role="dialog"
-                            aria-label="audit detail"
-                        >
-                            <div className="sticky top-0 bg-bg-surface border-b border-border-subtle px-5 py-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[12px] font-bold uppercase tracking-wider text-accent">{t('admin.audit.detailEyebrow', '稽核細節')}</p>
-                                    <h3 className="mt-0.5 text-base font-semibold text-text-primary">
-                                        {t(`admin.audit.actionTypes.${auditDrawer.action}`, { defaultValue: ACTION_LABELS[auditDrawer.action] || auditDrawer.action })}
-                                    </h3>
-                                </div>
-                                <button
-                                    onClick={() => setAuditDrawer(null)}
-                                    className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-base transition-colors"
-                                    aria-label={t('common.close', '關閉')}
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                            <dl className="px-5 py-4 space-y-3 text-sm">
-                                {[
-                                    [t('admin.audit.table.time'), formatDate(auditDrawer.created_at)],
-                                    [t('admin.audit.table.action'), auditDrawer.action],
-                                    [t('admin.audit.table.resource'), auditDrawer.resource_type + (auditDrawer.resource_id ? ` · ${auditDrawer.resource_id}` : '')],
-                                    [t('admin.audit.table.user'), auditDrawer.user_email || auditDrawer.user_id || '-'],
-                                    [t('admin.audit.table.ip'), auditDrawer.ip_address || '-'],
-                                    [t('admin.audit.detailDescription', '描述'), auditDrawer.description || '-'],
-                                    [t('admin.audit.detailUserAgent', 'User Agent'), auditDrawer.user_agent || '-'],
-                                ].map(([label, value]) => (
-                                    <div key={label} className="grid grid-cols-[120px_1fr] gap-3">
-                                        <dt className="text-text-muted">{label}</dt>
-                                        <dd className="text-text-primary break-all">{value}</dd>
-                                    </div>
-                                ))}
-                            </dl>
-                            {auditDrawer.details && Object.keys(auditDrawer.details).length > 0 && (
-                                <div className="px-5 pb-6">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">{t('admin.audit.detailPayload', 'Payload')}</p>
-                                    <pre className="p-4 rounded-[12px] border border-border-subtle bg-bg-base text-[12px] text-text-primary overflow-x-auto">
-                                        {JSON.stringify(auditDrawer.details, null, 2)}
-                                    </pre>
-                                </div>
-                            )}
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            {/* Audit detail drawer is now rendered inside AuditSection. */}
         </div>
     )
 }

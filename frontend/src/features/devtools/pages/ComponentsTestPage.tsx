@@ -26,7 +26,7 @@ export default function ComponentsTest() {
     }
 
     return (
-        <div className="min-h-screen bg-bg-base text-text-primary p-8 flex gap-8">
+        <div className="min-h-[100dvh] bg-bg-base text-text-primary p-8 flex gap-8">
             {/* Left Panel: Controls */}
             <div className="flex-1 space-y-12 overflow-y-auto pr-4">
                 <div className="mb-8 border-b border-border-subtle pb-4">

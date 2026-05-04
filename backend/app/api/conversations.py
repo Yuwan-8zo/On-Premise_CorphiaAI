@@ -55,7 +55,12 @@ async def list_conversations(
     
     # 過濾條件
     if search:
-        query = query.where(Conversation.title.ilike(f"%{search}%"))
+        # 跳脫 LIKE 萬用字元，限制長度避免 DoS
+        if len(search) > 128:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="search 字串過長")
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.where(Conversation.title.ilike(f"%{escaped}%", escape="\\"))
     if folder_id:
         query = query.where(Conversation.folder_id == folder_id)
     if is_pinned is not None:
@@ -64,7 +69,10 @@ async def list_conversations(
         query = query.where(Conversation.is_archived == is_archived)
     else:
         # 預設不顯示封存
-        query = query.where(Conversation.is_archived == False)
+        # FIX: 用 isnot(True) 取代 == False，這樣 NULL 也會被視為「未封存」
+        # 舊資料 migration 前可能有 is_archived=NULL 的紀錄，原本 `== False`
+        # 在 SQL 中對 NULL 回傳 NULL（=falsy），導致這些對話消失
+        query = query.where(Conversation.is_archived.isnot(True))
     
     # 計算總數
     count_query = select(func.count()).select_from(query.subquery())
@@ -86,6 +94,49 @@ async def list_conversations(
     )
 
 
+async def _ensure_valid_tenant_id(db, current_user) -> str:
+    """
+    防止 user.tenant_id 指向已被刪除的 tenant 導致 INSERT 違反 FK 約束。
+    流程：
+      1. 若 user.tenant_id 在 tenants 表存在 → 直接回傳
+      2. 不存在 → 確保 'default' tenant 存在（不存在就現場建立）
+      3. 把 user 的 tenant_id 更新到 'default' 並 commit
+      4. 回傳 'default'
+    """
+    from app.models.tenant import Tenant
+    from sqlalchemy import select
+    from app.models.user import User
+
+    desired = current_user.tenant_id or "default"
+
+    # 確認 desired tenant 是否存在
+    exists = await db.execute(select(Tenant).where(Tenant.id == desired))
+    if exists.scalar_one_or_none():
+        return desired
+
+    # 不存在 → 確保 default 存在
+    default_check = await db.execute(select(Tenant).where(Tenant.id == "default"))
+    if not default_check.scalar_one_or_none():
+        default_tenant = Tenant(
+            id="default",
+            slug="default",
+            name="預設組織",
+            description="系統預設租戶（自動建立）",
+            is_active=True,
+        )
+        db.add(default_tenant)
+        await db.commit()
+
+    # 把這個 user 的 tenant_id 更新到 default，避免下次又踩到同一個雷
+    user_row = await db.execute(select(User).where(User.id == current_user.id))
+    user_obj = user_row.scalar_one_or_none()
+    if user_obj is not None:
+        user_obj.tenant_id = "default"
+        await db.commit()
+
+    return "default"
+
+
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
     request_body: ConversationCreate,
@@ -94,19 +145,22 @@ async def create_conversation(
     request: Request = None,
 ):
     """建立新對話"""
+    # 自我修復：若 user 的 tenant_id 指向不存在的 tenant，先 remap 到 default
+    safe_tenant_id = await _ensure_valid_tenant_id(db, current_user)
+
     conversation = Conversation(
-        tenant_id=current_user.tenant_id or "default",
+        tenant_id=safe_tenant_id,
         user_id=current_user.id,
         title=request_body.title,
         model=request_body.model,
         folder_id=request_body.folder_id,
         settings=request_body.settings,
     )
-    
+
     db.add(conversation)
     await db.commit()
     await db.refresh(conversation)
-    
+
     # 審計日誌
     await write_audit_log(
         db=db,
@@ -115,12 +169,12 @@ async def create_conversation(
         resource_id=conversation.id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id,
+        tenant_id=safe_tenant_id,
         description=f"建立對話: {conversation.title}",
         ip_address=get_client_ip(request) if request else None,
         user_agent=get_user_agent(request) if request else None,
     )
-    
+
     return ConversationResponse.model_validate(conversation)
 
 

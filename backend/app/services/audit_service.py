@@ -54,6 +54,10 @@ class AuditAction:
     PASSWORD_CHANGE_FAILED = "password_change_failed"
     ACCOUNT_LOCKED = "account_locked"
 
+    # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
+    NGROK_START = "ngrok_start"
+    NGROK_STOP = "ngrok_stop"
+
 
 # 資源類型常數
 class AuditResource:
@@ -129,27 +133,54 @@ async def write_audit_log(
     return audit_log
 
 
+def _is_valid_ip(value: str) -> bool:
+    """檢查字串是否是合法 IPv4 或 IPv6（粗檢，避免噪音 log 出無效 IP）。"""
+    import ipaddress
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def get_client_ip(request) -> str:
     """
     從 FastAPI Request 物件取得客戶端 IP
+
+    SECURITY 注意：
+    - X-Forwarded-For 是攻擊者可控的 Header，正式部署時要在 reverse proxy
+      （Nginx / Caddy）層做白名單，只信任「最後一跳是 trusted proxy」的值。
+    - 這裡只做格式驗證 + 取最左側 client IP（FF 標準語意：left-most = original client）。
+
+    FIX:
+    - 原本沒驗證 IP 格式，X-Forwarded-For 給 "evil; <script>" 也會直接寫進 audit log。
+    - 多 IP 時取最左側那個，但要 strip + 驗證合法。
+    - 全部都無效時回 "unknown"，不要洩漏任何攻擊者塞的字串。
 
     Args:
         request: FastAPI Request 物件
 
     Returns:
-        str: 客戶端 IP 位址
+        str: 客戶端 IP 位址（合法 IP 或 "unknown"）
     """
     # 優先讀取反向代理 Header
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+        # 多個 IP 用逗號分隔（X-Forwarded-For: client, proxy1, proxy2）
+        # 取最左側（原始 client）。逐一檢查直到找到合法 IP。
+        for candidate in forwarded_for.split(","):
+            candidate = candidate.strip()
+            if candidate and _is_valid_ip(candidate):
+                return candidate
 
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
-        return real_ip
+        real_ip = real_ip.strip()
+        if _is_valid_ip(real_ip):
+            return real_ip
 
-    # 回退到直連 IP
-    if request.client:
+    # 回退到直連 IP（這個值是 ASGI server 給的，可信）
+    if request.client and request.client.host:
         return request.client.host
 
     return "unknown"

@@ -4,6 +4,7 @@ RAG 服務模組
 實作向量儲存與檢索功能 (基於 PostgreSQL + pgvector)
 """
 
+import asyncio
 import logging
 import re
 from typing import Optional
@@ -65,32 +66,44 @@ def _tokenize_query(query: str, min_len: int = 2, max_tokens: int = 32) -> list[
 
 class RAGService:
     """RAG 檢索服務"""
-    
+
     def __init__(self):
         self.embed_model = None
         self._initialized = False
-    
+        # 防併發初始化：多個 async task 同時呼叫 initialize() 時，
+        # 只有第一個會真的去載 SentenceTransformer，其他會等它完成。
+        # 沒這把鎖：N 個 task 同時觸發 → 載 N 次 model（記憶體爆 / 競爭 GPU）。
+        self._init_lock = asyncio.Lock()
+
     async def initialize(self) -> bool:
         """
         初始化 RAG 服務 (載入 Embedding 模型)
-        
+
         Returns:
             bool: 是否初始化成功
         """
         if self._initialized:
             return True
-        
-        try:
-            # 初始化 Embedding 模型
-            await self._init_embedding_model()
-            
-            self._initialized = True
-            return True
-            
-        except Exception as e:
-            logger.error(f"RAG 服務初始化失敗: {e}")
-            self._initialized = True
-            return False
+
+        async with self._init_lock:
+            # double-check：拿到鎖之後可能其他人已經初始化完
+            if self._initialized:
+                return True
+
+            try:
+                # 初始化 Embedding 模型
+                await self._init_embedding_model()
+                self._initialized = True
+                return True
+
+            except Exception as e:
+                # FIX: 原本失敗也設 _initialized=True 會永遠卡住「失敗狀態」
+                # 下次呼叫直接 return True 但 embed_model 是 None → 後續 search 全炸
+                # 改成：失敗就維持 _initialized=False，讓下次 initialize 可以重試
+                logger.error(f"RAG 服務初始化失敗: {e}", exc_info=True)
+                self.embed_model = None
+                self._initialized = False
+                return False
     
     async def _init_embedding_model(self):
         """初始化 Embedding 模型"""
@@ -122,12 +135,16 @@ class RAGService:
             list[float]: 向量
         """
         if self.embed_model is None:
-            # 使用簡單的雜湊作為回退（長度必須對應資料庫設計的 384 維度）
-            import hashlib
-            hash_obj = hashlib.sha512(text.encode())
-            # SHA-512 gives 64 bytes -> we need 384 floats.
-            base_val = [float(b) / 255.0 for b in hash_obj.digest()]  # 64 floats
-            return (base_val * 6)[:384]
+            # FIX: 移除「SHA-512 hash 偽 embedding」fallback。
+            # 原本想法：embedding model 沒載成功時也讓系統能跑。
+            # 問題：偽 embedding 的相似度計算完全沒語意意義（hash 重複 6 次湊 384 維，
+            # 相同 query 必相同向量，不同 query 完全不相似），會讓 RAG 「能跑但完全錯」，
+            # 比直接 fail 還糟糕（使用者以為 AI 看了文件，實際上沒看到任何相關內容）。
+            # 改成直接 raise，讓上層走 fallback（無 RAG 純 LLM 對話）或顯示錯誤。
+            raise RuntimeError(
+                "Embedding 模型未載入。請檢查 sentence-transformers 是否安裝、"
+                "model 是否下載完成；查看 RAG service initialize() 的錯誤日誌。"
+            )
 
         # NOTE: sentence_transformers.encode() 是同步 CPU 密集型操作，
         # 必須以 asyncio.to_thread() 包裝，避免阻塞 async event loop
@@ -143,10 +160,11 @@ class RAGService:
         n_results: int = 5,
         document_ids: Optional[list[str]] = None,
         similarity_threshold: float = 0.3,
+        precomputed_embedding: Optional[list[float]] = None,
     ) -> list[dict]:
         """
         搜尋相關文件 (基於 pgvector)
-        
+
         Args:
             db: 資料庫 Session
             query: 查詢文字
@@ -154,20 +172,26 @@ class RAGService:
             n_results: 回傳結果數量
             document_ids: 指定要搜尋的文件 ID 列表
             similarity_threshold: 最低相似度門檻（0~1），低於此值的結果會被過濾
-            
+            precomputed_embedding: 已經算好的 query embedding（複用避免重算）。
+                                   hybrid_search 內部 + chat_service 補搜時，
+                                   多次呼叫同一 query 應該共用 embedding，
+                                   省掉每次跑 SentenceTransformer.encode() 的 CPU 成本。
+
         Returns:
             list[dict]: 搜尋結果
         """
         if not self._initialized:
             await self.initialize()
-        
+
         # 如果提供了 document_ids 但為空列表，直接返回空結果（不執行無意義搜索）
         if document_ids is not None and len(document_ids) == 0:
             return []
-        
+
         try:
-            # 生成查詢向量
-            query_embedding = await self.get_embedding(query)
+            # 優先用呼叫端傳入的 embedding，省掉重算
+            query_embedding = precomputed_embedding
+            if query_embedding is None:
+                query_embedding = await self.get_embedding(query)
             
             # 計算 cosine distance 並用 add_columns 取回數值
             cosine_dist = DocumentChunk.embedding.cosine_distance(query_embedding)
@@ -202,14 +226,21 @@ class RAGService:
                 if similarity < similarity_threshold:
                     continue
                 
+                # NOTE: chunk_metadata 只包 filename / tenant_id（document_service 寫入時的 schema）
+                # 不含 document_id（DocumentChunk model 上是獨立 column）。
+                # 上層 chat_service 需要 document_id 來做「per-document coverage」覆蓋邏輯，
+                # 所以這裡把 column 值 merge 進 metadata 一起回傳。
                 search_results.append({
                     "chunk_id": chunk.id,
                     "content": chunk.content,
-                    "metadata": chunk.chunk_metadata or {},
+                    "metadata": {
+                        **(chunk.chunk_metadata or {}),
+                        "document_id": chunk.document_id,
+                    },
                     "score": similarity,
                     "distance": round(distance, 4),
                 })
-            
+
             return search_results
             
         except Exception as e:
@@ -253,6 +284,12 @@ class RAGService:
         # 候選召回：先拿向量 Top-K*3，再用關鍵字 re-rank
         oversample = max(n_results * 3, n_results + 5)
 
+        # 在這裡算一次 query embedding 然後傳給 search()，避免它內部又算一次
+        # （chat_service 補搜場景：同一 query 跑多次 search，原本每次都重新 encode 浪費 CPU）
+        if not self._initialized:
+            await self.initialize()
+        query_embedding = await self.get_embedding(query)
+
         # ── 1) 向量召回 ─────────────────────────────────────
         vector_hits = await self.search(
             db=db,
@@ -261,6 +298,7 @@ class RAGService:
             n_results=oversample,
             document_ids=document_ids,
             similarity_threshold=0.0,  # 下面自己過濾
+            precomputed_embedding=query_embedding,
         )
 
         if not vector_hits:
@@ -272,8 +310,11 @@ class RAGService:
         keyword_hits: list[dict] = []
         if tokens:
             try:
+                # 跳脫 LIKE 萬用字元：使用者 query 含 % / _ 會被當通配，誤命中所有 chunk
+                def _esc(t: str) -> str:
+                    return t.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 conditions = [
-                    DocumentChunk.content.ilike(f"%{t}%") for t in tokens
+                    DocumentChunk.content.ilike(f"%{_esc(t)}%", escape="\\") for t in tokens
                 ]
                 kw_stmt = (
                     select(DocumentChunk)
@@ -288,10 +329,14 @@ class RAGService:
 
                 result = await db.execute(kw_stmt)
                 for chunk in result.scalars().all():
+                    # 同 vector path：把 document_id 從 column 補進 metadata 給上層用
                     keyword_hits.append({
                         "chunk_id": chunk.id,
                         "content": chunk.content,
-                        "metadata": chunk.chunk_metadata or {},
+                        "metadata": {
+                            **(chunk.chunk_metadata or {}),
+                            "document_id": chunk.document_id,
+                        },
                         "score": 0.0,
                         "distance": None,
                     })
@@ -368,11 +413,19 @@ class RAGService:
 
 
 # 全域 RAG 服務實例
-_rag_instance = None
+# 注意：初始化只是 __init__()（純記憶體狀態，不會 IO），
+# CPython GIL 保證 `if x is None: x = X()` 不會留 partial-construct，
+# 所以 sync 取得 singleton 不需要鎖。重點是 RAGService.initialize() 才會
+# 載入 embedding model（重 IO），那邊有獨立的 self._init_lock 處理。
+_rag_instance: Optional["RAGService"] = None
 
 
-def get_rag_service() -> RAGService:
-    """取得 RAG 服務單例"""
+def get_rag_service() -> "RAGService":
+    """取得 RAG 服務單例。
+
+    若多個 async task 同時呼叫，最差情況是建立兩個 RAGService 實例其中一個被丟棄，
+    並不會壞資料（embedding model 載入是 .initialize() 內部用 asyncio.Lock 保護的）。
+    """
     global _rag_instance
     if _rag_instance is None:
         _rag_instance = RAGService()

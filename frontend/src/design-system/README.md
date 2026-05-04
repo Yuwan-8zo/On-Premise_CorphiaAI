@@ -96,7 +96,7 @@ const buttonColor = BRAND.bronze
 ### 在 Tailwind className 用 — semantic 名稱
 ```tsx
 <div className="bg-bg-base text-text-primary border-border-subtle">
-<button className="bg-accent text-white hover:bg-accent-hover">
+<button className="bg-accent text-text-on-accent hover:bg-accent-hover">
 ```
 
 | 用途 | className |

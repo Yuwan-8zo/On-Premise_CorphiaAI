@@ -64,8 +64,12 @@ async def add_token_to_blacklist(
             f"type={token_type}, reason={reason}"
         )
     except Exception as e:
-        logger.error(f"Token 黑名單寫入失敗: {e}")
+        # FIX: 原本失敗 rollback 後仍 return blacklist_entry（含未提交資料），
+        # 後續若有 caller 用這個物件存取 lazy-loaded 欄位會崩。
+        # 改成 raise 讓 caller 知道寫入失敗，token 沒真正被撤銷。
+        logger.error(f"Token 黑名單寫入失敗: {e}", exc_info=True)
         await db.rollback()
+        raise
 
     return blacklist_entry
 

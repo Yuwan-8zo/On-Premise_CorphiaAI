@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react'
+import MaterialIcon from '@/components/icons/MaterialIcon'
 
 // ── PII 遮罩警告 ──────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
             >
-                <span className="text-amber-600 text-sm">🛡️</span>
+                <MaterialIcon name="security" size={18} className="text-amber-600" aria-hidden />
                 <span className="font-medium text-amber-700 flex-1">
                     {message}
                 </span>
@@ -77,24 +78,25 @@ interface InjectionWarningProps {
     message: string
 }
 
+// 各風險等級對應的 Material Symbols 圖示與顏色 token
 const RISK_COLORS: Record<string, { border: string; bg: string; text: string; icon: string }> = {
     low: {
         border: 'border-border-subtle',
         bg: 'bg-bg-surface',
-        text: 'text-text-secondary ',
-        icon: 'ℹ️',
+        text: 'text-text-secondary',
+        icon: 'info',
     },
     medium: {
-        border: 'border-orange-300/50 /30',
+        border: 'border-orange-300/50',
         bg: 'bg-orange-50/80',
-        text: 'text-orange-700 ',
-        icon: '⚠️',
+        text: 'text-orange-700',
+        icon: 'warning',
     },
     high: {
-        border: 'border-red-300/50 /30',
+        border: 'border-red-300/50',
         bg: 'bg-red-50/80',
-        text: 'text-red-700 ',
-        icon: '🚨',
+        text: 'text-red-700',
+        icon: 'crisis_alert',
     },
 }
 
@@ -108,7 +110,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
             >
-                <span className="text-sm">{colors.icon}</span>
+                <MaterialIcon name={colors.icon} size={18} className={colors.text} aria-hidden />
                 <span className={`font-medium ${colors.text} flex-1`}>
                     {message}
                 </span>

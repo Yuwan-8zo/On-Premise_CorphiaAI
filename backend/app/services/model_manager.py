@@ -1,5 +1,5 @@
-import os
 import logging
+import threading
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
@@ -40,33 +40,59 @@ class ModelManager:
         self.models_dir = Path(models_dir)
         self._models: Dict[str, ModelInfo] = {}
         self._current_model: Optional[str] = None
-        
+        # 保護 _models / _current_model 的同步原語：
+        # FastAPI 多 task 並發呼叫 select_model() / scan_models() 時，
+        # 沒鎖會出現「scan 清空 dict 中、select 拿到空 dict 結果失敗」之類的競爭。
+        # 用 RLock 因為 scan_models 內部會被 select_model 呼叫時可能重入。
+        self._lock = threading.RLock()
+
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.scan_models()
-    
+
     def scan_models(self) -> List[ModelInfo]:
         """Scan the directory for GGUF files"""
-        self._models.clear()
-        
-        if not self.models_dir.exists():
-            logger.warning(f"Model dir not found: {self.models_dir}")
-            return []
-        
-        for ext in self.SUPPORTED_EXTENSIONS:
-            for model_path in self.models_dir.glob(f"*{ext}"):
-                if model_path.is_file():
-                    try:
-                        info = self._parse_model_info(model_path)
-                        self._models[info.name] = info
-                        logger.info(f"Discovered: {info.name} ({info.size_gb:.2f} GB)")
-                    except Exception as e:
-                        logger.error(f"Error parse {model_path}: {e}")
-        
-        if self._models and not self._current_model:
-            self._current_model = list(self._models.keys())[0]
-            logger.info(f"Default to: {self._current_model}")
-        
-        return list(self._models.values())
+        with self._lock:
+            self._models.clear()
+
+            if not self.models_dir.exists():
+                logger.warning(f"Model dir not found: {self.models_dir}")
+                return []
+
+            for ext in self.SUPPORTED_EXTENSIONS:
+                for model_path in self.models_dir.glob(f"*{ext}"):
+                    if model_path.is_file():
+                        try:
+                            info = self._parse_model_info(model_path)
+                            self._models[info.name] = info
+                            logger.info(f"Discovered: {info.name} ({info.size_gb:.2f} GB)")
+                        except Exception as e:
+                            logger.error(f"Error parse {model_path}: {e}")
+
+            if self._models and not self._current_model:
+                configured_model = self._resolve_configured_model_path()
+                for name, info in self._models.items():
+                    if configured_model and Path(info.path).resolve() == configured_model:
+                        self._current_model = name
+                        break
+                if not self._current_model:
+                    self._current_model = list(self._models.keys())[0]
+                logger.info(f"Default to: {self._current_model}")
+
+            return list(self._models.values())
+
+    def _resolve_configured_model_path(self) -> Optional[Path]:
+        """Resolve LLAMA_MODEL_PATH relative to backend/ when it points to an existing file."""
+        try:
+            from app.core.config import settings
+
+            configured = Path(settings.llama_model_path)
+            if not configured.is_absolute():
+                backend_dir = Path(__file__).resolve().parents[2]
+                configured = backend_dir / configured
+            configured = configured.resolve()
+            return configured if configured.exists() else None
+        except Exception:
+            return None
     
     def _parse_model_info(self, path: Path) -> ModelInfo:
         stat = path.stat()
@@ -111,25 +137,28 @@ class ModelManager:
     
     @property
     def current_model(self) -> Optional[ModelInfo]:
-        if self._current_model and self._current_model in self._models:
-            return self._models[self._current_model]
-        return None
-    
+        with self._lock:
+            if self._current_model and self._current_model in self._models:
+                return self._models[self._current_model]
+            return None
+
     @property
     def current_model_path(self) -> Optional[str]:
         model = self.current_model
         return model.path if model else None
-    
+
     def select_model(self, name: str) -> bool:
-        if name in self._models:
-            self._current_model = name
-            logger.info(f"Selected: {name}")
-            return True
-        logger.error(f"Cannot select: {name}")
-        return False
-    
+        with self._lock:
+            if name in self._models:
+                self._current_model = name
+                logger.info(f"Selected: {name}")
+                return True
+            logger.error(f"Cannot select: {name}")
+            return False
+
     def get_model(self, name: str) -> Optional[ModelInfo]:
-        return self._models.get(name)
+        with self._lock:
+            return self._models.get(name)
     
     def to_dict(self) -> Dict[str, Any]:
         return {

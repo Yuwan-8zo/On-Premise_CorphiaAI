@@ -10,7 +10,7 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, desc
 
@@ -74,37 +74,52 @@ async def list_audit_logs(
         count_query_base = count_query_base.where(AuditLog.user_id == user_id)
 
     if search:
-        search_filter = f"%{search}%"
+        # FIX: 跳脫 % / _ / \，否則使用者輸入的萬用字元會被當 LIKE 通配
+        if len(search) > 256:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="search 字串過長",
+            )
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_filter = f"%{escaped}%"
         query = query.where(
-            (AuditLog.description.ilike(search_filter))
-            | (AuditLog.user_email.ilike(search_filter))
+            AuditLog.description.ilike(search_filter, escape="\\")
+            | AuditLog.user_email.ilike(search_filter, escape="\\")
         )
         count_query_base = count_query_base.where(
-            (AuditLog.description.ilike(search_filter))
-            | (AuditLog.user_email.ilike(search_filter))
+            AuditLog.description.ilike(search_filter, escape="\\")
+            | AuditLog.user_email.ilike(search_filter, escape="\\")
         )
 
     if start_date:
+        # FIX: AuditLog.created_at 是 DateTime（不帶 timezone，naive UTC 儲存）。
+        # 上一版誤用 to_aware_utc 變成 aware datetime，asyncpg 拿來跟 naive column
+        # 比較直接 raise「can't subtract offset-naive and offset-aware datetimes」。
+        # 改用 to_naive_utc：naive 字串視為 UTC、aware 字串轉到 UTC 後去掉 tzinfo。
         from datetime import datetime
+        from app.core.time_utils import to_naive_utc
 
         try:
-            start_dt = datetime.fromisoformat(start_date)
-            query = query.where(AuditLog.created_at >= start_dt)
-            count_query_base = count_query_base.where(
-                AuditLog.created_at >= start_dt
-            )
+            start_dt = to_naive_utc(datetime.fromisoformat(start_date))
+            if start_dt is not None:
+                query = query.where(AuditLog.created_at >= start_dt)
+                count_query_base = count_query_base.where(
+                    AuditLog.created_at >= start_dt
+                )
         except ValueError:
             pass
 
     if end_date:
         from datetime import datetime
+        from app.core.time_utils import to_naive_utc
 
         try:
-            end_dt = datetime.fromisoformat(end_date)
-            query = query.where(AuditLog.created_at <= end_dt)
-            count_query_base = count_query_base.where(
-                AuditLog.created_at <= end_dt
-            )
+            end_dt = to_naive_utc(datetime.fromisoformat(end_date))
+            if end_dt is not None:
+                query = query.where(AuditLog.created_at <= end_dt)
+                count_query_base = count_query_base.where(
+                    AuditLog.created_at <= end_dt
+                )
         except ValueError:
             pass
 
@@ -245,19 +260,21 @@ async def _fetch_export_logs(
 
     if start_date:
         from datetime import datetime
+        from app.core.time_utils import to_naive_utc
         try:
-            query = query.where(
-                AuditLog.created_at >= datetime.fromisoformat(start_date)
-            )
+            sd = to_naive_utc(datetime.fromisoformat(start_date))
+            if sd is not None:
+                query = query.where(AuditLog.created_at >= sd)
         except ValueError:
             pass
 
     if end_date:
         from datetime import datetime
+        from app.core.time_utils import to_naive_utc
         try:
-            query = query.where(
-                AuditLog.created_at <= datetime.fromisoformat(end_date)
-            )
+            ed = to_naive_utc(datetime.fromisoformat(end_date))
+            if ed is not None:
+                query = query.where(AuditLog.created_at <= ed)
         except ValueError:
             pass
 

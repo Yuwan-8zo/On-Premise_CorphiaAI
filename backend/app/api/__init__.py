@@ -16,6 +16,7 @@ from app.api.tenants import router as tenants_router
 from app.api.models import router as models_router
 from app.api.folders import router as folders_router
 from app.api.system_monitor import router as system_monitor_router
+from app.api.voice import router as voice_router
 
 __all__ = [
     "auth_router",
@@ -32,5 +33,6 @@ __all__ = [
     "models_router",
     "folders_router",
     "system_monitor_router",
+    "voice_router",
 ]
 

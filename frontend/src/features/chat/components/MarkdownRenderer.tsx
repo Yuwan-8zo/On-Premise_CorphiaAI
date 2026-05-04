@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import MaterialIcon from '@/components/icons/MaterialIcon'
 
 interface MarkdownRendererProps {
     content: string
@@ -32,9 +33,10 @@ const CopyButton = ({ code }: { code: string }) => {
     return (
         <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 px-2 py-1 text-xs text-text-secondary bg-bg-surface hover:bg-bg-elevated rounded transition-colors"
+            className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-bg-surface hover:bg-white/[0.06] dark:hover:bg-white/[0.06] rounded transition-colors"
         >
-            {copied ? '已複製 ✓' : '複製'}
+            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
+            {copied ? '已複製' : '複製'}
         </button>
     )
 }

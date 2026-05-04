@@ -26,6 +26,7 @@ export const fontSize = {
 }
 
 export const themeColors = {
+    // 暖色調米色 / 深灰，避開純白純黑造成的視覺壓迫
     darkBg: '#202022',
     darkSurface: '#28282A',
     darkBgGradient: 'linear-gradient(135deg, #202022 0%, #101012 100%)',
@@ -52,7 +53,12 @@ export const accentColors = {
 
 export const palette = {
     corphia: {
-        bronze: brandColors.bronze,
+        // 'bronze' 改成綁定使用者選的品牌色（透過 --color-ios-accent-light）。
+        // 原本寫死成 #896E53，導致 text-corphia-bronze / bg-corphia-bronze 等
+        // class 永遠停在金色，使用者切到藍/粉/橘/綠時這些元件不跟著變。
+        // 改用 rgb(var(--color-ios-accent-light) / <alpha>) 之後，
+        // Tailwind 的 alpha 修飾子（/30 /50 等）也能正常運作。
+        bronze: 'rgb(var(--color-ios-accent-light) / <alpha-value>)',
         beige: '#DDD8D0',
         sand: '#ECE8E1',
         'warm-gray': '#807C76',
@@ -86,6 +92,9 @@ export const palette = {
         secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
         muted: 'rgb(var(--text-muted) / <alpha-value>)',
         disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
+        // --text-on-accent 是 hex（#000 or #fff），App.tsx 依 accent 亮度動態切換。
+        // 用在「bg-accent 上的文字」，Tailwind class: text-text-on-accent
+        'on-accent': 'var(--text-on-accent, #fff)',
     },
     border: {
         subtle: 'rgb(var(--border-subtle) / <alpha-value>)',

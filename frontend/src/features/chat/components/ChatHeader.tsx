@@ -43,56 +43,58 @@ export default function ChatHeader({
     handleShareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
+    // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
-        <header className="shrink-0 w-full p-4 md:px-6 flex items-center justify-between z-30 bg-bg-surface/85 supports-[backdrop-filter]:bg-bg-surface/70 backdrop-blur-xl transition-colors sticky top-0">
-            <div className="flex items-center gap-3">
+        <header className="shrink-0 w-full p-3 md:p-4 md:px-6 flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
-                    className={`p-2 -ml-2 rounded-full hover:bg-bg-surface/50  transition-colors md:hidden ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-text-secondary '}`}
+                    className={`p-2 -ml-1 rounded-full hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/50 transition-colors md:hidden shrink-0 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-text-secondary'}`}
                 >
                     <SidebarIcon className="w-5 h-5" />
                 </button>
-                
-                {/* 左側：Corphia Logo 與文字 */}
-                <h1 className={`text-[20px] font-semibold text-text-primary  tracking-[0.3px] flex items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
+
+                {/* Left: Corphia title - hidden on mobile to give space to model selector */}
+                <h1 className={`hidden sm:flex text-[20px] font-semibold text-text-primary tracking-[0.3px] items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
                     Corphia
                 </h1>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2 min-w-0 shrink">
                 {/* 右側：GGUF 模型選擇下拉選單 */}
-                <div className="relative">
-                    <button 
+                <div className="relative min-w-0">
+                    <button
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                         disabled={isModelLoading}
-                        className="flex items-center gap-2 transition-all px-3 py-1.5 rounded-full bg-bg-base border border-border-subtle hover:bg-bg-surface text-text-primary shadow-sm active:scale-[0.98] disabled:opacity-50"
+                        className="flex items-center gap-1.5 md:gap-2 transition-all px-2.5 md:px-3 py-1.5 rounded-full bg-bg-base border border-border-subtle hover:bg-white/[0.06] dark:hover:bg-white/[0.06] text-text-primary shadow-sm active:scale-[0.98] disabled:opacity-50 max-w-[180px] md:max-w-none"
                     >
-                        <span className="text-[14px] font-semibold font-mono tracking-tight sm:max-w-none transition-colors flex items-center gap-2">
+                        <span className="text-[12px] md:text-[14px] font-semibold font-mono tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
                                 <>
-                                    <div className="w-3.5 h-3.5 border-2 border-border-subtle border-t-transparent rounded-full animate-spin" />
+                                    <div className="w-3.5 h-3.5 border-2 border-border-subtle border-t-transparent rounded-full animate-spin shrink-0" />
                                     <span className="hidden md:inline">正在處理模型...</span>
-                                    <span className="md:hidden">載入中...</span>
+                                    <span className="md:hidden">載入中</span>
                                 </>
                             ) : selectedModel ? (
                                 <>
-                                    <span className="md:hidden truncate max-w-[120px]">
+                                    {/* Mobile: short abbreviation to avoid overflow */}
+                                    <span className="md:hidden truncate max-w-[110px]">
                                         {(() => {
                                             const name = selectedModel.name.toLowerCase();
                                             if (name.includes('qwen') && name.includes('2.5') && name.includes('7b')) {
-                                                if (name.includes('q5_k_m')) return 'Q2.5-7B-Q5KM';
-                                                if (name.includes('q4_k_m')) return 'Q2.5-7B-Q4KM';
-                                                return 'Q2.5-7B';
+                                                if (name.includes('q5_k_m')) return 'Qwen2.5·Q5';
+                                                if (name.includes('q4_k_m')) return 'Qwen2.5·Q4';
+                                                return 'Qwen2.5·7B';
                                             }
                                             if (name.includes('llama') && name.includes('3')) return 'Llama3';
-                                            return selectedModel.name.split('.')[0].substring(0, 12);
+                                            return selectedModel.name.split('.')[0].substring(0, 10);
                                         })()}
                                     </span>
-                                    <span className="hidden md:inline">{selectedModel.name}</span>
+                                    <span className="hidden md:inline truncate">{selectedModel.name}</span>
                                 </>
-                            ) : 'Loading Models...'}
+                            ) : 'Loading...'}
                         </span>
-                        <svg className={`w-4 h-4 text-text-muted opacity-80 transition-transform ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg className={`w-4 h-4 text-text-muted opacity-80 transition-transform shrink-0 ${modelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
 
                     <AnimatePresence>
@@ -175,7 +177,7 @@ export default function ChatHeader({
                 <div className="relative">
                     <button 
                         onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                        className={`p-2 hover:bg-bg-surface  rounded-full transition-colors ${headerMenuOpen ? 'text-text-primary  bg-bg-surface ' : 'text-text-muted hover:text-text-secondary '}`}
+                        className={`p-2 hover:bg-white/[0.06] dark:hover:bg-white/[0.06]  rounded-full transition-colors ${headerMenuOpen ? 'text-text-primary  bg-bg-surface ' : 'text-text-muted hover:text-text-secondary '}`}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
@@ -197,21 +199,21 @@ export default function ChatHeader({
                                 >
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-bg-surface active:bg-bg-surface"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-white/[0.06] dark:hover:bg-white/[0.06] active:bg-bg-surface"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                         <span className="font-medium text-[15px]">分享</span>
                                     </button>
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleRenameConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-bg-surface active:bg-bg-surface"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-white/[0.06] dark:hover:bg-white/[0.06] active:bg-bg-surface"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                         <span className="font-medium text-[15px]">重新命名</span>
                                     </button>
                                     <button 
                                         onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleMoveToProject(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-bg-surface active:bg-bg-surface"
+                                        className="w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-3 transition-colors hover:bg-white/[0.06] dark:hover:bg-white/[0.06] active:bg-bg-surface"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                         <span className="font-medium text-[15px]">移至專案</span>

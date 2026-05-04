@@ -4,13 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Web App Manifest：iOS PWA 啟動畫面 / 背景色 / standalone 模式 -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- viewport-fit=cover 讓 iOS Safari 把背景色塗到狀態列 + Home Indicator 安全區外（劉海 + 底部黑條） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="Corphia AI Platform - 企業級私有部署 AI 問答系統，支援 RAG 與本地可信資料庫" />
     <meta name="keywords" content="Corphia, AI, Chat, RAG, 企業級 AI, 私有部署, ChatGPT" />
     <meta name="author" content="Corphia AI Team" />
     
     <!-- Security Headers (Meta fallback) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: http: https:;" />
+    <!--
+      media-src 'self' blob:  ← 語音訊息播放需要 blob: URL
+        前端用 MediaRecorder 錄音 → URL.createObjectURL() 產生 blob:http://localhost:5173/...
+        若 CSP 沒明確列 media-src，會 fallback 到 default-src 'self' 把 blob: 全擋掉，
+        音訊根本播不出來（log: violates Content Security Policy directive: "default-src 'self'"）
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' ws: wss: http: https:;" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     
     <!-- Open Graph (Facebook/LinkedIn) -->
@@ -39,8 +48,18 @@
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F4F0" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />
     <meta id="color-scheme-meta" name="color-scheme" content="light dark" />
-    <!-- iOS Safari 狀態列：透明黑、可全螢幕 PWA -->
+    <!-- PWA 全螢幕能力標記
+         apple-mobile-web-app-capable 是舊版（已 deprecated），但仍要保留供舊 iOS Safari 用；
+         mobile-web-app-capable 是新標準，現代 Chromium 用這個 -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!--
+      PWA 模式（加到主畫面）才生效，Safari 瀏覽器模式無作用：
+        - black-translucent：狀態列透明，背景延伸到瀏海區，時間/電量浮在 page bg 上 —— 最像原生 App
+        - default：標準白底黑字（在深色 page bg 上會出現一條白條）
+        - black：純黑底
+      Corphia 主色是 #202022 深色，所以 black-translucent 最適合，整片往上延伸視覺一致
+    -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <!--
       Boot script — 必須在任何 React/Vite 代碼執行前跑：
@@ -52,6 +71,7 @@
     <script>
       (function() {
         try {
+          // 同步 design-system/tokens.js
           var DARK_BASE = '#202022';
           var DARK_SURFACE = '#28282A';
           var LIGHT_BASE = '#F6F4F0';
@@ -66,18 +86,19 @@
             if (pref === 'light' || pref === 'dark') theme = pref;
           }
 
-          var path = window.location.pathname;
-          var isChat = path === '/' || path.indexOf('/chat') === 0;
+          // 所有頁面統一用 base 色 + 弧線 SVG（chat 不再例外）
           var bg;
           if (theme === 'dark') {
-            bg = isChat ? DARK_SURFACE : DARK_BASE;
+            bg = DARK_BASE;
             document.documentElement.classList.add('dark');
             document.documentElement.style.colorScheme = 'only dark';
           } else {
-            bg = isChat ? LIGHT_SURFACE : LIGHT_BASE;
+            bg = LIGHT_BASE;
             document.documentElement.style.colorScheme = 'only light';
           }
           document.documentElement.style.backgroundColor = bg;
+          // body 也設一次，避免 Safari URL bar 透明區掉色
+          if (document.body) document.body.style.backgroundColor = bg;
 
           // 移除靜態 prefers-color-scheme 的兩組 meta，改成單一動態值（覆寫 Safari）
           var staticMetas = document.querySelectorAll('meta[name="theme-color"]');
@@ -95,6 +116,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Material Symbols Outlined - 全站圖示，取代 emoji -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>

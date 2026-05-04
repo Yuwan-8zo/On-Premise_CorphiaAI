@@ -25,6 +25,42 @@ export default {
         changeName: '修改名稱',
         active: '啟用',
         disabled: '停用',
+        clearAll: '全部清除',
+        dismiss: '關閉',
+        skip: '略過',
+        next: '下一步',
+        prev: '上一步',
+    },
+
+    // 首次使用引導（spotlight tour）
+    onboarding: {
+        start: '開始使用',
+        welcome: {
+            title: '歡迎使用 Corphia AI',
+            desc: '私有部署的企業知識引擎。所有對話、文件與向量索引都留在本機。我會帶你看主畫面 4 個主要功能。',
+        },
+        tour: {
+            modeToggle: {
+                title: '一般 vs 專案',
+                desc: '在這裡切換對話模式：一般是純聊天；專案會把資料夾內的文件當作 RAG 上下文。',
+            },
+            newChat: {
+                title: '開新對話',
+                desc: '一般模式按這裡新增對話；專案模式則會建立新資料夾。',
+            },
+            chatInput: {
+                title: '輸入訊息',
+                desc: '輸入問題或拖放檔案進來，AI 會逐字串流回應；左側「提示詞範本」按鈕可選範本，右側「麥克風」可錄音。',
+            },
+            settings: {
+                title: '設定 / 管理後台',
+                desc: '點頭像進設定：主題、語言、強調色都在這裡。管理員還能進入管理後台。',
+            },
+        },
+        done: {
+            title: '準備好了',
+            desc: '可以開始第一場對話。如果想再看一次，到「設定 → 使用說明」中點「重新觀看引導」。',
+        },
     },
 
     // 認證
@@ -63,14 +99,18 @@ export default {
         terms: '服務條款',
         help: '幫助與支援',
         changePassword: '修改密碼',
+        waitingBackend: '等待後端啟動',
+        connectingBackend: '正在連線後端',
+        backendOfflineHint: '請確認 backend 已啟動，連上後會自動進入',
+        backendCheckingHint: '初次連線，稍候即可使用',
     },
 
     // 對話
     chat: {
         emptyGreeting: '有什麼我可以幫忙的，{{name}}？',
         connectedToModel: '已連線本地 {{model}}',
-        inputPlaceholder: '傳送訊息給 Corphia AI...',
-        projectInputPlaceholder: '傳送訊息或上傳資料...',
+        inputPlaceholder: '輸入訊息…',
+        projectInputPlaceholder: '輸入訊息或拖入檔案…',
         suggestions: [
             { title:"摘要文件", desc:"幫我整理出一份簡單的重點摘要" },
             { title:"翻譯內容", desc:"將這段文字翻譯成通順的在地語言" },
@@ -88,6 +128,28 @@ export default {
         sendMessage: '發送訊息',
         thinking: '思考中...',
         thinkingSteps: ['處理中', '分析中', '思考中', '生成中'],
+        phase: {
+            thinking: '思考中',
+            retrieving: '檢索知識庫中',
+            generating: '生成回應中',
+        },
+        voice: {
+            startRecording: '錄製語音訊息',
+            cancel: '取消錄音',
+            send: '送出語音',
+            preparing: '正在準備麥克風...',
+            recordingAria: '錄音中',
+            permissionDenied: '已拒絕麥克風權限，請在瀏覽器設定中允許後再試。',
+            unsupported: '此瀏覽器不支援麥克風錄音。',
+            startFailed: '無法啟動錄音，請稍後再試。',
+            placeholderContent: '[語音訊息]',
+            defaultTitle: '語音訊息',
+            noTranscriptHint: '已送出語音留言（瀏覽器未提供即時轉錄）',
+            transcribing: '語音轉文字中...',
+            transcribeFailed: '語音轉文字失敗',
+            aiFallback: '我收到您剛剛的語音訊息了，但這次無法成功辨識內容。請再試一次，或改用文字輸入讓我為您處理。',
+            aiFallbackError: '我無法處理您剛剛的語音訊息（{{error}}）。請改用文字輸入，這樣我才能完整理解並回覆您的需求。',
+        },
         stopGeneration: '停止生成',
         regenerate: '重新生成',
         copyMessage: '複製訊息',
@@ -118,19 +180,23 @@ export default {
 
     // 文件管理
     documents: {
-        dropZoneTitle: '拖放文件到此處，或點擊選擇',
-        dropZoneSubtitle: '支援 PDF、Word、Excel、TXT、Markdown · 最大 50MB',
+        dropZoneTitle: '拖放文件到此處，或點擊選擇（可多選）',
+        dropZoneSubtitle: '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown · 最大 50MB',
         downloadSample: '下載範例檔試試看',
         uploadedTitle: '已上傳文件',
         searchPlaceholder: '搜尋檔名…',
         noMatch: '沒有符合搜尋的檔案',
         empty: '尚無上傳的文件',
         onboard1Title: '上傳什麼檔案',
-        onboard1Desc: '支援 PDF、Word、Excel、純文字與 Markdown。建議從一份小檔開始試試。',
+        onboard1Desc: '支援 PDF、Word、Excel、PowerPoint、純文字與 Markdown。可一次拖入多個檔案。',
         onboard2Title: '上傳後會發生什麼',
         onboard2Desc: '系統會自動切塊、向量化並寫入索引，狀態列會顯示處理中／已完成。',
         onboard3Title: '怎麼用 RAG 問答',
         onboard3Desc: '切到「專案」對話模式並把檔案加入專案，AI 會自動引用相關段落並標記出處。',
+        uploadQueueTitle: '上傳中',
+        uploadDone: '已完成',
+        uploadFailed: '失敗',
+        uploadQueued: '排隊中',
     },
 
     // 設定
@@ -179,6 +245,8 @@ export default {
         enterAdmin: '進入管理後台',
         adminLabel: '管理後台',
         showQR: '顯示 QR Code 在手機上登入',
+        replayTour: '重新觀看引導',
+        replayTourHint: '重新顯示首次使用引導',
     },
 
     // 錯誤
@@ -219,8 +287,8 @@ export default {
         injectionDescription: '系統已自動清除危險標記，並記錄此事件於審計日誌。',
         riskLevel: '風險等級',
         matchedPatterns: '偵測到的模式',
-        offlineMode: '✅ 資料主權保證：完全離線運行',
-        onlineWarning: '⚠️ 偵測到外部網路連線',
+        offlineMode: '資料主權保證：完全離線運行',
+        onlineWarning: '偵測到外部網路連線',
     },
 
     // 系統監控 (C4 差異化)
@@ -272,7 +340,7 @@ export default {
             step2Start: '進入該資料夾點擊上傳按鈕，支援上傳 ',
             step2Types: '.txt, .md, .csv 或 .pdf',
             step2End: ' 文件。',
-            step3: '系統後台會自動將文件送入切片處理程序（Chunking）寫入企業向量資料庫（ChromaDB）。',
+            step3: '系統後台會自動將文件送入切片處理程序（Chunking）並寫入 PostgreSQL + pgvector。',
             step4: '處理完成後，您點選「基於此來源開始提問」，AI 便會針對您的文件內容給予答覆與精準溯源。'
         },
         chat: {
@@ -312,6 +380,34 @@ export default {
             documentsDetail: '已索引來源',
             messages: '訊息總數',
             messagesDetail: '審計追蹤',
+            snapshotTitle: '即時概況',
+            snapshotEyebrow: 'Live Snapshot',
+            activeUsers: '活躍使用者',
+            activeUsersHint: '目前狀態為啟用的帳號',
+            eventsToday: '審計事件',
+            eventsTodayHint: '可至「稽核」分頁查看完整紀錄',
+            recentActivity: '最近活動',
+            viewAll: '查看全部',
+            noRecentActivity: '尚無最近活動',
+            operatorsTitle: '最近操作人員',
+            trendTitle: '近 7 天事件趨勢',
+            distributionTitle: '事件分布',
+            rolesTitle: '使用者角色',
+            docTypesTitle: '文件類型',
+            docStatusTitle: '處理狀態',
+        },
+        ngrok: {
+            activeStatus: '已啟動',
+            starting: '啟動中…',
+            inactive: '未啟動',
+            showQr: '顯示 QR Code',
+            toggleOnLabel: '已啟用',
+            toggleOffLabel: '啟用',
+            toggleOn: '啟動公開隧道',
+            toggleOff: '關閉公開隧道',
+            offlineHint: '需要連上網際網路才能啟用公開網址，請確認網路連線後再試一次。',
+            offlineBadge: '離線',
+            offlineDisabledTooltip: '目前離線中，無法啟用公開網址',
         },
         dashboard: {
             operationalMap: '營運地圖',
@@ -344,6 +440,11 @@ export default {
                 newPassword: '新密碼',
                 role: '角色',
                 active: '啟用帳號',
+            },
+            role: {
+                admin: '管理員',
+                engineer: '工程師',
+                user: '使用者',
             },
         },
         models: {

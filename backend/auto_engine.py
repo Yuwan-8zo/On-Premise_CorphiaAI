@@ -9,6 +9,7 @@ if sys.platform == "win32":
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 STATE_PATH = os.path.join(BASE_DIR, ".engine_state.json")
+LLAMA_CPP_VERSION = "0.2.90"
 
 def get_gpus():
     """偵測系統上所有的 GPU 顯示卡"""
@@ -112,7 +113,14 @@ def check_and_optimize(force=False):
         subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "llama-cpp-python"], 
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
-        install_cmd = [sys.executable, "-m", "pip", "install", "llama-cpp-python"]
+        install_cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            f"llama-cpp-python=={LLAMA_CPP_VERSION}",
+            "--only-binary=:all:",
+        ]
         
         env = os.environ.copy()
         
@@ -141,6 +149,32 @@ def check_and_optimize(force=False):
             with open(STATE_PATH, "w", encoding="utf-8") as f:
                 json.dump(current_state, f)
             return True
+        elif backend != "CPU":
+            print("\033[93mGPU 版本安裝失敗，改用 CPU wheel 保證 llama-cpp-python 可用。\033[0m")
+            fallback_cmd = [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                f"llama-cpp-python=={LLAMA_CPP_VERSION}",
+                "--only-binary=:all:",
+                "--extra-index-url",
+                "https://abetlen.github.io/llama-cpp-python/whl/cpu",
+            ]
+            set_env_variable("LLAMA_N_GPU_LAYERS", "0")
+            fallback_result = subprocess.run(fallback_cmd, env=env)
+            if fallback_result.returncode == 0:
+                current_state["backend"] = "CPU"
+                current_state["gpu_install_failed"] = True
+                with open(STATE_PATH, "w", encoding="utf-8") as f:
+                    json.dump(current_state, f)
+                print("[2/2] \033[92mCPU 核心安裝成功。\033[0m")
+                return True
+            print("\033[91mCPU wheel 安裝也失敗，請檢查 Python 版本與網路來源。\033[0m")
+            current_state["failed"] = True
+            with open(STATE_PATH, "w", encoding="utf-8") as f:
+                json.dump(current_state, f)
+            return False
         else:
             print("\033[91m引擎自動切換失敗，保留預設狀態。\033[0m")
             # 記錄失敗狀態，避免下次無限重試

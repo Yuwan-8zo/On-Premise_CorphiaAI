@@ -236,24 +236,56 @@ async def websocket_chat(
                     pass
 
         # 訊息處理迴圈
+        # WebSocket 單則訊息上限（防 DoS via huge payload）
+        # FastAPI / starlette 預設沒有 receive_json 大小上限，攻擊者可一次送 100MB
+        # JSON 直接吃爆記憶體。實際聊天訊息應該 < 10KB，給 1MB 緩衝寬鬆但有界。
+        WS_MAX_MESSAGE_BYTES = 1 * 1024 * 1024
+        # 單則 content 字數上限（即使 JSON 包裝小，content 字串本身也要限）
+        WS_MAX_CONTENT_CHARS = 32_000
+
         while True:
             try:
-                # 接收訊息
-                data = await websocket.receive_json()
-                
+                # 改用 receive_text 先檢查大小，再 parse JSON，避免 parse 完才發現超大
+                raw = await websocket.receive_text()
+                if len(raw.encode("utf-8")) > WS_MAX_MESSAGE_BYTES:
+                    await websocket.send_json({
+                        "type": "error",
+                        "code": "MESSAGE_TOO_LARGE",
+                        "message": f"訊息超過 {WS_MAX_MESSAGE_BYTES // 1024}KB 上限",
+                    })
+                    continue
+                try:
+                    import json as _json
+                    data = _json.loads(raw)
+                except (ValueError, TypeError):
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "無效的 JSON 格式",
+                    })
+                    continue
+
                 msg_type = data.get("type")
-                
+
                 if msg_type == "message":
                     content = data.get("content", "").strip()
                     use_rag = data.get("use_rag", True)
                     temperature = data.get("temperature", 0.7)
                     max_tokens = data.get("max_tokens", 2048)
                     language = data.get("language", "zh-TW")
-                    
+
                     if not content:
                         await websocket.send_json({
                             "type": "error",
                             "message": "訊息內容不能為空"
+                        })
+                        continue
+
+                    # 內容字串長度上限（即使整體 JSON 不大，極長字串也會吃 LLM context）
+                    if len(content) > WS_MAX_CONTENT_CHARS:
+                        await websocket.send_json({
+                            "type": "error",
+                            "code": "CONTENT_TOO_LONG",
+                            "message": f"訊息內容超過 {WS_MAX_CONTENT_CHARS} 字上限",
                         })
                         continue
                     

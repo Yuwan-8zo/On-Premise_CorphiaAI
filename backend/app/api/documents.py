@@ -111,7 +111,15 @@ async def upload_document(
         )
         
         if folderName:
-            document.doc_metadata = {"folderName": folderName, "isActive": True}
+            # SECURITY: folderName 來自前端，限制長度 + 拒絕控制字元
+            # 不限制具體字元（讓使用者用中文 / emoji 命名），但要防 NULL byte 跟超長字串
+            safe_folder = str(folderName).strip()[:128]
+            if "\x00" in safe_folder:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="folderName 含非法字元",
+                )
+            document.doc_metadata = {"folderName": safe_folder, "isActive": True}
             # SQLAlchemy needs a commit to save the update
             await db.commit()
         

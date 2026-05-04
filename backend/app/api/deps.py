@@ -12,6 +12,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.time_utils import to_aware_utc
 from app.models.user import User, UserRole
 from app.services.token_service import is_token_blacklisted
 
@@ -102,11 +103,17 @@ async def get_current_user(
     
     # 檢查 Token 是否在使用者 token_revoked_at 之前發放
     # （管理員強制撤銷所有 Token 時設定的時間戳）
+    #
+    # FIX: 原本用 .replace(tzinfo=timezone.utc) 在「DB 已是 aware datetime」的環境
+    # 會丟掉真實時區資訊（例如 PostgreSQL TIMESTAMP WITH TIME ZONE 拉回來是 +08:00
+    # 直接 replace 成 UTC 等於把時間「平移」8 小時，比對結果錯）。
+    # 改用 to_aware_utc() 統一處理：naive 視為 UTC 補 tzinfo，aware 直接 astimezone(UTC)。
     if user.token_revoked_at:
         token_iat = payload.get("iat")
         if token_iat:
             token_issued_at = datetime.fromtimestamp(token_iat, tz=timezone.utc)
-            if token_issued_at < user.token_revoked_at.replace(tzinfo=timezone.utc):
+            revoked_at_utc = to_aware_utc(user.token_revoked_at)
+            if revoked_at_utc and token_issued_at < revoked_at_utc:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token 已被撤銷，請重新登入",

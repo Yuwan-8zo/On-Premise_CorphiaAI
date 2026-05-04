@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.time_utils import utc_now_naive
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, or_
 # QUALITY-01 修正：langgraph 和 duckduckgo_search 改為懶惰 import（在使用點 import）
 # 避免這些套件未安裝時阻斷整個模組載入，提升系統啟動可靠性
 import asyncio
@@ -174,17 +174,24 @@ class ChatService:
         document_ids = None
         
         if folder_name:
+            # FIX: 原本拉整個 tenant 的所有 Document 進記憶體 + Python loop 過濾
+            # （tenant 有 10k 文件就裝 10k 物件）。改用 PostgreSQL JSONB operator
+            # 在 SQL 層直接過濾 doc_metadata->>'folderName' 與 'isActive'，
+            # 並只 SELECT id 欄位省記憶體。
             from app.models.document import Document
             docs_result = await self.db.execute(
-                select(Document).where(Document.tenant_id == state.get("tenant_id"))
+                select(Document.id)
+                .where(Document.tenant_id == state.get("tenant_id"))
+                .where(Document.doc_metadata["folderName"].astext == folder_name)
+                # isActive 預設 True：欄位不存在或為 'true' 都算啟用
+                .where(
+                    or_(
+                        Document.doc_metadata["isActive"].astext == "true",
+                        Document.doc_metadata["isActive"].astext.is_(None),
+                    )
+                )
             )
-            documents = docs_result.scalars().all()
-            
-            document_ids = []
-            for doc in documents:
-                metadata = doc.doc_metadata or {}
-                if metadata.get("folderName") == folder_name and metadata.get("isActive", True):
-                    document_ids.append(doc.id)
+            document_ids = [row[0] for row in docs_result.all()]
                     
         # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
         # 提高中文專有名詞與代號（例如 SOP 編號、人名）的命中率。
@@ -196,8 +203,77 @@ class ChatService:
             document_ids=document_ids,
             similarity_threshold=settings.rag_similarity_threshold,
         )
-        
+
+        # ─────────────────────────────────────────────────────────────
+        # FIX: 「每個檔案至少貢獻一個 chunk」覆蓋保證（安全版）
+        # ─────────────────────────────────────────────────────────────
+        # Bug 場景：勾 5 個檔案，top-K=5 chunks 可能全部來自單一檔案，
+        # 前端顯示「參考來源 (1)」 → 體感「AI 只讀了 1 個檔案」。
+        #
+        # 補丁設計：
+        #   1) 用 search()（純向量）而不是 hybrid_search()，省掉 keyword
+        #      regex pass，每個 missing doc 只多打一次 SQL，毫秒級。
+        #   2) 上限 3 個 missing（之前 10 容易把 backend 拖到 timeout）。
+        #   3) try/except 包整個 block：補搜失敗也不影響主流程，至少
+        #      讓 LLM 拿到主搜尋的結果回答。
+        #   4) asyncio.wait_for 個別 timeout 1.5s，單個慢不拖整體。
+        # ─────────────────────────────────────────────────────────────
+        if document_ids and len(document_ids) > 1:
+            try:
+                import asyncio
+                covered_doc_ids: set[str] = {
+                    r["metadata"].get("document_id")
+                    for r in search_results
+                    if r.get("metadata", {}).get("document_id")
+                }
+                missing_doc_ids = [d for d in document_ids if d not in covered_doc_ids]
+
+                # 補搜共用同一個 query embedding，避免每個 missing doc 都重新 encode
+                # （SentenceTransformer.encode() 是 CPU 密集型，3 個 doc 重複算就是 3x 成本）
+                shared_embedding = None
+                if missing_doc_ids:
+                    try:
+                        shared_embedding = await asyncio.wait_for(
+                            self.rag_service.get_embedding(state.get("query", "")),
+                            timeout=2.0,
+                        )
+                    except (asyncio.TimeoutError, Exception) as e:
+                        logger.warning(f"per-doc fallback embedding 計算失敗: {e}")
+
+                for doc_id in missing_doc_ids[:3]:
+                    try:
+                        extra = await asyncio.wait_for(
+                            self.rag_service.search(
+                                db=self.db,
+                                query=state.get("query", ""),
+                                tenant_id=state.get("tenant_id"),
+                                n_results=1,
+                                document_ids=[doc_id],
+                                similarity_threshold=0.0,
+                                precomputed_embedding=shared_embedding,
+                            ),
+                            timeout=1.5,
+                        )
+                        search_results.extend(extra)
+                    except asyncio.TimeoutError:
+                        logger.warning(f"per-doc fallback timeout for {doc_id}, skipped")
+                    except Exception as e:
+                        logger.warning(f"per-doc fallback failed for {doc_id}: {e}")
+            except Exception as e:
+                logger.error(f"per-doc coverage 補搜整段失敗（已 fallback 主搜尋結果）: {e}")
+
         if search_results:
+            # FIX: 去重 by chunk_id（hybrid_search 主搜 + per-doc fallback 可能命中同一個 chunk）
+            # 同個 chunk 重複丟給 LLM 會浪費 context，前端 sources 列表也會出現重複條目
+            seen_chunk_ids: set[str] = set()
+            unique_results = []
+            for r in search_results:
+                cid = r.get("chunk_id")
+                if cid and cid not in seen_chunk_ids:
+                    seen_chunk_ids.add(cid)
+                    unique_results.append(r)
+            search_results = unique_results
+
             context = self.rag_service.build_context(search_results)
             sources = [
                 {
@@ -307,14 +383,18 @@ class ChatService:
     ) -> list[Message]:
         """
         取得對話訊息
-        
+
         Args:
             conversation_id: 對話 ID
-            limit: 最大數量
-            
+            limit: 最大數量（會被強制 clamp 在 1-200 之間，避免外部呼叫者
+                   不小心傳 10000+ 把整段對話載入記憶體爆爛）
+
         Returns:
             list[Message]: 訊息列表
         """
+        # 防呆：clamp 到合理範圍。下界 1（避免 limit<=0 變成「全部」），
+        # 上界 200（一般 LLM context 已經吃不下這麼多訊息了）。
+        limit = max(1, min(int(limit or 0) or 50, 200))
         result = await self.db.execute(
             select(Message)
             .where(Message.conversation_id == conversation_id)

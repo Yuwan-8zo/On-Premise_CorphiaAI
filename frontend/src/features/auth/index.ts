@@ -1,5 +1,5 @@
 export { default as BackendStatusPill } from './components/BackendStatusPill'
+export { default as BackendBootSplash } from './components/BackendBootSplash'
 export { default as AuthEngineScene } from './components/AuthEngineScene'
 export { default as FloatingInput } from './components/FloatingInput'
-export { default as QrAccessModal } from './components/QrAccessModal'
 export type { BackendStatus } from './components/BackendStatusPill'

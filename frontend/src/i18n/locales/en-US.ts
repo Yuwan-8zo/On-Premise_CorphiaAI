@@ -25,6 +25,42 @@ export default {
         changeName: 'Change Name',
         active: 'Active',
         disabled: 'Disabled',
+        clearAll: 'Clear all',
+        dismiss: 'Dismiss',
+        skip: 'Skip',
+        next: 'Next',
+        prev: 'Back',
+    },
+
+    // First-time spotlight onboarding tour
+    onboarding: {
+        start: 'Get started',
+        welcome: {
+            title: 'Welcome to Corphia AI',
+            desc: 'A self-hosted enterprise knowledge engine. Everything stays on your machine. I\'ll walk you through 4 key parts of the interface.',
+        },
+        tour: {
+            modeToggle: {
+                title: 'General vs Project',
+                desc: 'Switch chat mode here: General is plain chat; Project uses the folder contents as RAG context.',
+            },
+            newChat: {
+                title: 'Start something new',
+                desc: 'Creates a new conversation in General mode, or a new folder in Project mode.',
+            },
+            chatInput: {
+                title: 'Type or drop',
+                desc: 'Type a message or drop files in. The left button opens the prompt-template menu; the mic button on the right records voice.',
+            },
+            settings: {
+                title: 'Settings & admin',
+                desc: 'Click your avatar to open Settings — theme, language, accent. Admins can also reach the admin console from here.',
+            },
+        },
+        done: {
+            title: 'You\'re all set',
+            desc: 'Start your first conversation. To see this guide again, open Settings → Guide and click "Replay tour".',
+        },
     },
 
     // Authentication
@@ -63,14 +99,18 @@ export default {
         terms: 'Terms of Service',
         help: 'Help & Support',
         changePassword: 'Change Password',
+        waitingBackend: 'Waiting for backend',
+        connectingBackend: 'Connecting to backend',
+        backendOfflineHint: 'Make sure the backend is running — you will be taken to the login as soon as it responds.',
+        backendCheckingHint: 'Initial connection — this should only take a moment.',
     },
 
     // Chat
     chat: {
         emptyGreeting: 'What can I help you with, {{name}}?',
         connectedToModel: 'Connected to local {{model}}',
-        inputPlaceholder: 'Message Corphia AI...',
-        projectInputPlaceholder: 'Send a message or upload documents...',
+        inputPlaceholder: 'Type a message…',
+        projectInputPlaceholder: 'Type a message or drop files…',
         suggestions: [
             { title:"Summarize Document", desc:"Help me organize a simple key summary" },
             { title:"Translate Content", desc:"Translate this text into fluent local language" },
@@ -88,6 +128,28 @@ export default {
         sendMessage: 'Send Message',
         thinking: 'Thinking...',
         thinkingSteps: ['Processing', 'Analyzing', 'Thinking', 'Generating'],
+        phase: {
+            thinking: 'Thinking',
+            retrieving: 'Searching knowledge base',
+            generating: 'Generating response',
+        },
+        voice: {
+            startRecording: 'Record voice message',
+            cancel: 'Cancel recording',
+            send: 'Send voice',
+            preparing: 'Preparing microphone...',
+            recordingAria: 'Recording',
+            permissionDenied: 'Microphone permission denied. Please allow it in your browser settings and try again.',
+            unsupported: 'Voice recording is not supported in this browser.',
+            startFailed: 'Could not start recording. Please try again.',
+            placeholderContent: '[Voice message]',
+            defaultTitle: 'Voice message',
+            noTranscriptHint: 'Voice memo sent (your browser did not provide live transcription).',
+            transcribing: 'Transcribing...',
+            transcribeFailed: 'Transcription failed',
+            aiFallback: 'I received your voice message but could not transcribe it this time. Please try again, or type your message instead.',
+            aiFallbackError: 'I could not process your voice message ({{error}}). Please type your message so I can give you a complete reply.',
+        },
         stopGeneration: 'Stop',
         regenerate: 'Regenerate',
         copyMessage: 'Copy',
@@ -118,19 +180,23 @@ export default {
 
     // Documents
     documents: {
-        dropZoneTitle: 'Drop files here, or click to select',
-        dropZoneSubtitle: 'Supports PDF, Word, Excel, TXT, Markdown · max 50MB',
+        dropZoneTitle: 'Drop files here, or click to select (multiple)',
+        dropZoneSubtitle: 'Supports PDF, Word, Excel, PowerPoint, TXT, Markdown · max 50MB',
         downloadSample: 'Download a sample file',
         uploadedTitle: 'Uploaded',
         searchPlaceholder: 'Search filename…',
         noMatch: 'No matching files',
         empty: 'No documents uploaded yet',
         onboard1Title: 'What to upload',
-        onboard1Desc: 'PDF, Word, Excel, plain text, or Markdown. A small file is the best way to start.',
+        onboard1Desc: 'PDF, Word, Excel, PowerPoint, plain text, or Markdown. Drop multiple files at once.',
         onboard2Title: 'What happens next',
         onboard2Desc: 'The file is chunked, embedded, and indexed automatically. The status badge shows progress.',
         onboard3Title: 'How to use it with RAG',
         onboard3Desc: 'Switch to Project chat mode and add the file. The AI will cite the relevant passages with sources.',
+        uploadQueueTitle: 'Uploading',
+        uploadDone: 'Done',
+        uploadFailed: 'Failed',
+        uploadQueued: 'Queued',
     },
 
     // Settings
@@ -179,6 +245,8 @@ export default {
         enterAdmin: 'Enter Admin Dashboard',
         adminLabel: 'Admin Dashboard',
         showQR: 'Show QR Code for mobile login',
+        replayTour: 'Replay tour',
+        replayTourHint: 'Show the first-time onboarding tour again',
     },
 
     // Errors
@@ -219,8 +287,8 @@ export default {
         injectionDescription: 'Dangerous tokens have been sanitized and this event has been logged for audit.',
         riskLevel: 'Risk Level',
         matchedPatterns: 'Detected Patterns',
-        offlineMode: '✅ Data Sovereignty: Fully Offline Operation',
-        onlineWarning: '⚠️ External network connection detected',
+        offlineMode: 'Data Sovereignty: Fully Offline Operation',
+        onlineWarning: 'External network connection detected',
     },
 
     // System Monitor (C4)
@@ -272,7 +340,7 @@ export default {
             step2Start: 'Enter the folder and click the upload button, supporting ',
             step2Types: '.txt, .md, .csv or .pdf',
             step2End: ' files.',
-            step3: 'The system backend will automatically send files to chunking and write to the enterprise vector database (ChromaDB).',
+            step3: 'The backend automatically chunks files and writes embeddings to PostgreSQL + pgvector.',
             step4: 'Once processed, click"Ask questions based on this source", and AI will answer and trace sources accurately based on your documents.'
         },
         chat: {
@@ -312,6 +380,34 @@ export default {
             documentsDetail: 'indexed sources',
             messages: 'Messages',
             messagesDetail: 'audit trail',
+            snapshotTitle: 'Live Snapshot',
+            snapshotEyebrow: 'Live Snapshot',
+            activeUsers: 'Active Users',
+            activeUsersHint: 'Accounts currently enabled',
+            eventsToday: 'Audit Events',
+            eventsTodayHint: 'See the Audit tab for full history',
+            recentActivity: 'Recent Activity',
+            viewAll: 'View all',
+            noRecentActivity: 'No recent activity',
+            operatorsTitle: 'Recent Operators',
+            trendTitle: '7-day Activity Trend',
+            distributionTitle: 'Event Distribution',
+            rolesTitle: 'User Roles',
+            docTypesTitle: 'Document Types',
+            docStatusTitle: 'Processing Status',
+        },
+        ngrok: {
+            activeStatus: 'Active',
+            starting: 'Starting…',
+            inactive: 'Inactive',
+            showQr: 'Show QR Code',
+            toggleOnLabel: 'Enabled',
+            toggleOffLabel: 'Enable',
+            toggleOn: 'Start public tunnel',
+            toggleOff: 'Stop public tunnel',
+            offlineHint: 'Internet access is required to enable the public URL. Please reconnect and try again.',
+            offlineBadge: 'Offline',
+            offlineDisabledTooltip: 'You are offline. Public URL cannot be started.',
         },
         dashboard: {
             operationalMap: 'Operational Map',
@@ -344,6 +440,11 @@ export default {
                 newPassword: 'New Password',
                 role: 'Role',
                 active: 'Active Account',
+            },
+            role: {
+                admin: 'Admin',
+                engineer: 'Engineer',
+                user: 'User',
             },
         },
         models: {

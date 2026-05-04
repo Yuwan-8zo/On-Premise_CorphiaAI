@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { documentsApi } from '@/api/documents'
+import MaterialIcon from '@/components/icons/MaterialIcon'
 
 interface Document {
     id: string
@@ -31,8 +32,12 @@ const UploadIcon = () => (
 const FileIcon = ({ type }: { type: string }) => {
     const colors: Record<string, string> = {
         pdf: 'text-red-500',
-        docx: 'text-light-accent',
+        docx: 'text-blue-500',
+        doc: 'text-blue-500',
         xlsx: 'text-green-500',
+        xls: 'text-green-500',
+        pptx: 'text-orange-500',
+        ppt: 'text-orange-500',
         txt: 'text-text-secondary',
         md: 'text-text-secondary',
     }
@@ -44,6 +49,39 @@ const FileIcon = ({ type }: { type: string }) => {
             </svg>
         </div>
     )
+}
+
+// 副檔名白名單 — 跟後端能成功解析的格式對齊。
+// 舊版 office 格式 (.doc / .xls / .ppt) 後端會拒絕（python-pptx / python-docx 解析
+// 不穩或不支援），這邊就不放進 accept 讓使用者能選到。
+const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.txt', '.md']
+const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(',')
+
+/**
+ * 多檔上傳佇列的單筆狀態
+ *
+ * 為什麼要把 progress / status / error 攤在 item 上而不是用一個全域變數：
+ *   - 上傳是並行的（CONCURRENCY=3），每筆有自己的進度
+ *   - 任何一筆失敗都不該影響其他筆
+ *   - UI 要逐筆畫一條進度條，需要 stable id 對應 React key
+ */
+interface UploadItem {
+    id: string
+    file: File
+    progress: number  // 0-100
+    status: 'queued' | 'uploading' | 'completed' | 'failed'
+    error?: string
+}
+
+const UPLOAD_CONCURRENCY = 3
+
+function getExtension(name: string): string {
+    const idx = name.lastIndexOf('.')
+    return idx >= 0 ? name.slice(idx).toLowerCase() : ''
+}
+
+function isAcceptedFile(file: File): boolean {
+    return ACCEPTED_EXTENSIONS.includes(getExtension(file.name))
 }
 
 const TrashIcon = () => (
@@ -80,11 +118,15 @@ export default function Documents() {
 
     const [documents, setDocuments] = useState<Document[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [isUploading, setIsUploading] = useState(false)
-    const [uploadProgress, setUploadProgress] = useState(0)
+    const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([])
     const [error, setError] = useState<string | null>(null)
     const [dragActive, setDragActive] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
+
+    // 是否還有檔案正在上傳（給 input disabled / drop zone 樣式判斷用）
+    const isUploading = uploadQueue.some(
+        (item) => item.status === 'queued' || item.status === 'uploading',
+    )
 
     /** 依當前語系決定要下載的範例檔 */
     const sampleHref = (() => {
@@ -130,29 +172,104 @@ export default function Documents() {
         loadDocuments()
     }, [loadDocuments])
 
-    // 上傳文件
-    const uploadFile = async (file: File) => {
-        setIsUploading(true)
-        setUploadProgress(0)
-        setError(null)
+    /**
+     * 把 N 個檔案丟進上傳佇列並開始處理。
+     *
+     * 行為：
+     *   1) 先把選中的檔案分成「副檔名合法」和「不合法」兩堆，不合法的直接退掉並提示
+     *   2) 合法的給每筆配 id，初始 status='queued'，加進 uploadQueue
+     *   3) 起 UPLOAD_CONCURRENCY 個 worker 從佇列搶檔案來上傳
+     *   4) 每筆獨立追蹤進度與錯誤，互不影響
+     *   5) 全部結束後 reload 文件列表，並把 'completed' 的條目延遲 4 秒淡出
+     *      （'failed' 的留著讓使用者看到原因，要手動關才會消）
+     */
+    const enqueueUploads = useCallback(
+        async (files: File[]) => {
+            if (files.length === 0) return
+            setError(null)
 
-        try {
-            await documentsApi.upload(file, undefined, (progressEvent) => {
-                const progress = progressEvent.total
-                    ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    : 0
-                setUploadProgress(progress)
-            })
+            // 先過濾副檔名
+            const accepted: File[] = []
+            const rejected: File[] = []
+            for (const f of files) {
+                if (isAcceptedFile(f)) accepted.push(f)
+                else rejected.push(f)
+            }
+            if (rejected.length > 0) {
+                const names = rejected.map((f) => f.name).join('、')
+                setError(`不支援的檔案類型：${names}`)
+            }
+            if (accepted.length === 0) return
 
-            // 重新載入列表
+            // 為每筆配 id 並加進佇列
+            const newItems: UploadItem[] = accepted.map((file) => ({
+                id:
+                    typeof crypto !== 'undefined' && crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                file,
+                progress: 0,
+                status: 'queued',
+            }))
+            setUploadQueue((prev) => [...prev, ...newItems])
+
+            // 提取 setUploadQueue 用的 helper：依 id 局部更新某 item
+            const patchItem = (id: string, patch: Partial<UploadItem>) => {
+                setUploadQueue((prev) =>
+                    prev.map((it) => (it.id === id ? { ...it, ...patch } : it)),
+                )
+            }
+
+            // 用 shift 模擬 queue，多個 worker 並行搶
+            const workQueue = [...newItems]
+            const workerLoop = async () => {
+                while (true) {
+                    const item = workQueue.shift()
+                    if (!item) return
+                    patchItem(item.id, { status: 'uploading', progress: 0 })
+                    try {
+                        await documentsApi.upload(item.file, undefined, (e) => {
+                            const pct = e.total
+                                ? Math.round((e.loaded * 100) / e.total)
+                                : 0
+                            patchItem(item.id, { progress: pct })
+                        })
+                        patchItem(item.id, { status: 'completed', progress: 100 })
+                    } catch (err: unknown) {
+                        const axiosErr = err as { response?: { data?: { detail?: string } } }
+                        const msg =
+                            axiosErr?.response?.data?.detail ||
+                            (err instanceof Error ? err.message : '上傳失敗')
+                        patchItem(item.id, { status: 'failed', error: msg })
+                        console.error(`上傳失敗 [${item.file.name}]:`, err)
+                    }
+                }
+            }
+
+            // 開 N 個 worker
+            await Promise.all(
+                Array.from(
+                    { length: Math.min(UPLOAD_CONCURRENCY, newItems.length) },
+                    () => workerLoop(),
+                ),
+            )
+
+            // 全部跑完 → 重新拉一次列表
             await loadDocuments()
-        } catch (err) {
-            console.error('上傳失敗:', err)
-            setError('文件上傳失敗')
-        } finally {
-            setIsUploading(false)
-            setUploadProgress(0)
-        }
+
+            // 4 秒後淡出已完成的；失敗的保留讓使用者看
+            setTimeout(() => {
+                setUploadQueue((prev) =>
+                    prev.filter((it) => it.status !== 'completed'),
+                )
+            }, 4000)
+        },
+        [loadDocuments],
+    )
+
+    /** 移除佇列中某筆（用於失敗後手動 dismiss） */
+    const dismissUpload = (id: string) => {
+        setUploadQueue((prev) => prev.filter((it) => it.id !== id))
     }
 
     // 刪除文件
@@ -184,14 +301,16 @@ export default function Documents() {
         e.stopPropagation()
         setDragActive(false)
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            uploadFile(e.dataTransfer.files[0])
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            enqueueUploads(Array.from(e.dataTransfer.files))
         }
     }
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            uploadFile(e.target.files[0])
+        if (e.target.files && e.target.files.length > 0) {
+            enqueueUploads(Array.from(e.target.files))
+            // reset input value so the same file can be re-selected later
+            e.target.value = ''
         }
     }
 
@@ -202,27 +321,42 @@ export default function Documents() {
     }
 
     return (
-        <div className="min-h-screen bg-bg-base transition-colors duration-300">
-            {/* 頂部導覽列 */}
-            <header className="h-[80px] border-b border-border-subtle flex items-center justify-between px-8 bg-bg-base/95 /95 backdrop-blur-md transition-colors sticky top-0 z-10">
+        <div
+            className="min-h-[100dvh] bg-bg-base transition-colors duration-300 relative"
+            style={{
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+        >
+            {/* 背景弧線 SVG —— 跟登入/Admin/Chat 同款 */}
+            <div aria-hidden className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
+                </svg>
+            </div>
+            {/* 頂部導覽列 —— 玻璃感 sticky bar */}
+            <header className="relative z-10 h-16 sm:h-[80px] border-b border-white/40 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl transition-colors sticky top-0">
                 <div className="flex items-center gap-3">
                     <Link
                         to="/chat"
                         aria-label={t('common.backToChat')}
                         title={t('common.backToChat')}
-                        className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-colors"
+                        className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
                         </svg>
                     </Link>
-                    <h1 className="text-xl font-semibold text-text-primary tracking-wide">
-                        📁 {t('nav.documents')}
+                    <h1 className="text-xl font-semibold text-text-primary tracking-wide flex items-center gap-2">
+                        <MaterialIcon name="folder" size={22} />
+                        {t('nav.documents')}
                     </h1>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-bg-surface rounded-full transition-colors"
+                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] rounded-full transition-colors"
                 >
                     {theme === 'dark' ? (
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -236,13 +370,13 @@ export default function Documents() {
                 </button>
             </header>
 
-            <div className="max-w-5xl mx-auto p-8 pt-10">
-                {/* 上傳區域 */}
+            <div className="relative z-10 max-w-5xl mx-auto p-4 sm:p-8 pt-6 sm:pt-10">
+                {/* 上傳區域 —— 玻璃感虛線框 */}
                 <div
-                    className={`relative border-2 border-dashed rounded-cv-lg p-10 mb-10 transition-colors bg-bg-base  ${dragActive
-                            ? 'border-corphia-bronze bg-accent /10'
-                            : 'border-border-subtle hover:border-corphia-bronze/50 /50'
-                        } shadow-sm dark:shadow-none`}
+                    className={`relative border-2 border-dashed rounded-cv-lg p-5 sm:p-10 mb-4 sm:mb-6 transition-colors backdrop-blur-xl ${dragActive
+                            ? 'border-corphia-bronze bg-accent/10 supports-[backdrop-filter]:bg-accent/8'
+                            : 'border-white/40 dark:border-white/10 bg-bg-base/60 supports-[backdrop-filter]:bg-bg-base/45 hover:border-corphia-bronze/50'
+                        } shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)]`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -251,20 +385,23 @@ export default function Documents() {
                     <input
                         type="file"
                         onChange={handleFileSelect}
-                        accept=".pdf,.docx,.xlsx,.txt,.md"
+                        accept={ACCEPT_ATTR}
+                        multiple
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={isUploading}
                     />
 
                     <div className="text-center flex flex-col items-center">
-                        <div className="text-corphia-bronze mb-4">
+                        <div className="text-corphia-bronze mb-2 sm:mb-4">
                             <UploadIcon />
                         </div>
-                        <p className="text-text-primary font-medium mb-2 text-lg">
-                            {t('documents.dropZoneTitle', '拖放文件到此處，或點擊選擇')}
+                        <p className="text-text-primary font-medium mb-1.5 sm:mb-2 text-[15px] sm:text-lg leading-tight">
+                            {t('documents.dropZoneTitle', '拖放文件到此處，或點擊選擇（可多選）')}
                         </p>
-                        <p className="text-sm text-text-secondary">
-                            {t('documents.dropZoneSubtitle', '支援 PDF、Word、Excel、TXT、Markdown · 最大 50MB')}
+                        <p className="text-[12px] sm:text-sm text-text-secondary leading-relaxed">
+                            {t(
+                                'documents.dropZoneSubtitle',
+                                '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown · 最大 50MB',
+                            )}
                         </p>
                         <a
                             href={sampleHref}
@@ -278,24 +415,116 @@ export default function Documents() {
                             {t('documents.downloadSample', '下載範例檔試試看')}
                         </a>
                     </div>
-
-                    {/* 上傳進度 */}
-                    {isUploading && (
-                        <div className="mt-6 max-w-md mx-auto">
-                            <div className="h-2 bg-bg-surface rounded-full overflow-hidden border border-border-subtle">
-                                <div
-                                    className="h-full bg-accent transition-all duration-300 relative"
-                                    style={{ width: `${uploadProgress}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-bg-base/20" />
-                                </div>
-                            </div>
-                            <p className="text-sm text-text-secondary text-center mt-2">
-                                上傳中... {uploadProgress}%
-                            </p>
-                        </div>
-                    )}
                 </div>
+
+                {/* 上傳佇列 — 每筆檔案一條進度條 */}
+                {uploadQueue.length > 0 && (
+                    <div className="mb-6 rounded-cv-lg border border-white/40 dark:border-white/10 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] shadow-sm dark:shadow-none overflow-hidden">
+                        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
+                            <p className="text-sm font-semibold text-text-primary">
+                                {t('documents.uploadQueueTitle', '上傳中')}
+                                <span className="ml-2 text-text-secondary font-normal">
+                                    ({uploadQueue.filter((i) => i.status === 'completed').length}
+                                    {' / '}
+                                    {uploadQueue.length})
+                                </span>
+                            </p>
+                            {!isUploading && uploadQueue.every((i) => i.status !== 'uploading') && (
+                                <button
+                                    onClick={() => setUploadQueue([])}
+                                    className="text-xs font-medium text-text-secondary hover:text-text-primary transition"
+                                >
+                                    {t('common.clearAll', '全部清除')}
+                                </button>
+                            )}
+                        </div>
+                        <ul className="divide-y divide-border-subtle">
+                            {uploadQueue.map((item) => {
+                                const ext = getExtension(item.file.name).slice(1)
+                                const sizeLabel = formatFileSize(item.file.size)
+                                const isFailed = item.status === 'failed'
+                                const isDone = item.status === 'completed'
+                                const isUploadingNow = item.status === 'uploading'
+
+                                return (
+                                    <li key={item.id} className="px-5 py-3">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <FileIcon type={ext} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-text-primary truncate">
+                                                    {item.file.name}
+                                                </p>
+                                                <p className="text-xs text-text-secondary">
+                                                    {sizeLabel}
+                                                    {isFailed && item.error && (
+                                                        <span className="text-red-500"> · {item.error}</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div className="shrink-0 flex items-center gap-2">
+                                                {/* 狀態指示器 */}
+                                                {isDone && (
+                                                    <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 inline-flex items-center gap-0.5">
+                                                        <MaterialIcon name="check_circle" size={13} aria-hidden />
+                                                        {t('documents.uploadDone', '已完成')}
+                                                    </span>
+                                                )}
+                                                {isFailed && (
+                                                    <span className="text-[11px] font-semibold text-red-500 inline-flex items-center gap-0.5">
+                                                        <MaterialIcon name="error" size={13} aria-hidden />
+                                                        {t('documents.uploadFailed', '失敗')}
+                                                    </span>
+                                                )}
+                                                {isUploadingNow && (
+                                                    <span className="text-[11px] font-mono tabular-nums text-text-secondary">
+                                                        {item.progress}%
+                                                    </span>
+                                                )}
+                                                {item.status === 'queued' && (
+                                                    <span className="text-[11px] font-medium text-text-muted">
+                                                        {t('documents.uploadQueued', '排隊中')}
+                                                    </span>
+                                                )}
+                                                {(isFailed || isDone) && (
+                                                    <button
+                                                        onClick={() => dismissUpload(item.id)}
+                                                        className="p-1 text-text-muted hover:text-text-primary transition rounded-full"
+                                                        title={t('common.dismiss', '關閉')}
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {/* 進度條 */}
+                                        <div className="h-1.5 bg-bg-surface rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all duration-200 ${
+                                                    isFailed
+                                                        ? 'bg-red-500'
+                                                        : isDone
+                                                            ? 'bg-green-500'
+                                                            : 'bg-accent'
+                                                }`}
+                                                style={{
+                                                    width: `${
+                                                        isFailed
+                                                            ? 100
+                                                            : isDone
+                                                                ? 100
+                                                                : item.progress
+                                                    }%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </div>
+                )}
 
                 {/* 錯誤訊息 */}
                 {error && (
@@ -311,7 +540,7 @@ export default function Documents() {
                             {
                                 step: '01',
                                 title: t('documents.onboard1Title', '上傳什麼檔案'),
-                                desc: t('documents.onboard1Desc', '支援 PDF、Word、Excel、純文字與 Markdown。建議從一份小檔開始試試。'),
+                                desc: t('documents.onboard1Desc', '支援 PDF、Word、Excel、PowerPoint、純文字與 Markdown。可一次拖入多個檔案。'),
                             },
                             {
                                 step: '02',
@@ -326,7 +555,7 @@ export default function Documents() {
                         ].map((card) => (
                             <div
                                 key={card.step}
-                                className="rounded-cv-lg border border-border-subtle bg-bg-base p-5 shadow-sm dark:shadow-none"
+                                className="rounded-cv-lg border border-white/40 dark:border-white/10 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] p-5 shadow-sm dark:shadow-none"
                             >
                                 <p className="text-xs font-semibold tracking-[0.18em] text-text-muted mb-2">{card.step}</p>
                                 <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>

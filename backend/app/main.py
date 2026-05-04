@@ -30,6 +30,7 @@ from app.api import (
     models_router,
     folders_router,
     system_monitor_router,
+    voice_router,
 )
 from app.services.llm_service import get_llm_service
 from app.services.rag_service import get_rag_service
@@ -48,12 +49,13 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("✅ 資料庫初始化完成")
     
-    # 生產環境安全檢查：避免使用預設 SECRET_KEY
-    if settings.app_env.lower() == "production" and settings.secret_key == "your-super-secret-key-change-in-production":
-        logger.critical("🚨 [安全警告] 生產環境中使用了預設的 SECRET_KEY！系統拒絕啟動。")
-        logger.critical("請執行 `python scripts/generate_key.py` 產生密鑰，並更新至 .env 檔案中。")
-        import sys
-        sys.exit(1)
+    # NOTE: SECRET_KEY 的安全檢查已移到 app.core.config.Settings 的 model_validator，
+    # 在這裡的好處是「載 Settings() 那一刻」就會拋錯，比 lifespan 啟動更早。
+    # 這裡保留 informational log 讓部署時看到目前環境設定。
+    logger.info(
+        "🔧 環境設定: app_env=%s, debug=%s, secret_key 長度=%d",
+        settings.app_env, settings.debug, len(settings.secret_key),
+    )
     
     # 清理過期的 Token 黑名單記錄
     try:
@@ -65,6 +67,26 @@ async def lifespan(app: FastAPI):
                 logger.info(f"🧹 已清理 {count} 筆過期的 Token 黑名單記錄")
     except Exception as e:
         logger.warning(f"Token 黑名單清理失敗（可忽略）: {e}")
+
+    # FIX: 清理上一輪 session 留下的「孤兒 ngrok process」。
+    # 場景：使用者上次直接 Ctrl+C 結束 start.py，ngrok 是 detached subprocess
+    # 不會被殺掉。下次啟動 backend，新 session 的 ngrok 預設應該是「關閉」狀態，
+    # 但 query_ngrok_state() 會發現舊 ngrok 還在 4040 port 上 → 回報 active=true
+    # → admin 進去看 ngrok widget 顯示「已啟動」（跟使用者的「預設關閉」期望不符）。
+    #
+    # 啟動時主動殺掉所有 ngrok process，並把 .runtime/ngrok.json 寫成 inactive。
+    # 使用者要開公開連結就走 admin 後台 toggle，明確 opt-in。
+    try:
+        from app.services.ngrok_service import (
+            stop_ngrok_processes,
+            write_ngrok_runtime,
+            NgrokState,
+        )
+        stop_ngrok_processes()
+        write_ngrok_runtime(NgrokState.inactive(source="backend_boot"))
+        logger.info("🧹 已清理孤兒 ngrok process（如有）")
+    except Exception as e:
+        logger.warning(f"ngrok 啟動清理失敗（可忽略）: {e}")
     
     # 初始化 LLM 和 RAG 服務
     llm_service = get_llm_service()
@@ -76,11 +98,11 @@ async def lifespan(app: FastAPI):
     yield
     
     # 關閉時執行
-    # ISSUE-04 修正：確保 httpx AsyncClient 正確關閉，避免連接池洩漏
     try:
-        if llm_service.client is not None:
-            await llm_service.client.aclose()
-            logger.info("✅ LLM httpx client 已正確關閉")
+        close_client = getattr(llm_service.client, "aclose", None)
+        if close_client is not None:
+            await close_client()
+            logger.info("✅ LLM client 已正確關閉")
     except Exception as e:
         logger.warning(f"關閉 LLM client 時發生錯誤（可忽略）: {e}")
     
@@ -221,6 +243,7 @@ app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
 app.include_router(folders_router, prefix="/api/v1")
 app.include_router(system_monitor_router, prefix="/api/v1")
+app.include_router(voice_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 

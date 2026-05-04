@@ -1,14 +1,52 @@
+import { useEffect, useState } from 'react'
+
+import OnboardingTour, { isOnboardingDone } from '@/components/onboarding/OnboardingTour'
 import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '@/features/chat/components'
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
+import { useUIStore } from '@/store/uiStore'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
 
+    // 第一次進入 chat 觸發引導；旗標寫在 localStorage，已看過就不再顯示
+    // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
+    const onboardingReplayToken = useUIStore((s) => s.onboardingReplayToken)
+    const [showOnboarding, setShowOnboarding] = useState(false)
+
+    useEffect(() => {
+        // 初次進入：沒看過才開
+        if (!isOnboardingDone()) {
+            setShowOnboarding(true)
+        }
+    }, [])
+
+    useEffect(() => {
+        // replay token 變動才開（>0 代表使用者按了重看）
+        if (onboardingReplayToken > 0) {
+            setShowOnboarding(true)
+        }
+    }, [onboardingReplayToken])
+
     return (
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
-        <div className="flex fixed inset-0 w-full h-[100dvh] bg-bg-surface text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors">
-            
+        // 與 LoginPage / Admin 同款：bg-bg-base + 三條弧線 SVG，sidebar / main 玻璃化
+        <div
+            className="flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
+            style={{
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+        >
+            {/* 背景弧線 SVG —— 跟登入/Admin 同款 */}
+            <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
+                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
+                </svg>
+            </div>
+
             {/* --- Mobile Sidebar Overlay --- */}
             <div 
                 className={`fixed inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
@@ -20,8 +58,8 @@ export default function Chat() {
             {/* 左側邊欄 Sidebar */}
             <ChatSidebar {...sidebarProps} />
 
-            {/* --- 右側主聊天視窗 Main Section --- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-bg-surface z-10">
+            {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
+            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-transparent z-10">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -80,9 +118,14 @@ export default function Chat() {
                                                 </label>
                                                 
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="font-medium text-[15px] text-text-primary truncate">{doc.filename ||"Unknown"}</span>
+                                                    <span className="font-medium text-[15px] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
                                                     <span className="text-[13px] text-text-secondary mt-0.5">
-                                                        {new Date(doc.created_at).toLocaleString()} • {Math.round((doc.size_bytes || 0) / 1024)} KB
+                                                        {new Date(doc.created_at).toLocaleString()} • {(() => {
+                                                            const bytes = doc.file_size || doc.size_bytes || 0
+                                                            if (bytes < 1024) return `${bytes} B`
+                                                            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+                                                            return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+                                                        })()}
                                                     </span>
                                                 </div>
                                             </div>
@@ -123,7 +166,7 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {mainProps.isUploading && mainProps.selectedFolder && (
-                            <div className="mt-6 p-4 bg-accent /10 rounded-cv-lg border border-corphia-bronze/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
+                            <div className="mt-6 p-4 bg-accent/10 rounded-cv-lg border border-corphia-bronze/20 flex items-center justify-between shadow-sm animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze border-t-transparent animate-spin" />
                                     <span className="text-corphia-bronze text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
@@ -136,9 +179,13 @@ export default function Chat() {
                     </div>
                 ) : (
                 <div className="relative flex-1 overflow-hidden h-full flex flex-col">
-                    {/* 右側小地圖與置底按鈕 */}
+                    {/* Minimap + scroll-to-bottom button.
+                        Only render scroll-to-bottom when there are messages, otherwise it can
+                        overlay on top of empty-state suggestion cards on narrow viewports. */}
                     <ChatMinimap messages={mainProps.messages} containerRef={mainProps.scrollContainerRef} />
-                    <ScrollToBottomButton containerRef={mainProps.scrollContainerRef} dependsOn={mainProps.messages} />
+                    {mainProps.messages.length > 0 && (
+                        <ScrollToBottomButton containerRef={mainProps.scrollContainerRef} dependsOn={mainProps.messages} isStreaming={mainProps.isStreaming} />
+                    )}
                     
                     <div ref={mainProps.scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
@@ -150,27 +197,28 @@ export default function Chat() {
                         )}
                         {mainProps.messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
-                            <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[10vh]">
-                                {/* Greeting */}
-                                <h2 className="text-[28px] md:text-[34px] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-tight">
+                            <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[8vh] md:pt-[10vh]">
+                                {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
+                                    避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
+                                <h2 className="text-[18px] sm:text-[24px] md:text-[34px] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
                                     {mainProps.t('chat.emptyGreeting', {
-                                        name:
-                                            mainProps.user?.name ||
-                                            mainProps.user?.email?.split('@')[0] ||
-                                            mainProps.t('common.user', 'User'),
+                                        name: (() => {
+                                            const raw =
+                                                mainProps.user?.name ||
+                                                mainProps.user?.email?.split('@')[0] ||
+                                                mainProps.t('common.user', 'User')
+                                            return raw.length > 16 ? raw.slice(0, 14) + '…' : raw
+                                        })(),
                                     })}
                                 </h2>
-                                {mainProps.selectedModel?.name && (
-                                    <p className="text-center text-sm text-text-secondary mb-8">
-                                        {mainProps.t('chat.connectedToModel', {
-                                            model: mainProps.selectedModel.name,
-                                            defaultValue: '已連線本地 {{model}}',
-                                        })}
-                                    </p>
-                                )}
+                                {/* 已移除「已連線本地 …」副標題，主畫面更乾淨；模型名稱仍可在右上角下拉選單看到 */}
+                                <div className="mb-8" />
 
-                                {/* Suggested Prompts */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-2 md:px-0">
+                                {/* Suggested Prompts —— 齊寬卡片（同最寬內容）：
+                                    父容器 w-max → 寬度 = 最寬子卡內容；
+                                    grid 1fr 讓 N 個 cell 平均分這個寬度，於是所有卡同寬 = 最寬內容；
+                                    桌機 sm:grid-cols-2 排兩欄，max-w-full 防超出視窗。 */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-max max-w-full mx-auto px-2 md:px-0 stagger-fade-in">
                                     {(() => {
                                         const suggestions = (mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
                                             { title:"摘要文件", desc:"幫我整理出一份簡單的重點摘要" },
@@ -180,7 +228,7 @@ export default function Chat() {
                                         ];
                                         const icons = [
                                             <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-                                            <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 15h2.498M15 15l2.498-5L20 15" /></svg>,
+                                            <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 15h2.498" /></svg>,
                                             <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
                                             <svg className="w-5 h-5 text-accent mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                                         ];
@@ -188,10 +236,11 @@ export default function Chat() {
                                             <button
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
-                                                className="text-left p-4 rounded-cv-lg bg-bg-base border border-border-subtle shadow-sm hover:bg-bg-surface hover:border-border-strong/30 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 group active:scale-[0.98] active:translate-y-0"
+                                                /* 不設 width：grid 自動讓每個 cell 取相同寬度（最寬內容）。玻璃感卡片。 */
+                                                className="text-left px-4 py-3 rounded-cv-lg bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/70 lift-on-hover group active:scale-[0.98]"
                                             >
                                                 {icons[index % icons.length]}
-                                                <div className="font-semibold text-[13px] mb-1.5 text-text-primary transition-colors">{item.title}</div>
+                                                <div className="font-semibold text-[13px] mb-1 text-text-primary transition-colors">{item.title}</div>
                                                 <div className="text-[12px] text-text-secondary leading-relaxed">{item.desc}</div>
                                             </button>
                                         ));
@@ -264,6 +313,12 @@ export default function Chat() {
                 setInput={modalProps.setNewFolderInput}
                 onSubmit={modalProps.submitNewFolder}
                 onClose={() => modalProps.setNewFolderModal(false)}
+            />
+
+            {/* 第一次使用引導 / 重看引導 */}
+            <OnboardingTour
+                isOpen={showOnboarding}
+                onClose={() => setShowOnboarding(false)}
             />
         </div>
     )

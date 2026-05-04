@@ -1,81 +1,73 @@
 /**
  * AI 思考狀態指示器
  *
- * 在 AI 串流回應開始前（message.content 為空時），
- * 循環顯示 Processing → Analyzing → Thinking → Generating 等狀態提示，
- * 並附帶動畫點點（dot pulse）與進度條效果。
+ * 在 AI 串流回應開始前（message.content 為空時），依目前實際情境顯示文字：
+ *   - phase='thinking'   → 「思考中...」（剛送出、後端還沒回任何 event）
+ *   - phase='retrieving' → 「檢索知識庫...」（RAG 啟用，已等候一小段時間）
+ *   - phase='generating' → 「生成回應中...」（sources 已回，LLM 正要產生 tokens）
+ *
+ * 文字會配上脈動點點，整體跟著當前 phase 切換時帶 fade-in 動畫。
  */
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-/** 每個步驟顯示的時間（ms） */
-const STEP_DURATION = 1800
+export type ThinkingPhase = 'thinking' | 'retrieving' | 'generating'
 
-const AIThinkingIndicator = () => {
+interface AIThinkingIndicatorProps {
+    /** 當前實際狀況。由上層（MessageBubble）依 message.sources 等資訊決定。 */
+    phase?: ThinkingPhase
+    /** 是否使用 RAG（一般聊天無檢索流程，不要顯示「檢索」狀態） */
+    ragEnabled?: boolean
+}
+
+const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false }: AIThinkingIndicatorProps) => {
     const { t } = useTranslation()
 
-    // 從 i18n 取得步驟陣列，fallback 到英文預設值
-    const steps = t('chat.thinkingSteps', { returnObjects: true }) as string[]
-    const safeSteps: string[] = Array.isArray(steps) && steps.length > 0
-        ? steps
-        : ['Processing', 'Analyzing', 'Thinking', 'Generating']
-
-    const [currentStep, setCurrentStep] = useState(0)
-    const [isExiting, setIsExiting] = useState(false)
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
+    // RAG 模式下，已過 ~1.2 秒仍處於 thinking 階段，自動進到 retrieving，讓使用者感覺有進度
+    const [autoRetrieving, setAutoRetrieving] = useState(false)
     useEffect(() => {
-        const advance = () => {
-            // 觸發淡出動畫
-            setIsExiting(true)
-            timerRef.current = setTimeout(() => {
-                setCurrentStep((prev) => (prev + 1) % safeSteps.length)
-                setIsExiting(false)
-            }, 300) // 與 CSS transition 同步
+        if (!ragEnabled || phase !== 'thinking') {
+            setAutoRetrieving(false)
+            return
         }
+        const id = setTimeout(() => setAutoRetrieving(true), 1200)
+        return () => clearTimeout(id)
+    }, [ragEnabled, phase])
 
-        const intervalId = setInterval(advance, STEP_DURATION)
-        return () => {
-            clearInterval(intervalId)
-            if (timerRef.current) clearTimeout(timerRef.current)
-        }
-    }, [safeSteps.length])
+    const effectivePhase: ThinkingPhase =
+        phase === 'thinking' && autoRetrieving ? 'retrieving' : phase
+
+    const phaseLabels: Record<ThinkingPhase, string> = {
+        thinking: t('chat.phase.thinking', { defaultValue: '思考中' }),
+        retrieving: t('chat.phase.retrieving', { defaultValue: '檢索知識庫中' }),
+        generating: t('chat.phase.generating', { defaultValue: '生成回應中' }),
+    }
+
+    // phase 切換時做一次 fade transition
+    const [displayPhase, setDisplayPhase] = useState<ThinkingPhase>(effectivePhase)
+    const [fading, setFading] = useState(false)
+    const phaseRef = useRef(effectivePhase)
+    useEffect(() => {
+        if (effectivePhase === phaseRef.current) return
+        setFading(true)
+        const id = setTimeout(() => {
+            phaseRef.current = effectivePhase
+            setDisplayPhase(effectivePhase)
+            setFading(false)
+        }, 220)
+        return () => clearTimeout(id)
+    }, [effectivePhase])
 
     return (
-        <div className="flex flex-col gap-2 py-1 select-none">
-            {/* 主狀態列 */}
-            <div className="flex items-center gap-2.5">
-                {/* 步驟文字（淡入淡出） */}
-                <span
-                    className="text-[14px] font-medium text-text-secondary tracking-wide transition-opacity duration-300"
-                    style={{ opacity: isExiting ? 0 : 1 }}
-                >
-                    {safeSteps[currentStep]}
-                    {/* 滾動省略號 */}
-                    <DotEllipsis />
-                </span>
-            </div>
-
-            {/* 進度條 */}
-            <div className="ml-[28px] h-[2px] w-40 rounded-full bg-bg-elevated overflow-hidden">
-                <div
-                    className="h-full rounded-full bg-gradient-to-r from-[rgb(var(--color-ios-accent-light))] to-transparent"
-                    style={{
-                        width: '45%',
-                        animation: 'thinking-slide 1.4s ease-in-out infinite',
-                    }}
-                />
-            </div>
-
-            {/* 全域 keyframe 注入（僅首次掛載） */}
-            <style>{`
-                @keyframes thinking-slide {
-                    0%   { transform: translateX(-100%); opacity: 0.4; }
-                    50%  { transform: translateX(100%);  opacity: 1; }
-                    100% { transform: translateX(250%);  opacity: 0.4; }
-                }
-            `}</style>
+        <div className="flex items-center py-1 select-none">
+            <span
+                className="text-[14px] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
+                style={{ opacity: fading ? 0 : 1 }}
+            >
+                {phaseLabels[displayPhase]}
+                <DotEllipsis />
+            </span>
         </div>
     )
 }

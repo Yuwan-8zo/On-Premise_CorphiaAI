@@ -8,27 +8,134 @@ html {
   font-size: 14px;
   background-color: rgb(var(--bg-canvas));
   color-scheme: only light;
-  height: 100%;
+  /* PWA 模式（加到主畫面 + black-translucent）：頁面內容會延伸到瀏海/Home Indicator 之外，
+     但只有 100dvh 才會真的「填滿 PWA 視窗」；100% 會被 viewport-fit=cover 算成扣掉 inset 後的高度，
+     底部會出現一條黑邊。所以 html/body/#root 全部以 100dvh 為準。 */
+  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
   background-attachment: fixed;
+  /* Premium feel: smooth scrolling baseline; reduced-motion query below
+     short-circuits this for accessibility */
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Noto Sans TC', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* OpenType features for refined Latin: contextual alternates, kerning, ligatures.
+     Inter and SF Pro both honour these. The default would already enable kerning
+     and ligatures, but being explicit prevents future fonts from regressing. */
+  font-feature-settings: 'kern', 'liga', 'calt';
+  text-rendering: optimizeLegibility;
   background-color: rgb(var(--bg-canvas));
   color: rgb(var(--text-primary));
   overscroll-behavior-y: none;
-  height: 100%;
+  /* 跟 html 同步 100dvh，避免 PWA 模式底部出現一條沒被 body 涵蓋的黑邊 */
+  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
 }
 
+/* Premium typography defaults:
+   - Display headings get tight tracking (large text wants to feel "set"
+     rather than "spread out")
+   - Numbers should align in tables/lists; tabular figures avoid the jitter
+     where 1 is narrower than 0
+   - Tight optical sizing for big numbers (font-light reads clean at large sizes) */
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+.tabular-nums,
+table td,
+table th,
+[data-numeric='true'] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Note: previously applied a global :focus-visible outline here, but `outline`
+   does not reliably follow border-radius across browsers, which made
+   pill-shaped inputs look like rectangles when focused. Components define
+   their own focus styles (e.g. focus:border-corphia-bronze on FloatingInput),
+   so we don't override globally. */
+
 #root {
-  height: 100%;
+  /* React 掛載點以 100dvh 為準，但保持透明，讓 html 的 dark mode 漸層
+     （linear-gradient #202022 → #101012）能透出來。html 已經吃了 fixed 漸層
+     當保底，body/#root 跟著 100dvh 拉滿就不會有空白邊。 */
+  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
 }
 
 .dark {
   color-scheme: only dark;
+}
+
+/*
+ * 全站禁用文字反選
+ * --------------------
+ * 平台型 UI（左側欄、按鈕、標題、icon、status pill 等）不需要被反選；
+ * 預設禁止選取可避免使用者誤觸「藍底反白」破壞畫面。
+ *
+ * 例外：
+ *   1. 聊天訊息內容（.selectable-text 或 [data-selectable=true]）→ 可選
+ *   2. 表單欄位（input / textarea / [contenteditable]）→ 一定要可選（瀏覽器原生需求）
+ *   3. SyntaxHighlighter 程式碼區塊 → 可選（複製程式碼是基本需求）
+ */
+html, body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.selectable-text,
+.selectable-text *,
+[data-selectable="true"],
+[data-selectable="true"] *,
+pre,
+pre *,
+code,
+code * {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* ============================================================================
+ * View Transition — 主題切換 cross-fade
+ * ----------------------------------------------------------------------------
+ * uiStore.toggleTheme / setThemePreference 包在 document.startViewTransition()
+ * 裡時，瀏覽器會自動把整個 root（包含 html background、所有 fixed 元素）拍
+ * 兩張快照做 cross-fade。預設動畫只有 0.25s 略短，這裡拉到 0.4s 配 Apple ease。
+ *
+ * 不靠 CSS transition：因為 html 的 dark mode 用 background-image: linear-gradient
+ * 切換時 transition 會抓不到（背景圖只能 step 切換），所以靠這層 viewport 級
+ * snapshot 動畫。Safari 18+ / Chrome 111+ 支援；舊瀏覽器走原本即時切換的 fallback。
+ *
+ * 為什麼不放 1s+ 那麼久：手機 PWA 模式下 view transition 會擋互動，太長會卡。
+ * 0.4s 是「看得到動畫但不影響操作節奏」的甜蜜點。
+ * ========================================================================== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 使用者開了 reduce-motion → 取消 cross-fade（拉短到 1ms 等於沒動畫） */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms;
+  }
 }

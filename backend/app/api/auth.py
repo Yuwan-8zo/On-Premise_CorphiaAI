@@ -2,6 +2,7 @@
 認證 API
 """
 
+import re
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -235,7 +236,14 @@ async def register(
             tenant_id = tenant.id
 
     # 建立使用者
-    display_name = request_body.name or request_body.email.split("@")[0]
+    # FIX: email local-part 直接當 name 可能含 `.+` 等特殊字元（user.name+tag@example.com）
+    # 也可能很短/很長。清理：替換特殊字元為底線，截斷到 50 字
+    if request_body.name:
+        display_name = request_body.name
+    else:
+        local_part = request_body.email.split("@")[0]
+        cleaned = re.sub(r"[^A-Za-z0-9_一-鿿]", "_", local_part)
+        display_name = cleaned[:50] or "User"
     user = User(
         email=request_body.email,
         password_hash=get_password_hash(request_body.password),

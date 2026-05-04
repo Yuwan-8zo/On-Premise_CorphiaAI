@@ -54,7 +54,7 @@ frontend/build/
 logs/
 *.log
 
-# ChromaDB
+# Local vector/cache data
 chroma_data/
 
 # AI Models (大檔案，不放進版本控管)
@@ -94,3 +94,15 @@ backend/.engine_state.json
 backend/error.txt
 crash.log
 backend/crash.log
+
+# 前端 build 錯誤暫存
+frontend/build_err*.txt
+frontend/tsconfig.node.tsbuildinfo
+frontend/scratch_puppeteer/
+
+# 後端測試 / 設計截圖
+backend/screenshots/
+.runtime/screenshots/
+
+# Claude worktrees（每次 session 用完就應該被 cleanup.ps1 清掉）
+.claude/worktrees/

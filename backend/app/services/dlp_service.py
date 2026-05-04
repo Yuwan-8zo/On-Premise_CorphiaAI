@@ -47,8 +47,15 @@ def check_dlp(text: str) -> DLPCheckResult:
     if not terms:
         return DLPCheckResult(blocked=False, matched_terms=[], reason="")
 
-    lower = text.lower()
-    matched = [term for term in terms if term and term in lower]
+    # FIX: Unicode normalize（NFKC）讓全形/半形等價
+    # 例如「最高機密」vs「最ⓗ機密」（圈字）、ＡＢＣ vs ABC、Ⅴ vs V
+    # 沒 normalize 攻擊者用全形字就能繞過 DLP 黑名單
+    import unicodedata
+    normalized = unicodedata.normalize("NFKC", text).lower()
+    matched = [
+        term for term in terms
+        if term and unicodedata.normalize("NFKC", term).lower() in normalized
+    ]
 
     if matched:
         logger.warning(f"[DLP] 偵測到黑名單字詞，請求已攔阻: {matched}")

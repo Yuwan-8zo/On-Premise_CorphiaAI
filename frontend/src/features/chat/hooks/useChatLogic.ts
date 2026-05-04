@@ -11,9 +11,10 @@ import { conversationsApi } from '@/api/conversations'
 import { documentsApi, type DocumentResponse } from '@/api/documents'
 import modelsApi, { type ModelItem } from '@/api/models'
 import { foldersApi } from '@/api/folders'
-import { createChatWebSocket, type ChatWebSocket, type StreamResponse } from '@/api/websocket'
+import { createChatWebSocket, type ChatWebSocket } from '@/api/websocket'
 import { useToastStore } from '@/store/toastStore'
 import type { Message } from '@/types/chat'
+import { buildStreamDispatcher } from './messageStreamHandlers'
 
 // D2: 拆出的元件和 Hooks
 
@@ -287,7 +288,38 @@ export function useChatLogic() {
         loadConversations()
     }, [setConversations])
 
+    /*
+     * 自動滾動策略：
+     *   1. 預設 autoFollowRef = true，AI 串流新訊息時自動跟隨到底部
+     *   2. 使用者「主動往上捲」（離底部 > 60px）→ autoFollowRef = false，停止自動跟隨
+     *   3. 使用者再「捲回底部」（離底部 ≤ 60px）→ autoFollowRef = true，重新啟動自動跟隨
+     *
+     * 之所以用 ref 不用 state：
+     *   - state 變動會觸發重新 render；但這個邏輯只是 useEffect 內部判斷用，沒必要 re-render
+     *   - 用 ref 也避免閉包過時的問題
+     */
+    const autoFollowRef = useRef(true)
+
     useEffect(() => {
+        const container = scrollContainerRef.current
+        if (!container) return
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+            // 60px 容忍：彈性下捲動畫、ResizeObserver 抖動不會誤判
+            autoFollowRef.current = distanceFromBottom <= 60
+        }
+
+        container.addEventListener('scroll', handleScroll, { passive: true })
+        // 初始化一次（剛進對話可能已經捲在某處）
+        handleScroll()
+        return () => container.removeEventListener('scroll', handleScroll)
+    }, [])
+
+    useEffect(() => {
+        // 訊息改變時 → 只有「使用者目前還貼在底部」才自動往下；否則尊重使用者閱讀位置
+        if (!autoFollowRef.current) return
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
@@ -298,73 +330,21 @@ export function useChatLogic() {
         }
     }, [input])
 
-    const handleWebSocketMessage = useCallback((data: StreamResponse) => {
-        switch (data.type) {
-            case 'stream':
-                if (data.content) {
-                    appendToLastMessage(data.content)
-                }
-                break
-            case 'done': {
-                setStreaming(false)
-                // 重新載入訊息以取得剛建立的 message 的真實 UUID，這樣編輯重新生成才能正常運作
-                const currentConvId = useChatStore.getState().currentConversation?.id
-                if (currentConvId) {
-                    conversationsApi.getMessages(currentConvId)
-                        .then(msgs => useChatStore.getState().setMessages(msgs))
-                        .catch(err => console.error('同步訊息失敗:', err))
-                }
-                break
-            }
-            case 'error':
-                console.error('WebSocket 錯誤:', data.message)
-                setStreaming(false)
-                break
-            case 'sources':
-                if (data.sources) {
-                    setSourcesToLastMessage(data.sources as any)
-                }
-                // C2: 儲存 RAG debug 資訊
-                if (data.debug) {
-                    useChatStore.getState().setRAGDebug(data.debug)
-                }
-                break
-            // A1: PII 遮罩警告
-            case 'pii_warning':
-                useChatStore.getState().addSecurityWarning({
-                    type: 'pii',
-                    message: data.message || '偵測到敏感資訊已自動遮罩',
-                    data: { mask_map: data.mask_map || [] },
-                    timestamp: Date.now(),
-                })
-                break
-            // A2: Prompt Injection 偵測警告
-            case 'injection_warning':
-                useChatStore.getState().addSecurityWarning({
-                    type: 'injection',
-                    message: data.message || '偵測到可疑的 Prompt Injection 模式',
-                    data: {
-                        risk_level: data.risk_level || 'medium',
-                        matched_patterns: data.matched_patterns || [],
-                    },
-                    timestamp: Date.now(),
-                })
-                break
-            // A3: DLP 黑名單命中 → 後端已攔阻，不會有 stream 內容
-            case 'dlp_block':
-                setStreaming(false)
-                useChatStore.getState().addSecurityWarning({
-                    type: 'dlp',
-                    message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',
-                    data: {
-                        matched_terms_count: data.matched_terms_count || 0,
-                    },
-                    timestamp: Date.now(),
-                })
-                toast.error(data.message || '訊息已被 DLP 策略攔阻')
-                break
-        }
-    }, [appendToLastMessage, setStreaming, setSourcesToLastMessage, toast])
+    /*
+     * Memoize the WebSocket packet dispatcher. The actual switch table lives in
+     * ./messageStreamHandlers.ts as a pure factory; useCallback keeps the same
+     * function reference across renders so connectWebSocket below doesn't
+     * resubscribe every time.
+     */
+    const handleWebSocketMessage = useCallback(
+        buildStreamDispatcher({
+            appendToLastMessage,
+            setStreaming,
+            setSourcesToLastMessage,
+            toast,
+        }),
+        [appendToLastMessage, setStreaming, setSourcesToLastMessage, toast],
+    )
 
     const connectWebSocket = useCallback(async (conversationId: string) => {
         if (wsRef.current) {
@@ -388,13 +368,33 @@ export function useChatLogic() {
 
     const selectConversation = useCallback(async (conversation: typeof currentConversation) => {
         if (!conversation) return
-        setCurrentConversation(conversation)
+
+        const previousConv = useChatStore.getState().currentConversation
+        const isSameConv = previousConv?.id === conversation.id
+        const isStreamingNow = useChatStore.getState().isStreaming
+
         setSelectedFolder(null)
         if (window.innerWidth < 768) {
             setSidebarOpen(false)
         }
+
+        // 唯一允許「不重新載入」的場景：完全相同對話 + 還在串流（避免把進行中的回覆中斷）
+        // 其他情況一律重新撈訊息，確保不同對話的內容完全隔開
+        if (isSameConv && isStreamingNow) {
+            return
+        }
+
+        // 切換對話 = 一個全新的 view → 先清空訊息陣列再撈，避免閃出舊對話的內容
+        setCurrentConversation(conversation)
+        setMessages([])
+        autoFollowRef.current = true
+
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
+            // 若 await 期間使用者又切去別的對話，store 的 currentConversation 已不是這次 fetch 的對象 → 丟掉這次結果
+            if (useChatStore.getState().currentConversation?.id !== conversation.id) {
+                return
+            }
             setMessages(msgs)
             setHasMoreMessages(msgs.length === 50)
             await connectWebSocket(conversation.id)
@@ -452,33 +452,57 @@ export function useChatLogic() {
     }, [loadMoreMessages])
 
     // --- 檔案上傳處理 ---
+    /**
+     * 多檔上傳：依序跑（chat 場景同時要送訊息，上傳體驗以「整批進度」呈現即可）。
+     * 進度條 = 已完成檔數 / 總檔數，比逐檔顯示更不擁擠。
+     */
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+        const fileList = e.target.files
+        if (!fileList || fileList.length === 0) return
+        const files = Array.from(fileList)
 
         setIsUploading(true)
         setUploadProgress(0)
 
-        const targetFolder = selectedFolder || (currentConversation?.settings?.folderName as string) || '新資料夾'
+        const targetFolder =
+            selectedFolder ||
+            (currentConversation?.settings?.folderName as string) ||
+            '新資料夾'
+
+        const totalBytes = files.reduce((sum, f) => sum + f.size, 0)
+        let bytesDoneOfFinishedFiles = 0
 
         try {
-            await documentsApi.upload(file, targetFolder, (progressEvent) => {
-                const progress = progressEvent.total
-                    ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    : 0
-                setUploadProgress(progress)
-            })
-            
-            if (selectedFolder) {
-                await loadFolderDocuments(selectedFolder)
-            } else {
-                setUploadedFiles(prev => [...prev, { name: file.name }])
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i]
+                try {
+                    await documentsApi.upload(file, targetFolder, (progressEvent) => {
+                        // 整批進度 = (已完成檔的 bytes + 當前檔目前 bytes) / 總 bytes
+                        const currentLoaded = progressEvent.loaded ?? 0
+                        const overall = totalBytes
+                            ? Math.round(
+                                  ((bytesDoneOfFinishedFiles + currentLoaded) * 100) /
+                                      totalBytes,
+                              )
+                            : 0
+                        setUploadProgress(Math.min(overall, 99))
+                    })
+                    bytesDoneOfFinishedFiles += file.size
+
+                    if (selectedFolder) {
+                        await loadFolderDocuments(selectedFolder)
+                    } else {
+                        setUploadedFiles((prev) => [...prev, { name: file.name }])
+                    }
+                } catch (err) {
+                    console.error(`上傳失敗 [${file.name}]:`, err)
+                    // 單檔失敗不中斷整批 — 繼續下一個
+                }
             }
-        } catch (err) {
-            console.error('上傳失敗:', err)
+            setUploadProgress(100)
         } finally {
             setIsUploading(false)
-            setUploadProgress(0)
+            setTimeout(() => setUploadProgress(0), 400)
             if (fileInputRef.current) fileInputRef.current.value = ''
         }
     }
@@ -538,15 +562,27 @@ export function useChatLogic() {
             const docList = res.data
             const folderDocs = docList.filter((d: DocumentResponse) => d.doc_metadata?.folderName === folderName && (d.doc_metadata?.isActive ?? true))
             if (folderDocs.length === 0) {
-                // 此資料夾內尚無檢索文件，自動提示上傳
-                const promptMsg: Message = {
+                // 此資料夾內尚無檢索文件，串流提示上傳（模擬 AI 打字效果）
+                const emptyAssistantMsg: Message = {
                     id: `auto-${Date.now()}`,
                     role: 'assistant',
-                    content: `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要芳您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`,
+                    content: '',
                     tokens: 0,
                     createdAt: new Date().toISOString(),
                 }
-                addMessage(promptMsg)
+                addMessage(emptyAssistantMsg)
+                setStreaming(true)
+
+                const noDocsText = `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請點擊輸入區左側的「附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`
+                // 以每 3 字元為單位打字，間距 30ms（與 sendMessage 的串流體驗一致）
+                const chunkSize = 3
+                const delay = 30
+                for (let i = 0; i < noDocsText.length; i += chunkSize) {
+                    const chunk = noDocsText.slice(i, i + chunkSize)
+                    appendToLastMessage(chunk)
+                    await new Promise<void>((resolve) => setTimeout(resolve, delay))
+                }
+                setStreaming(false)
             }
         } catch (error) {
             console.error('新增對話失敗:', error)
@@ -662,6 +698,8 @@ export function useChatLogic() {
             createdAt: new Date().toISOString(),
         }
         addMessage(tempUserMessage)
+        // 使用者剛送訊息 → 重置自動跟隨：AI 回覆過程中要看到內容捲入
+        autoFollowRef.current = true
 
         const tempAssistantMessage: Message = {
             id: `temp-${Date.now() + 1}`,
@@ -689,7 +727,7 @@ export function useChatLogic() {
                     )
                     if (activeDocs.length === 0) {
                         // 無可用文件 → 保持串流狀態，逐段 append 提示訊息（模擬打字效果）
-                        const noDocsText = `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請在右側點擊「📎 附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`
+                        const noDocsText = `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請點擊輸入區左側的「附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`
                         // 以每 3 字元為單位打字，間距 30ms
                         const chunkSize = 3
                         const delay = 30
@@ -804,6 +842,140 @@ export function useChatLogic() {
         setStreaming(false)
     }
 
+    /**
+     * 送出語音訊息：
+     *   1. 先在 UI 上加入帶 audio.pending=true 的 user message
+     *   2. 把 webm/opus 用 Web Audio API 解碼 + 重採樣成 16kHz mono WAV
+     *   3. 上傳到後端 /voice/transcribe（Whisper）取得真實的逐字稿
+     *   4. 拿到文字後更新 user message（清掉 pending，填 transcript），
+     *      然後跟一般文字訊息一樣交給 LLM 串流回覆
+     *   5. 任何一步失敗都不卡住對話：清掉 pending、用 fallback 文字當 AI 回覆
+     */
+    const handleSendVoice = async (payload: {
+        blob: Blob
+        url: string
+        mimeType: string
+        durationMs: number
+    }) => {
+        if (isStreaming || isConnecting) return
+
+        // 確保已連線到對話
+        let conversationId = currentConversation?.id
+        if (!conversationId) {
+            try {
+                const conversation = await conversationsApi.create({
+                    title: t('chat.voice.defaultTitle'),
+                    settings: { isProject: chatMode === 'project' },
+                })
+                addConversation(conversation)
+                setCurrentConversation(conversation)
+                conversationId = conversation.id
+                await connectWebSocket(conversationId)
+            } catch (error) {
+                console.error('建立對話失敗:', error)
+            }
+        }
+
+        // 1. 先在 UI 顯示語音訊息（pending 狀態），同時加入 assistant placeholder + 進入 streaming
+        const userMessageId = `temp-${Date.now()}`
+        const tempUserMessage: Message = {
+            id: userMessageId,
+            role: 'user',
+            content: t('chat.voice.placeholderContent'),
+            tokens: 0,
+            createdAt: new Date().toISOString(),
+            audio: {
+                url: payload.url,
+                mimeType: payload.mimeType,
+                durationMs: payload.durationMs,
+                pending: true,
+            },
+        }
+        addMessage(tempUserMessage)
+        autoFollowRef.current = true
+
+        const tempAssistantMessage: Message = {
+            id: `temp-${Date.now() + 1}`,
+            role: 'assistant',
+            content: '',
+            tokens: 0,
+            createdAt: new Date().toISOString(),
+        }
+        addMessage(tempAssistantMessage)
+        setStreaming(true)
+
+        // 2. 解碼 + 重採樣 + 上傳到後端 Whisper
+        let transcript = ''
+        let transcriptionError: string | null = null
+        try {
+            const { blobToWav16kMono } = await import('@/lib/audioToWav')
+            const { voiceApi } = await import('@/api/voice')
+            const wavBlob = await blobToWav16kMono(payload.blob)
+            const result = await voiceApi.transcribe(wavBlob, { language })
+            transcript = (result.text || '').trim()
+        } catch (err: any) {
+            transcriptionError = err?.response?.data?.detail || err?.message || String(err)
+            console.error('[voice] 轉錄失敗:', err)
+        }
+
+        // 3. 更新 user message：清掉 pending，填上 transcript / error
+        const userMessageUpdate: Partial<Message> = {
+            audio: {
+                url: payload.url,
+                mimeType: payload.mimeType,
+                durationMs: payload.durationMs,
+                transcript: transcript || undefined,
+                error: transcriptionError || undefined,
+                pending: false,
+            },
+            content: transcript || t('chat.voice.placeholderContent'),
+        }
+        useChatStore.getState().updateMessage(userMessageId, userMessageUpdate)
+
+        // 4. 沒有轉錄文字（後端失敗或音訊太短）→ 用 fallback 串 AI 回應
+        if (!transcript) {
+            const fallbackText = transcriptionError
+                ? t('chat.voice.aiFallbackError', { error: transcriptionError })
+                : t('chat.voice.aiFallback')
+            const chunkSize = 3
+            const delay = 28
+            for (let i = 0; i < fallbackText.length; i += chunkSize) {
+                const chunk = fallbackText.slice(i, i + chunkSize)
+                appendToLastMessage(chunk)
+                await new Promise<void>((resolve) => setTimeout(resolve, delay))
+            }
+            setStreaming(false)
+            return
+        }
+
+        // 5. 有轉錄 → 跟文字訊息一樣交給 LLM
+        const shouldUseRag = chatMode === 'project'
+        if (wsRef.current?.isConnected) {
+            wsRef.current.sendMessage(transcript, shouldUseRag, 0.7, language)
+        } else {
+            try {
+                if (conversationId) {
+                    const response = await conversationsApi.sendMessage(conversationId, {
+                        content: transcript,
+                        useRag: shouldUseRag,
+                    })
+                    useChatStore.setState((state) => {
+                        const newMessages = [...state.messages]
+                        newMessages[newMessages.length - 1] = response
+                        return { messages: newMessages }
+                    })
+                }
+            } catch (error) {
+                console.error('語音轉文字後送出失敗:', error)
+                useChatStore.setState((state) => ({
+                    messages: state.messages.slice(0, -1),
+                }))
+            } finally {
+                setStreaming(false)
+            }
+        }
+    }
+
 
     useEffect(() => {
         return () => wsRef.current?.disconnect()
@@ -878,10 +1050,11 @@ export function useChatLogic() {
             setInput, 
             inputRef, 
             fileInputRef, 
-            handleKeyDown, 
-            handleStop, 
-            handleSend, 
-            handleFileUpload
+            handleKeyDown,
+            handleStop,
+            handleSend,
+            handleFileUpload,
+            handleSendVoice
         },
         modalProps: {
             activeMenu, 

@@ -8,8 +8,8 @@
 }
 
 ::-webkit-scrollbar {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
@@ -18,6 +18,8 @@
 
 ::-webkit-scrollbar-thumb {
   background-color: transparent;
+  /* 4px transparent border = visible thumb is ~4px wide.
+     Tight but still grabbable. Premium feels narrow, not chunky. */
   border: 4px solid transparent;
   background-clip: padding-box;
   border-radius: 999px;
@@ -25,7 +27,7 @@
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background-color: rgb(var(--scrollbar-thumb));
+  background-color: rgb(var(--scrollbar-thumb) / 0.55);
 }
 
 ::-webkit-scrollbar-thumb:hover {

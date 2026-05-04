@@ -23,6 +23,27 @@ export const systemApi = {
     },
 
     /**
+     * 啟動 ngrok 公開隧道（admin only）
+     * 後端會 block 最多 ~20s 等 ngrok 取到 URL，所以呼叫端要設較長 timeout
+     */
+    startNgrok: async (): Promise<NgrokInfo> => {
+        const response = await apiClient.post<NgrokInfo>(
+            '/system/ngrok/start',
+            null,
+            { timeout: 30000 },
+        )
+        return response.data
+    },
+
+    /**
+     * 關閉 ngrok 公開隧道（admin only）
+     */
+    stopNgrok: async (): Promise<NgrokInfo> => {
+        const response = await apiClient.post<NgrokInfo>('/system/ngrok/stop')
+        return response.data
+    },
+
+    /**
      * 取得詳細系統健康（CPU / GPU / VRAM / LLM 統計）
      */
     getHealthDetailed: async () => {

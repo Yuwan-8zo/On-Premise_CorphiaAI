@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
 )
+from sqlalchemy import text
 
 from app.main import app
 from app.core.database import Base, get_db
@@ -37,7 +38,7 @@ if os.path.exists(_env_test):
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/corphia_test",
+    "postgresql+asyncpg://corphia:corphia123@localhost:5433/corphia_test",
 )
 
 # ── 建立測試引擎（與 app 引擎分離）────────────────────────────────
@@ -69,6 +70,7 @@ async def setup_test_db():
     async with test_engine.begin() as conn:
         # 確保所有 model 已被 import
         import app.models  # noqa: F401
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:

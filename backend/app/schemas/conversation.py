@@ -30,6 +30,8 @@ class ConversationUpdate(BaseModel):
 class ConversationResponse(BaseModel):
     """對話回應 Schema"""
     id: str
+    tenant_id: str
+    user_id: str
     title: str
     model: str
     message_count: int

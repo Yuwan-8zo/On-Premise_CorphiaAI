@@ -30,12 +30,19 @@ async def list_tenants(
     count_query = select(func.count(Tenant.id))
     
     if search:
-        search_filter = f"%{search}%"
+        # 跳脫 LIKE 萬用字元，避免使用者輸入的 % / _ 被當通配
+        if len(search) > 128:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="search 字串過長")
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_filter = f"%{escaped}%"
         query = query.where(
-            (Tenant.name.ilike(search_filter)) | (Tenant.slug.ilike(search_filter))
+            Tenant.name.ilike(search_filter, escape="\\")
+            | Tenant.slug.ilike(search_filter, escape="\\")
         )
         count_query = count_query.where(
-            (Tenant.name.ilike(search_filter)) | (Tenant.slug.ilike(search_filter))
+            Tenant.name.ilike(search_filter, escape="\\")
+            | Tenant.slug.ilike(search_filter, escape="\\")
         )
         
     total = (await db.execute(count_query)).scalar() or 0

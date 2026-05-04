@@ -100,12 +100,19 @@ async def list_users(
     
     # 篩選條件
     if search:
-        search_filter = f"%{search}%"
+        # 跳脫 LIKE 萬用字元 + 限長度
+        if len(search) > 128:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="search 字串過長")
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_filter = f"%{escaped}%"
         query = query.where(
-            (User.name.ilike(search_filter)) | (User.email.ilike(search_filter))
+            User.name.ilike(search_filter, escape="\\")
+            | User.email.ilike(search_filter, escape="\\")
         )
         count_query = count_query.where(
-            (User.name.ilike(search_filter)) | (User.email.ilike(search_filter))
+            User.name.ilike(search_filter, escape="\\")
+            | User.email.ilike(search_filter, escape="\\")
         )
     
     if role:
@@ -178,17 +185,23 @@ async def update_current_user(
     db: DbSession,
 ):
     """
-    更新當前使用者資訊
+    更新當前使用者資訊（僅限 name / avatar_url，不允許自改 is_active 鎖死自己）
     """
     update_data = data.model_dump(exclude_unset=True)
-    
+
+    # SECURITY FIX: 移除使用者不該改自己的欄位
+    # is_active 是 admin 才能改的（停用帳號），使用者自己不該能設 is_active=False 把自己鎖出去
+    # role 在 UserUpdate schema 已經沒這欄，但保險起見也擋（防未來 schema 增加）
+    SELF_ALLOWED_FIELDS = {"name", "avatar_url"}
+    update_data = {k: v for k, v in update_data.items() if k in SELF_ALLOWED_FIELDS}
+
     if not update_data:
         return UserResponse.model_validate(current_user)
-    
+
     # 更新資料
     for key, value in update_data.items():
         setattr(current_user, key, value)
-    
+
     await db.commit()
     await db.refresh(current_user)
     

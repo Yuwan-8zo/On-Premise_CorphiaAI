@@ -25,6 +25,42 @@ export default {
         changeName: '名前を変更',
         active: 'アクティブ',
         disabled: '無効',
+        clearAll: 'すべてクリア',
+        dismiss: '閉じる',
+        skip: 'スキップ',
+        next: '次へ',
+        prev: '戻る',
+    },
+
+    // 初回利用ガイド（スポットライトツアー）
+    onboarding: {
+        start: '使い始める',
+        welcome: {
+            title: 'Corphia AI へようこそ',
+            desc: 'プライベートデプロイの企業向けナレッジエンジンです。データは端末内に保持されます。これから主画面の 4 つの主要機能をご案内します。',
+        },
+        tour: {
+            modeToggle: {
+                title: '一般 vs プロジェクト',
+                desc: 'チャットモードをここで切替：一般は通常チャット、プロジェクトはフォルダ内ファイルを RAG コンテキストとして使用。',
+            },
+            newChat: {
+                title: '新規作成',
+                desc: '一般モードでは新しい会話を、プロジェクトモードでは新しいフォルダを作成します。',
+            },
+            chatInput: {
+                title: '入力 / ドロップ',
+                desc: 'メッセージを入力するかファイルをドロップ。左のボタンでプロンプトテンプレート、右のマイクボタンで音声入力ができます。',
+            },
+            settings: {
+                title: '設定 / 管理画面',
+                desc: 'アバターをクリックで設定：テーマ・言語・アクセントカラーをここで変更。管理者は管理画面にもアクセス可能です。',
+            },
+        },
+        done: {
+            title: '準備完了',
+            desc: '最初の会話を始められます。再度ガイドを見るには、設定 → 使用説明 から「ガイドを再生」をタップしてください。',
+        },
     },
 
     // 認證 (Auth)
@@ -63,14 +99,18 @@ export default {
         terms: '利用規約',
         help: 'ヘルプ＆サポート',
         changePassword: 'パスワード変更',
+        waitingBackend: 'バックエンドの起動を待機中',
+        connectingBackend: 'バックエンドに接続中',
+        backendOfflineHint: 'バックエンドが起動していることをご確認ください。接続でき次第、自動でログイン画面が表示されます。',
+        backendCheckingHint: '初回接続です。しばらくお待ちください。',
     },
 
     // 對話 (Chat)
     chat: {
         emptyGreeting: '何かお手伝いしましょうか、{{name}}？',
         connectedToModel: 'ローカル {{model}} に接続中',
-        inputPlaceholder: 'Corphia AI にメッセージを送信...',
-        projectInputPlaceholder: 'メッセージを送信するか、資料をアップロードしてください...',
+        inputPlaceholder: 'メッセージを入力…',
+        projectInputPlaceholder: 'メッセージ入力またはファイルをドロップ…',
         suggestions: [
             { title:"ドキュメントを要約", desc:"簡単な要点のまとめを作成してください" },
             { title:"コンテンツを翻訳", desc:"このテキストを自然な現地語に翻訳してください" },
@@ -88,6 +128,28 @@ export default {
         sendMessage: 'メッセージを送信',
         thinking: '考え中...',
         thinkingSteps: ['処理中', '分析中', '考え中', '生成中'],
+        phase: {
+            thinking: '考え中',
+            retrieving: 'ナレッジベース検索中',
+            generating: '回答生成中',
+        },
+        voice: {
+            startRecording: '音声メッセージを録音',
+            cancel: '録音をキャンセル',
+            send: '音声を送信',
+            preparing: 'マイクを準備しています...',
+            recordingAria: '録音中',
+            permissionDenied: 'マイクの使用が拒否されました。ブラウザの設定で許可してから再度お試しください。',
+            unsupported: 'このブラウザは音声録音に対応していません。',
+            startFailed: '録音を開始できませんでした。もう一度お試しください。',
+            placeholderContent: '[音声メッセージ]',
+            defaultTitle: '音声メッセージ',
+            noTranscriptHint: '音声メモを送信しました（ブラウザがリアルタイム文字起こしに対応していません）',
+            transcribing: '文字起こし中...',
+            transcribeFailed: '文字起こしに失敗しました',
+            aiFallback: '音声メッセージを受け取りましたが、今回は内容を認識できませんでした。もう一度お試しいただくか、テキストで入力してください。',
+            aiFallbackError: '音声メッセージを処理できませんでした（{{error}}）。テキストで入力していただけると、より正確に回答できます。',
+        },
         stopGeneration: '生成を停止',
         regenerate: '再生成',
         copyMessage: 'メッセージをコピー',
@@ -118,19 +180,23 @@ export default {
 
     // ドキュメント
     documents: {
-        dropZoneTitle: 'ファイルをここにドロップ、またはクリックして選択',
-        dropZoneSubtitle: 'PDF、Word、Excel、TXT、Markdown 対応 · 最大 50MB',
+        dropZoneTitle: 'ファイルをここにドロップ、またはクリックして選択（複数可）',
+        dropZoneSubtitle: 'PDF、Word、Excel、PowerPoint、TXT、Markdown 対応 · 最大 50MB',
         downloadSample: 'サンプルファイルをダウンロード',
         uploadedTitle: 'アップロード済み',
         searchPlaceholder: 'ファイル名で検索…',
         noMatch: '一致するファイルがありません',
         empty: 'まだファイルがありません',
         onboard1Title: 'アップロードできるもの',
-        onboard1Desc: 'PDF、Word、Excel、プレーンテキスト、Markdown 対応。小さなファイルから試すのがおすすめです。',
+        onboard1Desc: 'PDF、Word、Excel、PowerPoint、プレーンテキスト、Markdown 対応。複数ファイルを一度にドロップ可能。',
         onboard2Title: 'アップロード後の処理',
         onboard2Desc: '自動でチャンク化・ベクトル化・インデックス化されます。ステータスで進捗が確認できます。',
         onboard3Title: 'RAG で使う方法',
         onboard3Desc: 'プロジェクトチャットモードに切り替え、ファイルをプロジェクトに追加。AI が関連箇所を引用付きで回答します。',
+        uploadQueueTitle: 'アップロード中',
+        uploadDone: '完了',
+        uploadFailed: '失敗',
+        uploadQueued: '待機中',
     },
 
     // 設定 (Settings)
@@ -179,6 +245,8 @@ export default {
         enterAdmin: '管理画面へ',
         adminLabel: '管理画面',
         showQR: 'モバイルでのログイン用QRコードを表示',
+        replayTour: 'ガイドを再生',
+        replayTourHint: '初回利用ガイドを再表示',
     },
 
     // 錯誤 (Errors)
@@ -219,8 +287,8 @@ export default {
         injectionDescription: '危険なトークンは除去され、このイベントは監査ログに記録されました。',
         riskLevel: 'リスクレベル',
         matchedPatterns: '検出されたパターン',
-        offlineMode: '✅ データ主権保証：完全オフライン運用',
-        onlineWarning: '⚠️ 外部ネットワーク接続を検出',
+        offlineMode: 'データ主権保証：完全オフライン運用',
+        onlineWarning: '外部ネットワーク接続を検出',
     },
 
     // システムモニター (C4)
@@ -272,7 +340,7 @@ export default {
             step2Start: 'そのフォルダに入り、アップロードボタンをクリックします。対応形式は ',
             step2Types: '.txt, .md, .csv または .pdf',
             step2End: ' です。',
-            step3: 'システムのバックエンドは自動的にファイルをチャンキング（分割）処理に送り、企業用ベクトルデータベース (ChromaDB) に保存します。',
+            step3: 'バックエンドが自動的にファイルをチャンク化し、埋め込みを PostgreSQL + pgvector に保存します。',
             step4: '処理完了後、「このソースに基づいて質問する」をクリックすると、AIがドキュメント内容に基づいて正確な情報源とともに回答を提供します。'
         },
         chat: {
@@ -312,6 +380,34 @@ export default {
             documentsDetail: 'インデックス済みソース',
             messages: '総メッセージ数',
             messagesDetail: '監査証跡',
+            snapshotTitle: 'ライブスナップショット',
+            snapshotEyebrow: 'Live Snapshot',
+            activeUsers: 'アクティブユーザー',
+            activeUsersHint: '現在有効なアカウント',
+            eventsToday: '監査イベント',
+            eventsTodayHint: '完全な履歴は「監査」タブで確認',
+            recentActivity: '最近のアクティビティ',
+            viewAll: 'すべて表示',
+            noRecentActivity: '最近のアクティビティはありません',
+            operatorsTitle: '最近の操作者',
+            trendTitle: '過去7日のアクティビティ',
+            distributionTitle: 'イベント分布',
+            rolesTitle: 'ユーザーロール',
+            docTypesTitle: 'ドキュメントタイプ',
+            docStatusTitle: '処理ステータス',
+        },
+        ngrok: {
+            activeStatus: '起動中',
+            starting: '起動中…',
+            inactive: '未起動',
+            showQr: 'QRコードを表示',
+            toggleOnLabel: '有効',
+            toggleOffLabel: '有効化',
+            toggleOn: '公開トンネルを開始',
+            toggleOff: '公開トンネルを停止',
+            offlineHint: '公開URLを有効にするにはインターネット接続が必要です。接続を確認してから再度お試しください。',
+            offlineBadge: 'オフライン',
+            offlineDisabledTooltip: '現在オフラインのため、公開URLを開始できません。',
         },
         dashboard: {
             operationalMap: '運用マップ',
@@ -344,6 +440,11 @@ export default {
                 newPassword: '新しいパスワード',
                 role: 'ロール',
                 active: 'アカウントを有効にする',
+            },
+            role: {
+                admin: '管理者',
+                engineer: 'エンジニア',
+                user: 'ユーザー',
             },
         },
         models: {

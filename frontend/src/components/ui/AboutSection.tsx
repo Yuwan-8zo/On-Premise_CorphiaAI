@@ -50,7 +50,7 @@ export default function AboutSection() {
                 </h3>
                 <div className="flex items-center justify-center gap-2">
                     <span className="px-2.5 py-1 text-xs font-semibold bg-bg-surface text-text-secondary rounded-lg">
-                        {t('about.version')} 2.2.0
+                        {t('about.version')} 2.3.0
                     </span>
                     <span className="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-lg flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
@@ -65,7 +65,7 @@ export default function AboutSection() {
             </motion.p>
 
             {/* 技術棧標籤卡塊 */}
-            <motion.div variants={itemVariants} className="w-full bg-bg-base/50 /30 border border-border-subtle rounded-cv-xl p-6 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="w-full bg-bg-base/50 border border-border-subtle rounded-cv-xl p-6 backdrop-blur-sm">
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                     <motion.div variants={badgeVariants} className="flex flex-col">
                         <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.frontend')}</span>
@@ -79,7 +79,7 @@ export default function AboutSection() {
 
                     <motion.div variants={badgeVariants} className="flex flex-col">
                         <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.vector')}</span>
-                        <span className="text-[15px] font-semibold text-text-primary">ChromaDB</span>
+                        <span className="text-[15px] font-semibold text-text-primary">pgvector</span>
                     </motion.div>
 
                     <motion.div variants={badgeVariants} className="flex flex-col">

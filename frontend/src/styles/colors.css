@@ -1,4 +1,5 @@
 :root {
+  /* 亮色：暖米色基底，柔和不刺眼 */
   --bg-canvas: 246 244 240;
   --bg-base: 250 250 248;
   --bg-main: 247 246 244;
@@ -14,14 +15,33 @@
   --border-subtle: 232 228 223;
   --border-strong: 139 115 85;
 
-  --accent: 137 110 83;
-  --accent-hover: 111 89 67;
-  --accent-active: 87 69 55;
-  --accent-soft: 137 110 83;
-
-  --color-primary: #896E53;
+  /*
+   * --accent 系列改用「指向 --color-ios-accent-light」的方式，
+   * 而不是寫死成 137 110 83 的金色 RGB。
+   *
+   * 為什麼：
+   *   Tailwind 的 bg-accent / text-accent / border-accent 會展開成
+   *   rgb(var(--accent) / <alpha>)，原本 --accent 寫死 → 切換品牌色時
+   *   只有透過 --color-ios-accent-* 引用的元件（聊天高亮、selection 等）
+   *   才會跟著換色，bg-accent 系列永遠停在金色。
+   *
+   *   把 --accent / --accent-hover / --accent-active / --accent-soft 改成
+   *   var(--color-ios-accent-light)，當 html[data-accent='blue'] 等屬性
+   *   覆寫 --color-ios-accent-* 時，--accent 也會同步生效，
+   *   所有用 bg-accent / text-accent / border-accent 的元件統統跟著變色。
+   *
+   *   hover/active 暫時都指向同一個動態值，不再做漸深；按鈕的 hover 視覺
+   *   主要靠 hover:opacity-90 提供回饋（已是現有大多數按鈕的寫法）。
+   */
   --color-ios-accent-light: 137 110 83;
   --color-ios-accent-dark: 137 110 83;
+  /* --color-primary 也綁到品牌色（Corphia logo 的星芒用） */
+  --color-primary: rgb(var(--color-ios-accent-light));
+
+  --accent: var(--color-ios-accent-light);
+  --accent-hover: var(--color-ios-accent-light);
+  --accent-active: var(--color-ios-accent-light);
+  --accent-soft: var(--color-ios-accent-light);
 
   --scrollbar-thumb: 209 209 209;
   --scrollbar-thumb-hover: 161 161 161;
@@ -59,6 +79,7 @@ html[data-accent='green'] {
 
 html.dark {
   color-scheme: only dark;
+  /* 深色：深灰漸層，比純黑柔和 */
   background-color: #202022;
   background-image: linear-gradient(135deg, #202022 0%, #101012 100%);
   background-attachment: fixed;
@@ -80,6 +101,17 @@ html.dark {
 
   --scrollbar-thumb: 74 74 74;
   --scrollbar-thumb-hover: 90 90 90;
+
+  /*
+   * 深色模式重新指向 --color-ios-accent-dark。
+   * 目前 light/dark 兩個變數其實都被填入同一個品牌色，
+   * 但保留語意對的綁定，未來若要為深色模式調整色階（例如稍微提高彩度
+   * 在深色背景上更亮），改 colors.css 一處即可。
+   */
+  --accent: var(--color-ios-accent-dark);
+  --accent-hover: var(--color-ios-accent-dark);
+  --accent-active: var(--color-ios-accent-dark);
+  --accent-soft: var(--color-ios-accent-dark);
 }
 
 html.dark body {
@@ -98,12 +130,22 @@ html.dark .highlighter-marker {
   background-color: rgb(var(--color-ios-accent-dark) / 0.15);
 }
 
+/*
+ * Markdown <strong> highlight（沿用 Apple iOS 設計慣例）：
+ *   - 文字：強調色（accent）100%
+ *   - 背景：強調色 85% 透明度 → opacity 0.15
+ *   - 圓角小膠囊感、留白 0.1em / 0.3em，視覺輕巧不搶 focus
+ *
+ * 同時適用 light / dark：var(--color-ios-accent-*) 由 App.tsx 依使用者選的品牌色動態注入；
+ * 換品牌色時整個 highlight 顏色會跟著替換。
+ */
 .markdown-body strong {
   color: rgb(var(--color-ios-accent-light));
   background-color: rgb(var(--color-ios-accent-light) / 0.15);
   border-radius: 4px;
   padding: 0.1em 0.3em;
   margin: 0 0.1em;
+  font-weight: 600;
 }
 
 html.dark .markdown-body strong {

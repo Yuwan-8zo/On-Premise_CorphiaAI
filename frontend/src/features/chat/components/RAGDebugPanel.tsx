@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import MaterialIcon from '@/components/icons/MaterialIcon'
 
 interface RAGSource {
     chunk_id: string
@@ -44,11 +45,11 @@ function scoreBg(score: number): string {
     return 'bg-red-500/10 border-red-500/20'
 }
 
-/** 路由決策的中文 */
+/** 路由決策的中文（icon 為 Material Symbols 名稱） */
 const ROUTE_LABELS: Record<string, { label: string; icon: string }> = {
-    rag: { label: '知識庫檢索', icon: '📚' },
-    web_search: { label: '網路搜尋', icon: '🌐' },
-    chat: { label: '一般對話', icon: '💬' },
+    rag: { label: '知識庫檢索', icon: 'menu_book' },
+    web_search: { label: '網路搜尋', icon: 'travel_explore' },
+    chat: { label: '一般對話', icon: 'chat' },
 }
 
 export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
@@ -75,15 +76,21 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 >
                     <polyline points="9 18 15 12 9 6" />
                 </svg>
-                <span className="font-mono">
-                    🔍 RAG Debug — {sources.length} chunks
-                    {routeInfo && <span className="ml-2">{routeInfo.icon} {routeInfo.label}</span>}
+                <span className="font-mono inline-flex items-center gap-1.5">
+                    <MaterialIcon name="search" size={14} aria-hidden />
+                    RAG Debug — {sources.length} chunks
+                    {routeInfo && (
+                        <span className="ml-2 inline-flex items-center gap-1">
+                            <MaterialIcon name={routeInfo.icon} size={14} aria-hidden />
+                            {routeInfo.label}
+                        </span>
+                    )}
                 </span>
             </button>
 
             {/* 展開的除錯面板 */}
             {isExpanded && (
-                <div className="mt-2 space-y-2 border border-border-subtle rounded-xl p-3 bg-bg-base/50 /50 backdrop-blur-sm">
+                <div className="mt-2 space-y-2 border border-border-subtle rounded-xl p-3 bg-bg-base/50 backdrop-blur-sm">
                     {/* 統計概覽 */}
                     {debug && (
                         <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-border-subtle">

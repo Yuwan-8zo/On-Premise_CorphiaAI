@@ -1,8 +1,22 @@
-﻿import { motion } from '@/lib/gsapMotion'
+﻿import { Sparkles } from 'lucide-react'
+import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
+
+import { resetOnboarding } from '@/components/onboarding/OnboardingTour'
+import { useUIStore } from '@/store/uiStore'
 
 export default function GuideSection() {
     const { t } = useTranslation()
+    const triggerOnboardingReplay = useUIStore((s) => s.triggerOnboardingReplay)
+    const setSettingsOpen = useUIStore((s) => s.setSettingsOpen)
+
+    function handleReplayOnboarding() {
+        // 清旗標 + 觸發 replay token，並關掉 settings modal 讓 chat 看得到 tour
+        resetOnboarding()
+        setSettingsOpen(false)
+        // 等 modal 關閉動畫，再觸發（Tour 顯示在 ChatPage）
+        setTimeout(() => triggerOnboardingReplay(), 200)
+    }
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -25,10 +39,24 @@ export default function GuideSection() {
             className="space-y-6 pb-8"
         >
             <div>
-                <h3 className="text-xl font-bold text-text-primary mb-2 tracking-tight">{t('guide.title')}</h3>
-                <p className="text-text-secondary text-sm">
-                    {t('guide.subtitle')}
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <h3 className="text-xl font-bold text-text-primary mb-2 tracking-tight">{t('guide.title')}</h3>
+                        <p className="text-text-secondary text-sm">
+                            {t('guide.subtitle')}
+                        </p>
+                    </div>
+                    {/* 重新觀看引導按鈕 —— 隨時可以重看一次 onboarding tour */}
+                    <button
+                        type="button"
+                        onClick={handleReplayOnboarding}
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/20 transition"
+                        title={t('settings.replayTourHint', '重新顯示首次使用引導')}
+                    >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        {t('settings.replayTour', '重新觀看引導')}
+                    </button>
+                </div>
             </div>
 
             {/* 一、權限管理與角色 */}

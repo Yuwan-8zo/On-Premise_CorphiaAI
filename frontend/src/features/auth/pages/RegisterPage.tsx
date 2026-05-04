@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/api/auth'
+import MaterialIcon from '@/components/icons/MaterialIcon'
 
 export default function Register() {
     const { t } = useTranslation()
@@ -87,7 +88,23 @@ export default function Register() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
+        // 註冊頁同 LoginPage，強制鎖品牌色（Titanium Bronze）—— 不跟 accent 切色。
+        <div
+            className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4"
+            style={{
+                // 同 LoginPage：強制 Bronze。
+                // CSS custom property 是 early binding，子樹繼承已 resolve 的 root 值，
+                // 必須把整組 --accent* 直接蓋成 bronze RGB tuple。
+                ['--color-ios-accent-light' as string]: '137 110 83',
+                ['--color-ios-accent-dark' as string]: '137 110 83',
+                ['--accent' as string]: '137 110 83',
+                ['--accent-hover' as string]: '137 110 83',
+                ['--accent-active' as string]: '137 110 83',
+                ['--accent-soft' as string]: '137 110 83',
+                ['--border-subtle' as string]: '39 37 36',
+                ['--border-strong' as string]: '55 49 45',
+            }}
+        >
             {/* 背景裝飾 */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
@@ -100,7 +117,7 @@ export default function Register() {
                     {/* Logo */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-[16px] bg-gradient-to-br from-primary-500 to-primary-700 mb-4">
-                            <span className="text-3xl">🤖</span>
+                            <MaterialIcon name="smart_toy" size={32} className="text-white" aria-hidden />
                         </div>
                         <h1 className="text-2xl font-bold text-text-primary">Corphia AI</h1>
                         <p className="text-text-muted mt-2">{t('auth.createAccount')}</p>

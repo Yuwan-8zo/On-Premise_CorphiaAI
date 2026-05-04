@@ -79,6 +79,13 @@ async def delete_folder(
     db: DbSession,
 ):
     """刪除指定名稱的資料夾"""
+    # FIX: folder_name 從 URL path 來，雖然 SQLAlchemy 已 parametrize 防 SQL injection，
+    # 但仍應限制長度避免攻擊者塞超大字串嘗試 DoS DB query parser
+    if not folder_name or len(folder_name) > 128:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="folder_name 不可為空或超過 128 字元",
+        )
     result = await db.execute(
         select(Folder).where(
             Folder.user_id == current_user.id,

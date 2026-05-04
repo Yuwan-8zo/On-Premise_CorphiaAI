@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { authApi } from '@/api/auth'
-import { motion, AnimatePresence, LayoutGroup } from '@/lib/gsapMotion'
-import { QrCode, MessageSquare, FileText, Shield } from 'lucide-react'
-import { CorphiaLogo, CorphiaWordmark } from '@/components/icons/CorphiaIcons'
-import { BackendStatusPill, FloatingInput, QrAccessModal, type BackendStatus } from '@/features/auth'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import { MessageSquare, FileText, Shield } from 'lucide-react'
+import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
+import { BackendBootSplash, BackendStatusPill, FloatingInput, type BackendStatus } from '@/features/auth'
 import { springSnappy } from '@/lib/motionPresets'
 
 export default function Login() {
@@ -25,7 +25,6 @@ export default function Login() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
-    const [showQR, setShowQR] = useState(false)
     const langMenuRef = useRef<HTMLDivElement>(null)
 
     const [email, setEmail] = useState('')
@@ -41,9 +40,15 @@ export default function Login() {
 
     useEffect(() => {
         let isCancelled = false
+
+        // health check —— 同時包 try/catch 把 ERR_ABORTED / 500 都靜默吞掉，
+        // 不然 backend 沒開時 console 會被 fetch 失敗紅色錯誤淹沒
         const checkBackend = async () => {
             try {
-                const response = await fetch('/api/v1/health')
+                const response = await fetch('/api/v1/health', {
+                    // signal 讓 unmount 時可中斷未完成的請求，避免 lingering 500 紀錄
+                    cache: 'no-store',
+                })
                 if (response.ok) {
                     if (!isCancelled) {
                         setBackendStatus('online')
@@ -53,15 +58,18 @@ export default function Login() {
                     if (!isCancelled) setBackendStatus('offline')
                 }
             } catch {
+                // network error / abort —— 一律當 offline，不 log
                 if (!isCancelled) setBackendStatus('offline')
             }
         }
 
         checkBackend()
 
+        // offline 時用 5s（之前 3s 太密集 → console 每 3 秒一條 500 紅字）；
+        // 連上後降頻到 30s 維持心跳
         const intervalId = setInterval(() => {
             checkBackend()
-        }, hasInitialConnected ? 30000 : 3000)
+        }, hasInitialConnected ? 30000 : 5000)
 
         return () => {
             isCancelled = true
@@ -170,8 +178,51 @@ export default function Login() {
         }
     }
 
+    // Login 鎖品牌色，但 border 要根據 light/dark 模式給不同混色，
+    // 不然 dark mix 寫死在 light 背景上會變成超深的線。
+    // 公式：bronze 7% + 當前 base bg 93%
+    //   light bg (250,250,248) → ~242 240 236（極淡的暖白）
+    //   dark  bg (32, 32, 34)  → ~39 37 37（極淡的深棕）
+    // store 的 theme 已是 resolved 過的 'light' | 'dark'，'system' 在 themePreference 裡
+    const isDark = theme === 'dark'
+    const loginBorderSubtle = isDark ? '39 37 37' : '242 240 236'
+    const loginBorderStrong = isDark ? '55 49 45' : '225 219 212'
+
+    // ── 後端首次連線前蓋全螢幕 splash —————————————————————————
+    // 沒過 200 health check 就讓使用者看 splash，不要被 disabled 表單騙。
+    // 一旦 hasInitialConnected 翻 true，splash 整個 unmount，正常走表單流程。
+    if (!hasInitialConnected) {
+        return <BackendBootSplash status={backendStatus} />
+    }
+
     return (
-        <div className="min-h-screen flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
+        // 登入/註冊頁強制鎖品牌色（Titanium Bronze）—— 跟全域 accent 解耦。
+        //
+        // 注意：CSS custom property 是 early binding —— `--accent: var(--color-ios-accent-light)`
+        // 在 :root 被計算時就 resolve 成具體 RGB 值，子樹繼承的是已 resolve 的值，
+        // 不會重新計算。所以光蓋 --color-ios-accent-light 沒用，必須把
+        // --accent / --accent-hover / --accent-active / --accent-soft 全部蓋成 bronze
+        // 的 RGB tuple，這樣 bg-accent / text-accent / Tailwind alpha 修飾子才會用 bronze。
+        //
+        // border-subtle / border-strong 根據當前 light/dark 動態切，避免硬編譯
+        // 在反向背景上看起來太深或太淺。
+        <div
+            className="min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
+            style={{
+                ['--color-ios-accent-light' as string]: '137 110 83',
+                ['--color-ios-accent-dark' as string]: '137 110 83',
+                // 直接覆蓋 --accent 系列（不能依靠 var(--color-ios-accent-light) 重新解析）
+                ['--accent' as string]: '137 110 83',
+                ['--accent-hover' as string]: '137 110 83',
+                ['--accent-active' as string]: '137 110 83',
+                ['--accent-soft' as string]: '137 110 83',
+                ['--border-subtle' as string]: loginBorderSubtle,
+                ['--border-strong' as string]: loginBorderStrong,
+                // iOS safe-area —— 避免 Dynamic Island / 底部 Home Indicator 蓋到 Online pill / 內容
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+        >
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
@@ -179,8 +230,6 @@ export default function Login() {
                     <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
                 </svg>
             </div>
-
-            <QrAccessModal isOpen={showQR} onClose={() => setShowQR(false)} />
 
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
                 <BackendStatusPill status={backendStatus} />
@@ -199,7 +248,7 @@ export default function Login() {
 
                         <div className="space-y-7">
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
                                 </div>
@@ -210,7 +259,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-corphia-bronze" />
                                 </div>
                                 <div className="flex flex-col">
@@ -220,7 +269,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated border border-transparent flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center relative">
                                     <Shield className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
                                 </div>
@@ -233,15 +282,6 @@ export default function Login() {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => setShowQR(true)}
-                    className="absolute bottom-8 left-8 flex items-center justify-center bg-bg-base/60 backdrop-blur-md border border-border-subtle rounded-full p-1.5 shadow-sm hover:bg-bg-base/80 hover:scale-[1.02] transition-all group z-10"
-                    title={t('auth.scanToDownload')}
-                >
-                    <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center group-hover:bg-corphia-card transition-colors">
-                        <QrCode className="w-[18px] h-[18px] text-text-primary" />
-                    </div>
-                </button>
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col relative z-30">
@@ -253,18 +293,50 @@ export default function Login() {
                     <div className="flex gap-2 ml-auto">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 text-text-muted hover:text-text-secondary transition-colors"
+                            className="relative w-10 h-10 flex items-center justify-center text-text-muted hover:text-text-secondary transition-colors"
                             title={t('settings.theme')}
+                            aria-label={t('settings.theme')}
                         >
-                            {theme === 'dark' ? (
+                            {/*
+                              主題切換動畫：兩個圖示同時掛在 DOM，用 absolute 疊合，
+                              依 theme 切 opacity / rotate / scale 做 cross-fade。
+                              motion/AnimatePresence 在這個專案裡是 no-op（gsapMotion 包裝），
+                              所以改用 CSS transition + Tailwind 的 conditional class，
+                              效果一樣絲滑，且不依賴第三方動畫庫。
+
+                              dark 模式顯示太陽（rotate-0/scale-100/opacity-100），
+                              light 模式顯示月亮（同上）。另一個圖示反向：
+                              旋轉 -90/+90 度 + 縮小 + 透明，視覺上會看到「旋轉著消失/出現」。
+                              duration-500 比 default 慢一點，更有質感；ease 用 apple cubic。
+                            */}
+                            <span
+                                className="absolute inset-0 flex items-center justify-center transition-all duration-500"
+                                style={{
+                                    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                                    opacity: theme === 'dark' ? 1 : 0,
+                                    transform: theme === 'dark' ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
+                                }}
+                                aria-hidden="true"
+                            >
+                                {/* Sun (太陽) — 深色模式時顯示，提示「點一下切到淺色」 */}
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m12.728 0l-1.414-1.414M6.343 6.343L4.929 4.929M12 17a5 5 0 100-10 5 5 0 000 10z" />
                                 </svg>
-                            ) : (
+                            </span>
+                            <span
+                                className="absolute inset-0 flex items-center justify-center transition-all duration-500"
+                                style={{
+                                    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                                    opacity: theme === 'light' ? 1 : 0,
+                                    transform: theme === 'light' ? 'rotate(0deg) scale(1)' : 'rotate(90deg) scale(0.5)',
+                                }}
+                                aria-hidden="true"
+                            >
+                                {/* Moon (月亮) — 淺色模式時顯示，提示「點一下切到深色」 */}
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                 </svg>
-                            )}
+                            </span>
                         </button>
 
                         <div className="relative" ref={langMenuRef}>
@@ -312,15 +384,20 @@ export default function Login() {
                     </div>
                 </div>
 
-                <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6">
-                    <h2 className="text-xl font-bold text-text-primary mb-1 transition-colors">
+                <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6 px-4">
+                    {/*
+                      手機板用 CorphiaWordmark（含 LOGO 圖檔 + 字標），不再用「C 圖示 + 文字 Corphia」拼接。
+                      CorphiaWordmark 內部已 dark:hidden / hidden dark:block 自動切換淺/深色版 PNG，
+                      不需要額外處理 theme。
+
+                      尺寸：h-14 (56px) → sm: h-16 (64px)，比原本的「40px 字 + 36px icon」視覺份量略大但不溢位。
+                      max-w-[80%] 防止超寬螢幕（直式 iPad）logo 拉到頁面邊緣。
+                    */}
+                    <h2 className="text-xl font-bold text-text-primary mb-3 transition-colors">
                         {t('auth.welcomeTitle')}
                     </h2>
-                    <h1 className="text-[40px] font-extrabold text-text-primary mb-3 transition-colors flex items-center justify-center gap-4">
-                        <CorphiaLogo className="w-12 h-12" />
-                        Corphia
-                    </h1>
-                    <p className="text-text-secondary text-sm whitespace-nowrap">{t('auth.engineDesc')}</p>
+                    <CorphiaWordmark className="h-14 sm:h-16 w-auto max-w-[80%] object-contain mb-3 select-none pointer-events-none" />
+                    <p className="text-text-secondary text-sm">{t('auth.engineDesc')}</p>
                 </div>
 
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
@@ -329,88 +406,117 @@ export default function Login() {
                         noValidate
                         className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-lg dark:shadow-black/30 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
-                            <LayoutGroup>
-                                <div
-                                    className="relative flex rounded-full select-none cursor-pointer bg-bg-base border border-border-subtle transition-colors shrink-0"
-                                    style={{ padding: '5px' }}
-                                >
-                                    <motion.div
-                                        className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
-                                        initial={false}
-                                        animate={{ x: activeTab === 'login' ? 0 : '100%' }}
-                                        transition={springSnappy}
-                                        style={{ left: '5px', zIndex: 1 }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('login')}
-                                        style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                        className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                            activeTab === 'login' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
-                                        }`}
-                                    >
-                                        {t('auth.login')}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('register')}
-                                        style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                        className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                            activeTab === 'register' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
-                                        }`}
-                                    >
-                                        {t('auth.register')}
-                                    </button>
-                                </div>
-
-                                <motion.div layout className="flex-1" />
-
-                                <motion.div layout className="shrink-0 w-full">
-                                    <FloatingInput
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => { setEmail(e.target.value); setFieldErrors(prev => ({ ...prev, email: '' })) }}
-                                        required
-                                        label={t('auth.account')}
-                                        error={fieldErrors.email}
-                                    />
-                                </motion.div>
-
-                                <motion.div layout className="flex-1" />
-
-                                <motion.div layout className="shrink-0 w-full">
-                                    <FloatingInput
-                                        id="password"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({ ...prev, password: '' })) }}
-                                        required
-                                        label={t('auth.password')}
-                                        error={fieldErrors.password}
-                                    />
-                                </motion.div>
-
+                            {/*
+                              切換動畫策略：
+                              - 不再用 motion.div + layout 在每個 spacer 上做 FLIP，
+                                因為 layout 動畫會跟 CSS flex 的即時 relayout 互相打架，
+                                導致 0.3s 切換期間整列元素抖動。
+                              - 改成「純 CSS flex-1 spacer + 兩個明確動畫」：
+                                1) confirm-pw 上方的 spacer 用 flexGrow 0↔1
+                                2) confirm-pw wrapper 用 height 0↔auto + opacity
+                                兩個都用同一條 easing / duration，flex-1 spacer 跟著 CSS
+                                重新分配空間，視覺上完全同步。
+                              - 所有可見間距統一 flex-1：
+                                Login   → A = B = C   (3 個等寬空隙)
+                                Register → D = E = F = G (4 個等寬空隙)
+                            */}
+                            <div
+                                className="relative flex rounded-full select-none cursor-pointer bg-bg-base border border-border-subtle transition-colors shrink-0"
+                                style={{ padding: '5px' }}
+                            >
                                 <motion.div
-                                    animate={{ flexGrow: activeTab === 'register' ? 1 : 0 }}
-                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                    style={{ flexShrink: 0, flexBasis: 0, minHeight: 0 }}
+                                    className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
+                                    initial={false}
+                                    animate={{ x: activeTab === 'login' ? 0 : '100%' }}
+                                    transition={springSnappy}
+                                    style={{ left: '5px', zIndex: 1 }}
                                 />
-
-                                <motion.div
-                                    className="w-full shrink-0 overflow-hidden"
-                                    animate={{
-                                        height: activeTab === 'register' ? 'auto' : 0,
-                                        opacity: activeTab === 'register' ? 1 : 0,
-                                    }}
-                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                    style={{
-                                        height: activeTab === 'register' ? undefined : 0,
-                                        opacity: activeTab === 'register' ? 1 : 0,
-                                        pointerEvents: activeTab === 'register' ? 'auto' : 'none',
-                                    }}
-                                    aria-hidden={activeTab !== 'register'}
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('login')}
+                                    style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                    className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                        activeTab === 'login' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    }`}
                                 >
+                                    {t('auth.login')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('register')}
+                                    style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
+                                    className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
+                                        activeTab === 'register' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    }`}
+                                >
+                                    {t('auth.register')}
+                                </button>
+                            </div>
+
+                            {/* Gap A / D */}
+                            <div className="flex-1" />
+
+                            <div className="shrink-0 w-full">
+                                <FloatingInput
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => { setEmail(e.target.value); setFieldErrors(prev => ({ ...prev, email: '' })) }}
+                                    required
+                                    label={t('auth.account')}
+                                    error={fieldErrors.email}
+                                />
+                            </div>
+
+                            {/* Gap B / E */}
+                            <div className="flex-1" />
+
+                            <div className="shrink-0 w-full">
+                                <FloatingInput
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({ ...prev, password: '' })) }}
+                                    required
+                                    label={t('auth.password')}
+                                    error={fieldErrors.password}
+                                />
+                            </div>
+
+                            {/*
+                              Gap F：register 時補上等寬間距，login 時為 0。
+                              用 flexGrow 0↔1 動畫，跟下面 confirm-pw 的 height 動畫同 easing/duration → 同步生效。
+                            */}
+                            <motion.div
+                                initial={false}
+                                animate={{ flexGrow: activeTab === 'register' ? 1 : 0 }}
+                                transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+                                style={{ flexShrink: 0, flexBasis: 0, minHeight: 0 }}
+                            />
+
+                            {/*
+                              Confirm-password wrapper：
+                                - overflow-hidden 讓 height 0↔auto 的 collapse 動畫乾淨。
+                                - pt-3 (12px) 留空間給 FloatingInput 的浮動 label
+                                  （label 用 top:0 + translateY(-50%)，半個 label 會跑到 input 上緣外，
+                                  沒有 pt-3 的話會被 overflow-hidden 切掉）。
+                                - marginTop: -12 抵銷 pt-3：等於 wrapper 整個往上拉 12px，
+                                  讓「password-bottom → input-top」的視覺距離 =（F spacer 的 flex-share）
+                                  跟 D / E / G 完全等距。沒這層補償的話，F 會比其他 gap 多 12px。
+                            */}
+                            <motion.div
+                                initial={false}
+                                animate={{
+                                    height: activeTab === 'register' ? 'auto' : 0,
+                                    opacity: activeTab === 'register' ? 1 : 0,
+                                    marginTop: activeTab === 'register' ? -12 : 0,
+                                }}
+                                transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+                                className="w-full shrink-0 overflow-hidden"
+                                style={{ pointerEvents: activeTab === 'register' ? 'auto' : 'none' }}
+                                aria-hidden={activeTab !== 'register'}
+                            >
+                                <div className="pt-3">
                                     <FloatingInput
                                         id="confirm-password"
                                         type="password"
@@ -421,11 +527,13 @@ export default function Login() {
                                         tabIndex={activeTab === 'register' ? 0 : -1}
                                         error={fieldErrors.confirmPassword}
                                     />
-                                </motion.div>
+                                </div>
+                            </motion.div>
 
-                                <motion.div layout className="flex-[1.15]" />
+                            {/* Gap C / G — 統一 flex-1（原本是 1.15 會偏大） */}
+                            <div className="flex-1" />
 
-                                <div className="w-full flex flex-col gap-3 shrink-0">
+                            <div className="w-full flex flex-col gap-3 shrink-0">
                                     <AnimatePresence>
                                         {error && (
                                             <motion.div
@@ -465,7 +573,6 @@ export default function Login() {
                                         )}
                                     </button>
                                 </div>
-                            </LayoutGroup>
                     </form>
                 </div>
             </div>

@@ -66,6 +66,12 @@ export class ChatWebSocket {
     private reconnectAttempts = 0
     private maxReconnectAttempts = 3
     private reconnectDelay = 1000
+    /**
+     * 是否為「使用者主動斷線」。
+     * disconnect() 會把這個旗標設成 true，避免 onclose 又觸發 background 重連，
+     * 否則切換對話時會出現「主動斷 → 自動重連 → 又斷」的死循環。
+     */
+    private intentionallyClosed = false
 
     private messageHandlers: MessageHandler[] = []
     private openHandlers: ConnectionHandler[] = []
@@ -78,6 +84,9 @@ export class ChatWebSocket {
 
     connect(): Promise<void> {
         return new Promise((resolve, reject) => {
+            // 進入新的 connect 前重置「主動關閉」旗標
+            this.intentionallyClosed = false
+
             const token = useAuthStore.getState().accessToken
             if (!token) {
                 reject(new Error('未登入'))
@@ -109,16 +118,21 @@ export class ChatWebSocket {
 
             this.ws.onclose = () => {
                 console.log('WebSocket 已斷開')
-                
+
                 // 強制重置 Streaming 狀態，避免 UI 卡死
                 useChatStore.getState().setStreaming(false)
-                
+
                 this.closeHandlers.forEach((handler) => handler())
 
-                // 嘗試重連
+                // 主動關閉（disconnect()）→ 不重連；
+                // 只有意外斷線（網路波動 / 後端重啟）才嘗試重連。
+                if (this.intentionallyClosed) return
+
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++
                     setTimeout(() => {
+                        // 重連時若已被新的 connect() 接管，就跳過
+                        if (this.intentionallyClosed) return
                         this.connect().catch(e => console.error('背景重連失敗:', e))
                     }, this.reconnectDelay * this.reconnectAttempts)
                 }
@@ -175,6 +189,8 @@ export class ChatWebSocket {
     }
 
     disconnect(): void {
+        // 標記為「主動關閉」，讓 onclose 知道不要再嘗試重連
+        this.intentionallyClosed = true
         if (this.ws) {
             this.ws.close()
             this.ws = null

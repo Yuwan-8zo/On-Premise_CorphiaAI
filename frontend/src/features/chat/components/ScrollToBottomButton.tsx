@@ -1,12 +1,13 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 
 interface ScrollToBottomButtonProps {
     containerRef: React.RefObject<HTMLDivElement | null>
     dependsOn?: unknown // 用來強制更新的依賴，如 messages
+    isStreaming?: boolean // AI 是否仍在串流回覆中
 }
 
-export default function ScrollToBottomButton({ containerRef, dependsOn }: ScrollToBottomButtonProps) {
+export default function ScrollToBottomButton({ containerRef, dependsOn, isStreaming }: ScrollToBottomButtonProps) {
     const [showToBottom, setShowToBottom] = useState(false)
 
     useEffect(() => {
@@ -18,7 +19,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn }: Scroll
             const { scrollTop, scrollHeight, clientHeight } = container
             const distanceFromBottom = scrollHeight - scrollTop - clientHeight
 
-            // 如果距離底部大於 200px 且內容夠長，則顯示「往下箭頭」
+            // 距離底部大於 200px 且內容夠長 → 顯示
             if (distanceFromBottom > 200 && scrollHeight > clientHeight * 1.5) {
                 setShowToBottom(true)
             } else {
@@ -29,7 +30,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn }: Scroll
         container.addEventListener('scroll', handleScroll)
         // 初次呼叫，也要依據 dependsOn 決定是否檢查
         handleScroll()
-        
+
         // Timeout 以防止剛渲染時 scrollHeight 還沒更新
         const timeoutId = setTimeout(handleScroll, 100)
 
@@ -52,10 +53,33 @@ export default function ScrollToBottomButton({ containerRef, dependsOn }: Scroll
         })
     }
 
+    // 串流中 + 使用者已捲離底部 → 顯示膠囊狀「正在輸入…」指示器
+    const showTypingPill = Boolean(isStreaming) && showToBottom
+
     return (
-        <AnimatePresence>
-            {showToBottom && (
+        <AnimatePresence mode="wait">
+            {showTypingPill ? (
                 <motion.button
+                    key="typing-pill"
+                    initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 15, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={scrollToBottom}
+                    className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
+                    aria-label="AI 正在輸入，點擊回到底部"
+                    title="AI 正在輸入，點擊回到底部"
+                >
+                    <span className="flex items-center gap-1" aria-hidden="true">
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
+                    </span>
+                    <span className="text-[12.5px] font-medium leading-none">正在輸入</span>
+                </motion.button>
+            ) : showToBottom ? (
+                <motion.button
+                    key="to-bottom-arrow"
                     initial={{ opacity: 0, y: 15, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 15, scale: 0.9 }}
@@ -69,7 +93,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn }: Scroll
                         <polyline points="19 12 12 19 5 12"></polyline>
                     </svg>
                 </motion.button>
-            )}
+            ) : null}
         </AnimatePresence>
     )
 }

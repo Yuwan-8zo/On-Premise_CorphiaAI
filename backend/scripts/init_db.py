@@ -8,6 +8,11 @@ import asyncio
 import sys
 from pathlib import Path
 
+from sqlalchemy import text
+
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 # 添加專案根目錄到 Python 路徑
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -22,6 +27,7 @@ async def init_database():
     
     # 建立所有資料表
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(Base.metadata.create_all)
     
     print("✅ 資料表建立完成")

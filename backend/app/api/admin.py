@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, RequireAdmin
+from app.api.deps import get_db, RequireAdmin, get_current_user
 from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.document import Document
@@ -191,37 +191,51 @@ async def verify_conversation_hash_chain(
 @router.get("/quota/overview", summary="取得所有使用者配額使用概覽")
 async def get_quota_overview(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
 ) -> Dict[str, Any]:
     """
     列出所有使用者的每日配額設定與今日使用量（僅限管理員）
+
+    PERF FIX: 原本 N+1 查詢——對每個 user 個別 SELECT count(messages)，100 個 user
+    就 100 次 round-trip。改成單一 GROUP BY 把所有 user 的當日計數一次撈完。
+
+    SECURITY FIX: 加 tenant_id 過濾，避免某個 tenant 的 admin 看到其他 tenant 的資料。
     """
     from app.core.time_utils import utc_now_naive
 
     now = utc_now_naive()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    tenant_id = current_user.tenant_id or "default"
 
-    # 取所有使用者
+    # 取本租戶的使用者
     users_result = await db.execute(
         select(User.id, User.email, User.name, User.role, User.daily_message_limit)
+        .where(User.tenant_id == tenant_id)
     )
     users = users_result.all()
 
+    if not users:
+        return {"status": "success", "data": []}
+
+    # 一次撈所有使用者今日訊息計數（取代 N+1）
+    from app.models.conversation import Conversation as Conv
+    user_ids = [u[0] for u in users]
+    counts_result = await db.execute(
+        select(Conv.user_id, func.count(Message.id))
+        .join(Conv, Message.conversation_id == Conv.id)
+        .where(
+            Conv.user_id.in_(user_ids),
+            Message.role == "user",
+            Message.created_at >= today_start,
+        )
+        .group_by(Conv.user_id)
+    )
+    used_by_user = {uid: cnt for uid, cnt in counts_result.all()}
+
     overview = []
     for uid, email, name, role, limit in users:
-        # 計算今日訊息數
-        from app.models.conversation import Conversation as Conv
-        count_result = await db.execute(
-            select(func.count(Message.id))
-            .join(Conv, Message.conversation_id == Conv.id)
-            .where(
-                Conv.user_id == uid,
-                Message.role == "user",
-                Message.created_at >= today_start,
-            )
-        )
-        used = count_result.scalar() or 0
-
+        used = used_by_user.get(uid, 0)
         overview.append({
             "user_id": uid,
             "email": email,

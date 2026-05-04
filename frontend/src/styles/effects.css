@@ -60,3 +60,113 @@
     transform-origin: 50% 0;
   }
 }
+
+/* ==========================================================================
+   Premium-feel utility classes
+   --------------------------------------------------------------------------
+   Goal: subtle, restrained motion that gives a "considered" feel without
+   ever drawing attention to itself. The opposite of bouncy/flashy.
+   ========================================================================== */
+
+/* Card hover lift: 1px translateY + slightly stronger shadow.
+   Used on suggestion cards, KPI cards, anything that should feel tactile. */
+.lift-on-hover {
+  transition:
+    transform var(--duration-hover) var(--ease-apple),
+    box-shadow var(--duration-hover) var(--ease-apple),
+    border-color var(--duration-hover) var(--ease-apple);
+}
+@media (hover: hover) {
+  .lift-on-hover:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.04),
+      0 8px 24px rgb(0 0 0 / 0.06);
+  }
+}
+.dark .lift-on-hover:hover {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 8px 24px rgb(0 0 0 / 0.5);
+}
+.lift-on-hover:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-press);
+}
+
+/* Subtle accent glow — used on focused inputs / active buttons.
+   Wraps the element in a halo of accent at 18% opacity. Avoid on every
+   interactive — it loses meaning when overused. */
+.accent-glow {
+  box-shadow: 0 0 0 4px rgb(var(--color-ios-accent-light) / 0.18);
+  transition: box-shadow var(--duration-hover) var(--ease-apple);
+}
+
+/* Stagger fade-in for lists. Apply to a parent; children fade up sequentially.
+   Each child gets a 60ms offset (subtle, not waterfall). */
+.stagger-fade-in > * {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: staggerFadeIn var(--duration-medium) var(--ease-apple) forwards;
+}
+.stagger-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-fade-in > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-fade-in > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-fade-in > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-fade-in > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-fade-in > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-fade-in > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-fade-in > *:nth-child(8) { animation-delay: 420ms; }
+.stagger-fade-in > *:nth-child(n + 9) { animation-delay: 480ms; }
+
+@keyframes staggerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shimmer skeleton — used as a placeholder while data loads.
+   A diagonal sheen that loops slowly. Premium replacement for a spinner. */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(var(--bg-surface));
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(var(--text-primary) / 0.06) 50%,
+    transparent 70%
+  );
+  animation: shimmerSlide 1.6s linear infinite;
+}
+.dark .shimmer::after {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.04) 50%,
+    transparent 70%
+  );
+}
+@keyframes shimmerSlide {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* Reduced motion: kill the shimmer + stagger animations entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-fade-in > * {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  .shimmer::after {
+    animation: none;
+    opacity: 0.06;
+  }
+}

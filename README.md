@@ -1,159 +1,124 @@
-# Corphia AI Platform — On-Premise
+# Corphia AI Platform On-Premise
 
-**地端部署**的企業 LLM 對話 + RAG 平台。
-本機跑 GGUF 模型推理、pgvector 做向量檢索、FastAPI + React 19 + Tailwind。
+本專案採用「資料庫用 Docker，應用程式本機執行」：
 
-> 你正在看的是專案總入口。前後端的個別細節請看：
-> - [`backend/README.md`](./backend/README.md)
-> - [`frontend/README.md`](./frontend/README.md)
-> - [`frontend/src/design-system/README.md`](./frontend/src/design-system/README.md) — 設計系統
+- Docker：只負責 PostgreSQL + pgvector
+- Backend：本機 FastAPI + SQLAlchemy + asyncpg
+- Frontend：本機 React + Vite
+- LLM：本機 GGUF + `llama-cpp-python`
+- 不使用 Ollama
 
----
+## 一鍵啟動全部
 
-## ⚡ 一鍵啟動（每天開機後就跑這個）
+Windows 可以直接雙擊：
+
+```text
+start-all.bat
+```
+
+或在 PowerShell 執行：
 
 ```powershell
 cd D:\Antigravity\on-premise_CorphiaAI
 python start.py
 ```
 
-`start.py` 會幫你做完所有事：
+`start.py` 會自動處理：
 
-```
-[0/6] 自動喚醒 Docker Desktop + Ollama
-[1/6] docker-compose up -d           ← postgres + pgvector
-[2/6] 清掉佔用 5173 / 8168 的舊 process
-[3/6] 偵測硬體決定 GGUF 推理參數
-[4/6] 啟動前端 Vite (port 5173)        ← 同時自動開瀏覽器
-[5/6] 啟動後端 uvicorn (port 8168)     ← 等 GGUF mmap，看到 ✅ 就好
-[6/6] 啟動 ngrok 公開通道（如果有裝）
-```
-
-按 `Ctrl+C` 一次關掉所有東西。
-
-> 第一次啟動需 1～2 分鐘讓 GGUF 模型 mmap，看到 `[OK] 後端 API 已就緒 ✅` 才算完整。
-> `start.py` 會優先用 `backend/.venv/`（推薦），找不到才用 `backend/venv/`，再不行用全域 Python。
-
----
-
-## 預設帳號（dev 用）
-
-```
-admin@gmail.com      / Admin123       ← 管理員
-engineer@gmail.com   / Engineer123    ← 工程師
-user@gmail.com       / User123        ← 一般使用者
+```text
+1. 檢查並啟動 Docker Desktop
+2. 啟動 PostgreSQL + pgvector container
+3. 檢查 backend Python 套件
+4. 檢查/安裝 llama-cpp-python
+5. 初始化資料庫 schema 與預設資料
+6. 啟動 FastAPI backend
+7. 啟動 Vite frontend
+8. 開啟瀏覽器 http://localhost:5173
 ```
 
-帳號定義在 `backend/scripts/seed_users.py`，跑 `python scripts/seed_users.py` 重置。
+啟動完成後：
 
----
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost:8168
+API docs: http://localhost:8168/docs
+DB:       localhost:5433
+```
 
-## 第一次安裝（新電腦 / 重灌 / clone 下來）
+停止時，在啟動視窗按 `Ctrl+C`。Backend / Frontend 會關閉；Docker 資料庫會保留執行，方便下次快速啟動。
+
+## 資料庫
+
+Docker 只啟動資料庫：
 
 ```powershell
-# 1. 後端 venv 與套件
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-copy .env.example .env       # 編輯 .env，至少設 SECRET_KEY、DATABASE_URL、LLAMA_MODEL_PATH
-python scripts/init_db.py    # 建表
-python scripts/seed_users.py # 預設帳號
-deactivate
-cd ..
+docker compose up -d
+```
 
-# 2. 前端套件
-cd frontend
-npm install
-copy .env.example .env.local  # 通常不用改
-cd ..
+資料庫連線：
 
-# 3. GGUF 模型
-# 從 Hugging Face 下載 .gguf 放到 ai_model/ 底下
-# 預設用 ai_model/Qwen2.5-3B-Instruct-Q5_K_M.gguf
+```env
+DATABASE_URL=postgresql+asyncpg://corphia:corphia123@localhost:5433/corphia_ai
+```
 
-# 4. 之後就只要 python start.py 一條指令
+因為本機可能已經有 PostgreSQL 佔用 `5432`，所以 Docker PostgreSQL 對外使用 `5433`，container 內仍是 `5432`。
+
+## llama-cpp-python
+
+`llama-cpp-python` 是必要套件，已列在：
+
+```text
+backend/requirements.txt
+```
+
+一鍵啟動時會執行 `backend/auto_engine.py` 檢查。若 GPU wheel 不可用，會自動退回 CPU wheel，並設定：
+
+```env
+LLAMA_N_GPU_LAYERS=0
+```
+
+目前預設模型路徑：
+
+```env
+LLAMA_MODEL_PATH=../ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf
+```
+
+## 常用指令
+
+```powershell
+# 一鍵啟動
 python start.py
+
+# 強制重新檢查/安裝 llama-cpp-python
+python start.py --force-engine
+
+# 不自動開瀏覽器
+python start.py --skip-browser
+
+# 只看資料庫 container
+docker ps --filter name=corphia-postgres
+
+# 停止資料庫 container
+docker compose down
 ```
 
----
+## 預設帳號
 
-## 專案結構
-
-```
-on-premise_CorphiaAI/
-├─ start.py                 ← 一鍵啟動（推薦用法）
-├─ backend/                 ← FastAPI / Python
-│  ├─ app/                    ← 主程式
-│  ├─ scripts/                ← init_db、seed_users…
-│  ├─ requirements.txt
-│  └─ .venv/                  ← 虛擬環境（自己建，不進 git）
-├─ frontend/                ← React 19 / Vite / Tailwind
-│  ├─ src/
-│  │  ├─ pages/                ← 路由頁面
-│  │  ├─ components/           ← UI 元件
-│  │  ├─ design-system/        ← 設計 token (單一資料來源)
-│  │  ├─ store/                ← Zustand stores
-│  │  ├─ api/                  ← REST/WebSocket clients
-│  │  └─ i18n/locales/         ← 三語翻譯
-│  └─ public/samples/          ← 範例檔（給 Documents 頁下載）
-├─ ai_model/                ← GGUF 模型存放
-├─ docker-compose.yml       ← postgres + pgvector
-├─ scripts/                 ← 個別啟動腳本（start.py 是主流程）
-│  ├─ start-backend.ps1       ← 只開後端
-│  ├─ start-frontend.ps1      ← 只開前端
-│  └─ reset-backend-venv.ps1  ← 砍壞 venv 重建（救援用）
-└─ README.md                ← 你正在看
+```text
+engineer@local / Engineer123!
+admin@local    / Admin123!
+user@local     / User123!
 ```
 
----
+另外 `backend/scripts/seed_users.py` 可建立測試用 Gmail 帳號。
 
-## 設計系統
+## Log 位置
 
-整個 UI 的圓角、字級、主題色都從一個地方定義：
+一鍵啟動後，服務 log 會寫到：
 
+```text
+.runtime/backend.log
+.runtime/frontend.log
+.runtime/init-db.log
+.runtime/auto-engine.log
 ```
-frontend/src/design-system/tokens.js   ← 唯一資料來源
-frontend/src/design-system/index.ts    ← TS 入口
-frontend/src/design-system/README.md   ← 完整文件
-```
-
-詳見該資料夾的 README。**修一個值會即時影響整個 App**。
-
----
-
-## 常見問題
-
-### 後端啟動報 `Fatal error in launcher: ... D:\Cursor\...`
-舊 `venv/`（沒有點）是當專案在不同路徑時建的，內部 python.exe 寫死了舊路徑。
-跑救援腳本一次解決：
-
-```powershell
-.\scripts\reset-backend-venv.ps1
-```
-
-它會砍掉壞掉的 `venv\` 並建立新的 `.venv\`。
-
-### 前端 `rounded-cv-lg` 沒效果（圓角變成直角）
-`tailwind.config.js` 變更需要重啟 Vite dev server。
-最簡單的辦法：`Ctrl+C` 終止 `start.py`，再 `python start.py` 就好。
-
-### Port 5173 / 8168 已被占用
-`start.py` 會自動清掉，所以一般不需要手動處理。要手動的話：
-
-```powershell
-netstat -ano | Select-String ":5173"
-taskkill /F /PID <pid>
-```
-
-### 不想用 `start.py`，只啟動其中一邊
-- 只啟前端：`.\scripts\start-frontend.ps1`
-- 只啟後端：`.\scripts\start-backend.ps1`
-
----
-
-## 給協作者
-
-- 改前端 UI 之前先看 `frontend/src/design-system/README.md`，請用 token、不要寫 `rounded-[20px]` / `text-[15px]` 之類的硬編碼。
-- 後端改 schema 後記得 `alembic revision --autogenerate -m "..."`、`alembic upgrade head`。
-- Commit 訊息走 conventional：`feat`/`fix`/`refactor`/`chore`/`docs`/`style` + `(scope)`。

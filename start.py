@@ -1,403 +1,582 @@
 """
-Corphia AI - 一鍵啟動腳本
-執行方式: python start.py
-按下 Ctrl+C 可同時關閉前端與後端
+Corphia AI one-click local launcher.
 
-功能：
-  - 自動啟動 Docker / 後端 / 前端
-  - 瀏覽器自動開啟並顯示「引擎啟動中」畫面
-  - 查詢現有 Ngrok 通道並顯示公開網址
-  - 最後顯示 本機 / 區網 / 公開 三合一網址
+This starts the full local development stack:
+  1. Docker PostgreSQL + pgvector
+  2. Backend environment checks, llama-cpp-python, and DB initialization
+  3. FastAPI backend
+  4. Vite frontend
+  5. Browser at http://localhost:5173
 
-  ※ 公開網址由 ngrok_reset.py 獨立管理：
-     首次或想換網址 → python ngrok_reset.py
+The app itself runs locally. Docker is used only for PostgreSQL + pgvector.
 """
 
+from __future__ import annotations
+
+import argparse
 import os
+import re
+import shutil
 import signal
 import socket
 import subprocess
 import sys
-import threading
 import time
 import urllib.request
+from pathlib import Path
+from urllib.parse import urlparse
 
-# 修正 Windows 終端機編碼問題
+
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-BACKEND_DIR = os.path.join(BASE_DIR, "backend")
-
-if BACKEND_DIR not in sys.path:
-    sys.path.insert(0, BACKEND_DIR)
-
-from app.services.ngrok_service import (  # noqa: E402
-    find_ngrok_binary,
-    get_ngrok_state,
-    start_ngrok_tunnel,
-    start_ngrok_watcher,
-)
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
-def find_backend_python() -> str:
-    """
-    找出最適合用來跑後端 uvicorn 的 Python 直譯器。
+BASE_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = BASE_DIR / "backend"
+FRONTEND_DIR = BASE_DIR / "frontend"
+RUNTIME_DIR = BASE_DIR / ".runtime"
+BACKEND_PORT = 8168
+FRONTEND_PORT = 5173
+DEFAULT_DB_PORT = 5433
 
-    優先順序：
-      1. backend/.venv/Scripts/python.exe  ← 推薦寫法（前面有點）
-      2. backend/venv/Scripts/python.exe   ← 舊命名，向下相容
-      3. sys.executable                    ← 跑這個 start.py 的 Python
-    """
-    candidates = [
-        os.path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe"),
-        os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe"),
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return sys.executable
-
-# 儲存後端與前端程序
-processes: list[subprocess.Popen] = []
-ngrok_stop_event = threading.Event()
+PROCESSES: list[subprocess.Popen] = []
+# ngrok 開的 process 跟 backend/frontend 不一樣 —
+# 免費版 ngrok 偶爾自己斷線重連，主迴圈不該把它退出當致命錯誤。
+# 它只進 SHUTDOWN_PROCESSES（用於 Ctrl+C 清理），不進 PROCESSES（watchdog 監看）。
+SHUTDOWN_PROCESSES: list[subprocess.Popen] = []
+LOG_HANDLES = []
 
 
-# ─────────────────────────────────────────────────────────────
-#  工具函數
-# ─────────────────────────────────────────────────────────────
-
-def get_local_ip() -> str:
-    """取得本機區網 IP"""
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "無法取得"
+def info(message: str = "") -> None:
+    print(message, flush=True)
 
 
-def kill_process_tree(pid: int):
-    """強制終止 Windows 上的整個程序樹"""
-    subprocess.run(
-        ["taskkill", "/F", "/T", "/PID", str(pid)],
-        capture_output=True
+def ok(message: str) -> None:
+    info(f"[OK] {message}")
+
+
+def warn(message: str) -> None:
+    info(f"[WARN] {message}")
+
+
+def fail(message: str) -> None:
+    info(f"[ERROR] {message}")
+
+
+def run(
+    cmd: list[str],
+    cwd: Path = BASE_DIR,
+    timeout: int | None = None,
+    quiet: bool = False,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess:
+    # NOTE: 必須指定 encoding="utf-8"。
+    # Windows 上 text=True 預設用 locale 的 cp950，子程序若印 emoji 或非 BMP 字元
+    # （例如 schema init 印 ✅ 🚀），讀取執行緒會丟 UnicodeDecodeError 並炸出 traceback，
+    # 雖然不會中斷 start.py 主流程，但 console 看起來像出錯。
+    # errors="replace" 是雙保險：萬一遇到無法解碼的 byte 就替換掉而不是 raise。
+    return subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        timeout=timeout,
+        env=env,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=quiet,
+        check=False,
     )
 
 
-def shutdown(sig=None, frame=None):
-    """Ctrl+C 觸發時，關閉前端與後端服務"""
-    print("\n\n  正在關閉前端與後端服務...")
-    ngrok_stop_event.set()
-    for proc in processes:
+def run_logged(
+    cmd: list[str],
+    cwd: Path,
+    log_name: str,
+    timeout: int | None = None,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess:
+    result = run(cmd, cwd=cwd, timeout=timeout, quiet=True, env=env)
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = RUNTIME_DIR / log_name
+    output = (result.stdout or "") + (result.stderr or "")
+    log_path.write_text(output, encoding="utf-8", errors="replace")
+    return result
+
+
+def read_env(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.exists():
+        return values
+
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+def database_port() -> int:
+    backend_env = read_env(BACKEND_DIR / ".env")
+    url = backend_env.get("DATABASE_URL", "")
+    if url:
         try:
-            kill_process_tree(proc.pid)
-        except Exception:
+            parsed = urlparse(url)
+            if parsed.port:
+                return parsed.port
+        except ValueError:
             pass
-    print("  [OK] 服務已全部關閉\n")
-    sys.exit(0)
+
+    root_env = read_env(BASE_DIR / ".env")
+    return int(os.environ.get("POSTGRES_PORT") or root_env.get("POSTGRES_PORT") or DEFAULT_DB_PORT)
 
 
-signal.signal(signal.SIGINT, shutdown)
-signal.signal(signal.SIGTERM, shutdown)
-
-
-def open_frontend():
-    """Open the frontend after services have had a chance to come up."""
-    url = "http://localhost:5173"
-    if sys.platform == "win32":
-        subprocess.Popen(f"start {url}", shell=True)
-    elif sys.platform == "darwin":
-        subprocess.Popen(["open", url])
-    else:
-        subprocess.Popen(["xdg-open", url])
-
-
-def kill_port(port: int):
-    """找出佔用指定 Port 的程序並強制終止 (僅限 Windows)"""
-    if sys.platform != "win32":
-        return
-    try:
-        result = subprocess.run(
-            "netstat -ano", shell=True, capture_output=True, text=True
-        )
-        for line in result.stdout.strip().split("\n"):
-            if "LISTENING" not in line:
-                continue
-            parts = line.strip().split()
-            if len(parts) >= 5 and parts[1].endswith(f":{port}"):
-                pid = parts[-1]
-                if pid != "0":
-                    subprocess.run(
-                        f"taskkill /F /T /PID {pid}",
-                        shell=True, capture_output=True
-                    )
-    except Exception:
-        pass
-
-
-def find_ngrok() -> str | None:
-    """尋找 ngrok 執行檔。實作委派給 backend/app/services/ngrok_service.find_ngrok_binary。"""
-    return find_ngrok_binary(BASE_DIR)
-
-
-def _query_ngrok_url() -> str | None:
-    """查詢本機 ngrok API 上正在運作的 https 通道 URL。"""
-    state = get_ngrok_state(include_stale=False)
-    return state.url if state.active else None
-
-
-def start_ngrok() -> str | None:
-    """啟動 ngrok 通道，回傳 HTTPS public URL；失敗回傳 None。"""
-    print("  [ngrok] Waiting for public URL...", end="", flush=True)
-    process, state = start_ngrok_tunnel(frontend_port=5173, base_dir=BASE_DIR)
-    if process:
-        processes.append(process)
-    if state.active:
-        print(" ready", flush=True)
-        start_ngrok_watcher(stop_event=ngrok_stop_event)
-        return state.url
-    print(" failed", flush=True)
-    return None
-
-
-
-def wait_for_backend(port: int = 8168, timeout: int = 120) -> bool:
-    """等待後端服務啟動（顯示動態進度點）"""
-    url = f"http://127.0.0.1:{port}/api/v1/health"
+def wait_for_tcp(host: str, port: int, timeout: int = 60) -> bool:
     deadline = time.time() + timeout
-    dots = 0
-    print("  ", end="", flush=True)
     while time.time() < deadline:
         try:
-            res = urllib.request.urlopen(url, timeout=2)
-            if res.status == 200:
-                print(" 就緒！", flush=True)
+            with socket.create_connection((host, port), timeout=2):
                 return True
-        except Exception:
-            pass
-        print(".", end="", flush=True)
-        dots += 1
-        if dots % 20 == 0:
-            print("\n  ", end="", flush=True)
-        time.sleep(1)
-    print(" 逾時", flush=True)
+        except OSError:
+            time.sleep(1)
     return False
 
 
-# ─────────────────────────────────────────────────────────────
-#  自動喚醒 Docker Desktop
-# ─────────────────────────────────────────────────────────────
+def wait_for_http(url: str, timeout: int = 90) -> bool:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=3) as response:
+                if response.status < 500:
+                    return True
+        except Exception:
+            time.sleep(1)
+    return False
 
-def is_docker_running() -> bool:
-    """偵測 Docker daemon 是否已就緒"""
-    try:
-        result = subprocess.run(
-            ["docker", "info"],
-            capture_output=True, timeout=5
-        )
-        return result.returncode == 0
-    except Exception:
+
+def find_backend_python() -> Path:
+    candidates = [
+        BACKEND_DIR / ".venv" / "Scripts" / "python.exe",
+        BACKEND_DIR / "venv" / "Scripts" / "python.exe",
+        BACKEND_DIR / ".venv" / "bin" / "python",
+        BACKEND_DIR / "venv" / "bin" / "python",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return Path(sys.executable)
+
+
+def create_backend_venv() -> Path:
+    venv_python = BACKEND_DIR / ".venv" / "Scripts" / "python.exe"
+    if venv_python.exists():
+        return venv_python
+
+    info("[setup] Creating backend virtual environment...")
+    result = run([sys.executable, "-m", "venv", str(BACKEND_DIR / ".venv")], timeout=300)
+    if result.returncode != 0:
+        raise RuntimeError("Failed to create backend virtual environment.")
+    return venv_python if venv_python.exists() else find_backend_python()
+
+
+def python_can_import(python_exe: Path, modules: list[str]) -> bool:
+    imports = "; ".join(f"import {module}" for module in modules)
+    result = run([str(python_exe), "-c", imports], cwd=BACKEND_DIR, quiet=True, timeout=30)
+    return result.returncode == 0
+
+
+def ensure_backend_dependencies(python_exe: Path) -> None:
+    if python_can_import(python_exe, ["fastapi", "uvicorn", "sqlalchemy", "asyncpg"]):
+        ok("Backend Python dependencies are ready")
+        return
+
+    requirements = BACKEND_DIR / "requirements.txt"
+    if not requirements.exists():
+        raise RuntimeError("backend/requirements.txt was not found.")
+
+    info("[setup] Installing backend dependencies...")
+    result = run(
+        [str(python_exe), "-m", "pip", "install", "-r", str(requirements)],
+        cwd=BACKEND_DIR,
+        timeout=1800,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("Backend dependency installation failed.")
+    ok("Backend dependencies installed")
+
+
+def ensure_frontend_dependencies() -> None:
+    node_modules = FRONTEND_DIR / "node_modules"
+    if node_modules.exists():
+        ok("Frontend dependencies are ready")
+        return
+
+    npm = shutil.which("npm")
+    if not npm:
+        raise RuntimeError("npm was not found. Please install Node.js first.")
+
+    info("[setup] Installing frontend dependencies...")
+    result = run([npm, "install"], cwd=FRONTEND_DIR, timeout=1200)
+    if result.returncode != 0:
+        raise RuntimeError("Frontend dependency installation failed.")
+    ok("Frontend dependencies installed")
+
+
+def llama_cpp_installed(python_exe: Path) -> bool:
+    return python_can_import(python_exe, ["llama_cpp"])
+
+
+def run_auto_engine(python_exe: Path, force: bool) -> None:
+    script = BACKEND_DIR / "auto_engine.py"
+    if not script.exists():
+        warn("backend/auto_engine.py was not found; skipping llama-cpp-python auto setup")
+        return
+
+    if llama_cpp_installed(python_exe) and not force:
+        ok("llama-cpp-python is installed")
+        return
+
+    info("[setup] Checking llama-cpp-python...")
+    args = [str(python_exe), str(script), "--force"]
+    result = run_logged(args, cwd=BACKEND_DIR, log_name="auto-engine.log", timeout=1200)
+    if result.returncode != 0:
+        warn(f"llama-cpp-python auto setup reported a problem. See {RUNTIME_DIR / 'auto-engine.log'}")
+    elif llama_cpp_installed(python_exe):
+        ok("llama-cpp-python is installed")
+    else:
+        warn(f"llama-cpp-python is still missing after auto setup. See {RUNTIME_DIR / 'auto-engine.log'}")
+
+
+def docker_info_ok() -> bool:
+    docker = shutil.which("docker")
+    if not docker:
         return False
+    result = run([docker, "info"], quiet=True, timeout=8)
+    return result.returncode == 0
 
 
-def ensure_docker_desktop_running():
-    """若 Docker Desktop 未啟動，自動喚醒並等待就緒"""
-    if is_docker_running():
-        return  # 已就緒，直接跳過
+def start_docker_desktop() -> None:
+    if docker_info_ok():
+        ok("Docker daemon is ready")
+        return
 
-    print("  [啟動] Docker Desktop 尚未執行，正在自動開啟...", flush=True)
-
-    # 常見安裝路徑
-    docker_desktop_paths = [
-        os.path.join(os.environ.get("PROGRAMFILES", r"C:\Program Files"),
-                     "Docker", "Docker", "Docker Desktop.exe"),
-        os.path.join(os.environ.get("LOCALAPPDATA", ""),
-                     "Docker", "Docker", "Docker Desktop.exe"),
+    info("[docker] Docker daemon is not ready. Trying to start Docker Desktop...")
+    candidates = [
+        Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "Docker" / "Docker" / "Docker Desktop.exe",
+        Path(os.environ.get("LOCALAPPDATA", "")) / "Docker" / "Docker" / "Docker Desktop.exe",
     ]
     launched = False
-    for path in docker_desktop_paths:
-        if os.path.exists(path):
-            subprocess.Popen([path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for candidate in candidates:
+        if candidate.exists():
+            subprocess.Popen([str(candidate)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             launched = True
             break
 
     if not launched:
-        print("  [警告] 找不到 Docker Desktop，請手動開啟後再執行。")
+        raise RuntimeError("Docker Desktop was not found. Install Docker Desktop or start it manually.")
+
+    deadline = time.time() + 120
+    while time.time() < deadline:
+        if docker_info_ok():
+            ok("Docker daemon is ready")
+            return
+        time.sleep(2)
+
+    raise RuntimeError("Docker Desktop did not become ready in time.")
+
+
+def start_database() -> None:
+    start_docker_desktop()
+
+    compose_file = BASE_DIR / "docker-compose.yml"
+    if not compose_file.exists():
+        raise RuntimeError("docker-compose.yml was not found.")
+
+    info("[docker] Starting PostgreSQL + pgvector...")
+    commands = [
+        ["docker", "compose", "up", "-d"],
+        ["docker-compose", "up", "-d"],
+    ]
+    last_output = ""
+    for cmd in commands:
+        exe = shutil.which(cmd[0])
+        if not exe:
+            continue
+        result = run([exe, *cmd[1:]], cwd=BASE_DIR, quiet=True, timeout=180)
+        last_output = (result.stdout or "") + (result.stderr or "")
+        if result.returncode == 0:
+            port = database_port()
+            if wait_for_tcp("127.0.0.1", port, timeout=90):
+                ok(f"PostgreSQL + pgvector is ready on localhost:{port}")
+                return
+            raise RuntimeError(f"Database container started, but localhost:{port} did not become reachable.")
+
+    raise RuntimeError(f"Could not start Docker database.\n{last_output}".strip())
+
+
+def init_database(python_exe: Path) -> None:
+    script = BACKEND_DIR / "scripts" / "init_db.py"
+    if not script.exists():
+        warn("backend/scripts/init_db.py was not found; skipping DB initialization")
         return
 
-    # 等待 Docker daemon 就緒（最多 90 秒）
-    print("  [等待] Docker Desktop 啟動中", end="", flush=True)
-    deadline = time.time() + 90
-    while time.time() < deadline:
-        time.sleep(2)
-        print(".", end="", flush=True)
-        if is_docker_running():
-            print(" 就緒！", flush=True)
-            return
-    print(" 逾時，繼續嘗試...", flush=True)
+    info("[db] Initializing database schema and default data...")
+    result = run_logged([str(python_exe), str(script)], cwd=BACKEND_DIR, log_name="init-db.log", timeout=180)
+    if result.returncode != 0:
+        raise RuntimeError(f"Database initialization failed. See {RUNTIME_DIR / 'init-db.log'}")
+    ok("Database schema is ready")
 
 
-# ─────────────────────────────────────────────────────────────
-#  主程序
-# ─────────────────────────────────────────────────────────────
+def kill_port(port: int) -> None:
+    if sys.platform != "win32":
+        return
 
-def main():
-    print("=" * 52)
-    print("  🏃 Corphia AI Platform - 正在啟動，請稍候...")
-    print("=" * 52)
-    has_ngrok = bool(find_ngrok())
+    result = subprocess.run("netstat -ano -p tcp", shell=True, capture_output=True, text=True)
+    pattern = re.compile(rf"^\s*TCP\s+\S+:{port}\s+\S+\s+LISTENING\s+(\d+)\s*$", re.IGNORECASE)
+    pids = set()
+    for line in result.stdout.splitlines():
+        match = pattern.match(line)
+        if match:
+            pids.add(match.group(1))
 
-    # ── [0/6] 自動喚醒 Docker Desktop ────────────────────────
-    print("  [0/6] 檢查 Docker Desktop...")
-    ensure_docker_desktop_running()
-    print()
+    for pid in pids:
+        if pid != "0":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", pid], capture_output=True)
 
-    # ── [1/6] Docker ──────────────────────────────────────────
-    if os.path.exists("docker-compose.yml"):
-        print("  [1/6] 啟動 Docker 容器...")
-        try:
-            subprocess.run(
-                "docker-compose up -d", shell=True, check=True,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-            print("  [OK] Docker 容器已啟動")
-        except Exception:
-            print("  [跳過] Docker 啟動失敗或未安裝，繼續...")
-    else:
-        print("  [1/6] 未偵測到 docker-compose.yml，跳過 Docker...")
 
-    # ── [2/6] 清理 Port ────────────────────────────────────────
-    print("  [2/6] 清理佔用的 Port...")
-    kill_port(8168)
-    kill_port(5173)
+def open_log(name: str):
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    handle = open(RUNTIME_DIR / name, "a", encoding="utf-8", errors="replace")
+    LOG_HANDLES.append(handle)
+    return handle
 
-    # ── [3/6] 硬體偵測 ────────────────────────────────────────
-    print("  [3/6] 偵測硬體環境...")
-    if os.path.exists(BACKEND_DIR):
-        engine_script = os.path.join(BACKEND_DIR, "auto_engine.py")
-        if os.path.exists(engine_script):
-            py_exec = find_backend_python()
-            try:
-                subprocess.run(
-                    [py_exec, engine_script] + sys.argv[1:],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=10
-                )
-            except subprocess.TimeoutExpired:
-                print("  [跳過] 硬體偵測超時，使用預設設定")
-            except Exception:
-                pass
 
-    # ── [4/6] 前端先啟動 → 瀏覽器自動開啟 ──────────────────────
-    print("  [4/6] 啟動前端服務 (Port 5173)...")
-    if os.path.exists(FRONTEND_DIR):
-        proc = subprocess.Popen(
-            "npm run dev -- --host --logLevel silent",
-            cwd=FRONTEND_DIR, shell=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+def start_backend(python_exe: Path) -> None:
+    kill_port(BACKEND_PORT)
+    log = open_log("backend.log")
+    cmd = [
+        str(python_exe),
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(BACKEND_PORT),
+        "--log-level",
+        "info",
+    ]
+    process = subprocess.Popen(cmd, cwd=str(BACKEND_DIR), stdout=log, stderr=subprocess.STDOUT)
+    PROCESSES.append(process)
+    ok(f"Backend started on http://localhost:{BACKEND_PORT} (PID {process.pid})")
+
+
+def start_frontend() -> None:
+    kill_port(FRONTEND_PORT)
+    npm = shutil.which("npm")
+    if not npm:
+        raise RuntimeError("npm was not found. Please install Node.js first.")
+
+    log = open_log("frontend.log")
+    cmd = [npm, "run", "dev", "--", "--host", "0.0.0.0", "--logLevel", "silent"]
+    process = subprocess.Popen(cmd, cwd=str(FRONTEND_DIR), stdout=log, stderr=subprocess.STDOUT)
+    PROCESSES.append(process)
+    ok(f"Frontend started on http://localhost:{FRONTEND_PORT} (PID {process.pid})")
+
+
+def start_ngrok() -> str | None:
+    """
+    啟動 ngrok 公開通道指向 frontend，回傳公開 URL（失敗時回 None）。
+
+    流程：
+      1. 從 backend 套件動態 import ngrok_service（共用一份程式碼）
+      2. 找 ngrok 執行檔 — 沒裝就直接 warn 跳過、不 fail 整個啟動流程
+      3. 殺掉舊的 ngrok process（避免 4040 被前一輪佔走拿不到 tunnel API）
+      4. 開新的 ngrok http {FRONTEND_PORT}，poll API 直到拿到 https URL
+      5. 寫 .runtime/ngrok.json + frontend/.env.local 讓 admin 頁面 / Vite 同步知道
+      6. 啟動背景 watcher：每 10s 檢查 ngrok 公開 URL 是否有變動。
+         免費版 ngrok 重連可能會拿到不同子網域；watcher 會把最新 URL 持續寫回
+         runtime 檔案，後端 /system/ngrok 端點下次被前端問就拿得到新值。
+    """
+    backend_path = str(BACKEND_DIR)
+    if backend_path not in sys.path:
+        sys.path.insert(0, backend_path)
+
+    try:
+        from app.services.ngrok_service import (  # noqa: WPS433  延遲 import
+            find_ngrok_binary,
+            start_ngrok_tunnel,
+            start_ngrok_watcher,
         )
-        processes.append(proc)
-        print(f"  [OK] 前端程序已啟動 (PID: {proc.pid})")
+    except Exception as exc:  # pragma: no cover
+        warn(f"ngrok service import failed: {exc}. Skipping ngrok.")
+        return None
 
-    print("  [瀏覽器] 等待前端就緒，即將自動開啟瀏覽器...", end="", flush=True)
-    for _ in range(6):
-        time.sleep(0.5)
-        print(".", end="", flush=True)
+    if not find_ngrok_binary(BASE_DIR):
+        warn("ngrok binary not found (looked in PATH, C:\\ngrok, project root). "
+             "Install ngrok to enable public URL: https://ngrok.com/download")
+        return None
+
+    info("[ngrok] Launching public tunnel for frontend...")
+    process, state = start_ngrok_tunnel(frontend_port=FRONTEND_PORT, base_dir=BASE_DIR)
+    if process is not None:
+        # 只進 SHUTDOWN_PROCESSES（Ctrl+C 時會被清掉）；不進 PROCESSES（watchdog），
+        # 避免 ngrok 偶發斷線把整個服務棧拉下來。
+        SHUTDOWN_PROCESSES.append(process)
+    if state.active and state.url:
+        ok(f"ngrok tunnel ready: {state.url}")
+        # Watcher: 持續把當下 ngrok URL 寫回 .runtime/ngrok.json + frontend/.env.local
         try:
-            r = urllib.request.urlopen("http://127.0.0.1:5173", timeout=1)
-            if r.status < 500:
-                break
+            start_ngrok_watcher(root_dir=BASE_DIR, interval_seconds=10)
+        except Exception as exc:
+            warn(f"ngrok watcher failed to start (non-fatal): {exc}")
+        return state.url
+    warn("ngrok started but failed to acquire public URL within timeout. "
+         "Check ngrok authtoken: ngrok config add-authtoken <your-token>")
+    return None
+
+
+def open_browser() -> None:
+    url = f"http://localhost:{FRONTEND_PORT}"
+    if sys.platform == "win32":
+        os.startfile(url)  # type: ignore[attr-defined]
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", url])
+    else:
+        subprocess.Popen(["xdg-open", url])
+    ok(f"Browser opened: {url}")
+
+
+def shutdown(*_args) -> None:
+    info("")
+    info("[stop] Shutting down local backend and frontend...")
+    # PROCESSES (watchdog-monitored) + SHUTDOWN_PROCESSES (extras like ngrok)
+    # are both killed together on Ctrl+C / SIGTERM.
+    for process in list(PROCESSES) + list(SHUTDOWN_PROCESSES):
+        if process.poll() is not None:
+            continue
+        try:
+            if sys.platform == "win32":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)], capture_output=True)
+            else:
+                process.terminate()
         except Exception:
             pass
-    print()
-    print("  [OK] Frontend is ready; browser will open after backend check.")
 
-    # ── [5/6] 後端啟動 ───────────────────────────────────────
-    print("  [5/6] 啟動後端服務 (Port 8168)...")
-    if os.path.exists(BACKEND_DIR):
-        backend_python = find_backend_python()
-        backend_cmd = [
-            backend_python, "-m", "uvicorn", "app.main:app",
-            "--host", "0.0.0.0", "--port", "8168", "--log-level", "warning"
-        ]
-        proc = subprocess.Popen(
-            backend_cmd, cwd=BACKEND_DIR, shell=False,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        processes.append(proc)
-        print(f"  [OK] 後端程序已啟動 (PID: {proc.pid})")
-        print("  [等待] 後端 API 就緒中（LLM 模型載入可能需要 1~2 分鐘）：")
+    for handle in LOG_HANDLES:
+        try:
+            handle.close()
+        except Exception:
+            pass
 
-        backend_ready = wait_for_backend(8168, timeout=120)
-        if backend_ready:
-            print("  [OK] 後端 API 已就緒 ✅")
+    info("[OK] Local services stopped. Docker database remains running.")
+    sys.exit(0)
+
+
+def print_summary(ngrok_url: str | None = None) -> None:
+    info("")
+    info("=" * 64)
+    info("Corphia AI is ready")
+    info("=" * 64)
+    info(f"Frontend: http://localhost:{FRONTEND_PORT}")
+    info(f"Backend:  http://localhost:{BACKEND_PORT}")
+    info(f"API docs: http://localhost:{BACKEND_PORT}/docs")
+    info(f"DB:       localhost:{database_port()} (Docker PostgreSQL + pgvector)")
+    if ngrok_url:
+        info("")
+        info(f"Public:   {ngrok_url}    (ngrok)")
+        info(f"          {ngrok_url}/api/v1/    (REST API)")
+        info(f"          {ngrok_url.replace('https://', 'wss://')}/ws/    (WebSocket)")
+    info("")
+    info("Logs:")
+    info(f"Backend:  {RUNTIME_DIR / 'backend.log'}")
+    info(f"Frontend: {RUNTIME_DIR / 'frontend.log'}")
+    info(f"DB init:  {RUNTIME_DIR / 'init-db.log'}")
+    info("")
+    info("Press Ctrl+C in this window to stop backend and frontend.")
+    info("Docker database will keep running for fast next startup.")
+    info("=" * 64)
+    info("")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Start the full Corphia AI local stack.")
+    parser.add_argument("--force-engine", action="store_true", help="Force llama-cpp-python backend detection/install.")
+    parser.add_argument("--skip-browser", action="store_true", help="Do not open the browser automatically.")
+    parser.add_argument("--skip-init-db", action="store_true", help="Skip database schema/default data initialization.")
+    # Ngrok 預設關閉 —— 公開隧道屬於敏感能力，由 admin 在後台手動開啟比較合理。
+    # 如果你還是要在 start.py 啟動時就開，加 --ngrok。
+    # 舊的 --no-ngrok 旗標保留為 no-op alias（向後相容，避免之前 bat / docs 寫這個的破掉）。
+    parser.add_argument("--ngrok", action="store_true", help="Auto-launch ngrok tunnel at startup (default: off, open manually from admin panel).")
+    parser.add_argument("--no-ngrok", action="store_true", help="(deprecated, this is now the default) Skip ngrok at startup.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
+
+    info("=" * 64)
+    info("Corphia AI one-click startup")
+    info("=" * 64)
+    info("Docker is used only for PostgreSQL + pgvector.")
+    info("Backend, frontend, and GGUF model run locally.")
+    info("")
+
+    try:
+        python_exe = create_backend_venv()
+        ensure_backend_dependencies(python_exe)
+        ensure_frontend_dependencies()
+        start_database()
+        run_auto_engine(python_exe, force=args.force_engine)
+        if not args.skip_init_db:
+            init_database(python_exe)
+
+        start_backend(python_exe)
+        start_frontend()
+
+        info("[wait] Checking backend health...")
+        if not wait_for_http(f"http://127.0.0.1:{BACKEND_PORT}/api/v1/health", timeout=120):
+            raise RuntimeError(f"Backend health check timed out. See {RUNTIME_DIR / 'backend.log'}")
+        ok("Backend health check passed")
+
+        info("[wait] Checking frontend...")
+        if not wait_for_http(f"http://127.0.0.1:{FRONTEND_PORT}", timeout=90):
+            raise RuntimeError(f"Frontend check timed out. See {RUNTIME_DIR / 'frontend.log'}")
+        ok("Frontend is reachable")
+
+        # ngrok 必須在 frontend 監聽之後才能正確建 tunnel。
+        # 只有顯式 --ngrok 才在啟動時開；預設關閉，由 admin 後台動態啟動。
+        ngrok_url: str | None = None
+        if args.ngrok:
+            ngrok_url = start_ngrok()
         else:
-            print("  [警告] 後端啟動逾時，請確認 PostgreSQL 是否正在執行⚠️")
+            info("[ngrok] Skipped (default off). Toggle from admin panel when needed.")
 
-    open_frontend()
-    print("  [OK] Browser opened: http://localhost:5173")
+        if not args.skip_browser:
+            open_browser()
 
-    # ── [6/6] 啟動 Ngrok 公開通道 ────────────────────────────
-    public_url: str | None = None
-    if has_ngrok:
-        print("  [6/6] 啟動 Ngrok 公開通道...")
-        public_url = start_ngrok()
-        if public_url:
-            print("  [OK] Ngrok 通道就緒 ✅")
-        else:
-            print("  [跳過] Ngrok 通道建立失敗（請確認 authtoken 是否已設定）")
-    else:
-        print("  [6/6] 未安裝 Ngrok（跳過，可選安裝：https://ngrok.com/download）")
+        print_summary(ngrok_url=ngrok_url)
+        while True:
+            time.sleep(1)
+            for process in PROCESSES:
+                if process.poll() is not None:
+                    raise RuntimeError(f"A service exited unexpectedly. See logs in {RUNTIME_DIR}.")
 
-    # ── 最終：顯示三合一服務資訊 ─────────────────────────────────
-    local_ip = get_local_ip()
-    print()
-    print("=" * 52)
-    print("  🟢 Corphia AI Platform 已全面啟動！")
-    print("=" * 52)
-    print()
-    print("  📍 本機存取")
-    print(f"     前端: http://localhost:5173")
-    print(f"     後端: http://localhost:8168")
-    print(f"     文件: http://localhost:8168/docs")
-    print()
-    print(f"  📡 區域網路（手機 / 其他裝置）")
-    print(f"     前端: http://{local_ip}:5173")
-    print(f"     後端: http://{local_ip}:8168")
-    print()
-    print(f"  🌍 公開網址（Ngrok）")
-    if public_url:
-        print(f"     前端:       {public_url}")
-        print(f"     後端 API:   {public_url}/api/v1/")
-        print(f"     WebSocket:  {public_url.replace('https://', 'wss://')}/ws/")
-        print()
-        print(f"  ⚡ 架構：前後端共用同一 ngrok URL，透過 Vite Proxy 路由")
-        print(f"     /api/* → port 8168 (FastAPI)  /ws/* → port 8168 (WebSocket)")
-        print()
-        print(f"  💡 重新取得網址：python ngrok_reset.py")
-    else:
-        if has_ngrok:
-            print(f"     （Ngrok 啟動失敗，請確認 authtoken：ngrok config add-authtoken <token>）")
-        else:
-            print(f"     （未安裝 Ngrok，可至 https://ngrok.com/download 下載）")
-    print()
-    print("  🛑 按下 Ctrl+C 可隨時關閉服務")
-    print("=" * 52)
-    print()
-
-    # 持續等待，直到 Ctrl+C
-    while True:
-        time.sleep(1)
-        for proc in list(processes):
-            if proc.poll() is not None:
-                processes.remove(proc)
-                break
+    except Exception as exc:
+        fail(str(exc))
+        fail("Startup did not complete. Check .runtime/backend.log and .runtime/frontend.log if they exist.")
+        for process in list(PROCESSES) + list(SHUTDOWN_PROCESSES):
+            try:
+                if process.poll() is None:
+                    process.terminate()
+            except Exception:
+                pass
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

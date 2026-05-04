@@ -220,31 +220,73 @@ def _render_runtime_env(state: NgrokState) -> str:
 
 
 def _update_frontend_env_local(root_dir: Path, state: NgrokState) -> None:
+    """
+    清理 frontend/.env.local 中由 ngrok 管控的區塊。
+
+    FIX (循環閃退 bug)：
+    原本這裡會寫 `VITE_PUBLIC_BASE_URL={state.url}` 這個「動態值」進 .env.local。
+    每次 ngrok start/stop 因為 URL 改變 → .env.local 內容變了 → Vite 偵測到 →
+    重啟 dev server。Windows 上 npm.cmd 處理 Vite 連續重啟特別脆弱：cmd.exe
+    跳「要終止批次工作 (Y/N)?」+ npm.cmd 退出 → start.py watchdog 把它當 crash →
+    整包重啟 → 又跑這流程 → 死循環。
+
+    解法：完全不再寫 .env.local。
+    - VITE_PUBLIC_BASE_URL：grep 過 frontend src 完全沒人用，純噪音
+    - VITE_WS_URL：同上沒人用
+    - VITE_API_BASE_URL=/api/v1：是常數，setup 時放 .env 即可，不需要動態管
+    - 公開 URL 給前端用：透過 /system/ngrok API 即時取，frontend AdminPage 已經這樣做
+
+    這個函式現在只做「把舊版可能寫入的 ngrok-managed block 移除」，讓現有
+    .env.local 回到乾淨狀態。後續 toggle 不再 touch 此檔 → Vite 不再被觸發 →
+    閃退循環解除。
+    """
+    # state 參數保留：未來若要改成「只在重要狀態變化時動作」可用，目前不使用
+    _ = state
     path = _frontend_env_local_path(root_dir)
-    existing = path.read_text(encoding="utf-8") if path.exists() else ""
-    block = "\n".join(
-        [
-            MANAGED_ENV_START,
-            f"VITE_PUBLIC_BASE_URL={state.url or ''}",
-            "VITE_API_BASE_URL=/api/v1",
-            "VITE_WS_URL=/ws",
-            MANAGED_ENV_END,
-        ]
-    )
+    if not path.exists():
+        return
 
-    if MANAGED_ENV_START in existing and MANAGED_ENV_END in existing:
-        before = existing.split(MANAGED_ENV_START, 1)[0].rstrip()
+    existing = path.read_text(encoding="utf-8")
+    if MANAGED_ENV_START not in existing:
+        return
+
+    # 把舊 ngrok-managed block 整段移除
+    before = existing.split(MANAGED_ENV_START, 1)[0].rstrip()
+    after = ""
+    if MANAGED_ENV_END in existing:
         after = existing.split(MANAGED_ENV_END, 1)[1].lstrip()
-        next_content = "\n\n".join(part for part in [before, block, after.rstrip()] if part) + "\n"
-    else:
-        next_content = (existing.rstrip() + "\n\n" if existing.strip() else "") + block + "\n"
 
-    path.write_text(next_content, encoding="utf-8")
+    next_content = "\n\n".join(part for part in [before, after.rstrip()] if part)
+    if next_content:
+        next_content += "\n"
+
+    if next_content != existing:
+        path.write_text(next_content, encoding="utf-8")
 
 
 def stop_ngrok_processes() -> None:
     if sys.platform == "win32":
         subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+    else:
+        # macOS / Linux：用 pkill 試一下，沒裝 pkill 也不爆炸
+        subprocess.run("pkill -f ngrok", shell=True, capture_output=True)
+
+
+def stop_ngrok_and_clear_runtime(root_dir: Path | None = None) -> NgrokState:
+    """
+    從 admin 後台呼叫的「關閉公開網域」入口：
+      1) 用 taskkill / pkill 殺掉所有 ngrok process
+      2) 把 .runtime/ngrok.json + .env.local 寫成 inactive 狀態，
+         讓 ChatPage / Admin Overview 下次查詢時看到 active=False
+
+    注意：start.py 把 ngrok process 放在 SHUTDOWN_PROCESSES（非 watchdog 監控），
+    所以這個操作不會把後端整包拉下來。
+    """
+    stop_ngrok_processes()
+    time.sleep(0.5)
+    inactive = NgrokState.inactive(source="admin_stop")
+    write_ngrok_runtime(inactive, root_dir)
+    return inactive
 
 
 def start_ngrok_tunnel(
@@ -290,11 +332,24 @@ def start_ngrok_watcher(
     interval_seconds: int = 10,
     stop_event: threading.Event | None = None,
 ) -> threading.Thread:
+    """
+    背景監看 ngrok URL 是否變動（免費版重連會拿新子網域）。
+    URL 改變時把新值寫回 .runtime/ngrok.json + frontend/.env.local。
+
+    重要：last_url 用 query 取得當下 state 來「預先初始化」，避免 watcher 啟動的
+    第一輪 tick 把跟 start_ngrok_tunnel 剛寫的同一個 URL 又寫一次（會造成 Vite
+    第二次重啟，Windows 上 npm 連兩次重啟容易卡死）。
+    """
     root = root_dir or project_root()
     event = stop_event or threading.Event()
 
+    # 預先抓一次當前狀態 —— 跟 start_ngrok_tunnel 寫過的同步，
+    # 第一輪 tick 不會重複寫
+    initial_state = query_ngrok_state()
+    initial_url = initial_state.url if initial_state.active else None
+
     def watch() -> None:
-        last_url: str | None = None
+        last_url: str | None = initial_url
         while not event.is_set():
             state = query_ngrok_state()
             if state.active and state.url != last_url:

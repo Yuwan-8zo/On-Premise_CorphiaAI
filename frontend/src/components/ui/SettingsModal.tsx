@@ -2,7 +2,7 @@
  * 設定頁面 (Modal)
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
@@ -80,12 +80,6 @@ const ShieldIcon = () => (
     </svg>
 )
 
-const QrCodeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
-    </svg>
-)
 type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
 /**
@@ -113,11 +107,42 @@ export default function SettingsModal() {
     const navigate = useNavigate()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
 
+    /**
+     * 開合動畫 ——
+     * 本專案的 motion lib（gsapMotion）AnimatePresence 是 no-op Fragment，
+     * 所以 motion exit prop 不會生效，要關 modal 時直接 unmount → 沒退場動畫。
+     * 這裡用「延遲 unmount」手動實作：
+     *   - isVisible 控制是否真的 render（包含退場期間）
+     *   - isClosing 控制要套退場 class
+     * 開：isSettingsOpen true → isVisible true → 下一 frame 自動進入動畫尾態
+     * 關：isSettingsOpen false → isClosing true → 等 ANIM_MS 後 isVisible false unmount
+     */
+    const ANIM_MS = 220
+    const [isVisible, setIsVisible] = useState(false)
+    const [isClosing, setIsClosing] = useState(false)
+    useEffect(() => {
+        if (isSettingsOpen) {
+            // 進場：先 mount 在「關閉」狀態（isClosing=true），double rAF 後 flip 成 false 觸發 transition
+            setIsVisible(true)
+            setIsClosing(true)
+            const id1 = requestAnimationFrame(() => {
+                requestAnimationFrame(() => setIsClosing(false))
+            })
+            return () => cancelAnimationFrame(id1)
+        }
+        // 退場：isClosing=true 觸發 exit transition，等動畫結束才真正 unmount
+        setIsClosing(true)
+        const id = window.setTimeout(() => {
+            setIsVisible(false)
+            setIsClosing(false)
+        }, ANIM_MS)
+        return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isSettingsOpen])
+
     // 密碼修改狀態
     const [showPasswordForm, setShowPasswordForm] = useState(false)
 
-    // QR Code 顯示狀態
-    const [showQR, setShowQR] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
@@ -286,32 +311,20 @@ export default function SettingsModal() {
         }
     }
 
+    if (!isVisible) return (<></>)
+
     return (
         <>
-            <AnimatePresence>
-            {isSettingsOpen && (
-                <motion.div 
-                    key="settings-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
-                    onClick={() => setSettingsOpen(false)}
-                />
-            )}
-            {isSettingsOpen && (
-                <motion.div
-                    key="settings-modal"
-                    initial={{ scale: 0.95, y: 10 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.95, y: 10 }}
-                    transition={{ type:"spring", stiffness: 300, damping: 30 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none"
-                >
-                    {/* Modal Content */}
+            <div
+                className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+                onClick={() => setSettingsOpen(false)}
+            />
+            <div
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-all duration-200 ease-out ${isClosing ? 'opacity-0 scale-[0.97] translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}
+            >
+                    {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/95 backdrop-blur-2xl rounded-cv-lg shadow-2xl flex flex-col md:flex-row overflow-hidden border border-border-subtle select-none pointer-events-auto"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl rounded-cv-lg shadow-[0_22px_70px_rgb(0_0_0/0.18)] dark:shadow-[0_22px_70px_rgb(0_0_0/0.42)] flex flex-col md:flex-row overflow-hidden border border-white/40 dark:border-white/10 select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
@@ -321,8 +334,8 @@ export default function SettingsModal() {
                             <CloseIcon />
                         </button>
 
-                        {/* 側邊導航 */}
-                        <div className={`md:w-64 bg-bg-base/50 border-r border-border-subtle/50 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
+                        <div className={`md:w-64 bg-white/10 dark:bg-white/[0.03] border-r border-white/20 dark:border-white/10 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-text-primary tracking-wide">
                                     {t('settings.title')}
@@ -339,7 +352,7 @@ export default function SettingsModal() {
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all ${
                                             activeSection === item.id
                                                 ? 'bg-bg-surface text-text-primary shadow-sm font-semibold border border-border-subtle'
-                                                : 'text-text-secondary bg-transparent hover:text-text-primary hover:bg-bg-surface/50 font-medium border border-transparent'
+                                                : 'text-text-secondary bg-transparent hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/50 font-medium border border-transparent'
                                         }`}
                                     >
                                         <div className={`${activeSection === item.id ? 'text-accent' : 'text-text-secondary'}`}>
@@ -357,7 +370,7 @@ export default function SettingsModal() {
                                     <button
                                         onClick={() => { setSettingsOpen(false); navigate('/admin') }}
                                         title={t('settings.enterAdmin')}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm group"
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition-all font-medium text-sm group"
                                     >
                                         <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
                                             <ShieldIcon />
@@ -368,16 +381,6 @@ export default function SettingsModal() {
                                         </svg>
                                     </button>
                                 )}
-                                <button
-                                    onClick={() => setShowQR(true)}
-                                    title={t('settings.showQR')}
-                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-all font-medium text-sm"
-                                >
-                                    <div className="text-text-secondary">
-                                        <QrCodeIcon />
-                                    </div>
-                                    <span>{t('settings.mobileScanner')}</span>
-                                </button>
                             </div>
                         </div>
 
@@ -403,7 +406,7 @@ export default function SettingsModal() {
 
                                     {/* 頭像與名稱*/}
                                     <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 mb-10 text-center md:text-left">
-                                        <div className="w-24 h-24 rounded-full bg-accent text-white flex items-center justify-center text-4xl font-bold shadow-lg shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-accent text-text-on-accent flex items-center justify-center text-4xl font-bold shadow-lg shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div className="flex flex-col items-center md:items-start">
@@ -427,7 +430,7 @@ export default function SettingsModal() {
                                                         <button 
                                                             onClick={handleUpdateName}
                                                             disabled={isUpdatingName}
-                                                            className="p-1.5 px-3 text-sm font-medium bg-accent text-white rounded-[12px] flex-shrink-0 hover:bg-accent/90 transition-colors"
+                                                            className="p-1.5 px-3 text-sm font-medium bg-accent text-text-on-accent rounded-[12px] flex-shrink-0 hover:bg-accent/90 transition-colors"
                                                         >
                                                             {isUpdatingName ? t('common.loading') : t('common.save')}
                                                         </button>
@@ -437,7 +440,7 @@ export default function SettingsModal() {
                                                                 setIsEditingName(false)
                                                             }}
                                                             disabled={isUpdatingName}
-                                                            className="p-1.5 px-3 text-sm font-medium bg-bg-surface text-text-primary rounded-[12px] flex-shrink-0 hover:bg-bg-surface/80 transition-colors border border-border-subtle"
+                                                            className="p-1.5 px-3 text-sm font-medium bg-bg-surface text-text-primary rounded-[12px] flex-shrink-0 hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/80 transition-colors border border-border-subtle"
                                                         >
                                                             {t('common.cancel', '取消')}
                                                         </button>
@@ -449,7 +452,7 @@ export default function SettingsModal() {
                                                         </h3>
                                                         <button 
                                                             onClick={() => setIsEditingName(true)}
-                                                            className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-bg-surface"
+                                                            className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-white/[0.06] dark:hover:bg-white/[0.06]"
                                                             title={t('common.changeName')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -480,7 +483,7 @@ export default function SettingsModal() {
                                                 setConfirmNewPassword('')
                                                 setPasswordStrength(null)
                                             }}
-                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-bg-surface hover:bg-bg-surface/80 text-text-primary font-medium rounded-[16px] transition-colors border border-border-subtle"
+                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-bg-surface hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/80 text-text-primary font-medium rounded-[16px] transition-colors border border-border-subtle"
                                         >
                                             <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
@@ -673,7 +676,7 @@ export default function SettingsModal() {
                                                 onClick={() => handleLanguageChange(lang.code)}
                                                 className={`w-full flex items-center justify-between p-5 rounded-cv-lg transition-all border-2 ${i18n.language === lang.code
                                                         ? 'bg-accent/10 text-accent border-accent ring-1 ring-accent'
-                                                        : 'bg-bg-base hover:bg-bg-surface text-text-primary border-transparent shadow-sm'
+                                                        : 'bg-bg-base hover:bg-white/[0.06] dark:hover:bg-white/[0.06] text-text-primary border-transparent shadow-sm'
                                                     }`}
                                             >
                                                 <span className="font-semibold text-[16px]">{lang.label}</span>
@@ -703,9 +706,7 @@ export default function SettingsModal() {
                             </div>
                         </div>
                     </div>
-                </motion.div>
-            )}
-            </AnimatePresence>
+            </div>
 
 
 
@@ -886,7 +887,7 @@ export default function SettingsModal() {
                             <button
                                 onClick={handleChangePassword}
                                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-[#F6F4F0] font-semibold rounded-[16px] transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-text-on-accent font-semibold rounded-[16px] transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                             >
                                 {isChangingPassword ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -903,42 +904,6 @@ export default function SettingsModal() {
                 )}
             </AnimatePresence>
 
-            {/* QR Code 視窗 */}
-            <AnimatePresence>
-                {showQR && (
-                    <motion.div
-                        key="qr-backdrop"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-md"
-                        onClick={() => setShowQR(false)}
-                    />
-                )}
-                {showQR && (
-                    <motion.div
-                        key="qr-modal"
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type:"spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none"
-                    >
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className="bg-bg-base p-5 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 pointer-events-auto"
-                        >
-                            {/* QR Code 圖片 */}
-                            <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(window.location.origin)}`}
-                                alt="Mobile Access QR Code"
-                                className="w-full max-w-[380px] aspect-square object-contain mx-auto rounded-[16px]"
-                            />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </>
     )
 }

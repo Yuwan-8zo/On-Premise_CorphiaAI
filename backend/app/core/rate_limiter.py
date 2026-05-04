@@ -212,12 +212,19 @@ class RateLimiter:
         Returns:
             int: 清除的記錄數
         """
+        # FIX: key 格式是 "{rule_kind}:{ip}:{path}"，原本用 substring `ip in key` 太寬鬆：
+        #   reset(ip="1") 會誤刪 "10.0.0.1" / "192.168.1.1" / "1.2.3.4" 全部
+        # 改成精確比對 token：以 ":" 切開後比對 IP / path 段落
         with self._lock:
             keys_to_delete = []
             for key in self._records:
-                if ip and ip not in key:
+                parts = key.split(":", 2)  # 最多切 3 段：rule:ip:path
+                if len(parts) < 3:
                     continue
-                if path and path not in key:
+                _, key_ip, key_path = parts[0], parts[1], parts[2]
+                if ip and key_ip != ip:
+                    continue
+                if path and key_path != path:
                     continue
                 keys_to_delete.append(key)
             for key in keys_to_delete:

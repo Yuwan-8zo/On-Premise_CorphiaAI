@@ -36,7 +36,10 @@ from typing import Any, Dict, Optional, Annotated
 from pydantic import AfterValidator
 
 # ── 規則常數 ─────────────────────────────────────────────────
-_MAX_DEPTH = 8                # 最多允許的巢狀深度
+# DEPTH 從 8 降到 4：8 層巢狀已經是「結構複雜到沒人會手刻」的 JSON，
+# 攻擊者用「深巢狀」做 algorithmic complexity attack 容易把驗證 CPU 拉高。
+# 4 層足夠表達 settings.notifications.email.enabled 這類三層配置 + 一層保留。
+_MAX_DEPTH = 4
 _MAX_KEY_LENGTH = 128         # 鍵最大字元數
 _MAX_STRING_LENGTH = 8 * 1024  # 單個字串值最大字元數 (8 KB)
 _MAX_ITEMS = 512              # 單層 dict/list 最多項目數

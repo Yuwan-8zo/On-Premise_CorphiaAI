@@ -74,16 +74,12 @@ export default function App() {
 
     // 主題與重點色同步：更新 html/body 背景色 + meta theme-color + data-accent
     // 確保 Safari 頂部狀態列與底部 Home bar 顏色與 App 主題一致
-    // route-aware：'/' 或 '/chat*' 路徑用 surface 色（跟 sidebar 對齊），其他用 base 色
+    // 所有頁面（login / chat / docs / admin）現在統一用 bg-bg-base + 弧線 SVG，
+    // 所以 theme-color 一律給 baseBg，不再分 chat/其他。
     useEffect(() => {
         const isDark = theme === 'dark'
-        const path = location.pathname
-        const isChatPath = path === '/' || path.startsWith('/chat')
         const baseBg = isDark ? THEME_COLORS.darkBg : THEME_COLORS.lightBg
-        const surfaceBg = isDark ? THEME_COLORS.darkSurface : THEME_COLORS.lightSurface
-        // meta[theme-color] 用：使用者實際看到的最頂端那條顏色
-        // chat 頁的 sidebar 是 surface 色，登入頁直接是 base 漸層的最上方
-        const topBarBg = isChatPath ? surfaceBg : baseBg
+        const topBarBg = baseBg
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
@@ -108,6 +104,24 @@ export default function App() {
         html.style.setProperty('--color-ios-accent-light', rgbString)
         html.style.setProperty('--color-ios-accent-dark', rgbString)
         html.style.setProperty('--text-on-accent', textOnAccent)
+
+        // ─────────────────────────────────────────────────────────────
+        // 邊框/分隔線跟著 accent 走
+        // FIX: 原本 7%/22% 在深色模式（bg 32,32,34）算出來幾乎看不見
+        // （subtle ≈ 39,37,37 跟 bg 只差 ±5）。提到 16%/38%：
+        //   - subtle  ~50,44,42 → 跟 bg 差 ±15，淡但能勾勒卡片邊
+        //   - strong  ~72,62,53 → 跟 bg 差 ±30，明顯但不刺眼
+        // 淺色模式 (bg 250,250,248) 同步提升，但因為背景亮，邊框會更清楚
+        // ─────────────────────────────────────────────────────────────
+        const baseRgb = isDark ? [32, 32, 34] : [250, 250, 248]
+        const mix = (ratio: number) => {
+            const mr = Math.round(r * ratio + baseRgb[0] * (1 - ratio))
+            const mg = Math.round(g * ratio + baseRgb[1] * (1 - ratio))
+            const mb = Math.round(b * ratio + baseRgb[2] * (1 - ratio))
+            return `${mr} ${mg} ${mb}`
+        }
+        html.style.setProperty('--border-subtle', mix(0.16))
+        html.style.setProperty('--border-strong', mix(0.38))
         
         // 保留 data-accent 給一些可能的舊邏輯（如果有的話）
         if (!accentColor.startsWith('#')) {

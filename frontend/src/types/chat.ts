@@ -24,6 +24,23 @@ export interface MessageSource {
     score: number
 }
 
+/**
+ * 語音訊息附件。
+ * - url 通常為 ObjectURL（blob:）或上傳後的後端 URL
+ * - mimeType 通常為 audio/webm 或 audio/mp4
+ * - transcript 若瀏覽器支援 Web Speech API，可選擇性附上轉錄文字
+ */
+export interface MessageAudio {
+    url: string
+    mimeType: string
+    durationMs: number
+    transcript?: string
+    /** 後端正在轉錄；前端可顯示 loading 狀態，等轉錄完再清掉 */
+    pending?: boolean
+    /** 轉錄階段失敗的訊息（讓 UI 可顯示「轉錄失敗」狀態） */
+    error?: string
+}
+
 export interface Message {
     id: string
     role: 'user' | 'assistant' | 'system'
@@ -33,6 +50,8 @@ export interface Message {
     rating?: number
     content_hash?: string
     prev_hash?: string
+    /** 語音訊息附件（若此訊息為語音訊息） */
+    audio?: MessageAudio
     createdAt: string
 }
 

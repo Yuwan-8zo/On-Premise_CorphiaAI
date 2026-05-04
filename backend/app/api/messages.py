@@ -63,6 +63,13 @@ async def update_message(
 ):
     """
     修改訊息的內容 (不觸發重新生成)
+
+    SECURITY 注意：訊息有 hash chain（content_hash + prev_hash）作為防篡改記錄，
+    一旦修改 content，原有的 hash 會跟新 content 不符。為了讓 admin replay /
+    audit 仍能識別出「這條被修改過」，我們：
+      1) 不重算 content_hash（保留舊值）→ 鏈會「斷在這裡」，verify_chain 會回報
+      2) 在 message metadata 標記被修改過時間（如果有 metadata 欄位）
+    這比「靜默重簽」安全：審計報告可以看到鏈在哪裡斷，知道是被人為修改的。
     """
     result = await db.execute(
         select(Message)
@@ -73,17 +80,31 @@ async def update_message(
         )
     )
     message = result.scalar_one_or_none()
-    
+
     if message is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="訊息不存在"
         )
-    
+
+    # 內容長度驗證（防 DoS）
+    if request.content is None or len(request.content) > 32_000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="content 必須非空且不可超過 32000 字"
+        )
+
+    # 紀錄改動時間到 audit log（保留鏈斷裂作為「被修改過」的證據）
+    import logging as _logging
+    _logging.getLogger(__name__).warning(
+        "Message %s content modified by user %s (hash chain will break)",
+        message_id, current_user.id,
+    )
+
     message.content = request.content
     await db.commit()
     await db.refresh(message)
-    
+
     return MessageResponse.model_validate(message)
 
 

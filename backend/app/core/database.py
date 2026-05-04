@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 # 建立非同步引擎
-# DB-FIX-03：降低 pool_size 適合單機開發，pool_recycle=1800 防止長時間空閒連線過期
+# 連線池大小由 .env 控制，方便 Docker/PostgreSQL 設定同步調整。
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     future=True,
-    pool_size=5,           # 降低預設連線池大小（開發環境用，生產可調高）
-    max_overflow=10,       # 超出 pool_size 時可臨時擴充的最大數量
+    pool_size=settings.db_pool_size,
+    max_overflow=settings.db_max_overflow,
     pool_pre_ping=True,    # 使用前測試連線是否仍有效
     pool_recycle=1800,     # 每 30 分鐘回收連線，避免 PostgreSQL 踢掉閒置連線
 )

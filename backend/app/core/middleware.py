@@ -31,10 +31,20 @@ class MaxUploadSizeMiddleware(BaseHTTPMiddleware):
             if content_length:
                 try:
                     content_length = int(content_length)
+                    if content_length < 0:
+                        # FIX: 負數 content-length（HTTP 規範禁止但 client 可能塞）
+                        # 應該直接拒絕，否則會被視為「沒設」繞過上限檢查
+                        return JSONResponse(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": {"code": "INVALID_CONTENT_LENGTH", "message": "Content-Length 不可為負"}},
+                        )
                     if content_length > self.max_upload_size:
+                        # FIX: request.client 可能為 None（少見但 ASGI 規範允許）
+                        # 直接 .host 會 AttributeError，包在三元裡安全取 IP
+                        client_ip = request.client.host if request.client else "unknown"
                         logger.warning(
-                            f"⚠️ 攔截到過大的請求體: {content_length} bytes "
-                            f"(上限: {self.max_upload_size} bytes). 來源 IP: {request.client.host}"
+                            "攔截到過大的請求體: %d bytes (上限: %d bytes). 來源 IP: %s, Path: %s",
+                            content_length, self.max_upload_size, client_ip, request.url.path,
                         )
                         return JSONResponse(
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -47,6 +57,13 @@ class MaxUploadSizeMiddleware(BaseHTTPMiddleware):
                             }
                         )
                 except ValueError:
-                    pass  # 如果 content-length 不合法，交由後續處理
-                    
+                    # content-length 不是合法整數 → 拒絕，避免 chunked 攻擊繞過
+                    return JSONResponse(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        content={"error": {"code": "INVALID_CONTENT_LENGTH", "message": "Content-Length header 格式錯誤"}},
+                    )
+            # NOTE: chunked transfer encoding（沒 content-length）仍可能繞過此檢查。
+            # 真正的防線是 ASGI server（uvicorn）+ Nginx limit_request_size 設定。
+            # 應用層只能盡力而為。
+
         return await call_next(request)

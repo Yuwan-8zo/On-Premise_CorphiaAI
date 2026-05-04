@@ -1,24 +1,48 @@
-# Corphia AI Platform — Backend
+# Corphia AI Backend
 
-FastAPI + SQLAlchemy + pgvector + 本地 GGUF（llama-cpp-python）
+FastAPI backend，使用 Docker PostgreSQL + pgvector 作為資料庫，並以本機 GGUF + `llama-cpp-python` 推論。不使用 Ollama。
 
----
-
-## 第一次安裝
+## 安裝
 
 ```powershell
 cd D:\Antigravity\on-premise_CorphiaAI\backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-> ⚠️ 名稱用 `.venv` （前面有個點）。`.gitignore` 已經把它排除，不會被推上雲端。
-> 不要用 `venv`（沒有點），以免跟舊資料殘留混淆。
+`llama-cpp-python` 是必要套件。若要依 GPU/CPU 自動安裝最佳 wheel，可執行：
 
----
+```powershell
+python auto_engine.py --force
+```
 
-## 啟動開發伺服器
+## 資料庫
+
+資料庫由根目錄的 Docker Compose 啟動：
+
+```powershell
+cd D:\Antigravity\on-premise_CorphiaAI
+docker compose up -d
+```
+
+後端 `.env` 預設：
+
+```env
+DATABASE_URL=postgresql+asyncpg://corphia:corphia123@localhost:5433/corphia_ai
+```
+
+初始化資料表與帳號：
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+python scripts/init_db.py
+python scripts/seed_users.py
+```
+
+## 啟動後端
 
 ```powershell
 cd D:\Antigravity\on-premise_CorphiaAI\backend
@@ -26,62 +50,22 @@ cd D:\Antigravity\on-premise_CorphiaAI\backend
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8168
 ```
 
-> Port 一律用 **8168**，跟前端 `vite.config` 的 proxy 對齊。
-> README 舊版寫 8000 是錯的。
+API 文件：
 
-啟動後等 1～2 分鐘讓 GGUF 模型完成 mmap，看到 `Application startup complete.` 就可以登入了。
-
----
-
-## 初始化資料庫與種子資料
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python scripts/init_db.py
-python scripts/seed_users.py    # 建立預設 admin / engineer / user 帳號
+```text
+http://localhost:8168/docs
 ```
 
-預設帳號（可在 `scripts/seed_users.py` 修改）：
-- `admin@gmail.com / Admin123`
-- `engineer@gmail.com / Engineer123`
-- `user@gmail.com / User123`
+## 預設帳號
 
----
-
-## 環境變數
-
-複製 `.env.example` 為 `.env`，至少要設定：
-
-- `DATABASE_URL` — postgres + pgvector 連線字串
-- `SECRET_KEY` — JWT 簽章用，必改
-- `LLAMA_MODEL_PATH` — GGUF 檔案路徑
-
-完整變數說明見 `.env.example` 上方註解。
-
----
-
-## 常見問題
-
-**`Fatal error in launcher: Unable to create process using '...D:\Cursor\...'`**
-
-venv 內部 python.exe 的 base path 寫死成建立 venv 時的位置；資料夾搬家後就壞了。
-解法：把 `venv/` 整個刪掉重建。
-
-```powershell
-cd D:\Antigravity\on-premise_CorphiaAI\backend
-Remove-Item -Recurse -Force .\venv     # 砍掉舊的（如果還在）
-python -m venv .venv                   # 建乾淨的 .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+```text
+admin@gmail.com      / Admin123
+engineer@gmail.com   / Engineer123
+user@gmail.com       / User123
 ```
 
-**Port 8168 已被占用**
+## 注意
 
-```powershell
-netstat -ano | Select-String ":8168"   # 找 PID
-taskkill /F /PID <pid>                 # 殺掉
-```
-
-**Ollama 連線失敗的 WARNING**
-
-正常。Corphia 預設先試 Ollama，失敗會 fallback 到本地 GGUF。WARNING 可以忽略。
+- Docker 只跑 PostgreSQL + pgvector，不跑 backend/frontend。
+- GGUF 模型請放在 `ai_model/`。
+- 如果後端進入模擬模式，通常代表 `llama-cpp-python` 未安裝成功，或找不到 `.gguf` 模型。
