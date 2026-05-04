@@ -5,13 +5,11 @@
   --bg-main: 247 246 244;
   --bg-surface: 242 239 234;
   --bg-elevated: 255 255 255;
-
   --text-primary: 43 43 43;
   --text-secondary: 107 107 107;
   --text-muted: 140 134 125;
   --text-disabled: 180 180 180;
   --text-on-accent: #fff;
-
   --border-subtle: 232 228 223;
   --border-strong: 139 115 85;
 
@@ -35,14 +33,13 @@
    */
   --color-ios-accent-light: 137 110 83;
   --color-ios-accent-dark: 137 110 83;
+
   /* --color-primary 也綁到品牌色（Corphia logo 的星芒用） */
   --color-primary: rgb(var(--color-ios-accent-light));
-
   --accent: var(--color-ios-accent-light);
   --accent-hover: var(--color-ios-accent-light);
   --accent-active: var(--color-ios-accent-light);
   --accent-soft: var(--color-ios-accent-light);
-
   --scrollbar-thumb: 209 209 209;
   --scrollbar-thumb-hover: 161 161 161;
 }
@@ -79,6 +76,7 @@ html[data-accent='green'] {
 
 html.dark {
   color-scheme: only dark;
+
   /* 深色：深灰漸層，比純黑柔和 */
   background-color: #202022;
   background-image: linear-gradient(135deg, #202022 0%, #101012 100%);
@@ -90,15 +88,12 @@ html.dark {
   --bg-main: 24 24 22;
   --bg-surface: 40 40 42;
   --bg-elevated: 46 46 48;
-
   --text-primary: 246 244 240;
   --text-secondary: 154 154 154;
   --text-muted: 100 100 100;
   --text-disabled: 80 80 80;
-
   --border-subtle: 58 50 42;
   --border-strong: 139 115 85;
-
   --scrollbar-thumb: 74 74 74;
   --scrollbar-thumb-hover: 90 90 90;
 

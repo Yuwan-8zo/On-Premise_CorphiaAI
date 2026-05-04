@@ -8,6 +8,7 @@ html {
   font-size: 14px;
   background-color: rgb(var(--bg-canvas));
   color-scheme: only light;
+
   /* PWA 模式（加到主畫面 + black-translucent）：頁面內容會延伸到瀏海/Home Indicator 之外，
      但只有 100dvh 才會真的「填滿 PWA 視窗」；100% 會被 viewport-fit=cover 算成扣掉 inset 後的高度，
      底部會出現一條黑邊。所以 html/body/#root 全部以 100dvh 為準。 */
@@ -16,6 +17,7 @@ html {
   min-height: -webkit-fill-available;
   overflow: hidden;
   background-attachment: fixed;
+
   /* Premium feel: smooth scrolling baseline; reduced-motion query below
      short-circuits this for accessibility */
   scroll-behavior: smooth;
@@ -25,6 +27,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Noto Sans TC', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   /* OpenType features for refined Latin: contextual alternates, kerning, ligatures.
      Inter and SF Pro both honour these. The default would already enable kerning
      and ligatures, but being explicit prevents future fonts from regressing. */
@@ -33,6 +36,7 @@ body {
   background-color: rgb(var(--bg-canvas));
   color: rgb(var(--text-primary));
   overscroll-behavior-y: none;
+
   /* 跟 html 同步 100dvh，避免 PWA 模式底部出現一條沒被 body 涵蓋的黑邊 */
   height: 100dvh;
   min-height: 100dvh;

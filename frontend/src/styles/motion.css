@@ -3,7 +3,6 @@
   --ease-apple-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-pulse: cubic-bezier(0.4, 0, 0.6, 1);
-
   --duration-press: 120ms;
   --duration-fast: 150ms;
   --duration-hover: 180ms;
@@ -16,6 +15,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -30,6 +30,7 @@
     transform: translateY(15%);
     opacity: 0.5;
   }
+
   50% {
     transform: translateY(-40%);
     opacity: 1;
@@ -44,6 +45,7 @@
   0%, 100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -58,6 +60,7 @@
     opacity: 0;
     transform: translateY(24px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -82,6 +85,7 @@
     opacity: 0;
     transform: translateY(12px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);

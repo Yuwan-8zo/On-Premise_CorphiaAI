@@ -1,0 +1,12 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-tailwindcss"],
+  "rules": {
+    "property-no-vendor-prefix": null,
+    "media-feature-range-notation": null,
+    "keyframes-name-pattern": null,
+    "alpha-value-notation": null,
+    "font-family-name-quotes": null,
+    "value-keyword-case": null,
+    "no-descending-specificity": null
+  }
+}
