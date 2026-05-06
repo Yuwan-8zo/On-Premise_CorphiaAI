@@ -36,6 +36,7 @@ import {
 import type { ComponentType } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Tooltip from '@/components/ui/Tooltip'
 
 export const ONBOARDING_FLAG_KEY = 'corphia.onboarding.v1.done'
 
@@ -345,15 +346,16 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 )}
 
                 {/* × 略過 */}
-                <button
-                    type="button"
-                    onClick={handleClose}
-                    className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full text-text-muted hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition"
-                    aria-label={t('common.skip', '略過')}
-                    title={t('common.skip', '略過')}
-                >
-                    <X className="h-3.5 w-3.5" />
-                </button>
+                <Tooltip label={t('common.skip', '略過')}>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full text-text-muted hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition"
+                        aria-label={t('common.skip', '略過')}
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                </Tooltip>
 
                 {/* 內容 */}
                 <div className="px-5 pt-5 pb-4">

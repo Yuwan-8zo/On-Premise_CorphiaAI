@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { documentsApi } from '@/api/documents'
 import MaterialIcon from '@/components/icons/MaterialIcon'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface Document {
     id: string
@@ -339,16 +340,17 @@ export default function Documents() {
             {/* 頂部導覽列 —— 玻璃感 sticky bar */}
             <header className="relative z-10 h-16 sm:h-[80px] border-b border-white/40 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl transition-colors sticky top-0">
                 <div className="flex items-center gap-3">
-                    <Link
-                        to="/chat"
-                        aria-label={t('common.backToChat')}
-                        title={t('common.backToChat')}
-                        className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </Link>
+                    <Tooltip label={t('common.backToChat')}>
+                        <Link
+                            to="/chat"
+                            aria-label={t('common.backToChat')}
+                            className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </Link>
+                    </Tooltip>
                     <h1 className="text-xl font-semibold text-text-primary tracking-wide flex items-center gap-2">
                         <MaterialIcon name="folder" size={22} />
                         {t('nav.documents')}
@@ -486,15 +488,16 @@ export default function Documents() {
                                                     </span>
                                                 )}
                                                 {(isFailed || isDone) && (
-                                                    <button
-                                                        onClick={() => dismissUpload(item.id)}
-                                                        className="p-1 text-text-muted hover:text-text-primary transition rounded-full"
-                                                        title={t('common.dismiss', '關閉')}
-                                                    >
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
+                                                    <Tooltip label={t('common.dismiss', '關閉')}>
+                                                        <button
+                                                            onClick={() => dismissUpload(item.id)}
+                                                            className="p-1 text-text-muted hover:text-text-primary transition rounded-full"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+                                                    </Tooltip>
                                                 )}
                                             </div>
                                         </div>
@@ -624,13 +627,14 @@ export default function Documents() {
 
                                     <StatusBadge status={doc.status} />
 
-                                    <button
-                                        onClick={() => deleteDocument(doc.id)}
-                                        className="p-2 md:p-2.5 ml-4 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                        title="刪除"
-                                    >
-                                        <TrashIcon />
-                                    </button>
+                                    <Tooltip label={t('common.delete', '刪除')}>
+                                        <button
+                                            onClick={() => deleteDocument(doc.id)}
+                                            className="p-2 md:p-2.5 ml-4 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                        >
+                                            <TrashIcon />
+                                        </button>
+                                    </Tooltip>
                                 </div>
                             ))}
                         </div>

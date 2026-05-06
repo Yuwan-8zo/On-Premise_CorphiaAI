@@ -58,8 +58,20 @@ async function refreshAccessTokenOnce(): Promise<string | null> {
                 refresh_token: refreshToken,
             })
             const { access_token, refresh_token } = response.data
+
+            // BUG FIX：原本是 `setAuth(state.user!, ...)`，但 state.user 在 HMR /
+            // persist hydration 時可能是 null，! 只是騙 TS。setAuth(null, ...) 會把
+            // user 寫成 null 並進 localStorage，之後 ChatSidebar 一路顯示「Local User」。
+            //
+            // 改成「只動 token，不動 user」—— refresh 的目的就是換 access token，
+            // user 物件本來就不該被這條路徑影響。如果 user 真的沒了，
+            // App.tsx 的 bootstrapAuth / 各頁面的 fetchUser 會去重抓。
             const state = useAuthStore.getState()
-            state.setAuth(state.user!, access_token, refresh_token)
+            state.setAccessToken(access_token)
+            // refresh token rotate 時也更新（後端會 issue 新的 refresh token）
+            if (refresh_token && refresh_token !== state.refreshToken) {
+                useAuthStore.setState({ refreshToken: refresh_token })
+            }
             return access_token as string
         } catch {
             // Refresh 失敗才登出，且只執行一次（其他等待者都拿到 null，不會重複 redirect）
@@ -80,6 +92,9 @@ apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+        const requestUrl = originalRequest.url || ''
+        const isAuthRefreshRequest = requestUrl.includes('/auth/refresh')
+        const isLoginRequest = requestUrl.includes('/auth/login')
 
         // 429 Too Many Requests - 速率限制
         if (error.response?.status === 429) {
@@ -94,6 +109,15 @@ apiClient.interceptors.response.use(
         }
 
         // Token 過期，嘗試刷新（single-flight，多個並發 401 共用一個 refresh）
+        if (error.response?.status === 401 && isAuthRefreshRequest) {
+            useAuthStore.getState().clearAuth()
+            return Promise.reject(error)
+        }
+
+        if (error.response?.status === 401 && isLoginRequest) {
+            return Promise.reject(error)
+        }
+
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true
 
@@ -107,9 +131,7 @@ apiClient.interceptors.response.use(
             // Refresh 失敗（refresh token 不存在或 server 拒絕）→ 跳登入頁。
             // clearAuth 已經在 refreshAccessTokenOnce 裡做過了，這裡只負責導頁；
             // 多個並發 401 都走到這條路徑也只會執行一次 location 變更。
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login'
-            }
+            useAuthStore.getState().clearAuth()
         }
 
         return Promise.reject(error)

@@ -14,6 +14,8 @@
  *   failed     = red
  */
 
+import Tooltip from '@/components/ui/Tooltip'
+
 export interface StatusBarDatum {
     /** Stable key */
     key: 'pending' | 'processing' | 'completed' | 'failed' | string
@@ -68,15 +70,15 @@ export default function StatusBar({
                     const pct = (item.count / total) * 100
                     if (pct === 0) return null
                     return (
-                        <div
-                            key={item.key}
-                            className="h-full transition-all duration-300"
-                            style={{
-                                width: `${pct}%`,
-                                background: STATUS_COLORS[item.key] || STATUS_DEFAULT_COLOR,
-                            }}
-                            title={`${item.label}: ${item.count} (${pct.toFixed(1)}%)`}
-                        />
+                        <Tooltip key={item.key} label={`${item.label}: ${item.count} (${pct.toFixed(1)}%)`}>
+                            <div
+                                className="h-full transition-all duration-300"
+                                style={{
+                                    width: `${pct}%`,
+                                    background: STATUS_COLORS[item.key] || STATUS_DEFAULT_COLOR,
+                                }}
+                            />
+                        </Tooltip>
                     )
                 })}
             </div>

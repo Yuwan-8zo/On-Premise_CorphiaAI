@@ -6,6 +6,7 @@ import { PromptMenu } from './PromptMenu'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -127,7 +128,6 @@ export default function ChatInputArea({
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isConnecting || isUploading}
                                         className="p-2 transition-transform active:scale-95 text-text-muted hover:text-corphia-bronze mb-1 disabled:opacity-50"
-                                        title="上傳專案文件 (NotebookLM 模式)"
                                     >
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-[22px] h-[22px]">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -154,7 +154,6 @@ export default function ChatInputArea({
                                         onClick={() => setIsRecording(true)}
                                         disabled={isConnecting || isUploading}
                                         className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-text-muted hover:text-accent hover:bg-accent/10 disabled:opacity-50 transition-colors mb-1"
-                                        title={t('chat.voice.startRecording')}
                                         aria-label={t('chat.voice.startRecording')}
                                     >
                                         <MaterialIcon name="mic" size={22} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface ScrollToBottomButtonProps {
     containerRef: React.RefObject<HTMLDivElement | null>
@@ -19,8 +20,12 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
             const { scrollTop, scrollHeight, clientHeight } = container
             const distanceFromBottom = scrollHeight - scrollTop - clientHeight
 
-            // 距離底部大於 200px 且內容夠長 → 顯示
-            if (distanceFromBottom > 200 && scrollHeight > clientHeight * 1.5) {
+            // 60px 門檻 — 跟 useChatLogic.ts 的 autoFollowRef 同步：
+            // 使用者一旦滑出 60px 就視為「主動離開底部」，
+            // 此時 auto-scroll 已停止，所以馬上把「正在輸入」膠囊 / 回底部箭頭浮上來，
+            // 讓使用者明確看到「AI 還在生成，但畫面不再追隨」。
+            // 額外條件 scrollHeight > clientHeight * 1.5 防止短內容時誤觸發。
+            if (distanceFromBottom > 60 && scrollHeight > clientHeight * 1.5) {
                 setShowToBottom(true)
             } else {
                 setShowToBottom(false)
@@ -59,40 +64,43 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
     return (
         <AnimatePresence mode="wait">
             {showTypingPill ? (
-                <motion.button
-                    key="typing-pill"
-                    initial={{ opacity: 0, y: 15, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={scrollToBottom}
-                    className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
-                    aria-label="AI 正在輸入，點擊回到底部"
-                    title="AI 正在輸入，點擊回到底部"
-                >
-                    <span className="flex items-center gap-1" aria-hidden="true">
-                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
-                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
-                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
-                    </span>
-                    <span className="text-[12.5px] font-medium leading-none">正在輸入</span>
-                </motion.button>
+                <Tooltip label="AI 正在輸入，點擊回到底部" placement="bottom">
+                    <motion.button
+                        key="typing-pill"
+                        initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={scrollToBottom}
+                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
+                        aria-label="AI 正在輸入，點擊回到底部"
+                    >
+                        <span className="flex items-center gap-1" aria-hidden="true">
+                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
+                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
+                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
+                        </span>
+                        <span className="text-[12.5px] font-medium leading-none">正在輸入</span>
+                    </motion.button>
+                </Tooltip>
             ) : showToBottom ? (
-                <motion.button
-                    key="to-bottom-arrow"
-                    initial={{ opacity: 0, y: 15, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={scrollToBottom}
-                    className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 p-2.5 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
-                    aria-label="Scroll to bottom"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <polyline points="19 12 12 19 5 12"></polyline>
-                    </svg>
-                </motion.button>
+                <Tooltip label="回到底部" placement="bottom">
+                    <motion.button
+                        key="to-bottom-arrow"
+                        initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={scrollToBottom}
+                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 p-2.5 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
+                        aria-label="Scroll to bottom"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                    </motion.button>
+                </Tooltip>
             ) : null}
         </AnimatePresence>
     )

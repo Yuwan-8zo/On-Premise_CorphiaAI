@@ -13,6 +13,20 @@ export interface NgrokInfo {
     source?: string
 }
 
+export interface RuntimeInfo {
+    status: 'success' | 'error'
+    data: {
+        uptime_seconds: number
+        boot_timestamp: number
+        db_pool: {
+            size: number
+            checked_in: number
+            checked_out: number
+            overflow: number
+        }
+    }
+}
+
 export const systemApi = {
     /**
      * 取得當前 ngrok 公網 URL
@@ -57,5 +71,18 @@ export const systemApi = {
     getNetworkStatus: async () => {
         const response = await apiClient.get('/system/network/status')
         return response.data
+    },
+
+    /**
+     * 取得後端執行時間資訊（uptime / db pool 狀態）
+     */
+    getRuntimeInfo: async (): Promise<RuntimeInfo['data'] | null> => {
+        try {
+            const response = await apiClient.get<RuntimeInfo>('/system/runtime-info')
+            if (response.data?.status === 'success') return response.data.data
+            return null
+        } catch {
+            return null
+        }
     },
 }

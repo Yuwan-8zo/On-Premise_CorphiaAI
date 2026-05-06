@@ -57,6 +57,20 @@ function getActionPillClass(action: string): string {
     return 'border-border-subtle bg-bg-surface text-text-primary'
 }
 
+// 嚴重度分級：區分 critical / warning / info
+function getSeverityClass(action: string): string {
+    const CRITICAL_ACTIONS = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'account_locked']
+    const WARNING_ACTIONS = ['login_failed', 'token_revoke', 'ngrok_start']
+
+    if (CRITICAL_ACTIONS.includes(action)) {
+        return 'border-l-4 border-l-red-500 bg-red-500/10'
+    }
+    if (WARNING_ACTIONS.includes(action)) {
+        return 'border-l-4 border-l-amber-500 bg-amber-500/10'
+    }
+    return ''
+}
+
 export interface AuditSectionProps {
     auditSearchInput: string
     setAuditSearchInput: (value: string) => void
@@ -143,6 +157,21 @@ export default function AuditSection({
                                 <option value="model">{t('admin.audit.resourceTypes.model')}</option>
                             </select>
                         </Field>
+                        {/* 資安事件 filter chip */}
+                        <button
+                            onClick={() => {
+                                const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
+                                onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
+                            }}
+                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                                auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
+                                    ? 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30'
+                                    : 'bg-bg-elevated border border-border-subtle text-text-secondary hover:border-border-strong'
+                            }`}
+                        >
+                            {t('admin.audit.securityEventsOnly', '只看資安事件')}
+                        </button>
+
                         <div className="flex gap-2">
                             <ActionButton variant="secondary" onClick={onExportCSV}>
                                 <Download className="h-4 w-4" />
@@ -243,7 +272,7 @@ export default function AuditSection({
                                     auditLogs.map((log) => (
                                         <tr
                                             key={log.id}
-                                            className="transition hover:bg-white/[0.04] dark:hover:bg-white/[0.04] cursor-pointer"
+                                            className={`transition cursor-pointer ${getSeverityClass(log.action)} hover:bg-white/[0.08] dark:hover:bg-white/[0.08]`}
                                             onClick={() => setAuditDrawer(log)}
                                         >
                                             <td className="px-3 sm:px-5 py-2 text-[11px] sm:text-sm text-text-secondary whitespace-nowrap">

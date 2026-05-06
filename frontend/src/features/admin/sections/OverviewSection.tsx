@@ -40,12 +40,12 @@ import ActivityBarChart from '@/features/admin/components/charts/ActivityBarChar
 import EventDonut, {
     EventDonutLegend,
 } from '@/features/admin/components/charts/EventDonut'
-import MiniDonut from '@/features/admin/components/charts/MiniDonut'
-import StatusBar from '@/features/admin/components/charts/StatusBar'
+import SecurityEventsPanel from '@/features/admin/components/panels/SecurityEventsPanel'
+import LLMHealthPanel from '@/features/admin/components/panels/LLMHealthPanel'
+import SystemResourcePanel from '@/features/admin/components/panels/SystemResourcePanel'
 import {
     aggregateByAction,
     aggregateByDay,
-    groupByKey,
 } from '@/features/admin/utils/auditAggregations'
 
 // ---------------------------------------------------------------------------
@@ -59,87 +59,22 @@ interface OverviewStats {
     totalMessages: number
 }
 
-interface OverviewUser {
-    id: string
-    name: string
-    email: string
-    isActive: boolean
-    role?: string
-}
-
-interface OverviewDocument {
-    file_type: string
-    status: string
-}
-
 export interface OverviewSectionProps {
     stats: OverviewStats
     activeUsers: number
     auditLogs: AuditLogItem[]
-    users: OverviewUser[]
-    documents: OverviewDocument[]
 }
 
 export default function OverviewSection({
     stats,
     activeUsers,
     auditLogs,
-    users,
-    documents,
 }: OverviewSectionProps) {
     const { t } = useTranslation()
 
     // 前端聚合圖表所需 series（memoised — 來源資料沒變就不重算）
     const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7), [auditLogs])
     const actionSeries = useMemo(() => aggregateByAction(auditLogs, 5), [auditLogs])
-
-    // 使用者角色分布（admin / engineer / user）
-    const roleSeries = useMemo(
-        () =>
-            groupByKey(
-                users,
-                (u) => u.role ?? 'user',
-                {
-                    admin: t('admin.users.role.admin', { defaultValue: 'Admin' }),
-                    engineer: t('admin.users.role.engineer', { defaultValue: 'Engineer' }),
-                    user: t('admin.users.role.user', { defaultValue: 'User' }),
-                },
-            ),
-        [users, t],
-    )
-
-    // 文件類型分布（pdf / docx / xlsx / pptx / md / txt）
-    const docTypeSeries = useMemo(
-        () =>
-            groupByKey(documents, (d) => d.file_type, {
-                pdf: 'PDF',
-                docx: 'Word',
-                xlsx: 'Excel',
-                pptx: 'PowerPoint',
-                md: 'Markdown',
-                txt: 'TXT',
-            }),
-        [documents],
-    )
-
-    // 文件處理狀態（pending / processing / completed / failed）—— 固定順序
-    const docStatusSeries = useMemo(() => {
-        const counts: Record<string, number> = {
-            pending: 0,
-            processing: 0,
-            completed: 0,
-            failed: 0,
-        }
-        for (const d of documents) {
-            if (d.status in counts) counts[d.status]++
-        }
-        return [
-            { key: 'completed', label: '已完成', count: counts.completed },
-            { key: 'processing', label: '處理中', count: counts.processing },
-            { key: 'pending', label: '等待中', count: counts.pending },
-            { key: 'failed', label: '失敗', count: counts.failed },
-        ]
-    }, [documents])
 
     // 今日事件數 — 從 auditLogs（即近 7 天的 summary）篩出 created_at 在今天的
     const todayEventCount = useMemo(() => {
@@ -265,50 +200,13 @@ export default function OverviewSection({
             </section>
 
             {/* ─────────────────────────────────────────────────────────────
-              Row 3 · 三個分布圖（使用者角色 / 文件類型 / 文件狀態）
-              4/4/4 split @ lg+
+              Row 3 · 資安事件 / LLM 健康度 / 系統資源
+              5/4/3 split @ lg+
               ───────────────────────────────────────────────────────────── */}
             <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
-                <Panel className="overflow-hidden flex flex-col min-h-[160px] lg:col-span-4 lg:min-h-0">
-                    <SectionHeader
-                        title={t('admin.overview.rolesTitle', '使用者角色')}
-                        eyebrow="User Roles"
-                    />
-                    <div className="flex-1 min-h-0 p-2.5">
-                        <MiniDonut
-                            data={roleSeries}
-                            centerEyebrow="USERS"
-                            emptyText={t('admin.users.noUsers')}
-                        />
-                    </div>
-                </Panel>
-
-                <Panel className="overflow-hidden flex flex-col min-h-[160px] lg:col-span-4 lg:min-h-0">
-                    <SectionHeader
-                        title={t('admin.overview.docTypesTitle', '文件類型')}
-                        eyebrow="Document Types"
-                    />
-                    <div className="flex-1 min-h-0 p-2.5">
-                        <MiniDonut
-                            data={docTypeSeries}
-                            centerEyebrow="FILES"
-                            emptyText={t('documents.empty', '尚無文件')}
-                        />
-                    </div>
-                </Panel>
-
-                <Panel className="overflow-hidden flex flex-col min-h-[160px] lg:col-span-4 lg:min-h-0">
-                    <SectionHeader
-                        title={t('admin.overview.docStatusTitle', '處理狀態')}
-                        eyebrow="Processing Status"
-                    />
-                    <div className="flex-1 min-h-0 p-3">
-                        <StatusBar
-                            data={docStatusSeries}
-                            emptyText={t('documents.empty', '尚無文件')}
-                        />
-                    </div>
-                </Panel>
+                <SecurityEventsPanel className="lg:col-span-5" />
+                <LLMHealthPanel className="lg:col-span-4" />
+                <SystemResourcePanel className="lg:col-span-3" />
             </section>
 
         </div>

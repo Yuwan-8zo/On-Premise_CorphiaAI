@@ -295,6 +295,72 @@ Move-Target -From (Join-Path $root 'ngrok_reset.py') `
             -Reason 'utility script belongs in scripts/'
 
 # ----------------------------------------------------------------------
+# Phase 9: Duplicate build scripts (canonical lives in tools/)
+# ----------------------------------------------------------------------
+# tools/build_*.ps1 are the canonical / more evolved versions (they
+# resolve project paths, mirror to releases/, etc). The copies that
+# accumulated at root / backend/ / launcher/ during dev are obsolete.
+Write-Host ""
+Write-Host "== Phase 9: Duplicate build scripts (tools/ is canonical) ==" -ForegroundColor Cyan
+Remove-Target -Path (Join-Path $root 'build_installer.ps1') `
+              -Reason 'duplicate - use tools\build_installer.ps1'
+Remove-Target -Path (Join-Path $root 'backend\build_backend.ps1') `
+              -Reason 'duplicate - use tools\build_backend.ps1'
+Remove-Target -Path (Join-Path $root 'launcher\build_launcher.ps1') `
+              -Reason 'duplicate - use tools\build_launcher.ps1'
+
+# ----------------------------------------------------------------------
+# Phase 10: One-off icon generation scripts (their job is done)
+# ----------------------------------------------------------------------
+# These were used once to convert the rectangular Corphia logo into a
+# square branded .ico for Tauri. The output (Corphia_Icon_Branded.png)
+# is what we keep; the recipes themselves can go.
+Write-Host ""
+Write-Host "== Phase 10: One-off icon generation scripts ==" -ForegroundColor Cyan
+Remove-Target -Path (Join-Path $root 'frontend\src-tauri\make-square-icon.ps1') `
+              -Reason 'one-off - padded Light icon to square (done)'
+Remove-Target -Path (Join-Path $root 'frontend\src-tauri\make-branded-icon.ps1') `
+              -Reason 'one-off - composited bronze-bg branded icon (done)'
+
+# ----------------------------------------------------------------------
+# Phase 11: Intermediate icon files
+# ----------------------------------------------------------------------
+# These are intermediate PNGs produced by the make-*-icon scripts.
+# Only Corphia_Icon_Branded.png needs to stick around (so the Tauri
+# `icon` CLI can be re-run); the square paddings can be regenerated
+# from Corphia_Icon_Light.png / Corphia_Icon_Dark.png if ever needed.
+Write-Host ""
+Write-Host "== Phase 11: Intermediate icon PNGs ==" -ForegroundColor Cyan
+Remove-Target -Path (Join-Path $root 'frontend\src\assets\Corphia_Icon_Square.png') `
+              -Reason 'intermediate (regen from Light + make-square-icon)'
+Remove-Target -Path (Join-Path $root 'frontend\src\assets\Corphia_Icon_Dark_Square.png') `
+              -Reason 'intermediate (regen from Dark + make-square-icon)'
+
+# ----------------------------------------------------------------------
+# Phase 12: Lottie animation infrastructure (cancelled)
+# ----------------------------------------------------------------------
+# We started building a LottieIcon wrapper for animated UI icons but the
+# direction was abandoned (decided against full-on Lottie integration to
+# keep bundle small). Stub file + planning README go.
+Write-Host ""
+Write-Host "== Phase 12: Cancelled Lottie integration ==" -ForegroundColor Cyan
+Remove-Target -Path (Join-Path $root 'frontend\src\components\icons\LottieIcon.tsx') `
+              -Reason 'stub - lottie integration cancelled'
+Remove-Target -Path (Join-Path $root 'frontend\src\assets\lottie') `
+              -Reason 'cancelled lottie asset folder (only had README)'
+
+# ----------------------------------------------------------------------
+# Phase 13: Old launchers superseded by PySide6 launcher
+# ----------------------------------------------------------------------
+# Corphia AI.bat was a quick-and-dirty double-click starter while we
+# were still figuring out distribution. Replaced by launcher/ +
+# tools/build_launcher.ps1 producing a real PySide6 GUI exe.
+Write-Host ""
+Write-Host "== Phase 13: Superseded launchers ==" -ForegroundColor Cyan
+Remove-Target -Path (Join-Path $root 'Corphia AI.bat') `
+              -Reason 'superseded by launcher/corphia_launcher.py + PySide6 build'
+
+# ----------------------------------------------------------------------
 # Summary
 # ----------------------------------------------------------------------
 Write-Host ""

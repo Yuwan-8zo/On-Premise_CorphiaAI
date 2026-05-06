@@ -6,18 +6,20 @@ import {
     Field,
     inputClass,
 } from '@/features/admin/components/AdminPrimitives'
+import Tooltip from '@/components/ui/Tooltip'
 import NgrokSidebarWidget from '@/features/admin/components/NgrokSidebarWidget'
 import NgrokQrModal from '@/features/admin/components/NgrokQrModal'
 import OverviewSection from '@/features/admin/sections/OverviewSection'
 import AuditSection from '@/features/admin/sections/AuditSection'
 import UsersSection from '@/features/admin/sections/UsersSection'
 import ModelsSection from '@/features/admin/sections/ModelsSection'
-import SystemSection from '@/features/admin/sections/SystemSection'
+// SystemSection 已移除：內容跟 OverviewSection 的 LLMHealthPanel / SystemResourcePanel 重複，
+// 為避免重複資訊故下架。元件檔仍保留在 sections/ 內以備需要時恢復。
+// import SystemSection from '@/features/admin/sections/SystemSection'
 import TenantsSection from '@/features/admin/sections/TenantsSection'
 // Only icons still used at AdminPage level: tab icons + sidebar logo + back arrow.
 // Section-specific icons live inside each section module.
 import {
-    Activity,
     ArrowLeft,
     Building2,
     Cpu,
@@ -64,14 +66,13 @@ interface Stats {
     totalMessages: number
 }
 
-type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'system' | 'tenants'
+type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'tenants'
 
 const TABS_CONFIG: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'overview', i18nKey: 'admin.tabs.overview', icon: Gauge },
     { id: 'users', i18nKey: 'admin.tabs.users', icon: Users },
     { id: 'models', i18nKey: 'admin.tabs.models', icon: Cpu },
     { id: 'audit', i18nKey: 'admin.tabs.audit', icon: FileText },
-    { id: 'system', i18nKey: 'admin.tabs.system', icon: Activity },
     { id: 'tenants', i18nKey: 'admin.tabs.tenants', icon: Building2 },
 ]
 
@@ -530,7 +531,7 @@ export default function Admin() {
             setIsUserModalOpen(false)
             loadUsers()
         } catch (err) {
-            window.alert(getErrorMessage(err))
+            useToastStore.getState().error(getErrorMessage(err))
         } finally {
             setIsSubmittingUser(false)
         }
@@ -573,7 +574,7 @@ export default function Admin() {
             setIsTenantModalOpen(false)
             loadTenants()
         } catch (err) {
-            window.alert(getErrorMessage(err))
+            useToastStore.getState().error(getErrorMessage(err))
         } finally {
             setIsSubmittingTenant(false)
         }
@@ -590,7 +591,7 @@ export default function Admin() {
                 loadTenants()
             } catch (err) {
                 console.error('Failed to toggle tenant status', err)
-                window.alert(getErrorMessage(err))
+                useToastStore.getState().error(getErrorMessage(err))
             }
         })
     }
@@ -629,13 +630,14 @@ export default function Admin() {
                 {/* 手機板 header 簡化：title + 工程師 pill 並排同一行，省垂直空間 */}
                 <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 border-b border-border-subtle pb-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <button
-                            onClick={() => navigate('/')}
-                            className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-bg-base hover:text-text-primary active:scale-[0.98]"
-                            title={t('common.backToChat', '返回聊天')}
-                        >
-                            <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
-                        </button>
+                        <Tooltip label={t('common.backToChat', '返回聊天')}>
+                            <button
+                                onClick={() => navigate('/')}
+                                className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-bg-base hover:text-text-primary active:scale-[0.98]"
+                            >
+                                <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+                            </button>
+                        </Tooltip>
                         <h1 className="text-[16px] md:text-[22px] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
@@ -775,8 +777,6 @@ export default function Admin() {
                                 /* 用 auditSummary（近 7 天，page_size=200）給 Overview 的圖表，
                                    不要傳 auditLogs（page_size=15）— 那是 audit 分頁用的 */
                                 auditLogs={auditSummary}
-                                users={users}
-                                documents={documents}
                             />
                         )}
 
@@ -822,9 +822,7 @@ export default function Admin() {
                             />
                         )}
 
-                        {activeSection === 'system' && (
-                            <SystemSection currentModelName={currentModel?.name} />
-                        )}
+                        {/* 'system' tab 已移除：資訊跟 OverviewSection 的系統資源 / LLM 健康面板重複 */}
 
                         {activeSection === 'tenants' && (
                             <TenantsSection

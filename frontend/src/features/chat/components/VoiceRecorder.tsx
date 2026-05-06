@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MaterialIcon from '@/components/icons/MaterialIcon'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface VoiceRecorderProps {
     /** 取消錄音（不送出） */
@@ -244,15 +245,16 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
             aria-label={t('chat.voice.recordingAria')}
         >
             {/* 取消按鈕 */}
-            <button
-                type="button"
-                onClick={handleCancel}
-                className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                title={t('chat.voice.cancel')}
-                aria-label={t('chat.voice.cancel')}
-            >
-                <MaterialIcon name="close" size={22} />
-            </button>
+            <Tooltip label={t('chat.voice.cancel')} placement="bottom">
+                <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                    aria-label={t('chat.voice.cancel')}
+                >
+                    <MaterialIcon name="close" size={22} />
+                </button>
+            </Tooltip>
 
             {/* 錄音指示燈 + 計時 */}
             <div className="flex items-center gap-2 shrink-0">
@@ -273,16 +275,17 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
             </div>
 
             {/* 送出按鈕 */}
-            <button
-                type="button"
-                onClick={handleSend}
-                disabled={!isReady}
-                className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent text-text-on-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-                title={t('chat.voice.send')}
-                aria-label={t('chat.voice.send')}
-            >
-                <MaterialIcon name="send" size={18} filled />
-            </button>
+            <Tooltip label={t('chat.voice.send')} placement="bottom">
+                <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!isReady}
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent text-text-on-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    aria-label={t('chat.voice.send')}
+                >
+                    <MaterialIcon name="send" size={18} filled />
+                </button>
+            </Tooltip>
         </div>
     )
 }

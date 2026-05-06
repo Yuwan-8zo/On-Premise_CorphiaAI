@@ -30,6 +30,9 @@ import { ToastContainer } from './components/ui/Toast'
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
+// Desktop sidecar boot gate — 在桌面 app 啟動時等待後端 ready 才放行
+import BackendGate from './components/boot/BackendGate'
+
 // Global UI Components
 const FallbackLoader = () => (
     <div className="flex items-center justify-center h-[100dvh] w-full bg-bg-base">
@@ -178,7 +181,7 @@ export default function App() {
     }
 
     return (
-        <>
+        <BackendGate>
             {/* 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入 */}
             <div
                 key={location.pathname}
@@ -260,7 +263,7 @@ export default function App() {
             <ConfirmModal />
             <SettingsModal />
             <ToastContainer />
-        </>
+        </BackendGate>
     )
 }
 

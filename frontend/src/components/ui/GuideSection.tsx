@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { resetOnboarding } from '@/components/onboarding/OnboardingTour'
 import { useUIStore } from '@/store/uiStore'
+import Tooltip from '@/components/ui/Tooltip'
 
 export default function GuideSection() {
     const { t } = useTranslation()
@@ -47,15 +48,16 @@ export default function GuideSection() {
                         </p>
                     </div>
                     {/* 重新觀看引導按鈕 —— 隨時可以重看一次 onboarding tour */}
-                    <button
-                        type="button"
-                        onClick={handleReplayOnboarding}
-                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/20 transition"
-                        title={t('settings.replayTourHint', '重新顯示首次使用引導')}
-                    >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        {t('settings.replayTour', '重新觀看引導')}
-                    </button>
+                    <Tooltip label={t('settings.replayTourHint', '重新顯示首次使用引導')}>
+                        <button
+                            type="button"
+                            onClick={handleReplayOnboarding}
+                            className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/20 transition"
+                        >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {t('settings.replayTour', '重新觀看引導')}
+                        </button>
+                    </Tooltip>
                 </div>
             </div>
 

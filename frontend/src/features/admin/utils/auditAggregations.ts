@@ -114,13 +114,19 @@ export function aggregateByDay(
 /**
  * 把 audit logs 依 action 分組聚合，回傳 top N 個（其餘併到「其他」）。
  * 已按 count 由大到小排序。
+ * 排除自動產生的 action（如 token_refresh），避免噪音。
  */
+const EXCLUDED_FROM_DASHBOARD = new Set([
+    'token_refresh',  // 自動排程，不是使用者行為
+])
+
 export function aggregateByAction(
     logs: AuditLogItem[],
     topN = 5,
 ): ActionCount[] {
     const counts = new Map<string, number>()
     for (const log of logs) {
+        if (EXCLUDED_FROM_DASHBOARD.has(log.action)) continue
         counts.set(log.action, (counts.get(log.action) ?? 0) + 1)
     }
 

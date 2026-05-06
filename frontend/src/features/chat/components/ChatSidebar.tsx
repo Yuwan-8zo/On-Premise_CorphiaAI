@@ -16,6 +16,7 @@ import { useUIStore } from '@/store/uiStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
+import Tooltip from '@/components/ui/Tooltip'
 
 // 預設資料夾名稱常數
 const DEFAULT_FOLDER = '新資料夾'
@@ -185,21 +186,22 @@ export default function ChatSidebar({
                 <div className={`flex items-center overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10 md:px-1' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0 md:px-0'}`}>
                     <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
                 </div>
-                <button
-                    onClick={toggleSidebar}
-                    onMouseEnter={() => setIsSidebarHovered(true)}
-                    onMouseLeave={() => setIsSidebarHovered(false)}
-                    title={sidebarOpen ?"收合側邊欄" :"開啟側邊欄"}
-                    className={`hidden md:flex rounded-full text-text-secondary hover:text-text-primary   hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-all duration-200 shrink-0 items-center justify-center ${
-                        (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
-                    }`}
-                >
+                <Tooltip label={sidebarOpen ?"收合側邊欄" :"開啟側邊欄"}>
+                    <button
+                        onClick={toggleSidebar}
+                        onMouseEnter={() => setIsSidebarHovered(true)}
+                        onMouseLeave={() => setIsSidebarHovered(false)}
+                        className={`hidden md:flex rounded-full text-text-secondary hover:text-text-primary   hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-all duration-200 shrink-0 items-center justify-center ${
+                            (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
+                        }`}
+                    >
                     {sidebarOpen || isSidebarHovered ? (
                         <SidebarIcon className="w-[20px] h-[20px]" />
                     ) : (
                         <CorphiaLogo className="w-[30px] h-[30px] rounded-[7px] text-text-primary" />
                     )}
-                </button>
+                    </button>
+                </Tooltip>
             </div>
 
             {/* 頂端控制區（包含新對話按鈕與切換器） */}
@@ -351,11 +353,12 @@ export default function ChatSidebar({
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                                <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                    className={`p-1.5 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}
-                                                    title="選項">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                                                </button>
+                                                <Tooltip label="選項">
+                                                    <button onClick={(e) => handleOpenMenu(e, conv.id)}
+                                                        className={`p-1.5 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}>
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                                                    </button>
+                                                </Tooltip>
                                             </div>
                                         </div>
                                     ))
@@ -422,12 +425,16 @@ export default function ChatSidebar({
                                                             <span className="truncate">{folderName}</span>
                                                         </div>
                                                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={(e) => createConvInFolder(folderName, e)} className="p-1 text-text-muted hover:text-text-primary rounded hover:bg-white/[0.06] dark:hover:bg-white/[0.06]" title="在此資料夾新增對話">
-                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                                                            </button>
-                                                            <button onClick={(e) => handleDeleteFolder(folderName, e)} className="p-1 text-text-muted hover:text-red-500 rounded hover:bg-red-50" title="刪除資料夾及內容">
-                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                            </button>
+                                                            <Tooltip label="在此資料夾新增對話">
+                                                                <button onClick={(e) => createConvInFolder(folderName, e)} className="p-1 text-text-muted hover:text-text-primary rounded hover:bg-white/[0.06] dark:hover:bg-white/[0.06]">
+                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                                                </button>
+                                                            </Tooltip>
+                                                            <Tooltip label="刪除資料夾及內容">
+                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} className="p-1 text-text-muted hover:text-red-500 rounded hover:bg-red-50">
+                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                </button>
+                                                            </Tooltip>
                                                         </div>
                                                     </div>
 
@@ -446,11 +453,12 @@ export default function ChatSidebar({
                                                                     >
                                                                         <span className="truncate pr-2">{conv.title}</span>
                                                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                                                            <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                                className={`p-1 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}
-                                                                                title="選項">
-                                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                                                                            </button>
+                                                                            <Tooltip label="選項">
+                                                                                <button onClick={(e) => handleOpenMenu(e, conv.id)}
+                                                                                    className={`p-1 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}>
+                                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                                                                                </button>
+                                                                            </Tooltip>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -470,21 +478,30 @@ export default function ChatSidebar({
 
             {/* 底部：使用者卡片 */}
             <div className={`w-full transition-all duration-300 p-3 mt-auto flex flex-col ${!sidebarOpen ? 'items-center' : ''}`}>
-                <button
-                    data-tour="settings-button"
-                    onClick={() => setSettingsOpen(true)}
-                    title="前往設定"
-                    className={`relative flex items-center bg-transparent hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
-                >
+                <Tooltip label="前往設定">
+                    <button
+                        data-tour="settings-button"
+                        onClick={() => setSettingsOpen(true)}
+                        className={`relative flex items-center bg-transparent hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    >
                     <div className="w-[32px] h-[32px] rounded-full bg-accent text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[14px]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] text-text-primary truncate text-left m-0 leading-snug">{user?.name || 'Local User'}</p>
+                            {/*
+                              fallback 從「Local User」改成 email → 「…」。
+                              理由：「Local User」會誤導使用者以為系統有這個帳號（其實是 user
+                              物件 race condition / refresh bug 導致暫時 null）。
+                              優先順序：name → email → 「…」（載入中佔位）
+                            */}
+                            <p className="font-semibold text-[14px] text-text-primary truncate text-left m-0 leading-snug">
+                                {user?.name || user?.email || '…'}
+                            </p>
                         </div>
                     )}
-                </button>
+                    </button>
+                </Tooltip>
             </div>
         </aside>
     )

@@ -1,0 +1,479 @@
+"""
+認證 API
+"""
+
+import re
+from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.core.config import settings
+from app.core.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
+from app.models.user import User
+from app.models.tenant import Tenant
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    RefreshRequest,
+    RegisterRequest,
+    PasswordChangeRequest,
+    PasswordStrengthRequest,
+    PasswordStrengthResponse,
+)
+from app.schemas.user import UserResponse
+from app.api.deps import CurrentUser
+from app.services.audit_service import (
+    write_audit_log,
+    AuditAction,
+    AuditResource,
+    get_client_ip,
+    get_user_agent,
+)
+from app.services.token_service import add_token_to_blacklist
+from app.services.password_service import (
+    check_login_lockout,
+    record_login_failure,
+    reset_login_attempts,
+    get_password_strength_score,
+)
+
+# Bearer 安全方案（用於取得原始 Token）
+bearer_scheme = HTTPBearer()
+
+router = APIRouter(prefix="/auth", tags=["認證"])
+
+
+@router.post("/login", response_model=LoginResponse)
+async def login(
+    request_body: LoginRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    使用者登入
+
+    - **email**: 電子郵件
+    - **password**: 密碼
+
+    安全機制：
+    - 連續 5 次登入失敗將鎖定帳號 15 分鐘
+    - 登入成功會自動重置失敗計數
+    """
+    client_ip = get_client_ip(request)
+    ua = get_user_agent(request)
+
+    # 1. 檢查帳號是否已被鎖定
+    lockout_info = await check_login_lockout(db, request_body.email)
+    if lockout_info["is_locked"]:
+        # 帳號鎖定審計
+        await write_audit_log(
+            db=db,
+            action=AuditAction.LOGIN_FAILED,
+            resource_type=AuditResource.AUTH,
+            user_email=request_body.email,
+            description=f"登入失敗 (帳號鎖定中): {request_body.email}",
+            details={
+                "reason": "帳號暫時鎖定",
+                "minutes_remaining": lockout_info["minutes_remaining"],
+            },
+            ip_address=client_ip,
+            user_agent=ua,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"帳號已被暫時鎖定，請在 {lockout_info['minutes_remaining']} 分鐘後再試"
+        )
+
+    # 2. 查詢使用者
+    result = await db.execute(
+        select(User).where(User.email == request_body.email)
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None or not verify_password(request_body.password, user.password_hash):
+        # 記錄登入失敗（累加計數）
+        failure_info = await record_login_failure(db, request_body.email)
+
+        # 登入失敗審計
+        detail_msg = "帳號或密碼錯誤"
+        if failure_info["is_locked"]:
+            detail_msg = f"帳號或密碼錯誤，帳號已被鎖定 {failure_info['lockout_minutes']} 分鐘"
+        elif failure_info["remaining_attempts"] > 0:
+            detail_msg = f"帳號或密碼錯誤，剩餘 {failure_info['remaining_attempts']} 次嘗試機會"
+
+        await write_audit_log(
+            db=db,
+            action=AuditAction.LOGIN_FAILED,
+            resource_type=AuditResource.AUTH,
+            user_email=request_body.email,
+            description=f"登入失敗: {request_body.email}",
+            details={
+                "reason": "帳號或密碼錯誤",
+                "remaining_attempts": failure_info["remaining_attempts"],
+                "is_locked": failure_info["is_locked"],
+            },
+            ip_address=client_ip,
+            user_agent=ua,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail_msg,
+        )
+
+    if not user.is_active:
+        # 帳號停用審計
+        await write_audit_log(
+            db=db,
+            action=AuditAction.LOGIN_FAILED,
+            resource_type=AuditResource.AUTH,
+            user_id=user.id,
+            user_email=user.email,
+            tenant_id=user.tenant_id,
+            description=f"登入失敗 (帳號已停用): {user.email}",
+            details={"reason": "帳號已停用"},
+            ip_address=client_ip,
+            user_agent=ua,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="帳號已停用"
+        )
+
+    # 3. 登入成功：重置失敗計數
+    await reset_login_attempts(db, user)
+
+    # 更新最後登入時間
+    from app.core.time_utils import utc_now_naive
+    user.last_login_at = utc_now_naive()
+    await db.commit()
+
+    # 建立 Token
+    token_data = {"sub": user.id}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    # 登入成功審計
+    await write_audit_log(
+        db=db,
+        action=AuditAction.LOGIN_SUCCESS,
+        resource_type=AuditResource.AUTH,
+        user_id=user.id,
+        user_email=user.email,
+        tenant_id=user.tenant_id,
+        description=f"使用者登入成功: {user.email}",
+        ip_address=client_ip,
+        user_agent=ua,
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        # ISSUE-01 修正：從 settings 讀取，確保與環境變數 JWT_EXPIRE_MINUTES 一致
+        expires_in=settings.jwt_expire_minutes * 60
+    )
+
+
+@router.post("/register", response_model=UserResponse)
+async def register(
+    request_body: RegisterRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    使用者註冊
+
+    密碼需求：
+    - 至少 8 個字元
+    - 包含大寫字母
+    - 包含小寫字母
+    - 包含數字
+    - 包含特殊字元
+    """
+    client_ip = get_client_ip(request)
+    ua = get_user_agent(request)
+
+    # 檢查 Email 是否已存在
+    result = await db.execute(
+        select(User).where(User.email == request_body.email)
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="此 Email 已被註冊"
+        )
+
+    # 查詢租戶
+    tenant_id = None
+    if request_body.tenant_slug:
+        result = await db.execute(
+            select(Tenant).where(Tenant.slug == request_body.tenant_slug)
+        )
+        tenant = result.scalar_one_or_none()
+        if tenant is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="租戶不存在"
+            )
+        tenant_id = tenant.id
+    else:
+        # 使用預設租戶
+        result = await db.execute(
+            select(Tenant).where(Tenant.slug == "default")
+        )
+        tenant = result.scalar_one_or_none()
+        if tenant:
+            tenant_id = tenant.id
+
+    # 建立使用者
+    # FIX: email local-part 直接當 name 可能含 `.+` 等特殊字元（user.name+tag@example.com）
+    # 也可能很短/很長。清理：替換特殊字元為底線，截斷到 50 字
+    if request_body.name:
+        display_name = request_body.name
+    else:
+        local_part = request_body.email.split("@")[0]
+        cleaned = re.sub(r"[^A-Za-z0-9_一-鿿]", "_", local_part)
+        display_name = cleaned[:50] or "User"
+    user = User(
+        email=request_body.email,
+        password_hash=get_password_hash(request_body.password),
+        name=display_name,
+        tenant_id=tenant_id,
+        role="user"
+    )
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    # 註冊審計
+    await write_audit_log(
+        db=db,
+        action=AuditAction.REGISTER,
+        resource_type=AuditResource.AUTH,
+        resource_id=user.id,
+        user_id=user.id,
+        user_email=user.email,
+        tenant_id=user.tenant_id,
+        description=f"新使用者註冊: {user.email}",
+        ip_address=client_ip,
+        user_agent=ua,
+    )
+
+    return UserResponse.model_validate(user)
+
+
+@router.post("/refresh", response_model=LoginResponse)
+async def refresh_token(
+    request_body: RefreshRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """刷新 Access Token（舊的 Refresh Token 同時被撤銷）"""
+    payload = decode_token(request_body.refresh_token)
+
+    if payload is None or payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="無效的 Refresh Token"
+        )
+
+    # 檢查 Refresh Token 是否已被撤銷
+    old_jti = payload.get("jti")
+    if old_jti:
+        from app.services.token_service import is_token_blacklisted
+        is_blacklisted = await is_token_blacklisted(db, old_jti)
+        if is_blacklisted:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh Token 已被撤銷"
+            )
+
+    user_id = payload.get("sub")
+
+    # 查詢使用者
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="使用者不存在或已停用"
+        )
+
+    # 提前取出 user_id 字串，避免 audit commit 後 SQLAlchemy session expire
+    # 導致後續存取 user.id 時觸發 lazy load 崩潰 (MissingGreenlet)
+    resolved_user_id = str(user.id)
+    resolved_user_email = str(user.email)
+    resolved_tenant_id = user.tenant_id
+
+    # 撤銷舊的 Refresh Token
+    if old_jti:
+        old_exp = payload.get("exp")
+        expires_at = datetime.fromtimestamp(old_exp, tz=timezone.utc) if old_exp else None
+        await add_token_to_blacklist(
+            db=db,
+            jti=old_jti,
+            user_id=resolved_user_id,
+            token_type="refresh",
+            expires_at=expires_at,
+            reason="token_refresh",
+        )
+
+    # 建立新 Token
+    token_data = {"sub": resolved_user_id}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    # Token 刷新審計（使用已提前解析的字串，避免跨 session lazy-load）
+    await write_audit_log(
+        db=db,
+        action=AuditAction.TOKEN_REFRESH,
+        resource_type=AuditResource.AUTH,
+        user_id=resolved_user_id,
+        user_email=resolved_user_email,
+        tenant_id=resolved_tenant_id,
+        description=f"Token 刷新: {resolved_user_email}",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        # ISSUE-01 修正：從 settings 讀取，確保與環境變數 JWT_EXPIRE_MINUTES 一致
+        expires_in=settings.jwt_expire_minutes * 60
+    )
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(current_user: CurrentUser):
+    """取得當前使用者資訊"""
+    return UserResponse.model_validate(current_user)
+
+
+@router.post("/change-password")
+async def change_password(
+    request_body: PasswordChangeRequest,
+    current_user: CurrentUser,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    修改密碼
+
+    需要提供當前密碼進行驗證，新密碼需符合安全策略。
+    """
+    # 驗證當前密碼
+    if not verify_password(request_body.current_password, current_user.password_hash):
+        await write_audit_log(
+            db=db,
+            action=AuditAction.PASSWORD_CHANGE_FAILED,
+            resource_type=AuditResource.AUTH,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=current_user.tenant_id,
+            description=f"密碼修改失敗 (當前密碼錯誤): {current_user.email}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="當前密碼錯誤"
+        )
+
+    # 檢查新密碼不能與舊密碼相同
+    if verify_password(request_body.new_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="新密碼不能與當前密碼相同"
+        )
+
+    # 更新密碼
+    current_user.password_hash = get_password_hash(request_body.new_password)
+    await db.commit()
+
+    # 密碼修改審計
+    await write_audit_log(
+        db=db,
+        action=AuditAction.PASSWORD_CHANGE_SUCCESS,
+        resource_type=AuditResource.AUTH,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"密碼修改成功: {current_user.email}",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+
+    return {"message": "密碼修改成功"}
+
+
+@router.post("/check-password-strength", response_model=PasswordStrengthResponse)
+async def check_password_strength(request_body: PasswordStrengthRequest):
+    """
+    檢查密碼強度（無需登入）
+
+    用於前端即時提示密碼強度。
+    """
+    result = get_password_strength_score(request_body.password)
+    return PasswordStrengthResponse(**result)
+
+
+@router.post("/logout")
+async def logout(
+    current_user: CurrentUser,
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    使用者登出
+
+    將當前 Access Token 加入黑名單，使其立即失效。
+    """
+    # 解碼 Token 取得 JTI
+    token = credentials.credentials
+    payload = decode_token(token)
+
+    if payload and payload.get("jti"):
+        jti = payload["jti"]
+        exp = payload.get("exp")
+        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc) if exp else None
+
+        # 加入黑名單
+        await add_token_to_blacklist(
+            db=db,
+            jti=jti,
+            user_id=current_user.id,
+            token_type="access",
+            expires_at=expires_at,
+            reason="logout",
+        )
+
+    # 登出審計
+    await write_audit_log(
+        db=db,
+        action=AuditAction.LOGOUT,
+        resource_type=AuditResource.AUTH,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        description=f"使用者登出: {current_user.email}",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+
+    return {"message": "登出成功"}

@@ -30,6 +30,7 @@ import { Clipboard, ClipboardCheck, Globe, QrCode, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import ToggleSwitch from './ToggleSwitch'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface NgrokInfo {
     active: boolean
@@ -117,24 +118,39 @@ export default function NgrokSidebarWidget({
                     {/* 啟動時才顯示的 QR + 複製按鈕 */}
                     {isActive && (
                         <>
-                            <button
-                                onClick={onShowQr}
-                                title={t('admin.ngrok.showQr', '顯示 QR Code')}
-                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
-                            >
-                                <QrCode className="h-3 w-3" />
-                            </button>
-                            <button
-                                onClick={onCopyUrl}
-                                title={info?.url ?? undefined}
-                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
-                            >
-                                {copied ? (
-                                    <ClipboardCheck className="h-3 w-3" />
-                                ) : (
-                                    <Clipboard className="h-3 w-3" />
-                                )}
-                            </button>
+                            <Tooltip label={t('admin.ngrok.showQr', '顯示 QR Code')}>
+                                <button
+                                    onClick={onShowQr}
+                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
+                                >
+                                    <QrCode className="h-3 w-3" />
+                                </button>
+                            </Tooltip>
+                            {info?.url ? (
+                                <Tooltip label={info.url}>
+                                    <button
+                                        onClick={onCopyUrl}
+                                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
+                                    >
+                                        {copied ? (
+                                            <ClipboardCheck className="h-3 w-3" />
+                                        ) : (
+                                            <Clipboard className="h-3 w-3" />
+                                        )}
+                                    </button>
+                                </Tooltip>
+                            ) : (
+                                <button
+                                    onClick={onCopyUrl}
+                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
+                                >
+                                    {copied ? (
+                                        <ClipboardCheck className="h-3 w-3" />
+                                    ) : (
+                                        <Clipboard className="h-3 w-3" />
+                                    )}
+                                </button>
+                            )}
                         </>
                     )}
                 </div>

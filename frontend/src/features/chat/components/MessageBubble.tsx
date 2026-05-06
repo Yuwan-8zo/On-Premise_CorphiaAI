@@ -15,6 +15,7 @@ import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface MessageBubbleProps {
     message: Message
@@ -213,12 +214,12 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         rows={1}
                                     />
                                     <div className="flex justify-end gap-2 mt-1">
-                                        <button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-text-secondary hover:text-text-primary bg-bg-surface bg-bg-surface rounded-full transition-colors flex items-center justify-center shadow-sm" title="取消">
+                                        <Tooltip label="取消"><button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-text-secondary hover:text-text-primary bg-bg-surface bg-bg-surface rounded-full transition-colors flex items-center justify-center shadow-sm">
                                             <X className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={handleSaveEdit} className="p-1.5 text-text-primary bg-accent hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm" title="儲存修改">
+                                        </button></Tooltip>
+                                        <Tooltip label="儲存修改"><button onClick={handleSaveEdit} className="p-1.5 text-text-primary bg-accent hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm">
                                             <Check className="w-4 h-4" />
-                                        </button>
+                                        </button></Tooltip>
                                     </div>
                                 </div>
                             ) : (
@@ -228,14 +229,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     )}
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
-                            <button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors" title="複製">
+                            <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
                                 {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
+                            </button></Tooltip>
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {(!message.audio || message.audio.transcript) && (
-                                <button onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="p-1 hover:text-text-secondary rounded transition-colors" title="編輯">
+                                <Tooltip label="編輯"><button onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="p-1 hover:text-text-secondary rounded transition-colors">
                                     <Edit2 className="w-3.5 h-3.5" />
-                                </button>
+                                </button></Tooltip>
                             )}
                             {/*
                               重新傳送：保留原訊息內容，重跑 AI 回覆。
@@ -246,7 +247,6 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 <button
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
                                     className="p-1 hover:text-text-secondary rounded transition-colors"
-                                    title="重新生成"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                 </button>
@@ -254,18 +254,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {message.tokens > 0 && (
                                 <span
                                     className="ml-1 text-[11px] tabular-nums text-text-muted/80"
-                                    title={`本則訊息消耗 ${message.tokens.toLocaleString()} tokens`}
                                 >
                                     {message.tokens.toLocaleString()} tok
                                 </span>
                             )}
                             {message.content_hash && (
-                                <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
+                                <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
                                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                                     <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                         Verified: {message.content_hash.substring(0, 16)}...
                                     </div>
-                                </div>
+                                </div></Tooltip>
                             )}
                         </div>
                     )}
@@ -316,34 +315,34 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                         {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
-                                <button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors" title="複製">
+                                <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
                                     {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                                </button>
+                                </button></Tooltip>
                                 {onRegenerate && (
                                     <button
                                         onClick={() => onRegenerate(message.id)}
                                         className="p-1 hover:text-text-secondary rounded transition-colors"
-                                        title="重新生成"
-                                    >
+                                        >
                                         <RefreshCw className="w-3.5 h-3.5" />
                                     </button>
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
                                 {message.tokens > 0 && (
-                                    <span
-                                        className="ml-1 text-[11px] tabular-nums text-text-muted/80"
-                                        title={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}
-                                    >
-                                        {message.tokens.toLocaleString()} tok
-                                    </span>
+                                    <Tooltip label={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}>
+                                        <span
+                                            className="ml-1 text-[11px] tabular-nums text-text-muted/80"
+                                        >
+                                            {message.tokens.toLocaleString()} tok
+                                        </span>
+                                    </Tooltip>
                                 )}
                                 {message.content_hash && (
-                                    <div className="p-1 group/hash relative cursor-help" title={`防篡改雜湊驗證\nHash: ${message.content_hash}`}>
+                                    <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
                                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                                         <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                             Verified: {message.content_hash.substring(0, 16)}...
                                         </div>
-                                    </div>
+                                    </div></Tooltip>
                                 )}
                             </div>
                         )}

@@ -1,0 +1,44 @@
+# Antigravity Agent - 排除大型目錄（避免 Agent 初始化超時）
+
+# Python 虛擬環境
+backend/.venv/
+.venv/
+venv/
+env/
+
+# Node.js 套件
+frontend/node_modules/
+node_modules/
+
+# Build 輸出
+frontend/dist/
+backend/dist/
+backend/build/
+
+# Python 快取
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# 日誌
+*.log
+backend/crash.log
+.runtime/
+
+# 資料庫
+*.db
+*.sqlite
+*.sqlite3
+
+# AI 模型大檔
+ai_model/*.gguf
+ai_model/*.bin
+
+# 上傳檔案
+backend/uploads/
+
+# 前端 build 資訊
+frontend/tsconfig.node.tsbuildinfo
+frontend/package-lock.json

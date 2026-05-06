@@ -5,6 +5,7 @@ import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputAr
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
+import Tooltip from '@/components/ui/Tooltip'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
@@ -139,23 +140,24 @@ export default function Chat() {
                                                     {doc.status === 'completed' ? '已處理' : doc.status === 'failed' ? '失敗' : '處理中'}
                                                 </span>
                                                 
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        mainProps.showConfirm(mainProps.t('common.confirmDelete'), async () => {
-                                                            try {
-                                                                await mainProps.documentsApi.delete(doc.id)
-                                                                if (mainProps.selectedFolder) mainProps.loadFolderDocuments(mainProps.selectedFolder)
-                                                            } catch (error) {
-                                                                console.error('刪除文件失敗', error)
-                                                            }
-                                                        })
-                                                    }}
-                                                    className="p-2 text-text-muted hover:text-red-500 rounded-full hover:bg-red-50 md:opacity-0 group-hover:opacity-100 transition-all"
-                                                    title="刪除"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                </button>
+                                                <Tooltip label="刪除">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            mainProps.showConfirm(mainProps.t('common.confirmDelete'), async () => {
+                                                                try {
+                                                                    await mainProps.documentsApi.delete(doc.id)
+                                                                    if (mainProps.selectedFolder) mainProps.loadFolderDocuments(mainProps.selectedFolder)
+                                                                } catch (error) {
+                                                                    console.error('刪除文件失敗', error)
+                                                                }
+                                                            })
+                                                        }}
+                                                        className="p-2 text-text-muted hover:text-red-500 rounded-full hover:bg-red-50 md:opacity-0 group-hover:opacity-100 transition-all"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    </button>
+                                                </Tooltip>
                                             </div>
                                         </div>
                                     ))}
@@ -187,7 +189,12 @@ export default function Chat() {
                         <ScrollToBottomButton containerRef={mainProps.scrollContainerRef} dependsOn={mainProps.messages} isStreaming={mainProps.isStreaming} />
                     )}
                     
-                    <div ref={mainProps.scrollContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-4 relative">
+                    {/*
+                      訊息列表區：保留 overflow-y-auto 可滾動，但用 scrollbar-none 完全隱藏 scrollbar。
+                      右側已有 ChatMinimap（縮圖式導覽）+ ScrollToBottomButton 處理視覺指引，
+                      傳統 scrollbar 在這裡是噪音不是訊號。
+                    */}
+                    <div ref={mainProps.scrollContainerRef} className="flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
                         {mainProps.isLoadingMore && (

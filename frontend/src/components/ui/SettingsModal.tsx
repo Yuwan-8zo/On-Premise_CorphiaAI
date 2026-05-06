@@ -13,6 +13,7 @@ import { usersApi } from '../../api/users'
 import { ACCENT_COLORS } from '@/design-system'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
+import Tooltip from '@/components/ui/Tooltip'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -367,11 +368,11 @@ export default function SettingsModal() {
                             <div className="p-4 border-t border-border-subtle/50 space-y-2">
                                 {/* 管理後台入口：僅 admin / engineer 可見 */}
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                    <button
-                                        onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                        title={t('settings.enterAdmin')}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition-all font-medium text-sm group"
-                                    >
+                                    <Tooltip label={t('settings.enterAdmin')}>
+                                        <button
+                                            onClick={() => { setSettingsOpen(false); navigate('/admin') }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition-all font-medium text-sm group"
+                                        >
                                         <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
                                             <ShieldIcon />
                                         </span>
@@ -379,7 +380,8 @@ export default function SettingsModal() {
                                         <svg className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                         </svg>
-                                    </button>
+                                        </button>
+                                    </Tooltip>
                                 )}
                             </div>
                         </div>
@@ -450,15 +452,16 @@ export default function SettingsModal() {
                                                         <h3 className="text-[28px] leading-none font-bold text-text-primary tracking-tight">
                                                             {user?.name}
                                                         </h3>
-                                                        <button 
-                                                            onClick={() => setIsEditingName(true)}
-                                                            className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-white/[0.06] dark:hover:bg-white/[0.06]"
-                                                            title={t('common.changeName')}
-                                                        >
+                                                        <Tooltip label={t('common.changeName')}>
+                                                            <button
+                                                                onClick={() => setIsEditingName(true)}
+                                                                className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-white/[0.06] dark:hover:bg-white/[0.06]"
+                                                            >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                             </svg>
-                                                        </button>
+                                                            </button>
+                                                        </Tooltip>
                                                     </>
                                                 )}
                                             </div>
@@ -533,11 +536,11 @@ export default function SettingsModal() {
                                         </button>
 
                                         {/* 跟隨系統 */}
-                                        <button
-                                            onClick={() => setThemePreference('system')}
-                                            className={`${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
-                                            title={t('settings.themeSystemHint')}
-                                        >
+                                        <Tooltip label={t('settings.themeSystemHint')}>
+                                            <button
+                                                onClick={() => setThemePreference('system')}
+                                                className={`${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
+                                            >
                                             <div className="w-full h-24 rounded-xl mb-4 flex items-center justify-center transition-transform hover:scale-105 overflow-hidden border border-border-subtle">
                                                 {/* 半邊太陽半邊月亮，呼應 prefers-color-scheme */}
                                                 <div className="flex w-full h-full">
@@ -552,7 +555,8 @@ export default function SettingsModal() {
                                             <p className={`text-[15px] font-semibold ${themePreference === 'system' ? 'text-accent' : 'text-text-primary'}`}>
                                                 {t('settings.themeSystem')}
                                             </p>
-                                        </button>
+                                            </button>
+                                        </Tooltip>
                                     </div>
 
                                     {/* 強調色設定*/}
@@ -562,32 +566,33 @@ export default function SettingsModal() {
                                         </h3>
                                         <div className="flex flex-wrap items-center gap-3">
                                             {ACCENT_OPTIONS.map(([key, color]) => (
-                                                <button
-                                                    key={key}
-                                                    type="button"
-                                                    onClick={() => setAccentColor(key)}
-                                                    className={`tap h-11 w-11 rounded-full border p-1 transition-all ${
-                                                        accentColor === key
-                                                            ? 'border-accent ring-4 ring-accent/20'
-                                                            : 'border-border-subtle hover:border-border-strong/40'
-                                                    }`}
-                                                    title={color.label}
-                                                >
+                                                <Tooltip key={key} label={color.label}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAccentColor(key)}
+                                                        className={`tap h-11 w-11 rounded-full border p-1 transition-all ${
+                                                            accentColor === key
+                                                                ? 'border-accent ring-4 ring-accent/20'
+                                                                : 'border-border-subtle hover:border-border-strong/40'
+                                                        }`}
+                                                    >
                                                     <span
                                                         className="block h-full w-full rounded-full shadow-sm"
                                                         style={{ backgroundColor: color.hex }}
                                                     />
-                                                </button>
+                                                    </button>
+                                                </Tooltip>
                                             ))}
-                                            <div className="relative h-11 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full border border-border-subtle shadow-sm transition-transform hover:scale-105">
-                                                <input
-                                                    type="color"
-                                                    value={accentColor.startsWith('#') ? accentColor : ACCENT_COLORS.default.hex}
-                                                    onChange={(e) => setAccentColor(e.target.value)}
-                                                    className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0 outline-none"
-                                                    title={t('settings.customColor', '自訂主題色')}
-                                                />
-                                            </div>
+                                            <Tooltip label={t('settings.customColor', '自訂主題色')}>
+                                                <div className="relative h-11 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full border border-border-subtle shadow-sm transition-transform hover:scale-105">
+                                                    <input
+                                                        type="color"
+                                                        value={accentColor.startsWith('#') ? accentColor : ACCENT_COLORS.default.hex}
+                                                        onChange={(e) => setAccentColor(e.target.value)}
+                                                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0 outline-none"
+                                                    />
+                                                </div>
+                                            </Tooltip>
                                             <span className="basis-full text-[14px] text-text-secondary sm:basis-auto">
                                                 {t('settings.customColorHint', '點擊選擇自訂品牌主題色')}
                                             </span>
