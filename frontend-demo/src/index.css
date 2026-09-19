@@ -1,2 +1,2 @@
-/* Demo 專案的 CSS — 完整引用 frontend 的所有樣式 */
+/* Demo 專案的 CSS — 引用 frontend 的所有樣式 */
 @import '../../frontend/src/styles/index.css';

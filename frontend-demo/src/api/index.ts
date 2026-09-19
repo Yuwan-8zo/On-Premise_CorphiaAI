@@ -10,17 +10,25 @@ export { foldersApi } from './folders'
 export { tenantsApi } from './tenants'
 export { usersApi } from './users'
 export { adminApi } from './admin'
+export type { TenantUsageStats, UserLockoutStatus, ModelIntegrityInfo } from './admin'
 export { systemApi } from './system'
-export { default as modelsApi } from './models'
-export { getModels, selectModel, refreshModels } from './models'
-export { getAuditLogs, exportAuditLogsCSV, exportAuditLogsJSON } from './auditLogs'
+export type { RuntimeInfo } from './system'
+export { default as modelsApi, getModels, selectModel, refreshModels } from './models'
+export { getAuditLogs, exportAuditLogsCSV, exportAuditLogsJSON, ACTION_LABELS, RESOURCE_LABELS } from './auditLogs'
 export { ChatWebSocket, createChatWebSocket } from './websocket'
 export type { StreamResponse, WebSocketMessage } from './websocket.types'
+export { healthApi, fetchHealth, isLlmReady, isApiReady } from './health'
 
-// client 是 mock，不需要 axios 實例
+// client stub（防止元件直接 import apiClient 時報錯）
 export const apiClient = {
     get: () => Promise.resolve({ data: {} }),
     post: () => Promise.resolve({ data: {} }),
     put: () => Promise.resolve({ data: {} }),
+    patch: () => Promise.resolve({ data: {} }),
     delete: () => Promise.resolve({ data: {} }),
+    interceptors: {
+        request: { use: () => 0, eject: () => {} },
+        response: { use: () => 0, eject: () => {} },
+    },
+    defaults: { headers: { common: {} } },
 }

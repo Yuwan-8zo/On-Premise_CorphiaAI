@@ -13,8 +13,8 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 
-// i18n — 從 frontend/src 載入相同的語系設定
-import '../../frontend/src/i18n'
+// i18n — 透過 alias 載入真實 frontend 的語系設定（翻譯已靜態 import，可打包）
+import '@/i18n/index'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

@@ -1,43 +1,52 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
 /**
  * frontend-demo/vite.config.ts
  *
- * 關鍵策略：
- * 1. `@/api/*`  → 本專案的 src/api/*（mock 版本，優先匹配）
- * 2. `@/*`      → ../frontend/src/*（實際 UI 元件，共用，不複製）
+ * 策略：
+ *   @/api/*  → ./src/api/*   (mock API，優先)
+ *   @/demo/* → ./src/demo/*  (demo 元件)
+ *   @/*      → ../frontend/src/*  (真實 UI 元件，共用不複製)
  *
- * Vite alias 是「第一個匹配優先」，所以 @/api 放在 @ 前面就能蓋掉 API。
+ * build 使用 vite-plugin-singlefile → 輸出單一 index.html（所有 JS/CSS 內嵌）
+ * 雙擊即可在瀏覽器開啟，不需要任何伺服器。
  */
 export default defineConfig({
-    plugins: [react()],
+    plugins: [
+        react(),
+        viteSingleFile(), // 輸出單一 HTML，所有資源 inline
+    ],
     resolve: {
         alias: [
-            // ① Mock API — 優先：這個資料夾裡的 mock 覆蓋原本的 API 呼叫
-            {
-                find: /^@\/api\/(.*)/,
-                replacement: path.resolve(__dirname, './src/api/$1'),
-            },
-            // ② Demo 專屬資料夾
-            {
-                find: /^@\/demo\/(.*)/,
-                replacement: path.resolve(__dirname, './src/demo/$1'),
-            },
-            // ③ 其餘所有 @/* → 指向真實 frontend/src（UI 元件、store、hooks 都在這）
-            {
-                find: '@',
-                replacement: path.resolve(__dirname, '../frontend/src'),
-            },
+            // ① Mock API — 優先蓋掉真實 API
+            { find: /^@\/api\/(.*)/, replacement: path.resolve(__dirname, './src/api/$1') },
+            // ② Demo 元件
+            { find: /^@\/demo\/(.*)/, replacement: path.resolve(__dirname, './src/demo/$1') },
+            // ③ 其餘所有 @/* → 真實 frontend/src
+            { find: '@', replacement: path.resolve(__dirname, '../frontend/src') },
         ],
+    },
+    build: {
+        outDir: 'dist',
+        // vite-plugin-singlefile 需要這些設定
+        assetsInlineLimit: 100 * 1024 * 1024, // 所有資源都 inline（不管大小）
+        cssCodeSplit: false,
+        rollupOptions: {
+            output: {
+                inlineDynamicImports: true, // lazy import 也 inline
+            },
+        },
+        target: 'esnext',
+    },
+    css: {
+        preprocessorOptions: {},
     },
     server: {
         port: 5174,
         allowedHosts: true,
         hmr: { overlay: false },
-        // Demo 不需要 proxy，所有 API 已被 mock 取代
     },
-    // Tailwind 需要掃描真實 frontend 的 src
-    // 這裡用 css preprocessor 處理，tailwind.config.js 已設定 content 路徑
 })

@@ -1,15 +1,33 @@
 /**
- * Mock Documents API — Demo 版（模擬多段式上傳進度）
+ * Mock Documents API — 修正版
+ * 完全符合 DocumentsPage.tsx 期望的介面
  */
 
 import { DEMO_DOCUMENTS } from '../demo/mockData'
 
 function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 
-type MockDoc = (typeof DEMO_DOCUMENTS)[number]
-let documents: MockDoc[] = [...DEMO_DOCUMENTS]
+// Mock Document 資料型別（snake_case，與後端 API response 一致）
+type MockDocRaw = {
+    id: string
+    filename: string
+    original_filename: string
+    file_type: string
+    file_size: number
+    size_bytes: number
+    status: 'completed' | 'pending' | 'failed' | 'processing'
+    chunk_count: number
+    error_message?: string
+    created_at: string
+    processed_at: string
+    doc_metadata: Record<string, unknown>
+}
 
-export type DocumentResponse = MockDoc
+let documents: MockDocRaw[] = DEMO_DOCUMENTS.map((d) => ({
+    ...d,
+    status: 'completed' as const,
+    error_message: undefined,
+}))
 
 export const documentsApi = {
     list: async () => {
@@ -17,26 +35,34 @@ export const documentsApi = {
         return { data: documents, total: documents.length }
     },
 
+    /**
+     * upload(file, folderName?, onProgress?)
+     * onProgress callback 格式：{ loaded: number, total: number }
+     */
     upload: async (
         file: File,
-        folderName: string,
-        onProgress?: (e: { loaded: number }) => void
+        folderName?: string,
+        onProgress?: (e: { loaded: number; total: number }) => void,
     ) => {
-        // 模擬 5 個上傳階段（接收 → 解析 → Chunking → 向量化 → 完成）
+        // 5 段式進度模擬
         const stages = [
-            { pct: 15, label: '上傳中', ms: 400 },
-            { pct: 35, label: '解析文件', ms: 500 },
-            { pct: 60, label: 'Chunking', ms: 600 },
-            { pct: 85, label: '向量化', ms: 700 },
-            { pct: 99, label: '儲存索引', ms: 400 },
+            { pct: 12, ms: 350 },
+            { pct: 30, ms: 500 },
+            { pct: 58, ms: 650 },
+            { pct: 82, ms: 750 },
+            { pct: 98, ms: 400 },
         ]
+
         for (const stage of stages) {
             await sleep(stage.ms)
-            onProgress?.({ loaded: Math.floor((file.size * stage.pct) / 100) })
+            onProgress?.({
+                loaded: Math.floor((file.size * stage.pct) / 100),
+                total: file.size,
+            })
         }
         await sleep(300)
 
-        const newDoc: MockDoc = {
+        const newDoc: MockDocRaw = {
             id: `demo-doc-${Date.now()}`,
             filename: file.name,
             original_filename: file.name,
@@ -45,12 +71,14 @@ export const documentsApi = {
             size_bytes: file.size,
             status: 'completed',
             chunk_count: Math.max(Math.floor(file.size / 5000), 1),
+            error_message: undefined,
             created_at: new Date().toISOString(),
             processed_at: new Date().toISOString(),
-            doc_metadata: { folderName, isActive: true },
+            doc_metadata: { folderName: folderName ?? '預設', isActive: true },
         }
         documents = [newDoc, ...documents]
-        onProgress?.({ loaded: file.size })
+
+        onProgress?.({ loaded: file.size, total: file.size })
         return newDoc
     },
 

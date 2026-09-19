@@ -1,5 +1,5 @@
 /**
- * Mock Conversations API — Demo 版
+ * Mock Conversations API — 補齊所有 frontend 元件用到的方法
  */
 
 import { DEMO_CONVERSATIONS } from '../demo/mockData'
@@ -13,6 +13,12 @@ export const conversationsApi = {
     list: async (_params?: unknown) => {
         await sleep(200)
         return { data: conversations, total: conversations.length }
+    },
+
+    /** SharePage 用 */
+    get: async (id: string) => {
+        await sleep(200)
+        return conversations.find((c) => c.id === id) || conversations[0]
     },
 
     create: async (payload: { title: string; settings?: Record<string, unknown> }) => {
@@ -49,16 +55,38 @@ export const conversationsApi = {
 
     getMessages: async (_id: string, _params?: unknown) => {
         await sleep(300)
-        return []  // 新的對話從空白開始
+        return []
     },
 
     sendMessage: async (_id: string, _payload: unknown) => {
         await sleep(500)
-        return { id: `msg-${Date.now()}`, role: 'assistant', content: '', tokens: 0, createdAt: new Date().toISOString() }
+        return {
+            id: `msg-${Date.now()}`,
+            role: 'assistant' as const,
+            content: '',
+            tokens: 0,
+            createdAt: new Date().toISOString(),
+        }
+    },
+
+    /** MessageBubble 用 — 更新訊息文字 */
+    updateMessageText: async (_convId: string, _msgId: string, _text: string) => {
+        await sleep(200)
+        return { success: true }
     },
 
     verifyChain: async (_id: string) => {
         await sleep(600)
-        return { valid: true, total_messages: 8 }
+        return {
+            valid: true,
+            total_messages: 8,
+            first_broken_index: null,  // useChatLogic 會讀這個
+        }
+    },
+
+    /** Share page 用 */
+    getSharedConversation: async (id: string) => {
+        await sleep(300)
+        return conversations.find((c) => c.id === id) || conversations[0]
     },
 }
