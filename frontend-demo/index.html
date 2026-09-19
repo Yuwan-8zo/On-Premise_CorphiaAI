@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="../frontend/public/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Corphia AI Platform - 展示模式（Demo Mode）" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F4F0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />
+    <meta id="color-scheme-meta" name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Corphia AI — Demo Mode</title>
+    <script>
+      (function() {
+        try {
+          var DARK_BASE = '#202022';
+          var LIGHT_BASE = '#F6F4F0';
+          var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          var stored = localStorage.getItem('ui-storage');
+          if (stored) {
+            var state = (JSON.parse(stored) || {}).state || {};
+            var pref = state.themePreference || state.theme;
+            if (pref === 'light' || pref === 'dark') theme = pref;
+          }
+          var bg = theme === 'dark' ? DARK_BASE : LIGHT_BASE;
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'only dark';
+          } else {
+            document.documentElement.style.colorScheme = 'only light';
+          }
+          document.documentElement.style.backgroundColor = bg;
+        } catch(e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
