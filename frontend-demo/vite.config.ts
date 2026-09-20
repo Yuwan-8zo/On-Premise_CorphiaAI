@@ -26,9 +26,11 @@ export default defineConfig({
             // ② GSAP mock — 避免 registerPlugin 在 bundle 環境報錯
             { find: /^@\/lib\/gsap$/, replacement: path.resolve(__dirname, './src/lib/gsap') },
             { find: /^@\/lib\/gsapMotion$/, replacement: path.resolve(__dirname, './src/lib/gsapMotion') },
-            // ③ Demo 元件
+            // ③ Recharts mock — 避免 "Invariant failed" 初始化錯誤
+            { find: 'recharts', replacement: path.resolve(__dirname, './src/lib/recharts') },
+            // ④ Demo 元件
             { find: /^@\/demo\/(.*)/, replacement: path.resolve(__dirname, './src/demo/$1') },
-            // ④ 其餘所有 @/* → 真實 frontend/src
+            // ⑤ 其餘所有 @/* → 真實 frontend/src
             { find: '@', replacement: path.resolve(__dirname, '../frontend/src') },
         ],
     },
