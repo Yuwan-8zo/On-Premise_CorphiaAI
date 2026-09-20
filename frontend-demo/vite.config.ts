@@ -23,9 +23,12 @@ export default defineConfig({
         alias: [
             // ① Mock API — 優先蓋掉真實 API
             { find: /^@\/api\/(.*)/, replacement: path.resolve(__dirname, './src/api/$1') },
-            // ② Demo 元件
+            // ② GSAP mock — 避免 registerPlugin 在 bundle 環境報錯
+            { find: /^@\/lib\/gsap$/, replacement: path.resolve(__dirname, './src/lib/gsap') },
+            { find: /^@\/lib\/gsapMotion$/, replacement: path.resolve(__dirname, './src/lib/gsapMotion') },
+            // ③ Demo 元件
             { find: /^@\/demo\/(.*)/, replacement: path.resolve(__dirname, './src/demo/$1') },
-            // ③ 其餘所有 @/* → 真實 frontend/src
+            // ④ 其餘所有 @/* → 真實 frontend/src
             { find: '@', replacement: path.resolve(__dirname, '../frontend/src') },
         ],
     },

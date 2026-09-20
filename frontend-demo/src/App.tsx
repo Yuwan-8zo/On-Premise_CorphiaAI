@@ -3,9 +3,10 @@
  *
  * Demo 版的 App.tsx：
  * 1. 移除 BackendGate（不需要後端）
- * 2. 啟動時直接注入 mock 使用者（跳過 bootstrapAuth）
- * 3. 加入右下角「⟳ 重設展示」按鈕
- * 4. 其餘路由、主題、i18n 邏輯與原版完全相同
+ * 2. 啟動時設定 isBootstrapped=true，讓登入頁正常顯示
+ * 3. 使用者從登入頁輸入任意帳密即可登入（mock auth）
+ * 4. 移除右下角 DemoResetButton
+ * 5. 其餘路由、主題、i18n 邏輯與原版完全相同
  */
 
 import { useEffect, lazy, Suspense } from 'react'
@@ -15,12 +16,12 @@ import { useUIStore } from '@/store/uiStore'
 import { ACCENT_COLORS, THEME_COLORS } from '@/design-system'
 
 // Pages（從 frontend/src 載入，alias 已設定）
-const Login = lazy(() => import('@/pages/Login'))
+const Login    = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
-const Chat = lazy(() => import('@/pages/Chat'))
+const Chat     = lazy(() => import('@/pages/Chat'))
 const Documents = lazy(() => import('@/pages/Documents'))
-const Admin = lazy(() => import('@/pages/Admin'))
-const Share = lazy(() => import('@/pages/Share'))
+const Admin    = lazy(() => import('@/pages/Admin'))
+const Share    = lazy(() => import('@/pages/Share'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
 // Global UI（從 frontend/src 載入）
@@ -29,10 +30,6 @@ import SettingsModal from '@/components/ui/SettingsModal'
 import { ToastContainer } from '@/components/ui/Toast'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
-// Demo 專屬元件
-import DemoResetButton from './demo/DemoResetButton'
-import { DEMO_USER } from './demo/mockData'
-
 const FallbackLoader = () => (
     <div className="flex items-center justify-center h-[100dvh] w-full bg-bg-base">
         <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 border-t-accent animate-spin"></div>
@@ -40,7 +37,7 @@ const FallbackLoader = () => (
 )
 
 export default function App() {
-    const { isAuthenticated, isBootstrapped, setAuth, setBootstrapped } = useAuthStore()
+    const { isAuthenticated, isBootstrapped, setBootstrapped } = useAuthStore()
     const { theme, setTheme, accentColor, themePreference } = useUIStore()
     const location = useLocation()
 
@@ -51,17 +48,14 @@ export default function App() {
 
     const canUseAuthenticatedRedirect = isBootstrapped && isAuthenticated
 
-    // ── Demo：啟動時直接注入 mock 使用者，跳過所有後端認證 ──────────
+    // ── Demo：直接標記 bootstrapped，讓登入頁正常顯示 ───────────────
+    // 不呼叫 bootstrapAuth()（那會嘗試打後端），也不預先注入使用者
+    // 使用者從登入頁輸入任意帳密，mock authApi.login() 就會成功
     useEffect(() => {
         if (!isBootstrapped) {
-            setAuth(
-                DEMO_USER as any,
-                'demo-access-token',
-                'demo-refresh-token'
-            )
             setBootstrapped(true)
         }
-    }, [isBootstrapped, setAuth, setBootstrapped])
+    }, [isBootstrapped, setBootstrapped])
 
     // ── 系統主題監聽（與原版相同）──────────────────────────────────
     useEffect(() => {
@@ -73,7 +67,7 @@ export default function App() {
         return () => mediaQuery.removeEventListener('change', handler)
     }, [setTheme, themePreference])
 
-    // ── 主題 & 重點色同步（與原版相同）────────────────────────────
+    // ── 主題 & 重點色同步（與原版完全相同）──────────────────────────
     useEffect(() => {
         const isDark = theme === 'dark'
         const baseBg = isDark ? THEME_COLORS.darkBg : THEME_COLORS.lightBg
@@ -146,14 +140,13 @@ export default function App() {
         document.head.appendChild(metaColorScheme)
     }, [theme, accentColor, location.pathname])
 
-    // ── 等待 mock 使用者注入完成 ───────────────────────────────────
+    // 等待 setBootstrapped 完成（避免閃爍）
     if (!isBootstrapped && !isPublicRoute) {
         return <FallbackLoader />
     }
 
     return (
         <>
-            {/* 頁面切換動畫 */}
             <div key={location.pathname} className="page-transition h-full overflow-hidden">
                 <Suspense fallback={<FallbackLoader />}>
                     <Routes location={location}>
@@ -185,9 +178,6 @@ export default function App() {
             <ConfirmModal />
             <SettingsModal />
             <ToastContainer />
-
-            {/* Demo 重設按鈕（固定右下角） */}
-            <DemoResetButton />
         </>
     )
 }
