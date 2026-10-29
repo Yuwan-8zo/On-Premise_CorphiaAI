@@ -2,15 +2,15 @@
 管理員 API 路由
 """
 
-from typing import Dict, Any
 import hashlib
+from typing import Any
+
 from pathlib import Path
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 import asyncio
-import time as time_module
 
 from app.api.deps import get_db, RequireAdmin, get_current_user
 from app.models.user import User
@@ -20,8 +20,6 @@ from app.models.message import Message
 from app.models.audit_log import AuditLog
 from app.models.tenant import Tenant
 from app.services.audit_service import AuditAction
-
-
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -29,7 +27,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 async def get_system_stats(
     db: AsyncSession = Depends(get_db),
     _ = RequireAdmin
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     取得系統統計數據 (僅限管理員)
     """
@@ -63,7 +61,7 @@ async def get_system_stats(
 @router.get("/rate-limit/stats", summary="取得速率限制統計")
 async def get_rate_limit_stats(
     _ = RequireAdmin
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     取得速率限制器的即時統計資料 (僅限管理員)
     """
@@ -99,7 +97,7 @@ async def reset_rate_limit(
     ip: str = None,
     path: str = None,
     _ = RequireAdmin
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     清除指定 IP 或終點的速率限制記錄，無需重啟後端。
     
@@ -118,10 +116,11 @@ async def reset_rate_limit(
 
 @router.post("/cache/clear", summary="清除系統快取")
 async def clear_system_cache(
-    _ = RequireAdmin
-) -> Dict[str, Any]:
+    _=RequireAdmin,
+) -> dict[str, Any]:
     """清除系統快取 (僅限管理員)"""
     import gc
+
     gc.collect()
     # If redis or memory cache exists, clear them here.
     return {"status": "success", "message": "System cache cleared."}
@@ -130,7 +129,7 @@ async def clear_system_cache(
 @router.post("/index/rebuild", summary="最佳化 PostgreSQL 向量索引")
 async def rebuild_vector_index(
     _ = RequireAdmin
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """最佳化 pgvector 向量索引 (僅限管理員)"""
     # Trigger background indexing job
     return {
@@ -142,7 +141,7 @@ async def rebuild_vector_index(
 @router.get("/system/info", summary="取得系統硬體與環境資訊")
 async def get_system_info(
     _ = RequireAdmin
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """取得系統資訊如 CPU, 記憶體等 (僅限管理員)"""
     import psutil
     import platform
@@ -176,7 +175,7 @@ async def verify_conversation_hash_chain(
     conversation_id: str,
     db: AsyncSession = Depends(get_db),
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     驗證某對話中所有訊息的 SHA-256 Hash Chain 是否完整。
 
@@ -200,7 +199,7 @@ async def get_quota_overview(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     列出所有使用者的每日配額設定與今日使用量（僅限管理員）
 
@@ -261,16 +260,24 @@ async def get_security_summary(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     回傳最近 24 小時各類資安事件的次數，供後台儀表板顯示。
     """
     since = datetime.utcnow() - timedelta(hours=24)
     tenant_id = current_user.tenant_id or "default"
 
+    # 登入失敗、帳號鎖定發生在「還不知道是哪個租戶」之前，tenant_id 會是空的，也要算進來
+    from sqlalchemy import or_, and_
     base_q = select(AuditLog.action, func.count(AuditLog.id)).where(
         AuditLog.created_at >= since,
-        AuditLog.tenant_id == tenant_id,
+        or_(
+            AuditLog.tenant_id == tenant_id,
+            and_(
+                AuditLog.tenant_id.is_(None),
+                AuditLog.action.in_([AuditAction.LOGIN_FAILED, AuditAction.ACCOUNT_LOCKED]),
+            ),
+        ),
     ).group_by(AuditLog.action)
 
     result = await db.execute(base_q)
@@ -298,7 +305,7 @@ async def get_user_lockout_summary(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     聚合每個使用者的鎖定 / 失敗狀態。回傳包括：
     - current_attempts: 當前失敗次數
@@ -370,7 +377,7 @@ def _compute_sha256_cached(path: Path) -> str | None:
 @router.get("/models/integrity", summary="取得每個本機模型的完整性與效能資訊")
 async def get_models_integrity(
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     返回本機每個 GGUF 模型的：
     - SHA256 hash（帶快取）
@@ -418,7 +425,7 @@ async def get_models_integrity(
 async def get_tenants_usage(
     db: AsyncSession = Depends(get_db),
     _ = RequireAdmin,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     返回每個租戶的使用量摘要：
     - users_count: 使用者數
@@ -472,4 +479,48 @@ async def get_tenants_usage(
             "security_events_24h": sec_24h.get(t.id, 0),
         })
     return {"status": "success", "data": data}
+
+
+@router.get("/dashboard-snapshot", summary="管理後台儀表板聚合（減少輪詢次數）")
+async def get_dashboard_snapshot(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _=RequireAdmin,
+) -> dict[str, Any]:
+    """
+    一次回傳 Overview 常用資料：資安摘要 + AI 就緒狀態。
+    各分頁專用 API（users/models/tenants）仍各自呼叫。
+    """
+    from app.services.boot_service import build_health_payload
+
+    since = datetime.utcnow() - timedelta(hours=24)
+    tenant_id = current_user.tenant_id or "default"
+
+    base_q = select(AuditLog.action, func.count(AuditLog.id)).where(
+        AuditLog.created_at >= since,
+        AuditLog.tenant_id == tenant_id,
+    ).group_by(AuditLog.action)
+    result = await db.execute(base_q)
+    counts = {action: cnt for action, cnt in result.all()}
+
+    health = build_health_payload()
+
+    return {
+        "status": "success",
+        "data": {
+            "security": {
+                "window_hours": 24,
+                "pii_detected": counts.get(AuditAction.PII_DETECTED, 0),
+                "prompt_injection_blocked": counts.get(AuditAction.PROMPT_INJECTION_BLOCKED, 0),
+                "dlp_hit": counts.get(AuditAction.DLP_HIT, 0),
+                "login_failed": counts.get(AuditAction.LOGIN_FAILED, 0),
+                "account_locked": counts.get(AuditAction.ACCOUNT_LOCKED, 0),
+                "token_revoked": counts.get(AuditAction.TOKEN_REVOKE, 0),
+            },
+            "ai": {
+                "llm": health.get("llm", "loading"),
+                "rag": health.get("rag", "loading"),
+            },
+        },
+    }
 

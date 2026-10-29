@@ -41,7 +41,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-asyncio pytest-cov httpx
+
+    - name: Lint Backend (Ruff)
+      working-directory: ./backend
+      run: |
+        python -m ruff check --select E,F --ignore E501 .
         
     - name: Run Backend Tests
       working-directory: ./backend
@@ -69,10 +73,18 @@ jobs:
     - name: Install dependencies
       working-directory: ./frontend
       run: npm ci
+
+    - name: Lint Frontend (ESLint)
+      working-directory: ./frontend
+      run: npm run lint
         
     - name: Run Frontend Tests
       working-directory: ./frontend
       run: npm run test -- --run
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
         
   e2e-tests:
     name: E2E Tests (Playwright)

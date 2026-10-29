@@ -10,7 +10,6 @@ PII 遮罩服務的單元測試
 - 混合場景
 """
 
-import pytest
 from app.services.pii_masking_service import mask_pii
 
 

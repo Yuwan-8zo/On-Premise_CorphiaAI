@@ -10,7 +10,6 @@
 - POST /api/v1/auth/change-password
 """
 
-import pytest
 from httpx import AsyncClient
 
 from app.models.user import User
@@ -46,12 +45,13 @@ class TestLogin:
         assert response.status_code == 401
 
     async def test_login_nonexistent_email(self, async_client: AsyncClient):
-        """❌ 不存在的帳號 → 401"""
+        """❌ 不存在的帳號 → 404 + ACCOUNT_NOT_FOUND（前端會切到註冊）"""
         response = await async_client.post(
             "/api/v1/auth/login",
             json={"email": "nobody@nowhere.com", "password": "SomePass123!"},
         )
-        assert response.status_code == 401
+        assert response.status_code == 404
+        assert "ACCOUNT_NOT_FOUND" in response.text
 
     async def test_login_missing_fields(self, async_client: AsyncClient):
         """❌ 缺少必填欄位 → 422"""

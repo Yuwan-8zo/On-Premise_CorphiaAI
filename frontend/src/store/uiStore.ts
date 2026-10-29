@@ -106,8 +106,8 @@ export const useUIStore = create<UIState>()(
             themePreference: 'system',
             language: 'zh-TW',
             accentColor: 'default',
-            // 手機版預設收起，桌機版預設展開
-            sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
+            // Demo 模式：預設收起
+            sidebarOpen: false,
             sidebarWidth: 280,
 
             // 設定主題（系統 prefers-color-scheme 自動同步用，不需動畫；

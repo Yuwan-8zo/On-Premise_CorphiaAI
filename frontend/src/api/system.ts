@@ -4,13 +4,20 @@
 
 import apiClient from './client'
 
-export interface NgrokInfo {
-    active: boolean
-    url: string | null
-    api_url: string | null
-    ws_url: string | null
-    updated_at?: string | null
-    source?: string
+// Newer backend responses wrap the payload as { schema_version, data }.
+// Accept both shapes so the admin panels keep working either way.
+function unwrapEnvelope<T = any>(body: any): T {
+    if (body && typeof body === 'object' && 'schema_version' in body && 'data' in body) {
+        return body.data as T
+    }
+    return body as T
+}
+
+export interface LanStatus {
+    enabled: boolean
+    bind_host: string
+    lan_ips: string[]
+    requires_restart: boolean
 }
 
 export interface RuntimeInfo {
@@ -29,31 +36,18 @@ export interface RuntimeInfo {
 
 export const systemApi = {
     /**
-     * 取得當前 ngrok 公網 URL
+     * 取得區域網路 (LAN) 開關狀態
      */
-    getNgrokUrl: async (): Promise<NgrokInfo> => {
-        const response = await apiClient.get<NgrokInfo>('/system/ngrok-url')
+    getLanStatus: async (): Promise<LanStatus> => {
+        const response = await apiClient.get<LanStatus>('/system/lan/status')
         return response.data
     },
 
     /**
-     * 啟動 ngrok 公開隧道（admin only）
-     * 後端會 block 最多 ~20s 等 ngrok 取到 URL，所以呼叫端要設較長 timeout
+     * 切換區域網路 (LAN) 開關（需重啟 start.py 才會生效）
      */
-    startNgrok: async (): Promise<NgrokInfo> => {
-        const response = await apiClient.post<NgrokInfo>(
-            '/system/ngrok/start',
-            null,
-            { timeout: 30000 },
-        )
-        return response.data
-    },
-
-    /**
-     * 關閉 ngrok 公開隧道（admin only）
-     */
-    stopNgrok: async (): Promise<NgrokInfo> => {
-        const response = await apiClient.post<NgrokInfo>('/system/ngrok/stop')
+    toggleLan: async (enabled: boolean): Promise<LanStatus> => {
+        const response = await apiClient.post<LanStatus>('/system/lan/toggle', { enabled })
         return response.data
     },
 
@@ -62,7 +56,7 @@ export const systemApi = {
      */
     getHealthDetailed: async () => {
         const response = await apiClient.get('/system/health/detailed')
-        return response.data
+        return unwrapEnvelope(response.data)
     },
 
     /**
@@ -70,7 +64,7 @@ export const systemApi = {
      */
     getNetworkStatus: async () => {
         const response = await apiClient.get('/system/network/status')
-        return response.data
+        return unwrapEnvelope(response.data)
     },
 
     /**

@@ -35,6 +35,7 @@ class DocumentService:
         ".ppt": "application/vnd.ms-powerpoint",
         ".txt": "text/plain",
         ".md": "text/markdown",
+        ".csv": "text/csv",
     }
     
     # 分塊設定
@@ -218,9 +219,20 @@ class DocumentService:
             # 前端「檢視來源」可定位到「文件第幾段」、做精準引用。
             # （chunk_index column 本來就有，但只看 column 沒看 metadata 的下游也能拿到。）
             total_chunks = len(chunks)
+
+            # PERF: 批次向量化，避免每個 chunk 都單獨 encode（thread 切換 + Python overhead 很高）
+            # 若批次 API 不可用或失敗，fallback 回逐段 get_embedding（保持行為相容）。
+            embeddings: list[list[float]] | None = None
+            try:
+                get_embeddings = getattr(rag_service, "get_embeddings", None)
+                if callable(get_embeddings):
+                    embeddings = await get_embeddings(chunks, batch_size=32)
+            except Exception as e:
+                logger.warning(f"批次 embedding 失敗，fallback 逐段 encode: {e}")
+                embeddings = None
+
             for i, chunk_content in enumerate(chunks):
-                # 取得向量
-                embedding = await rag_service.get_embedding(chunk_content)
+                embedding = embeddings[i] if embeddings is not None else await rag_service.get_embedding(chunk_content)
 
                 chunk = DocumentChunk(
                     document_id=document.id,
@@ -234,7 +246,7 @@ class DocumentService:
                         "total_chunks": total_chunks,
                         # 約略字元數（給前端顯示「第 X 段（含 N 字）」用，不必精算）
                         "char_count": len(chunk_content),
-                    }
+                    },
                 )
                 self.db.add(chunk)
 
@@ -276,6 +288,8 @@ class DocumentService:
             return await self._parse_excel(file_path)
         elif ext in ["pptx", "ppt"]:
             return await self._parse_powerpoint(file_path)
+        elif ext == "csv":
+            return await self._parse_csv(file_path)
         else:
             raise ValueError(f"不支援的檔案類型: {ext}")
     
@@ -365,6 +379,34 @@ class DocumentService:
             except ImportError:
                 logger.warning("openpyxl 未安裝，無法解析 Excel")
                 raise
+
+        return await asyncio.to_thread(_process)
+
+    async def _parse_csv(self, file_path: Path) -> str:
+        """解析 CSV 檔案：自動偵測編碼（Big5 / UTF-8 皆可），每列轉為「欄名: 值」便於語意檢索"""
+        import asyncio
+        import csv
+        import io
+        import chardet
+
+        def _process():
+            with open(file_path, "rb") as f:
+                raw = f.read()
+            encoding = chardet.detect(raw).get("encoding") or "utf-8"
+            text = raw.decode(encoding, errors="ignore").lstrip("\ufeff")
+            rows = list(csv.reader(io.StringIO(text)))
+            if not rows:
+                return ""
+            header = [h.strip() for h in rows[0]]
+            lines = []
+            for row in rows[1:]:
+                cells = [c.strip() for c in row]
+                if not any(cells):
+                    continue
+                pairs = [f"{header[i] if i < len(header) and header[i] else f'欄{i + 1}'}: {v}"
+                         for i, v in enumerate(cells) if v]
+                lines.append(" | ".join(pairs))
+            return "\n".join([" | ".join(header)] + lines)
 
         return await asyncio.to_thread(_process)
 

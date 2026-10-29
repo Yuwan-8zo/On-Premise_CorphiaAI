@@ -46,9 +46,13 @@ def validate_file_signature(file_bytes: bytes, filename: str, content_type: str)
     if ext in {"txt", "md", "csv"}:
         # 純文字嘗試解碼；不只試 utf-8，也試 utf-8-sig（BOM）跟常見的 cp950 / big5
         # （台灣使用者匯出的舊 csv 常見 big5 編碼）
+        # Only the first 1 KB is sampled; that cut can land in the middle of a
+        # multi-byte character (Chinese is 3 bytes in UTF-8), so decode it
+        # incrementally and ignore an unfinished character at the end.
+        import codecs
         for encoding in ("utf-8", "utf-8-sig", "cp950", "big5"):
             try:
-                file_bytes[:1024].decode(encoding)
+                codecs.getincrementaldecoder(encoding)().decode(file_bytes[:1024], final=False)
                 return True
             except UnicodeDecodeError:
                 continue

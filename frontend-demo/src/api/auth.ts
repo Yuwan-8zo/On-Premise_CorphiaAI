@@ -12,11 +12,29 @@ const MOCK_REFRESH_TOKEN = 'demo-refresh-token'
 
 function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 
+// 記住目前登入的使用者（讓 me() 回傳正確的名稱）
+let _currentUser: User | null = null
+
+function makeUser(email: string, name?: string): User {
+    return {
+        id: `user-${Date.now()}`,
+        email,
+        name: name || email.split('@')[0],
+        role: 'admin' as const,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+    } as User
+}
+
 export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
         await sleep(800)
         if (!data.password || data.password.length < 4) {
             throw { response: { data: { detail: '密碼不正確，請再試一次' } } }
+        }
+        // 若之前有註冊過，沿用那個 user；否則用信箱前綴
+        if (!_currentUser || _currentUser.email !== data.email) {
+            _currentUser = makeUser(data.email)
         }
         return {
             accessToken: MOCK_ACCESS_TOKEN,
@@ -28,19 +46,14 @@ export const authApi = {
 
     register: async (data: RegisterRequest): Promise<User> => {
         await sleep(1000)
-        return {
-            id: `user-${Date.now()}`,
-            email: data.email,
-            name: data.name || data.email.split('@')[0],
-            role: 'user',
-            isActive: true,
-            createdAt: new Date().toISOString(),
-        } as User
+        _currentUser = makeUser(data.email, data.name)
+        return _currentUser
     },
 
     me: async (): Promise<User> => {
         await sleep(200)
-        return DEMO_USER as unknown as User
+        // 有記住登入者就回傳，否則回 DEMO_USER
+        return _currentUser ?? (DEMO_USER as unknown as User)
     },
 
     logout: async (): Promise<void> => { await sleep(200) },

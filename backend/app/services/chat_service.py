@@ -12,7 +12,8 @@ from app.core.time_utils import utc_now_naive
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, or_
-# QUALITY-01 修正：langgraph 和 duckduckgo_search 改為懶惰 import（在使用點 import）
+# QUALITY-01 修正：langgraph 改為懶惰 import（在使用點 import）
+# 地端原則：本平台不提供網路搜尋，所有回答僅來自本地模型與企業內部文件，查詢不會送出內網
 # 避免這些套件未安裝時阻斷整個模組載入，提升系統啟動可靠性
 import asyncio
 
@@ -105,7 +106,6 @@ class ChatService:
         
         workflow.add_node("router", self._router_node)
         workflow.add_node("rag", self._rag_node)
-        workflow.add_node("web_search", self._web_search_node)
         workflow.add_node("chat_prep", self._chat_prep_node)
         
         workflow.add_edge(START, "router")
@@ -118,13 +118,11 @@ class ChatService:
             route_condition,
             {
                 "rag": "rag",
-                "web_search": "web_search",
                 "chat": "chat_prep"
             }
         )
         
         workflow.add_edge("rag", END)
-        workflow.add_edge("web_search", END)
         workflow.add_edge("chat_prep", END)
         
         return workflow.compile()
@@ -136,19 +134,23 @@ class ChatService:
         if use_rag and folder_name:
             # 專案綁定，強制內部 RAG 減少外部幻覺
             return {"route": "rag"}
-            
+
+        if not use_rag:
+            # 一般對話（前端未要求查文件）：不搜尋任何文件，也省下一次分類用的 LLM 呼叫
+            return {"route": "chat"}
+
         schema = {
             "type": "object",
             "properties": {
                 "route": {
                     "type": "string",
-                    "enum": ["rag", "web_search", "chat"]
+                    "enum": ["rag", "chat"]
                 }
             },
             "required": ["route"]
         }
         
-        prompt_text = f"分析最後一則訊息以決定路徑：\n'rag': 從專案資料夾內部文獻中尋找答案\n'web_search': 需要上網搜尋最新即時資訊\n'chat': 一般問答\n\n使用者最新訊息：「{state.get('query')}」"
+        prompt_text = f"分析最後一則訊息以決定路徑：\n'rag': 從專案資料夾內部文獻中尋找答案\n'chat': 一般問答\n\n使用者最新訊息：「{state.get('query')}」"
         system_prompt = "你是一個分類系統。請務必唯一輸出符合 schema 的 JSON。"
         
         prompt = self.llm_service.build_chat_prompt(
@@ -157,9 +159,10 @@ class ChatService:
         )
         
         try:
-            decision = await self.llm_service.generate_structured(prompt, schema)
+            # The answer is only {"route": "rag|chat"}; a small cap keeps this step fast on CPU.
+            decision = await self.llm_service.generate_structured(prompt, schema, max_tokens=24)
             route = decision.get("route", "chat")
-            if route not in ["rag", "web_search", "chat"]:
+            if route not in ["rag", "chat"]:
                 route = "chat"
         except Exception as e:
             logger.error(f"Router Decision Error: {e}")
@@ -296,37 +299,6 @@ class ChatService:
                 }
                 for r in search_results
             ]
-        return {"context": context, "sources": sources}
-
-    async def _web_search_node(self, state: AgentState) -> dict:
-        context = ""
-        sources = []
-        try:
-            # QUALITY-01 修正：懶惰 import duckduckgo_search，避免套件未安裝時阻斷啟動
-            from duckduckgo_search import DDGS
-            # DuckDuckGo 搜尋 (以 thread 非同步執行避免阻塞)
-            # NOTE: 加入 15 秒 timeout 保護，防止搜尋阻塞整個請求
-            def _sync_search():
-                with DDGS() as ddgs:
-                    return list(ddgs.text(state.get("query"), max_results=3))
-            
-            results = await asyncio.wait_for(
-                asyncio.to_thread(_sync_search),
-                timeout=15.0
-            )
-            
-            for idx, r in enumerate(results):
-                context += f"【來源 {idx+1}】 {r.get('title')}\n{r.get('body')}\n\n"
-                sources.append({
-                    "chunk_id": f"web_{idx}",
-                    "content": r.get('body', '')[:200],
-                    "score": 0.9,
-                    "document_id": r.get('href', ''),
-                    "document_name": f"網頁：{r.get('title')}"
-                })
-        except Exception as e:
-            logger.error(f"Web Search Error: {e}")
-            
         return {"context": context, "sources": sources}
 
     async def _chat_prep_node(self, state: AgentState) -> dict:
@@ -476,8 +448,6 @@ class ChatService:
         
         if final_state.get("folder_name"):
             system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
-        elif route == "web_search":
-            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合回答問題。必須使用系統指定的回覆語言。"
         else:
             system_prompt = self.DEFAULT_SYSTEM_PROMPT
 
@@ -539,6 +509,16 @@ class ChatService:
             language: 回覆語言代碼（zh-TW / en-US / ja-JP）
             resubmit_message_id: 若提供，則為修改歷史對話並重新生成
         """
+        from app.services.boot_service import is_llm_ready
+
+        if not is_llm_ready():
+            yield {
+                "type": "error",
+                "message": "AI 模型仍在載入中，請稍候再試",
+                "code": "LLM_LOADING",
+            }
+            return
+
         if resubmit_message_id:
             from sqlalchemy import delete
             # 尋找並更新使用者訊息
@@ -616,8 +596,6 @@ class ChatService:
         
         if final_state.get("folder_name"):
             system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
-        elif route == "web_search":
-            system_prompt = "你是具備網路搜尋能力的 AI，請根據以下提供的網頁檢索內容，綜合客觀地回答問題。必須使用系統指定的回覆語言。"
         else:
             system_prompt = self.DEFAULT_SYSTEM_PROMPT
 
@@ -715,7 +693,8 @@ class ChatService:
         
         if first_user_msg:
             # 簡單截取前 50 字元作為標題
-            title = first_user_msg.content[:50]
+            from app.services.pii_masking_service import mask_pii
+            title = mask_pii(first_user_msg.content)["masked_text"][:50]
             if len(first_user_msg.content) > 50:
                 title += "..."
             

@@ -133,14 +133,29 @@ class ModelManager:
             return list(self._models.values())
 
     def _resolve_configured_model_path(self) -> Optional[Path]:
-        """Resolve LLAMA_MODEL_PATH relative to backend/ when it points to an existing file."""
+        """Resolve LLAMA_MODEL_PATH when it points to an existing file.
+
+        Notes:
+        - 支援絕對路徑
+        - 支援相對路徑（依序嘗試以 backend/app、backend、project root 為基底）
+        - 讓預設值 `ai_model/<model>.gguf` 在 dev 模式可直接指向專案根目錄的 ai_model/
+        """
         try:
             from app.core.config import settings
 
             configured = Path(settings.llama_model_path)
             if not configured.is_absolute():
-                backend_dir = Path(__file__).resolve().parents[2]
-                configured = backend_dir / configured
+                # __file__ = backend/app/services/model_manager.py
+                backend_app_dir = Path(__file__).resolve().parents[2]       # backend/app
+                backend_dir = backend_app_dir.parent                        # backend
+                project_root = backend_dir.parent                           # project root
+
+                for base in (backend_app_dir, backend_dir, project_root):
+                    candidate = (base / configured).resolve()
+                    if candidate.exists():
+                        return candidate
+                return None
+
             configured = configured.resolve()
             return configured if configured.exists() else None
         except Exception:

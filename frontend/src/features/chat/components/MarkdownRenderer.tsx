@@ -4,82 +4,16 @@
  * 支援 GFM、程式碼高亮、數學公式
  */
 
-import React, { memo } from 'react'
+import React, { lazy, memo, Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+
+const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
 
 interface MarkdownRendererProps {
     content: string
     className?: string
 }
-
-// 複製按鈕元件
-const CopyButton = ({ code }: { code: string }) => {
-    const [copied, setCopied] = React.useState(false)
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(code)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-        } catch (err) {
-            console.error('複製失敗:', err)
-        }
-    }
-
-    return (
-        <button
-            onClick={handleCopy}
-            className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-bg-surface hover:bg-white/[0.06] dark:hover:bg-white/[0.06] rounded transition-colors"
-        >
-            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
-            {copied ? '已複製' : '複製'}
-        </button>
-    )
-}
-
-// 程式碼區塊元件
-const CodeBlock = memo(({
-    language,
-    children
-}: {
-    language: string
-    children: string
-}) => {
-    return (
-        <div className="relative group my-4">
-            {/* 語言標籤 */}
-            {language && (
-                <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-bg-surface rounded-tl rounded-br">
-                    {language}
-                </div>
-            )}
-
-            {/* 複製按鈕 */}
-            <CopyButton code={children} />
-
-            {/* 程式碼內容 */}
-            <SyntaxHighlighter
-                language={language || 'text'}
-                style={oneDark}
-                customStyle={{
-                    margin: 0,
-                    borderRadius: '0.5rem',
-                    padding: '2rem 1rem 1rem',
-                }}
-                showLineNumbers={children.split('\n').length > 3}
-                wrapLines
-            >
-                {children}
-            </SyntaxHighlighter>
-        </div>
-    )
-})
-
-CodeBlock.displayName = 'CodeBlock'
 
 // 錯誤捕獲邊界，防止 Markdown 解析失敗導致整個畫面黑屏
 class MarkdownErrorBoundary extends React.Component<
@@ -142,9 +76,17 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             }
 
                             return (
-                                <CodeBlock language={match?.[1] || ''}>
-                                    {String(children).replace(/\n$/, '')}
-                                </CodeBlock>
+                                <Suspense
+                                    fallback={
+                                        <pre className="my-4 p-4 rounded-cv-md bg-bg-elevated text-sm overflow-x-auto">
+                                            {String(children).replace(/\n$/, '')}
+                                        </pre>
+                                    }
+                                >
+                                    <MarkdownCodeBlock language={match?.[1] || ''}>
+                                        {String(children).replace(/\n$/, '')}
+                                    </MarkdownCodeBlock>
+                                </Suspense>
                             )
                         },
 

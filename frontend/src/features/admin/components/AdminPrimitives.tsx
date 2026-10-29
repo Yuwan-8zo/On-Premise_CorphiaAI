@@ -25,12 +25,8 @@ export function Panel({
     children: React.ReactNode
 }) {
     return (
-        // Glass morphism v3：白色微染 + 較明顯邊框
-        // FIX: 原本 dark:border-white/10 在深色頁面幾乎看不見，bumped 到 white/20
-        //   - light mode: white/50 — 淺色背景上白色邊框本就明顯，半透明就夠
-        //   - dark mode:  white/20 — 深色背景上需要更亮才看得到，但仍保持 glass 透視感
         <section
-            className={`rounded-cv-lg border border-white/50 dark:border-white/20 bg-white/[0.04] dark:bg-white/[0.04] supports-[backdrop-filter]:bg-white/[0.04] backdrop-blur-2xl ${className}`}
+            className={`rounded-cv-lg border border-white/[0.06] bg-black/[0.22] shadow-[0_4px_16px_rgb(0_0_0/0.3)] ${className}`}
         >
             {children}
         </section>
@@ -52,7 +48,7 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 border-b border-border-subtle px-5 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-white/[0.06] px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
                 {eyebrow && (
                     <p className="mb-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
@@ -182,7 +178,7 @@ export function ModalFrame({
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className={`relative w-full ${maxWidth} rounded-[26px] border border-white/50 bg-bg-surface/86 p-6 text-text-primary shadow-[0_22px_70px_rgb(0_0_0/0.18)] supports-[backdrop-filter]:bg-bg-surface/74 backdrop-blur-2xl pointer-events-auto dark:border-white/20`}
+                    className={`relative w-full ${maxWidth} rounded-cv-lg border border-white/[0.08] bg-[rgb(28,28,30)] p-6 text-text-primary shadow-[0_24px_80px_rgb(0_0_0/0.5),inset_0_1px_0_rgb(255_255_255/0.06)] pointer-events-auto`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {children}
@@ -221,9 +217,20 @@ export function Field({
 // ---------------------------------------------------------------------------
 
 export const inputClass =
-    'w-full rounded-[18px] border border-border-subtle/80 bg-bg-elevated/80 px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-bg-elevated focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
+    'w-full rounded-cv-lg border border-border-subtle/80 bg-bg-elevated/80 px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-bg-elevated focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
 
 export const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B6B6B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_1rem_center] bg-no-repeat pr-10`
+
+// ---------------------------------------------------------------------------
+// Table helpers — keep Admin tables consistent (Users / Audit / etc.).
+// ---------------------------------------------------------------------------
+
+export const tableHeadRowClass =
+    'border-b border-border-subtle bg-bg-elevated/40 text-left text-xs uppercase tracking-wider text-text-secondary'
+
+export const tableBodyClass = 'divide-y divide-border-subtle'
+
+export const tableEmptyCellClass = 'px-5 py-10 text-center text-text-secondary'
 
 // ---------------------------------------------------------------------------
 // formatDate — shared by Overview / Audit / Users sections.

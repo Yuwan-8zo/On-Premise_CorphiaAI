@@ -135,25 +135,34 @@ describe('Login 頁面', () => {
     mockSetLoading.mockClear()
   })
 
-  it('應渲染包含 email 和 password 的登入表單', () => {
+  it('應渲染包含 email 和 password 的登入表單', async () => {
     renderLogin()
-    // 使用 querySelector 確保不會因為 a11y role 解析失敗而報錯
-    const emailInput = document.querySelector('input[type="email"]') || document.querySelector('input[name="email"]')
-    expect(emailInput).toBeTruthy()
-    expect(document.querySelector('input[type="password"]')).toBeTruthy()
+    await waitFor(() => {
+      const emailInput =
+        document.querySelector('input[type="email"]') ||
+        document.querySelector('input[name="email"]')
+      expect(emailInput).toBeTruthy()
+      expect(document.querySelector('input[type="password"]')).toBeTruthy()
+    })
   })
 
-  it('應渲染送出按鈕', () => {
+  it('應渲染送出按鈕', async () => {
     renderLogin()
-    // 送出按鈕可能是 type="submit" 或含登入文字
-    const submitBtn =
-      document.querySelector('button[type="submit"]') ||
-      screen.queryByRole('button', { name: /登入|submit|login/i })
-    expect(submitBtn).toBeTruthy()
+    await waitFor(() => {
+      const submitBtn =
+        document.querySelector('button[type="submit"]') ||
+        screen.queryByRole('button', { name: /登入|submit|login/i })
+      expect(submitBtn).toBeTruthy()
+    })
   })
 
   it('成功登入後應重導向', async () => {
     renderLogin()
+
+    await waitFor(() => {
+      expect(document.querySelector('input[type="email"]')).toBeTruthy()
+      expect(document.querySelector('input[type="password"]')).toBeTruthy()
+    })
 
     const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement
     const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement

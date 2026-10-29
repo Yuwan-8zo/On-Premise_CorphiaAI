@@ -13,12 +13,10 @@ NOTE: 文件上傳涉及 I/O，測試使用 mock 或小型記憶體 fixture
 
 import io
 import uuid
-import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient
 
 from app.models.user import User
-from app.models.document import Document
 
 
 # ── Helper: 建立假文件 fixture ────────────────────────────────

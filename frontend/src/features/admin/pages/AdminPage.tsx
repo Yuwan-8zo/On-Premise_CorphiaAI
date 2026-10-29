@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     ActionButton,
@@ -7,16 +7,16 @@ import {
     inputClass,
 } from '@/features/admin/components/AdminPrimitives'
 import Tooltip from '@/components/ui/Tooltip'
-import NgrokSidebarWidget from '@/features/admin/components/NgrokSidebarWidget'
-import NgrokQrModal from '@/features/admin/components/NgrokQrModal'
+import LanSidebarWidget from '@/features/admin/components/LanSidebarWidget'
 import OverviewSection from '@/features/admin/sections/OverviewSection'
-import AuditSection from '@/features/admin/sections/AuditSection'
-import UsersSection from '@/features/admin/sections/UsersSection'
-import ModelsSection from '@/features/admin/sections/ModelsSection'
+
+const AuditSection = lazy(() => import('@/features/admin/sections/AuditSection'))
+const UsersSection = lazy(() => import('@/features/admin/sections/UsersSection'))
+const ModelsSection = lazy(() => import('@/features/admin/sections/ModelsSection'))
 // SystemSection 已移除：內容跟 OverviewSection 的 LLMHealthPanel / SystemResourcePanel 重複，
 // 為避免重複資訊故下架。元件檔仍保留在 sections/ 內以備需要時恢復。
 // import SystemSection from '@/features/admin/sections/SystemSection'
-import TenantsSection from '@/features/admin/sections/TenantsSection'
+const TenantsSection = lazy(() => import('@/features/admin/sections/TenantsSection'))
 // Only icons still used at AdminPage level: tab icons + sidebar logo + back arrow.
 // Section-specific icons live inside each section module.
 import {
@@ -32,7 +32,6 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { useToastStore } from '@/store/toastStore'
-import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { getModels, refreshModels, selectModel, type ModelItem } from '@/api/models'
 import {
     exportAuditLogsCSV,
@@ -94,10 +93,6 @@ export default function Admin() {
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
     const showConfirm = useUIStore((s) => s.showConfirm)
-    // 監聽瀏覽器是否有外網連線，用於 ngrok（公開網址）UI gating。
-    // Corphia AI 主體 100% 地端可用，這旗標只影響「公開網址」這項功能；
-    // 離線時 toggle 仍可顯示但會被攔截，並用 toast 提示使用者。
-    const isOnline = useNetworkStatus()
     /** 把絕對路徑壓縮成最後 1～2 段（demo 模式時用），避免裸露使用者目錄 */
     const sanitizePath = (p: string) => {
         if (!p) return ''
@@ -163,18 +158,10 @@ export default function Admin() {
     const [modelsDir, setModelsDir] = useState('')
     const [isLoadingModels, setIsLoadingModels] = useState(false)
 
-    // ngrok URL 狀態
-    const [ngrokInfo, setNgrokInfo] = useState<{
-        active: boolean
-        url: string | null
-        api_url: string | null
-        ws_url: string | null
-        updated_at?: string | null
-        source?: string
-    } | null>(null)
-    const [isLoadingNgrok, setIsLoadingNgrok] = useState(false)
-    const [ngrokCopied, setNgrokCopied] = useState(false)
-    const [isNgrokQrOpen, setIsNgrokQrOpen] = useState(false)
+    // LAN（區域網路）開關狀態：切換後需重啟 start.py 才會生效
+    const [lanEnabled, setLanEnabled] = useState(false)
+    const [lanIps, setLanIps] = useState<string[]>([])
+    const [isLoadingLan, setIsLoadingLan] = useState(false)
 
     const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
     const [auditTotal, setAuditTotal] = useState(0)
@@ -218,67 +205,38 @@ export default function Admin() {
         }
     }, [])
 
-    const loadNgrokUrl = useCallback(async () => {
-        setIsLoadingNgrok(true)
+    const loadLanStatus = useCallback(async () => {
+        setIsLoadingLan(true)
         try {
-            const info = await systemApi.getNgrokUrl()
-            setNgrokInfo(info)
+            const s = await systemApi.getLanStatus()
+            setLanEnabled(Boolean(s.enabled))
+            setLanIps(Array.isArray(s.lan_ips) ? s.lan_ips : [])
         } catch (err) {
-            console.error('Failed to load ngrok URL:', err)
-            setNgrokInfo({ active: false, url: null, api_url: null, ws_url: null })
+            console.error('Failed to load LAN status:', err)
         } finally {
-            setIsLoadingNgrok(false)
+            setIsLoadingLan(false)
         }
     }, [])
 
-    /**
-     * 啟動 ngrok：呼叫後端 /system/ngrok/start，後端會 block 最多 20s 拿 URL。
-     * 期間 isLoadingNgrok=true，UI 顯示 spinner。回來時更新 state。
-     *
-     * 離線守門：navigator.onLine === false 時直接擋掉，顯示 toast 給使用者。
-     * 不打 API 是因為 ngrok 建立到外部服務的通道一定要外網；
-     * 讓使用者等 20 秒 timeout 才知道沒網路，UX 很糟。
-     */
-    const handleStartNgrok = useCallback(async () => {
-        if (!isOnline) {
-            // 用 getState() 而非 hook 取 toast，避免讓 store state 變化都重渲整個 admin 頁。
-            useToastStore.getState().error(
-                t('admin.ngrok.offlineHint', '需要連上網際網路才能啟用公開網址，請確認網路連線後再試一次。')
-            )
-            return
-        }
-        setIsLoadingNgrok(true)
-        try {
-            const info = await systemApi.startNgrok()
-            setNgrokInfo(info)
-        } catch (err) {
-            console.error('Failed to start ngrok:', err)
-            // 失敗後重抓一次當前狀態（可能因為 binary 缺失或 authtoken 未設）
+    const handleToggleLan = useCallback(
+        async (nextEnabled: boolean) => {
+            setIsLoadingLan(true)
             try {
-                const info = await systemApi.getNgrokUrl()
-                setNgrokInfo(info)
-            } catch {
-                setNgrokInfo({ active: false, url: null, api_url: null, ws_url: null })
+                const s = await systemApi.toggleLan(nextEnabled)
+                setLanEnabled(Boolean(s.enabled))
+                setLanIps(Array.isArray(s.lan_ips) ? s.lan_ips : [])
+                useToastStore.getState().info(
+                    t('admin.lan.restartHint', '已更新區域網路設定。請重啟 start.py（或重啟後端/前端）後才會生效。')
+                )
+            } catch (err) {
+                console.error('Failed to toggle LAN:', err)
+                useToastStore.getState().error(getErrorMessage(err))
+            } finally {
+                setIsLoadingLan(false)
             }
-        } finally {
-            setIsLoadingNgrok(false)
-        }
-    }, [isOnline, t])
-
-    /**
-     * 關閉 ngrok：呼叫 /system/ngrok/stop（taskkill / pkill），更新 state 為 inactive。
-     */
-    const handleStopNgrok = useCallback(async () => {
-        setIsLoadingNgrok(true)
-        try {
-            const info = await systemApi.stopNgrok()
-            setNgrokInfo(info)
-        } catch (err) {
-            console.error('Failed to stop ngrok:', err)
-        } finally {
-            setIsLoadingNgrok(false)
-        }
-    }, [])
+        },
+        [t]
+    )
 
     const loadUsers = useCallback(async () => {
         setIsLoading(true)
@@ -389,24 +347,10 @@ export default function Admin() {
     useEffect(() => {
         loadStats()
         loadUsers()
-        loadNgrokUrl()
+        loadLanStatus()
         loadAuditSummary()
         loadDocumentsForOverview()
-    }, [loadStats, loadUsers, loadNgrokUrl, loadAuditSummary, loadDocumentsForOverview])
-
-    /*
-     * Free-tier ngrok rotates the public subdomain on every reconnect.
-     * Poll /system/ngrok every 30s while the admin page is mounted so the
-     * displayed URL stays current without a manual reload. Backend has its
-     * own watcher that writes runtime files; this is just the UI side.
-     */
-    useEffect(() => {
-        if (activeSection !== 'overview') return
-        const id = window.setInterval(() => {
-            loadNgrokUrl()
-        }, 30_000)
-        return () => window.clearInterval(id)
-    }, [activeSection, loadNgrokUrl])
+    }, [loadStats, loadUsers, loadLanStatus, loadAuditSummary, loadDocumentsForOverview])
 
     useEffect(() => {
         if (activeSection === 'models') loadModels()
@@ -598,13 +542,7 @@ export default function Admin() {
 
     // metricCards now live inside OverviewSection (presentational concern).
 
-    // 一鍵複製 ngrok URL
-    const handleCopyNgrokUrl = async () => {
-        if (!ngrokInfo?.url) return
-        await navigator.clipboard.writeText(ngrokInfo.url)
-        setNgrokCopied(true)
-        setTimeout(() => setNgrokCopied(false), 2000)
-    }
+    // ngrok UI 已移除，改成 LAN 開關
 
     return (
         // 與 LoginPage 同款背景：bg-bg-base + 三條弧線 SVG 紋理（亮色 bronze、深色 white，極低 opacity）
@@ -666,9 +604,9 @@ export default function Admin() {
                       桌機板（lg+）：h-full，aside 撐滿 grid row，wrapper 的 mt-auto 把 widget 推到底。
                       之前一律 h-full 的版本在手機板把 aside 撐滿整個 main → content 區被擠到 0 高度看不到。
                     */}
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden rounded-cv-lg border border-white/50 dark:border-white/20 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] p-2">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden rounded-cv-lg border border-white/[0.06] bg-black/[0.22] shadow-[0_4px_16px_rgb(0_0_0/0.3)] p-2">
                         {/* Model card 在手機板隱藏，騰出空間給內容 */}
-                        <div className="hidden lg:block mb-2 rounded-cv-md border border-white/50 dark:border-white/20 bg-bg-surface/60 supports-[backdrop-filter]:bg-bg-surface/45 backdrop-blur-xl p-2.5">
+                        <div className="hidden lg:block mb-2 rounded-cv-md border border-white/[0.07] bg-white/[0.04] p-2.5">
                             <div className="mb-2 flex items-center justify-between gap-2">
                                 <div className="min-w-0">
                                     <p className="text-[9px] uppercase tracking-[0.16em] text-text-secondary">{t('admin.currentModel')}</p>
@@ -678,7 +616,7 @@ export default function Admin() {
                                     <Sparkles className="h-3.5 w-3.5 text-accent" />
                                 </span>
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle/40">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
                             </div>
                         </div>
@@ -700,7 +638,7 @@ export default function Admin() {
                             {pillRect && (
                                 <div
                                     aria-hidden
-                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-bg-elevated ring-1 ring-inset ring-white/40 dark:ring-white/10"
+                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-white/[0.08] ring-1 ring-inset ring-white/[0.08]"
                                     style={{
                                         left: pillRect.left,
                                         top: pillRect.top,
@@ -747,15 +685,11 @@ export default function Admin() {
                           手機板隱藏（lg+ 才出現），騰出空間給內容。
                         */}
                         <div className="hidden lg:block mt-auto">
-                            <NgrokSidebarWidget
-                                info={ngrokInfo}
-                                isLoading={isLoadingNgrok}
-                                copied={ngrokCopied}
-                                isOffline={!isOnline}
-                                onCopyUrl={handleCopyNgrokUrl}
-                                onShowQr={() => setIsNgrokQrOpen(true)}
-                                onStart={handleStartNgrok}
-                                onStop={handleStopNgrok}
+                            <LanSidebarWidget
+                                enabled={lanEnabled}
+                                isLoading={isLoadingLan}
+                                lanIps={lanIps}
+                                onToggle={handleToggleLan}
                             />
                         </div>
                     </aside>
@@ -781,6 +715,7 @@ export default function Admin() {
                         )}
 
                         {activeSection === 'users' && (
+                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
                             <UsersSection
                                 users={users}
                                 activeUsers={activeUsers}
@@ -789,9 +724,11 @@ export default function Admin() {
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
                             />
+                            </Suspense>
                         )}
 
                         {activeSection === 'models' && (
+                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
                             <ModelsSection
                                 models={models}
                                 modelsDir={modelsDir}
@@ -800,9 +737,11 @@ export default function Admin() {
                                 onRefreshModels={handleRefreshModels}
                                 onSelectModel={handleSelectModel}
                             />
+                            </Suspense>
                         )}
 
                         {activeSection === 'audit' && (
+                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
                             <AuditSection
                                 auditSearchInput={auditSearchInput}
                                 setAuditSearchInput={setAuditSearchInput}
@@ -820,11 +759,13 @@ export default function Admin() {
                                 onExportCSV={handleExportCSV}
                                 onExportJSON={handleExportJSON}
                             />
+                            </Suspense>
                         )}
 
                         {/* 'system' tab 已移除：資訊跟 OverviewSection 的系統資源 / LLM 健康面板重複 */}
 
                         {activeSection === 'tenants' && (
+                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
                             <TenantsSection
                                 tenants={tenants}
                                 activeTenants={activeTenants}
@@ -833,17 +774,13 @@ export default function Admin() {
                                 onEditTenant={handleEditTenant}
                                 onToggleTenantStatus={handleToggleTenantStatus}
                             />
+                            </Suspense>
                         )}
                     </div>
                 </main>
             </div>
 
-            {/* Ngrok QR Code 大尺寸 modal —— 點 sidebar QR 按鈕後在螢幕中央顯示，純 QR 無文字 */}
-            <NgrokQrModal
-                url={ngrokInfo?.url || null}
-                isOpen={isNgrokQrOpen}
-                onClose={() => setIsNgrokQrOpen(false)}
-            />
+            {/* LAN 模式不需要額外 modal */}
 
             {isUserModalOpen && (
                 <ModalFrame onClose={() => setIsUserModalOpen(false)}>

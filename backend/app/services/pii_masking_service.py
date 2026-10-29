@@ -29,17 +29,22 @@ class MaskResult(TypedDict):
 # NOTE: 順序很重要 — 信用卡（16 位整體）必須先掃，否則 8 位統編模式可能誤觸發
 # （雖然 \b 邊界讓「1111-2222」內部的 4 位不會被當 8 位匹配，但 1111-2222-3333 拼起來
 # 仍可能在某些上下文觸發；先掃較長 pattern 並從文字中替換掉，後續就不會再被掃）。
+# FIX: `\b` 在中文語境下失效——中文字屬於 \w，「身分證是A123456789」中「是」與「A」之間
+# 沒有字詞邊界，號碼緊貼中文時整筆漏判。改用「前後不是英數字」的明確邊界 _L / _R。
+_L = r'(?<![A-Za-z0-9])'
+_R = r'(?![A-Za-z0-9])'
+
 _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 台灣身分證字號 (A123456789)
     (
         "tw_national_id",
-        re.compile(r'\b[A-Z][12]\d{8}\b'),
+        re.compile(_L + r'[A-Z][12]\d{8}' + _R),
         "台灣身分證",
     ),
     # 信用卡號 (16 位，可能有空格或連字號分隔) — 要在 8 位統編前掃
     (
         "credit_card",
-        re.compile(r'\b(?:\d{4}[-\s]?){3}\d{4}\b'),
+        re.compile(_L + r'(?:\d{4}[-\s]?){3}\d{4}' + _R),
         "信用卡號",
     ),
     # 台灣統一編號 (8 位數字)
@@ -49,37 +54,37 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     (
         "tw_business_id",
         re.compile(
-            r'(?:統一?編號|統編|VAT)[^\d]{0,20}(\d{8})\b'
-            r'|\b(\d{8})[^\d]{0,20}(?:統一?編號|統編)'
+            r'(?:統一?編號|統編|VAT)[^\d]{0,20}(\d{8})(?!\d)'
+            r'|(?<!\d)(\d{8})[^\d]{0,20}(?:統一?編號|統編)'
         ),
         "統一編號",
     ),
     # 台灣手機號碼 (09xx-xxx-xxx 或 09xxxxxxxx)
     (
         "tw_phone",
-        re.compile(r'\b09\d{2}[-\s]?\d{3}[-\s]?\d{3}\b'),
+        re.compile(_L + r'09\d{2}[-\s]?\d{3}[-\s]?\d{3}' + _R),
         "手機號碼",
     ),
     # 電子郵件 — 加 lookbehind/lookahead 避免誤殺像 user.name.dept 這種無 @ 的「.連結」
     # 確保 @ 之前是 word char，@ 之後 TLD 至少 2 字（已有）
     (
         "email",
-        re.compile(r'\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9](?:[a-zA-Z0-9.\-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}\b'),
+        re.compile(r'(?<![A-Za-z0-9._%+\-])[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9](?:[a-zA-Z0-9.\-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}' + _R),
         "電子郵件",
     ),
     # API Key / Secret (以 sk-, api_, AKIA, ghp_, ghs_, ghu_ 開頭的長字串)
     # 補上 GitHub token 常見前綴
     (
         "api_key",
-        re.compile(r'\b(?:sk-|api_|AKIA|ghp_|ghs_|ghu_|ghr_|gho_)[a-zA-Z0-9_\-]{16,}\b'),
+        re.compile(_L + r'(?:sk-|api_|AKIA|ghp_|ghs_|ghu_|ghr_|gho_)[a-zA-Z0-9_\-]{16,}' + _R),
         "API 金鑰",
     ),
     # 台灣護照號碼 (9 位數字) — 同 tw_business_id 修正：限定上下文距離
     (
         "tw_passport",
         re.compile(
-            r'(?:護照(?:號碼|號)?|passport)[^\d]{0,20}(\d{9})\b'
-            r'|\b(\d{9})[^\d]{0,20}護照',
+            r'(?:護照(?:號碼|號)?|passport)[^\d]{0,20}(\d{9})(?!\d)'
+            r'|(?<!\d)(\d{9})[^\d]{0,20}護照',
             re.IGNORECASE,
         ),
         "護照號碼",

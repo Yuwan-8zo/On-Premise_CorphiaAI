@@ -22,6 +22,7 @@ from sqlalchemy import text
 
 from app.main import app
 from app.core.database import Base, get_db
+from app.services.boot_service import mark_api_ready
 from app.core.security import get_password_hash, create_access_token
 from app.models.user import User, UserRole
 from app.models.tenant import Tenant
@@ -94,6 +95,13 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 # ── 覆寫 app 的 get_db 依賴，使其使用測試 session ─────────────────
+@pytest.fixture(autouse=True)
+def _ensure_api_ready_for_health():
+    """測試環境未必跑完整 lifespan；health 端點需 API 層標記就緒。"""
+    mark_api_ready()
+    yield
+
+
 @pytest_asyncio.fixture
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """
@@ -196,11 +204,3 @@ def engineer_auth_headers(test_engineer: User) -> dict:
     """產生 engineer Bearer Token Headers"""
     token = create_access_token({"sub": test_engineer.id})
     return {"Authorization": f"Bearer {token}"}
-import asyncio
-import pytest
-
-@pytest.fixture(scope='session')
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()

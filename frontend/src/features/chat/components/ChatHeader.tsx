@@ -3,6 +3,7 @@ import { SidebarIcon } from './ChatIcons'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
+import { useSystemStore } from '@/store/systemStore'
 import type { Conversation } from '@/types/chat'
 
 interface ChatHeaderProps {
@@ -32,6 +33,8 @@ interface ChatHeaderProps {
     handleDeleteConversation: (id: string, e: React.MouseEvent) => void
 }
 
+const NO_MODEL_STATES: Array<{ name: string; state: string }> = []
+
 export default function ChatHeader({
     sidebarOpen, toggleSidebar,
     modelDropdownOpen, setModelDropdownOpen,
@@ -43,6 +46,8 @@ export default function ChatHeader({
     handleShareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
+    // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
+    const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
         <header className="shrink-0 w-full p-3 md:p-4 md:px-6 flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
@@ -112,11 +117,17 @@ export default function ChatHeader({
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">無可用模型，請掃描目錄。</div>
                                         ) : (
-                                            availableModels.map(model => (
+                                            availableModels.map(model => {
+                                                const loadState = modelStates.find(m => m.name === model.name)?.state
+                                                const preloaded = loadState === 'ready'
+                                                return (
                                                 <button
                                                     key={model.name}
                                                     onClick={async () => {
                                                         if (isModelLoading) return;
+                                                        // 沒有預先載入的大模型（如 14B）切換要等很久，先確認避免展示時誤點
+                                                        if (!preloaded && selectedModel?.name !== model.name &&
+                                                            !window.confirm(`${model.name} 沒有預先載入，切換需要從硬碟載入 ${model.size_gb.toFixed(1)} GB，約 1～2 分鐘，期間無法回答問題。確定要切換嗎？`)) return;
                                                         try {
                                                             setIsModelLoading(true);
                                                             await modelsApi.selectModel(model.name);
@@ -137,13 +148,19 @@ export default function ChatHeader({
                                                             {model.quantization && (
                                                                 <span className="bg-bg-surface/50 px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
                                                             )}
+                                                            {loadState && (
+                                                                <span className={preloaded ? 'text-emerald-500' : 'text-text-muted'}>
+                                                                    {preloaded ? '已載入・可立即切換' : loadState === 'loading' ? '載入中…' : '未預先載入・切換約需 1～2 分鐘'}
+                                                                </span>
+                                                            )}
                                                         </span>
                                                     </div>
                                                     {selectedModel?.name === model.name && (
                                                         <svg className="w-5 h-5 ml-2 text-corphia-bronze shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
                                                     )}
                                                 </button>
-                                            ))
+                                                )
+                                            })
                                         )}
                                     </div>
                                     

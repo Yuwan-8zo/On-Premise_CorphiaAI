@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash
 from app.models.tenant import Tenant
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.document import Document
 

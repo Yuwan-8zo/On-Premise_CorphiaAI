@@ -33,7 +33,6 @@ from app.api import (
     voice_router,
 )
 from app.services.llm_service import get_llm_service
-from app.services.rag_service import get_rag_service
 from app.core.rate_limiter import RateLimitMiddleware
 from app.core.middleware import MaxUploadSizeMiddleware
 
@@ -90,15 +89,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"ngrok 啟動清理失敗（可忽略）: {e}")
     
-    # 初始化 LLM 和 RAG 服務
+    from app.services.boot_service import mark_api_ready, start_background_warmup
+
+    mark_api_ready()
+    start_background_warmup()
+    logger.info("✅ API 已就緒；LLM/RAG 於背景預熱中")
+
     llm_service = get_llm_service()
-    await llm_service.initialize()
-    
-    rag_service = get_rag_service()
-    await rag_service.initialize()
-    
+
     yield
-    
+
     # 關閉時執行
     try:
         close_client = getattr(llm_service.client, "aclose", None)
@@ -188,11 +188,11 @@ async def global_exception_handler(request: Request, exc: Exception):
     - 給每次例外配一組 error_id，使用者回報時可據此查日誌
     - 生產環境 (APP_ENV=production) 連 debug detail 都不給
     """
-    import uuid
     import traceback
     from app.core.time_utils import utc_now_iso
 
-    error_id = uuid.uuid4().hex[:12]
+    from app.core.api_response import new_error_id
+    error_id = new_error_id()
     logger.error(
         f"[ERROR_ID={error_id}] 未處理的例外 at {request.method} {request.url}: {exc}",
         exc_info=True,

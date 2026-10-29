@@ -55,7 +55,7 @@ const FileIcon = ({ type }: { type: string }) => {
 // 副檔名白名單 — 跟後端能成功解析的格式對齊。
 // 舊版 office 格式 (.doc / .xls / .ppt) 後端會拒絕（python-pptx / python-docx 解析
 // 不穩或不支援），這邊就不放進 accept 讓使用者能選到。
-const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.txt', '.md']
+const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.csv', '.txt', '.md']
 const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(',')
 
 /**

@@ -50,9 +50,17 @@ class Settings(BaseSettings):
     jwt_refresh_expire_days: int = 7
     
     # LLM (local GGUF via llama.cpp)
-    llama_model_path: str = "qwen2.5-3b-instruct-q5_k_m.gguf"
+    # 預設指向專案根目錄的 ai_model/（ModelManager 會在啟動時解析並選為預設模型）
+    llama_model_path: str = "ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf"
     llama_context_size: int = 4096
     llama_n_gpu_layers: int = 0
+    # CPU threads for llama.cpp; 0 = all cores minus two (keeps the API responsive while the model runs)
+    llama_n_threads: int = 0
+    # Canned "simulated" replies when no GGUF model is loaded. Off by default:
+    # every answer must come from the real model, otherwise the user sees an error.
+    allow_simulated_llm: bool = False
+    # Models kept loaded at startup (size tags, comma separated). Others load only when selected.
+    llm_preload_models: str = "3B,7B"
     
     # 上傳
     upload_directory: str = "./uploads"
@@ -72,10 +80,10 @@ class Settings(BaseSettings):
     enable_prompt_injection_guard: bool = True  # A2: 偵測 Prompt Injection 攻擊
     enable_dlp: bool = True                    # A3: 關鍵字黑名單阻擋
     # DLP 黑名單，逗號分隔；可從環境變數覆寫
-    dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret"
+    dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"
 
     # RAG 可調參數（Phase 3 預留）
-    rag_top_k: int = 5
+    rag_top_k: int = 3  # 3 段已足夠回答；每多一段，CPU 要多讀約 10～20 秒
     rag_similarity_threshold: float = 0.25
     rag_bm25_weight: float = 0.3
 

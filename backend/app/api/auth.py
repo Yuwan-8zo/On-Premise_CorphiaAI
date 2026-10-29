@@ -99,7 +99,26 @@ async def login(
     )
     user = result.scalar_one_or_none()
 
-    if user is None or not verify_password(request_body.password, user.password_hash):
+    if user is None:
+        # 信箱尚未註冊：回傳明確代碼，前端會直接切到註冊並帶入信箱。
+        # 仍寫稽核並累加失敗次數，保留暴力嘗試的速率限制。
+        await record_login_failure(db, request_body.email)
+        await write_audit_log(
+            db=db,
+            action=AuditAction.LOGIN_FAILED,
+            resource_type=AuditResource.AUTH,
+            user_email=request_body.email,
+            description=f"登入失敗（信箱未註冊）: {request_body.email}",
+            details={"reason": "帳號不存在"},
+            ip_address=client_ip,
+            user_agent=ua,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "ACCOUNT_NOT_FOUND", "message": "此信箱尚未註冊，請建立帳號"},
+        )
+
+    if not verify_password(request_body.password, user.password_hash):
         # 記錄登入失敗（累加計數）
         failure_info = await record_login_failure(db, request_body.email)
 

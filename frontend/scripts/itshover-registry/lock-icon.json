@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "lock-icon",
+  "dependencies": ["motion"],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "icons/lock-icon.tsx",
+      "content": "import { forwardRef, useImperativeHandle } from \"react\";\nimport type { AnimatedIconHandle, AnimatedIconProps } from \"./types\";\nimport { motion, useAnimate } from \"motion/react\";\n\nconst LockIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(\n  (\n    { size = 48, color = \"currentColor\", strokeWidth = 2, className = \"\" },\n    ref,\n  ) => {\n    const [scope, animate] = useAnimate();\n\n    const start = async () => {\n      await animate(\n        \".lock-upper-body\",\n        { rotate: 40, y: -1.7, x: 3 },\n        { duration: 0.28, ease: \"easeOut\" },\n      );\n    };\n\n    const stop = async () => {\n      await animate(\n        \".lock-upper-body\",\n        { rotate: 0, x: 0, y: 0 },\n        { duration: 0.22, ease: \"easeInOut\" },\n      );\n    };\n\n    useImperativeHandle(ref, () => ({\n      startAnimation: start,\n      stopAnimation: stop,\n    }));\n\n    const handleHoverStart = () => {\n      start();\n    };\n\n    const handleHoverEnd = () => {\n      stop();\n    };\n\n    return (\n      <motion.svg\n        ref={scope}\n        onHoverStart={handleHoverStart}\n        onHoverEnd={handleHoverEnd}\n        xmlns=\"http://www.w3.org/2000/svg\"\n        width={size}\n        height={size}\n        viewBox=\"0 0 24 24\"\n        fill=\"none\"\n        stroke={color}\n        strokeWidth={strokeWidth}\n        strokeLinecap=\"round\"\n        strokeLinejoin=\"round\"\n        className={`cursor-pointer ${className}`}\n        style={{ overflow: \"visible\" }}\n      >\n        <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n\n        {/* Lock body */}\n        <path d=\"M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z\" />\n\n        {/* Keyhole */}\n        <path d=\"M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0\" />\n\n        {/* Lock shackle */}\n        <motion.path\n          className=\"lock-upper-body\"\n          d=\"M8 11v-4a4 4 0 1 1 8 0v4\"\n          style={{ transformOrigin: \"50% 100%\" }}\n        />\n      </motion.svg>\n    );\n  },\n);\n\nLockIcon.displayName = \"LockIcon\";\n\nexport default LockIcon;\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "icons/types.ts",
+      "content": "import type { SVGProps } from \"react\";\n\nexport type IconEasing =\n  | \"linear\"\n  | \"easeIn\"\n  | \"easeOut\"\n  | \"easeInOut\"\n  | \"circIn\"\n  | \"circOut\"\n  | \"circInOut\"\n  | \"backIn\"\n  | \"backOut\"\n  | \"backInOut\"\n  | \"anticipate\";\n\nexport interface AnimatedIconProps extends Omit<\n  SVGProps<SVGSVGElement>,\n  | \"ref\"\n  | \"onAnimationStart\"\n  | \"onAnimationEnd\"\n  | \"onAnimationIteration\"\n  | \"onDrag\"\n  | \"onDragEnd\"\n  | \"onDragEnter\"\n  | \"onDragExit\"\n  | \"onDragLeave\"\n  | \"onDragOver\"\n  | \"onDragStart\"\n  | \"onDrop\"\n  | \"values\"\n> {\n  /** Icon size in pixels or CSS string */\n  size?: number | string;\n  /** Icon color (defaults to currentColor) */\n  color?: string;\n  /** SVG stroke width */\n  strokeWidth?: number;\n  /** Additional CSS classes */\n  className?: string;\n}\n\nexport interface AnimatedIconHandle {\n  startAnimation: () => void;\n  stopAnimation: () => void;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

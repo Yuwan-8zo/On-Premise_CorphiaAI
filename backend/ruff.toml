@@ -1,0 +1,15 @@
+target-version = "py311"
+line-length = 100
+
+[lint]
+# 漸進式重構：先只卡住明確錯誤（語法/未定義/明顯 bug），避免一次引入大量樣式改動。
+select = ["E", "F"]
+ignore = [
+  "E501", # line length handled pragmatically; keep refactors incremental
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+

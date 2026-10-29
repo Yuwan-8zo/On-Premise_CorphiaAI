@@ -106,3 +106,9 @@ backend/screenshots/
 
 # Claude worktrees（每次 session 用完就應該被 cleanup.ps1 清掉）
 .claude/worktrees/
+
+# Claude cache（可能非常大，不進版本控管）
+.claude/
+frontend/public/boot-status.json
+frontend/public/boot-status.tmp
+docs/demo/專題資料/

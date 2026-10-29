@@ -1,230 +1,290 @@
 /**
- * BackendBootSplash — 後端啟動中的 splash screen
+ * BackendBootSplash — 啟動狀態畫面
  * ===================================================
  *
- * 桌面 app 雙擊啟動時，Tauri 視窗會「秒開」，但後端 sidecar 要載 GGUF 模型
- * 通常要 10~30 秒才 ready。這段時間使用者看到登入頁但點下去都失敗很沒安全感。
+ * 一鍵啟動時，前端會最先開好、瀏覽器馬上打開；後端、資料庫、AI 模型還在載入。
+ * 這個畫面逐項顯示每個服務的即時狀態，讓使用者知道「現在在等什麼」：
  *
- * 這個 splash 在 backend health 沒回 200 之前蓋掉所有路由，顯示：
- *   - Corphia logo
- *   - 旋轉的 loading 指示器
- *   - 動態訊息（每幾秒輪播 "正在啟動服務..." → "正在載入模型..."）
- *   - 30 秒後若還沒 ready，顯示錯誤 + 重試按鈕
+ *   - /boot-status.json   由 start.py 寫入：Docker、資料庫、AI 引擎、資料表、後端 API
+ *   - /api/v1/health      由後端提供：文件檢索模型、每個 AI 模型（3B / 7B / 14B）
  *
- * 使用方式：
- *   <BackendGate>
- *     <App />     ← 只有 backend ready 才會渲染
- *   </BackendGate>
+ * 全部就緒（使用中的模型、預先載入的模型、文件檢索都完成）才進入系統，
+ * 進去之後問問題就不必再等模型載入。
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
-// 同時載入兩個版本，依當前主題（dark / light）切換顯示，
-// 避免「深色 C 在深色背景看不到」這種對比失敗
-import CorphiaLogoForLight from '@/assets/Corphia_Icon_Light.png' // 深色 C（用在淺色背景）
-import CorphiaLogoForDark from '@/assets/Corphia_Icon_Dark.png'   // 白色 C（用在深色背景）
+import CorphiaLogoForLight from '@/assets/Corphia_Icon_Light.png'
+import CorphiaLogoForDark from '@/assets/Corphia_Icon_Dark.png'
 
-/** 輪播文字 — 給使用者「事情有在進行」的感受，避免覺得當掉 */
-const STATUS_MESSAGES = [
-    '正在啟動服務…',
-    '正在載入 AI 模型…',
-    '正在連接資料庫…',
-    '即將就緒…',
-]
+type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
-/** 健康檢查 endpoint。Vite proxy 會自動轉到 backend */
-const HEALTH_URL = '/api/v1/health'
+interface LauncherStep {
+    key: string
+    label: string
+    state: StepState
+    detail: string
+    started_at: number | null
+    finished_at: number | null
+}
 
-/** 重試的「視為失敗」門檻 — 30 秒沒 ready 就顯示錯誤頁 */
-const TIMEOUT_MS = 30_000
+interface LauncherStatus {
+    run_id: string
+    overall: 'starting' | 'ready' | 'error' | 'stopped'
+    started_at: number
+    updated_at: number
+    message: string
+    steps: LauncherStep[]
+}
 
-/** 輪詢間隔 */
-const POLL_INTERVAL_MS = 1500
+interface ModelState {
+    name: string
+    size_gb: number
+    state: 'pending' | 'loading' | 'ready' | 'error' | 'not_preloaded'
+    is_current: boolean
+    started_at: number | null
+    finished_at: number | null
+    error: string
+}
+
+interface Health {
+    status: string
+    llm: string
+    rag: string
+    models?: ModelState[]
+}
+
+interface Row {
+    key: string
+    label: string
+    state: StepState
+    detail: string
+    started: number | null
+    finished: number | null
+}
+
+const POLL_MS = 1000
+/** 啟動程式超過這麼久沒更新狀態檔，且後端也沒回應 → 視為啟動程式已停止 */
+const STALE_SEC = 45
+
+async function getJson<T>(url: string): Promise<T | null> {
+    try {
+        const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(2500) })
+        if (!res.ok) return null
+        return (await res.json()) as T
+    } catch {
+        return null
+    }
+}
+
+function modelLabel(m: ModelState): string {
+    const size = m.name.match(/(\d+(?:\.\d+)?B)/i)?.[1]?.toUpperCase() ?? m.name
+    return `AI 模型 ${size}（${m.size_gb.toFixed(1)} GB）`
+}
+
+function modelRow(m: ModelState): Row {
+    const map: Record<ModelState['state'], StepState> = {
+        pending: 'pending',
+        loading: 'running',
+        ready: 'done',
+        error: 'error',
+        not_preloaded: 'skipped',
+    }
+    const detail =
+        m.state === 'not_preloaded'
+            ? '不預先載入（需要時再切換）'
+            : m.state === 'error'
+              ? m.error || '載入失敗'
+              : m.state === 'loading'
+                ? '從硬碟載入模型權重…'
+                : m.state === 'ready'
+                  ? m.is_current ? '已載入・使用中' : '已載入・可立即切換'
+                  : m.is_current ? '等待載入（使用中的模型）' : '等待載入'
+    return {
+        key: `model-${m.name}`,
+        label: modelLabel(m),
+        state: map[m.state],
+        detail,
+        started: m.started_at,
+        finished: m.finished_at,
+    }
+}
+
+function fmtSec(row: Row, now: number): string {
+    if (!row.started) return ''
+    const end = row.finished ?? now
+    const s = Math.max(0, Math.round(end - row.started))
+    return s >= 60 ? `${Math.floor(s / 60)} 分 ${s % 60} 秒` : `${s} 秒`
+}
+
+function StateIcon({ state }: { state: StepState }) {
+    if (state === 'running') {
+        return <div className="h-4 w-4 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
+    }
+    if (state === 'done') {
+        return (
+            <svg className="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12.5 10 17.5 19 7" />
+            </svg>
+        )
+    }
+    if (state === 'error') {
+        return (
+            <svg className="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+        )
+    }
+    if (state === 'skipped') {
+        return <div className="h-0.5 w-3 rounded bg-text-muted/50" />
+    }
+    return <div className="h-2 w-2 rounded-full bg-text-muted/40" />
+}
+
+const STATE_TEXT: Record<StepState, string> = {
+    pending: '等待中',
+    running: '載入中',
+    done: '完成',
+    error: '失敗',
+    skipped: '略過',
+}
 
 interface BackendBootSplashProps {
-    /** 後端 ready 時觸發 */
+    /** 全部就緒時觸發 */
     onReady: () => void
 }
 
 export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
-    const [statusIdx, setStatusIdx] = useState(0)
-    const [isTimeout, setIsTimeout] = useState(false)
-    const [retryCount, setRetryCount] = useState(0)
-    const startTimeRef = useRef(Date.now())
+    const [launcher, setLauncher] = useState<LauncherStatus | null>(null)
+    const [health, setHealth] = useState<Health | null>(null)
+    const [now, setNow] = useState(() => Date.now() / 1000)
+    const firstSeen = useRef(Date.now() / 1000)
+    const readyFired = useRef(false)
 
-    // 輪播狀態文字（每 2.5 秒換一句）
-    useEffect(() => {
-        const id = setInterval(() => {
-            setStatusIdx((i) => (i + 1) % STATUS_MESSAGES.length)
-        }, 2500)
-        return () => clearInterval(id)
-    }, [])
-
-    // 輪詢 health endpoint
     useEffect(() => {
         let cancelled = false
-        let timer: ReturnType<typeof setTimeout>
-
-        const check = async () => {
+        const tick = async () => {
+            const [l, h] = await Promise.all([
+                getJson<LauncherStatus>(`/boot-status.json?t=${Date.now()}`),
+                getJson<Health>('/api/v1/health'),
+            ])
             if (cancelled) return
-
-            // 超過 timeout → 顯示錯誤頁
-            if (Date.now() - startTimeRef.current > TIMEOUT_MS) {
-                setIsTimeout(true)
-                return
-            }
-
-            try {
-                const res = await fetch(HEALTH_URL, {
-                    method: 'GET',
-                    // 不要快取
-                    cache: 'no-store',
-                    // 短超時，避免某次卡住延遲下次嘗試
-                    signal: AbortSignal.timeout(2000),
-                })
-                if (res.ok && !cancelled) {
-                    onReady()
-                    return
-                }
-            } catch {
-                // ignore — 下次再試
-            }
-
-            timer = setTimeout(check, POLL_INTERVAL_MS)
+            setLauncher(l)
+            setHealth(h)
+            setNow(Date.now() / 1000)
         }
-
-        check()
+        tick()
+        const id = setInterval(tick, POLL_MS)
         return () => {
             cancelled = true
-            if (timer) clearTimeout(timer)
+            clearInterval(id)
         }
-        // retryCount 改變時重新跑（使用者按重試）
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [retryCount])
+    }, [])
 
-    const handleRetry = () => {
-        startTimeRef.current = Date.now()
-        setIsTimeout(false)
-        setRetryCount((c) => c + 1)
+    const models = health?.models ?? []
+    const apiUp = health?.status === 'ok'
+    const allReady =
+        apiUp &&
+        health?.llm === 'ready' &&
+        health?.rag === 'ready' &&
+        !models.some((m) => m.state === 'pending' || m.state === 'loading' || m.state === 'error')
+
+    useEffect(() => {
+        if (allReady && !readyFired.current) {
+            readyFired.current = true
+            // 讓使用者看到「全部完成」一下再進入
+            const t = setTimeout(onReady, 900)
+            return () => clearTimeout(t)
+        }
+    }, [allReady, onReady])
+
+    // ── 組出畫面上的每一列 ──────────────────────────────────────────
+    const rows: Row[] = []
+    const launcherFresh = launcher && launcher.overall !== 'stopped'
+    if (launcherFresh) {
+        for (const s of launcher.steps) {
+            // 後端已經回應，就算狀態檔慢一步也直接視為完成
+            const state: StepState = apiUp && s.state !== 'error' && s.state !== 'skipped' ? 'done' : s.state
+            rows.push({ key: s.key, label: s.label, state, detail: s.detail, started: s.started_at, finished: state === 'done' ? (s.finished_at ?? s.started_at) : s.finished_at })
+        }
+    } else {
+        rows.push({ key: 'backend', label: '後端 API 伺服器', state: apiUp ? 'done' : 'running', detail: apiUp ? '已連線' : '等待後端回應…', started: firstSeen.current, finished: apiUp ? firstSeen.current : null })
     }
 
+    // 後端已啟動但正忙著載入模型時，health 偶爾會逾時；這時應顯示「載入中」而不是「等待後端」
+    const backendStarted = apiUp || Boolean(launcherFresh && launcher.steps.some((s) => s.key === 'backend' && s.state === 'done'))
+    const ragState: StepState = !apiUp
+        ? backendStarted ? 'running' : 'pending'
+        : health?.rag === 'ready'
+          ? 'done'
+          : health?.rag === 'error' || health?.rag === 'unavailable'
+            ? 'error'
+            : 'running'
+    rows.push({ key: 'rag', label: '文件檢索模型（Embedding）', state: ragState, detail: ragState === 'done' ? '可依企業文件回答' : ragState === 'running' ? '載入中…' : ragState === 'error' ? '載入失敗' : '等待後端', started: null, finished: null })
+
+    if (models.length) {
+        // 使用中的模型放最前面，其餘依大小排序
+        const sorted = [...models].sort((a, b) => Number(b.is_current) - Number(a.is_current) || a.size_gb - b.size_gb)
+        rows.push(...sorted.map(modelRow))
+    } else {
+        rows.push({ key: 'models', label: 'AI 模型（3B／7B）', state: backendStarted ? 'running' : 'pending', detail: backendStarted ? '載入模型中…' : '等待後端啟動後開始載入', started: null, finished: null })
+    }
+
+    const totalStart = launcherFresh ? launcher.started_at : firstSeen.current
+    const totalSec = Math.max(0, Math.round(now - totalStart))
+    const launcherError = launcherFresh && launcher.overall === 'error'
+    const launcherStale =
+        launcherFresh && launcher.overall === 'starting' && !apiUp && now - launcher.updated_at > STALE_SEC
+    const stopped = launcher?.overall === 'stopped' && !apiUp
+    const doneCount = rows.filter((r) => r.state === 'done' || r.state === 'skipped').length
+
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-bg-base">
-            {/* 弧線背景：呼應主畫面風格 */}
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-bg-base">
             <div
                 className="absolute inset-0 pointer-events-none opacity-50"
-                style={{
-                    background:
-                        'radial-gradient(ellipse 800px 400px at 50% 30%, rgba(180, 148, 102, 0.08), transparent 70%)',
-                }}
+                style={{ background: 'radial-gradient(ellipse 800px 400px at 50% 20%, rgba(180, 148, 102, 0.08), transparent 70%)' }}
             />
 
-            <div className="relative z-10 flex flex-col items-center gap-8 px-8 max-w-md text-center">
-                {/* Logo（用 motion.div 包，因為自製 motion 沒有 motion.img）
-                    主題切換：跟 CorphiaWordmark 一樣用 dark:hidden / hidden dark:block 的兩張圖法，
-                    比 useUIStore 訂閱主題狀態更輕量（splash 早期 zustand 可能還沒 hydrate） */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    {/* 淺色模式：深色 C */}
-                    <img
-                        src={CorphiaLogoForLight}
-                        alt="Corphia AI"
-                        className="w-24 h-24 select-none dark:hidden"
-                        draggable={false}
-                    />
-                    {/* 深色模式：白色 C */}
-                    <img
-                        src={CorphiaLogoForDark}
-                        alt="Corphia AI"
-                        className="w-24 h-24 select-none hidden dark:block"
-                        draggable={false}
-                    />
-                </motion.div>
-
-                {/* 標題 */}
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
-                        Corphia AI
-                    </h1>
-                    <p className="text-sm text-text-muted">
-                        Enterprise Knowledge Engine
-                    </p>
+            <div className="relative z-10 w-full max-w-xl px-6 py-10">
+                <div className="mb-6 flex items-center gap-4">
+                    <img src={CorphiaLogoForLight} alt="Corphia AI" className="h-12 w-12 select-none dark:hidden" draggable={false} />
+                    <img src={CorphiaLogoForDark} alt="Corphia AI" className="hidden h-12 w-12 select-none dark:block" draggable={false} />
+                    <div className="flex-1">
+                        <h1 className="text-xl font-semibold tracking-tight text-text-primary">Corphia AI 啟動中</h1>
+                        <p className="text-sm text-text-muted">
+                            {allReady ? '全部就緒，正在進入系統…' : `已完成 ${doneCount} / ${rows.length} 項・已經過 ${totalSec >= 60 ? `${Math.floor(totalSec / 60)} 分 ${totalSec % 60} 秒` : `${totalSec} 秒`}`}
+                        </p>
+                    </div>
                 </div>
 
-                {/* 動態狀態 — timeout 之前顯示 */}
-                {!isTimeout && (
-                    <div className="flex flex-col items-center gap-4">
-                        {/* 旋轉指示器 */}
-                        <div className="w-10 h-10 rounded-full border-[3px] border-accent/15 border-t-accent animate-spin" />
+                <ul className="divide-y divide-border-subtle/60 overflow-hidden rounded-cv-lg border border-border-subtle bg-bg-surface/60">
+                    {rows.map((r) => (
+                        <li key={r.key} className="flex items-center gap-3 px-4 py-3">
+                            <div className="flex w-5 justify-center">
+                                <StateIcon state={r.state} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className={`text-sm font-medium ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
+                                {r.detail && <p className={`truncate text-xs ${r.state === 'error' ? 'text-red-500' : 'text-text-muted'}`}>{r.detail}</p>}
+                            </div>
+                            <div className="shrink-0 text-right">
+                                <p className={`text-xs font-medium ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-emerald-500' : r.state === 'error' ? 'text-red-500' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
+                                <p className="text-[11px] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
 
-                        {/* 輪播文字 */}
-                        <AnimatePresence mode="wait">
-                            <motion.p
-                                key={statusIdx}
-                                initial={{ opacity: 0, y: 6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -6 }}
-                                transition={{ duration: 0.3 }}
-                                className="text-sm text-text-secondary"
-                            >
-                                {STATUS_MESSAGES[statusIdx]}
-                            </motion.p>
-                        </AnimatePresence>
+                {(launcherError || launcherStale || stopped) && (
+                    <div className="mt-4 rounded-cv-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-text-primary">
+                        <p className="font-medium">
+                            {stopped ? '系統目前是關閉狀態' : launcherError ? '啟動過程發生錯誤' : '啟動程式沒有回應'}
+                        </p>
+                        {launcherError && launcher?.message && <p className="mt-1 break-words text-xs text-text-secondary">{launcher.message}</p>}
+                        <p className="mt-1 text-xs text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
                     </div>
                 )}
 
-                {/* Timeout 錯誤狀態 */}
-                {isTimeout && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col items-center gap-4"
-                    >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-500">
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M12 9v4M12 17h.01" />
-                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                            </svg>
-                        </div>
-                        <div className="space-y-2">
-                            <p className="text-sm font-medium text-text-primary">
-                                後端服務啟動逾時
-                            </p>
-                            <p className="text-xs text-text-secondary leading-relaxed">
-                                可能原因：
-                                <br />
-                                • 後端正在載入大型 AI 模型，請再等待
-                                <br />
-                                • 後端尚未啟動（請確認後端服務有跑起來）
-                                <br />
-                                • PostgreSQL 沒開
-                            </p>
-                        </div>
-                        <button
-                            onClick={handleRetry}
-                            className="rounded-cv-md bg-accent px-4 py-2 text-sm font-medium text-text-on-accent hover:bg-accent/90 transition"
-                        >
-                            重試
-                        </button>
-                    </motion.div>
-                )}
-
-                {/* 底部小字：版本 / 提示 */}
-                <p className="text-[11px] text-text-muted/70 mt-4">
-                    地端部署 · 資料 100% 留在本機
-                </p>
+                <p className="mt-6 text-center text-[11px] text-text-muted/70">地端部署 · 所有回答都由本機 AI 產生 · 資料 100% 留在本機</p>
             </div>
         </div>
     )

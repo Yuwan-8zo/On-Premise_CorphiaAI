@@ -11,7 +11,6 @@ Prompt Injection 偵測服務的單元測試
 - 正常對話不誤判
 """
 
-import pytest
 from app.services.prompt_guard_service import check_prompt_injection, check_document_injection
 
 

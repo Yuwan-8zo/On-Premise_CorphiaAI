@@ -8,32 +8,81 @@
 import logging
 import platform
 import asyncio
+import time as time_module
+import json
+import socket
+from pathlib import Path
 from app.core.time_utils import utc_now_iso
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.api.deps import get_current_user, RequireAdmin
 from app.core.database import get_db
 from app.models.user import User
-from app.services.ngrok_service import (
-    find_ngrok_binary,
-    get_ngrok_state,
-    start_ngrok_tunnel,
-    stop_ngrok_and_clear_runtime,
-)
-from app.services.audit_service import (
-    AuditAction,
-    AuditResource,
-    write_audit_log,
-    get_client_ip,
-    get_user_agent,
-)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/system", tags=["系統監控"])
 
+def _project_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _runtime_dir() -> Path:
+    return _project_root() / ".runtime"
+
+
+def _lan_runtime_path() -> Path:
+    return _runtime_dir() / "lan.json"
+
+
+def _read_lan_enabled() -> bool:
+    path = _lan_runtime_path()
+    if not path.exists():
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return bool(data.get("lan_enabled"))
+    except Exception:
+        return False
+
+
+def _write_lan_enabled(enabled: bool) -> None:
+    _runtime_dir().mkdir(parents=True, exist_ok=True)
+    payload = {"lan_enabled": bool(enabled), "updated_at": utc_now_iso()}
+    _lan_runtime_path().write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _bind_host(enabled: bool) -> str:
+    return "0.0.0.0" if enabled else "127.0.0.1"
+
+
+def _detect_lan_ips() -> list[str]:
+    ips: set[str] = set()
+    try:
+        host = socket.gethostname()
+        _name, _aliases, addrs = socket.gethostbyname_ex(host)
+        for ip in addrs:
+            if ip and not ip.startswith("127."):
+                ips.add(ip)
+    except Exception:
+        pass
+
+    # 盡量補足：有些環境 gethostbyname_ex 只回一個或回到錯的網卡
+    try:
+        for info in socket.getaddrinfo(host, None):
+            ip = info[4][0]
+            if ip and "." in ip and not ip.startswith("127."):
+                ips.add(ip)
+    except Exception:
+        pass
+
+    return sorted(ips)
+
+
+class LanToggleRequest(BaseModel):
+    enabled: bool
 
 async def _get_cpu_info() -> dict:
     """取得 CPU 使用資訊"""
@@ -146,17 +195,21 @@ async def detailed_health(
         _get_llm_stats(),
     )
 
-    return {
-        "timestamp": utc_now_iso(),
-        "platform": {
-            "system": platform.system(),
-            "machine": platform.machine(),
-            "python_version": platform.python_version(),
-        },
-        "cpu": cpu_info,
-        "gpu": gpu_info,
-        "llm": llm_stats,
-    }
+    from app.schemas.system_monitor import SystemMonitorEnvelope
+
+    return SystemMonitorEnvelope(
+        data={
+            "timestamp": utc_now_iso(),
+            "platform": {
+                "system": platform.system(),
+                "machine": platform.machine(),
+                "python_version": platform.python_version(),
+            },
+            "cpu": cpu_info,
+            "gpu": gpu_info,
+            "llm": llm_stats,
+        }
+    )
 
 
 @router.get("/network/status")
@@ -193,162 +246,53 @@ async def network_status(
     except Exception:
         is_online = False
 
+    from app.schemas.system_monitor import SystemMonitorEnvelope
+
+    return SystemMonitorEnvelope(
+        data={
+            "is_online": is_online,
+            "latency_ms": latency_ms,
+            "data_sovereignty": not is_online,
+            "message": "✅ 資料主權保證：完全離線運行" if not is_online else "⚠️ 偵測到外部網路連線",
+        }
+    )
+
+
+@router.get("/lan/status", summary="取得區域網路 (LAN) 開關狀態")
+async def get_lan_status(
+    _ = RequireAdmin,
+):
+    enabled = _read_lan_enabled()
+    host = _bind_host(enabled)
+    ips = _detect_lan_ips()
     return {
-        "is_online": is_online,
-        "latency_ms": latency_ms,
-        "data_sovereignty": not is_online,
-        "message": "✅ 資料主權保證：完全離線運行" if not is_online else "⚠️ 偵測到外部網路連線",
+        "enabled": enabled,
+        "bind_host": host,
+        "lan_ips": ips,
+        # 注意：切換需要重啟 start.py / 服務才會生效
+        "requires_restart": True,
     }
 
 
-@router.get("/ngrok-url")
-async def get_ngrok_url(
-    _ = RequireAdmin,
-):
-    """
-    取得當前 ngrok 公開網址
-
-    即時查詢本機 ngrok API（port 4040~4042），回傳目前運作中的 HTTPS 通道。
-    若 ngrok 未啟動則回傳 active: false。
-    """
-    return get_ngrok_state().to_dict()
-
-
-@router.post("/ngrok/start")
-async def start_ngrok(
-    request: Request,
+@router.post("/lan/toggle", summary="設定區域網路 (LAN) 開關（需重啟生效）")
+async def toggle_lan(
+    body: LanToggleRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     _ = RequireAdmin,
 ):
-    """
-    啟動 ngrok 公開隧道（admin 用）
-
-    流程：
-      1. 找 ngrok 執行檔 — 沒裝就回 503
-      2. 殺掉舊 process（避免 4040 端口被佔）
-      3. 起新 ngrok http <FRONTEND_PORT>，poll 直到拿到 https URL（或超時）
-      4. 寫 .runtime/ngrok.json + frontend/.env.local
-      5. 寫 audit log（記錄誰在何時何處把公開連結打開）
-
-    SECURITY: 這個端點把 backend / frontend 暴露到公網，必須記錄到 audit log，
-    答辯 / 合規稽核時可回答「公開連結被誰、什麼時間、從哪台機器打開」。
-    """
-    if not find_ngrok_binary():
-        # 503 Service Unavailable — 缺工具，前端會顯示「未安裝」提示
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=503,
-            detail="ngrok 執行檔未找到（需安裝後重啟）",
-        )
-
-    # 在 thread pool 跑 — start_ngrok_tunnel 內含 sleep(1) + 多次 poll，會阻塞最多 ~20s
-    # FIX: 包 wait_for 作為硬上限，ngrok 卡住時 API 不會永遠掛著
-    try:
-        process, state = await asyncio.wait_for(
-            asyncio.to_thread(start_ngrok_tunnel),
-            timeout=25.0,
-        )
-    except asyncio.TimeoutError:
-        from fastapi import HTTPException
-        # 失敗也寫 audit log（管理員嘗試開但失敗了，這也是有價值的紀錄）
-        await write_audit_log(
-            db=db,
-            action=AuditAction.NGROK_START,
-            resource_type=AuditResource.SYSTEM,
-            user_id=current_user.id,
-            user_email=current_user.email,
-            tenant_id=current_user.tenant_id or "default",
-            description="嘗試啟動 ngrok 公開隧道但超時失敗",
-            details={"result": "timeout", "timeout_sec": 25},
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-        raise HTTPException(
-            status_code=504,
-            detail="ngrok 啟動超過 25 秒未回應，已放棄。請檢查 authtoken 設定或網路。",
-        )
-
-    if not state.active:
-        from fastapi import HTTPException
-        await write_audit_log(
-            db=db,
-            action=AuditAction.NGROK_START,
-            resource_type=AuditResource.SYSTEM,
-            user_id=current_user.id,
-            user_email=current_user.email,
-            tenant_id=current_user.tenant_id or "default",
-            description="嘗試啟動 ngrok 公開隧道但未取得 URL",
-            details={"result": "no_url", "source": state.source if hasattr(state, "source") else None},
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-        raise HTTPException(
-            status_code=502,
-            detail="ngrok 已啟動但取不到公開 URL（可能 authtoken 未設定）",
-        )
-
-    # 成功：寫入 audit log，紀錄公開 URL（合規稽核需要）
-    await write_audit_log(
-        db=db,
-        action=AuditAction.NGROK_START,
-        resource_type=AuditResource.SYSTEM,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
-        description=f"啟動 ngrok 公開隧道：{state.url or '<unknown>'}",
-        details={
-            "result": "success",
-            "public_url": state.url,
-            "api_url": state.api_url,
-        },
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request),
-    )
-    logger.info(
-        "[ngrok][admin=%s] tunnel started: %s",
-        current_user.email, state.url,
-    )
-
-    return state.to_dict()
-
-
-@router.post("/ngrok/stop")
-async def stop_ngrok(
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    _ = RequireAdmin,
-):
-    """
-    關閉 ngrok 公開隧道（admin 用）
-
-    用 taskkill / pkill 殺掉所有 ngrok process，
-    然後把 runtime 狀態寫成 inactive，這樣前端下次查詢就拿到 active: false。
-
-    一樣寫 audit log，記錄「誰在何時關閉公開連結」。
-    """
-    state = await asyncio.to_thread(stop_ngrok_and_clear_runtime)
-
-    await write_audit_log(
-        db=db,
-        action=AuditAction.NGROK_STOP,
-        resource_type=AuditResource.SYSTEM,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
-        description="關閉 ngrok 公開隧道",
-        details={"result": "success"},
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request),
-    )
-    logger.info("[ngrok][admin=%s] tunnel stopped", current_user.email)
-
-    return state.to_dict()
+    _ = db
+    _write_lan_enabled(body.enabled)
+    logger.info("[lan][admin=%s] set lan_enabled=%s", current_user.email, body.enabled)
+    return {
+        "enabled": bool(body.enabled),
+        "bind_host": _bind_host(bool(body.enabled)),
+        "lan_ips": _detect_lan_ips(),
+        "requires_restart": True,
+    }
 
 
 # 模組級啟動時間 — 用 time.time() 在載入 module 時就抓
-import time as time_module
 _BACKEND_BOOT_TIME = time_module.time()
 
 

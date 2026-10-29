@@ -92,7 +92,12 @@ class RAGService:
 
             try:
                 # 初始化 Embedding 模型
-                await self._init_embedding_model()
+                ok = await self._init_embedding_model()
+                if not ok:
+                    self.embed_model = None
+                    self._initialized = False
+                    return False
+
                 self._initialized = True
                 return True
 
@@ -105,7 +110,7 @@ class RAGService:
                 self._initialized = False
                 return False
     
-    async def _init_embedding_model(self):
+    async def _init_embedding_model(self) -> bool:
         """初始化 Embedding 模型"""
         try:
             from sentence_transformers import SentenceTransformer
@@ -118,6 +123,7 @@ class RAGService:
             )
 
             logger.info("✅ Embedding 模型載入完成")
+            return True
 
         except ImportError as e:
             # 不只說「未安裝」——把真正的 ImportError 訊息印出來，
@@ -126,11 +132,14 @@ class RAGService:
                 f"sentence-transformers 載入失敗（套件可能未安裝或子模組缺失）: {e!r}",
                 exc_info=True,
             )
+            return False
         except Exception as e:
             logger.warning(
                 f"Embedding 模型載入失敗: {type(e).__name__}: {e}",
                 exc_info=True,
             )
+            self.embed_model = None
+            return False
     
     async def get_embedding(self, text: str) -> list[float]:
         """
@@ -159,6 +168,32 @@ class RAGService:
         import asyncio
         embedding = await asyncio.to_thread(self.embed_model.encode, text)
         return embedding.tolist()
+
+    async def get_embeddings(self, texts: list[str], *, batch_size: int = 32) -> list[list[float]]:
+        """
+        批次取得多段文字的向量表示。
+
+        目的：文件分塊向量化時，避免對每個 chunk 都呼叫一次 encode()，
+        減少 thread 切換與 Python overhead，提升吞吐量。
+        """
+        if not texts:
+            return []
+        if self.embed_model is None:
+            raise RuntimeError(
+                "Embedding 模型未載入。請檢查 sentence-transformers 是否安裝、"
+                "model 是否下載完成；查看 RAG service initialize() 的錯誤日誌。"
+            )
+
+        import asyncio
+
+        # SentenceTransformer.encode 支援 list[str]，回傳 ndarray；此處統一轉成 list[list[float]]
+        vectors = await asyncio.to_thread(
+            self.embed_model.encode,
+            texts,
+            batch_size=batch_size,
+            show_progress_bar=False,
+        )
+        return vectors.tolist()
 
     async def search(
         self,
@@ -189,7 +224,9 @@ class RAGService:
             list[dict]: 搜尋結果
         """
         if not self._initialized:
-            await self.initialize()
+            ok = await self.initialize()
+            if not ok:
+                return []
 
         # 如果提供了 document_ids 但為空列表，直接返回空結果（不執行無意義搜索）
         if document_ids is not None and len(document_ids) == 0:
@@ -295,7 +332,9 @@ class RAGService:
         # 在這裡算一次 query embedding 然後傳給 search()，避免它內部又算一次
         # （chat_service 補搜場景：同一 query 跑多次 search，原本每次都重新 encode 浪費 CPU）
         if not self._initialized:
-            await self.initialize()
+            ok = await self.initialize()
+            if not ok:
+                return []
         query_embedding = await self.get_embedding(query)
 
         # ── 1) 向量召回 ─────────────────────────────────────

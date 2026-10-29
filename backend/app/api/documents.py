@@ -165,12 +165,10 @@ async def upload_document(
 
 
 async def process_document_task(document_id: str):
-    """背景任務：處理文件"""
-    from app.core.database import async_session_maker
-    
-    async with async_session_maker() as db:
-        doc_service = DocumentService(db)
-        await doc_service.process_document(document_id)
+    """背景任務：處理文件（併發限制 + 等待 RAG）"""
+    from app.services.document_index_worker import run_document_index
+
+    await run_document_index(document_id)
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)

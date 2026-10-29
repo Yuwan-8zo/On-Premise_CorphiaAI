@@ -48,7 +48,6 @@ function scoreBg(score: number): string {
 /** 路由決策的中文（icon 為 Material Symbols 名稱） */
 const ROUTE_LABELS: Record<string, { label: string; icon: string }> = {
     rag: { label: '知識庫檢索', icon: 'menu_book' },
-    web_search: { label: '網路搜尋', icon: 'travel_explore' },
     chat: { label: '一般對話', icon: 'chat' },
 }
 
@@ -78,7 +77,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 </svg>
                 <span className="font-mono inline-flex items-center gap-1.5">
                     <MaterialIcon name="search" size={14} aria-hidden />
-                    RAG Debug — {sources.length} chunks
+                    檢索細節（{sources.length} 個段落）
                     {routeInfo && (
                         <span className="ml-2 inline-flex items-center gap-1">
                             <MaterialIcon name={routeInfo.icon} size={14} aria-hidden />

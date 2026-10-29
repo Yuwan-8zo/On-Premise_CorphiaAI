@@ -88,6 +88,11 @@ class LLMService:
         self.use_llama_cpp = False
         self._llama_instance = None
 
+        # Loaded models stay in memory (path -> Llama) so switching is instant.
+        self._cache: dict[str, Any] = {}
+        # Per-model load status for the boot screen: name -> {state, started_at, finished_at, error}
+        self._model_status: dict[str, dict] = {}
+
         # ── C4: tokens/sec 即時統計 ─────────────────────────
         # 保留最近 10 次生成的 (tokens, elapsed_sec)，用於 /system/health/detailed
         self._recent_runs: deque[tuple[int, float]] = deque(maxlen=10)
@@ -127,12 +132,107 @@ class LLMService:
         }
 
     def reload_llama(self) -> None:
-        """重新初始化以重新掛載 GGUF 模型。"""
+        """重新初始化以切換 GGUF 模型（已載入過的模型保留在快取，切換時直接使用）。"""
         self._initialized = False
-        if self._llama_instance is not None:
-            del self._llama_instance
-            self._llama_instance = None
+        self._llama_instance = None
         self.use_llama_cpp = False
+
+    # ── multi-model loading ───────────────────────────────────────────────
+    def _set_model_status(self, name: str, state: str, error: str = "") -> None:
+        now = time.time()
+        st = self._model_status.setdefault(name, {"state": "pending", "started_at": None, "finished_at": None, "error": ""})
+        if state == "loading" and st["started_at"] is None:
+            st["started_at"] = now
+        if state in ("ready", "error"):
+            st["started_at"] = st["started_at"] or now
+            st["finished_at"] = now
+        st["state"] = state
+        st["error"] = error
+
+    @staticmethod
+    def _load_path(model_path: str):
+        import os
+        # Leave two cores free so the API stays responsive while the model is busy.
+        threads = settings.llama_n_threads or max(2, (os.cpu_count() or 4) - 2)
+        llm = Llama(
+            model_path=model_path,
+            n_gpu_layers=settings.llama_n_gpu_layers,
+            n_ctx=settings.llama_context_size,
+            n_threads=threads,
+            n_threads_batch=threads,
+            verbose=False,
+        )
+        # One tiny inference pages the weights into memory, so the first real
+        # question is not slowed down by disk reads.
+        try:
+            llm(prompt="hi", max_tokens=1, temperature=0.0)
+        except Exception:
+            pass
+        return llm
+
+    async def _ensure_loaded(self, name: str, model_path: str):
+        inst = self._cache.get(model_path)
+        if inst is not None:
+            self._set_model_status(name, "ready")
+            return inst
+        self._set_model_status(name, "loading")
+        try:
+            inst = await asyncio.to_thread(self._load_path, model_path)
+        except Exception as exc:
+            self._set_model_status(name, "error", str(exc)[:200])
+            raise
+        self._cache[model_path] = inst
+        self._set_model_status(name, "ready")
+        return inst
+
+    @staticmethod
+    def _preload_tags() -> list[str]:
+        return [t.strip().upper() for t in (settings.llm_preload_models or "").split(",") if t.strip()]
+
+    def _is_preload_target(self, name: str) -> bool:
+        up = name.upper()
+        return any(f"-{tag}-" in f"-{up}-" or f"-{tag}-" in up for tag in self._preload_tags())
+
+    async def preload_models(self) -> None:
+        """Load the configured models (e.g. 3B,7B) in the background, one after another."""
+        if not LLAMA_CPP_AVAILABLE:
+            return
+        manager = get_model_manager()
+        for info in list(manager._models.values()):
+            if not self._is_preload_target(info.name) or info.path in self._cache:
+                continue
+            try:
+                logger.info(f"預先載入模型: {info.name}")
+                await self._ensure_loaded(info.name, info.path)
+                logger.info(f"✅ 預先載入完成: {info.name}")
+            except Exception as exc:
+                logger.error(f"預先載入失敗 {info.name}: {exc}")
+
+    def get_model_states(self) -> list[dict]:
+        """Status of every model in ai_model/ for the boot screen."""
+        manager = get_model_manager()
+        current = manager._current_model
+        out = []
+        for info in manager._models.values():
+            st = self._model_status.get(info.name)
+            if st:
+                state = st["state"]
+            elif info.path in self._cache:
+                state = "ready"
+            elif info.name == current or self._is_preload_target(info.name):
+                state = "pending"
+            else:
+                state = "not_preloaded"
+            out.append({
+                "name": info.name,
+                "size_gb": round(info.size_gb, 2),
+                "state": state,
+                "is_current": info.name == current,
+                "started_at": st["started_at"] if st else None,
+                "finished_at": st["finished_at"] if st else None,
+                "error": st["error"] if st else "",
+            })
+        return out
 
     async def initialize(self) -> bool:
         """初始化本機 GGUF 模型。"""
@@ -150,15 +250,7 @@ class LLMService:
         else:
             logger.info(f"準備掛載 GGUF 模型: {model_path}")
             try:
-                def _load_model():
-                    return Llama(
-                        model_path=model_path,
-                        n_gpu_layers=settings.llama_n_gpu_layers,
-                        n_ctx=settings.llama_context_size,
-                        verbose=False,
-                    )
-
-                self._llama_instance = await asyncio.to_thread(_load_model)
+                self._llama_instance = await self._ensure_loaded(manager._current_model or model_path, model_path)
                 self.use_llama_cpp = True
                 self.model = model_path
                 logger.info(f"✅ 成功掛載 GGUF 模型: {model_path}")
@@ -188,6 +280,7 @@ class LLMService:
 
         if self.use_llama_cpp and self._llama_instance:
             return await self._llama_generate(prompt, max_tokens, temperature, top_p, stop)
+        self._require_real_model()
         return self._simulate_response(prompt)
 
     async def generate_stream(
@@ -218,6 +311,7 @@ class LLMService:
                 yield chunk
             return
 
+        self._require_real_model()
         async for chunk in self._simulate_stream(prompt):
             yield chunk
 
@@ -243,6 +337,7 @@ class LLMService:
                 prompt, schema_dict, max_tokens, temperature, top_p
             )
 
+        self._require_real_model()
         try:
             properties = schema_dict.get("properties", {})
             simulated_result = {}
@@ -296,6 +391,7 @@ class LLMService:
         """
         start = time.perf_counter()
         token_count = 0
+        first_token_at: Optional[float] = None
         # 用 maxsize 限制 queue 大小：thread 比 consumer 快太多時會 backpressure，
         # 避免使用者連按 10 次造成 memory unbounded growth
         q: queue.Queue = queue.Queue(maxsize=64)
@@ -351,6 +447,10 @@ class LLMService:
                 text = chunk["choices"][0]["text"]
                 if text:
                     token_count += 1
+                    if token_count == 1:
+                        # tokens/sec should measure generation only, not the time spent
+                        # reading the prompt and documents before the first token
+                        first_token_at = time.perf_counter()
                     yield text
         except (GeneratorExit, asyncio.CancelledError):
             # 呼叫端 break 或 task cancel → 通知 thread 停止
@@ -366,8 +466,8 @@ class LLMService:
                     q.get_nowait()
             except queue.Empty:
                 pass
-            elapsed = time.perf_counter() - start
-            self.record_generation(token_count, elapsed)
+            if first_token_at is not None and token_count > 1:
+                self.record_generation(token_count - 1, time.perf_counter() - first_token_at)
 
     async def _llama_generate_structured(self, prompt, schema_dict, max_tokens, temperature, top_p):
         start = time.perf_counter()
@@ -404,28 +504,26 @@ class LLMService:
                 for k, prop in properties.items()
             }
 
+    def _require_real_model(self) -> None:
+        """Refuse to answer with canned text unless explicitly allowed (dev/test only)."""
+        if not settings.allow_simulated_llm:
+            raise RuntimeError("AI 模型未載入：請確認 ai_model/ 內有 GGUF 模型並重新啟動系統。")
+
     def _simulate_response(self, prompt: str) -> str:
-        return f"""這是一個模擬的 AI 回應。
+        # SECURITY/UX: 模擬模式不應回顯完整 prompt（可能含 system 指令、token 或敏感資訊）。
+        safe_excerpt = (prompt or "").strip().replace("\n", " ")
+        safe_excerpt = _sanitize_chatml_content(safe_excerpt)
+        if len(safe_excerpt) > 140:
+            safe_excerpt = safe_excerpt[:140] + "…"
 
-您的問題是關於：「{prompt[:100]}...」
-
-**注意**: 目前系統以模擬模式運行，因為 llama-cpp-python 尚未安裝，或 ai_model/ 中沒有可用的 GGUF 模型。
-
-請確認：
-1. `ai_model/` 內有 `.gguf` 模型檔。
-2. 後端環境已安裝 `llama-cpp-python`。
-3. `backend/.env` 的 `LLAMA_N_GPU_LAYERS` 與硬體設定相符。
-
----
-
-### Corphia AI Platform v2.3
-
-本系統支援以下功能：
-- 智慧對話
-- RAG 知識問答
-- 多租戶管理
-- 三層權限控制
-"""
+        return (
+            "這是一個模擬的 AI 回應。\n\n"
+            f"收到的輸入摘要：「{safe_excerpt}」\n\n"
+            "注意：目前系統以模擬模式運行，可能原因：\n"
+            "1) llama-cpp-python 未成功載入\n"
+            "2) ai_model/ 中沒有可用的 GGUF 模型\n"
+            "3) GGUF 掛載失敗（例如記憶體不足）\n"
+        )
 
     async def _simulate_stream(self, prompt: str) -> AsyncGenerator[str, None]:
         response = self._simulate_response(prompt)

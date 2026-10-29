@@ -41,11 +41,33 @@ FRONTEND_PORT = 5173
 DEFAULT_DB_PORT = 5433
 
 PROCESSES: list[subprocess.Popen] = []
-# ngrok 開的 process 跟 backend/frontend 不一樣 —
-# 免費版 ngrok 偶爾自己斷線重連，主迴圈不該把它退出當致命錯誤。
-# 它只進 SHUTDOWN_PROCESSES（用於 Ctrl+C 清理），不進 PROCESSES（watchdog 監看）。
 SHUTDOWN_PROCESSES: list[subprocess.Popen] = []
 LOG_HANDLES = []
+
+LAN_RUNTIME_PATH = RUNTIME_DIR / "lan.json"
+
+
+def read_lan_enabled() -> bool:
+    """
+    區域網路 (LAN) 開關：
+    - False: 只綁定 127.0.0.1（本機可用）
+    - True:  綁定 0.0.0.0（允許區網其他設備存取）
+
+    寫入來源：管理後台的「區域網路開關」會更新 .runtime/lan.json。
+    生效時機：需要重啟 start.py（因為是 listener bind host）。
+    """
+    try:
+        if not LAN_RUNTIME_PATH.exists():
+            return False
+        import json
+        data = json.loads(LAN_RUNTIME_PATH.read_text(encoding="utf-8"))
+        return bool(data.get("lan_enabled"))
+    except Exception:
+        return False
+
+
+def bind_host() -> str:
+    return "0.0.0.0" if read_lan_enabled() else "127.0.0.1"
 
 
 def info(message: str = "") -> None:
@@ -182,13 +204,32 @@ def create_backend_venv() -> Path:
 
 
 def python_can_import(python_exe: Path, modules: list[str]) -> bool:
-    imports = "; ".join(f"import {module}" for module in modules)
-    result = run([str(python_exe), "-c", imports], cwd=BACKEND_DIR, quiet=True, timeout=30)
+    # 只檢查「是否已安裝」而不真的 import 執行模組本體。
+    # 像 sentence_transformers / torch 在 Windows 上首次 import 可能很慢，
+    # 直接 import 容易超時誤判成「未安裝」。
+    probe = (
+        "import importlib.util\n"
+        "mods = " + repr(modules) + "\n"
+        "missing = [m for m in mods if importlib.util.find_spec(m) is None]\n"
+        "raise SystemExit(1 if missing else 0)\n"
+    )
+    result = run([str(python_exe), "-c", probe], cwd=BACKEND_DIR, quiet=True, timeout=30)
     return result.returncode == 0
 
 
 def ensure_backend_dependencies(python_exe: Path) -> None:
-    if python_can_import(python_exe, ["fastapi", "uvicorn", "sqlalchemy", "asyncpg"]):
+    # 這裡檢查「實際會在啟動期被 import/使用」的核心依賴，避免只檢查 fastapi/uvicorn
+    # 卻漏掉 RAG/搜尋相關套件，導致服務啟動後才在 log 裡爆 ModuleNotFoundError。
+    if python_can_import(
+        python_exe,
+        [
+            "fastapi",
+            "uvicorn",
+            "sqlalchemy",
+            "asyncpg",
+            "sentence_transformers",
+        ],
+    ):
         ok("Backend Python dependencies are ready")
         return
 
@@ -196,15 +237,29 @@ def ensure_backend_dependencies(python_exe: Path) -> None:
     if not requirements.exists():
         raise RuntimeError("backend/requirements.txt was not found.")
 
+    # Windows 偶發 WinError 32（檔案被掃毒/索引/殘留 python process 鎖住）
+    # 導致 pip 安裝中斷。這裡做有限次重試，讓一鍵啟動更穩定。
     info("[setup] Installing backend dependencies...")
-    result = run(
-        [str(python_exe), "-m", "pip", "install", "-r", str(requirements)],
-        cwd=BACKEND_DIR,
-        timeout=1800,
-    )
-    if result.returncode != 0:
-        raise RuntimeError("Backend dependency installation failed.")
-    ok("Backend dependencies installed")
+    cmd = [
+        str(python_exe),
+        "-m",
+        "pip",
+        "install",
+        "--no-cache-dir",
+        "-r",
+        str(requirements),
+    ]
+    last_rc = 1
+    for attempt in range(1, 4):
+        result = run(cmd, cwd=BACKEND_DIR, timeout=1800)
+        last_rc = result.returncode
+        if last_rc == 0:
+            ok("Backend dependencies installed")
+            return
+        warn(f"Backend dependency installation failed (attempt {attempt}/3). Retrying in {attempt * 3}s...")
+        time.sleep(attempt * 3)
+
+    raise RuntimeError("Backend dependency installation failed.")
 
 
 def ensure_frontend_dependencies() -> None:
@@ -253,36 +308,229 @@ def docker_info_ok() -> bool:
     docker = shutil.which("docker")
     if not docker:
         return False
-    result = run([docker, "info"], quiet=True, timeout=8)
+    try:
+        result = run([docker, "info"], quiet=True, timeout=8)
+    except subprocess.TimeoutExpired:
+        # Docker Desktop is still booting; treat as "not ready yet" and keep waiting.
+        return False
     return result.returncode == 0
 
 
-def start_docker_desktop() -> None:
-    if docker_info_ok():
-        ok("Docker daemon is ready")
-        return
+# ── Live startup status for the browser ─────────────────────────────────────
+# start.py writes each step's state to frontend/public/boot-status.json; the
+# frontend boot screen polls it (plus /api/v1/health for the AI models) so the
+# audience sees what is loading instead of a blank wait.
+BOOT_STATUS_PATH = FRONTEND_DIR / "public" / "boot-status.json"
+BOOT_STEPS = [
+    ("docker", "Docker 容器服務"),
+    ("database", "PostgreSQL 資料庫"),
+    ("engine", "AI 推論引擎（llama.cpp）"),
+    ("schema", "資料表與預設資料"),
+    ("backend", "後端 API 伺服器"),
+]
+BOOT: dict = {}
 
-    info("[docker] Docker daemon is not ready. Trying to start Docker Desktop...")
+
+def _boot_write() -> None:
+    import json
+
+    if not BOOT:
+        return
+    BOOT["updated_at"] = time.time()
+    data = json.dumps(BOOT, ensure_ascii=False)
+    try:
+        BOOT_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        tmp = BOOT_STATUS_PATH.with_suffix(".tmp")
+        tmp.write_text(data, encoding="utf-8")
+    except OSError:
+        return  # status display is best-effort; never block startup
+    # On Windows the replace fails while the dev server is reading the file
+    # for the browser, so retry briefly and fall back to a direct write.
+    for _ in range(10):
+        try:
+            os.replace(tmp, BOOT_STATUS_PATH)
+            return
+        except OSError:
+            time.sleep(0.05)
+    try:
+        BOOT_STATUS_PATH.write_text(data, encoding="utf-8")
+    except OSError:
+        pass
+
+
+def boot_init() -> None:
+    BOOT.clear()
+    BOOT.update({
+        "run_id": f"{os.getpid()}-{int(time.time())}",
+        "overall": "starting",
+        "started_at": time.time(),
+        "message": "",
+        "steps": [
+            {"key": k, "label": label, "state": "pending", "detail": "", "started_at": None, "finished_at": None}
+            for k, label in BOOT_STEPS
+        ],
+    })
+    _boot_write()
+
+
+def boot(key: str, state: str | None = None, detail: str | None = None) -> None:
+    """Update one step: state in pending/running/done/error/skipped."""
+    if not BOOT:
+        return
+    for step in BOOT["steps"]:
+        if step["key"] != key:
+            continue
+        now = time.time()
+        if state:
+            if state == "running" and step["started_at"] is None:
+                step["started_at"] = now
+            if state in ("done", "error", "skipped"):
+                step["started_at"] = step["started_at"] or now
+                step["finished_at"] = now
+            step["state"] = state
+        if detail is not None:
+            step["detail"] = detail
+    _boot_write()
+
+
+def boot_fail_running(message: str) -> None:
+    if not BOOT:
+        return
+    for step in BOOT["steps"]:
+        if step["state"] == "running":
+            step["state"] = "error"
+            step["finished_at"] = time.time()
+            step["detail"] = message[:300]
+    BOOT["overall"] = "error"
+    BOOT["message"] = message[:300]
+    _boot_write()
+
+
+DOCKER_PROCESS_NAMES = ("Docker Desktop.exe", "com.docker.backend.exe", "com.docker.build.exe",
+                        "docker-ai.exe", "docker-mcp.exe")
+
+
+def docker_desktop_running() -> bool:
+    if sys.platform != "win32":
+        return False
+    result = run(["tasklist", "/FI", "IMAGENAME eq Docker Desktop.exe", "/NH"], quiet=True, timeout=15)
+    return "Docker Desktop.exe" in (result.stdout or "")
+
+
+def reset_docker_vm() -> None:
+    """Stop only Docker's own WSL virtual machine. When Docker Desktop is killed,
+    this VM can stay half-running and the engine then never answers."""
+    if sys.platform == "win32":
+        try:
+            run(["wsl", "--terminate", "docker-desktop"], quiet=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def kill_docker_desktop() -> None:
+    for name in DOCKER_PROCESS_NAMES:
+        run(["taskkill", "/F", "/IM", name], quiet=True, timeout=15)
+    time.sleep(3)
+    reset_docker_vm()
+
+
+def clear_stale_docker_sockets() -> None:
+    """
+    If Docker Desktop was not shut down cleanly, it leaves socket files behind
+    (e.g. Docker\\run\\dockerInference, docker-secrets-engine\\engine.sock).
+    On the next start it cannot delete them and crashes with
+    "The file cannot be accessed by the system". Only call this while Docker
+    Desktop is NOT running: the folders are moved aside (nothing is deleted)
+    and Docker recreates them.
+    """
+    import stat as stat_mod
+
+    local = Path(os.environ.get("LOCALAPPDATA", ""))
+    for folder in (local / "Docker" / "run", local / "docker-secrets-engine"):
+        if not folder.is_dir():
+            continue
+        has_socket = False
+        try:
+            for entry in os.scandir(folder):
+                attrs = getattr(entry.stat(follow_symlinks=False), "st_file_attributes", 0)
+                if attrs & stat_mod.FILE_ATTRIBUTE_REPARSE_POINT:
+                    has_socket = True
+                    break
+        except OSError:
+            has_socket = True
+        if has_socket:
+            target = folder.with_name(f"{folder.name}.stale-{time.strftime('%Y%m%d-%H%M%S')}")
+            try:
+                folder.rename(target)
+                info(f"[docker] Moved leftover Docker files aside: {target.name}")
+            except OSError as exc:
+                warn(f"Could not move {folder}: {exc}")
+
+
+def launch_docker_desktop() -> None:
     candidates = [
         Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "Docker" / "Docker" / "Docker Desktop.exe",
         Path(os.environ.get("LOCALAPPDATA", "")) / "Docker" / "Docker" / "Docker Desktop.exe",
     ]
-    launched = False
     for candidate in candidates:
         if candidate.exists():
             subprocess.Popen([str(candidate)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            launched = True
-            break
+            return
+    raise RuntimeError("Docker Desktop was not found. Install Docker Desktop or start it manually.")
 
-    if not launched:
-        raise RuntimeError("Docker Desktop was not found. Install Docker Desktop or start it manually.")
 
-    deadline = time.time() + 120
+def wait_for_docker(seconds: int) -> bool:
+    deadline = time.time() + seconds
     while time.time() < deadline:
         if docker_info_ok():
-            ok("Docker daemon is ready")
-            return
+            return True
+        _boot_write()  # heartbeat so the browser knows we are still working
         time.sleep(2)
+    return False
+
+
+def start_docker_desktop() -> None:
+    boot("docker", "running", "檢查 Docker 是否已在執行…")
+    if docker_info_ok():
+        ok("Docker daemon is ready")
+        boot("docker", "done", "已在執行")
+        return
+
+    info("[docker] Docker daemon is not ready. Starting Docker Desktop...")
+    if docker_desktop_running():
+        # Docker was opened some other way (e.g. its own icon) and is not answering:
+        # usually it crashed on leftover files and is showing an error dialog.
+        # Give it a short grace period in case it is still booting, then repair.
+        boot("docker", detail="Docker 已開啟但沒有回應，確認中…")
+        if wait_for_docker(30):
+            ok("Docker daemon is ready")
+            boot("docker", "done", "已在執行")
+            return
+        warn("Docker Desktop is open but not responding. Restarting it cleanly...")
+        boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+        kill_docker_desktop()
+    boot("docker", detail="清理上次留下的殘留檔…")
+    reset_docker_vm()
+    clear_stale_docker_sockets()
+    launch_docker_desktop()
+
+    # A cold boot of Docker Desktop can take a couple of minutes.
+    boot("docker", detail="啟動 Docker Desktop（冷開機約 1～2 分鐘）…")
+    if wait_for_docker(150):
+        ok("Docker daemon is ready")
+        boot("docker", "done", "啟動完成")
+        return
+
+    # Still not up: most likely Docker crashed on leftover files. Restart it cleanly once.
+    warn("Docker Desktop did not start. Closing it, cleaning leftover files and trying once more...")
+    boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+    kill_docker_desktop()
+    clear_stale_docker_sockets()
+    launch_docker_desktop()
+    if wait_for_docker(240):
+        ok("Docker daemon is ready")
+        boot("docker", "done", "自動修復後啟動完成")
+        return
 
     raise RuntimeError("Docker Desktop did not become ready in time.")
 
@@ -295,6 +543,7 @@ def start_database() -> None:
         raise RuntimeError("docker-compose.yml was not found.")
 
     info("[docker] Starting PostgreSQL + pgvector...")
+    boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…")
     commands = [
         ["docker", "compose", "up", "-d"],
         ["docker-compose", "up", "-d"],
@@ -310,6 +559,7 @@ def start_database() -> None:
             port = database_port()
             if wait_for_tcp("127.0.0.1", port, timeout=90):
                 ok(f"PostgreSQL + pgvector is ready on localhost:{port}")
+                boot("database", "done", f"localhost:{port}")
                 return
             raise RuntimeError(f"Database container started, but localhost:{port} did not become reachable.")
 
@@ -353,22 +603,57 @@ def open_log(name: str):
     return handle
 
 
+MODEL_CHOICE: str | None = None
+
+
+def find_model_file(choice: str) -> Path | None:
+    """Pick a GGUF in ai_model/ by size tag, e.g. '3B' or '7B'."""
+    tag = choice.strip().upper()
+    for path in sorted((BASE_DIR / "ai_model").glob("*.gguf")):
+        if f"-{tag}-" in path.name.upper():
+            return path
+    return None
+
+
 def start_backend(python_exe: Path) -> None:
     kill_port(BACKEND_PORT)
     log = open_log("backend.log")
+    host = bind_host()
     cmd = [
         str(python_exe),
         "-m",
         "uvicorn",
         "app.main:app",
         "--host",
-        "0.0.0.0",
+        host,
         "--port",
         str(BACKEND_PORT),
         "--log-level",
         "info",
     ]
-    process = subprocess.Popen(cmd, cwd=str(BACKEND_DIR), stdout=log, stderr=subprocess.STDOUT)
+    # 強制 HuggingFace / sentence-transformers 走離線快取。
+    # 這個專案是「地端部署、資料 100% 留在本機」的定位，不該在啟動期打 HF Hub。
+    # 線上環境常見的卡點：sentence-transformers 載入 paraphrase-multilingual-MiniLM-L12-v2
+    # 時 huggingface_hub 會做 metadata revalidation，網路慢/被擋時整個 lifespan startup
+    # 會被卡住一兩分鐘，導致 start.py 的 health 檢查超時、誤判後端啟動失敗並 kill backend。
+    # 注：cache 必須已存在於 ~/.cache/huggingface/，第一次安裝完 requirements 後就會有。
+    backend_env = os.environ.copy()
+    backend_env.setdefault("HF_HUB_OFFLINE", "1")
+    backend_env.setdefault("TRANSFORMERS_OFFLINE", "1")
+    if MODEL_CHOICE:
+        model_file = find_model_file(MODEL_CHOICE)
+        if model_file:
+            backend_env["LLAMA_MODEL_PATH"] = str(model_file)
+            ok(f"AI model for this session: {model_file.name}")
+        else:
+            warn(f"No model matching '{MODEL_CHOICE}' in ai_model/; using the default model.")
+    process = subprocess.Popen(
+        cmd,
+        cwd=str(BACKEND_DIR),
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        env=backend_env,
+    )
     PROCESSES.append(process)
     ok(f"Backend started on http://localhost:{BACKEND_PORT} (PID {process.pid})")
 
@@ -380,62 +665,11 @@ def start_frontend() -> None:
         raise RuntimeError("npm was not found. Please install Node.js first.")
 
     log = open_log("frontend.log")
-    cmd = [npm, "run", "dev", "--", "--host", "0.0.0.0", "--logLevel", "silent"]
+    host = bind_host()
+    cmd = [npm, "run", "dev", "--", "--host", host, "--logLevel", "silent"]
     process = subprocess.Popen(cmd, cwd=str(FRONTEND_DIR), stdout=log, stderr=subprocess.STDOUT)
     PROCESSES.append(process)
     ok(f"Frontend started on http://localhost:{FRONTEND_PORT} (PID {process.pid})")
-
-
-def start_ngrok() -> str | None:
-    """
-    啟動 ngrok 公開通道指向 frontend，回傳公開 URL（失敗時回 None）。
-
-    流程：
-      1. 從 backend 套件動態 import ngrok_service（共用一份程式碼）
-      2. 找 ngrok 執行檔 — 沒裝就直接 warn 跳過、不 fail 整個啟動流程
-      3. 殺掉舊的 ngrok process（避免 4040 被前一輪佔走拿不到 tunnel API）
-      4. 開新的 ngrok http {FRONTEND_PORT}，poll API 直到拿到 https URL
-      5. 寫 .runtime/ngrok.json + frontend/.env.local 讓 admin 頁面 / Vite 同步知道
-      6. 啟動背景 watcher：每 10s 檢查 ngrok 公開 URL 是否有變動。
-         免費版 ngrok 重連可能會拿到不同子網域；watcher 會把最新 URL 持續寫回
-         runtime 檔案，後端 /system/ngrok 端點下次被前端問就拿得到新值。
-    """
-    backend_path = str(BACKEND_DIR)
-    if backend_path not in sys.path:
-        sys.path.insert(0, backend_path)
-
-    try:
-        from app.services.ngrok_service import (  # noqa: WPS433  延遲 import
-            find_ngrok_binary,
-            start_ngrok_tunnel,
-            start_ngrok_watcher,
-        )
-    except Exception as exc:  # pragma: no cover
-        warn(f"ngrok service import failed: {exc}. Skipping ngrok.")
-        return None
-
-    if not find_ngrok_binary(BASE_DIR):
-        warn("ngrok binary not found (looked in PATH, C:\\ngrok, project root). "
-             "Install ngrok to enable public URL: https://ngrok.com/download")
-        return None
-
-    info("[ngrok] Launching public tunnel for frontend...")
-    process, state = start_ngrok_tunnel(frontend_port=FRONTEND_PORT, base_dir=BASE_DIR)
-    if process is not None:
-        # 只進 SHUTDOWN_PROCESSES（Ctrl+C 時會被清掉）；不進 PROCESSES（watchdog），
-        # 避免 ngrok 偶發斷線把整個服務棧拉下來。
-        SHUTDOWN_PROCESSES.append(process)
-    if state.active and state.url:
-        ok(f"ngrok tunnel ready: {state.url}")
-        # Watcher: 持續把當下 ngrok URL 寫回 .runtime/ngrok.json + frontend/.env.local
-        try:
-            start_ngrok_watcher(root_dir=BASE_DIR, interval_seconds=10)
-        except Exception as exc:
-            warn(f"ngrok watcher failed to start (non-fatal): {exc}")
-        return state.url
-    warn("ngrok started but failed to acquire public URL within timeout. "
-         "Check ngrok authtoken: ngrok config add-authtoken <your-token>")
-    return None
 
 
 def open_browser() -> None:
@@ -484,11 +718,8 @@ def print_summary(ngrok_url: str | None = None) -> None:
     info(f"Backend:  http://localhost:{BACKEND_PORT}")
     info(f"API docs: http://localhost:{BACKEND_PORT}/docs")
     info(f"DB:       localhost:{database_port()} (Docker PostgreSQL + pgvector)")
-    if ngrok_url:
-        info("")
-        info(f"Public:   {ngrok_url}    (ngrok)")
-        info(f"          {ngrok_url}/api/v1/    (REST API)")
-        info(f"          {ngrok_url.replace('https://', 'wss://')}/ws/    (WebSocket)")
+    # LAN mode: allow access from other devices on same network when enabled.
+    info(f"LAN:      {'enabled (0.0.0.0)' if read_lan_enabled() else 'disabled (127.0.0.1)'}")
     info("")
     info("Logs:")
     info(f"Backend:  {RUNTIME_DIR / 'backend.log'}")
@@ -506,16 +737,75 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--force-engine", action="store_true", help="Force llama-cpp-python backend detection/install.")
     parser.add_argument("--skip-browser", action="store_true", help="Do not open the browser automatically.")
     parser.add_argument("--skip-init-db", action="store_true", help="Skip database schema/default data initialization.")
-    # Ngrok 預設關閉 —— 公開隧道屬於敏感能力，由 admin 在後台手動開啟比較合理。
-    # 如果你還是要在 start.py 啟動時就開，加 --ngrok。
-    # 舊的 --no-ngrok 旗標保留為 no-op alias（向後相容，避免之前 bat / docs 寫這個的破掉）。
-    parser.add_argument("--ngrok", action="store_true", help="Auto-launch ngrok tunnel at startup (default: off, open manually from admin panel).")
-    parser.add_argument("--no-ngrok", action="store_true", help="(deprecated, this is now the default) Skip ngrok at startup.")
+    parser.add_argument(
+        "--backend-only",
+        action="store_true",
+        help="Only start Docker DB + backend (frontend must already run separately).",
+    )
+    parser.add_argument(
+        "--skip-frontend",
+        action="store_true",
+        help="Do not start Vite dev server.",
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Size tag of the GGUF model to load for this session, e.g. 3B or 7B (default: LLAMA_MODEL_PATH / 7B).",
+    )
     return parser.parse_args()
+
+
+def wait_for_ai_ready(timeout: int = 600) -> None:
+    """Wait until the active model, the preloaded models and document search are loaded."""
+    import json
+
+    url = f"http://127.0.0.1:{BACKEND_PORT}/api/v1/health"
+    deadline = time.time() + timeout
+    last: dict = {}
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=3) as resp:
+                last = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            last = {}
+        models = last.get("models") or []
+        if last.get("llm") == "error" or last.get("rag") == "error" or any(m.get("state") == "error" for m in models):
+            bad = [m["name"] for m in models if m.get("state") == "error"]
+            raise RuntimeError(
+                f"AI 模型載入失敗（llm={last.get('llm')}, rag={last.get('rag')}, models={bad}）。See {RUNTIME_DIR / 'backend.log'}"
+            )
+        waiting = [m["name"] for m in models if m.get("state") in ("pending", "loading")]
+        if last.get("llm") == "ready" and last.get("rag") == "ready" and not waiting:
+            loaded = [m["name"] for m in models if m.get("state") == "ready"]
+            ok("Real AI models loaded: " + ", ".join(loaded))
+            return
+        _boot_write()
+        time.sleep(2)
+    raise RuntimeError(f"AI 模型載入逾時（llm={last.get('llm')}, rag={last.get('rag')}）。")
+
+
+def wait_for_api_health(timeout: int = 120) -> bool:
+    """等待 API 層就緒（不必等 LLM/RAG 背景預熱完成）。"""
+    deadline = time.time() + timeout
+    url = f"http://127.0.0.1:{BACKEND_PORT}/api/v1/health"
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=3) as resp:
+                if resp.status == 200:
+                    import json
+                    body = json.loads(resp.read().decode("utf-8"))
+                    if body.get("status") == "ok":
+                        return True
+        except Exception:
+            pass
+        time.sleep(1.5)
+    return False
 
 
 def main() -> int:
     args = parse_args()
+    global MODEL_CHOICE
+    MODEL_CHOICE = args.model
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
@@ -527,39 +817,57 @@ def main() -> int:
     info("")
 
     try:
+        boot_init()
         python_exe = create_backend_venv()
         ensure_backend_dependencies(python_exe)
         ensure_frontend_dependencies()
-        start_database()
-        run_auto_engine(python_exe, force=args.force_engine)
-        if not args.skip_init_db:
-            init_database(python_exe)
 
-        start_backend(python_exe)
-        start_frontend()
-
-        info("[wait] Checking backend health...")
-        if not wait_for_http(f"http://127.0.0.1:{BACKEND_PORT}/api/v1/health", timeout=120):
-            raise RuntimeError(f"Backend health check timed out. See {RUNTIME_DIR / 'backend.log'}")
-        ok("Backend health check passed")
-
-        info("[wait] Checking frontend...")
-        if not wait_for_http(f"http://127.0.0.1:{FRONTEND_PORT}", timeout=90):
-            raise RuntimeError(f"Frontend check timed out. See {RUNTIME_DIR / 'frontend.log'}")
-        ok("Frontend is reachable")
-
-        # ngrok 必須在 frontend 監聽之後才能正確建 tunnel。
-        # 只有顯式 --ngrok 才在啟動時開；預設關閉，由 admin 後台動態啟動。
-        ngrok_url: str | None = None
-        if args.ngrok:
-            ngrok_url = start_ngrok()
+        # Frontend first: it does not need the backend, and the browser can then
+        # show the live startup status while everything else comes up.
+        skip_frontend = args.skip_frontend or args.backend_only
+        if not skip_frontend:
+            start_frontend()
+            info("[wait] Checking frontend...")
+            if not wait_for_http(f"http://127.0.0.1:{FRONTEND_PORT}", timeout=90):
+                raise RuntimeError(f"Frontend check timed out. See {RUNTIME_DIR / 'frontend.log'}")
+            ok("Frontend is reachable")
+            if not args.skip_browser:
+                open_browser()
         else:
-            info("[ngrok] Skipped (default off). Toggle from admin panel when needed.")
+            ok("Skipped frontend startup (use existing dev server or production build)")
 
-        if not args.skip_browser:
-            open_browser()
+        start_database()
 
-        print_summary(ngrok_url=ngrok_url)
+        boot("engine", "running", "檢查 llama-cpp-python…")
+        run_auto_engine(python_exe, force=args.force_engine)
+        boot("engine", "done", "已安裝")
+
+        if not args.skip_init_db:
+            boot("schema", "running", "建立／檢查資料表…")
+            init_database(python_exe)
+            boot("schema", "done", "資料表已就緒")
+        else:
+            boot("schema", "skipped", "略過")
+
+        boot("backend", "running", "啟動 FastAPI 伺服器…")
+        start_backend(python_exe)
+
+        info("[wait] Checking backend API health...")
+        # Loading the GGUF model can briefly freeze the API on a cold disk, so allow plenty of time.
+        if not wait_for_api_health(timeout=420):
+            raise RuntimeError(f"Backend API health check timed out. See {RUNTIME_DIR / 'backend.log'}")
+        ok("Backend API is ready")
+        boot("backend", "done", f"http://localhost:{BACKEND_PORT}")
+
+        info("[wait] Loading the AI models (3B, 7B) and document search... progress is shown in the browser.")
+        wait_for_ai_ready()
+        BOOT["overall"] = "ready"
+        _boot_write()
+
+        if args.backend_only:
+            info(f"[hint] Backend: http://127.0.0.1:{BACKEND_PORT} — attach your frontend separately")
+
+        print_summary(ngrok_url=None)
         while True:
             time.sleep(1)
             for process in PROCESSES:
@@ -567,6 +875,7 @@ def main() -> int:
                     raise RuntimeError(f"A service exited unexpectedly. See logs in {RUNTIME_DIR}.")
 
     except Exception as exc:
+        boot_fail_running(str(exc))
         fail(str(exc))
         fail("Startup did not complete. Check .runtime/backend.log and .runtime/frontend.log if they exist.")
         for process in list(PROCESSES) + list(SHUTDOWN_PROCESSES):

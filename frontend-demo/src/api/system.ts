@@ -28,6 +28,42 @@ export const systemApi = {
         return { max_tokens: 2048, temperature: 0.7, model: 'qwen2.5-7b-instruct-q4_k_m' }
     },
 
+    // LLMHealthPanel + SystemResourcePanel 用
+    getHealthDetailed: async () => {
+        await sleep(300)
+        return {
+            llm: {
+                model_loaded: true,
+                provider: 'ollama',
+                model_path: 'qwen2.5-7b-instruct-q4_k_m',
+                throughput: {
+                    last_tokens_per_sec: 9.62,
+                    total_generations: 24,
+                },
+            },
+            cpu: {
+                cpu_percent: 38.5,
+                cpu_cores: 8,
+                memory_total_gb: 16.0,
+                memory_used_gb: 9.94,
+                memory_percent: 62.1,
+            },
+        }
+    },
+
+    getLanStatus: async () => {
+        await sleep(200)
+        return { enabled: false, lan_ips: [] as string[] }
+    },
+
+    toggleLan: async (enabled: boolean) => {
+        await sleep(400)
+        return {
+            enabled,
+            lan_ips: enabled ? ['192.168.1.100', '192.168.1.101'] : [],
+        }
+    },
+
     getRuntimeInfo: async (): Promise<RuntimeInfo> => {
         await sleep(300)
         return {

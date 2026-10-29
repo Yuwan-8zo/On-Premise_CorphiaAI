@@ -22,17 +22,31 @@ export default defineConfig(({ mode }) => ({
     build: {
         rollupOptions: {
             output: {
-                manualChunks: {
-                    vendor: ['react', 'react-dom'],
-                    router: ['react-router-dom'],
-                    state: ['zustand'],
-                    motion: ['gsap', '@gsap/react'],
-                    markdown: ['react-markdown', 'remark-gfm', 'react-syntax-highlighter']
-                }
-            }
+                manualChunks(id) {
+                    if (!id.includes('node_modules'))
+                        return;
+                    if (id.includes('react-dom') || id.includes('react/'))
+                        return 'react-vendor';
+                    if (id.includes('react-router'))
+                        return 'router';
+                    if (id.includes('zustand'))
+                        return 'state';
+                    if (id.includes('gsap'))
+                        return 'gsap';
+                    if (id.includes('/motion/') || id.includes('motion/dist'))
+                        return 'motion';
+                    if (id.includes('react-markdown')
+                        || id.includes('remark-gfm')
+                        || id.includes('react-syntax-highlighter')) {
+                        return 'markdown';
+                    }
+                    if (id.includes('recharts'))
+                        return 'charts';
+                },
+            },
         },
         minify: 'esbuild',
-        target: 'esnext'
+        target: 'esnext',
     },
     // BUG-06 修正：僅在 production build 時移除 console/debugger，開發模式保留完整 debug 輸出
     esbuild: mode === 'production' ? { drop: ['console', 'debugger'] } : {},
@@ -40,8 +54,6 @@ export default defineConfig(({ mode }) => ({
         port: 5173,
         allowedHosts: true,
         hmr: {
-            // NOTE: overlay: false 避免在 ngrok / 遠端存取時因 HMR 連線失敗顯示錯誤彈窗
-            // HMR 本地仍正常運作；ngrok 環境下 HMR 無法作用但不影響應用功能
             overlay: false,
         },
         proxy: {

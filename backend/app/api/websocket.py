@@ -120,15 +120,51 @@ async def websocket_chat(
 
         async def _security_gate(raw_text: str) -> Optional[str]:
             """
-            安全閘道：DLP → Injection → PII。
+            安全閘道（三層，依序）：PII 遮罩 → DLP → Prompt Injection。
 
+            - PII 命中 → 送 pii_warning + 使用 masked_text（個資先遮罩，後續階段與稽核都不接觸原值）
             - DLP 命中 → 送 dlp_block 事件 + 回傳 None（呼叫端應 continue 不送 LLM）
             - Injection 命中 → 送 injection_warning，但不阻斷（僅提醒 + 使用 sanitized_text）
-            - PII 命中 → 送 pii_warning + 使用 masked_text 餵給 LLM
 
             回傳：要送進 LLM 的（可能已淨化／遮罩過的）文字；若為 None 表示已攔阻。
             """
             processed = raw_text
+
+            # A1: PII Masking — 遮罩後再送模型
+            if settings.enable_pii_masking:
+                mask_result = mask_pii(processed)
+                if mask_result["has_pii"]:
+                    # 只回傳遮罩版的對照表，避免洩漏原值
+                    await websocket.send_json({
+                        "type": "pii_warning",
+                        "message": f"已自動遮罩 {len(mask_result['mask_map'])} 項敏感資訊。",
+                        # 遮罩後的整句（不含原值），前端用來立刻替換畫面上的使用者訊息
+                        "masked_text": mask_result["masked_text"],
+                        "mask_map": [
+                            {
+                                "original_preview": m["original_preview"],
+                                "masked": m["masked"],
+                                "type": m["type"],
+                                "label": m["label"],
+                            }
+                            for m in mask_result["mask_map"]
+                        ],
+                    })
+                    # PII 偵測時寫 audit log
+                    try:
+                        await write_audit_log(
+                            db=db,
+                            action=AuditAction.PII_DETECTED,
+                            resource_type=AuditResource.CONVERSATION,
+                            resource_id=conversation_id,
+                            user_id=user_id,
+                            tenant_id=conversation.tenant_id,
+                            description=f"訊息中偵測到 {len(mask_result.get('mask_map', []))} 個個資片段並已遮罩",
+                            details={"pii_types": [m.get("type") for m in mask_result.get("mask_map", [])]},
+                        )
+                    except Exception:
+                        pass  # audit 失敗不能阻斷主流程
+                    processed = mask_result["masked_text"]
 
             # A3: DLP — 命中就攔阻，不送模型
             dlp_result = check_dlp(processed)
@@ -178,41 +214,17 @@ async def websocket_chat(
                         )
                     except Exception:
                         pass  # audit 失敗不能阻斷主流程
+                    # 高風險（例如要求忽略指令、輸出系統提示）直接攔阻，不送模型；
+                    # 只靠淨化時，模型仍可能照做並洩漏系統提示。
+                    if guard_result["risk_level"] == "high":
+                        await websocket.send_json({
+                            "type": "injection_block",
+                            "message": "偵測到高風險提示詞注入攻擊，請求已攔阻，未送入 AI 模型。",
+                            "risk_level": guard_result["risk_level"],
+                        })
+                        return None
                     processed = guard_result["sanitized_text"]
 
-            # A1: PII Masking — 遮罩後再送模型
-            if settings.enable_pii_masking:
-                mask_result = mask_pii(processed)
-                if mask_result["has_pii"]:
-                    # 只回傳遮罩版的對照表，避免洩漏原值
-                    await websocket.send_json({
-                        "type": "pii_warning",
-                        "message": f"已自動遮罩 {len(mask_result['mask_map'])} 項敏感資訊。",
-                        "mask_map": [
-                            {
-                                "original_preview": m["original_preview"],
-                                "masked": m["masked"],
-                                "type": m["type"],
-                                "label": m["label"],
-                            }
-                            for m in mask_result["mask_map"]
-                        ],
-                    })
-                    # PII 偵測時寫 audit log
-                    try:
-                        await write_audit_log(
-                            db=db,
-                            action=AuditAction.PII_DETECTED,
-                            resource_type=AuditResource.CONVERSATION,
-                            resource_id=conversation_id,
-                            user_id=user_id,
-                            tenant_id=conversation.tenant_id,
-                            description=f"訊息中偵測到 {len(mask_result.get('mask_map', []))} 個個資片段並已遮罩",
-                            details={"pii_types": [m.get("type") for m in mask_result.get("mask_map", [])]},
-                        )
-                    except Exception:
-                        pass  # audit 失敗不能阻斷主流程
-                    processed = mask_result["masked_text"]
 
             return processed
 

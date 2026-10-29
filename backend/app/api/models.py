@@ -19,6 +19,10 @@ async def get_all_models() -> Dict[str, Any]:
 async def refresh_models_api() -> Dict[str, Any]:
     manager = get_model_manager()
     manager.scan_models()
+    # 重要：models list 變動後，必須同步重載 LLM，否則會卡在啟動時的模擬模式
+    llm = get_llm_service()
+    llm.reload_llama()
+    await llm.initialize()
     return manager.to_dict()
 
 @router.post("/select")
@@ -27,14 +31,19 @@ async def select_model(request: SelectModelRequest) -> Dict[str, Any]:
     if manager.select_model(request.name):
         llm = get_llm_service()
         llm.reload_llama()
+        await llm.initialize()
         return {"message": f"Successfully selected {request.name}", "current_model": request.name}
     raise HTTPException(status_code=404, detail="Model currently unavailable.")
 
 @router.get("/status")
 async def get_model_status() -> Dict[str, Any]:
     manager = get_model_manager()
+    llm = get_llm_service()
     return {
+        # model manager 是否有選到模型（檔案層級）
         "loaded": manager.current_model is not None,
         "current_model": manager._current_model,
-        "model_path": manager.current_model_path
+        "model_path": manager.current_model_path,
+        # 真實推論層級：llama-cpp 是否成功掛載（避免 UI 誤以為已載入但其實仍是模擬）
+        "llama_cpp_loaded": bool(getattr(llm, "use_llama_cpp", False) and getattr(llm, "_llama_instance", None)),
     }

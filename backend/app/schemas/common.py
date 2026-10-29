@@ -44,4 +44,7 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     version: str
     database: str = "connected"
-    llm: str = "ready"
+    llm: str = "loading"
+    rag: str = "loading"
+    # Per-model load status (name, size_gb, state, is_current, started_at, finished_at, error)
+    models: list[dict] = []

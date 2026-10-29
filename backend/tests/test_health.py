@@ -7,5 +7,9 @@ async def test_health_check(async_client: AsyncClient):
     response = await async_client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "ok"
+    assert data["status"] in ("ok", "starting")
     assert "version" in data
+    assert "llm" in data
+    assert "rag" in data
+    # API 層就緒後應為 ok（LLM/RAG 可能仍在 loading）
+    assert data["status"] == "ok"

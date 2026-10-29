@@ -10,11 +10,7 @@ from sqlalchemy import text
 from app.core.database import engine, init_db
 
 # Ensure all models are imported so create_all works
-import app.models.user
-import app.models.conversation
-import app.models.message
-import app.models.document
-import app.models.document_chunk
+import app.models  # noqa: F401
 
 from datetime import datetime
 

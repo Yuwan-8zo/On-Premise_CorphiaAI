@@ -18,7 +18,7 @@ export interface WebSocketMessage {
 }
 
 export interface StreamResponse {
-    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'dlp_block'
+    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
     content?: string
     messageId?: string
     sources?: Array<{
@@ -35,6 +35,8 @@ export interface StreamResponse {
     code?: string
     /** 內部錯誤追蹤 ID（由後端 global_exception_handler 產生） */
     error_id?: string
+    /** A1: 遮罩後的整句使用者訊息（不含原值） */
+    masked_text?: string
     /** A1: PII 遮罩對照表 */
     mask_map?: Array<{
         original_preview: string

@@ -254,7 +254,12 @@ export default function ChatSidebar({
                         data-tour="mode-toggle"
                         className="relative bg-black/5 dark:bg-white/5 rounded-cv-xl cursor-pointer shrink-0 transition-colors border border-transparent"
                         style={{ width: '48px', height: '88px' }}
-                        onClick={() => setChatMode(chatMode === 'general' ? 'project' : 'general')}
+                        onClick={() => {
+                            const next = chatMode === 'general' ? 'project' : 'general'
+                            setChatMode(next)
+                            // 收合狀態下看不到資料夾清單；切到專案時自動展開側邊欄
+                            if (next === 'project') setSidebarOpen(true)
+                        }}
                     >
                         <div className="absolute bg-bg-elevated dark:bg-white/15 rounded-full shadow-sm border border-border-subtle dark:border-white/10"
                             style={{

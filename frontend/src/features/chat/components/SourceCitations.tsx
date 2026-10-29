@@ -28,6 +28,26 @@ const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
     </svg>
 )
 
+interface SourceGroup {
+    key: string
+    name: string
+    best: number
+    chunks: MessageSource[]
+}
+
+/** 同一份文件的多個段落合併成一筆，避免「1 份檔案卻顯示 2 個來源」 */
+function groupByDocument(sources: MessageSource[]): SourceGroup[] {
+    const map = new Map<string, SourceGroup>()
+    for (const s of sources) {
+        const key = s.document_id || s.document_name || s.chunk_id
+        const g = map.get(key) ?? { key, name: s.document_name || '未知文件', best: 0, chunks: [] }
+        g.chunks.push(s)
+        g.best = Math.max(g.best, s.score || 0)
+        map.set(key, g)
+    }
+    return [...map.values()].sort((a, b) => b.best - a.best)
+}
+
 export default function SourceCitations({ sources }: SourceCitationsProps) {
     const [isExpanded, setIsExpanded] = useState(false)
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -35,6 +55,8 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     if (!sources || sources.length === 0) {
         return null
     }
+
+    const groups = groupByDocument(sources)
 
     const toggleItem = (id: string) => {
         const newExpanded = new Set(expandedItems)
@@ -48,48 +70,53 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
 
     return (
         <div className="mt-3 border border-border-subtle rounded-cv-lg overflow-hidden">
-            {/* 標題列 */}
+            {/* 標題列：顯示文件數，段落數另外標示 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full flex items-center justify-between px-3 py-2 bg-bg-surface hover:bg-bg-surface transition-colors"
             >
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
                     <DocumentIcon />
-                    <span>參考來源 ({sources.length})</span>
+                    <span>
+                        參考來源：{groups.length} 份文件
+                        {sources.length > groups.length && (
+                            <span className="text-text-muted">（共引用 {sources.length} 個段落）</span>
+                        )}
+                    </span>
                 </div>
                 <ChevronIcon isOpen={isExpanded} />
             </button>
 
-            {/* 來源列表 */}
             {isExpanded && (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {sources.map((source, index) => (
-                        <div key={source.chunk_id} className="bg-bg-base">
-                            {/* 來源標題 */}
+                    {groups.map((group, index) => (
+                        <div key={group.key} className="bg-bg-base">
                             <button
-                                onClick={() => toggleItem(source.chunk_id)}
+                                onClick={() => toggleItem(group.key)}
                                 className="w-full flex items-center justify-between px-3 py-2 hover:bg-bg-surface transition-colors"
                             >
-                                <div className="flex items-center gap-2 text-sm">
+                                <div className="flex min-w-0 items-center gap-2 text-sm">
                                     <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent text-corphia-bronze rounded text-xs font-medium">
                                         {index + 1}
                                     </span>
-                                    <span className="text-text-secondary truncate">
-                                        {source.document_name ||"未知文件"}
-                                    </span>
-                                    <span className="text-xs text-text-muted">
-                                        ({Math.round(source.score * 100)}% 相關)
+                                    <span className="text-text-secondary truncate">{group.name}</span>
+                                    <span className="flex-shrink-0 text-xs text-text-muted">
+                                        （{group.chunks.length} 個段落・最高 {Math.round(group.best * 100)}% 相關）
                                     </span>
                                 </div>
-                                <ChevronIcon isOpen={expandedItems.has(source.chunk_id)} />
+                                <ChevronIcon isOpen={expandedItems.has(group.key)} />
                             </button>
 
-                            {/* 來源內容 */}
-                            {expandedItems.has(source.chunk_id) && (
-                                <div className="px-3 pb-3">
-                                    <div className="p-3 bg-bg-surface rounded-[12px] text-sm text-text-secondary leading-relaxed">
-                                        {source.content}
-                                    </div>
+                            {expandedItems.has(group.key) && (
+                                <div className="space-y-2 px-3 pb-3">
+                                    {group.chunks.map((chunk, i) => (
+                                        <div key={chunk.chunk_id} className="p-3 bg-bg-surface rounded-[12px] text-sm text-text-secondary leading-relaxed">
+                                            <p className="mb-1 text-xs text-text-muted">
+                                                段落 {i + 1}・{Math.round((chunk.score || 0) * 100)}% 相關
+                                            </p>
+                                            {chunk.content}
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>

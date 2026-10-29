@@ -4,8 +4,8 @@
 
 from fastapi import APIRouter
 
-from app.core.config import settings
 from app.schemas.common import HealthResponse
+from app.services.boot_service import build_health_payload
 
 router = APIRouter(tags=["系統"])
 
@@ -13,23 +13,19 @@ router = APIRouter(tags=["系統"])
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     """
-    健康檢查端點
-    
-    回傳系統運行狀態
+    健康檢查端點。
+
+    - status=ok：API 與資料庫已就緒（前端可進登入頁）
+    - llm/rag：loading | ready | unavailable | error（背景預熱進度）
     """
-    return HealthResponse(
-        status="ok",
-        version="2.3.0",
-        database="connected",
-        llm="ready"
-    )
+    return HealthResponse(**build_health_payload())
 
 
 @router.get("/")
 async def root():
     """API 根路徑"""
     return {
-        "name": settings.app_name,
+        "name": "Corphia AI",
         "version": "2.3.0",
-        "status": "running"
+        "status": "running",
     }

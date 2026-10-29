@@ -23,11 +23,8 @@ type MockDocRaw = {
     doc_metadata: Record<string, unknown>
 }
 
-let documents: MockDocRaw[] = DEMO_DOCUMENTS.map((d) => ({
-    ...d,
-    status: 'completed' as const,
-    error_message: undefined,
-}))
+// 展示從空白開始，讓上傳動作更有說服力
+let documents: MockDocRaw[] = []
 
 export const documentsApi = {
     list: async () => {
@@ -62,6 +59,8 @@ export const documentsApi = {
         }
         await sleep(300)
 
+        // 若是上傳論文本身，顯示實際的 chunk 數（48）
+        const isThesis = file.name.includes('專題') || file.name.includes('計畫書') || file.name.toLowerCase().endsWith('.docx')
         const newDoc: MockDocRaw = {
             id: `demo-doc-${Date.now()}`,
             filename: file.name,
@@ -70,11 +69,11 @@ export const documentsApi = {
             file_size: file.size,
             size_bytes: file.size,
             status: 'completed',
-            chunk_count: Math.max(Math.floor(file.size / 5000), 1),
+            chunk_count: isThesis ? 48 : Math.max(Math.floor(file.size / 5000), 1),
             error_message: undefined,
             created_at: new Date().toISOString(),
             processed_at: new Date().toISOString(),
-            doc_metadata: { folderName: folderName ?? '預設', isActive: true },
+            doc_metadata: { folderName: folderName ?? '資安專題', isActive: true },
         }
         documents = [newDoc, ...documents]
 

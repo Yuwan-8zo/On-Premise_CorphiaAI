@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
 import { authApi } from '@/api/auth'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { MessageSquare, FileText, Shield, HelpCircle, X } from 'lucide-react'
@@ -35,15 +36,17 @@ export default function Login() {
     const [error, setError] = useState('')
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking')
-    const [hasInitialConnected, setHasInitialConnected] = useState(false)
+    // `hasCompletedInitialCheck`: 只控制首次載入的 splash 顯示/隱藏
+    // `hasEverConnected`: 只用來決定 health polling 頻率（連上後降頻）
+    const [hasCompletedInitialCheck, setHasCompletedInitialCheck] = useState(false)
+    const [hasEverConnected, setHasEverConnected] = useState(false)
 
     // 登入失敗一次後：登入按鈕內縮，右側出現 `?` 按鈕（聯絡管理員）
     // 切換 tab / 改 email 會 reset，避免使用者改完帳號後 ? 按鈕還賴著不走
     const [loginFailedOnce, setLoginFailedOnce] = useState(false)
     const [showResetModal, setShowResetModal] = useState(false)
 
-    // 註冊成功後切回 login tab，顯示「請以新帳號登入」綠色提示一次
-    const [registerSuccessHint, setRegisterSuccessHint] = useState(false)
+    // 註冊成功改用全域 toast（不再用 inline hint）
 
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
@@ -61,14 +64,21 @@ export default function Login() {
                 if (response.ok) {
                     if (!isCancelled) {
                         setBackendStatus('online')
-                        setHasInitialConnected(true)
+                        setHasEverConnected(true)
+                        setHasCompletedInitialCheck(true)
                     }
                 } else {
-                    if (!isCancelled) setBackendStatus('offline')
+                    if (!isCancelled) {
+                        setBackendStatus('offline')
+                        setHasCompletedInitialCheck(true)
+                    }
                 }
             } catch {
                 // network error / abort —— 一律當 offline，不 log
-                if (!isCancelled) setBackendStatus('offline')
+                if (!isCancelled) {
+                    setBackendStatus('offline')
+                    setHasCompletedInitialCheck(true)
+                }
             }
         }
 
@@ -78,13 +88,13 @@ export default function Login() {
         // 連上後降頻到 30s 維持心跳
         const intervalId = setInterval(() => {
             checkBackend()
-        }, hasInitialConnected ? 30000 : 5000)
+        }, hasEverConnected ? 30000 : 5000)
 
         return () => {
             isCancelled = true
             clearInterval(intervalId)
         }
-    }, [hasInitialConnected])
+    }, [hasEverConnected])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -146,7 +156,7 @@ export default function Login() {
                 setPassword('')
                 setConfirmPassword('')
                 setLoginFailedOnce(false)
-                setRegisterSuccessHint(true)
+                useToastStore.getState().success(t('auth.registerSuccessReLogin', '註冊成功，請以新帳號登入'))
                 setLoading(false)
                 return
             }
@@ -170,6 +180,18 @@ export default function Login() {
             }
             const status = axiosError?.response?.status
             const data = axiosError?.response?.data
+
+            // 信箱尚未註冊 → 直接切到註冊分頁，信箱保留，提示建立帳號
+            const rawDetail = (data as { detail?: unknown } | undefined)?.detail
+            const detailObj = rawDetail && typeof rawDetail === 'object' ? (rawDetail as { code?: string; message?: string }) : undefined
+            const errCode = detailObj?.code || data?.error?.code
+            if (activeTab === 'login' && status === 404 && errCode === 'ACCOUNT_NOT_FOUND') {
+                setActiveTab('register')
+                setConfirmPassword('')
+                setLoginFailedOnce(false)
+                setFieldErrors({ email: detailObj?.message || data?.error?.message || '此信箱尚未註冊，請建立帳號' })
+                return
+            }
 
             // 登入模式下任何認證失敗（401/403）都觸發「忘記密碼?」UI
             // 後端為了防 user enumeration 故意把「帳號不存在」跟「密碼錯」都回 401，
@@ -215,10 +237,9 @@ export default function Login() {
     const loginBorderSubtle = isDark ? '39 37 37' : '242 240 236'
     const loginBorderStrong = isDark ? '55 49 45' : '225 219 212'
 
-    // ── 後端首次連線前蓋全螢幕 splash —————————————————————————
-    // 沒過 200 health check 就讓使用者看 splash，不要被 disabled 表單騙。
-    // 一旦 hasInitialConnected 翻 true，splash 整個 unmount，正常走表單流程。
-    if (!hasInitialConnected) {
+    // ── 後端首次檢查前蓋全螢幕 splash —————————————————————————
+    // 只在「第一次 health check 還沒完成」時顯示，避免 backend offline 時永遠卡 splash。
+    if (!hasCompletedInitialCheck) {
         return <BackendBootSplash status={backendStatus} />
     }
 
@@ -234,7 +255,8 @@ export default function Login() {
         // border-subtle / border-strong 根據當前 light/dark 動態切，避免硬編譯
         // 在反向背景上看起來太深或太淺。
         <div
-            className="min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
+            // 用多重 vh 單位做 fallback，避免在某些 WebView/內嵌瀏覽器 dvh 計算異常造成版面上下偏移
+            className="min-h-screen min-h-[100svh] min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
             style={{
                 ['--color-ios-accent-light' as string]: '137 110 83',
                 ['--color-ios-accent-dark' as string]: '137 110 83',
@@ -312,7 +334,7 @@ export default function Login() {
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col relative z-30">
-                <div className="flex justify-between items-center p-6 w-full">
+                <div className="flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
                     <div className="lg:hidden">
                         <BackendStatusPill status={backendStatus} compact />
                     </div>
@@ -481,7 +503,6 @@ export default function Login() {
                                         // 切換到註冊：把「忘記密碼?」按鈕收掉，登入失敗的訊息也清掉。
                                         // email/password 沿用（這就是「轉移文字到註冊頁」的意思）。
                                         setLoginFailedOnce(false)
-                                        setRegisterSuccessHint(false)
                                     }}
                                     style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
                                     className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
@@ -505,8 +526,6 @@ export default function Login() {
                                         setFieldErrors(prev => ({ ...prev, email: '' }))
                                         // 改帳號 → 收掉「忘記密碼?」按鈕（可能是換帳號了，不是忘密碼）
                                         setLoginFailedOnce(false)
-                                        // 改任何欄位都把「註冊成功」綠色提示收掉
-                                        setRegisterSuccessHint(false)
                                     }}
                                     required
                                     label={t('auth.account')}
@@ -525,7 +544,6 @@ export default function Login() {
                                     onChange={(e) => {
                                         setPassword(e.target.value)
                                         setFieldErrors(prev => ({ ...prev, password: '' }))
-                                        setRegisterSuccessHint(false)
                                     }}
                                     required
                                     label={t('auth.password')}
@@ -602,24 +620,6 @@ export default function Login() {
                                         )}
                                     </AnimatePresence>
 
-                                    {/* 註冊成功 → 切回 login tab 後顯示一次 */}
-                                    <AnimatePresence>
-                                        {registerSuccessHint && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -10, height: 0 }}
-                                                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                                                exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                                                className="w-full text-center overflow-hidden"
-                                            >
-                                                <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-200 shadow-sm dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50">
-                                                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    <span>{t('auth.registerSuccessReLogin', '註冊成功，請以新帳號登入')}</span>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
 
                                     {/*
                                       登入 / 註冊送出按鈕區。

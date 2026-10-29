@@ -85,7 +85,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="rounded-[22px] border border-border-strong bg-bg-elevated/72 p-5 flex flex-col"
+                                className="rounded-cv-lg border border-border-subtle bg-bg-elevated/72 p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">

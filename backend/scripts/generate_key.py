@@ -1,9 +1,7 @@
 import secrets
-import string
 
 def generate_secret_key(length=32) -> str:
     """Generate a high-entropy secret key for JWT signing."""
-    alphabet = string.ascii_letters + string.digits
     # Generate random string and encode to hex for easier copy/pasting in .env
     key = secrets.token_hex(length)
     return key

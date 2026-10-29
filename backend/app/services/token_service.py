@@ -46,6 +46,12 @@ async def add_token_to_blacklist(
     if expires_at is None:
         expires_at = utc_now_naive_plus(hours=24)
 
+    # Already revoked (e.g. logout pressed twice / two tabs): nothing to do.
+    from sqlalchemy import select as _select
+    existing = (await db.execute(_select(TokenBlacklist).where(TokenBlacklist.jti == jti))).scalar_one_or_none()
+    if existing is not None:
+        return existing
+
     blacklist_entry = TokenBlacklist(
         jti=jti,
         user_id=user_id,

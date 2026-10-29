@@ -15,94 +15,54 @@ export const DEMO_USER = {
 }
 
 export const DEMO_MODELS = [
-    { name: 'qwen2.5-7b-instruct-q4_k_m', display_name: 'Qwen2.5-7B (CPU)', size_gb: 4.4, is_loaded: true, context_length: 32768, description: '純 CPU 推論，9.62 tok/s' },
-    { name: 'qwen2.5-3b-instruct-q4_k_m', display_name: 'Qwen2.5-3B (CPU)', size_gb: 2.0, is_loaded: false, context_length: 32768, description: '輕量模型，23.57 tok/s' },
-    { name: 'qwen2.5-14b-instruct-q4_k_m', display_name: 'Qwen2.5-14B (CPU)', size_gb: 8.9, is_loaded: false, context_length: 32768, description: '高品質模型，4.14 tok/s' },
-    { name: 'qwen2.5-7b-instruct-gpu', display_name: 'Qwen2.5-7B (GPU)', size_gb: 4.4, is_loaded: false, context_length: 32768, description: 'GPU 加速，37.30 tok/s' },
+    { name: 'qwen2.5-7b-instruct-q4_k_m', display_name: 'Qwen2.5-7B (CPU)', size_gb: 4.4, is_loaded: true, is_current: true, context_length: 32768, description: '純 CPU 推論，9.62 tok/s', filename: 'qwen2.5-7b-instruct-q4_k_m.gguf', quantization: 'Q4_K_M', sha256: 'a3f8d2c1b4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1' },
+    { name: 'qwen2.5-3b-instruct-q4_k_m', display_name: 'Qwen2.5-3B (CPU)', size_gb: 2.0, is_loaded: false, is_current: false, context_length: 32768, description: '輕量模型，23.57 tok/s', filename: 'qwen2.5-3b-instruct-q4_k_m.gguf', quantization: 'Q4_K_M', sha256: 'b4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5' },
+    { name: 'qwen2.5-14b-instruct-q4_k_m', display_name: 'Qwen2.5-14B (CPU)', size_gb: 8.9, is_loaded: false, is_current: false, context_length: 32768, description: '高品質模型，4.14 tok/s', filename: 'qwen2.5-14b-instruct-q4_k_m.gguf', quantization: 'Q4_K_M', sha256: 'c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6' },
 ]
 
-export const DEMO_CONVERSATIONS: Conversation[] = [
-    {
-        id: 'demo-conv-001',
-        title: '本系統如何保護企業敏感資料？',
-        model: 'qwen2.5-7b-instruct-q4_k_m',
-        messageCount: 2,
-        totalTokens: 312,
-        isPinned: false,
-        isArchived: false,
-        settings: { isProject: true, folderName: '資安專題' },
-        createdAt: '2026-09-19T21:30:00.000Z',
-        updatedAt: '2026-09-19T21:35:00.000Z',
-    },
-    {
-        id: 'demo-conv-002',
-        title: '測試資安功能',
-        model: 'qwen2.5-7b-instruct-q4_k_m',
-        messageCount: 6,
-        totalTokens: 480,
-        isPinned: false,
-        isArchived: false,
-        settings: { isProject: true, folderName: '資安專題' },
-        createdAt: '2026-09-19T21:31:00.000Z',
-        updatedAt: '2026-09-19T21:34:00.000Z',
-    },
-]
+export const DEMO_CONVERSATIONS: Conversation[] = []
 
-export const DEMO_FOLDERS = [{ name: '資安專題', conversationCount: 2 }]
+export const DEMO_FOLDERS: { name: string; conversationCount: number }[] = []
 
-export const DEMO_DOCUMENTS = [
-    {
-        id: 'demo-doc-001',
-        filename: '專題計畫書.docx',
-        original_filename: '專題提案計畫書-中小企業導入地端AI系統之資安維護實作.docx',
-        file_type: 'docx',
-        file_size: 245760,
-        size_bytes: 245760,
-        status: 'completed',
-        chunk_count: 48,
-        created_at: '2026-09-19T21:28:00.000Z',
-        processed_at: '2026-09-19T21:29:10.000Z',
-        doc_metadata: { folderName: '資安專題', isActive: true },
-    },
-]
+export const DEMO_DOCUMENTS: {
+    id: string; filename: string; original_filename: string; file_type: string
+    file_size: number; size_bytes: number; status: string; chunk_count: number
+    created_at: string; processed_at: string; doc_metadata: Record<string, unknown>
+}[] = []
 
 export const DEMO_SOURCES: MessageSource[] = [
     {
         document_id: 'demo-doc-001',
         document_name: '專題提案計畫書-中小企業導入地端AI系統之資安維護實作.docx',
-        chunk_id: 'chunk-032',
-        content: '3.2 個人資料自動遮罩（PII Masking）\n系統在用戶提問進入 AI 模型之前，會自動偵測並遮罩身分證號、手機號碼、信用卡號等敏感資訊。被遮罩的原始資料不會進入 LLM，確保敏感資訊不外洩至模型端。',
+        chunk_id: 'chunk-051',
+        content: '4.3 資安功能實測結果（表 4-3）\nPII 遮罩準確率：96.7%；DLP 阻擋率：100%；Prompt Injection 偵測率：90%。測試環境採本地部署，無任何資料送至外部伺服器。',
         score: 0.92,
     },
     {
-        document_id: 'demo-doc-001',
-        document_name: '專題提案計畫書-中小企業導入地端AI系統之資安維護實作.docx',
-        chunk_id: 'chunk-033',
-        content: '3.3 DLP 資料外洩防護規則引擎\n針對企業機密關鍵字（如薪資、合約、客戶名單），系統設有觸發規則，一旦偵測到高風險操作，立即阻擋請求並將事件記錄至稽核日誌。',
-        score: 0.88,
-    },
-    {
-        document_id: 'demo-doc-001',
-        document_name: '專題提案計畫書-中小企業導入地端AI系統之資安維護實作.docx',
-        chunk_id: 'chunk-051',
+        document_id: 'demo-doc-002',
+        document_name: '專題提案計畫書-中小企業導入地端AI系統之資安維護實作.pdf',
+        chunk_id: 'chunk-p051',
         content: '4.3 資安功能實測結果（表 4-3）\nPII 遮罩準確率：96.7%；DLP 阻擋率：100%；Prompt Injection 偵測率：90%。測試環境採本地部署，無任何資料送至外部伺服器。',
-        score: 0.81,
+        score: 0.88,
     },
 ]
 
-export const DEMO_QA_ANSWER = `Corphia 採用多層次資料保護機制，主要包含以下四個面向：
+export const DEMO_QA_ANSWER = `Corphia AI Platform 採用多層次資料保護機制，完全部署於企業內部環境，確保所有資料不離開本地端。
 
 **1. 個人資料自動遮罩（PII Masking）**
-系統在用戶提問進入 AI 模型之前，會自動偵測並遮罩身分證號、手機號碼、信用卡號等敏感資訊。被遮罩的原始資料不會進入 LLM，確保敏感資訊不外洩。
+提問在進入 AI 模型前，系統自動偵測並遮罩身分證號、手機號碼、信用卡號等敏感資訊，原始資料不進入 LLM。
 
 **2. DLP 資料外洩防護**
-針對企業機密關鍵字（如「薪資」「合約」「客戶名單」），系統設有觸發規則，一旦偵測到高風險操作，立即阻擋並記錄至稽核日誌。
+針對企業機密關鍵字（薪資、合約、客戶名單等）設有觸發規則，偵測到高風險操作即時阻擋並記錄至稽核日誌。
 
 **3. Prompt Injection 偵測**
-系統內建提示詞注入偵測引擎，可識別 ChatML 標籤繞過、角色扮演攻擊、越獄指令等模式，偵測到時自動清除危險標記並警告使用者。
+內建提示詞注入偵測引擎，可識別 ChatML 標籤繞過、角色扮演攻擊、越獄指令等模式，自動清除危險標記並警示使用者。
 
 **4. 完整稽核追蹤**
-所有對話、文件操作、異常事件均記錄於不可竄改的稽核日誌，管理員可依時間、使用者、事件類型篩選查閱，確保合規性與可追溯性。`
+所有對話、文件操作、異常事件均記錄於不可竄改的稽核日誌，管理員可依時間、使用者、事件類型篩選查閱，符合企業合規要求。
+
+**5. 地端部署，資料零外流**
+採用 Ollama 本地推論引擎，搭配 Qwen2.5 系列模型，所有運算在企業內部完成，敏感資料永不送至雲端。`
 
 export const DEMO_PII_MASK_MAP = [
     { original_preview: 'A123456789', masked: '[ID_CARD_****789]', type: 'ID_CARD', label: '身分證號' },
@@ -141,26 +101,50 @@ export const DEMO_INJECTION_ANSWER = `⚠️ **偵測到提示詞注入攻擊**
 
 我是 Corphia，協助中小企業管理企業知識的地端 AI 助理。我的行為準則已由您的系統管理員設定，無法被覆蓋或修改。`
 
-export const DEMO_AUDIT_LOGS = [
-    { id: 'log-001', event_type: 'INJECTION_DETECTED', user_email: 'demo@corp.ai', user_id: 'demo-user-001', description: '偵測到提示詞注入攻擊（HIGH），已自動清除危險標記', risk_level: 'high', ip_address: '192.168.1.101', created_at: '2026-09-19T21:34:00.000Z', metadata: {} },
-    { id: 'log-002', event_type: 'DLP_BLOCKED', user_email: 'demo@corp.ai', user_id: 'demo-user-001', description: '請求包含機密關鍵字（薪資、合約），已依 DLP 政策阻擋', risk_level: 'high', ip_address: '192.168.1.101', created_at: '2026-09-19T21:33:00.000Z', metadata: {} },
-    { id: 'log-003', event_type: 'PII_MASKED', user_email: 'demo@corp.ai', user_id: 'demo-user-001', description: '遮罩 1 筆個資（身分證號：ID_CARD），原始資料未進入模型', risk_level: 'medium', ip_address: '192.168.1.101', created_at: '2026-09-19T21:32:00.000Z', metadata: {} },
-    { id: 'log-004', event_type: 'CHAT_QUERY', user_email: 'demo@corp.ai', user_id: 'demo-user-001', description: '正常問答完成，引用 3 篇文件段落', risk_level: 'low', ip_address: '192.168.1.101', created_at: '2026-09-19T21:31:00.000Z', metadata: {} },
-    { id: 'log-005', event_type: 'DOCUMENT_UPLOAD', user_email: 'demo@corp.ai', user_id: 'demo-user-001', description: '上傳文件「專題提案計畫書.docx」並完成向量化處理（48 chunks）', risk_level: 'low', ip_address: '192.168.1.101', created_at: '2026-09-19T21:28:00.000Z', metadata: {} },
-    { id: 'log-006', event_type: 'USER_LOGIN', user_email: 'admin@corp.ai', user_id: 'admin-user-001', description: '管理員帳號登入成功', risk_level: 'low', ip_address: '192.168.1.100', created_at: '2026-09-19T21:25:00.000Z', metadata: {} },
-]
+export const DEMO_AUDIT_LOGS: {
+    id: string; event_type: string; user_email: string; user_id: string
+    description: string; risk_level: string; ip_address: string; created_at: string; metadata: Record<string, unknown>
+}[] = []
 
 export const DEMO_USERS = [
-    { id: 'admin-user-001', name: '系統管理員', email: 'admin@corp.ai', role: 'admin', isActive: true, createdAt: '2026-09-01T08:00:00.000Z', lastLoginAt: '2026-09-19T21:25:00.000Z' },
-    { id: 'demo-user-001', name: '王小明', email: 'demo@corp.ai', role: 'user', isActive: true, createdAt: '2026-09-10T08:00:00.000Z', lastLoginAt: '2026-09-19T21:30:00.000Z' },
-    { id: 'demo-user-002', name: '李小華', email: 'lihua@corp.ai', role: 'user', isActive: true, createdAt: '2026-09-12T08:00:00.000Z', lastLoginAt: '2026-09-18T14:22:00.000Z' },
+    { id: 'user-admin-001', name: '系統管理員', email: 'admin@corp.ai', role: 'admin', is_active: true, created_at: '2026-09-01T08:00:00.000Z', last_login_at: '2026-09-20T09:00:00.000Z' },
+    { id: 'user-002', name: '王小明', email: 'ming@corp.ai', role: 'user', is_active: true, created_at: '2026-09-05T08:00:00.000Z', last_login_at: '2026-09-19T17:30:00.000Z' },
+    { id: 'user-003', name: '李小華', email: 'hua@corp.ai', role: 'user', is_active: true, created_at: '2026-09-10T08:00:00.000Z', last_login_at: '2026-09-18T14:22:00.000Z' },
 ]
 
-export const DEMO_STATS = { totalUsers: 3, totalConversations: 2, totalDocuments: 1, totalMessages: 8 }
+export const DEMO_STATS = { totalUsers: 3, totalConversations: 0, totalDocuments: 0, totalMessages: 0 }
+
+export const DEMO_RAG_IN_DOC_ANSWER = `根據您上傳的《專題提案計畫書-中小企業導入地端AI系統之資安維護實作》，系統資安功能實測結果如下：
+
+**表 4-3 資安功能實測結果**
+
+| 資安功能 | 測試筆數 | 準確率 / 阻擋率 |
+|---------|---------|---------------|
+| PII 個資自動遮罩 | 30 筆 | **96.7%** |
+| DLP 資料外洩防護 | 20 筆 | **100%** |
+| Prompt Injection 偵測 | 20 筆 | **90%** |
+
+所有測試均在本地部署環境下進行，**無任何資料傳送至外部伺服器**。
+
+> 📄 引用來源：第 4.3 節「資安功能實測結果」`
+
+export const DEMO_RAG_NOT_FOUND_ANSWER = `根據目前知識庫中的文件，**找不到與此問題相關的資訊**。
+
+本系統的 RAG（檢索增強生成）功能僅能根據已上傳文件的內容回答問題。目前知識庫收錄：
+- 《專題提案計畫書-中小企業導入地端AI系統之資安維護實作》
+
+**知識庫可回答的問題類型：**
+- 系統功能與技術規格說明
+- 資安功能實測結果與效能數據
+- 系統架構、部署方式與研究背景
+
+如需查詢知識庫範圍以外的資訊，請上傳相關文件，或改為使用不啟用 RAG 的一般問答模式。`
 
 export const DEMO_TRIGGERS = {
-    qa:        ['保護', '資料', '敏感', '安全', '機制', '功能', '如何', '什麼'],
-    pii:       ['身份證', '身分證', '手機號', '信用卡', 'A123456789'],
-    dlp:       ['薪資', '合約', '客戶名單', '薪水', '員工薪'],
-    injection: ['忽略', '以前的指令', '沒有任何限制', '越獄', 'ignore previous'],
+    qa:          ['保護', '資料', '敏感', '安全', '機制', '功能', '如何', '什麼', '確保', '地端', '平台'],
+    pii:         ['身份證', '身分證', '手機號', '信用卡', 'A123456789'],
+    dlp:         ['薪資', '合約', '客戶名單', '薪水', '員工薪'],
+    injection:   ['忽略', '以前的指令', '沒有任何限制', '越獄', 'ignore previous'],
+    rag_in_doc:  ['準確率', '阻擋率', '偵測率', '實測', '根據文件', '根據上傳', '文件中', '知識庫中'],
+    rag_not_found: ['天氣', '氣象', '股市', '股價', '電影', '運動', '新聞', '食物', '餐廳'],
 }

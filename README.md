@@ -95,12 +95,29 @@ python start.py --force-engine
 # 不自動開瀏覽器
 python start.py --skip-browser
 
+# 只啟動後端（前端已用 npm run dev 跑著時）
+python start.py --backend-only
+
+# 不啟動 Vite（僅後端 + DB）
+python start.py --skip-frontend
+
 # 只看資料庫 container
 docker ps --filter name=corphia-postgres
 
 # 停止資料庫 container
 docker compose down
 ```
+
+## 建議硬體規格（地端）
+
+| 項目 | 最低 | 建議 |
+|------|------|------|
+| RAM | 16 GB | 32 GB（7B Q5 + Embedding） |
+| 磁碟 | 20 GB 可用 | SSD 50 GB+（含 GGUF 模型） |
+| GPU | 無（CPU 模式） | NVIDIA 8 GB+ VRAM（可 offload 層數） |
+| Docker | 必須 | Desktop 常駐（僅 PostgreSQL） |
+
+首次啟動：API 約 **10–30 秒** 可進登入頁；LLM/RAG 背景預熱可能再需 **1–5 分鐘**（視模型與磁碟速度）。
 
 ## 預設帳號
 

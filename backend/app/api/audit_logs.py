@@ -53,10 +53,13 @@ async def list_audit_logs(
 
     # 非 engineer 只能查看自己租戶的
     if current_user.role != "engineer":
-        query = query.where(AuditLog.tenant_id == current_user.tenant_id)
-        count_query_base = count_query_base.where(
-            AuditLog.tenant_id == current_user.tenant_id
-        )
+        # 帳號沒有指定租戶時視為 default（與後台資安統計一致）；
+        # 登入失敗等事件發生在認得租戶之前，tenant_id 為空，也一併顯示
+        from sqlalchemy import or_
+        tid = current_user.tenant_id or "default"
+        tenant_filter = or_(AuditLog.tenant_id == tid, AuditLog.tenant_id.is_(None))
+        query = query.where(tenant_filter)
+        count_query_base = count_query_base.where(tenant_filter)
 
     # 篩選條件
     if action:

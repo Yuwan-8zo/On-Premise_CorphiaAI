@@ -102,7 +102,7 @@ def check_and_optimize(force=False):
         except Exception:
             pass
             
-    print(f"\n[AI 引擎管家] 偵測到新的硬體環境！")
+    print("\n[AI 引擎管家] 偵測到新的硬體環境！")
     print(f" -> 系統 GPUs: {', '.join(gpus) if gpus else 'None'}")
     print(f" -> 為您規劃最佳核心: {backend} 加速模式\n")
     

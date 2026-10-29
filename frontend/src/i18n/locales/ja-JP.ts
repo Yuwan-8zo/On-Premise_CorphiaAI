@@ -320,7 +320,6 @@ export default {
         chunksCount: '取得チャンク数',
         similarity: '類似度',
         ragRoute: 'ナレッジベース検索',
-        webRoute: 'ウェブ検索',
         chatRoute: '一般チャット',
     },
 

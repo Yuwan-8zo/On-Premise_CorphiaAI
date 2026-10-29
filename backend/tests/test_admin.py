@@ -6,7 +6,6 @@
 - 管理員（admin/engineer）可正常存取
 """
 
-import pytest
 from httpx import AsyncClient
 
 from app.models.user import User

@@ -1,7 +1,6 @@
 """
 測試 admin@local email 驗證
 """
-import asyncio
 from pydantic import BaseModel, EmailStr, ValidationError
 
 class LoginRequest(BaseModel):

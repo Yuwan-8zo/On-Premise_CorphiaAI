@@ -63,6 +63,19 @@ interface ModelIntegrityResponse {
     }
 }
 
+export interface DashboardSnapshot {
+    security: SecuritySummary
+    ai: {
+        llm: string
+        rag: string
+    }
+}
+
+interface DashboardSnapshotResponse {
+    status: 'success' | 'error'
+    data: DashboardSnapshot
+}
+
 export interface TenantUsageStats {
     id: string
     name: string
@@ -94,6 +107,13 @@ export const adminApi = {
      */
     getSecuritySummary: async (): Promise<SecuritySummary | null> => {
         const response = await apiClient.get<SecuritySummaryResponse>('/admin/security-summary')
+        if (response.data?.status === 'success') return response.data.data
+        return null
+    },
+
+    /** Overview 儀表板聚合（資安 + AI 就緒），減少多路輪詢 */
+    getDashboardSnapshot: async (): Promise<DashboardSnapshot | null> => {
+        const response = await apiClient.get<DashboardSnapshotResponse>('/admin/dashboard-snapshot')
         if (response.data?.status === 'success') return response.data.data
         return null
     },

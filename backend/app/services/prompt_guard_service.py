@@ -90,6 +90,17 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         ),
         "medium",
     ),
+    # 冒充高權限角色（中英）——「扮演管理員」「假裝你是系統管理員」「act as admin」
+    (
+        "冒充高權限角色",
+        re.compile(
+            r'(?:扮演|假裝|假装|冒充|以|當作|当作|你是|你現在是|你现在是).{0,6}'
+            r'(?:系統管理員|系统管理员|管理員|管理员|超級使用者|超级用户|root|admin|administrator)'
+            r'|(?:act|pretend|behave)\s+(?:as|like|to\s+be)\s+(?:an?\s+)?(?:admin|administrator|root|superuser)',
+            re.IGNORECASE
+        ),
+        "high",
+    ),
     # Markdown / HTML injection
     (
         "Markdown圖片注入",

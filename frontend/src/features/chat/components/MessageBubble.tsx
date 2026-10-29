@@ -10,7 +10,8 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Copy, Edit2, Check, X, ShieldCheck, RefreshCw } from 'lucide-react'
+import { Edit2, Check, X, RefreshCw } from 'lucide-react'
+import { CopyIcon, ItshoverIcon, ShieldCheckIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
 import { motion } from '@/lib/gsapMotion'
@@ -230,7 +231,11 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
                             <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
-                                {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                {isCopied ? (
+                                    <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
+                                ) : (
+                                    <ItshoverIcon icon={CopyIcon} size={14} interactive />
+                                )}
                             </button></Tooltip>
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {(!message.audio || message.audio.transcript) && (
@@ -260,7 +265,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             )}
                             {message.content_hash && (
                                 <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
-                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                    <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
                                     <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                         Verified: {message.content_hash.substring(0, 16)}...
                                     </div>
@@ -291,15 +296,15 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             />
                         ) : null}
 
-                        {/* 來源引用 */}
-                        {message.sources && message.sources.length > 0 && (
+                        {/* 來源引用：回答完成後才顯示，避免還沒回答就先出現「參考了哪些段落」 */}
+                        {!isStreaming && message.sources && message.sources.length > 0 && (
                             <div className="mt-4">
                                 <SourceCitations sources={message.sources} />
                             </div>
                         )}
 
                         {/* C2: RAG 除錯面板 — 僅在最後一則 AI 訊息且開啟 Debug Mode 時顯示 */}
-                        {showRAGDebug && message.sources && message.sources.length > 0 && (
+                        {showRAGDebug && !isStreaming && message.sources && message.sources.length > 0 && (
                             <RAGDebugPanel
                                 sources={message.sources.map((s) => ({
                                     chunk_id: s.chunk_id,
@@ -316,7 +321,11 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
                                 <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
-                                    {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                    {isCopied ? (
+                                    <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
+                                ) : (
+                                    <ItshoverIcon icon={CopyIcon} size={14} interactive />
+                                )}
                                 </button></Tooltip>
                                 {onRegenerate && (
                                     <button
@@ -338,7 +347,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 )}
                                 {message.content_hash && (
                                     <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
-                                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                        <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
                                         <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
                                             Verified: {message.content_hash.substring(0, 16)}...
                                         </div>

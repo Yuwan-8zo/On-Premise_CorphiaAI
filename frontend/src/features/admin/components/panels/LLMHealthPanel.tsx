@@ -26,9 +26,17 @@ interface DetailedHealthData {
 
 export interface LLMHealthPanelProps {
     className?: string
+    aiBoot?: { llm: string; rag: string } | null
 }
 
-export default function LLMHealthPanel({ className }: LLMHealthPanelProps) {
+const bootLabel: Record<string, string> = {
+    loading: '載入中',
+    ready: '就緒',
+    unavailable: '未掛載',
+    error: '錯誤',
+}
+
+export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProps) {
     const { t } = useTranslation()
 
     const { data } = usePolling(
@@ -52,55 +60,73 @@ export default function LLMHealthPanel({ className }: LLMHealthPanelProps) {
     const tokensPerSec = llm?.throughput?.last_tokens_per_sec ?? 0
     const totalGenerations = llm?.throughput?.total_generations ?? 0
 
+    const llmReady = aiBoot?.llm === 'ready'
+    const ragReady = aiBoot?.rag === 'ready'
+
     return (
-        <Panel className={`overflow-hidden flex flex-col min-h-[160px] lg:min-h-0 ${className || ''}`}>
-            <SectionHeader
-                title={t('admin.overview.llmHealth', 'LLM 即時狀態')}
-                eyebrow="LLM Health"
-            />
-            <div className="flex-1 min-h-0 p-2.5">
-                <div className="flex flex-col gap-2 h-full">
-                    {/* 模型名稱行 */}
-                    <div className="px-2 py-1.5 rounded-cv-sm bg-bg-secondary/50 border border-border/30">
-                        <p className="text-[8px] font-medium uppercase tracking-[0.1em] text-text-muted mb-0.5">
-                            {t('admin.overview.modelLoaded', '已載入')}
+        <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 ${className || ''}`}>
+            {/* 標題列：eyebrow + LLM/RAG 狀態 badge 並排 */}
+            <div className="flex items-start justify-between px-5 py-3 border-b border-white/[0.06]">
+                <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">LLM Health</p>
+                    <h2 className="text-[15px] font-semibold tracking-tight text-text-primary">
+                        {t('admin.overview.llmHealth', 'LLM 即時狀態')}
+                    </h2>
+                </div>
+                {aiBoot && (
+                    <div className="flex gap-1.5 mt-0.5">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide border ${llmReady ? 'bg-emerald-950/70 text-emerald-400 border-emerald-500/30' : 'bg-white/[0.05] text-text-muted border-white/[0.08]'}`}>
+                            <span className={`h-1 w-1 rounded-full ${llmReady ? 'bg-emerald-400' : 'bg-text-muted'}`} />
+                            LLM
+                        </span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide border ${ragReady ? 'bg-blue-950/70 text-blue-400 border-blue-500/30' : 'bg-white/[0.05] text-text-muted border-white/[0.08]'}`}>
+                            <span className={`h-1 w-1 rounded-full ${ragReady ? 'bg-blue-400' : 'bg-text-muted'}`} />
+                            RAG
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col gap-2 p-2.5">
+                {/* 模型名稱 — 主要資訊 */}
+                <div className="flex items-center gap-2.5 px-3 py-2 rounded-cv-sm bg-white/[0.05] border border-white/[0.07]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
+                        <Cpu className="h-3.5 w-3.5" />
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-text-muted">
+                            {t('admin.overview.modelLoaded', '當前模型')}
                         </p>
-                        <p className="text-sm font-medium text-text-primary truncate">
+                        <p className="text-[13px] font-medium text-text-primary truncate leading-tight">
                             {modelName}
                         </p>
                     </div>
+                </div>
 
-                    {/* 兩個小卡網格 */}
-                    <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
-                        {/* Tokens/sec */}
-                        <div className="flex flex-col items-start justify-between p-2 rounded-cv-sm bg-bg-secondary/50 border border-border/30 hover:border-border/60 transition-colors">
-                            <div className="flex items-center gap-1.5 w-full mb-1">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-accent/10 text-accent">
-                                    <Zap className="h-2.5 w-2.5" />
-                                </span>
-                                <p className="text-[7px] font-medium uppercase tracking-[0.1em] text-text-muted truncate">
-                                    {t('admin.overview.tokensPerSec', 'Tokens/秒')}
-                                </p>
-                            </div>
-                            <p className="text-base font-semibold tabular-nums text-text-primary">
-                                {tokensPerSec.toFixed(1)}
+                {/* 兩個指標卡 */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1 px-3 py-2.5 rounded-cv-sm bg-white/[0.05] border border-white/[0.07] hover:bg-white/[0.08] transition-colors">
+                        <div className="flex items-center gap-1.5">
+                            <Zap className="h-3 w-3 text-amber-400" />
+                            <p className="text-[8px] font-medium uppercase tracking-[0.1em] text-text-muted">
+                                {t('admin.overview.tokensPerSec', 'Tokens/秒')}
                             </p>
                         </div>
+                        <p className="text-xl font-semibold tabular-nums text-text-primary">
+                            {tokensPerSec.toFixed(1)}
+                        </p>
+                    </div>
 
-                        {/* Total Generations */}
-                        <div className="flex flex-col items-start justify-between p-2 rounded-cv-sm bg-bg-secondary/50 border border-border/30 hover:border-border/60 transition-colors">
-                            <div className="flex items-center gap-1.5 w-full mb-1">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-accent/10 text-accent">
-                                    <Cpu className="h-2.5 w-2.5" />
-                                </span>
-                                <p className="text-[7px] font-medium uppercase tracking-[0.1em] text-text-muted truncate">
-                                    {t('admin.overview.totalGenerations', '推論次數')}
-                                </p>
-                            </div>
-                            <p className="text-base font-semibold tabular-nums text-text-primary">
-                                {totalGenerations.toLocaleString()}
+                    <div className="flex flex-col gap-1 px-3 py-2.5 rounded-cv-sm bg-white/[0.05] border border-white/[0.07] hover:bg-white/[0.08] transition-colors">
+                        <div className="flex items-center gap-1.5">
+                            <Cpu className="h-3 w-3 text-violet-400" />
+                            <p className="text-[8px] font-medium uppercase tracking-[0.1em] text-text-muted">
+                                {t('admin.overview.totalGenerations', '推論次數')}
                             </p>
                         </div>
+                        <p className="text-xl font-semibold tabular-nums text-text-primary">
+                            {totalGenerations.toLocaleString()}
+                        </p>
                     </div>
                 </div>
             </div>

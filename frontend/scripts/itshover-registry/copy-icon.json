@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "copy-icon",
+  "dependencies": ["motion"],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "icons/copy-icon.tsx",
+      "content": "import { forwardRef, useImperativeHandle } from \"react\";\nimport type { AnimatedIconHandle, AnimatedIconProps } from \"./types\";\nimport { motion, useAnimate } from \"motion/react\";\n\nconst CopyIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(\n  (\n    { size = 24, color = \"currentColor\", strokeWidth = 2, className = \"\" },\n    ref,\n  ) => {\n    const [scope, animate] = useAnimate();\n\n    const start = async () => {\n      await animate(\n        \".front-copy\",\n        { x: [0, 2, 0], y: [0, 2, 0] },\n        { duration: 0.3, ease: \"easeInOut\" },\n      );\n    };\n\n    const stop = () => {\n      animate(\n        \".front-copy\",\n        { x: 0, y: 0 },\n        { duration: 0.2, ease: \"easeOut\" },\n      );\n    };\n\n    useImperativeHandle(ref, () => {\n      return {\n        startAnimation: start,\n        stopAnimation: stop,\n      };\n    });\n\n    const handleHoverStart = () => {\n      start();\n    };\n\n    const handleHoverEnd = () => {\n      stop();\n    };\n\n    return (\n      <motion.div\n        ref={scope}\n        onHoverStart={handleHoverStart}\n        onHoverEnd={handleHoverEnd}\n        className={`inline-flex cursor-pointer items-center justify-center ${className}`}\n      >\n        <svg\n          xmlns=\"http://www.w3.org/2000/svg\"\n          width={size}\n          height={size}\n          viewBox=\"0 0 24 24\"\n          fill=\"none\"\n          stroke={color}\n          strokeWidth={strokeWidth}\n          strokeLinecap=\"round\"\n          strokeLinejoin=\"round\"\n        >\n          <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n          <path d=\"M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1\" />\n          <motion.path\n            className=\"front-copy\"\n            d=\"M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z\"\n          />\n        </svg>\n      </motion.div>\n    );\n  },\n);\n\nCopyIcon.displayName = \"CopyIcon\";\n\nexport default CopyIcon;\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "icons/types.ts",
+      "content": "import type { SVGProps } from \"react\";\n\nexport type IconEasing =\n  | \"linear\"\n  | \"easeIn\"\n  | \"easeOut\"\n  | \"easeInOut\"\n  | \"circIn\"\n  | \"circOut\"\n  | \"circInOut\"\n  | \"backIn\"\n  | \"backOut\"\n  | \"backInOut\"\n  | \"anticipate\";\n\nexport interface AnimatedIconProps extends Omit<\n  SVGProps<SVGSVGElement>,\n  | \"ref\"\n  | \"onAnimationStart\"\n  | \"onAnimationEnd\"\n  | \"onAnimationIteration\"\n  | \"onDrag\"\n  | \"onDragEnd\"\n  | \"onDragEnter\"\n  | \"onDragExit\"\n  | \"onDragLeave\"\n  | \"onDragOver\"\n  | \"onDragStart\"\n  | \"onDrop\"\n  | \"values\"\n> {\n  /** Icon size in pixels or CSS string */\n  size?: number | string;\n  /** Icon color (defaults to currentColor) */\n  color?: string;\n  /** SVG stroke width */\n  strokeWidth?: number;\n  /** Additional CSS classes */\n  className?: string;\n}\n\nexport interface AnimatedIconHandle {\n  startAnimation: () => void;\n  stopAnimation: () => void;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

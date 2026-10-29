@@ -4,7 +4,7 @@ import { DEMO_AUDIT_LOGS } from '../demo/mockData'
 function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 
 export type AuditLogItem = (typeof DEMO_AUDIT_LOGS)[number] & { action?: string }
-export interface AuditLogQuery { page?: number; limit?: number; event_type?: string; user_id?: string }
+export interface AuditLogQuery { page?: number; limit?: number; page_size?: number; event_type?: string; action?: string; resource_type?: string; user_id?: string; start_date?: string; end_date?: string }
 
 /** auditAggregations.ts 需要這個 export */
 export const ACTION_LABELS: Record<string, string> = {
@@ -31,21 +31,21 @@ export const RESOURCE_LABELS: Record<string, string> = {
     admin: '管理員',
 }
 
-/** 加入 action 欄位（與 event_type 相同），讓 auditAggregations 可以讀取 */
-const LOGS_WITH_ACTION = DEMO_AUDIT_LOGS.map((l) => ({
-    ...l,
-    action: l.event_type,
-}))
-
 export async function getAuditLogs(_query?: AuditLogQuery) {
     await sleep(300)
-    return { data: LOGS_WITH_ACTION, total: LOGS_WITH_ACTION.length }
+    // 每次呼叫都即時從 DEMO_AUDIT_LOGS 讀取，確保 push 進去的新事件能反映
+    const logsWithAction = DEMO_AUDIT_LOGS.map((l) => ({ ...l, action: l.event_type }))
+    const page = _query?.page ?? 1
+    const pageSize = _query?.page_size ?? _query?.limit ?? 20
+    const total = logsWithAction.length
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
+    return { data: logsWithAction, total, page, total_pages: totalPages }
 }
 
 export async function exportAuditLogsCSV(_query?: AuditLogQuery) {
     await sleep(200)
     const headers = ['時間', '使用者', '事件類型', '說明', '風險等級', 'IP']
-    const rows = LOGS_WITH_ACTION.map((l) => [l.created_at, l.user_email, l.event_type, `"${l.description}"`, l.risk_level, l.ip_address])
+    const rows = DEMO_AUDIT_LOGS.map((l) => [l.created_at, l.user_email, l.event_type, `"${l.description}"`, l.risk_level, l.ip_address])
     const csv = '\uFEFF' + [headers, ...rows].map((r) => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -55,7 +55,7 @@ export async function exportAuditLogsCSV(_query?: AuditLogQuery) {
 
 export async function exportAuditLogsJSON(_query?: AuditLogQuery) {
     await sleep(200)
-    const blob = new Blob([JSON.stringify(LOGS_WITH_ACTION, null, 2)], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(DEMO_AUDIT_LOGS.map((l) => ({ ...l, action: l.event_type })), null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a'); a.href = url; a.download = 'audit_logs_demo.json'; a.click()
     return blob

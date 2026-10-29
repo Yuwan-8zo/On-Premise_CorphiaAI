@@ -18,6 +18,10 @@
 import { conversationsApi } from '@/api/conversations'
 import type { StreamResponse } from '@/api/websocket'
 import { useChatStore } from '@/store/chatStore'
+import { useToastStore } from '@/store/toastStore'
+
+// Security notices stay on screen long enough to be read during a live demo.
+const SECURITY_TOAST_MS = 6000
 
 interface ToastApi {
     error: (message: string) => void
@@ -77,6 +81,20 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                     data: { mask_map: data.mask_map || [] },
                     timestamp: Date.now(),
                 })
+                // 立刻把畫面上剛送出的使用者訊息換成遮罩版，觀眾不必等 AI 回答完才看到
+                if (typeof data.masked_text === 'string') {
+                    const masked = data.masked_text
+                    const st = useChatStore.getState()
+                    const msgs = [...st.messages]
+                    for (let i = msgs.length - 1; i >= 0; i--) {
+                        if (msgs[i].role === 'user') {
+                            msgs[i] = { ...msgs[i], content: masked }
+                            break
+                        }
+                    }
+                    st.setMessages(msgs)
+                }
+                useToastStore.getState().add('🔒 偵測到個人資料，已自動遮罩後才交給 AI', 'info', SECURITY_TOAST_MS)
                 break
 
             // A2: Prompt Injection 偵測警告 — 後端 guard 偵測到可疑模式
@@ -90,11 +108,33 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                     },
                     timestamp: Date.now(),
                 })
+                useToastStore.getState().add('⚠️ 偵測到提示詞注入攻擊，已寫入稽核日誌', 'error', SECURITY_TOAST_MS)
+                break
+
+            // A2: 高風險 Prompt Injection → 後端已攔阻，不會有 stream content
+            case 'injection_block':
+                setStreaming(false)
+                appendToLastMessage(
+                    `⛔ **已攔阻高風險提示詞注入攻擊**
+
+${data.message || '請求未送入 AI 模型。'}
+
+系統指令無法被覆蓋，此事件已寫入稽核日誌。`,
+                )
                 break
 
             // A3: DLP 黑名單命中 → 後端已攔阻，根本不會有 stream content 過來
             case 'dlp_block':
                 setStreaming(false)
+                // The backend never streams an answer for a blocked message, so fill the
+                // empty assistant bubble with a visible notice instead of leaving it blank.
+                appendToLastMessage(
+                    `⛔ **此訊息已被 DLP 資料外洩防護政策攔阻**
+
+${data.message || '訊息包含列管字詞。'}
+
+此事件已寫入稽核日誌，內容沒有送進 AI 模型。`,
+                )
                 useChatStore.getState().addSecurityWarning({
                     type: 'dlp',
                     message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',
@@ -103,7 +143,7 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                     },
                     timestamp: Date.now(),
                 })
-                toast.error(data.message || '訊息已被 DLP 策略攔阻')
+                useToastStore.getState().add('⛔ 訊息含列管機密字詞，已依 DLP 政策攔阻', 'error', SECURITY_TOAST_MS)
                 break
         }
     }

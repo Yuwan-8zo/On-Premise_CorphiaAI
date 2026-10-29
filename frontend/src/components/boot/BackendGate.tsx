@@ -16,6 +16,9 @@
  */
 
 import { useState, type ReactNode } from 'react'
+
+import { useSystemStore } from '@/store/systemStore'
+
 import BackendBootSplash from './BackendBootSplash'
 
 interface BackendGateProps {
@@ -26,7 +29,14 @@ export default function BackendGate({ children }: BackendGateProps) {
     const [isReady, setIsReady] = useState(false)
 
     if (!isReady) {
-        return <BackendBootSplash onReady={() => setIsReady(true)} />
+        return (
+            <BackendBootSplash
+                onReady={() => {
+                    useSystemStore.getState().startHealthPolling()
+                    setIsReady(true)
+                }}
+            />
+        )
     }
 
     return <>{children}</>

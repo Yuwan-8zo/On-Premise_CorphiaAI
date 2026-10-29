@@ -110,10 +110,10 @@ export default function ModelsSection({
                             return (
                                 <div
                                     key={model.name}
-                                    className={`flex flex-col gap-4 rounded-[22px] border p-5 md:flex-row md:items-center md:justify-between ${
+                                    className={`flex flex-col gap-4 rounded-cv-lg border p-5 md:flex-row md:items-center md:justify-between ${
                                         model.is_current
                                             ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
-                                            : 'border-border-strong bg-bg-elevated/72'
+                                            : 'border-border-subtle bg-bg-elevated/72'
                                     }`}
                                 >
                                     <div className="min-w-0 flex-1">

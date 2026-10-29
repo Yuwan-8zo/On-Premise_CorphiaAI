@@ -9,7 +9,7 @@ function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 const mockModelsApi = {
     getModels: async () => {
         await sleep(300)
-        return { models: DEMO_MODELS as ModelItem[], current_model: DEMO_MODELS[0].name }
+        return { models: DEMO_MODELS as ModelItem[], current_model: DEMO_MODELS[0].name, models_dir: 'ai_models' }
     },
     selectModel: async (name: string) => {
         await sleep(800)
@@ -17,7 +17,7 @@ const mockModelsApi = {
     },
     refreshModels: async () => {
         await sleep(1000)
-        return { models: DEMO_MODELS as ModelItem[], current_model: DEMO_MODELS[0].name }
+        return { models: DEMO_MODELS as ModelItem[], current_model: DEMO_MODELS[0].name, models_dir: 'ai_models' }
     },
 }
 

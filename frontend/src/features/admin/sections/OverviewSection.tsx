@@ -31,7 +31,9 @@ import {
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { adminApi } from '@/api/admin'
 import type { AuditLogItem } from '@/api/auditLogs'
+import { usePolling } from '@/features/admin/hooks/usePolling'
 import {
     Panel,
     SectionHeader,
@@ -72,6 +74,12 @@ export default function OverviewSection({
 }: OverviewSectionProps) {
     const { t } = useTranslation()
 
+    const { data: dashboardSnapshot } = usePolling(
+        () => adminApi.getDashboardSnapshot(),
+        8000,
+        true,
+    )
+
     // 前端聚合圖表所需 series（memoised — 來源資料沒變就不重算）
     const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7), [auditLogs])
     const actionSeries = useMemo(() => aggregateByAction(auditLogs, 5), [auditLogs])
@@ -87,37 +95,55 @@ export default function OverviewSection({
         }).length
     }, [auditLogs])
 
-    // 6 張 KPI 卡（4 個業務 stat + 2 個即時數）
+    // 6 張 KPI 卡（4 個業務 stat + 2 個即時數）— 各自配色
     const metricCards = [
         {
             label: t('admin.overview.users'),
             value: stats.totalUsers,
             icon: Users,
+            iconBg: 'bg-blue-950/70 ring-1 ring-blue-500/25',
+            iconColor: 'text-blue-400',
+            glow: 'bg-blue-500/15',
         },
         {
             label: t('admin.overview.conversations'),
             value: stats.totalConversations,
             icon: MessageSquare,
+            iconBg: 'bg-emerald-950/70 ring-1 ring-emerald-500/25',
+            iconColor: 'text-emerald-400',
+            glow: 'bg-emerald-500/15',
         },
         {
             label: t('admin.overview.documents'),
             value: stats.totalDocuments,
             icon: Layers3,
+            iconBg: 'bg-violet-950/70 ring-1 ring-violet-500/25',
+            iconColor: 'text-violet-400',
+            glow: 'bg-violet-500/15',
         },
         {
             label: t('admin.overview.messages'),
             value: stats.totalMessages,
             icon: FileText,
+            iconBg: 'bg-amber-950/70 ring-1 ring-amber-500/25',
+            iconColor: 'text-amber-400',
+            glow: 'bg-amber-500/15',
         },
         {
             label: t('admin.overview.activeUsers', '活躍使用者'),
             value: activeUsers,
             icon: Activity,
+            iconBg: 'bg-teal-950/70 ring-1 ring-teal-500/25',
+            iconColor: 'text-teal-400',
+            glow: 'bg-teal-500/15',
         },
         {
             label: t('admin.overview.eventsToday', '今日事件'),
             value: todayEventCount,
             icon: ShieldCheck,
+            iconBg: 'bg-red-950/70 ring-1 ring-red-500/25',
+            iconColor: 'text-red-400',
+            glow: 'bg-red-500/15',
         },
     ]
 
@@ -136,22 +162,22 @@ export default function OverviewSection({
                     return (
                         <Panel
                             key={item.label}
-                            className="relative overflow-hidden p-2.5 hover:border-accent/40 lift-on-hover"
+                            className="relative overflow-hidden p-2.5 lift-on-hover"
                         >
-                            {/* 角落柔光斑點 */}
+                            {/* 角落柔光斑點 — 各自顏色 */}
                             <div
                                 aria-hidden
-                                className="pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full bg-accent/10 blur-2xl"
+                                className={`pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full blur-2xl ${item.glow}`}
                             />
                             <div className="relative flex items-center gap-2">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm bg-accent/10 text-accent">
+                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-[9px] font-medium uppercase tracking-[0.14em] text-text-muted">
                                         {item.label}
                                     </p>
-                                    <p className="text-[18px] font-light leading-tight text-text-primary tabular-nums">
+                                    <p className={`text-[18px] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
                                         {item.value.toLocaleString()}
                                     </p>
                                 </div>
@@ -204,8 +230,14 @@ export default function OverviewSection({
               5/4/3 split @ lg+
               ───────────────────────────────────────────────────────────── */}
             <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
-                <SecurityEventsPanel className="lg:col-span-5" />
-                <LLMHealthPanel className="lg:col-span-4" />
+                <SecurityEventsPanel
+                    className="lg:col-span-5"
+                    securitySummary={dashboardSnapshot?.security ?? null}
+                />
+                <LLMHealthPanel
+                    className="lg:col-span-4"
+                    aiBoot={dashboardSnapshot?.ai}
+                />
                 <SystemResourcePanel className="lg:col-span-3" />
             </section>
 

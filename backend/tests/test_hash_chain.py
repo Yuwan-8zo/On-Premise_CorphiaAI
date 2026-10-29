@@ -8,7 +8,6 @@ B2: Hash Chain 服務的單元測試
 - 邊界情況（空內容、特殊字元）
 """
 
-import pytest
 from app.services.hash_chain_service import compute_message_hash
 
 

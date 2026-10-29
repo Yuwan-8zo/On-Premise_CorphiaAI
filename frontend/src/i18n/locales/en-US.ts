@@ -320,7 +320,6 @@ export default {
         chunksCount: 'Retrieved Chunks',
         similarity: 'Similarity',
         ragRoute: 'Knowledge Base Retrieval',
-        webRoute: 'Web Search',
         chatRoute: 'General Chat',
     },
 

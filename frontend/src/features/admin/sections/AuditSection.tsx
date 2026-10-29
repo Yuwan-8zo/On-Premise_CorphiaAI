@@ -39,6 +39,8 @@ import {
     inputClass,
     selectClass,
     formatDate,
+    tableBodyClass,
+    tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
 
 // Pure helper — colors the action pill based on the verb.
@@ -255,16 +257,16 @@ export default function AuditSection({
                                     <th>{t('admin.audit.table.ip')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border-subtle">
+                            <tbody className={tableBodyClass}>
                                 {isLoadingAudit ? (
                                     <tr>
-                                        <td className="px-5 py-10 text-center text-text-secondary" colSpan={5}>
+                                        <td className={tableEmptyCellClass} colSpan={5}>
                                             {t('common.loading')}
                                         </td>
                                     </tr>
                                 ) : auditLogs.length === 0 ? (
                                     <tr>
-                                        <td className="px-5 py-10 text-center text-text-secondary" colSpan={5}>
+                                        <td className={tableEmptyCellClass} colSpan={5}>
                                             {t('admin.audit.noEvents')}
                                         </td>
                                     </tr>

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "shield-check",
+  "dependencies": ["motion"],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "icons/shield-check.tsx",
+      "content": "import { forwardRef, useImperativeHandle, useCallback } from \"react\";\nimport type { AnimatedIconHandle, AnimatedIconProps } from \"./types\";\nimport { motion, useAnimate } from \"motion/react\";\n\nconst ShieldCheck = forwardRef<AnimatedIconHandle, AnimatedIconProps>(\n  (\n    { size = 24, color = \"currentColor\", strokeWidth = 2, className = \"\" },\n    ref,\n  ) => {\n    const [scope, animate] = useAnimate();\n\n    const start = useCallback(async () => {\n      animate(\n        \".shield-body\",\n        { scale: [1, 1.05, 1] },\n        { duration: 0.35, ease: \"easeOut\" },\n      );\n\n      await animate(\n        \".shield-check\",\n        { pathLength: [0, 1], opacity: [0, 1] },\n        { duration: 0.3, ease: \"easeInOut\" },\n      );\n    }, [animate]);\n\n    const stop = useCallback(() => {\n      animate(\".shield-body\", { scale: 1 }, { duration: 0.2 });\n      animate(\n        \".shield-check\",\n        { pathLength: 1, opacity: 1 },\n        { duration: 0.2 },\n      );\n    }, [animate]);\n\n    useImperativeHandle(ref, () => ({\n      startAnimation: start,\n      stopAnimation: stop,\n    }));\n\n    return (\n      <motion.svg\n        ref={scope}\n        onHoverStart={start}\n        onHoverEnd={stop}\n        xmlns=\"http://www.w3.org/2000/svg\"\n        width={size}\n        height={size}\n        viewBox=\"0 0 24 24\"\n        fill=\"none\"\n        stroke={color}\n        strokeWidth={strokeWidth}\n        strokeLinecap=\"round\"\n        strokeLinejoin=\"round\"\n        className={`cursor-pointer ${className}`}\n        style={{ overflow: \"visible\" }}\n      >\n        <motion.path\n          className=\"shield-body\"\n          style={{ transformOrigin: \"50% 50%\" }}\n          d=\"M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06\"\n        />\n\n        <motion.path\n          className=\"shield-check\"\n          d=\"M15 19l2 2l4 -4\"\n          initial={{ pathLength: 1, opacity: 1 }}\n        />\n      </motion.svg>\n    );\n  },\n);\n\nShieldCheck.displayName = \"ShieldCheck\";\nexport default ShieldCheck;\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "icons/types.ts",
+      "content": "import type { SVGProps } from \"react\";\n\nexport type IconEasing =\n  | \"linear\"\n  | \"easeIn\"\n  | \"easeOut\"\n  | \"easeInOut\"\n  | \"circIn\"\n  | \"circOut\"\n  | \"circInOut\"\n  | \"backIn\"\n  | \"backOut\"\n  | \"backInOut\"\n  | \"anticipate\";\n\nexport interface AnimatedIconProps extends Omit<\n  SVGProps<SVGSVGElement>,\n  | \"ref\"\n  | \"onAnimationStart\"\n  | \"onAnimationEnd\"\n  | \"onAnimationIteration\"\n  | \"onDrag\"\n  | \"onDragEnd\"\n  | \"onDragEnter\"\n  | \"onDragExit\"\n  | \"onDragLeave\"\n  | \"onDragOver\"\n  | \"onDragStart\"\n  | \"onDrop\"\n  | \"values\"\n> {\n  /** Icon size in pixels or CSS string */\n  size?: number | string;\n  /** Icon color (defaults to currentColor) */\n  color?: string;\n  /** SVG stroke width */\n  strokeWidth?: number;\n  /** Additional CSS classes */\n  className?: string;\n}\n\nexport interface AnimatedIconHandle {\n  startAnimation: () => void;\n  stopAnimation: () => void;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "triangle-alert-icon",
+  "dependencies": ["motion"],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "icons/triangle-alert-icon.tsx",
+      "content": "import { forwardRef, useImperativeHandle, useCallback } from \"react\";\nimport type { AnimatedIconHandle, AnimatedIconProps } from \"./types\";\nimport { motion, useAnimate } from \"motion/react\";\n\nconst TriangleAlertIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(\n  (\n    { size = 24, color = \"currentColor\", strokeWidth = 2, className = \"\" },\n    ref,\n  ) => {\n    const [scope, animate] = useAnimate();\n\n    const start = useCallback(async () => {\n      await animate(\n        \".triangle\",\n        {\n          y: [0, -1.5, 0],\n        },\n        {\n          duration: 0.25,\n          ease: \"easeOut\",\n        },\n      );\n\n      animate(\n        \".exclamation-line\",\n        {\n          scaleY: [1, 1.35, 1],\n        },\n        {\n          duration: 0.3,\n          ease: \"easeOut\",\n        },\n      );\n\n      animate(\n        \".exclamation-dot\",\n        {\n          scale: [1, 1.4, 1],\n          opacity: [1, 0.6, 1],\n        },\n        {\n          duration: 0.25,\n          delay: 0.05,\n          ease: \"easeOut\",\n        },\n      );\n    }, [animate]);\n\n    const stop = useCallback(() => {\n      animate(\".triangle\", { y: 0 }, { duration: 0.2, ease: \"easeOut\" });\n      animate(\n        \".exclamation-line\",\n        { scaleY: 1 },\n        { duration: 0.2, ease: \"easeOut\" },\n      );\n      animate(\n        \".exclamation-dot\",\n        { scale: 1, opacity: 1 },\n        { duration: 0.2, ease: \"easeOut\" },\n      );\n    }, [animate]);\n\n    useImperativeHandle(ref, () => ({\n      startAnimation: start,\n      stopAnimation: stop,\n    }));\n\n    return (\n      <motion.svg\n        ref={scope}\n        onHoverStart={start}\n        onHoverEnd={stop}\n        xmlns=\"http://www.w3.org/2000/svg\"\n        width={size}\n        height={size}\n        viewBox=\"0 0 24 24\"\n        fill=\"none\"\n        stroke={color}\n        strokeWidth={strokeWidth}\n        strokeLinecap=\"round\"\n        strokeLinejoin=\"round\"\n        className={`cursor-pointer ${className}`}\n      >\n        <motion.path\n          className=\"triangle\"\n          d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"\n        />\n\n        <g>\n          <motion.path\n            className=\"exclamation-line\"\n            d=\"M12 9v4\"\n            style={{ transformOrigin: \"12px 11px\" }}\n          />\n          <motion.path\n            className=\"exclamation-dot\"\n            d=\"M12 17h.01\"\n            style={{ transformOrigin: \"12px 17px\" }}\n          />\n        </g>\n      </motion.svg>\n    );\n  },\n);\n\nTriangleAlertIcon.displayName = \"TriangleAlertIcon\";\nexport default TriangleAlertIcon;\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "icons/types.ts",
+      "content": "import type { SVGProps } from \"react\";\n\nexport type IconEasing =\n  | \"linear\"\n  | \"easeIn\"\n  | \"easeOut\"\n  | \"easeInOut\"\n  | \"circIn\"\n  | \"circOut\"\n  | \"circInOut\"\n  | \"backIn\"\n  | \"backOut\"\n  | \"backInOut\"\n  | \"anticipate\";\n\nexport interface AnimatedIconProps extends Omit<\n  SVGProps<SVGSVGElement>,\n  | \"ref\"\n  | \"onAnimationStart\"\n  | \"onAnimationEnd\"\n  | \"onAnimationIteration\"\n  | \"onDrag\"\n  | \"onDragEnd\"\n  | \"onDragEnter\"\n  | \"onDragExit\"\n  | \"onDragLeave\"\n  | \"onDragOver\"\n  | \"onDragStart\"\n  | \"onDrop\"\n  | \"values\"\n> {\n  /** Icon size in pixels or CSS string */\n  size?: number | string;\n  /** Icon color (defaults to currentColor) */\n  color?: string;\n  /** SVG stroke width */\n  strokeWidth?: number;\n  /** Additional CSS classes */\n  className?: string;\n}\n\nexport interface AnimatedIconHandle {\n  startAnimation: () => void;\n  stopAnimation: () => void;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

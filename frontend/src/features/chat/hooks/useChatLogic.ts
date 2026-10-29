@@ -13,6 +13,7 @@ import modelsApi, { type ModelItem } from '@/api/models'
 import { foldersApi } from '@/api/folders'
 import { createChatWebSocket, type ChatWebSocket } from '@/api/websocket'
 import { useToastStore } from '@/store/toastStore'
+import { useSystemStore, selectLlmReady } from '@/store/systemStore'
 import type { Message } from '@/types/chat'
 import { buildStreamDispatcher } from './messageStreamHandlers'
 
@@ -23,6 +24,7 @@ const DEFAULT_FOLDER = '新資料夾'
 
 
 export function useChatLogic() {
+    const llmReady = useSystemStore(selectLlmReady)
     const { t } = useTranslation()
     const toast = useToastStore()
     const { user } = useAuthStore()
@@ -252,6 +254,14 @@ export function useChatLogic() {
             loadFolderDocuments(selectedFolder)
         }
     }, [selectedFolder, loadFolderDocuments])
+
+    // 有文件還在「處理中」時每 3 秒重新讀一次，處理完自動變成「已處理」，不必手動重新整理
+    const hasProcessingDocs = folderDocuments.some(d => d.status !== 'completed' && d.status !== 'failed')
+    useEffect(() => {
+        if (!selectedFolder || !hasProcessingDocs) return
+        const id = setInterval(() => loadFolderDocuments(selectedFolder), 3000)
+        return () => clearInterval(id)
+    }, [selectedFolder, hasProcessingDocs, loadFolderDocuments])
 
     const loadModels = useCallback(async () => {
         try {
@@ -554,6 +564,8 @@ export function useChatLogic() {
             })
             addConversation(conversation)
             setUploadedFiles([])
+            // 展開資料夾，讓新對話立刻出現在側邊欄
+            setExpandedFolders(prev => new Set(prev).add(folderName))
             await selectConversation(conversation)
 
             // 偵測資料夾是否有文件，若無檔案則自動模擬 AI 回覆
@@ -655,9 +667,10 @@ export function useChatLogic() {
         try {
             const res = await conversationsApi.verifyChain(convId)
             if (res.valid) {
-                toast.success(`對話完整性驗證通過！\n共 ${res.total_messages} 則訊息皆未被竄改。`)
+                // 展示時要讓評審看清楚，停留 6 秒
+                useToastStore.getState().add(`✅ 對話完整性驗證通過：共 ${res.total_messages} 則訊息皆未被竄改（雜湊鏈）`, 'success', 6000)
             } else {
-                toast.error(`對話紀錄遭竄改！\n在第 ${res.first_broken_index} 則訊息發生斷鏈\n(ID: ${(res as any).first_broken_message_id})`)
+                useToastStore.getState().add(`⛔ 對話紀錄遭竄改！第 ${res.first_broken_index} 則訊息的雜湊鏈斷裂`, 'error', 8000)
             }
         } catch (err) {
             console.error('驗證失敗', err)
@@ -1054,7 +1067,8 @@ export function useChatLogic() {
             handleStop,
             handleSend,
             handleFileUpload,
-            handleSendVoice
+            handleSendVoice,
+            llmReady,
         },
         modalProps: {
             activeMenu, 

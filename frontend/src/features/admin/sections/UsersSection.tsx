@@ -18,6 +18,9 @@ import {
     RoleBadge,
     formatDate,
     type AdminUserRole,
+    tableHeadRowClass,
+    tableBodyClass,
+    tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
 import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
@@ -69,7 +72,7 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.is_locked) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-lg bg-red-500/15 px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-600 dark:text-red-400">
                 <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
                 {lockoutStatus.minutes_until_unlock ? `鎖定中 ${lockoutStatus.minutes_until_unlock}m` : '鎖定中'}
             </div>
@@ -78,7 +81,7 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.failures_last_7d >= 3) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 {lockoutStatus.failures_last_7d} 次失敗
             </div>
@@ -162,7 +165,7 @@ export default function UsersSection({
             */}
             <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px]">
-                    <thead className="border-b border-border-subtle bg-bg-elevated/40 text-left text-xs uppercase tracking-wider text-text-secondary">
+                    <thead className={tableHeadRowClass}>
                         <tr>
                             <th className="px-4 py-3">{t('admin.users.table.user', '使用者')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.role', '角色')}</th>
@@ -172,16 +175,16 @@ export default function UsersSection({
                             <th className="px-4 py-3 text-right">{t('admin.users.table.action', '操作')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-subtle">
+                    <tbody className={tableBodyClass}>
                         {isLoading ? (
                             <tr>
-                                <td className="px-4 py-10 text-center text-text-secondary" colSpan={6}>
+                                <td className={tableEmptyCellClass} colSpan={6}>
                                     {t('common.loading', '載入中')}
                                 </td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td className="px-4 py-10 text-center text-text-secondary" colSpan={6}>
+                                <td className={tableEmptyCellClass} colSpan={6}>
                                     {t('admin.users.noUsers', '暫無使用者')}
                                 </td>
                             </tr>

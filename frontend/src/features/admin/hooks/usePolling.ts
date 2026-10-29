@@ -45,8 +45,14 @@ export function usePolling<T>(
 
     useEffect(() => {
         if (!enabled) return
-        refetch()
-        const id = setInterval(refetch, intervalMs)
+
+        const tick = () => {
+            if (typeof document !== 'undefined' && document.hidden) return
+            void refetch()
+        }
+
+        tick()
+        const id = setInterval(tick, intervalMs)
         return () => clearInterval(id)
     }, [refetch, intervalMs, enabled])
 

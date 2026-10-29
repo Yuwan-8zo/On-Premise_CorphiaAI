@@ -20,17 +20,30 @@ export default defineConfig({
         viteSingleFile(), // 輸出單一 HTML，所有資源 inline
     ],
     resolve: {
+        // Force single instance of these shared packages so the demo's BrowserRouter
+        // context is visible to components imported from ../frontend/src
+        dedupe: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'react-router',
+            'zustand',
+            'framer-motion',
+            'i18next',
+            'react-i18next',
+            'gsap',
+            '@gsap/react',
+        ],
         alias: [
             // ① Mock API — 優先蓋掉真實 API
             { find: /^@\/api\/(.*)/, replacement: path.resolve(__dirname, './src/api/$1') },
-            // ② GSAP mock — 避免 registerPlugin 在 bundle 環境報錯
-            { find: /^@\/lib\/gsap$/, replacement: path.resolve(__dirname, './src/lib/gsap') },
-            { find: /^@\/lib\/gsapMotion$/, replacement: path.resolve(__dirname, './src/lib/gsapMotion') },
-            // ③ Recharts mock — 避免 "Invariant failed" 初始化錯誤
+            // ② Recharts mock — 避免 "Invariant failed" 初始化錯誤
             { find: 'recharts', replacement: path.resolve(__dirname, './src/lib/recharts') },
-            // ④ Demo 元件
+            // ③ Demo 元件
             { find: /^@\/demo\/(.*)/, replacement: path.resolve(__dirname, './src/demo/$1') },
-            // ⑤ 其餘所有 @/* → 真實 frontend/src
+            // ④ 刪除文件管理頁（/documents 路由直接重導到首頁）
+            { find: /.*\/pages\/Documents$/, replacement: path.resolve(__dirname, './src/pages/Documents') },
+            // ④ 其餘所有 @/* → 真實 frontend/src（包括真實 gsap.ts / gsapMotion.tsx）
             { find: '@', replacement: path.resolve(__dirname, '../frontend/src') },
         ],
     },

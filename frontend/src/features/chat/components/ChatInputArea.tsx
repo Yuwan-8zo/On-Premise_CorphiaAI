@@ -33,6 +33,8 @@ interface ChatInputAreaProps {
         mimeType: string
         durationMs: number
     }) => void
+    /** false 時禁用送出（AI 模型背景載入中） */
+    llmReady?: boolean
 }
 
 export default function ChatInputArea({
@@ -40,6 +42,7 @@ export default function ChatInputArea({
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
+    llmReady = true,
 }: ChatInputAreaProps) {
     const { t } = useTranslation()
     const toast = useToastStore()
@@ -55,7 +58,7 @@ export default function ChatInputArea({
                 ref={fileInputRef}
                 onChange={handleFileUpload}
                 className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.txt,.md"
+                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md"
                 multiple
             />
         )
@@ -70,6 +73,11 @@ export default function ChatInputArea({
                 transition={{ duration: 0.3, ease:"easeOut" }}
                 className="shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
+                {!llmReady && (
+                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-amber-600 dark:text-amber-400 mb-2">
+                        {t('chat.llmWarming', 'AI 模型載入中，完成後即可對話…')}
+                    </p>
+                )}
                 {/* Mobile RWD: tighter horizontal padding + min-w-0 so flex-1 children shrink */}
                 <div data-tour="chat-input" className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 w-full relative flex items-end gap-1.5 sm:gap-2 min-w-0">
                     {/* 顯示提示詞選擇器（手機板 < sm 時隱藏，騰出 textarea 空間）
@@ -142,7 +150,7 @@ export default function ChatInputArea({
                                     onKeyDown={handleKeyDown}
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
-                                    disabled={isConnecting}
+                                    disabled={isConnecting || !llmReady}
                                     className="flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[10px] max-h-[160px] disabled:opacity-50 text-[15px] sm:text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                                     style={{ lineHeight: '1.4' }}
                                 />
@@ -168,10 +176,10 @@ export default function ChatInputArea({
                                     ) : (
                                         <button
                                             onClick={() => handleSend()}
-                                            disabled={!input.trim() || isConnecting}
+                                            disabled={!input.trim() || isConnecting || !llmReady}
                                             className="transition-transform active:scale-95"
                                         >
-                                            <SendDotBtn disabled={!input.trim() || isConnecting} />
+                                            <SendDotBtn disabled={!input.trim() || isConnecting || !llmReady} />
                                         </button>
                                     )}
                                 </div>
@@ -187,7 +195,7 @@ export default function ChatInputArea({
                 ref={fileInputRef}
                 onChange={handleFileUpload}
                 className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.txt,.md"
+                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md"
                 multiple
             />
         </>

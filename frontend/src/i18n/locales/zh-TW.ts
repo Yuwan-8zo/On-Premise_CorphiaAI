@@ -320,7 +320,6 @@ export default {
         chunksCount: '檢索 Chunks 數',
         similarity: '相似度',
         ragRoute: '知識庫檢索',
-        webRoute: '網路搜尋',
         chatRoute: '一般對話',
     },
 

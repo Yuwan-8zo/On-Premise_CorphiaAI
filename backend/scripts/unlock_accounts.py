@@ -9,7 +9,7 @@ import os
 # 加入專案根目錄到 sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from app.core.database import async_session_maker, init_db
 from app.models.user import User
 
@@ -20,7 +20,7 @@ async def unlock_all() -> None:
         # 查詢所有有鎖定紀錄或失敗計數的帳號
         result = await session.execute(
             select(User).where(
-                (User.locked_until != None) | (User.failed_login_attempts > 0)
+                (User.locked_until.is_not(None)) | (User.failed_login_attempts > 0)
             )
         )
         users = result.scalars().all()

@@ -27,6 +27,15 @@ from app.services.audit_service import (
 
 router = APIRouter(prefix="/conversations", tags=["對話"])
 
+def _safe_title(title: str) -> str:
+    """對話標題常直接取自第一則訊息，必須先遮罩個資，避免身分證等出現在側邊欄與資料庫。"""
+    from app.core.config import settings as _settings
+    from app.services.pii_masking_service import mask_pii
+    if not title or not _settings.enable_pii_masking:
+        return title
+    return mask_pii(title)["masked_text"]
+
+
 
 @router.get("", response_model=ConversationListResponse)
 async def list_conversations(
@@ -150,7 +159,7 @@ async def create_conversation(
     conversation = Conversation(
         tenant_id=safe_tenant_id,
         user_id=current_user.id,
-        title=request_body.title,
+        title=_safe_title(request_body.title),
         model=request_body.model,
         folder_id=request_body.folder_id,
         settings=request_body.settings,
@@ -228,6 +237,7 @@ async def update_conversation(
     # NOTE: 防止 title 被更新為空字串
     if 'title' in update_data:
         update_data['title'] = (update_data['title'] or '').strip() or conversation.title
+        update_data['title'] = _safe_title(update_data['title'])
     for field, value in update_data.items():
         setattr(conversation, field, value)
     

@@ -23,17 +23,26 @@ export const adminApi = {
         return {
             stats: DEMO_STATS,
             security: {
-                pii_masked_count: 1,
-                dlp_blocked_count: 1,
-                injection_detected_count: 1,
-                high_risk_count: 2,
+                pii_detected: 0,
+                prompt_injection_blocked: 0,
+                dlp_hit: 0,
+                login_failed: 0,
             },
             ai: {
-                total_tokens: 792,
-                avg_tokens_per_session: 264,
-                model: 'qwen2.5-7b-instruct-q4_k_m',
-                speed_toks: 9.62,
+                llm: 'ready',
+                rag: 'ready',
             },
+        }
+    },
+
+    // ── Security summary（SecurityEventsPanel 自行 polling 用）
+    getSecuritySummary: async () => {
+        await sleep(300)
+        return {
+            pii_detected: 0,
+            prompt_injection_blocked: 0,
+            dlp_hit: 0,
+            login_failed: 0,
         }
     },
 
@@ -42,9 +51,11 @@ export const adminApi = {
         await sleep(400)
         return {
             models: [
-                { name: 'qwen2.5-7b-instruct-q4_k_m', status: 'ok', hash_valid: true, last_checked: new Date().toISOString() },
+                { name: 'qwen2.5-7b-instruct-q4_k_m', status: 'ok', hash_valid: true, last_checked: new Date().toISOString(), sha256: 'a3f8d2c1b4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1', filename: 'qwen2.5-7b-instruct-q4_k_m.gguf', size_bytes: 4723000000 },
+                { name: 'qwen2.5-3b-instruct-q4_k_m', status: 'ok', hash_valid: true, last_checked: new Date().toISOString(), sha256: 'b4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5', filename: 'qwen2.5-3b-instruct-q4_k_m.gguf', size_bytes: 2100000000 },
+                { name: 'qwen2.5-14b-instruct-q4_k_m', status: 'ok', hash_valid: true, last_checked: new Date().toISOString(), sha256: 'c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', filename: 'qwen2.5-14b-instruct-q4_k_m.gguf', size_bytes: 9400000000 },
             ],
-            throughput: { 'qwen2.5-7b-instruct-q4_k_m': 9.62 },
+            throughput: { last_tokens_per_sec: 9.62, total_generations: 24 },
         }
     },
 
@@ -65,6 +76,8 @@ export const adminApi = {
             is_locked: false,
             failed_attempts: 0,
             locked_until: null,
+            failures_last_7d: 0,
+            minutes_until_unlock: null,
         }))
     },
 }
@@ -78,8 +91,15 @@ export interface TenantUsageStats {
 export interface UserLockoutStatus {
     user_id: string; email: string; is_locked: boolean
     failed_attempts: number; locked_until: string | null
+    failures_last_7d: number; minutes_until_unlock: number | null
 }
 
 export interface ModelIntegrityInfo {
     name: string; status: string; hash_valid: boolean; last_checked: string
+    sha256?: string; filename?: string; size_bytes?: number
+}
+
+export interface SecuritySummary {
+    pii_detected: number; prompt_injection_blocked: number
+    dlp_hit: number; login_failed: number
 }
