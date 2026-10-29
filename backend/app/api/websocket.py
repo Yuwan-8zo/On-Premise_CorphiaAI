@@ -112,11 +112,18 @@ async def websocket_chat(
             await websocket.close(code=4004, reason="對話不存在")
             return
         
+        # 稽核紀錄要顯示「誰、從哪裡」：查一次信箱，並取連線的 IP
+        from app.models.user import User
+        _user = await db.get(User, user_id)
+        audit_email = _user.email if _user else None
+        audit_ip = websocket.client.host if websocket.client else None
+
         # 建立一個變數來追蹤當前的生成任務
         current_generation_task: Optional[asyncio.Task] = None
 
-        # 單次生成最長時長（秒）；超過則自動中斷，避免 llama-cpp 卡死拖垮整條 WS
-        GENERATION_TIMEOUT_SEC = 300
+        # 單次生成最長時長（秒）；超過則自動中斷，避免 llama-cpp 卡死拖垮整條 WS。
+        # 純 CPU 跑 7B 文件問答約 2.5 分鐘，若前面還有一題在排隊會更久，所以給 10 分鐘
+        GENERATION_TIMEOUT_SEC = 600
 
         async def _security_gate(raw_text: str) -> Optional[str]:
             """
@@ -158,6 +165,8 @@ async def websocket_chat(
                             resource_type=AuditResource.CONVERSATION,
                             resource_id=conversation_id,
                             user_id=user_id,
+                            user_email=audit_email,
+                            ip_address=audit_ip,
                             tenant_id=conversation.tenant_id,
                             description=f"訊息中偵測到 {len(mask_result.get('mask_map', []))} 個個資片段並已遮罩",
                             details={"pii_types": [m.get("type") for m in mask_result.get("mask_map", [])]},
@@ -182,6 +191,8 @@ async def websocket_chat(
                         resource_type=AuditResource.CONVERSATION,
                         resource_id=conversation_id,
                         user_id=user_id,
+                        user_email=audit_email,
+                        ip_address=audit_ip,
                         tenant_id=conversation.tenant_id,
                         description=f"DLP 偵測到 {len(dlp_result.get('matched_terms', []))} 個違禁詞並已攔阻",
                         details={"matched_terms_count": len(dlp_result.get('matched_terms', []))},
@@ -208,6 +219,8 @@ async def websocket_chat(
                             resource_type=AuditResource.CONVERSATION,
                             resource_id=conversation_id,
                             user_id=user_id,
+                            user_email=audit_email,
+                            ip_address=audit_ip,
                             tenant_id=conversation.tenant_id,
                             description=f"偵測到 Prompt Injection 攻擊模式：{guard_result.get('risk_level')}",
                             details={"risk_level": guard_result.get("risk_level"), "matched_patterns": guard_result.get("matched_patterns", [])},

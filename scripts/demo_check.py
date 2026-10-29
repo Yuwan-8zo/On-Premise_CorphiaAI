@@ -104,7 +104,7 @@ async def main() -> int:
     s, det = http("GET", API + "/system/health/detailed", token=token)
     det = det.get("data", det) if isinstance(det, dict) else {}
     model = str(det.get("llm", {}).get("model_path", ""))
-    check("目前模型為 3B", "3B" in model, model.split("\\")[-1])
+    check("目前模型為 7B", "7B" in model, model.split("\\")[-1])
     llm = det.get("llm", {})
     check("真實 AI 模型已載入（非模擬）",
           llm.get("model_loaded") is True and llm.get("provider") == "llama.cpp", f"provider={llm.get('provider')}")

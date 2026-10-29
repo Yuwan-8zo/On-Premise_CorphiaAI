@@ -97,6 +97,12 @@ export const ACTION_LABELS: Record<string, string> = {
     password_change_success: '密碼修改成功',
     password_change_failed: '密碼修改失敗',
     account_locked: '帳號鎖定',
+    pii_detected: '個資偵測',
+    prompt_injection_blocked: '注入攻擊',
+    dlp_hit: 'DLP 命中',
+    tenant_create: '建立租戶',
+    tenant_update: '更新租戶',
+    tenant_delete: '停用租戶',
 }
 
 /**

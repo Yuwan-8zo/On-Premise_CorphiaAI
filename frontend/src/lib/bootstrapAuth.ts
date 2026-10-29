@@ -26,11 +26,25 @@ const runBootstrapAuth = async () => {
     }
 
     try {
-        const response = await api.post(
-            '/auth/refresh',
-            { refresh_token: refreshToken },
-            { timeout: 5000 },
-        )
+        // 一鍵啟動會先開瀏覽器、後端稍後才起來：連不上（沒有回應或 5xx）時先等一下重試，
+        // 不要直接登出；只有伺服器明確回 401/403（登入真的失效）才登出
+        const deadline = Date.now() + 10 * 60 * 1000
+        let response
+        for (;;) {
+            try {
+                response = await api.post(
+                    '/auth/refresh',
+                    { refresh_token: refreshToken },
+                    { timeout: 5000 },
+                )
+                break
+            } catch (err) {
+                const status = (err as { response?: { status?: number } })?.response?.status
+                const serverDown = status === undefined || status >= 500
+                if (!serverDown || Date.now() > deadline) throw err
+                await new Promise(r => setTimeout(r, 2000))
+            }
+        }
         const newAccessToken = response.data.access_token
         const newRefreshToken = response.data.refresh_token
         setAccessToken(newAccessToken)

@@ -20,6 +20,7 @@
  *   圖表 fill / stroke 透過 useAccentColor 把 CSS var 轉成具體 RGB 字串
  */
 
+import { parseServerDate } from '@/lib/utils'
 import {
     Activity,
     FileText,
@@ -90,7 +91,7 @@ export default function OverviewSection({
         today.setHours(0, 0, 0, 0)
         const tomorrow = today.getTime() + 86400000
         return auditLogs.filter((log) => {
-            const t = new Date(log.created_at).getTime()
+            const t = parseServerDate(log.created_at).getTime()
             return t >= today.getTime() && t < tomorrow
         }).length
     }, [auditLogs])

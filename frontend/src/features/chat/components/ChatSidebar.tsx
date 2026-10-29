@@ -101,6 +101,8 @@ export default function ChatSidebar({
     const [activePillLeft, setActivePillLeft] = useState(0)
     const [activePillHeight, setActivePillHeight] = useState(0)
     const [pillVisible, setPillVisible] = useState(false)
+    // 清單滑入動畫結束時 +1，觸發直線重新定位（動畫中量到的位置會偏移）
+    const [listAnimTick, setListAnimTick] = useState(0)
 
     useLayoutEffect(() => {
         // 取出計算邏輯成一個函式，可被多個觸發點重用：
@@ -168,11 +170,22 @@ export default function ChatSidebar({
             if (activeEl) ro.observe(activeEl)
         }
 
+        // 切換一般／專案時清單會從旁邊滑入（約 0.3 秒），側邊欄開合也有 0.3 秒動畫；
+        // 動畫中量到的位置會偏移，所以在動畫結束後再量一次，避免直線疊到文字上
+        const timers = [350, 700].map(ms => window.setTimeout(compute, ms))
+        const aside = scroll?.closest('aside')
+        const onAnimEnd = () => compute()
+        aside?.addEventListener('transitionend', onAnimEnd)
+        aside?.addEventListener('animationend', onAnimEnd)
+
         return () => {
             cancelAnimationFrame(rafId)
+            timers.forEach(id => window.clearTimeout(id))
+            aside?.removeEventListener('transitionend', onAnimEnd)
+            aside?.removeEventListener('animationend', onAnimEnd)
             ro?.disconnect()
         }
-    }, [currentConversationId, conversations, chatMode, expandedFolders, sidebarOpen])
+    }, [currentConversationId, conversations, chatMode, expandedFolders, sidebarOpen, listAnimTick])
 
     return (
         <aside
@@ -254,8 +267,11 @@ export default function ChatSidebar({
                         data-tour="mode-toggle"
                         className="relative bg-black/5 dark:bg-white/5 rounded-cv-xl cursor-pointer shrink-0 transition-colors border border-transparent"
                         style={{ width: '48px', height: '88px' }}
-                        onClick={() => {
-                            const next = chatMode === 'general' ? 'project' : 'general'
+                        onClick={(e) => {
+                            // 依點的位置決定模式（上半＝一般、下半＝專案），不要用「切換」：
+                            // 否則已在專案模式時點專案圖示反而會切回一般
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const next = e.clientY - rect.top < rect.height / 2 ? 'general' : 'project'
                             setChatMode(next)
                             // 收合狀態下看不到資料夾清單；切到專案時自動展開側邊欄
                             if (next === 'project') setSidebarOpen(true)
@@ -339,6 +355,7 @@ export default function ChatSidebar({
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: 20, opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeInOut" }}
+                            onAnimationComplete={() => setListAnimTick(n => n + 1)}
                             className="absolute inset-0 px-4"
                         >
                             <div className="mb-2 pl-3 mt-1">
@@ -377,6 +394,7 @@ export default function ChatSidebar({
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: -20, opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeInOut" }}
+                            onAnimationComplete={() => setListAnimTick(n => n + 1)}
                             className="absolute inset-0 px-4"
                         >
                             <div className="mb-2 pl-3 mt-1">

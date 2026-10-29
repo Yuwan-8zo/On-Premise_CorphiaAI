@@ -1,3 +1,4 @@
+import { parseServerDate } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 
 import OnboardingTour, { isOnboardingDone } from '@/components/onboarding/OnboardingTour'
@@ -121,7 +122,7 @@ export default function Chat() {
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-medium text-[15px] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
                                                     <span className="text-[13px] text-text-secondary mt-0.5">
-                                                        {new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(doc.created_at) ? doc.created_at : doc.created_at + 'Z').toLocaleString()} • {(() => {
+                                                        {parseServerDate(doc.created_at).toLocaleString()} • {(() => {
                                                             const bytes = doc.file_size || doc.size_bytes || 0
                                                             if (bytes < 1024) return `${bytes} B`
                                                             if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`

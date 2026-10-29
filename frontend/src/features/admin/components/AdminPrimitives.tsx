@@ -9,6 +9,7 @@
  *   - Whitespace via padding, not via outer glow
  */
 
+import { parseServerDate } from '@/lib/utils'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -240,7 +241,7 @@ export const tableEmptyCellClass = 'px-5 py-10 text-center text-text-secondary'
 
 export function formatDate(value?: string): string {
     if (!value) return '-'
-    return new Date(value).toLocaleString('zh-TW', {
+    return parseServerDate(value).toLocaleString('zh-TW', {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',

@@ -135,8 +135,8 @@ async def main() -> int:
         check("AI 模型就緒", isinstance(h, dict) and h.get("llm") == "ready", f"llm={h.get('llm')}")
         check("文件檢索模型就緒", isinstance(h, dict) and h.get("rag") == "ready", f"rag={h.get('rag')}")
         st = {m["name"].split("-")[1]: m for m in (h.get("models") or [])}
-        check("3B 已載入且為使用中", st.get("3B", {}).get("state") == "ready" and st.get("3B", {}).get("is_current"))
-        check("7B 已載入待命", st.get("7B", {}).get("state") == "ready")
+        check("7B 已載入且為使用中", st.get("7B", {}).get("state") == "ready" and st.get("7B", {}).get("is_current"))
+        check("3B 已載入待命", st.get("3B", {}).get("state") == "ready")
         check("14B 不預先載入", st.get("14B", {}).get("state") == "not_preloaded")
         s, bs = http("GET", "/boot-status.json", base=FRONT)
         check("前端啟動狀態檔＝全部就緒", isinstance(bs, dict) and bs.get("overall") == "ready",
@@ -287,20 +287,20 @@ async def main() -> int:
         n7 = next((n for n in names if "-7B-" in n), None)
         n3 = next((n for n in names if "-3B-" in n), None)
         t = time.time()
-        s, _ = http("POST", "/models/select", {"name": n7}, token=token, timeout=300)
-        t7 = time.time() - t
-        check("切換到 7B：已預先載入，切換很快", s == 200 and t7 < 10, f"{t7:.1f} 秒")
+        s, _ = http("POST", "/models/select", {"name": n3}, token=token, timeout=300)
+        t3 = time.time() - t
+        check("切換到 3B：已預先載入，切換很快", s == 200 and t3 < 10, f"{t3:.1f} 秒")
         r = await ask(normal["id"], token, "1+1 等於多少？只回答數字。", max_tokens=8)
-        check("7B 真實回答", "done" in r["types"] and r["text"].strip() != "", f"{r['total'] or 0:.0f} 秒 | {r['text'][:20]!r}")
+        check("3B 真實回答", "done" in r["types"] and r["text"].strip() != "", f"{r['total'] or 0:.0f} 秒 | {r['text'][:20]!r}")
         s, det = http("GET", "/system/health/detailed", token=token)
         det = det.get("data", det) if isinstance(det, dict) else {}
-        check("系統顯示目前是 7B", "7B" in str(det.get("llm", {}).get("model_path", "")))
+        check("系統顯示目前是 3B", "3B" in str(det.get("llm", {}).get("model_path", "")))
         t = time.time()
-        s, _ = http("POST", "/models/select", {"name": n3}, token=token, timeout=300)
-        check("切回 3B", s == 200 and time.time() - t < 10, f"{time.time() - t:.1f} 秒")
+        s, _ = http("POST", "/models/select", {"name": n7}, token=token, timeout=300)
+        check("切回 7B", s == 200 and time.time() - t < 10, f"{time.time() - t:.1f} 秒")
         s, h = http("GET", "/health")
         cur = [m["name"] for m in h.get("models", []) if m.get("is_current")]
-        check("切回後目前模型＝3B", cur and "-3B-" in cur[0], f"{cur}")
+        check("切回後目前模型＝7B", cur and "-7B-" in cur[0], f"{cur}")
 
         # ───────────────────────────────────────────────────────────
         section("6. 管理後台與稽核")

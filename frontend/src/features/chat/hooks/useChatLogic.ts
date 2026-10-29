@@ -540,6 +540,12 @@ export function useChatLogic() {
             setTimeout(() => newFolderInputRef.current?.focus(), 100)
         } else {
             // 一般模式：建立新對話
+            // 目前這則還沒有任何訊息時直接沿用，避免連按產生一堆空白「新對話」
+            const state = useChatStore.getState()
+            if (state.currentConversation && !state.currentConversation.settings?.isProject && state.messages.length === 0) {
+                setUploadedFiles([])
+                return
+            }
             try {
                 const conversation = await conversationsApi.create({ 
                     title: '新對話',
@@ -550,6 +556,7 @@ export function useChatLogic() {
                 await selectConversation(conversation)
             } catch (error) {
                 console.error('建立對話失敗:', error)
+                toast.error('建立對話失敗，請確認系統已啟動完成後再試一次')
             }
         }
     }

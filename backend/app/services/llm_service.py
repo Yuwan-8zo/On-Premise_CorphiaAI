@@ -149,6 +149,19 @@ class LLMService:
         st["state"] = state
         st["error"] = error
 
+    # 同一個 llama.cpp 模型物件不能同時跑兩個生成，否則 ggml.dll 會直接當掉（0xc0000005）。
+    # 例如前一題還在生成時又送出下一題、或關掉分頁後重開再問。每個模型一把鎖，後來的排隊等。
+    _gen_locks: dict = {}
+    _gen_locks_guard = threading.Lock()
+
+    @classmethod
+    def _lock_for(cls, inst) -> threading.Lock:
+        with cls._gen_locks_guard:
+            lock = cls._gen_locks.get(id(inst))
+            if lock is None:
+                lock = cls._gen_locks[id(inst)] = threading.Lock()
+            return lock
+
     @staticmethod
     def _load_path(model_path: str):
         import os
@@ -355,15 +368,19 @@ class LLMService:
     async def _llama_generate(self, prompt, max_tokens, temperature, top_p, stop):
         start = time.perf_counter()
 
+        inst = self._llama_instance
+        lock = self._lock_for(inst)
+
         def _run():
-            return self._llama_instance(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                stop=stop or [],
-                stream=False,
-            )
+            with lock:
+                return inst(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    stop=stop or [],
+                    stream=False,
+                )
 
         response = await asyncio.to_thread(_run)
         elapsed = time.perf_counter() - start
@@ -397,16 +414,37 @@ class LLMService:
         q: queue.Queue = queue.Queue(maxsize=64)
         stop_event = threading.Event()
 
+        inst = self._llama_instance
+        lock = self._lock_for(inst)
+
         def _run_llama():
             try:
-                stream = self._llama_instance(
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                    stop=stop or [],
-                    stream=True,
-                )
+                with lock:
+                    if stop_event.is_set():
+                        # 排隊期間使用者已離開，不必再生成
+                        return
+                    _stream_into_queue(inst(
+                        prompt=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        top_p=top_p,
+                        stop=stop or [],
+                        stream=True,
+                    ))
+            except Exception as e:
+                try:
+                    q.put(e, timeout=1.0)
+                except queue.Full:
+                    pass
+            finally:
+                # sentinel：告訴 consumer 沒了
+                try:
+                    q.put(None, timeout=1.0)
+                except queue.Full:
+                    pass
+
+        def _stream_into_queue(stream):
+            try:
                 for chunk in stream:
                     if stop_event.is_set():
                         # 使用者中斷 → 提前結束，不再產 token
@@ -420,17 +458,11 @@ class LLMService:
                         if stop_event.is_set():
                             break
                         # 否則丟掉這個 chunk（罕見，q maxsize=64 應該夠）
-            except Exception as e:
-                try:
-                    q.put(e, timeout=1.0)
-                except queue.Full:
-                    pass
             finally:
-                # sentinel：告訴 consumer 沒了
-                try:
-                    q.put(None, timeout=1.0)
-                except queue.Full:
-                    pass
+                # 在鎖還握著時把生成器關乾淨，下一題才不會跟它搶同一個模型
+                close = getattr(stream, "close", None)
+                if close:
+                    close()
 
         thread = threading.Thread(target=_run_llama, daemon=True)
         thread.start()
@@ -479,8 +511,12 @@ class LLMService:
             + "\n\n```json\n"
         )
 
+        inst = self._llama_instance
+        lock = self._lock_for(inst)
+
         def _run():
-            return self._llama_instance(
+            with lock:
+                return inst(
                 prompt=augmented_prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,

@@ -28,8 +28,22 @@ _embedding_model = None
 #   中文 → 連續 CJK 字元整塊保留 + 二字 bigram 拆分
 # 2024+ 的向量模型早已能處理中文，但 hybrid 用關鍵字 re-rank 時，
 # 光靠整句子當 token 會命中率 0；這裡給一個實用的中間解。
+_FILLER_CHARS = set("的是哪什麼如何嗎呢了在有和與及或之其這那請問怎樣些個")
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]+")
 _ASCII_WORD_RE = re.compile(r"[A-Za-z0-9_\-]+")
+
+
+# 目錄行：標題後面接 Tab／全形空白／點線，再接頁碼，例如「表4-3　資安防護閘道攔截測試結果\t21」
+_TOC_LINE_RE = re.compile(r"[\t　 .…]+\d{1,3}\s*$", re.MULTILINE)
+
+
+def _is_low_content(text: str) -> bool:
+    """目錄、頁碼表這類段落沒有可回答的內容，卻因為字少而相似度偏高，會擠掉真正的答案。"""
+    t = text.strip()
+    if len(t) < 40:
+        return True
+    toc_lines = len(_TOC_LINE_RE.findall(t))
+    return toc_lines >= 2 and len(t) < 400
 
 
 def _tokenize_query(query: str, min_len: int = 2, max_tokens: int = 32) -> list[str]:
@@ -51,7 +65,11 @@ def _tokenize_query(query: str, min_len: int = 2, max_tokens: int = 32) -> list[
             tokens.append(cjk)
         # bigram 補漏，讓「資料主權」也能命中「資料」「料主」「主權」
         for i in range(len(cjk) - 1):
-            tokens.append(cjk[i : i + 2])
+            bg = cjk[i : i + 2]
+            # 含虛詞的片段（「是哪」「題的」「如何」）幾乎每段都有，只會稀釋真正關鍵詞的分數
+            if any(ch in _FILLER_CHARS for ch in bg):
+                continue
+            tokens.append(bg)
 
     # 去重並保留順序
     seen: set[str] = set()
@@ -363,8 +381,11 @@ class RAGService:
                 conditions = [
                     DocumentChunk.content.ilike(f"%{_esc(t)}%", escape="\\") for t in tokens
                 ]
+                # 關鍵字命中的段落也要算出向量相似度，否則只靠關鍵字命中的段落分數永遠過不了門檻；
+                # 依相似度排序取前 50 筆，避免任意取前幾筆而漏掉真正的答案段落
+                kw_dist = DocumentChunk.embedding.cosine_distance(query_embedding)
                 kw_stmt = (
-                    select(DocumentChunk)
+                    select(DocumentChunk, kw_dist.label("distance"))
                     .join(Document, DocumentChunk.document_id == Document.id)
                     .where(or_(*conditions))
                 )
@@ -372,11 +393,12 @@ class RAGService:
                     kw_stmt = kw_stmt.where(Document.tenant_id == tenant_id)
                 if document_ids:
                     kw_stmt = kw_stmt.where(DocumentChunk.document_id.in_(document_ids))
-                kw_stmt = kw_stmt.limit(oversample)
+                kw_stmt = kw_stmt.order_by(kw_dist).limit(max(oversample, 50))
 
                 result = await db.execute(kw_stmt)
-                for chunk in result.scalars().all():
+                for chunk, distance in result.all():
                     # 同 vector path：把 document_id 從 column 補進 metadata 給上層用
+                    dist = float(distance) if distance is not None else 1.0
                     keyword_hits.append({
                         "chunk_id": chunk.id,
                         "content": chunk.content,
@@ -384,8 +406,8 @@ class RAGService:
                             **(chunk.chunk_metadata or {}),
                             "document_id": chunk.document_id,
                         },
-                        "score": 0.0,
-                        "distance": None,
+                        "score": round(1.0 - dist, 4),
+                        "distance": round(dist, 4),
                     })
             except Exception as e:
                 logger.warning(f"關鍵字召回失敗（fallback 純向量）: {e}")
@@ -415,7 +437,10 @@ class RAGService:
         ranked = sorted(
             merged.values(), key=lambda x: x["hybrid_score"], reverse=True
         )
-        ranked = [r for r in ranked if r["hybrid_score"] >= similarity_threshold]
+        ranked = [
+            r for r in ranked
+            if r["hybrid_score"] >= similarity_threshold and not _is_low_content(r["content"])
+        ]
         return ranked[:n_results]
 
     def build_context(

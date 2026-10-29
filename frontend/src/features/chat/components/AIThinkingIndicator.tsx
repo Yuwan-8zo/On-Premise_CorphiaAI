@@ -59,15 +59,31 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false }: AIThink
         return () => clearTimeout(id)
     }, [effectivePhase])
 
+    // 純 CPU 跑 7B 讀完文件要一兩分鐘；顯示已等待秒數，避免看起來像當機
+    const [elapsed, setElapsed] = useState(0)
+    useEffect(() => {
+        const start = Date.now()
+        const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000)
+        return () => clearInterval(id)
+    }, [])
+
     return (
-        <div className="flex items-center py-1 select-none">
+        <div className="flex flex-col py-1 select-none">
             <span
                 className="text-[14px] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
                 style={{ opacity: fading ? 0 : 1 }}
             >
                 {phaseLabels[displayPhase]}
                 <DotEllipsis />
+                {elapsed >= 3 && (
+                    <span className="ml-1 text-text-muted font-normal tabular-nums">（已等待 {elapsed} 秒）</span>
+                )}
             </span>
+            {elapsed >= 15 && (
+                <span className="mt-1 text-[12px] text-text-muted">
+                    AI 在本機處理器上運算，資料不會離開這台電腦；閱讀文件需要一點時間，請稍候
+                </span>
+            )}
         </div>
     )
 }

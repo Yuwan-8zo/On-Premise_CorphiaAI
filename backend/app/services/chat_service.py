@@ -7,6 +7,7 @@
 import logging
 from typing import TypedDict, Optional, AsyncGenerator
 
+from app.core.zh_convert import to_traditional
 from app.core.config import settings
 from app.core.time_utils import utc_now_naive
 
@@ -41,53 +42,32 @@ class AgentState(TypedDict, total=False):
 
 
 
+def _clip_history(text: str, limit: int = 400) -> str:
+    text = text or ""
+    return text if len(text) <= limit else text[:limit] + "…"
+
+
 class ChatService:
     """對話服務"""
     
     # 系統提示
-    DEFAULT_SYSTEM_PROMPT = """[語言規則：極度重要] 你的回覆必須使用「台灣正體中文」。2. 絕對禁止出現以下簡體字：兴→興、路→路、信→信、楼→樓、面→面、为→為、这→這、仅→僅、以→以、跟→跟、就→就、高兴→高興、文件→檔案、问题→問題、应用→應用、软件→軟體。
-你是 Corphia AI，一個由 Corphia AI Platform 驅動的智慧助手。
+    # 提示詞保持精簡：純 CPU 筆電讀入提示詞很慢（7B 每秒約 12 個 token），
+    # 每多 100 個 token 就多等約 8 秒。簡體字由 zh_convert 在輸出時自動轉正體，不必在這裡列舉。
+    DEFAULT_SYSTEM_PROMPT = """你是 Corphia AI，企業內部的智慧助手，友善、專業，回答準確且有條理。
+1. 有參考資料時，優先使用資料中的資訊。
+2. 不確定時誠實說明。
+3. 必要時使用 Markdown 條列。"""
 
-你的特點：
-- 友善、專業、樂於助人
-- 回答準確、有條理
-- 支援繁體中文、英文和日文
-- 可以參考提供的資料來回答問題
-
-回答規則：
-1. 必須使用系統指定的回覆語言回答，不能自行判斷
-2. 如果有參考資料，優先使用資料中的資訊
-3. 如果不確定，誠實說明
-4. 必要時使用 Markdown 格式組織回答"""
-
-    STRICT_RAG_SYSTEM_PROMPT = """[語言規則：極度重要] 你的回覆必須使用「台灣正體中文」。絕對禁止使用簡體字，包含但不限於：高兴→高興、信息→資訊、软件→軟體、算法→演算法、应用→應用。
-你是一個專案專屬的 AI 知識助理。
-- 友善、專業、樂於助人
-- 支援繁體中文、英文和日文
-
-回答規則（極度重要）：
-1. 你**必須**且**只能**基於使用者提供的「參考資料」來回答問題。
-2. 如果使用者的問題超出了參考資料的範圍，或者資料中沒有相關資訊，請直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
-3. 絕對不可以編造答案或使用你原本內建的外部知識來回答專業問題。
-4. 回答請條理分明，必要時使用 Markdown 格式並標註來源所在。
-5. 必須使用系統指定的回覆語言回答，不能自行判斷。"""
+    STRICT_RAG_SYSTEM_PROMPT = """你是 Corphia AI，專案資料夾的知識助理。
+1. 只能根據「參考資料」回答，不可編造，也不可使用外部知識。
+2. 參考資料中沒有答案時，直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
+3. 回答條理分明，必要時使用 Markdown 條列。"""
 
     # 語言指令對照表
     LANGUAGE_DIRECTIVES: dict[str, str] = {
         "zh-TW": (
-            "《繁體中文絕對限定》 "
-            "你的所有輸出必須是台灣正體中文。"
-            "下列任何簡體字均不得出現："
-            "『兴』只能寫『興』、『高兴』必須寫『高興』、"
-            "『信息』只能寫『資訊』、『信』只能寫『信』、"
-            "『草』只能寫『草』、『软件』必須寫『軟體』、"
-            "『程序』必須寫『程式』、『屏幕』必須寫『螢幕』、"
-            "『网络』必須寫『網路』、『组件』必須寫『元件』、"
-            "『文件』必須寫『檔案』、『数据』必須寫『資料』、"
-            "『实现』必須寫『實現』、『这』必須寫『這』、"
-            "『为』必須寫『為』、『来』必須寫『來』、『会』必須寫『會』、"
-            "『时』必須寫『時』、『这个』必須寫『這個』。"
-            "不論使用者用何語言提問，你的所有回覆都必須是標準台灣繁體中文。"
+            "請全程使用台灣正體中文回答，不可使用簡體字；"
+            "除了專有名詞與技術名稱（例如 DLP、JWT、Prompt Injection）之外，不要夾雜英文單字。"
         ),
         "en-US": "[IMPORTANT] You MUST reply entirely in English. Regardless of the language the user writes in, all your responses must be in English.",
         "ja-JP": "『重要』あなたは必ず日本語で回答してください。ユーザーがどの言語で質問しても、すべての返答は日本語でなければなりません。",
@@ -420,9 +400,10 @@ class ChatService:
         folder_name = conversation.settings.get("folderName") if conversation else None
         tenant_id = conversation.tenant_id if conversation else "default"
         
+        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
         chat_history = [
-            {"role": m.role, "content": m.content}
-            for m in messages[-10:]
+            {"role": m.role, "content": _clip_history(m.content)}
+            for m in messages[-settings.chat_history_messages:]
         ]
         
         # 執行 LangGraph 路由
@@ -467,6 +448,8 @@ class ChatService:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+        if language == "zh-TW":
+            response_text = to_traditional(response_text)
         
         # 儲存助手訊息
         assistant_message = Message(
@@ -568,9 +551,10 @@ class ChatService:
         folder_name = conversation.settings.get("folderName") if conversation else None
         tenant_id = conversation.tenant_id if conversation else "default"
         
+        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
         chat_history = [
-            {"role": m.role, "content": m.content}
-            for m in messages[-10:]
+            {"role": m.role, "content": _clip_history(m.content)}
+            for m in messages[-settings.chat_history_messages:]
         ]
         
         # 執行 LangGraph 路由（使用遮罩後的安全內容）
@@ -631,6 +615,8 @@ class ChatService:
             temperature=temperature,
             max_tokens=max_tokens,
         ):
+            if language == "zh-TW":
+                chunk = to_traditional(chunk)
             full_response += chunk
             yield {
                 "type": "stream",

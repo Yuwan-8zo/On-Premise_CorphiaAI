@@ -10,6 +10,7 @@
  * 如果分頁很多，這邊聚合出來的計數會偏低；解法是後端提供 aggregation API。
  */
 
+import { parseServerDate } from '@/lib/utils'
 import type { AuditLogItem } from '@/api/auditLogs'
 import { ACTION_LABELS } from '@/api/auditLogs'
 
@@ -97,7 +98,7 @@ export function aggregateByDay(
 
     for (const log of logs) {
         if (!log.created_at) continue
-        const created = new Date(log.created_at)
+        const created = parseServerDate(log.created_at)
         if (Number.isNaN(created.getTime())) continue
         created.setHours(0, 0, 0, 0)
         const diffDays = Math.floor(

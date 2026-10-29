@@ -189,7 +189,8 @@ export default function Login() {
                 setActiveTab('register')
                 setConfirmPassword('')
                 setLoginFailedOnce(false)
-                setFieldErrors({ email: detailObj?.message || data?.error?.message || '此信箱尚未註冊，請建立帳號' })
+                // 提示顯示在欄位右側，字太長會把信箱擠掉；已切到註冊分頁，短短一句就夠
+                setFieldErrors({ email: '尚未註冊' })
                 return
             }
 
