@@ -293,6 +293,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             <AIThinkingIndicator
                                 phase={message.sources && message.sources.length > 0 ? 'generating' : 'thinking'}
                                 ragEnabled={Boolean(message.sources !== undefined)}
+                                readingDocs={Boolean(message.sources && message.sources.length > 0)}
                             />
                         ) : null}
 

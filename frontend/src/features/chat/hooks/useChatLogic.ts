@@ -359,10 +359,17 @@ export function useChatLogic() {
     const connectWebSocket = useCallback(async (conversationId: string) => {
         if (wsRef.current) {
             wsRef.current.disconnect()
+            // 換對話時舊的回答會被中斷，不會再收到「完成」；不重設的話畫面會一直停在生成中
+            if (useChatStore.getState().isStreaming) setStreaming(false)
         }
 
         const ws = createChatWebSocket(conversationId)
-        ws.onMessage(handleWebSocketMessage)
+        // 只處理「目前畫面上這個對話」的訊息：舊連線晚到的字不能接到別的對話上
+        ws.onMessage((data) => {
+            const current = useChatStore.getState().currentConversation
+            if (current && current.id !== conversationId) return
+            handleWebSocketMessage(data)
+        })
         ws.onClose(() => console.log('WebSocket 已斷開'))
 
         try {
@@ -374,7 +381,7 @@ export function useChatLogic() {
         } finally {
             setIsConnecting(false)
         }
-    }, [handleWebSocketMessage])
+    }, [handleWebSocketMessage, setStreaming])
 
     const selectConversation = useCallback(async (conversation: typeof currentConversation) => {
         if (!conversation) return

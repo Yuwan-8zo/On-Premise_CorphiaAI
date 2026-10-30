@@ -19,9 +19,11 @@ interface AIThinkingIndicatorProps {
     phase?: ThinkingPhase
     /** 是否使用 RAG（一般聊天無檢索流程，不要顯示「檢索」狀態） */
     ragEnabled?: boolean
+    /** 後端已找到文件段落、模型正在讀：等待說明才提「閱讀文件」 */
+    readingDocs?: boolean
 }
 
-const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false }: AIThinkingIndicatorProps) => {
+const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDocs = false }: AIThinkingIndicatorProps) => {
     const { t } = useTranslation()
 
     // RAG 模式下，已過 ~1.2 秒仍處於 thinking 階段，自動進到 retrieving，讓使用者感覺有進度
@@ -81,7 +83,9 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false }: AIThink
             </span>
             {elapsed >= 15 && (
                 <span className="mt-1 text-[12px] text-text-muted">
-                    AI 在本機處理器上運算，資料不會離開這台電腦；閱讀文件需要一點時間，請稍候
+                    {readingDocs
+                        ? 'AI 在本機處理器上運算，資料不會離開這台電腦；正在閱讀找到的文件段落，需要一點時間，請稍候'
+                        : 'AI 在本機處理器上運算，資料不會離開這台電腦，請稍候'}
                 </span>
             )}
         </div>

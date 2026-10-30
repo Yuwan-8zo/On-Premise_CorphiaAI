@@ -101,8 +101,6 @@ export default function ChatSidebar({
     const [activePillLeft, setActivePillLeft] = useState(0)
     const [activePillHeight, setActivePillHeight] = useState(0)
     const [pillVisible, setPillVisible] = useState(false)
-    // 清單滑入動畫結束時 +1，觸發直線重新定位（動畫中量到的位置會偏移）
-    const [listAnimTick, setListAnimTick] = useState(0)
 
     useLayoutEffect(() => {
         // 取出計算邏輯成一個函式，可被多個觸發點重用：
@@ -185,7 +183,7 @@ export default function ChatSidebar({
             aside?.removeEventListener('animationend', onAnimEnd)
             ro?.disconnect()
         }
-    }, [currentConversationId, conversations, chatMode, expandedFolders, sidebarOpen, listAnimTick])
+    }, [currentConversationId, conversations, chatMode, expandedFolders, sidebarOpen])
 
     return (
         <aside
@@ -355,7 +353,6 @@ export default function ChatSidebar({
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: 20, opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeInOut" }}
-                            onAnimationComplete={() => setListAnimTick(n => n + 1)}
                             className="absolute inset-0 px-4"
                         >
                             <div className="mb-2 pl-3 mt-1">
@@ -394,7 +391,6 @@ export default function ChatSidebar({
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: -20, opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeInOut" }}
-                            onAnimationComplete={() => setListAnimTick(n => n + 1)}
                             className="absolute inset-0 px-4"
                         >
                             <div className="mb-2 pl-3 mt-1">

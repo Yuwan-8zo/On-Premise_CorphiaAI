@@ -121,8 +121,24 @@ export class ChatWebSocket {
             this.ws.onclose = () => {
                 console.log('WebSocket 已斷開')
 
+                // 回答到一半連線斷了（系統被關閉、電腦睡眠…）：在泡泡裡說明，不要留一個空白泡泡像卡住
+                const st = useChatStore.getState()
+                if (
+                    st.isStreaming &&
+                    !this.intentionallyClosed &&
+                    st.currentConversation?.id === this.conversationId
+                ) {
+                    const last = st.messages[st.messages.length - 1]
+                    if (last?.role === 'assistant') {
+                        st.appendToLastMessage(
+                            (last.content ? '\n\n' : '') +
+                            '⚠️ 與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
+                        )
+                    }
+                }
+
                 // 強制重置 Streaming 狀態，避免 UI 卡死
-                useChatStore.getState().setStreaming(false)
+                st.setStreaming(false)
 
                 this.closeHandlers.forEach((handler) => handler())
 
@@ -142,8 +158,7 @@ export class ChatWebSocket {
 
             this.ws.onerror = (error) => {
                 console.error('WebSocket 錯誤:', error)
-                // 強制重置 Streaming 狀態，避免 UI 卡死
-                useChatStore.getState().setStreaming(false)
+                // 生成中狀態交給 onclose 重設（錯誤之後一定會觸發 onclose），才能在泡泡裡顯示斷線說明
                 
                 this.errorHandlers.forEach((handler) => handler(error))
                 reject(error)

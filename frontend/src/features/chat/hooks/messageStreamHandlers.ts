@@ -42,11 +42,38 @@ export interface StreamDispatchDeps {
 export function buildStreamDispatcher(deps: StreamDispatchDeps) {
     const { appendToLastMessage, setStreaming, setSourcesToLastMessage, toast } = deps
 
+    // 每個字都更新一次畫面時，電腦一慢（例如用電池）更新就會堆積，React 判定成無限迴圈而丟字、
+    // 甚至整頁卡死。這裡把字先收集起來，每 50 毫秒才更新一次畫面。
+    let pending = ''
+    let pendingConvId: string | undefined
+    let flushTimer: ReturnType<typeof setTimeout> | null = null
+
+    const flush = () => {
+        if (flushTimer) {
+            clearTimeout(flushTimer)
+            flushTimer = null
+        }
+        if (!pending) return
+        const text = pending
+        pending = ''
+        // 收集期間使用者切到別的對話：這些字屬於原本的對話，不能接到新對話上
+        if (useChatStore.getState().currentConversation?.id !== pendingConvId) return
+        appendToLastMessage(text)
+    }
+
     return function handleStreamPacket(data: StreamResponse): void {
+        if (data.type === 'stream') {
+            if (data.content) {
+                if (!pending) pendingConvId = useChatStore.getState().currentConversation?.id
+                pending += data.content
+                if (!flushTimer) flushTimer = setTimeout(flush, 50)
+            }
+            return
+        }
+        // 其他訊息（完成、錯誤、來源…）之前，先把收集中的字補上，順序才不會亂
+        flush()
+
         switch (data.type) {
-            case 'stream':
-                if (data.content) appendToLastMessage(data.content)
-                break
 
             case 'done': {
                 setStreaming(false)

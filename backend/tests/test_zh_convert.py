@@ -4,6 +4,7 @@ from app.core.zh_convert import to_traditional
 def test_converts_simplified_only_chars():
     assert to_traditional("需要进一步的帮助，请随时告诉我") == "需要進一步的幫助，請隨時告訴我"
     assert to_traditional("文中并未列出") == "文中並未列出"
+    assert to_traditional("LoRA 与 QLoRA，为什么，着重于") == "LoRA 與 QLoRA，為什麼，著重於"
 
 
 def test_keeps_valid_traditional_usage():

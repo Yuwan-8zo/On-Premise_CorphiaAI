@@ -507,8 +507,14 @@ class ChatService:
             # 尋找並更新使用者訊息
             result = await self.db.execute(select(Message).where(Message.id == resubmit_message_id))
             user_message = result.scalar_one_or_none()
-            if not user_message:
-                # NOTE: 訊息不存在（可能是 temp ID），返回錯誤避免無效快取
+            # 只能重送「這個對話裡的使用者訊息」：否則會改寫別的對話的紀錄，
+            # 並用那則訊息的時間去刪除這個對話後面的訊息
+            if (
+                not user_message
+                or user_message.conversation_id != conversation_id
+                or user_message.role != MessageRole.USER.value
+            ):
+                # NOTE: 訊息不存在（可能是 temp ID）或不屬於此對話，返回錯誤避免改錯資料
                 yield {"type": "error", "message": "訊息不存在，無法重新生成"}
                 return
             user_message.content = content
