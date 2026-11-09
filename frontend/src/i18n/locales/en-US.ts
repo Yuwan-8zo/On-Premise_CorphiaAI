@@ -13,6 +13,7 @@ export default {
         loading: 'Loading...',
         search: 'Search',
         confirm: 'Confirm',
+        confirmHint: 'This action cannot be undone.',
         user: 'User',
         confirmDelete: 'Do you want to delete?',
         back: 'Back',

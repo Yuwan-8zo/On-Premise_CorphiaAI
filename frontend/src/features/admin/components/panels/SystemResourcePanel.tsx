@@ -72,7 +72,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                                 {cpuPercent.toFixed(1)}%
                             </p>
                         </div>
-                        <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden">
+                        <div className="h-2 rounded-full bg-[var(--chip)] overflow-hidden">
                             <div
                                 className={`h-full transition-all duration-300 ${getResourceColor(cpuPercent)}`}
                                 style={{ width: `${cpuPercent}%` }}
@@ -93,7 +93,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                                 {memoryPercent.toFixed(1)}%
                             </p>
                         </div>
-                        <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden">
+                        <div className="h-2 rounded-full bg-[var(--chip)] overflow-hidden">
                             <div
                                 className={`h-full transition-all duration-300 ${getResourceColor(memoryPercent)}`}
                                 style={{ width: `${memoryPercent}%` }}

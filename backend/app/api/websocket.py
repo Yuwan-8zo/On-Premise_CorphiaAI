@@ -289,6 +289,14 @@ async def websocket_chat(
             except WebSocketDisconnect:
                 # 使用者關掉頁面，不用回任何東西
                 logger.info(f"生成中 WebSocket 已斷線: {connection_id}")
+            except RuntimeError as e:
+                # 使用者換對話／關分頁後，連線已關閉但生成還在送字：屬於正常斷線，不是錯誤
+                if "websocket.close" in str(e) or "response already completed" in str(e):
+                    logger.info(f"生成中 WebSocket 已關閉，停止送出: {connection_id}")
+                else:
+                    import uuid as _uuid
+                    err_id = _uuid.uuid4().hex[:12]
+                    logger.error(f"[ERROR_ID={err_id}] 生成發生錯誤: {e}", exc_info=True)
             except Exception as e:
                 import uuid as _uuid
                 err_id = _uuid.uuid4().hex[:12]

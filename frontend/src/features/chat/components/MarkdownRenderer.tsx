@@ -36,7 +36,7 @@ class MarkdownErrorBoundary extends React.Component<
     render() {
         if (this.state.hasError) {
             return (
-                <div className="text-red-500 p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+                <div className="text-red-500 p-4 bg-red-500/10 rounded-[10px] border border-red-500/20">
                     <p className="font-bold mb-2">解析訊息內容時發生錯誤</p>
                     <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}
@@ -67,7 +67,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             if (isInline) {
                                 return (
                                     <code
-                                        className="px-1.5 py-0.5 bg-bg-elevated text-accent rounded text-sm font-mono"
+                                        className="px-1.5 py-0.5 bg-[var(--chip)] text-accent rounded text-sm font-mono"
                                         {...props}
                                     >
                                         {children}
@@ -78,7 +78,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             return (
                                 <Suspense
                                     fallback={
-                                        <pre className="my-4 p-4 rounded-cv-md bg-bg-elevated text-sm overflow-x-auto">
+                                        <pre className="my-4 p-4 rounded-[14px] bg-[var(--chip)] text-sm overflow-x-auto">
                                             {String(children).replace(/\n$/, '')}
                                         </pre>
                                     }
@@ -92,7 +92,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 標題
                         h1: ({ children }) => (
-                            <h1 className="text-2xl font-bold text-text-primary mt-6 mb-4 border-b border-border-subtle pb-2">
+                            <h1 className="text-2xl font-bold text-text-primary mt-6 mb-4 border-b border-[var(--paper-line)] pb-2">
                                 {children}
                             </h1>
                         ),
@@ -109,7 +109,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 螢光筆/標記文字 (==文字==)
                         mark: ({ children }) => (
-                            <mark className="px-1.5 py-0.5 bg-bg-elevated text-accent rounded font-medium">
+                            <mark className="px-1.5 py-0.5 bg-[var(--chip)] text-accent rounded font-medium">
                                 {children}
                             </mark>
                         ),
@@ -138,7 +138,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 引用
                         blockquote: ({ children }) => (
-                            <blockquote className="my-4 pl-4 border-l-4 border-accent bg-bg-surface py-2 italic text-text-secondary">
+                            <blockquote className="my-4 pl-4 border-l-4 border-accent bg-[var(--chip)] py-2 italic text-text-secondary">
                                 {children}
                             </blockquote>
                         ),
@@ -149,7 +149,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-accent hover:underline"
+                                className="text-accent "
                             >
                                 {children}
                             </a>
@@ -158,28 +158,28 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         // 表格
                         table: ({ children }) => (
                             <div className="my-4 overflow-x-auto">
-                                <table className="min-w-full border border-border-subtle">
+                                <table className="min-w-full border border-[var(--paper-line)]">
                                     {children}
                                 </table>
                             </div>
                         ),
                         thead: ({ children }) => (
-                            <thead className="bg-bg-surface">{children}</thead>
+                            <thead className="bg-[var(--chip)]">{children}</thead>
                         ),
                         th: ({ children }) => (
-                            <th className="px-4 py-2 text-left text-sm font-semibold text-text-primary border-b border-border-subtle">
+                            <th className="px-4 py-2 text-left text-sm font-semibold text-text-primary border-b border-[var(--paper-line)]">
                                 {children}
                             </th>
                         ),
                         td: ({ children }) => (
-                            <td className="px-4 py-2 text-sm text-text-secondary border-b border-border-subtle">
+                            <td className="px-4 py-2 text-sm text-text-secondary border-b border-[var(--paper-line)]">
                                 {children}
                             </td>
                         ),
 
                         // 分隔線
                         hr: () => (
-                            <hr className="my-6 border-border-subtle" />
+                            <hr className="my-6 border-[var(--paper-line)]" />
                         ),
 
                         // 強調 (改由 index.css 統一由 --color-ios-accent 控制顏色與螢光筆效果)

@@ -4,7 +4,7 @@ import { useToastStore } from '@/store/toastStore'
 import { useUIStore } from '@/store/uiStore'
 import { useTranslation } from 'react-i18next'
 import MessageBubble from '@/features/chat/components/MessageBubble'
-import { AlertCircle, CheckCircle2, MessageSquare, PanelLeftClose, Settings } from 'lucide-react'
+import { AlertCircle, CheckCircle2, MessageSquare, PanelLeftClose, Settings } from '@/components/snow/icons'
 
 export default function ComponentsTest() {
     const { t } = useTranslation()

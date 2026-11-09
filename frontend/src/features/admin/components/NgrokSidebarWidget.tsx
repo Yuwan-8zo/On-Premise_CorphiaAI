@@ -4,7 +4,7 @@
  * 不再內嵌 QR；改成「點 QR 按鈕彈出大 modal」的設計。
  */
 
-import { Check } from 'lucide-react'
+import { Check } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -66,7 +66,7 @@ export default function NgrokSidebarWidget({
         <button
             type="button"
             onClick={onCopyUrl}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition "
             aria-label={t('admin.ngrok.copyUrl', '複製公開網址')}
         >
             {copied ? (
@@ -79,7 +79,7 @@ export default function NgrokSidebarWidget({
 
     return (
         <div className="pt-3">
-            <div className="rounded-cv-md border border-white/50 dark:border-white/20 bg-bg-surface/60 supports-[backdrop-filter]:bg-bg-surface/45 backdrop-blur-xl p-2 shrink-0">
+            <div className="snow-well rounded-[18px] p-2 shrink-0">
                 <div className="flex items-center gap-1.5">
                     <SidebarIconBadge variant={showOfflineState ? 'warning' : 'accent'}>
                         <ItshoverIcon
@@ -100,7 +100,7 @@ export default function NgrokSidebarWidget({
                                 <button
                                     type="button"
                                     onClick={onShowQr}
-                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition hover:bg-accent/20"
+                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent transition "
                                     aria-label={t('admin.ngrok.showQr', '顯示 QR Code')}
                                 >
                                     <ItshoverIcon icon={QrcodeIcon} size={12} interactive />
@@ -115,7 +115,7 @@ export default function NgrokSidebarWidget({
                     )}
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between border-t border-border-subtle pt-1.5">
+                <div className="mt-1.5 flex items-center justify-between border-t border-[var(--paper-line)] pt-1.5">
                     <span className="text-[10px] font-medium text-text-secondary">
                         {t('admin.ngrok.toggleOnLabel', '啟用')}
                     </span>

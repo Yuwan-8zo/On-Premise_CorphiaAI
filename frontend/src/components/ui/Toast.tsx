@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { Check, X, Info } from 'lucide-react'
+import { Check, X, Info } from '@/components/snow/icons'
 import { useToastStore, type Toast } from '../../store/toastStore'
 
 const icons = {
@@ -39,15 +39,13 @@ function ToastItem({ toast }: { toast: Toast }) {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => remove(toast.id)}
             className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
-                bg-bg-base/90 /90 backdrop-blur-xl
-                border ${borderColors[toast.type]}
-                shadow-lg dark:shadow-black/40`}
+                paper !rounded-[18px]`}
         >
             <span className="shrink-0 mt-0.5">{icons[toast.type]}</span>
             <p className="text-[14px] leading-snug text-text-primary flex-1 pr-1">
                 {toast.message}
             </p>
-            <button onClick={() => remove(toast.id)} className="shrink-0 text-text-muted hover:text-text-secondary transition-colors">
+            <button onClick={() => remove(toast.id)} className="shrink-0 text-text-muted  transition-colors">
                 <X className="w-3.5 h-3.5" />
             </button>
             {/* 底部進度條 */}

@@ -1,4 +1,4 @@
-﻿import { Sparkles } from 'lucide-react'
+﻿import { Layers3, Pointer, Sparkles, Users } from '@/components/snow/icons'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 
@@ -52,7 +52,7 @@ export default function GuideSection() {
                         <button
                             type="button"
                             onClick={handleReplayOnboarding}
-                            className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/20 transition"
+                            className="btn btn-sm btn-secondary shrink-0 !text-accent"
                         >
                             <Sparkles className="h-3.5 w-3.5" />
                             {t('settings.replayTour', '重新觀看引導')}
@@ -65,23 +65,21 @@ export default function GuideSection() {
             <motion.section variants={itemVariants} className="space-y-3">
                 <h4 className="text-[16px] font-semibold flex items-center gap-2 text-text-primary">
                     <span className="p-1 bg-accent text-corphia-bronze rounded-md">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <Users className="w-5 h-5" />
                     </span>
                     {t('guide.auth.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-4 text-[14px]">
+                <div className="snow-well rounded-[20px] p-4 text-[14px]">
                     <ul className="space-y-4">
                         <li className="flex flex-col sm:flex-row sm:gap-3 gap-1">
                             <span className="w-auto sm:w-20 font-medium text-text-primary shrink-0">Engineer</span>
                             <span className="text-text-secondary">{t('guide.auth.engineer')}</span>
                         </li>
-                        <li className="border-t border-border-subtle pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
+                        <li className="border-t border-[var(--paper-line)] pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
                             <span className="w-auto sm:w-20 font-medium text-text-primary shrink-0">Admin</span>
                             <span className="text-text-secondary">{t('guide.auth.admin')}</span>
                         </li>
-                        <li className="border-t border-border-subtle pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
+                        <li className="border-t border-[var(--paper-line)] pt-3 flex flex-col sm:flex-row sm:gap-3 gap-1">
                             <span className="w-auto sm:w-20 font-medium text-text-primary shrink-0">User</span>
                             <span className="text-text-secondary">{t('guide.auth.user')}</span>
                         </li>
@@ -93,13 +91,11 @@ export default function GuideSection() {
             <motion.section variants={itemVariants} className="space-y-3">
                 <h4 className="text-[16px] font-semibold flex items-center gap-2 text-text-primary">
                     <span className="p-1 bg-green-100 text-green-600 rounded-md">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
+                        <Layers3 className="w-5 h-5" />
                     </span>
                     {t('guide.project.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
+                <div className="snow-well rounded-[20px] p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
                     <p>{t('guide.project.descStart')} <strong className="text-text-primary">{t('guide.project.mode')}</strong>{t('guide.project.descEnd')}</p>
                     <ol className="list-decimal pl-5 space-y-2">
                         <li>{t('guide.project.step1')}</li>
@@ -113,14 +109,12 @@ export default function GuideSection() {
             {/* 三、對話與介面操作技巧 */}
             <motion.section variants={itemVariants} className="space-y-3">
                 <h4 className="text-[16px] font-semibold flex items-center gap-2 text-text-primary">
-                    <span className="p-1 bg-bg-surface text-text-secondary rounded-md">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                        </svg>
+                    <span className="p-1 bg-[var(--chip)] text-text-secondary rounded-md">
+                        <Pointer className="w-5 h-5" />
                     </span>
                     {t('guide.chat.title')}
                 </h4>
-                <div className="bg-bg-base border border-border-subtle rounded-cv-lg p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
+                <div className="snow-well rounded-[20px] p-5 text-[14px] space-y-3 text-text-secondary leading-relaxed">
                     <ul className="list-disc pl-5 space-y-3">
                         <li>
                             <strong className="text-text-primary font-medium block mb-1">{t('guide.chat.minimapTitle')}</strong>

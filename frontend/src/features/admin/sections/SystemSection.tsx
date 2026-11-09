@@ -21,7 +21,7 @@ import {
     Clock,
     Server,
     MonitorPlay,
-} from 'lucide-react'
+} from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import SystemMonitorPanel from '@/components/system/SystemMonitorPanel'
@@ -79,13 +79,13 @@ export default function SystemSection({ currentModelName }: SystemSectionProps) 
               ───────────────────────────────────────────────────────────── */}
             <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {/* Uptime */}
-                <Panel className="relative overflow-hidden p-2.5 hover:border-accent/40">
+                <Panel className="relative overflow-hidden p-2.5 ">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full bg-accent/10 blur-2xl"
                     />
                     <div className="relative flex items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm bg-accent/10 text-accent">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent/10 text-accent">
                             <Clock className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -98,13 +98,13 @@ export default function SystemSection({ currentModelName }: SystemSectionProps) 
                 </Panel>
 
                 {/* DB Pool */}
-                <Panel className="relative overflow-hidden p-2.5 hover:border-accent/40">
+                <Panel className="relative overflow-hidden p-2.5 ">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full bg-accent/10 blur-2xl"
                     />
                     <div className="relative flex items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm bg-accent/10 text-accent">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent/10 text-accent">
                             <Database className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -117,13 +117,13 @@ export default function SystemSection({ currentModelName }: SystemSectionProps) 
                 </Panel>
 
                 {/* Current Model */}
-                <Panel className="relative overflow-hidden p-2.5 hover:border-accent/40">
+                <Panel className="relative overflow-hidden p-2.5 ">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full bg-accent/10 blur-2xl"
                     />
                     <div className="relative flex items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm bg-accent/10 text-accent">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent/10 text-accent">
                             <Cpu className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -138,13 +138,13 @@ export default function SystemSection({ currentModelName }: SystemSectionProps) 
                 </Panel>
 
                 {/* Platform */}
-                <Panel className="relative overflow-hidden p-2.5 hover:border-accent/40">
+                <Panel className="relative overflow-hidden p-2.5 ">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full bg-accent/10 blur-2xl"
                     />
                     <div className="relative flex items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm bg-accent/10 text-accent">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent/10 text-accent">
                             <Server className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">

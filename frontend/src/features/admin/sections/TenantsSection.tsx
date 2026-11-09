@@ -6,7 +6,7 @@
  * - 30s 輪詢更新
  */
 
-import { Plus, AlertTriangle } from 'lucide-react'
+import { Plus, AlertTriangle } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import type { Tenant } from '@/api/tenants'
@@ -85,7 +85,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="rounded-cv-lg border border-border-subtle bg-bg-elevated/72 p-5 flex flex-col"
+                                className="snow-well rounded-[10px] p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -112,7 +112,7 @@ export default function TenantsSection({
                                 )}
 
                                 {/* Separator */}
-                                <div className="border-t border-border-subtle my-3" />
+                                <div className="border-t border-[var(--paper-line)] my-3" />
 
                                 {/* Usage stats — Glance 風格 */}
                                 <div className="mb-4 grid grid-cols-2 gap-3">

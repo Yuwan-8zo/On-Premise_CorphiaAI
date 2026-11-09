@@ -1,0 +1,789 @@
+/* ============================================================================
+ * Snow 設計系統（參考「北海道雪見六日」設計研究）
+ * ----------------------------------------------------------------------------
+ * 只換「形狀、材質、間距、動態、按鈕」；顏色沿用 Corphia 原本配色（colors.css）。
+ * 規則：
+ *   - 同心圓角：外圓角 ＝ 內圓角 ＋ 間距
+ *   - 卡片：實色紙張＋細邊＋柔和長陰影，圓角 25、內距 26
+ *   - 按鈕：Apple 膠囊（主要＝實心品牌色、次要＝灰色毛玻璃），圖示鈕＝圓形毛玻璃
+ *   - 字型：思源黑體（打包在前端，內網離線也能顯示）
+ * ========================================================================== */
+
+:root {
+  /* 圓角與間距 */
+  --r-card: 25px;     /* 內容卡片 */
+  --pad-card: 26px;   /* 卡片內距 */
+  --r-in: max(calc(var(--r-card) - var(--pad-card) / 2), 10px); /* 卡片裡的圖片、列 */
+  --r-row: 18px;      /* 列表列、輸入框 */
+  --r-ctl: 24px;      /* 控制項群組 */
+  --r-xl: 46px;       /* 大型浮層 */
+  --edge: 16px;       /* 貼著視窗邊的元素 */
+  --btn-h: 44px;      /* 一般按鈕高度（Apple 最小觸控尺寸） */
+  --btn-h-lg: 52px;   /* 對話框主按鈕 */
+  --dialog-pad: 18px; /* 對話框內距：對話框圓角 ＝ 按鈕圓角 26 ＋ 18 ＝ 44 */
+
+  /* 動態曲線（iOS 抽屜／彈簧） */
+  --ease-sp: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-io: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* 材質：顏色取自 Corphia 墨色（43 39 34），不引入新色 */
+  --paper: rgb(var(--bg-elevated));
+  --paper-line: rgb(var(--border-subtle));
+  --glass: rgba(255, 255, 255, 0.42);
+  --glass-ctl: rgba(255, 255, 255, 0.58);
+  --glass-ctl-hover: rgba(120, 112, 100, 0.18);
+  --glass-shade: rgba(43, 39, 34, 0.18);
+  --well: rgba(43, 39, 34, 0.08);
+  --rim-hi: rgba(255, 255, 255, 0.8);
+  --chip: rgba(43, 39, 34, 0.06);
+  --shadow-paper: 0 1px 2px rgba(43, 39, 34, 0.05), 0 20px 44px -30px rgba(43, 39, 34, 0.28);
+  --shadow-float: 0 16px 36px -14px var(--glass-shade);
+  /* 輸入欄位：實色底（比白紙深一階），浮動標籤的遮色片也用它 */
+  --field: rgb(243 241 237);
+  --field-line: rgba(43, 39, 34, 0.1);
+}
+
+html.dark {
+  --paper: rgb(var(--bg-surface));
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-ctl: rgba(255, 255, 255, 0.14);
+  --glass-ctl-hover: rgba(255, 255, 255, 0.18);
+  --glass-shade: rgba(0, 0, 0, 0.45);
+  --well: rgba(0, 0, 0, 0.38);
+  --rim-hi: rgba(255, 255, 255, 0.4);
+  --chip: rgba(255, 255, 255, 0.08);
+  --shadow-paper: 0 1px 2px rgba(0, 0, 0, 0.25), 0 24px 50px -30px rgba(0, 0, 0, 0.6);
+  --field: rgb(54 54 57);
+  --field-line: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- 字型：思源黑體 ---------- */
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: 'Noto Sans TC', 'Source Han Sans TC', '思源黑體', -apple-system, BlinkMacSystemFont,
+    'Microsoft JhengHei', sans-serif;
+}
+
+/* ---------- 卡片（紙張） ---------- */
+.paper {
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-paper);
+}
+
+.paper-pad {
+  padding: var(--pad-card);
+}
+
+/* 區段標題：卡片裡的「六天總覽」那一級 */
+.section-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgb(var(--text-primary));
+}
+
+/* ---------- 玻璃材質 ---------- */
+.glass-ctl {
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- 按鈕：直接照「北海道雪見六日」HTML 的 Dock／.rb 規格 ----------
+ * 圓形圖示鈕：獨立 50×50、群組內 46×46；圖示 27px、線寬 1.6
+ * 群組（.grp）：寬 50、圓角 25、內距 2、玻璃底色、模糊 12
+ * 懸停：內縮 4px 的淡色圓盤；目前選取：凹陷底盤＋內陰影、圖示變主色
+ * 按下：scale(0.97)；材質上下各一條 0.5px 白色亮邊
+ * HTML 沒有文字按鈕，文字按鈕沿用膠囊外形，材質／亮邊／按壓同上 */
+:root {
+  --rim-glass: inset 0 0.5px 0 var(--rim-hi), inset 0 -0.5px 0 rgba(255, 255, 255, 0.35);
+}
+
+html.dark {
+  --rim-glass: inset 0 0.5px 0 rgba(255, 255, 255, 0.28), inset 0 -0.5px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--btn-h);
+  padding: 0 22px;
+  border: 0;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.26s var(--ease-out),
+    background-color 0.26s var(--ease-out),
+    opacity 0.26s var(--ease-out);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-lg {
+  height: var(--btn-h-lg);
+  font-size: 17px;
+  padding: 0 28px;
+}
+
+.btn-sm {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* 主要：實心品牌色 */
+.btn-primary {
+  background: rgb(var(--accent));
+  color: var(--text-on-accent, #fff);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+}
+
+
+/* 次要：HTML 的玻璃材質（glass-ctl＋模糊 12＋亮邊） */
+.btn-secondary {
+  background: var(--glass-ctl);
+  color: rgb(var(--text-primary));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--rim-glass);
+}
+
+
+.btn-danger {
+  background: var(--glass-ctl);
+  color: rgb(200 60 50);
+  box-shadow: var(--rim-glass);
+}
+
+html.dark .btn-danger {
+  color: rgb(255 120 110);
+}
+
+.btn-danger-solid {
+  background: rgb(220 70 60);
+  color: #fff;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* 圓形圖示鈕（HTML 的 .rb）：50×50 玻璃圓 */
+.btn-icon {
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: rgb(var(--text-primary));
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--rim-glass);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.26s var(--ease-out),
+    background-color 0.26s var(--ease-out),
+    color 0.26s var(--ease-out);
+}
+
+/* 圖示：50 的按鈕配 27px（約 54%），線寬 1.6 */
+.btn-icon > svg {
+  width: 54%;
+  height: 54%;
+  stroke-width: 1.6;
+}
+
+
+
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-icon.is-current {
+  color: rgb(var(--accent));
+}
+
+
+/* 不要玻璃底的圖示鈕（只剩懸停圓盤） */
+.btn-icon-plain {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* 按鈕群（HTML 的 .grp）：內距 2、圓角＝46/2＋2＝25、玻璃底 */
+.btn-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  gap: 0;
+  border-radius: 25px;
+  background: var(--glass-ctl);
+  box-shadow: var(--rim-glass);
+  /* 不用 backdrop-filter：它會讓群組裡的 fixed 遮罩（點外面關閉選單）被侷限在群組內 */
+}
+
+.btn-group .btn-icon {
+  width: 46px;
+  height: 46px;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* 舊用法相容：.is-current 用在非圖示元素時，也給凹陷底盤 */
+.is-current:not(.btn-icon) {
+  background: var(--well);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+/* 提示泡泡（HTML 的 .tip）：高 28、圓角 14、玻璃底、13px 粗體 */
+.snow-tip {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-primary));
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--rim-glass);
+}
+
+/* 分段切換的滑塊（HTML 的 .bs-knob）：白色、圓角＝高度一半、極淡陰影 */
+.snow-knob {
+  background: #fff;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
+  border: 0 !important;
+}
+
+html.dark .snow-knob {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- 對話框（Apple Alert） ---------- */
+.dialog-sheet {
+  border-radius: calc(var(--btn-h-lg) / 2 + var(--dialog-pad));
+  padding: calc(var(--dialog-pad) + 10px) var(--dialog-pad) var(--dialog-pad);
+  background: rgb(var(--bg-elevated) / 0.86);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: var(--shadow-float);
+  border: 1px solid var(--paper-line);
+}
+
+html.dark .dialog-sheet {
+  background: rgb(var(--bg-elevated) / 0.82);
+}
+
+.dialog-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 700;
+  color: rgb(var(--text-primary));
+  padding: 0 8px;
+}
+
+.dialog-body {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 23px;
+  color: rgb(var(--text-secondary));
+  padding: 0 8px;
+}
+
+.dialog-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* ---------- 列表列（圖示方塊＋標題＋小字＋箭頭） ---------- */
+.snow-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+/* 列與列之間的細線：從圖示右側開始（HTML：left 52px） */
+.snow-row + .snow-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 50px;
+  height: 0.5px;
+  background: var(--paper-line);
+}
+
+/* 可點的列：左右各外推 12px，懸停／按下時整列浮出圓角淡底 */
+button.snow-row,
+a.snow-row {
+  margin: 0 -12px;
+  padding: 12px;
+  width: calc(100% + 24px) !important;
+  border-radius: 16px;
+  transition: background-color 0.2s var(--ease-out);
+}
+
+button.snow-row + button.snow-row::before,
+a.snow-row + a.snow-row::before {
+  left: 62px;
+  right: 12px;
+}
+
+@media (hover: hover) {
+  button.snow-row:hover,
+  a.snow-row:hover {
+    background-color: color-mix(in srgb, var(--chip) 60%, transparent);
+  }
+}
+
+button.snow-row:active,
+a.snow-row:active {
+  background-color: var(--chip);
+}
+
+.snow-row-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--chip);
+  color: rgb(var(--accent));
+}
+
+/* ---------- 輸入框 ---------- */
+.snow-input {
+  height: var(--btn-h-lg);
+  border-radius: var(--r-row);
+  background: var(--field);
+  border: 1px solid var(--field-line);
+  padding: 0 16px;
+  transition:
+    border-color 0.2s var(--ease-out),
+    background-color 0.2s var(--ease-out);
+}
+
+.snow-input:focus {
+  outline: none;
+  border-color: rgb(var(--accent) / 0.6);
+  background: var(--paper);
+}
+
+/* 對話框裡的次要按鈕：對話框本身半透明，玻璃底色會太淡，改用實色淡灰 */
+.dialog-sheet .btn-secondary,
+.dialog-sheet .btn-danger {
+  background: rgb(var(--text-primary) / 0.08);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+
+/* ---------- 分段切換（GlassSegmented）：照範本拉桿旋鈕 .bs-knob ----------
+ * 靜止：白色滑塊＋極淡陰影；按住：放大（約 1.12×1.3，略微溢出軌道）、變玻璃、亮邊浮出
+ * 位移與放大分開：translateX 跟手指（拖動時由程式每幀更新、不加過渡），scale 用 0.32s 抽屜曲線 */
+.seg-track {
+  background: var(--chip);
+  cursor: pointer;
+}
+
+.seg-knob {
+  position: absolute;
+  z-index: 1;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
+  /* 位置與尺寸由 GlassSegmented 每幀繪製（範本 drawLens），這裡只過場顏色 */
+  transition:
+    background-color 0.32s var(--ease-sp),
+    box-shadow 0.32s var(--ease-sp);
+}
+
+html.dark .seg-knob {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.28);
+}
+
+
+.seg-knob.is-pressed {
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--rim-glass), 0 8px 20px -10px var(--glass-shade);
+}
+
+html.dark .seg-knob.is-pressed {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seg-knob {
+    transition: none;
+  }
+}
+
+/* 使用者要求：滑鼠懸停時按鈕不變色（底色、圖示、文字都維持原樣），只保留按下的縮放 */
+
+/* ---------- 圖示：照範本 .ic（24 格、線條不填色、圓頭圓角、線寬 1.8） ----------
+ * 用 :where() 讓這條規則權重為 0：按鈕裡的 1.6（.btn-icon）等更具體的規則會蓋過它；
+ * 但仍會蓋過內嵌 SVG 上的 stroke-width 屬性，全站線條粗細一致。轉圈的讀取圖示不套用。 */
+:where(svg[stroke='currentColor']:not(.animate-spin)) :where(path, line, polyline, polygon, circle, rect, ellipse) {
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:where(.btn-icon) :where(svg[stroke='currentColor']) :where(path, line, polyline, polygon, circle, rect, ellipse) {
+  stroke-width: 1.6;
+}
+
+/* 三點選單的點要粗才看得見（範本用 .01 線段＋圓頭畫點） */
+.ic-MoreHorizontal path {
+  stroke-width: 3.2 !important;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+ * Liquid Glass 光邊 —— 直接照範本第 26 區（依系統按鈕逐點實測）
+ *   1 內側亮線：顏色取背景色提亮（--rimC），頂端最亮、隨圓角 R 遞減（--rimA）
+ *   2 亮線下約 5px 的內光暈（--glowA）
+ *   3 只有左右兩側外面有細暗線（--rimD）；亮區與暗區不重疊
+ * 顏色換成 Corphia：淺色紙＝白 → 亮線近白；深色紙（40,40,42）提亮到 L0.6 ≈ 中灰
+ * ════════════════════════════════════════════════════════════════ */
+:root {
+  --rimC: #f7f6f3;
+  --rim-out: rgba(43, 39, 34, 0.16);
+}
+
+/* 玻璃卡片裡的小膠囊（浮動標籤）：卡片內模糊無效，改用比卡片亮一階的實底 */
+:root {
+  --pill-solid: rgb(255 255 255);
+}
+html.dark {
+  --pill-solid: rgb(62 62 65);
+}
+
+html.dark {
+  --rimC: #86837f;
+  --rim-out: rgba(0, 0, 0, 0.6);
+}
+
+.btn-icon,
+.btn-group,
+.btn-secondary,
+.btn-danger,
+.snow-tip,
+.glass-chip,
+.glass-field,
+.seg-track,
+.seg-knob.is-pressed {
+  --R: 25px;
+  --rimD: linear-gradient(180deg, transparent 0, transparent calc(var(--R) * 0.45), var(--rim-out) calc(var(--R) * 0.8), var(--rim-out) calc(100% - var(--R) * 0.8), transparent calc(100% - var(--R) * 0.45), transparent 100%);
+  --rimA: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) calc(var(--R) * 0.13), rgba(0, 0, 0, 0.25) calc(var(--R) * 0.3), rgba(0, 0, 0, 0.1) calc(var(--R) * 0.5), transparent calc(var(--R) * 0.75), transparent calc(100% - var(--R) * 0.75), rgba(0, 0, 0, 0.1) calc(100% - var(--R) * 0.5), rgba(0, 0, 0, 0.25) calc(100% - var(--R) * 0.3), rgba(0, 0, 0, 0.45) calc(100% - var(--R) * 0.13), #000 100%);
+  --glowA: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.38) 0.35px, rgba(0, 0, 0, 0.24) 1px, rgba(0, 0, 0, 0.13) 2px, rgba(0, 0, 0, 0.07) 3px, transparent 5px, transparent calc(100% - 5px), rgba(0, 0, 0, 0.07) calc(100% - 3px), rgba(0, 0, 0, 0.13) calc(100% - 2px), rgba(0, 0, 0, 0.24) calc(100% - 1px), rgba(0, 0, 0, 0.38) calc(100% - 0.35px), rgba(0, 0, 0, 0.55) 100%);
+  /* 舊的上下直線光邊拿掉，改用下面的偽元素 */
+  box-shadow: none;
+}
+
+.btn-secondary,
+.btn-danger {
+  --R: 22px;
+}
+
+.btn-lg.btn-secondary,
+.btn-lg.btn-danger {
+  --R: 26px;
+}
+
+.btn-sm.btn-secondary {
+  --R: 17px;
+}
+
+.snow-tip {
+  --R: 14px;
+}
+
+.seg-knob.is-pressed {
+  --R: 22px;
+}
+
+/* 亮線＋內光暈 */
+.btn-icon::before,
+.btn-group::before,
+.btn-secondary::before,
+.btn-danger::before,
+.snow-tip::before,
+.glass-chip::before,
+.glass-field::before,
+.seg-track::before,
+.seg-knob.is-pressed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  padding: 0.5px;
+  background: var(--rimC);
+  -webkit-mask: var(--glowA), var(--rimA), linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: source-over, source-in, xor;
+  mask: var(--glowA) add, var(--rimA) intersect, linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* 左右兩側外面的細暗線 */
+.btn-icon::after,
+.btn-group::after,
+.btn-secondary::after,
+.btn-danger::after,
+.snow-tip::after,
+.glass-chip::after,
+.glass-field::after,
+.seg-track::after,
+.seg-knob.is-pressed::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: -0.5px;
+  border-radius: inherit;
+  padding: 0.5px;
+  pointer-events: none;
+  z-index: 2;
+  background: var(--rimD);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* 群組裡的按鈕：光邊由群組本身畫，按鈕自己不畫；
+ * 目前選取改用 ::before 畫範本的凹陷底盤（內縮 4px） */
+.btn-group .btn-icon::after {
+  content: none;
+}
+
+.btn-group .btn-icon::before {
+  inset: 4px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  -webkit-mask: none;
+  mask: none;
+  z-index: -1;
+}
+
+.btn-group 
+/* 單獨的圓鈕被選取（例如選單打開中）：底盤直接畫在按鈕本身 */
+.btn-icon.is-current:not(.btn-group .btn-icon) {
+  background: var(--well);
+}
+
+/* 不要玻璃的圖示鈕（卡片裡的複製、刪除等）：也不畫光邊 */
+.btn-icon-plain::before,
+.btn-icon-plain::after {
+  content: none;
+}
+
+/* 群組裡用 relative 的子元素（模型選單按鈕等）要在光邊下面 */
+.btn-group > :not(.absolute, .fixed) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- 液態玻璃輸入列（ChatGPT／範本同規格）----------
+ * 玻璃底（glass-ctl＋模糊 12）＋範本光邊；單行高度 52 → 圓角 26（膠囊），多行時維持 26 */
+.glass-field {
+  --R: 25px;
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 0;
+  border-radius: 25px;
+}
+
+/* 分段切換軌道：玻璃膠囊（範本 .grp 同材質），高度約 46 → 圓角 23 */
+.seg-track {
+  --R: 23px;
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* 光邊要在內容上面、但不擋點擊；軌道裡的滑塊／按鈕維持原本層次 */
+.glass-field > :not(.absolute, .fixed),
+.seg-track > :not(.absolute, .fixed, .seg-knob) {
+  position: relative;
+}
+.seg-track > .seg-knob {
+  position: absolute;
+}
+
+/* 玻璃放在白紙卡片裡（側邊欄、登入卡）時，白玻璃會跟紙同色：軌道改用淡墨色，光邊照常 */
+.paper .seg-track {
+  background: var(--chip);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+ * 全系統液態玻璃：卡片、側邊欄、選單、對話框、後台面板（原本的 .paper 紙張）
+ * 半透明＋模糊 24＋飽和 180%，邊緣用範本第 26 區光邊（亮線＋內光暈＋左右暗線），不再用實線邊框
+ * ════════════════════════════════════════════════════════════════ */
+:root {
+  --glass-card: rgba(255, 255, 255, 0.62);
+}
+
+html.dark {
+  --glass-card: rgba(52, 52, 55, 0.55);
+}
+
+.paper,
+.dialog-sheet {
+  --R: 25px;
+  --rimD: linear-gradient(180deg, transparent 0, transparent calc(var(--R) * 0.45), var(--rim-out) calc(var(--R) * 0.8), var(--rim-out) calc(100% - var(--R) * 0.8), transparent calc(100% - var(--R) * 0.45), transparent 100%);
+  --rimA: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) calc(var(--R) * 0.13), rgba(0, 0, 0, 0.25) calc(var(--R) * 0.3), rgba(0, 0, 0, 0.1) calc(var(--R) * 0.5), transparent calc(var(--R) * 0.75), transparent calc(100% - var(--R) * 0.75), rgba(0, 0, 0, 0.1) calc(100% - var(--R) * 0.5), rgba(0, 0, 0, 0.25) calc(100% - var(--R) * 0.3), rgba(0, 0, 0, 0.45) calc(100% - var(--R) * 0.13), #000 100%);
+  --glowA: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.38) 0.35px, rgba(0, 0, 0, 0.24) 1px, rgba(0, 0, 0, 0.13) 2px, rgba(0, 0, 0, 0.07) 3px, transparent 5px, transparent calc(100% - 5px), rgba(0, 0, 0, 0.07) calc(100% - 3px), rgba(0, 0, 0, 0.13) calc(100% - 2px), rgba(0, 0, 0, 0.24) calc(100% - 1px), rgba(0, 0, 0, 0.38) calc(100% - 0.35px), rgba(0, 0, 0, 0.55) 100%);
+  background: var(--glass-card);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 0;
+  box-shadow: 0 20px 44px -28px var(--glass-shade);
+}
+
+.paper::before,
+.dialog-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+  padding: 0.5px;
+  background: var(--rimC);
+  -webkit-mask: var(--glowA), var(--rimA), linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: source-over, source-in, xor;
+  mask: var(--glowA) add, var(--rimA) intersect, linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+.paper::after,
+.dialog-sheet::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: -0.5px;
+  border-radius: inherit;
+  padding: 0.5px;
+  pointer-events: none;
+  z-index: 3;
+  background: var(--rimD);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* 玻璃卡片裡的輸入欄位、分段軌道維持淡墨色（見上方），不疊第二層模糊 */
+.paper .glass-field {
+  background: var(--chip);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* 側邊欄收合時：膠囊形（寬 72、圓角 36；內含 46 的按鈕，外圓角 ＝ 23 ＋ 13，同心） */
+.rail-capsule {
+  --R: 36px;
+}
+
+/* 光邊偽元素需要有定位的父層：只對「沒有自己指定 absolute／fixed／sticky」的元件補 relative，
+ * 不然會蓋掉關閉鈕、下拉選單、手機版側邊欄原本的定位 */
+:is(.btn, .btn-icon, .btn-group, .snow-tip, .glass-chip, .glass-field, .seg-track, .paper, .dialog-sheet):not(.absolute, .fixed, .sticky) {
+  position: relative;
+}
+
+/* 玻璃膠囊／小浮層（狀態膠囊、捲到底部鈕、使用者訊息泡泡等）：玻璃底＋模糊＋光邊；圓角由元件自己的 rounded-* 決定 */
+.glass-chip {
+  --R: 18px;
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 0 !important;
+}
+
+/* 玻璃卡片裡的內容區塊：淡墨色底、無邊框（不在玻璃上再疊一層玻璃） */
+.snow-well {
+  background: var(--chip);
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 一般輸入框（不是聊天輸入列）：實色欄位底＋細邊 */
+.snow-field {
+  background: var(--field) !important;
+  border: 1px solid var(--field-line) !important;
+  box-shadow: none !important;
+}
+
+.snow-field:focus,
+.snow-field:focus-within {
+  border-color: rgb(var(--accent) / 0.6) !important;
+}
+
+/* 40 高的按鈕群（和後台返回鈕同尺寸）：內含 36 的按鈕、內距 2、圓角 20（同心） */
+/* 小號群組：外高 36（與後台「回上一頁」同大小），內距 2 → 內鈕 32、圓角 16 */
+.btn-group.btn-group-36 {
+  --R: 18px;
+  border-radius: 18px;
+}
+.btn-group.btn-group-36 .btn-icon {
+  width: 32px;
+  height: 32px;
+}

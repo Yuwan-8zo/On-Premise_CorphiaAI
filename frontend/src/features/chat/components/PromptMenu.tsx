@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { Sparkles } from '@/components/snow/icons'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 
@@ -10,9 +12,11 @@ interface PromptTemplate {
 interface PromptMenuProps {
     onSelect: (prompt: string) => void
     disabled?: boolean
+    /** 放在輸入欄裡：38 圓鈕、內距 6，與欄位外框同心（25 − 6 = 19） */
+    inline?: boolean
 }
 
-export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
+export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
     // 「進場 / 退場動畫」雙 state pattern：
     //   - isVisible：是否真的 mount 在 DOM（控制 unmount 延遲）
@@ -26,6 +30,11 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
     const [isVisible, setIsVisible] = useState(false)
     const [isAnimating, setIsAnimating] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
+    const popRef = useRef<HTMLDivElement>(null)
+    const btnRef = useRef<HTMLButtonElement>(null)
+    // 選單掛到 body：放在輸入欄（本身是毛玻璃）裡面時，瀏覽器只會模糊到輸入欄為止，
+    // 後面的頁面完全沒被模糊 → 文字透出來。所以改用 portal ＋ 依按鈕位置固定定位。
+    const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null)
     const { t } = useTranslation()
 
     // 從 i18n 取出 templates 陣列
@@ -49,7 +58,8 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
     // 點擊其他地方關閉選單
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            const target = event.target as Node
+            if (menuRef.current && !menuRef.current.contains(target) && !popRef.current?.contains(target)) {
                 setIsOpen(false)
             }
         }
@@ -62,6 +72,20 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
         }
     }, [isOpen])
 
+    // 開啟時算出按鈕位置（視窗縮放時重算）
+    useLayoutEffect(() => {
+        if (!isVisible) return
+        const place = () => {
+            const r = btnRef.current?.getBoundingClientRect()
+            if (!r) return
+            const gap = inline ? 6 : 0
+            setPos({ left: r.left - gap, bottom: window.innerHeight - r.top + (inline ? 14 : 8) })
+        }
+        place()
+        window.addEventListener('resize', place)
+        return () => window.removeEventListener('resize', place)
+    }, [isVisible, inline])
+
     // 如果沒有設定模板或格式不對，不顯示按鈕
     if (!Array.isArray(templates) || templates.length === 0) {
         return null
@@ -69,43 +93,43 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
 
     return (
         <div className="relative flex items-center" ref={menuRef}>
-            <Tooltip label={t('chat.promptTemplatesTitle') || '提示詞模版'}>
+            <Tooltip label={isOpen ? '' : (t('chat.promptTemplatesTitle') || '提示詞模版')}>
                 <button
+                    ref={btnRef}
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     disabled={disabled}
-                    className={`flex items-center justify-center w-[42px] h-[42px] shrink-0 rounded-full border shadow-sm disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent/30
+                    className={`btn-icon ${inline ? '!w-[38px] !h-[38px] [--R:19px]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
                         transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]
                         active:scale-90
                         ${isOpen
-                            ? 'bg-accent/15 border-accent/40 text-accent scale-105'
-                            : 'bg-bg-base border-border-subtle text-text-secondary hover:text-text-primary hover:bg-white/[0.06]'}`}
+                            ? 'is-current text-accent'
+                            : 'text-text-secondary'}`}
                     aria-expanded={isOpen}
                 >
                     {/* 閃亮圖示 (Sparkles)，open 時跟著旋轉 + 加倍體積感 */}
-                    <svg
-                        className={`w-5 h-5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isOpen ? 'rotate-[12deg] scale-110' : 'rotate-0 scale-100'}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                    </svg>
+                    <Sparkles className={`w-5 h-5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isOpen ? 'rotate-[12deg] scale-110' : 'rotate-0 scale-100'}`} />
                 </button>
             </Tooltip>
 
-            {/* 下拉選單：進場 + 退場 transition（不靠 tailwindcss-animate plugin） */}
-            {isVisible && (
+            {/* 下拉選單：portal 到 body，毛玻璃才會模糊到後面的頁面。
+                外框圓角 22、內距 6 → 項目圓角 16（同心）；懸停不變色 */}
+            {isVisible && pos && createPortal(
                 <div
-                    className="absolute bottom-full left-0 mb-2 w-48 sm:w-56 bg-bg-base rounded-2xl shadow-xl border border-border-subtle/50 overflow-hidden transform-gpu z-50 origin-bottom-left"
+                    ref={popRef}
+                    className="fixed w-52 sm:w-60 paper !rounded-[22px] p-[6px] transform-gpu z-[60] origin-bottom-left"
                     style={{
+                        left: pos.left,
+                        bottom: pos.bottom,
                         opacity: isAnimating ? 1 : 0,
                         transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
                         transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
                 >
-                    <div className="py-2 flex flex-col">
-                        <div className="px-3 md:px-4 py-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
-                            提示詞模版
+                    <div className="flex flex-col">
+                        <div className="px-3 pt-2 pb-1.5 text-[12px] font-semibold text-text-muted tracking-wider">
+                            {t('chat.promptTemplatesTitle') || '提示詞模版'}
                         </div>
                         {templates.map((item, index) => (
                             <button
@@ -114,13 +138,14 @@ export function PromptMenu({ onSelect, disabled }: PromptMenuProps) {
                                     onSelect(item.prompt)
                                     setIsOpen(false)
                                 }}
-                                className="w-full text-left px-3 md:px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-accent/10 hover:text-accent active:scale-[0.98]"
+                                className="w-full text-left px-3 h-11 rounded-[16px] text-[15px] font-medium text-text-primary transition-transform active:scale-[0.98] active:bg-[var(--chip)] focus-visible:bg-[var(--chip)] outline-none"
                             >
                                 {item.title}
                             </button>
                         ))}
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
         </div>
     )

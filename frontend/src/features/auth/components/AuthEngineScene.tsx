@@ -101,8 +101,8 @@ export default function AuthEngineScene({ className = '', showCopy = true, decor
         >
             <div className="console-shell absolute inset-0">
                 <div className="absolute left-[8%] right-[8%] top-[8%] h-[78%] rounded-[36px] border border-white/10 bg-white/[0.035] shadow-[0_36px_120px_rgba(0,0,0,0.32)] backdrop-blur-2xl" />
-                <div className="console-layer absolute left-[13%] right-[13%] top-[17%] h-[66%] rounded-[30px] border border-border-subtle/55 bg-bg-base/35 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-2xl" />
-                <div className="console-layer absolute left-[17%] right-[17%] top-[22%] h-[58%] overflow-hidden rounded-[26px] border border-white/10 bg-bg-elevated/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <div className="console-layer absolute left-[13%] right-[13%] top-[17%] h-[66%] rounded-[30px] border border-[var(--paper-line)] bg-bg-base/35 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-2xl" />
+                <div className="console-layer absolute left-[17%] right-[17%] top-[22%] h-[58%] overflow-hidden rounded-[26px] border border-white/10 bg-[var(--chip)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     <div className="console-sheen pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 rotate-12 bg-gradient-to-r from-transparent via-white/[0.075] to-transparent" />
                 </div>
 

@@ -30,6 +30,8 @@ interface ChatState {
     securityWarnings: SecurityWarning[]
     /** C2: 最近一次 RAG 除錯資訊 */
     ragDebug: RAGDebugInfo | null
+    /** 各對話被攔截的訊息（只存在這次開啟的頁面；資料庫不存，所以重新載入時要補回來） */
+    blockedByConv: Record<string, Message[]>
 
     // 動作
     setConversations: (conversations: Conversation[]) => void
@@ -38,6 +40,10 @@ interface ChatState {
     deleteConversation: (id: string) => void
     setCurrentConversation: (conversation: Conversation | null) => void
     setMessages: (messages: Message[]) => void
+    /** 用後端回來的訊息取代畫面，並把這個對話被攔截的訊息插回原位 */
+    setServerMessages: (conversationId: string, messages: Message[]) => void
+    /** 把最後一組「使用者訊息＋攔截通知」標成已攔截並記下來 */
+    markLastExchangeBlocked: () => void
     addMessage: (message: Message) => void
     updateMessage: (id: string, data: Partial<Message>) => void
     setStreaming: (streaming: boolean) => void
@@ -58,6 +64,7 @@ export const useChatStore = create<ChatState>()((set) => ({
     isStreaming: false,
     isLoading: false,
     securityWarnings: [],
+    blockedByConv: {},
     ragDebug: null,
 
     // 設定對話列表
@@ -95,6 +102,45 @@ export const useChatStore = create<ChatState>()((set) => ({
 
     // 設定訊息列表
     setMessages: (messages) => set({ messages }),
+
+    setServerMessages: (conversationId, messages) =>
+        set((state) => {
+            const blocked = state.blockedByConv[conversationId] || []
+            if (blocked.length === 0) return { messages }
+            // 依「前面有幾則一般訊息」把攔截訊息插回原位（不比較時間，各元件時鐘可能差幾秒）
+            const merged: Message[] = []
+            const at = (k: number) => blocked.filter((m) => (m.blockedAfter ?? Infinity) === k)
+            messages.forEach((m, k) => {
+                merged.push(...at(k))
+                merged.push(m)
+            })
+            merged.push(...blocked.filter((m) => (m.blockedAfter ?? Infinity) >= messages.length))
+            return { messages: merged }
+        }),
+
+    markLastExchangeBlocked: () =>
+        set((state) => {
+            const convId = state.currentConversation?.id
+            const messages = [...state.messages]
+            let ai = -1
+            let ui = -1
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (ai < 0 && messages[i].role === 'assistant') ai = i
+                else if (ai >= 0 && messages[i].role === 'user') { ui = i; break }
+            }
+            if (ai < 0) return {}
+            const first = ui >= 0 ? ui : ai
+            const after = messages.slice(0, first).filter((m) => !m.blocked).length
+            const marked: Message[] = []
+            for (const idx of [ui, ai]) {
+                if (idx < 0) continue
+                messages[idx] = { ...messages[idx], blocked: true, blockedAfter: after }
+                marked.push(messages[idx])
+            }
+            if (!convId) return { messages }
+            const prev = (state.blockedByConv[convId] || []).filter((m) => !marked.some((x) => x.id === m.id))
+            return { messages, blockedByConv: { ...state.blockedByConv, [convId]: [...prev, ...marked] } }
+        }),
 
     // 新增訊息
     addMessage: (message) =>

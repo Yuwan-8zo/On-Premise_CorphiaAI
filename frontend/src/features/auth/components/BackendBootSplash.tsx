@@ -102,7 +102,7 @@ export default function BackendBootSplash({ status }: BackendBootSplashProps) {
                     {/* 圓球 (前緣指引) — top-1/2 + translateY-1/2 確保垂直置中、不被 overflow-hidden 切掉 */}
                     <span
                         aria-hidden
-                        className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full shadow-sm animate-[bootSplashBall_2.2s_cubic-bezier(0.65,0,0.35,1)_infinite] ${
+                        className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full  animate-[bootSplashBall_2.2s_cubic-bezier(0.65,0,0.35,1)_infinite] ${
                             isOffline ? 'bg-[#FF453A]' : 'bg-text-primary'
                         }`}
                     />

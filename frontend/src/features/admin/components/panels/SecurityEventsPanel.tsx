@@ -45,7 +45,7 @@ export default function SecurityEventsPanel({
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex items-center gap-3 p-3 rounded-cv-sm bg-white/[0.04] border transition-colors hover:bg-white/[0.07] ${value > 0 ? kpi.borderAccent : 'border-white/[0.06]'}`}
+                                className={`flex items-center gap-3 p-3 rounded-[16px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-[var(--paper-line)]'}`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />

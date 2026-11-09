@@ -113,7 +113,7 @@ export default function Register() {
 
             {/* 註冊卡片 */}
             <div className="relative w-full max-w-md">
-                <div className="bg-bg-base/10 backdrop-blur-xl rounded-cv-lg shadow-2xl border border-border-subtle p-8">
+                <div className="paper !rounded-[32px] p-8">
                     {/* Logo */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-[16px] bg-gradient-to-br from-primary-500 to-primary-700 mb-4">
@@ -125,7 +125,7 @@ export default function Register() {
 
                     {/* 錯誤訊息 */}
                     {error && (
-                        <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm text-center">
+                        <div className="mb-6 p-3 glass-chip rounded-[14px] text-red-300 text-sm text-center">
                             {error}
                         </div>
                     )}
@@ -142,7 +142,7 @@ export default function Register() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-bg-base/10 border border-border-subtle rounded-full
+                                className="w-full px-4 py-3 bg-[var(--chip)] border-0 rounded-full
  text-text-primary placeholder-slate-400 
  focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
  transition-colors"
@@ -160,7 +160,7 @@ export default function Register() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-bg-base/10 border border-border-subtle rounded-full
+                                className="w-full px-4 py-3 bg-[var(--chip)] border-0 rounded-full
  text-text-primary placeholder-slate-400 
  focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
  transition-colors"
@@ -178,7 +178,7 @@ export default function Register() {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-bg-base/10 border border-border-subtle rounded-full
+                                className="w-full px-4 py-3 bg-[var(--chip)] border-0 rounded-full
  text-text-primary placeholder-slate-400 
  focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
  transition-colors"
@@ -196,7 +196,7 @@ export default function Register() {
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-bg-base/10 border border-border-subtle rounded-full
+                                className="w-full px-4 py-3 bg-[var(--chip)] border-0 rounded-full
  text-text-primary placeholder-slate-400 
  focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
  transition-colors"
@@ -209,9 +209,9 @@ export default function Register() {
                             type="submit"
                             disabled={isLoading}
                             className="w-full py-3 bg-gradient-to-r from-primary-600 to-primary-500 
- hover:from-primary-500 hover:to-primary-400
+  
  text-text-primary font-semibold rounded-full
- transition-all duration-300 transform hover:scale-[1.02]
+ transition-all duration-300 transform 
  disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {isLoading ? t('common.loading') : t('auth.register')}
@@ -221,7 +221,7 @@ export default function Register() {
                     {/* 登入連結 */}
                     <p className="mt-6 text-center text-text-muted">
                         {t('auth.hasAccount')}{' '}
-                        <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
+                        <Link to="/login" className="text-primary-400  font-medium">
                             {t('auth.login')}
                         </Link>
                     </p>

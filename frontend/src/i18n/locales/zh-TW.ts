@@ -13,6 +13,7 @@ export default {
         loading: '載入中...',
         search: '搜尋',
         confirm: '確認',
+        confirmHint: '此動作無法復原。',
         user: '使用者',
         confirmDelete: '要刪除嗎？',
         back: '返回',

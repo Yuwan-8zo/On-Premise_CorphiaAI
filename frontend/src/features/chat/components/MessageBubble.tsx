@@ -10,7 +10,7 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw } from 'lucide-react'
+import { Edit2, Check, X, RefreshCw } from '@/components/snow/icons'
 import { CopyIcon, ItshoverIcon, ShieldCheckIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
@@ -193,32 +193,32 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.error && (
-                                <div className="mt-1.5 max-w-full rounded-cv-md border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs text-red-500">
+                                <div className="mt-1.5 max-w-full rounded-[14px] border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs text-red-500">
                                     {t('chat.voice.transcribeFailed')}
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.transcript && message.content && (
-                                <div className="bg-bg-elevated/70 supports-[backdrop-filter]:bg-bg-elevated/55 backdrop-blur-xl border border-white/40 dark:border-white/10 text-text-primary rounded-cv-lg px-5 py-3 mt-1.5 whitespace-pre-wrap text-[15.5px] leading-relaxed selectable-text">
+                                <div className="glass-chip text-text-primary rounded-[22px] px-5 py-3 mt-1.5 whitespace-pre-wrap text-[15.5px] leading-relaxed selectable-text">
                                     {message.content}
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className={`bg-bg-elevated/70 supports-[backdrop-filter]:bg-bg-elevated/55 backdrop-blur-xl border border-white/40 dark:border-white/10 text-text-primary rounded-cv-lg px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative selectable-text ${isEditing ? 'w-full' : ''}`}>
+                        <div className={`glass-chip text-text-primary rounded-[22px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative selectable-text ${isEditing ? 'w-full' : ''}`}>
                             {isEditing ? (
                                 <div className="flex flex-col gap-2 w-full">
                                     <textarea
                                         ref={editTextareaRef}
                                         value={editContent}
                                         onChange={(e) => setEditContent(e.target.value)}
-                                        className="w-full bg-bg-base text-text-primary rounded-lg p-2 outline-none resize-none border border-border-subtle focus:border-corphia-bronze focus:ring-1 focus:ring-corphia-bronze max-h-[40vh] overflow-y-auto custom-scrollbar"
+                                        className="w-full snow-field text-text-primary rounded-[16px] p-3 outline-none resize-none max-h-[40vh] overflow-y-auto custom-scrollbar"
                                         rows={1}
                                     />
                                     <div className="flex justify-end gap-2 mt-1">
-                                        <Tooltip label="取消"><button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="p-1.5 text-text-secondary hover:text-text-primary bg-bg-surface bg-bg-surface rounded-full transition-colors flex items-center justify-center shadow-sm">
+                                        <Tooltip label="取消"><button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="btn-icon !w-9 !h-9 text-text-secondary">
                                             <X className="w-4 h-4" />
                                         </button></Tooltip>
-                                        <Tooltip label="儲存修改"><button onClick={handleSaveEdit} className="p-1.5 text-text-primary bg-accent hover:opacity-80 rounded-full transition-colors flex items-center justify-center shadow-sm">
+                                        <Tooltip label="儲存修改"><button onClick={handleSaveEdit} className="btn-icon !w-9 !h-9 !bg-accent !text-[var(--text-on-accent)]">
                                             <Check className="w-4 h-4" />
                                         </button></Tooltip>
                                     </div>
@@ -230,7 +230,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     )}
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
-                            <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
+                            <Tooltip label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                 {isCopied ? (
                                     <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
                                 ) : (
@@ -238,8 +238,8 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 )}
                             </button></Tooltip>
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
-                            {(!message.audio || message.audio.transcript) && (
-                                <Tooltip label="編輯"><button onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="p-1 hover:text-text-secondary rounded transition-colors">
+                            {!message.blocked && (!message.audio || message.audio.transcript) && (
+                                <Tooltip label="編輯"><button onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     <Edit2 className="w-3.5 h-3.5" />
                                 </button></Tooltip>
                             )}
@@ -248,10 +248,10 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                               直接用 onResubmit(messageId, 原內容)；上層會截斷此訊息之後的歷史並重新送 LLM。
                               無轉錄的純語音訊息沒有可送 LLM 的文字，直接隱藏此按鈕。
                             */}
-                            {onResubmit && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
+                            {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
                                 <button
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
-                                    className="p-1 hover:text-text-secondary rounded transition-colors"
+                                    className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                 </button>
@@ -266,7 +266,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {message.content_hash && (
                                 <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
                                     <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
-                                    <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
+                                    <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block snow-tip !h-auto text-[11px] px-2.5 py-1.5 whitespace-nowrap  z-50 border border-black/10 dark:border-white/10">
                                         Verified: {message.content_hash.substring(0, 16)}...
                                     </div>
                                 </div></Tooltip>
@@ -285,7 +285,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     {/* 內容區塊 */}
                     <div className="flex-1 min-w-0 text-text-primary text-[15.5px] leading-relaxed pb-4">
                         {message.content ? (
-                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-bg-surface dark:prose-pre:bg-bg-surface prose-pre:rounded-[12px] prose-pre:border prose-pre:border-border-subtle dark:prose-pre:border-border-subtle max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
+                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[12px] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
@@ -321,17 +321,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                         {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
-                                <Tooltip label="複製"><button onClick={handleCopy} className="p-1 hover:text-text-secondary rounded transition-colors">
+                                <Tooltip label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     {isCopied ? (
                                     <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
                                 ) : (
                                     <ItshoverIcon icon={CopyIcon} size={14} interactive />
                                 )}
                                 </button></Tooltip>
-                                {onRegenerate && (
+                                {onRegenerate && !message.blocked && (
                                     <button
                                         onClick={() => onRegenerate(message.id)}
-                                        className="p-1 hover:text-text-secondary rounded transition-colors"
+                                        className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
                                         >
                                         <RefreshCw className="w-3.5 h-3.5" />
                                     </button>
@@ -349,7 +349,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 {message.content_hash && (
                                     <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
                                         <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
-                                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block bg-[#1A1A1A] dark:bg-[#E5E5E5] text-white dark:text-black text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50 border border-black/10 dark:border-white/10">
+                                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block snow-tip !h-auto text-[11px] px-2.5 py-1.5 whitespace-nowrap  z-50 border border-black/10 dark:border-white/10">
                                             Verified: {message.content_hash.substring(0, 16)}...
                                         </div>
                                     </div></Tooltip>

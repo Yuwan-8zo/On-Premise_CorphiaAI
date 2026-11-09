@@ -240,7 +240,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
 
     return (
         <div
-            className="flex items-center gap-3 px-4 py-3 w-full bg-bg-base border border-border-subtle rounded-[30px] shadow-md dark:shadow-black/40"
+            className="flex items-center gap-3 px-4 py-3 w-full glass-field"
             role="dialog"
             aria-label={t('chat.voice.recordingAria')}
         >
@@ -249,7 +249,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                 <button
                     type="button"
                     onClick={handleCancel}
-                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                    className="btn-icon btn-icon-plain !w-10 !h-10 text-text-secondary"
                     aria-label={t('chat.voice.cancel')}
                 >
                     <MaterialIcon name="close" size={22} />
@@ -280,7 +280,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     type="button"
                     onClick={handleSend}
                     disabled={!isReady}
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent text-text-on-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                     aria-label={t('chat.voice.send')}
                 >
                     <MaterialIcon name="send" size={18} filled />

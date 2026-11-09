@@ -83,7 +83,7 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                 if (currentConvId) {
                     conversationsApi
                         .getMessages(currentConvId)
-                        .then((msgs) => useChatStore.getState().setMessages(msgs))
+                        .then((msgs) => useChatStore.getState().setServerMessages(currentConvId, msgs))
                         .catch((err) => console.error('同步訊息失敗:', err))
                 }
                 break
@@ -148,6 +148,8 @@ ${data.message || '請求未送入 AI 模型。'}
 
 系統指令無法被覆蓋，此事件已寫入稽核日誌。`,
                 )
+                // 攔截訊息不會存進資料庫：先標記起來，之後重新載入對話時才補得回來
+                useChatStore.getState().markLastExchangeBlocked()
                 break
 
             // A3: DLP 黑名單命中 → 後端已攔阻，根本不會有 stream content 過來
@@ -162,6 +164,7 @@ ${data.message || '訊息包含列管字詞。'}
 
 此事件已寫入稽核日誌，內容沒有送進 AI 模型。`,
                 )
+                useChatStore.getState().markLastExchangeBlocked()
                 useChatStore.getState().addSecurityWarning({
                     type: 'dlp',
                     message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',

@@ -37,7 +37,7 @@ export default function AboutSection() {
                 className="relative mb-6"
             >
                 <div
-                    className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] bg-gradient-to-tr from-accent via-accent to-blue-400 border border-border-subtle"
+                    className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] glass-chip [--R:28px]"
                 >
                     <CorphiaLogoSymbol className="w-16 h-16" />
                 </div>
@@ -49,10 +49,10 @@ export default function AboutSection() {
                     Corphia AI Platform
                 </h3>
                 <div className="flex items-center justify-center gap-2">
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-bg-surface text-text-secondary rounded-lg">
+                    <span className="px-2.5 py-1 text-xs font-semibold bg-[var(--chip)] text-text-secondary rounded-full">
                         {t('about.version')} 2.3.0
                     </span>
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-lg flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 text-xs font-semibold bg-green-500/15 text-green-600 dark:text-green-400 rounded-full flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                         {t('about.systemStable')}
                     </span>
@@ -65,7 +65,7 @@ export default function AboutSection() {
             </motion.p>
 
             {/* 技術棧標籤卡塊 */}
-            <motion.div variants={itemVariants} className="w-full bg-bg-base/50 border border-border-subtle rounded-cv-xl p-6 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="w-full snow-well rounded-[20px] p-6">
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                     <motion.div variants={badgeVariants} className="flex flex-col">
                         <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.frontend')}</span>

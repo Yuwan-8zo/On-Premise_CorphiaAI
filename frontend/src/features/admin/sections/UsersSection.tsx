@@ -7,7 +7,9 @@
  * - 強制登出按鈕
  */
 
-import { Plus, Trash2, UserRoundCog, LogOut, MoreHorizontal } from 'lucide-react'
+import { parseServerDate } from '@/lib/utils'
+import { Plus, Trash2, UserRoundCog, LogOut, MoreHorizontal } from '@/components/snow/icons'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -42,6 +44,9 @@ export interface UsersSectionProps {
     onAddUser: () => void
     onEditUser: (user: AdminUserRow) => void
     onDeleteUser: (user: AdminUserRow) => void
+    onForceLogout: (user: AdminUserRow) => void
+    /** 目前登入者：不能對自己強制登出或刪除 */
+    currentUserId?: string
 }
 
 /**
@@ -49,7 +54,7 @@ export interface UsersSectionProps {
  */
 function formatRelativeTime(isoString?: string): string {
     if (!isoString) return '--'
-    const date = new Date(isoString)
+    const date = parseServerDate(isoString)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffSec = Math.floor(diffMs / 1000)
@@ -98,6 +103,8 @@ export default function UsersSection({
     onAddUser,
     onEditUser,
     onDeleteUser,
+    onForceLogout,
+    currentUserId,
 }: UsersSectionProps) {
     const { t } = useTranslation()
     const [lockoutMap, setLockoutMap] = useState<Record<string, UserLockoutStatus>>({})
@@ -119,28 +126,48 @@ export default function UsersSection({
     // 每行一個三點按鈕，點下去開選單，選單內含編輯 / 強制登出 / 刪除。
     // 同時只能開一個選單（用 user.id 當 key），點外面或按 Esc 關閉。
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+    // 選單畫在頁面最外層（portal），不會被表格的捲動框切掉；
+    // 位置依按鈕在畫面上的座標計算，下方空間不夠時改往上開
+    const [menuPos, setMenuPos] = useState<{ top: number; right: number; up: boolean } | null>(null)
     const menuContainerRef = useRef<HTMLDivElement | null>(null)
+    const menuRef = useRef<HTMLDivElement | null>(null)
+
+    const closeMenu = () => {
+        setOpenMenuId(null)
+        setMenuPos(null)
+    }
 
     useEffect(() => {
         if (!openMenuId) return
 
-        // 點選單外面關閉
+        // 點選單和按鈕以外的地方關閉
         function handleClickOutside(event: MouseEvent) {
-            if (menuContainerRef.current && !menuContainerRef.current.contains(event.target as Node)) {
-                setOpenMenuId(null)
-            }
+            const target = event.target as Node
+            if (menuContainerRef.current?.contains(target) || menuRef.current?.contains(target)) return
+            closeMenu()
         }
         // Esc 關閉
         function handleEsc(event: KeyboardEvent) {
-            if (event.key === 'Escape') setOpenMenuId(null)
+            if (event.key === 'Escape') closeMenu()
+        }
+        // 捲動或縮放視窗時選單位置會跑掉，直接關閉
+        function handleMove() {
+            closeMenu()
         }
         document.addEventListener('mousedown', handleClickOutside)
         document.addEventListener('keydown', handleEsc)
+        window.addEventListener('resize', handleMove)
+        window.addEventListener('scroll', handleMove, true)
         return () => {
             document.removeEventListener('mousedown', handleClickOutside)
             document.removeEventListener('keydown', handleEsc)
+            window.removeEventListener('resize', handleMove)
+            window.removeEventListener('scroll', handleMove, true)
         }
     }, [openMenuId])
+
+    const openUser = users.find((u) => u.id === openMenuId) || null
+    const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId
 
     return (
         <Panel className="overflow-hidden">
@@ -163,7 +190,7 @@ export default function UsersSection({
               這樣整列寬度從 ~960px 降到 ~720px，1080p 視窗也能完整顯示。
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto pb-4">
                 <table className="w-full min-w-[720px]">
                     <thead className={tableHeadRowClass}>
                         <tr>
@@ -190,11 +217,11 @@ export default function UsersSection({
                             </tr>
                         ) : (
                             users.map((item) => (
-                                <tr key={item.id} className="transition hover:bg-white/[0.04] dark:hover:bg-white/[0.04]">
+                                <tr key={item.id} className="transition  ">
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold shadow-sm shadow-accent/20"
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold  "
                                                 style={{ color: 'var(--text-on-accent, #fff)' }}
                                             >
                                                 {item.name.charAt(0).toUpperCase()}
@@ -232,7 +259,18 @@ export default function UsersSection({
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    setOpenMenuId(openMenuId === item.id ? null : item.id)
+                                                    if (openMenuId === item.id) {
+                                                        closeMenu()
+                                                        return
+                                                    }
+                                                    const rect = e.currentTarget.getBoundingClientRect()
+                                                    const up = window.innerHeight - rect.bottom < 170
+                                                    setMenuPos({
+                                                        top: up ? rect.top - 6 : rect.bottom + 6,
+                                                        right: window.innerWidth - rect.right,
+                                                        up,
+                                                    })
+                                                    setOpenMenuId(item.id)
                                                 }}
                                                 aria-haspopup="menu"
                                                 aria-expanded={openMenuId === item.id}
@@ -240,61 +278,12 @@ export default function UsersSection({
                                                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
                                                     openMenuId === item.id
                                                         ? 'border-accent/40 bg-accent/10 text-accent'
-                                                        : 'border-border-subtle text-text-secondary hover:border-border-strong hover:bg-bg-elevated hover:text-text-primary'
+                                                        : 'border-[var(--paper-line)] text-text-secondary   '
                                                 }`}
                                             >
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </button>
 
-                                            {/*
-                                              Dropdown：絕對定位在 kebab 按鈕下方，靠右對齊。
-                                              z-50：蓋過 table sticky header 之類。
-                                              玻璃感跟 Panel 統一。
-                                            */}
-                                            {openMenuId === item.id && (
-                                                <div
-                                                    role="menu"
-                                                    className="absolute right-0 top-full z-50 mt-1.5 min-w-[160px] overflow-hidden rounded-xl border border-border-subtle bg-bg-base/95 backdrop-blur-xl shadow-xl"
-                                                >
-                                                    <button
-                                                        type="button"
-                                                        role="menuitem"
-                                                        onClick={() => {
-                                                            setOpenMenuId(null)
-                                                            onEditUser(item)
-                                                        }}
-                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-text-primary hover:bg-accent/10 hover:text-accent transition-colors"
-                                                    >
-                                                        <UserRoundCog className="h-4 w-4 shrink-0" />
-                                                        {t('common.edit', '編輯')}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        role="menuitem"
-                                                        onClick={() => {
-                                                            setOpenMenuId(null)
-                                                            onEditUser(item)
-                                                        }}
-                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-text-primary hover:bg-amber-500/10 hover:text-amber-500 transition-colors"
-                                                    >
-                                                        <LogOut className="h-4 w-4 shrink-0" />
-                                                        {t('admin.users.forceLogout', '強制登出')}
-                                                    </button>
-                                                    <div className="h-px bg-border-subtle" />
-                                                    <button
-                                                        type="button"
-                                                        role="menuitem"
-                                                        onClick={() => {
-                                                            setOpenMenuId(null)
-                                                            onDeleteUser(item)
-                                                        }}
-                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 shrink-0" />
-                                                        {t('common.delete', '刪除')}
-                                                    </button>
-                                                </div>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -303,6 +292,61 @@ export default function UsersSection({
                     </tbody>
                 </table>
             </div>
+            {openUser && menuPos && createPortal(
+                <div
+                    ref={menuRef}
+                    role="menu"
+                    className="fixed z-[1000] min-w-[168px] overflow-hidden paper !rounded-[20px] p-1.5"
+                    style={{
+                        top: menuPos.top,
+                        right: menuPos.right,
+                        transform: menuPos.up ? 'translateY(-100%)' : undefined,
+                    }}
+                >
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            closeMenu()
+                            onEditUser(openUser)
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-text-primary  "
+                    >
+                        <UserRoundCog className="h-4 w-4 shrink-0" />
+                        {t('common.edit', '編輯')}
+                    </button>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        disabled={isSelf(openUser)}
+                        title={isSelf(openUser) ? '不能對自己強制登出' : undefined}
+                        onClick={() => {
+                            closeMenu()
+                            onForceLogout(openUser)
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-text-primary  "
+                    >
+                        <LogOut className="h-4 w-4 shrink-0" />
+                        {t('admin.users.forceLogout', '強制登出')}
+                    </button>
+                    <div className="h-px bg-border-subtle" />
+                    <button
+                        type="button"
+                        role="menuitem"
+                        disabled={isSelf(openUser)}
+                        title={isSelf(openUser) ? '不能刪除自己的帳號' : undefined}
+                        onClick={() => {
+                            closeMenu()
+                            onDeleteUser(openUser)
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-red-500 "
+                    >
+                        <Trash2 className="h-4 w-4 shrink-0" />
+                        {t('common.delete', '刪除')}
+                    </button>
+                </div>,
+                document.body,
+            )}
         </Panel>
     )
 }

@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from '@/components/snow/icons'
 import { InputHTMLAttributes, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 
@@ -27,7 +28,7 @@ export default function FloatingInput({
     const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type
 
     return (
-        <div className={`relative w-full shrink-0 ${delayClass || ''}`}>
+        <div className={`glass-field !rounded-full [--R:26px] w-full shrink-0 ${error ? '[--rimC:rgb(239_68_68)]' : isFocused ? '[--rimC:rgb(var(--accent))]' : ''} ${delayClass || ''}`}>
             <input
                 id={id}
                 type={inputType}
@@ -40,9 +41,7 @@ export default function FloatingInput({
                     setIsFocused(false)
                     onBlur?.(event)
                 }}
-                className={`w-full px-5 py-3.5 rounded-full bg-bg-surface border text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-border-subtle focus:border-corphia-bronze focus:shadow-md focus:ring-0'
-                } ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${error ? 'pr-28' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -52,7 +51,7 @@ export default function FloatingInput({
                 - Unfocused/empty: label sits at input vertical center, looks like a placeholder
                 - Focused or filled: label floats to the input's top border line, with a
                   pill-shaped background that "notches out" the border behind it
-              The pill bg uses the same color as the input itself (bg-bg-surface), so the
+              The pill bg uses the same color as the input itself (bg-[var(--chip)]), so the
               notch reads as "the label sits inside the input" — works regardless of what's
               behind the form (translucent / blurred / colored). This keeps the input's
               rounded-full shape intact and the floating label clearly visible even when
@@ -95,7 +94,7 @@ export default function FloatingInput({
                         : { top: '50%', scale: 1 }
                 }
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute left-4 pointer-events-none px-2.5 py-0.5 origin-left whitespace-nowrap text-[15px] font-medium tracking-tight"
+                className="absolute left-4 z-[3] pointer-events-none px-2.5 py-0.5 origin-left whitespace-nowrap text-[15px] font-medium tracking-tight"
                 style={{
                     y: '-50%',
                     color: isFloating
@@ -104,21 +103,21 @@ export default function FloatingInput({
                     transition: 'color 160ms cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
             >
+                {/* 浮起時：跨在輸入框上緣的液態玻璃小膠囊（光邊 --R 12） */}
                 <span
                     aria-hidden="true"
-                    className="absolute inset-0 rounded-full bg-bg-surface"
+                    className="absolute inset-0 rounded-full glass-chip [--R:12px] !bg-[var(--pill-solid)]"
                     style={{
                         opacity: isFloating ? 1 : 0,
                         transition: 'opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 />
-                <span className="relative">{label}</span>
+                <span className="relative z-[3]">{label}</span>
             </motion.label>
 
             {error && (
                 <div className={`absolute top-[2px] bottom-[2px] flex items-center pointer-events-none z-10 ${isPasswordType && isFilled ? 'right-10' : 'right-[2px]'}`}>
-                    <div className="w-8 h-full bg-gradient-to-r from-transparent to-bg-surface" />
-                    <div className="bg-bg-surface h-full flex items-center pr-4 pl-1 rounded-r-full">
+                    <div className="h-full flex items-center pr-4 pl-1">
                         <span className="text-xs font-semibold text-red-500 whitespace-nowrap">{error}</span>
                     </div>
                 </div>
@@ -134,7 +133,7 @@ export default function FloatingInput({
                             transition={{ duration: 0.2 }}
                             type="button"
                             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            className="absolute right-4 top-1/2 p-2 text-text-muted hover:text-text-secondary transition-colors focus:outline-none"
+                            className="absolute right-4 top-1/2 p-2 text-text-muted  transition-colors focus:outline-none"
                             tabIndex={-1}
                         >
                             <AnimatePresence mode="wait" initial={false}>
@@ -146,14 +145,9 @@ export default function FloatingInput({
                                     transition={{ duration: 0.15 }}
                                 >
                                     {isPasswordVisible ? (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
+                                        <Eye className="w-5 h-5" />
                                     ) : (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
+                                        <EyeOff className="w-5 h-5" />
                                     )}
                                 </motion.div>
                             </AnimatePresence>

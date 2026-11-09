@@ -8,7 +8,7 @@
  * - 路徑隱藏於 tooltip
  */
 
-import { HardDrive, RefreshCw, Copy } from 'lucide-react'
+import { HardDrive, RefreshCw, Copy } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import type { ModelItem } from '@/api/models'
@@ -88,7 +88,7 @@ export default function ModelsSection({
                 />
                 {/* 路徑在 hover tooltip 顯示 */}
                 <Tooltip label={sanitizePath(modelsDir) || 'ai_model'}>
-                    <div className="border-b border-border-subtle px-5 py-2 font-mono text-[11px] text-text-muted truncate">
+                    <div className="border-b border-[var(--paper-line)] px-5 py-2 font-mono text-[11px] text-text-muted truncate">
                         {sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}
                     </div>
                 </Tooltip>
@@ -110,10 +110,10 @@ export default function ModelsSection({
                             return (
                                 <div
                                     key={model.name}
-                                    className={`flex flex-col gap-4 rounded-cv-lg border p-5 md:flex-row md:items-center md:justify-between ${
+                                    className={`flex flex-col gap-4 rounded-[10px] border p-5 md:flex-row md:items-center md:justify-between ${
                                         model.is_current
                                             ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
-                                            : 'border-border-subtle bg-bg-elevated/72'
+                                            : 'border-[var(--paper-line)] bg-[var(--chip)]'
                                     }`}
                                 >
                                     <div className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export default function ModelsSection({
                                                 </span>
                                             )}
                                             {model.quantization && (
-                                                <span className="rounded-full border border-border-subtle bg-bg-surface px-3 py-1 text-xs font-mono text-text-secondary">
+                                                <span className="rounded-full snow-well px-3 py-1 text-xs font-mono text-text-secondary">
                                                     {model.quantization}
                                                 </span>
                                             )}
@@ -160,7 +160,7 @@ export default function ModelsSection({
                                                                 copyToClipboard(integrity.sha256!)
                                                                 setCopied(model.name)
                                                             }}
-                                                            className="text-text-muted hover:text-text-primary"
+                                                            className="text-text-muted "
                                                         >
                                                             <Copy className="h-3.5 w-3.5" />
                                                         </button>

@@ -5,6 +5,7 @@
  * 這些是中小企業地端資安的核心差異化UI。
  */
 
+import { ChevronDown } from '@/components/snow/icons'
 import { useState } from 'react'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 
@@ -24,7 +25,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <div className="rounded-xl border border-amber-300/50 /30 bg-amber-50/80 backdrop-blur-sm p-3 mb-2 text-xs">
+        <div className="glass-chip rounded-[18px] p-3 mb-2 text-xs">
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
@@ -33,15 +34,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                 <span className="font-medium text-amber-700 flex-1">
                     {message}
                 </span>
-                <svg
-                    className={`w-3 h-3 text-amber-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <ChevronDown className={`w-3 h-3 text-amber-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
 
             {isExpanded && (
@@ -81,20 +74,20 @@ interface InjectionWarningProps {
 // 各風險等級對應的 Material Symbols 圖示與顏色 token
 const RISK_COLORS: Record<string, { border: string; bg: string; text: string; icon: string }> = {
     low: {
-        border: 'border-border-subtle',
-        bg: 'bg-bg-surface',
+        border: '',
+        bg: '',
         text: 'text-text-secondary',
         icon: 'info',
     },
     medium: {
-        border: 'border-orange-300/50',
-        bg: 'bg-orange-50/80',
+        border: '',
+        bg: '',
         text: 'text-orange-700',
         icon: 'warning',
     },
     high: {
-        border: 'border-red-300/50',
-        bg: 'bg-red-50/80',
+        border: '',
+        bg: '',
         text: 'text-red-700',
         icon: 'crisis_alert',
     },
@@ -105,7 +98,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
     const colors = RISK_COLORS[riskLevel] || RISK_COLORS.medium
 
     return (
-        <div className={`rounded-xl border ${colors.border} ${colors.bg} backdrop-blur-sm p-3 mb-2 text-xs`}>
+        <div className={`glass-chip rounded-[18px] p-3 mb-2 text-xs`}>
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"

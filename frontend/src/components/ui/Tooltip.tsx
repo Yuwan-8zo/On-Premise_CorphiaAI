@@ -147,13 +147,13 @@ export default function Tooltip({
             onBlur={handleLeave}
         >
             {children}
-            {isVisible &&
+            {isVisible && !!label &&
                 createPortal(
                     <span
                         ref={tooltipRef}
                         role="tooltip"
                         style={{ top: position.top, left: position.left }}
-                        className="pointer-events-none fixed z-[9999] max-w-[min(80vw,400px)] whitespace-pre-wrap break-words rounded-lg border border-border-subtle bg-bg-elevated px-2.5 py-1.5 text-xs font-medium text-text-primary shadow-lg"
+                        className="snow-tip pointer-events-none fixed z-[9999] max-w-[min(80vw,400px)] !h-auto min-h-[28px] !whitespace-pre-wrap break-words py-[5px]"
                     >
                         {label}
                     </span>,

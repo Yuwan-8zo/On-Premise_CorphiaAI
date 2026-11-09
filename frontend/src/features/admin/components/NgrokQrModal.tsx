@@ -34,7 +34,7 @@ export default function NgrokQrModal({ url, isOpen, onClose }: NgrokQrModalProps
     return createPortal(
         // 背景：輕度 backdrop-blur（從 2xl→sm）+ 提高半透明，讓底層更看得清，玻璃感保留但不糊
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-bg-base/55 supports-[backdrop-filter]:bg-bg-base/45 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
             onClick={onClose}
             role="dialog"
             aria-modal="true"
@@ -42,7 +42,7 @@ export default function NgrokQrModal({ url, isOpen, onClose }: NgrokQrModalProps
         >
             {/* QR 卡片：玻璃感包一層白邊；自己也只用 backdrop-blur-md 不要太糊 */}
             <div
-                className="rounded-cv-md border border-white/50 dark:border-white/20 bg-bg-surface/55 supports-[backdrop-filter]:bg-bg-surface/35 backdrop-blur-md p-3 shadow-[0_22px_70px_rgb(0_0_0/0.22)] dark:shadow-[0_22px_70px_rgb(0_0_0/0.5)]"
+                className="paper !rounded-[25px] p-3 shadow-[0_22px_70px_rgb(0_0_0/0.22)] dark:shadow-[0_22px_70px_rgb(0_0_0/0.5)]"
                 onClick={(e) => e.stopPropagation()}
                 style={{
                     width: 'min(90vw, 90vh)',
@@ -53,7 +53,7 @@ export default function NgrokQrModal({ url, isOpen, onClose }: NgrokQrModalProps
                 <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&margin=0&qzone=0&format=png&data=${encodeURIComponent(url)}`}
                     alt="QR"
-                    className="block w-full h-full select-none rounded-cv-sm"
+                    className="block w-full h-full select-none rounded-[10px]"
                     style={{ imageRendering: 'pixelated' }}
                     loading="eager"
                     draggable={false}

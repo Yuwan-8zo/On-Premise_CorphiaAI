@@ -13,6 +13,7 @@ export default {
         loading: '読み込み中...',
         search: '検索',
         confirm: '確認',
+        confirmHint: 'この操作は元に戻せません。',
         user: 'ユーザー',
         confirmDelete: '本当に削除しますか？',
         back: '戻る',

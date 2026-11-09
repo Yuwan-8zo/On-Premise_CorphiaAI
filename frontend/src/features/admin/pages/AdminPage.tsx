@@ -27,7 +27,7 @@ import {
     Gauge,
     Sparkles,
     Users,
-} from 'lucide-react'
+} from '@/components/snow/icons'
 
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -318,12 +318,16 @@ export default function Admin() {
             const yyyy = sevenDaysAgo.getFullYear()
             const mm = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')
             const dd = String(sevenDaysAgo.getDate()).padStart(2, '0')
-            const data = await getAuditLogs({
-                page: 1,
-                page_size: 100,
-                start_date: `${yyyy}-${mm}-${dd}`,
-            })
-            setAuditSummary(data.data)
+            // 每頁最多 100 筆；只抓第一頁時「審計事件」會卡在 100、趨勢圖只剩今天。
+            // 逐頁抓完近 7 天（最多 2000 筆，足夠 dashboard 統計）
+            const startDate = `${yyyy}-${mm}-${dd}`
+            const all: AuditLogItem[] = []
+            for (let page = 1; page <= 20; page++) {
+                const data = await getAuditLogs({ page, page_size: 100, start_date: startDate })
+                all.push(...data.data)
+                if (page >= (data.total_pages || 1)) break
+            }
+            setAuditSummary(all)
         } catch (err) {
             console.error('Failed to load audit summary:', err)
         }
@@ -483,12 +487,25 @@ export default function Admin() {
 
     const handleDeleteUser = async (item: UserData) => {
         // 使用專案統一的 ConfirmModal，避免跳出原生 window.confirm。
-        showConfirm(`確定要刪除 ${item.name}？此操作會移除該使用者。`, async () => {
+        showConfirm(`確定要刪除 ${item.name}（${item.email}）？此操作無法復原。`, async () => {
             try {
                 await usersApi.deleteUser(item.id)
+                useToastStore.getState().success(`已刪除使用者 ${item.name}`)
                 loadUsers()
-            } catch (error) {
-                console.error('Failed to delete user', error)
+            } catch (err) {
+                console.error('Failed to delete user', err)
+                useToastStore.getState().error(getErrorMessage(err))
+            }
+        })
+    }
+
+    const handleForceLogout = async (item: UserData) => {
+        showConfirm(`確定要強制登出 ${item.name}？對方目前的登入會立即失效，需要重新登入。`, async () => {
+            const result = await adminApi.forceLogout(item.id)
+            if (result) {
+                useToastStore.getState().success(`已強制登出 ${item.name}`)
+            } else {
+                useToastStore.getState().error('強制登出失敗，請稍後再試')
             }
         })
     }
@@ -566,12 +583,12 @@ export default function Admin() {
                   簡化過的 header（壓低 mb / pb 留空間給內容）
                 */}
                 {/* 手機板 header 簡化：title + 工程師 pill 並排同一行，省垂直空間 */}
-                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 border-b border-border-subtle pb-2 md:justify-between">
+                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 border-b border-[var(--paper-line)] pb-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <Tooltip label={t('common.backToChat', '返回聊天')}>
                             <button
                                 onClick={() => navigate('/')}
-                                className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-bg-base hover:text-text-primary active:scale-[0.98]"
+                                className="btn-icon !w-9 !h-9 text-text-secondary"
                             >
                                 <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                             </button>
@@ -579,11 +596,11 @@ export default function Admin() {
                         <h1 className="text-[16px] md:text-[22px] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
-                        <div className="hidden items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent sm:flex">
+                        <div className="hidden items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-xs font-semibold text-accent sm:flex">
                             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                             {t('admin.backendOnline')}
                         </div>
-                        <div className="rounded-full border border-border-subtle bg-bg-base px-2.5 md:px-3 py-1 md:py-1.5 text-[11px] md:text-xs font-medium text-text-secondary truncate max-w-[100px] md:max-w-none">
+                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[11px] md:text-xs font-medium text-text-secondary truncate max-w-[100px] md:max-w-none">
                             {user?.name || t('admin.operator')}
                         </div>
                     </div>
@@ -604,19 +621,19 @@ export default function Admin() {
                       桌機板（lg+）：h-full，aside 撐滿 grid row，wrapper 的 mt-auto 把 widget 推到底。
                       之前一律 h-full 的版本在手機板把 aside 撐滿整個 main → content 區被擠到 0 高度看不到。
                     */}
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden rounded-cv-lg border border-white/[0.06] bg-black/[0.22] shadow-[0_4px_16px_rgb(0_0_0/0.3)] p-2">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden paper p-2">
                         {/* Model card 在手機板隱藏，騰出空間給內容 */}
-                        <div className="hidden lg:block mb-2 rounded-cv-md border border-white/[0.07] bg-white/[0.04] p-2.5">
+                        <div className="hidden lg:block mb-2 rounded-[18px] border border-transparent bg-[var(--chip)] p-2.5">
                             <div className="mb-2 flex items-center justify-between gap-2">
                                 <div className="min-w-0">
                                     <p className="text-[9px] uppercase tracking-[0.16em] text-text-secondary">{t('admin.currentModel')}</p>
                                     <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{currentModel?.name || t('admin.standby')}</p>
                                 </div>
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-accent/10">
                                     <Sparkles className="h-3.5 w-3.5 text-accent" />
                                 </span>
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
                             </div>
                         </div>
@@ -638,7 +655,7 @@ export default function Admin() {
                             {pillRect && (
                                 <div
                                     aria-hidden
-                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-white/[0.08] ring-1 ring-inset ring-white/[0.08]"
+                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-[var(--chip)]"
                                     style={{
                                         left: pillRect.left,
                                         top: pillRect.top,
@@ -666,7 +683,7 @@ export default function Admin() {
                                         className={`tap relative z-10 flex min-w-max items-center gap-2 rounded-[14px] px-3 py-2 text-left text-[13px] font-semibold transition-colors active:scale-[0.99] lg:min-w-0 ${
                                             active
                                                 ? 'text-text-primary'
-                                                : 'text-text-secondary hover:text-text-primary'
+                                                : 'text-text-secondary '
                                         }`}
                                     >
                                         <Icon className={`h-3.5 w-3.5 transition-colors ${active ? 'text-accent' : 'text-text-muted'}`} />
@@ -703,7 +720,7 @@ export default function Admin() {
                       - 其他 tab（users / audit / models / 等）內容比較長，
                         靠這層的 overflow-y-auto 提供滾動。
                     */}
-                    <div className="flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 custom-scrollbar md:pr-2 lg:h-full lg:flex-none">
+                    <div className="flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 custom-scrollbar md:pr-2 lg:h-full lg:flex-none lg:pr-0 lg:-mr-3 lg:[scrollbar-gutter:stable]">
                         {activeSection === 'overview' && (
                             <OverviewSection
                                 stats={stats}
@@ -723,6 +740,8 @@ export default function Admin() {
                                 onAddUser={handleAddUser}
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
+                                onForceLogout={handleForceLogout}
+                                currentUserId={user?.id}
                             />
                             </Suspense>
                         )}
@@ -800,7 +819,7 @@ export default function Admin() {
                                 ]}
                             />
                         </Field>
-                        <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
+                        <label className="flex items-center justify-between rounded-[16px] snow-field px-4 py-3 text-sm text-text-primary">
                             {t('admin.tenants.status.active')}
                             <input type="checkbox" checked={userFormData.is_active} onChange={(event) => setUserFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>
@@ -819,7 +838,7 @@ export default function Admin() {
                         <Field label={t('admin.tenants.modal.name')}><input className={inputClass} required value={tenantFormData.name} onChange={(event) => setTenantFormData((prev) => ({ ...prev, name: event.target.value }))} /></Field>
                         <Field label="Slug"><input className={inputClass} required value={tenantFormData.slug} onChange={(event) => setTenantFormData((prev) => ({ ...prev, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} /></Field>
                         <Field label={t('admin.tenants.modal.description')}><textarea className={inputClass} rows={3} value={tenantFormData.description} onChange={(event) => setTenantFormData((prev) => ({ ...prev, description: event.target.value }))} /></Field>
-                        <label className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-3 text-sm text-text-primary">
+                        <label className="flex items-center justify-between rounded-[16px] snow-field px-4 py-3 text-sm text-text-primary">
                             {t('admin.tenants.status.active')}
                             <input type="checkbox" checked={tenantFormData.is_active} onChange={(event) => setTenantFormData((prev) => ({ ...prev, is_active: event.target.checked }))} />
                         </label>

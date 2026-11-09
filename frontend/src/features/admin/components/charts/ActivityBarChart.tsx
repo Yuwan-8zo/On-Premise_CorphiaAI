@@ -39,7 +39,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     const item = payload[0]?.payload
     if (!item) return null
     return (
-        <div className="rounded-cv-md border border-border-subtle bg-bg-elevated px-3 py-2 text-xs shadow-md">
+        <div className="paper !rounded-[14px] px-3 py-2 text-xs">
             <p className="font-mono font-medium text-text-primary tabular-nums">
                 {item.date}
             </p>
@@ -61,7 +61,7 @@ export default function ActivityBarChart({
         <ResponsiveContainer width="100%" height={height}>
             <BarChart
                 data={data}
-                margin={{ top: 12, right: 8, bottom: 0, left: -16 }}
+                margin={{ top: 12, right: 8, bottom: 0, left: -6 }}
             >
                 <defs>
                     <linearGradient id="activity-bar-fill" x1="0" y1="0" x2="0" y2="1">

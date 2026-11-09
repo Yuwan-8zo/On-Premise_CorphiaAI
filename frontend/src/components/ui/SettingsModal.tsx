@@ -2,12 +2,13 @@
  * 設定頁面 (Modal)
  */
 
+import { AlertTriangle, Book, Check, ChevronLeft, ChevronRight, Edit2, Eye, EyeOff, Globe, Info, Lock, Moon, Palette, ShieldCheck, Sun, User, X } from '@/components/snow/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
-import { useUIStore } from '../../store/uiStore'
+import { useUIStore, type AccentColorType } from '../../store/uiStore'
 import { authApi } from '../../api/auth'
 import { usersApi } from '../../api/users'
 import { ACCENT_COLORS } from '@/design-system'
@@ -17,68 +18,48 @@ import Tooltip from '@/components/ui/Tooltip'
 
 // --- Icons ---
 const CloseIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
+    <X className="w-5 h-5" />
 )
 
 const UserIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
+    <User className="w-5 h-5" />
 )
 
 const PaletteIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-    </svg>
+    <Palette className="w-5 h-5" />
 )
 
 const GlobeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-    </svg>
+    <Globe className="w-5 h-5" />
 )
 
 const InfoIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
+    <Info className="w-5 h-5" />
 )
 
 const BookIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
+    <Book className="w-5 h-5" />
 )
 
 /** 亮色模式 Icon */
 const SunIcon = () => (
-    <svg className="w-10 h-10 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M3 12h2m14 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7z" />
-    </svg>
+    <Sun className="w-10 h-10 text-amber-400" />
 )
 
 /** 深色模式 Icon */
 const MoonIcon = () => (
-    <svg className="w-10 h-10 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
+    <Moon className="w-10 h-10 text-text-secondary" />
 )
 
 
 
 const LockIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
+    <Lock className="w-5 h-5" />
 )
 
 /** 盾牌 Icon 用於管理後台入口 */
 const ShieldIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-    </svg>
+    <ShieldCheck className="w-5 h-5" />
 )
 
 type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
@@ -87,12 +68,12 @@ type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
  * 主題卡的選中／未選中外觀。獨立成常數避免在 JSX 內重複貼三次同樣的字串，
  * 也順便修掉 `bg-[rgb(...)/0.05]` 缺一個右括號的舊 bug。
  */
-const THEME_CARD_BASE = 'flex-1 p-4 rounded-cv-lg transition-all border-2'
+const THEME_CARD_BASE = 'flex-1 p-2 pb-3 rounded-[24px] transition-all snow-well'
 const THEME_CARD_SELECTED =
-    'border-accent ring-4 ring-accent/20 bg-accent/5 dark:bg-accent/10'
+    '!bg-accent/10 ring-2 ring-accent'
 const THEME_CARD_UNSELECTED =
-    'border-border-subtle hover:border-border-strong/40'
-const ACCENT_OPTIONS = Object.entries(ACCENT_COLORS)
+    ''
+const ACCENT_OPTIONS = Object.entries(ACCENT_COLORS) as [AccentColorType, (typeof ACCENT_COLORS)[string]][]
 
 export default function SettingsModal() {
     const { t, i18n } = useTranslation()
@@ -325,18 +306,18 @@ export default function SettingsModal() {
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl rounded-cv-lg shadow-[0_22px_70px_rgb(0_0_0/0.18)] dark:shadow-[0_22px_70px_rgb(0_0_0/0.42)] flex flex-col md:flex-row overflow-hidden border border-white/40 dark:border-white/10 select-none pointer-events-auto"
+                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] paper !rounded-[34px] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
-                            className="absolute top-4 right-4 p-2 text-text-secondary hover:text-text-primary bg-bg-main /10 rounded-full transition-colors z-20"
+                            className="btn-icon !w-9 !h-9 absolute top-[18px] right-[18px] text-text-secondary z-20"
                         >
                             <CloseIcon />
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
-                        <div className={`md:w-64 bg-white/10 dark:bg-white/[0.03] border-r border-white/20 dark:border-white/10 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div className={`md:w-64 border-r border-[var(--paper-line)] flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-text-primary tracking-wide">
                                     {t('settings.title')}
@@ -352,8 +333,8 @@ export default function SettingsModal() {
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all ${
                                             activeSection === item.id
-                                                ? 'bg-bg-surface text-text-primary shadow-sm font-semibold border border-border-subtle'
-                                                : 'text-text-secondary bg-transparent hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/50 font-medium border border-transparent'
+                                                ? 'bg-[var(--chip)] text-text-primary font-semibold border border-transparent'
+                                                : 'text-text-secondary bg-transparent font-medium border border-transparent'
                                         }`}
                                     >
                                         <div className={`${activeSection === item.id ? 'text-accent' : 'text-text-secondary'}`}>
@@ -365,21 +346,19 @@ export default function SettingsModal() {
                             </nav>
 
                             {/* 底部按鈕區 */}
-                            <div className="p-4 border-t border-border-subtle/50 space-y-2">
+                            <div className="p-4 border-t border-[var(--paper-line)] space-y-2">
                                 {/* 管理後台入口：僅 admin / engineer 可見 */}
                                 {(user?.role === 'admin' || user?.role === 'engineer') && (
                                     <Tooltip label={t('settings.enterAdmin')}>
                                         <button
                                             onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-text-secondary bg-transparent border border-border-subtle/50 hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition-all font-medium text-sm group"
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-[18px] text-text-secondary bg-[var(--chip)] transition-all font-medium text-sm group"
                                         >
                                         <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
                                             <ShieldIcon />
                                         </span>
                                         <span>{t('settings.adminLabel')}</span>
-                                        <svg className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                        </svg>
+                                        <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" />
                                         </button>
                                     </Tooltip>
                                 )}
@@ -391,24 +370,22 @@ export default function SettingsModal() {
                             <div className="p-6 md:p-10 min-h-full">
                                 {/* 手機版返回導航*/}
                                 <button 
-                                    className="md:hidden mb-6 flex items-center text-corphia-bronze font-medium hover:opacity-80 transition-opacity"
+                                    className="md:hidden mb-6 flex items-center text-corphia-bronze font-medium  transition-opacity"
                                     onClick={() => setMobileView('menu')}
                                 >
-                                    <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                                    </svg>
+                                    <ChevronLeft className="w-5 h-5 mr-1" />
                                     {t('common.cancel', '取消')}
                                 </button>
                                 {/* 個人資料 */}
                                 {activeSection === 'profile' && (
                                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                        <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
+                                        <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
                                             {t('settings.profile')}
                                         </h2>
 
                                     {/* 頭像與名稱*/}
                                     <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 mb-10 text-center md:text-left">
-                                        <div className="w-24 h-24 rounded-full bg-accent text-text-on-accent flex items-center justify-center text-4xl font-bold shadow-lg shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-accent text-text-on-accent flex items-center justify-center text-4xl font-bold  shrink-0">
                                             {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                                         </div>
                                         <div className="flex flex-col items-center md:items-start">
@@ -419,7 +396,7 @@ export default function SettingsModal() {
                                                             type="text"
                                                             value={editName}
                                                             onChange={(e) => setEditName(e.target.value)}
-                                                            className="text-xl font-bold text-text-primary bg-bg-base border border-accent/50 rounded-[12px] px-3 py-1 outline-none focus:ring-2 focus:ring-accent w-48"
+                                                            className="text-xl font-bold text-text-primary snow-field rounded-[14px] px-3 py-1 outline-none w-48"
                                                             autoFocus
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') handleUpdateName()
@@ -432,7 +409,7 @@ export default function SettingsModal() {
                                                         <button 
                                                             onClick={handleUpdateName}
                                                             disabled={isUpdatingName}
-                                                            className="p-1.5 px-3 text-sm font-medium bg-accent text-text-on-accent rounded-[12px] flex-shrink-0 hover:bg-accent/90 transition-colors"
+                                                            className="btn btn-sm btn-primary flex-shrink-0"
                                                         >
                                                             {isUpdatingName ? t('common.loading') : t('common.save')}
                                                         </button>
@@ -442,7 +419,7 @@ export default function SettingsModal() {
                                                                 setIsEditingName(false)
                                                             }}
                                                             disabled={isUpdatingName}
-                                                            className="p-1.5 px-3 text-sm font-medium bg-bg-surface text-text-primary rounded-[12px] flex-shrink-0 hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/80 transition-colors border border-border-subtle"
+                                                            className="btn btn-sm btn-secondary flex-shrink-0"
                                                         >
                                                             {t('common.cancel', '取消')}
                                                         </button>
@@ -455,11 +432,9 @@ export default function SettingsModal() {
                                                         <Tooltip label={t('common.changeName')}>
                                                             <button
                                                                 onClick={() => setIsEditingName(true)}
-                                                                className="text-text-muted hover:text-accent transition-colors p-1 rounded-full hover:bg-white/[0.06] dark:hover:bg-white/[0.06]"
+                                                                className="text-text-muted  transition-colors p-1 rounded-full "
                                                             >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                            </svg>
+                                                            <Edit2 className="w-5 h-5" />
                                                             </button>
                                                         </Tooltip>
                                                     </>
@@ -475,7 +450,7 @@ export default function SettingsModal() {
                                     </div>
 
                                     {/* 帳號操作區塊 */}
-                                    <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-border-subtle pt-8">
+                                    <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-[var(--paper-line)] pt-8">
                                         <button
                                             onClick={() => {
                                                 setShowPasswordForm(true)
@@ -486,14 +461,14 @@ export default function SettingsModal() {
                                                 setConfirmNewPassword('')
                                                 setPasswordStrength(null)
                                             }}
-                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-bg-surface hover:bg-white/[0.06] dark:hover:bg-white/[0.06]/80 text-text-primary font-medium rounded-[16px] transition-colors border border-border-subtle"
+                                            className="btn btn-secondary w-full sm:w-auto"
                                         >
                                             <LockIcon /> {t('auth.changePassword', '修改密碼')}
                                         </button>
 
                                         <button
                                             onClick={handleLogout}
-                                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-medium rounded-[16px] transition-colors border border-red-500/20"
+                                            className="btn btn-danger w-full sm:w-auto"
                                         >
                                             {t('auth.logout')}
                                         </button>
@@ -504,17 +479,17 @@ export default function SettingsModal() {
                             {/* 外觀設定 */}
                             {activeSection === 'appearance' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
+                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
                                         {t('settings.theme')}
                                     </h2>
 
-                                    <div className="flex gap-4 max-w-2xl">
+                                    <div className="grid grid-cols-3 gap-4 max-w-2xl">
                                         {/* 淺色模式 */}
                                         <button
                                             onClick={() => setThemePreference('light')}
                                             className={`${THEME_CARD_BASE} ${themePreference === 'light' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
                                         >
-                                            <div className="w-full h-24 rounded-xl bg-bg-base border border-border-subtle shadow-sm mb-4 flex items-center justify-center transition-transform hover:scale-105">
+                                            <div className="w-full h-24 rounded-[16px] bg-[#F6F4F0] mb-3 flex items-center justify-center">
                                                 <SunIcon />
                                             </div>
                                             <p className={`text-[15px] font-semibold ${themePreference === 'light' ? 'text-accent' : 'text-text-primary'}`}>
@@ -527,7 +502,7 @@ export default function SettingsModal() {
                                             onClick={() => setThemePreference('dark')}
                                             className={`${THEME_CARD_BASE} ${themePreference === 'dark' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
                                         >
-                                            <div className="w-full h-24 rounded-xl bg-bg-surface border border-border-subtle shadow-inner mb-4 flex items-center justify-center transition-transform hover:scale-105">
+                                            <div className="w-full h-24 rounded-[16px] bg-[#28282A] mb-3 flex items-center justify-center">
                                                 <MoonIcon />
                                             </div>
                                             <p className={`text-[15px] font-semibold ${themePreference === 'dark' ? 'text-accent' : 'text-text-primary'}`}>
@@ -536,18 +511,18 @@ export default function SettingsModal() {
                                         </button>
 
                                         {/* 跟隨系統 */}
-                                        <Tooltip label={t('settings.themeSystemHint')}>
+                                        <Tooltip label={t('settings.themeSystemHint')} className="flex-1 min-w-0 flex">
                                             <button
                                                 onClick={() => setThemePreference('system')}
-                                                className={`${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
+                                                className={`w-full ${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
                                             >
-                                            <div className="w-full h-24 rounded-xl mb-4 flex items-center justify-center transition-transform hover:scale-105 overflow-hidden border border-border-subtle">
+                                            <div className="w-full h-24 rounded-[17px] mb-3 flex items-center justify-center overflow-hidden">
                                                 {/* 半邊太陽半邊月亮，呼應 prefers-color-scheme */}
                                                 <div className="flex w-full h-full">
-                                                    <div className="flex-1 bg-bg-base flex items-center justify-center">
+                                                    <div className="flex-1 bg-[#F6F4F0] flex items-center justify-center">
                                                         <SunIcon />
                                                     </div>
-                                                    <div className="flex-1 bg-bg-surface flex items-center justify-center">
+                                                    <div className="flex-1 bg-[#28282A] flex items-center justify-center">
                                                         <MoonIcon />
                                                     </div>
                                                 </div>
@@ -573,29 +548,16 @@ export default function SettingsModal() {
                                                         className={`tap h-11 w-11 rounded-full border p-1 transition-all ${
                                                             accentColor === key
                                                                 ? 'border-accent ring-4 ring-accent/20'
-                                                                : 'border-border-subtle hover:border-border-strong/40'
+                                                                : 'border-[var(--paper-line)] '
                                                         }`}
                                                     >
                                                     <span
-                                                        className="block h-full w-full rounded-full shadow-sm"
+                                                        className="block h-full w-full rounded-full "
                                                         style={{ backgroundColor: color.hex }}
                                                     />
                                                     </button>
                                                 </Tooltip>
                                             ))}
-                                            <Tooltip label={t('settings.customColor', '自訂主題色')}>
-                                                <div className="relative h-11 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full border border-border-subtle shadow-sm transition-transform hover:scale-105">
-                                                    <input
-                                                        type="color"
-                                                        value={accentColor.startsWith('#') ? accentColor : ACCENT_COLORS.default.hex}
-                                                        onChange={(e) => setAccentColor(e.target.value)}
-                                                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0 outline-none"
-                                                    />
-                                                </div>
-                                            </Tooltip>
-                                            <span className="basis-full text-[14px] text-text-secondary sm:basis-auto">
-                                                {t('settings.customColorHint', '點擊選擇自訂品牌主題色')}
-                                            </span>
                                         </div>
                                     </div>
 
@@ -623,11 +585,11 @@ export default function SettingsModal() {
                                                     className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
                                                         ragDebugMode
                                                             ? 'bg-accent'
-                                                            : 'bg-bg-surface border border-border-subtle'
+                                                            : 'bg-[var(--well)]'
                                                     }`}
                                                 >
                                                     <span
-                                                        className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
+                                                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_0.5px_4px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.1)] transition-transform ${
                                                             ragDebugMode ? 'translate-x-6' : 'translate-x-1'
                                                         }`}
                                                     />
@@ -652,11 +614,11 @@ export default function SettingsModal() {
                                                     className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
                                                         demoMode
                                                             ? 'bg-accent'
-                                                            : 'bg-bg-surface border border-border-subtle'
+                                                            : 'bg-[var(--well)]'
                                                     }`}
                                                 >
                                                     <span
-                                                        className={`inline-block h-5 w-5 transform rounded-full bg-bg-base shadow transition-transform ${
+                                                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_0.5px_4px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.1)] transition-transform ${
                                                             demoMode ? 'translate-x-6' : 'translate-x-1'
                                                         }`}
                                                     />
@@ -670,7 +632,7 @@ export default function SettingsModal() {
                             {/* 語言設定 */}
                             {activeSection === 'language' && (
                                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-border-subtle">
+                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
                                         {t('settings.language')}
                                     </h2>
 
@@ -679,16 +641,14 @@ export default function SettingsModal() {
                                             <button
                                                 key={lang.code}
                                                 onClick={() => handleLanguageChange(lang.code)}
-                                                className={`w-full flex items-center justify-between p-5 rounded-cv-lg transition-all border-2 ${i18n.language === lang.code
-                                                        ? 'bg-accent/10 text-accent border-accent ring-1 ring-accent'
-                                                        : 'bg-bg-base hover:bg-white/[0.06] dark:hover:bg-white/[0.06] text-text-primary border-transparent shadow-sm'
+                                                className={`w-full flex items-center justify-between px-5 py-4 rounded-[18px] transition-all ${i18n.language === lang.code
+                                                        ? 'bg-accent/10 text-accent ring-2 ring-accent'
+                                                        : 'snow-well text-text-primary'
                                                     }`}
                                             >
                                                 <span className="font-semibold text-[16px]">{lang.label}</span>
                                                 {i18n.language === lang.code && (
-                                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                    </svg>
+                                                    <Check className="w-6 h-6" />
                                                 )}
                                             </button>
                                         ))}
@@ -738,12 +698,12 @@ export default function SettingsModal() {
                     >
                         {/* Card 內排版改為靈活設計：1:1 正方形 */}
                         <div
-                            className="relative w-full max-w-[640px] bg-bg-base shadow-2xl dark:shadow-black border border-border-subtle rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden pointer-events-auto"
+                            className="relative w-full max-w-[640px] paper !rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden pointer-events-auto"
                         >
                             {/* Close button */}
                             <button
                                 onClick={() => setShowPasswordForm(false)}
-                                className="absolute top-5 right-5 p-2 text-text-muted hover:text-text-primary bg-bg-main rounded-full transition-colors"
+                                className="btn-icon !w-9 !h-9 absolute top-5 right-5 text-text-secondary"
                             >
                                 <CloseIcon />
                             </button>
@@ -758,7 +718,7 @@ export default function SettingsModal() {
                             {/* 左右分欄排版：密碼規則 + 輸入區域 */}
                             <div className="flex gap-6">
                                 {/* 左側：密碼規則 */}
-                                <div className="flex-1 bg-bg-surface/50 rounded-cv-lg p-5 text-[13px] text-text-secondary space-y-2.5 border border-border-subtle/50">
+                                <div className="flex-1 snow-well rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5">
                                     <p className="font-semibold text-text-primary text-[14px] mb-2">{t('settings.pwdRequirements')}</p>
                                     {[
                                         t('settings.pwdRuleLength'),
@@ -776,13 +736,9 @@ export default function SettingsModal() {
                                                 passed === false ? 'text-red-500 ' : ''
                                             }`}>
                                                 {passed === true ? (
-                                                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                    </svg>
+                                                    <Check className="w-3.5 h-3.5 shrink-0" />
                                                 ) : passed === false ? (
-                                                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
+                                                    <X className="w-3.5 h-3.5 shrink-0" />
                                                 ) : (
                                                     <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">-</span>
                                                 )}
@@ -798,7 +754,7 @@ export default function SettingsModal() {
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
                                                 exit={{ opacity: 0, height: 0 }}
-                                                className="pt-3 mt-1 border-t border-border-subtle/60 /10 overflow-hidden"
+                                                className="pt-3 mt-1 border-t border-[var(--paper-line)] /10 overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-[11px] text-text-secondary">{t('settings.pwdStrengthLabel')}</span>
@@ -811,7 +767,7 @@ export default function SettingsModal() {
                                                         {getStrengthLabel(passwordStrength.level)}
                                                     </span>
                                                 </div>
-                                                <div className="h-2 bg-bg-surface rounded-full overflow-hidden">
+                                                <div className="h-2 bg-[var(--chip)] rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
                                                         style={{ width: `${passwordStrength.score}%` }}
@@ -870,17 +826,13 @@ export default function SettingsModal() {
                                     >
                                         {passwordError && (
                                             <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-red-50 text-red-600 rounded-full text-[13px] font-medium border border-red-200">
-                                                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
+                                                <AlertTriangle className="w-4 h-4 shrink-0" />
                                                 {passwordError}
                                             </div>
                                         )}
                                         {passwordSuccess && (
                                             <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-green-50 text-green-600 rounded-full text-[13px] font-medium border border-green-200">
-                                                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
+                                                <Check className="w-4 h-4 shrink-0" />
                                                 {passwordSuccess}
                                             </div>
                                         )}
@@ -892,7 +844,7 @@ export default function SettingsModal() {
                             <button
                                 onClick={handleChangePassword}
                                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                className="w-full py-3 bg-accent hover:bg-opacity-90 disabled:opacity-50 text-text-on-accent font-semibold rounded-[16px] transition-all text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                                className="btn btn-lg btn-primary btn-block focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                             >
                                 {isChangingPassword ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -930,13 +882,13 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={label}
-                className={`peer w-full px-5 py-3.5 rounded-[16px] bg-transparent border border-border-subtle text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
+                className={`peer w-full px-5 py-3.5 rounded-full bg-[var(--chip)] border border-transparent text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
             />
             <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none px-2 origin-left whitespace-nowrap
                 ${isFilled
-                    ? 'top-0 scale-[0.82] bg-bg-base text-text-primary font-semibold py-0.5 rounded-full'
+                    ? 'top-0 scale-[0.82] bg-transparent text-text-primary font-semibold py-0.5 rounded-full'
                     : 'top-1/2 scale-100 bg-transparent text-text-secondary py-0'}
-                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-bg-base peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
+                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-transparent peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
             `}>
                 {label}
             </label>
@@ -952,17 +904,12 @@ function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
                             type="button"
                             tabIndex={-1}
                             onClick={() => setVisible(v => !v)}
-                            className="p-1 text-text-muted hover:text-text-secondary transition-colors"
+                            className="p-1 text-text-muted  transition-colors"
                         >
                             {visible ? (
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
+                                <Eye className="w-4 h-4" />
                             ) : (
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                </svg>
+                                <EyeOff className="w-4 h-4" />
                             )}
                         </button>
                     </motion.div>

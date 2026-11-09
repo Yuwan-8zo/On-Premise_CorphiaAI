@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CorphiaBrandLogo } from '@/components/icons/CorphiaIcons'
-import { Home, ArrowLeft } from 'lucide-react'
+import { Home, ArrowLeft } from '@/components/snow/icons'
 
 export default function NotFound() {
     const { t } = useTranslation()
@@ -24,7 +24,7 @@ export default function NotFound() {
                     </div>
 
                     {/* 中央拱門插畫 (0) */}
-                    <div className="w-[90px] h-[140px] md:w-[120px] md:h-[180px] rounded-t-[900px] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-border-subtle">
+                    <div className="w-[90px] h-[140px] md:w-[120px] md:h-[180px] rounded-t-[900px] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-[var(--paper-line)]">
                         
                         {/* 內部光暈/漸層填色 */}
                         <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
@@ -73,7 +73,7 @@ export default function NotFound() {
                     {/* 回到首頁 */}
                     <Link
                         to="/"
-                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-accent hover:bg-accent text-text-primary text-[14px] font-medium transition-all active:scale-[0.98] shadow-md shadow-accent/20"
+                        className="btn btn-primary w-full sm:w-auto"
                     >
                         <Home className="w-[18px] h-[18px]" />
                         <span>回到首頁</span>
@@ -82,7 +82,7 @@ export default function NotFound() {
                     {/* 返回上一頁 */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="w-full sm:w-[150px] flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-transparent border border-border-subtle bg-bg-surface text-text-muted text-[14px] font-medium transition-all active:scale-[0.98]"
+                        className="btn btn-secondary w-full sm:w-auto"
                     >
                         <ArrowLeft className="w-[18px] h-[18px]" />
                         <span>返回上一頁</span>

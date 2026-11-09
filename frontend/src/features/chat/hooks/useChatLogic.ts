@@ -412,7 +412,7 @@ export function useChatLogic() {
             if (useChatStore.getState().currentConversation?.id !== conversation.id) {
                 return
             }
-            setMessages(msgs)
+            useChatStore.getState().setServerMessages(conversation.id, msgs)
             setHasMoreMessages(msgs.length === 50)
             await connectWebSocket(conversation.id)
         } catch (error) {
@@ -552,6 +552,23 @@ export function useChatLogic() {
             if (state.currentConversation && !state.currentConversation.settings?.isProject && state.messages.length === 0) {
                 setUploadedFiles([])
                 return
+            }
+            // 已經有一則還沒講過話的一般對話（例如重新整理後回到首頁）就直接打開它，不要再建新的
+            const emptyConv = state.conversations.find(
+                (c) => !c.settings?.isProject && (c.messageCount ?? 0) === 0,
+            )
+            // 清單上的訊息數不會即時更新，先向後端確認真的沒有訊息再沿用
+            if (emptyConv) {
+                try {
+                    const msgs = await conversationsApi.getMessages(emptyConv.id)
+                    if (msgs.length === 0) {
+                        setUploadedFiles([])
+                        await selectConversation(emptyConv)
+                        return
+                    }
+                } catch {
+                    // 查不到就照常建立新對話
+                }
             }
             try {
                 const conversation = await conversationsApi.create({ 
@@ -842,9 +859,16 @@ export function useChatLogic() {
                 tokens: 0,
                 createdAt: new Date().toISOString(),
             }
-            return { messages: [...newMessages, tempAssistantMessage] }
+            // 這則之後的對話會被截掉；之後被攔截的訊息也一併移除，免得重新載入時又冒出來
+            const convId = state.currentConversation?.id
+            let blockedByConv = state.blockedByConv
+            if (convId && blockedByConv[convId]) {
+                const keepIds = new Set(newMessages.map((m) => m.id))
+                blockedByConv = { ...blockedByConv, [convId]: blockedByConv[convId].filter((m) => keepIds.has(m.id)) }
+            }
+            return { messages: [...newMessages, tempAssistantMessage], blockedByConv }
         })
-        
+
         setStreaming(true)
 
         // 2. Call backend via WebSocket

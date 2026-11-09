@@ -3,6 +3,7 @@
 """
 
 import re
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -341,14 +342,21 @@ async def refresh_token(
     if old_jti:
         old_exp = payload.get("exp")
         expires_at = datetime.fromtimestamp(old_exp, tz=timezone.utc) if old_exp else None
-        await add_token_to_blacklist(
-            db=db,
-            jti=old_jti,
-            user_id=resolved_user_id,
-            token_type="refresh",
-            expires_at=expires_at,
-            reason="token_refresh",
-        )
+        try:
+            await add_token_to_blacklist(
+                db=db,
+                jti=old_jti,
+                user_id=resolved_user_id,
+                token_type="refresh",
+                expires_at=expires_at,
+                reason="token_refresh",
+            )
+        except IntegrityError:
+            # 同一個 refresh token 幾乎同時被用了兩次，另一個請求已經撤銷它：視為已使用過
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="此登入憑證已更新過，請重新登入",
+            )
 
     # 建立新 Token
     token_data = {"sub": resolved_user_id}

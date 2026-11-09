@@ -32,7 +32,7 @@ import {
     Settings as SettingsIcon,
     Sparkles,
     X,
-} from 'lucide-react'
+} from '@/components/snow/icons'
 import type { ComponentType } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -303,7 +303,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             {targetRect ? (
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute rounded-cv-md transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute rounded-[14px] transition-all duration-300 ease-out"
                     style={{
                         top: targetRect.top - PADDING,
                         left: targetRect.left - PADDING,
@@ -322,13 +322,13 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 ref={tooltipRef}
                 onClick={(e) => e.stopPropagation()}
                 style={tooltipStyle}
-                className="absolute rounded-cv-md border border-border-subtle bg-bg-base shadow-[0_20px_60px_rgba(0,0,0,0.45)] transition-all duration-300 ease-out"
+                className="absolute paper !rounded-[25px] transition-all duration-300 ease-out"
             >
                 {/* 箭頭 —— offset 動態跟著目標走，被 clamp 過的 tooltip 也能正確指回去 */}
                 {arrowSide && arrowOffset !== null && (
                     <span
                         aria-hidden
-                        className={`absolute h-3 w-3 rotate-45 border bg-bg-base border-border-subtle ${
+                        className={`absolute h-3 w-3 rotate-45 bg-[var(--glass-card)] backdrop-blur-xl ${
                             arrowSide === 'top'
                                 ? '-top-[7px] border-r-0 border-b-0'
                                 : arrowSide === 'bottom'
@@ -350,7 +350,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                     <button
                         type="button"
                         onClick={handleClose}
-                        className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full text-text-muted hover:bg-white/[0.06] dark:hover:bg-white/[0.06] hover:text-text-primary transition"
+                        className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full text-text-muted   transition"
                         aria-label={t('common.skip', '略過')}
                     >
                         <X className="h-3.5 w-3.5" />
@@ -376,7 +376,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 </div>
 
                 {/* footer：dots + nav */}
-                <div className="flex items-center justify-between border-t border-border-subtle bg-bg-surface/40 px-4 py-2.5">
+                <div className="flex items-center justify-between border-t border-[var(--paper-line)] px-4 py-2.5">
                     <div className="flex items-center gap-1">
                         {STEPS.map((_, i) => (
                             <button
@@ -387,7 +387,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                                 className={`h-1 rounded-full transition-all ${
                                     i === step
                                         ? 'w-4 bg-accent'
-                                        : 'w-1 bg-text-muted/40 hover:bg-text-muted/60'
+                                        : 'w-1 bg-text-muted/40 '
                                 }`}
                             />
                         ))}
@@ -398,7 +398,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                             <button
                                 type="button"
                                 onClick={handlePrev}
-                                className="flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[12px] text-text-secondary hover:bg-bg-base hover:text-text-primary transition"
+                                className="flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[12px] text-text-secondary   transition"
                             >
                                 <ChevronLeft className="h-3 w-3" />
                                 {t('common.prev', '上一步')}
@@ -408,7 +408,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                         <button
                             type="button"
                             onClick={handleNext}
-                            className="flex items-center gap-0.5 rounded-full bg-accent px-3 py-1 text-[12px] font-medium text-text-on-accent shadow-sm shadow-accent/30 hover:opacity-90 transition"
+                            className="flex items-center gap-0.5 btn btn-primary !h-8 !px-3.5 !text-[12px]"
                         >
                             {isLast
                                 ? t('onboarding.start', '開始使用')

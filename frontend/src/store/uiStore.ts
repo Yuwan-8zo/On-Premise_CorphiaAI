@@ -44,7 +44,9 @@ type Theme = 'light' | 'dark'
  */
 type ThemePreference = 'system' | 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
-export type AccentColorType = string
+/** 只允許固定的品牌色（已移除自由配色） */
+export type AccentColorType = 'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'green'
+const ACCENT_KEYS: AccentColorType[] = ['default', 'blue', 'purple', 'pink', 'orange', 'green']
 
 interface ConfirmConfig {
     message: string
@@ -143,7 +145,7 @@ export const useUIStore = create<UIState>()(
             setLanguage: (language) => set({ language }),
 
             // 設定重點色
-            setAccentColor: (color) => set({ accentColor: color }),
+            setAccentColor: (color) => set({ accentColor: ACCENT_KEYS.includes(color) ? color : 'default' }),
 
             // 設定側邊欄開關
             setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -183,6 +185,12 @@ export const useUIStore = create<UIState>()(
         }),
         {
             name: 'ui-storage',
+            // 以前存過的自訂顏色（#RRGGBB）一律改回預設品牌色
+            merge: (persisted, current) => {
+                const p = (persisted || {}) as Partial<typeof current>
+                const accent = ACCENT_KEYS.includes(p.accentColor as AccentColorType) ? p.accentColor : 'default'
+                return { ...current, ...p, accentColor: accent as AccentColorType }
+            },
             partialize: (state) => ({
                 theme: state.theme,
                 themePreference: state.themePreference,

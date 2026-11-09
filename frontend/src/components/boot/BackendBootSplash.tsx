@@ -12,6 +12,7 @@
  * 進去之後問問題就不必再等模型載入。
  */
 
+import { Check, X } from '@/components/snow/icons'
 import { useEffect, useRef, useState } from 'react'
 import CorphiaLogoForLight from '@/assets/Corphia_Icon_Light.png'
 import CorphiaLogoForDark from '@/assets/Corphia_Icon_Dark.png'
@@ -122,16 +123,12 @@ function StateIcon({ state }: { state: StepState }) {
     }
     if (state === 'done') {
         return (
-            <svg className="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12.5 10 17.5 19 7" />
-            </svg>
+            <Check className="h-4 w-4 text-emerald-500" />
         )
     }
     if (state === 'error') {
         return (
-            <svg className="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-                <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
+            <X className="h-4 w-4 text-red-500" />
         )
     }
     if (state === 'skipped') {
@@ -256,7 +253,7 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                     </div>
                 </div>
 
-                <ul className="divide-y divide-border-subtle/60 overflow-hidden rounded-cv-lg border border-border-subtle bg-bg-surface/60">
+                <ul className="divide-y divide-[var(--paper-line)] overflow-hidden rounded-[20px] snow-well">
                     {rows.map((r) => (
                         <li key={r.key} className="flex items-center gap-3 px-4 py-3">
                             <div className="flex w-5 justify-center">
@@ -275,7 +272,7 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                 </ul>
 
                 {(launcherError || launcherStale || stopped) && (
-                    <div className="mt-4 rounded-cv-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-text-primary">
+                    <div className="mt-4 rounded-[14px] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-text-primary">
                         <p className="font-medium">
                             {stopped ? '系統目前是關閉狀態' : launcherError ? '啟動過程發生錯誤' : '啟動程式沒有回應'}
                         </p>

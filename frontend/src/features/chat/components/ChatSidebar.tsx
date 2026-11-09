@@ -9,6 +9,8 @@
  * - 底部使用者卡片
  */
 
+import { ChevronRight, Folder, MessageSquare, MoreHorizontal, Plus, Trash2 } from '@/components/snow/icons'
+import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
@@ -136,7 +138,7 @@ export default function ChatSidebar({
             const visibleTop = elRect.top - scrollRect.top
             const visibleLeft = elRect.left - scrollRect.left
             const top = visibleTop + scroll.scrollTop + (itemH - pillH) / 2
-            // 膠囊靠在 item 左邊緣往左 6px：剛好「貼著但不疊到 rounded-xl 圓角」，
+            // 膠囊靠在 item 左邊緣往左 6px：剛好「貼著但不疊到 rounded-[14px] 圓角」，
             // 視覺上是獨立的 indicator，又不會跟 bubble 距離過遠。
             const left = visibleLeft + scroll.scrollLeft - 6
             setActivePillTop(top)
@@ -188,9 +190,9 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen 
-                ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0 shadow-xl md:shadow-md' 
-                : 'w-[75vw] max-w-[260px] md:w-[72px] -translate-x-full md:translate-x-0 shadow-none md:shadow-md'
-                } bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl rounded-r-[20px] md:rounded-[38px] border border-white/40 dark:border-white/10 transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-24px)] md:my-3 md:ml-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)]`}
+                ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' 
+                : 'w-[75vw] max-w-[260px] md:w-[72px] -translate-x-full md:translate-x-0'
+                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[35px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
         >
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
@@ -202,9 +204,7 @@ export default function ChatSidebar({
                         onClick={toggleSidebar}
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
-                        className={`hidden md:flex rounded-full text-text-secondary hover:text-text-primary   hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-all duration-200 shrink-0 items-center justify-center ${
-                            (!sidebarOpen && !isSidebarHovered) ? 'w-10 h-10 p-0' : 'w-10 h-10 p-2'
-                        }`}
+                        className="btn-icon btn-icon-plain hidden md:inline-flex !w-11 !h-11 text-text-secondary"
                     >
                     {sidebarOpen || isSidebarHovered ? (
                         <SidebarIcon className="w-[20px] h-[20px]" />
@@ -227,44 +227,22 @@ export default function ChatSidebar({
                               跟 sidebar 同色階更柔和，但仍保留可見的容器邊界
                 */}
                 {sidebarOpen ? (
-                    <motion.div
-                        layout
+                    <GlassSegmented
                         data-tour="mode-toggle"
-                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative flex rounded-full select-none cursor-pointer bg-black/5 dark:bg-white/5 border border-transparent transition-colors shrink-0 w-full"
-                        style={{ padding: '5px' }}
-                    >
-                        {/*
-                          Active indicator pill:
-                          淺色：bg-bg-elevated 是純白，在 bg-black/5 容器上對比清楚
-                          深色：原本 bg-bg-elevated (46,46,48) 跟容器 bg-white/5 在深色面板上幾乎同色，
-                                指示哪個 tab 在 active 看不太出來；改用 bg-white/15 強化對比，
-                                文字 text-text-primary 維持高對比度，clearly distinguishable
-                        */}
-                        <div
-                            className="bg-bg-elevated dark:bg-white/15 shadow-sm rounded-full border border-border-subtle dark:border-white/10"
-                            style={{
-                                position: 'absolute', top: '5px',
-                                left: chatMode === 'general' ? '5px' : 'calc(50% + 0px)',
-                                width: 'calc(50% - 5px)', height: 'calc(100% - 10px)',
-                                transition: 'left 0.55s cubic-bezier(0.23, 1, 0.32, 1)',
-                                zIndex: 1,
-                            }}
-                        />
-                        <button type="button" onClick={() => setChatMode('general')}
-                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'general' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '}`}
-                        >{t('chat.general')}</button>
-                        <button type="button" onClick={() => setChatMode('project')}
-                            style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                            className={`flex-1 py-1.5 text-[14px] text-center rounded-full font-semibold transition-colors duration-300 ${chatMode === 'project' ? 'text-text-primary ' : 'text-text-secondary  hover:text-text-primary '}`}
-                        >{t('chat.project')}</button>
-                    </motion.div>
+                        className="w-full shrink-0 h-[44px]"
+                        pad={5}
+                        value={chatMode}
+                        onChange={(v) => setChatMode(v)}
+                        options={[
+                            { value: 'general', label: t('chat.general') },
+                            { value: 'project', label: t('chat.project') },
+                        ]}
+                    />
                 ) : (
                     <div
                         data-tour="mode-toggle"
-                        className="relative bg-black/5 dark:bg-white/5 rounded-cv-xl cursor-pointer shrink-0 transition-colors border border-transparent"
-                        style={{ width: '48px', height: '88px' }}
+                        className="seg-track relative rounded-full cursor-pointer shrink-0"
+                        style={{ width: '46px', height: '86px' }}
                         onClick={(e) => {
                             // 依點的位置決定模式（上半＝一般、下半＝專案），不要用「切換」：
                             // 否則已在專案模式時點專案圖示反而會切回一般
@@ -275,7 +253,7 @@ export default function ChatSidebar({
                             if (next === 'project') setSidebarOpen(true)
                         }}
                     >
-                        <div className="absolute bg-bg-elevated dark:bg-white/15 rounded-full shadow-sm border border-border-subtle dark:border-white/10"
+                        <div className="absolute snow-knob rounded-full"
                             style={{
                                 width: '40px', height: '40px', top: '3px', left: '3px',
                                 transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
@@ -284,11 +262,11 @@ export default function ChatSidebar({
                         />
                         <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-text-primary ' : 'text-text-secondary '}`}
                             style={{ top: '3px', left: '3px', width: '40px', height: '40px' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <MessageSquare className="w-[20px] h-[20px]" />
                         </div>
                         <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-text-primary ' : 'text-text-secondary '}`}
                             style={{ top: '43px', left: '3px', width: '40px', height: '40px' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            <Folder className="w-[20px] h-[20px]" />
                         </div>
                     </div>
                 )}
@@ -303,13 +281,10 @@ export default function ChatSidebar({
                             createNewConversation()
                         }
                     }}
-                    className={`relative flex items-center bg-accent border border-transparent text-text-on-accent transition-all hover:bg-accent overflow-hidden group ${sidebarOpen ? 'w-full px-4 py-2.5 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    className={`relative flex items-center bg-accent border border-transparent text-text-on-accent transition-all  overflow-hidden group ${sidebarOpen ? 'w-full h-[44px] px-4 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                 >
                     <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[20px] h-[20px]">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
+                        <Plus className="w-[20px] h-[20px]" />
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
@@ -366,16 +341,16 @@ export default function ChatSidebar({
                                         <div key={conv.id}
                                             ref={(el) => { itemRefs.current[conv.id] = el }}
                                             onClick={() => selectConversation(conv)}
-                                            className={`relative w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                                ? 'bg-bg-elevated shadow-sm text-accent font-medium'
-                                                : 'text-text-secondary hover:bg-bg-elevated hover:text-accent'}`}
+                                            className={`relative w-full flex items-center justify-between text-left px-3 py-2.5 rounded-[14px] text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
+                                                ? 'bg-[var(--chip)] text-text-primary font-semibold'
+                                                : 'text-text-secondary  '}`}
                                         >
                                             <span className="truncate pr-2">{conv.title}</span>
                                             <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                 <Tooltip label="選項">
                                                     <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                        className={`p-1.5 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}>
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                                                        className={`p-1.5 rounded-full  ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-muted'}`}>
+                                                        <MoreHorizontal className="w-4 h-4" />
                                                     </button>
                                                 </Tooltip>
                                             </div>
@@ -434,24 +409,24 @@ export default function ChatSidebar({
                                                             setExpandedFolders(prev => new Set(prev).add(folderName))
                                                             if (window.innerWidth < 768) setSidebarOpen(false)
                                                         }}
-                                                        className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-lg group ${selectedFolder === folderName ? 'bg-bg-surface text-accent' : 'hover:bg-white/[0.06] dark:hover:bg-white/[0.06] text-text-secondary hover:text-accent'}`}
+                                                        className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-[10px] group ${selectedFolder === folderName ? 'bg-[var(--chip)] text-accent' : ' text-text-secondary '}`}
                                                     >
                                                         <div className="flex items-center gap-1 min-w-0">
                                                             <button onClick={(e) => { e.stopPropagation(); setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next }) }}
-                                                                className={`p-0.5 rounded-md hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors ${isExpanded ? 'text-text-secondary' : 'text-text-muted'}`}>
-                                                                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                                                className={`p-0.5 rounded-md  transition-colors ${isExpanded ? 'text-text-secondary' : 'text-text-muted'}`}>
+                                                                <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                                                             </button>
                                                             <span className="truncate">{folderName}</span>
                                                         </div>
                                                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                             <Tooltip label="在此資料夾新增對話">
-                                                                <button onClick={(e) => createConvInFolder(folderName, e)} className="p-1 text-text-muted hover:text-text-primary rounded hover:bg-white/[0.06] dark:hover:bg-white/[0.06]">
-                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                                                <button onClick={(e) => createConvInFolder(folderName, e)} className="p-1 text-text-muted  rounded ">
+                                                                    <Plus className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
                                                             <Tooltip label="刪除資料夾及內容">
-                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} className="p-1 text-text-muted hover:text-red-500 rounded hover:bg-red-50">
-                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} className="p-1 text-text-muted  rounded ">
+                                                                    <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
                                                         </div>
@@ -460,22 +435,22 @@ export default function ChatSidebar({
                                                     {isExpanded && (
                                                         // 子對話清單：左邊加一條導引線，視覺上清楚「這些對話屬於上方那個資料夾」
                                                         // ml-3 對齊 chevron 中心；border-l 1px subtle；pl-3 給對話內容呼吸空間
-                                                        <div className="ml-3 mt-1 pl-3 border-l border-border-subtle/60 space-y-0.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                                                        <div className="ml-3 mt-1 pl-3 border-l border-[var(--paper-line)] space-y-0.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                                                             {(grouped[folderName] || []).map((conv) => (
                                                                 <div key={conv.id} className="relative">
                                                                     <div
                                                                         ref={(el) => { itemRefs.current[conv.id] = el }}
                                                                         onClick={() => selectConversation(conv)}
-                                                                        className={`relative w-full flex items-center justify-between text-left px-3 py-1.5 rounded-xl text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                            ? 'bg-bg-elevated shadow-sm text-accent font-medium'
-                                                                            : 'text-text-secondary hover:text-accent hover:bg-bg-elevated'}`}
+                                                                        className={`relative w-full flex items-center justify-between text-left px-3 py-2 rounded-[14px] text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
+                                                                            ? 'bg-[var(--chip)] text-text-primary font-semibold'
+                                                                            : 'text-text-secondary  '}`}
                                                                     >
                                                                         <span className="truncate pr-2">{conv.title}</span>
                                                                         <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                             <Tooltip label="選項">
                                                                                 <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                                    className={`p-1 rounded-full hover:bg-bg-base ${activeMenuConvId === conv.id ? 'bg-bg-base text-text-primary' : 'text-text-muted'}`}>
-                                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                                                                                    className={`p-1 rounded-full  ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-muted'}`}>
+                                                                                    <MoreHorizontal className="w-3.5 h-3.5" />
                                                                                 </button>
                                                                             </Tooltip>
                                                                         </div>
@@ -501,7 +476,7 @@ export default function ChatSidebar({
                     <button
                         data-tour="settings-button"
                         onClick={() => setSettingsOpen(true)}
-                        className={`relative flex items-center bg-transparent hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                        className={`relative flex items-center bg-transparent  transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
                     >
                     <div className="w-[32px] h-[32px] rounded-full bg-accent text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[14px]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}

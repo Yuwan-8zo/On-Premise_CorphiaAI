@@ -2,20 +2,22 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
 
+from app.api.deps import CurrentUser, RequireAdmin
 from app.services.model_manager import get_model_manager
 from app.services.llm_service import get_llm_service
 
+# 查看與切換模型需要登入（所有角色都可切換）；重新掃描模型目錄只開放管理員與工程師
 router = APIRouter(prefix="/models", tags=["Models"])
 
 class SelectModelRequest(BaseModel):
     name: str
 
 @router.get("")
-async def get_all_models() -> Dict[str, Any]:
+async def get_all_models(current_user: CurrentUser) -> Dict[str, Any]:
     manager = get_model_manager()
     return manager.to_dict()
 
-@router.post("/refresh")
+@router.post("/refresh", dependencies=[RequireAdmin])
 async def refresh_models_api() -> Dict[str, Any]:
     manager = get_model_manager()
     manager.scan_models()
@@ -26,7 +28,7 @@ async def refresh_models_api() -> Dict[str, Any]:
     return manager.to_dict()
 
 @router.post("/select")
-async def select_model(request: SelectModelRequest) -> Dict[str, Any]:
+async def select_model(request: SelectModelRequest, current_user: CurrentUser) -> Dict[str, Any]:
     manager = get_model_manager()
     if manager.select_model(request.name):
         llm = get_llm_service()
@@ -36,7 +38,7 @@ async def select_model(request: SelectModelRequest) -> Dict[str, Any]:
     raise HTTPException(status_code=404, detail="Model currently unavailable.")
 
 @router.get("/status")
-async def get_model_status() -> Dict[str, Any]:
+async def get_model_status(current_user: CurrentUser) -> Dict[str, Any]:
     manager = get_model_manager()
     llm = get_llm_service()
     return {

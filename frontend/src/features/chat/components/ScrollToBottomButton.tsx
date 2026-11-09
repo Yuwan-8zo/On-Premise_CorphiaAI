@@ -1,3 +1,4 @@
+import { ArrowDown } from '@/components/snow/icons'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import Tooltip from '@/components/ui/Tooltip'
@@ -72,7 +73,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         exit={{ opacity: 0, y: 15, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
                         onClick={scrollToBottom}
-                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
+                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 btn-secondary [--R:16px] rounded-full text-text-secondary"
                         aria-label="AI 正在輸入，點擊回到底部"
                     >
                         <span className="flex items-center gap-1" aria-hidden="true">
@@ -92,13 +93,10 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         exit={{ opacity: 0, y: 15, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
                         onClick={scrollToBottom}
-                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 p-2.5 bg-bg-base/90 backdrop-blur-md rounded-full text-text-secondary shadow-md border border-border-subtle/50 hover:bg-bg-surface hover:text-text-primary transition-colors"
+                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 btn-icon !w-11 !h-11 text-text-secondary"
                         aria-label="Scroll to bottom"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <polyline points="19 12 12 19 5 12"></polyline>
-                        </svg>
+                        <ArrowDown className="w-[20px] h-[20px]" />
                     </motion.button>
                 </Tooltip>
             ) : null}

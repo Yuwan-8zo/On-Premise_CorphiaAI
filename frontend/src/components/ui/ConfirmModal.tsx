@@ -1,5 +1,4 @@
 ﻿import React, { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useUIStore } from '../../store/uiStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -41,42 +40,24 @@ export const ConfirmModal: React.FC = () => {
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
+                    {/* Apple 對話框：兩顆等寬膠囊按鈕；外框圓角 ＝ 按鈕圓角 ＋ 內距（同心） */}
                     <div
-                        className="glass-modal rounded-cv-xl w-full max-w-sm shadow-2xl overflow-hidden border border-border-subtle pointer-events-auto"
+                        role="alertdialog"
+                        aria-modal="true"
+                        className="dialog-sheet w-full max-w-[360px] pointer-events-auto"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="p-6">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <h3 className="text-xl font-medium text-text-primary">
-                                    Corphia AI
-                                </h3>
-                            </div>
-                            
-                            <p className="text-text-secondary whitespace-pre-wrap">
-                                {confirmConfig.message}
-                            </p>
-                        </div>
-                        
-                        <div className="p-4 bg-bg-surface/40 flex justify-end gap-2 border-t border-border-subtle">
-                            <button
-                                onClick={closeConfirm}
-                                disabled={isProcessing}
-                                className="tap px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:bg-bg-elevated transition-colors disabled:opacity-50"
-                            >
+                        <h3 className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>
+                        <p className="dialog-body">{t('common.confirmHint', '此動作無法復原。')}</p>
+                        <div className="dialog-actions">
+                            <button onClick={closeConfirm} disabled={isProcessing} className="btn btn-lg btn-secondary">
                                 {t('common.cancel')}
                             </button>
-                            <button
-                                onClick={handleConfirm}
-                                disabled={isProcessing}
-                                className="tap px-5 py-2.5 rounded-full text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-                            >
+                            <button onClick={handleConfirm} disabled={isProcessing} className="btn btn-lg btn-danger-solid">
                                 {isProcessing && (
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                     </svg>
                                 )}
                                 {t('common.confirm')}

@@ -7,7 +7,7 @@
  * 重要：這是 listener bind host 設定，切換後需要重啟 start.py 才會生效。
  */
 
-import { Info } from 'lucide-react'
+import { Info } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 
 import { GlobeIcon, ItshoverIcon, LockIcon } from '@/components/icons/itshover'
@@ -31,7 +31,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
 
     return (
         <div className="pt-3">
-            <div className="rounded-cv-md border border-white/[0.07] bg-white/[0.04] p-2 shrink-0">
+            <div className="rounded-[18px] border border-transparent bg-[var(--chip)] p-2 shrink-0">
                 <div className="flex items-center gap-1.5">
                     <SidebarIconBadge>
                         <ItshoverIcon icon={enabled ? GlobeIcon : LockIcon} size={12} />
@@ -52,13 +52,13 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                                 : t('admin.lan.tipOff', '僅允許本機存取（需重啟生效）')
                         }
                     >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-text-muted">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-transparent bg-[var(--chip)] text-text-muted">
                             <Info className="h-3 w-3" aria-hidden />
                         </span>
                     </Tooltip>
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between border-t border-white/[0.06] pt-1.5">
+                <div className="mt-1.5 flex items-center justify-between border-t border-[var(--paper-line)] pt-1.5">
                     <span className="text-[10px] font-medium text-text-secondary">
                         {t('admin.lan.toggleLabel', '區域網路')}
                     </span>
@@ -72,7 +72,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                 </div>
 
                 {enabled && lanIps.length > 0 && (
-                    <div className="mt-1.5 border-t border-border-subtle pt-1.5">
+                    <div className="mt-1.5 border-t border-[var(--paper-line)] pt-1.5">
                         <p className="text-[10px] text-text-muted leading-tight">
                             {t('admin.lan.ips', '本機 IP')}
                         </p>

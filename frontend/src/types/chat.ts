@@ -53,6 +53,10 @@ export interface Message {
     /** 語音訊息附件（若此訊息為語音訊息） */
     audio?: MessageAudio
     createdAt: string
+    /** 被 DLP／提示詞注入攔下的訊息：只存在前端，不會寫進資料庫，也不會成為下一題的對話歷史 */
+    blocked?: boolean
+    /** 被攔截訊息之前有幾則一般訊息（重新載入時用來插回原位，不依賴時間，避免各元件時鐘不一致） */
+    blockedAfter?: number
 }
 
 export interface ChatRequest {

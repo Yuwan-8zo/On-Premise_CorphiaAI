@@ -11,7 +11,7 @@ export default function BackendStatusPill({ status, compact = false }: BackendSt
     const label = status === 'online' ? 'Online' : status === 'offline' ? 'Offline' : 'Checking...'
 
     return (
-        <div className={`flex items-center gap-2 rounded-full border border-white/10 bg-bg-base/42 shadow-[0_10px_30px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-colors ${compact ? 'px-3 py-1.5' : 'px-3.5 py-2 w-fit'}`}>
+        <div className={`flex items-center gap-2 rounded-full glass-chip transition-colors ${compact ? 'px-3 py-1.5' : 'px-3.5 py-2 w-fit'}`}>
             <span className={`${compact ? 'w-2 h-2' : 'w-2 h-2'} rounded-full ${dotClass} shadow-[0_0_14px_currentColor]`} />
             <span className={`${compact ? 'text-xs font-medium' : 'text-[12px] font-medium'} ${textClass}`}>{label}</span>
         </div>

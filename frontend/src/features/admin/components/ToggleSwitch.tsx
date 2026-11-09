@@ -13,7 +13,7 @@
  * 三個尺寸（sm / md / lg）—— 預設 md 適合 strip 工具列，sm 給表格 row 用。
  */
 
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from '@/components/snow/icons'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -86,9 +86,9 @@ export default function ToggleSwitch({
                 transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
                 ${checked
                     ? 'bg-accent shadow-[inset_0_0_0_1px_rgb(var(--accent))]'
-                    : 'bg-bg-surface shadow-[inset_0_0_0_1px_rgb(var(--border-subtle))]'
+                    : 'bg-[var(--well)]'
                 }
-                ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:opacity-90 active:scale-[0.97]'}
+                ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer active:scale-[0.97]'}
                 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-bg-base
                 ${className}
             `}
@@ -96,7 +96,7 @@ export default function ToggleSwitch({
             <span
                 aria-hidden
                 className={`
-                    inline-flex items-center justify-center rounded-full bg-white shadow-md
+                    inline-flex items-center justify-center rounded-full bg-white shadow-[0_0.5px_4px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.1)]
                     ${s.thumb}
                     transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]
                     ${checked ? s.translate : 'translate-x-0.5'}

@@ -150,7 +150,7 @@ export const adminApi = {
      */
     forceLogout: async (userId: string): Promise<{ status: string } | null> => {
         try {
-            const response = await apiClient.post(`/admin/force-logout/${userId}`)
+            const response = await apiClient.post(`/users/${userId}/force-logout`)
             return response.data
         } catch {
             return null

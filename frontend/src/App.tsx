@@ -88,15 +88,7 @@ export default function App() {
 
         // 解析 accentColor (Hex -> RGB) 並計算對比色
         const presetAccent = ACCENT_COLORS[accentColor]
-        let [r, g, b] = (presetAccent || ACCENT_COLORS.default).rgb.split(' ').map(Number)
-        if (accentColor.startsWith('#')) {
-            const cleaned = accentColor.replace('#', '')
-            if (cleaned.length === 6) {
-                r = parseInt(cleaned.substring(0, 2), 16)
-                g = parseInt(cleaned.substring(2, 4), 16)
-                b = parseInt(cleaned.substring(4, 6), 16)
-            }
-        }
+        const [r, g, b] = (presetAccent || ACCENT_COLORS.default).rgb.split(' ').map(Number)
         
         // 亮度公式 (Luminance) 來決定文字該用深色或淺色
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
@@ -127,11 +119,7 @@ export default function App() {
         html.style.setProperty('--border-strong', mix(0.38))
         
         // 保留 data-accent 給一些可能的舊邏輯（如果有的話）
-        if (!accentColor.startsWith('#')) {
-            html.setAttribute('data-accent', accentColor)
-        } else {
-            html.removeAttribute('data-accent')
-        }
+        html.setAttribute('data-accent', accentColor)
 
         // dark class 切換
         if (isDark) {

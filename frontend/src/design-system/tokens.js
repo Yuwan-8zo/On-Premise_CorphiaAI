@@ -2,17 +2,18 @@
 // Keep shared visual constants here so Tailwind, React, and global CSS agree.
 
 export const radius = {
+    // Snow 設計：同心大圓角。卡片 25、列表列 18、控制項 24、大型浮層 46
     pill: '9999px',
-    'cv-xs': '6px',
-    'cv-sm': '10px',
+    'cv-xs': '8px',
+    'cv-sm': '12px',
     'cv-md': '14px',
-    'cv-lg': '20px',
+    'cv-lg': '18px',
     'cv-xl': '24px',
     'cv-2xl': '32px',
-    'card-sm': '22px',
-    'card-md': '30px',
-    'card-lg': '34px',
-    'card-xl': '38px',
+    'card-sm': '25px',
+    'card-md': '25px',
+    'card-lg': '32px',
+    'card-xl': '46px',
 }
 
 export const fontSize = {
@@ -132,13 +133,14 @@ export const palette = {
 }
 
 export const boxShadow = {
-    sm: '0 1px 2px rgb(0 0 0 / 0.04)',
-    DEFAULT: '0 2px 6px rgb(0 0 0 / 0.05)',
-    md: '0 4px 12px rgb(0 0 0 / 0.06)',
-    lg: '0 8px 20px rgb(0 0 0 / 0.07)',
-    xl: '0 12px 28px rgb(0 0 0 / 0.09)',
-    '2xl': '0 20px 40px rgb(0 0 0 / 0.12)',
-    inner: 'inset 0 1px 3px rgb(0 0 0 / 0.06)',
+    // Snow 設計：紙張式柔和長陰影（上方細邊＋下方大範圍淡陰影）
+    sm: '0 1px 2px rgb(43 39 34 / 0.05)',
+    DEFAULT: '0 1px 2px rgb(43 39 34 / 0.05), 0 8px 20px -12px rgb(43 39 34 / 0.18)',
+    md: '0 1px 2px rgb(43 39 34 / 0.05), 0 14px 30px -18px rgb(43 39 34 / 0.24)',
+    lg: '0 1px 2px rgb(43 39 34 / 0.05), 0 20px 44px -30px rgb(43 39 34 / 0.28)',
+    xl: '0 16px 36px -14px rgb(43 39 34 / 0.22)',
+    '2xl': '0 24px 50px -24px rgb(43 39 34 / 0.32)',
+    inner: 'inset 0 1px 3px rgb(0 0 0 / 0.08)',
 }
 
 export const motion = {
@@ -161,7 +163,7 @@ export const motion = {
         slow: 0.6,
     },
     easing: {
-        apple: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        apple: 'cubic-bezier(0.23, 1, 0.32, 1)',
         appleSoft: 'cubic-bezier(0.22, 1, 0.36, 1)',
         standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
         pulse: 'cubic-bezier(0.4, 0, 0.6, 1)',

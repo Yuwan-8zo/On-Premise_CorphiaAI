@@ -4,6 +4,7 @@
  * 顯示 RAG 檢索到的文件來源
  */
 
+import { ChevronDown, FileText } from '@/components/snow/icons'
 import { useState } from 'react'
 import type { MessageSource } from '@/types/chat'
 
@@ -12,20 +13,11 @@ interface SourceCitationsProps {
 }
 
 const DocumentIcon = () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-    </svg>
+    <FileText className="w-4 h-4" />
 )
 
 const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
-    <svg
-        className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-    >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
+    <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
 )
 
 interface SourceGroup {
@@ -69,11 +61,11 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     }
 
     return (
-        <div className="mt-3 border border-border-subtle rounded-cv-lg overflow-hidden">
+        <div className="mt-3 glass-chip rounded-[18px] overflow-hidden">
             {/* 標題列：顯示文件數，段落數另外標示 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-bg-surface hover:bg-bg-surface transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2"
             >
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
                     <DocumentIcon />
@@ -88,15 +80,15 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
             </button>
 
             {isExpanded && (
-                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                <div className="divide-y divide-[var(--paper-line)] border-t border-[var(--paper-line)]">
                     {groups.map((group, index) => (
-                        <div key={group.key} className="bg-bg-base">
+                        <div key={group.key}>
                             <button
                                 onClick={() => toggleItem(group.key)}
-                                className="w-full flex items-center justify-between px-3 py-2 hover:bg-bg-surface transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2"
                             >
                                 <div className="flex min-w-0 items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent text-corphia-bronze rounded text-xs font-medium">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-accent rounded-[6px] text-xs font-medium">
                                         {index + 1}
                                     </span>
                                     <span className="text-text-secondary truncate">{group.name}</span>
@@ -110,7 +102,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                             {expandedItems.has(group.key) && (
                                 <div className="space-y-2 px-3 pb-3">
                                     {group.chunks.map((chunk, i) => (
-                                        <div key={chunk.chunk_id} className="p-3 bg-bg-surface rounded-[12px] text-sm text-text-secondary leading-relaxed">
+                                        <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[12px] text-sm text-text-secondary leading-relaxed">
                                             <p className="mb-1 text-xs text-text-muted">
                                                 段落 {i + 1}・{Math.round((chunk.score || 0) * 100)}% 相關
                                             </p>

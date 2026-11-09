@@ -14,13 +14,22 @@ from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, desc
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, RequireAdmin
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogResponse, AuditLogListResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/audit-logs", tags=["審計日誌"])
+# 稽核紀錄只開放管理員與工程師（查詢、匯出 CSV／JSON 都適用）
+router = APIRouter(prefix="/audit-logs", tags=["審計日誌"], dependencies=[RequireAdmin])
+
+
+def _action_filter(action: str):
+    """單一操作類型用等於比對；逗號分隔的多個類型用 IN。"""
+    actions = [a.strip() for a in action.split(",") if a.strip()]
+    if len(actions) > 1:
+        return AuditLog.action.in_(actions)
+    return AuditLog.action == (actions[0] if actions else action)
 
 
 @router.get("", response_model=AuditLogListResponse)
@@ -63,8 +72,10 @@ async def list_audit_logs(
 
     # 篩選條件
     if action:
-        query = query.where(AuditLog.action == action)
-        count_query_base = count_query_base.where(AuditLog.action == action)
+        # 前端「只看資安事件」會送多個操作類型，以逗號分隔
+        cond = _action_filter(action)
+        query = query.where(cond)
+        count_query_base = count_query_base.where(cond)
 
     if resource_type:
         query = query.where(AuditLog.resource_type == resource_type)
@@ -257,7 +268,7 @@ async def _fetch_export_logs(
         query = query.where(AuditLog.tenant_id == current_user.tenant_id)
 
     if action:
-        query = query.where(AuditLog.action == action)
+        query = query.where(_action_filter(action))
     if resource_type:
         query = query.where(AuditLog.resource_type == resource_type)
 

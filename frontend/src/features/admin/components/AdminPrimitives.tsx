@@ -4,8 +4,8 @@
  * Extracted from AdminPage.tsx to keep the main page focused on data + layout.
  *
  * Design language (matches login + chat pages):
- *   - Flat: bg-bg-base + border-border-subtle, no glass/big-shadow/28px-radius
- *   - Single radius token: rounded-cv-lg
+ *   - Flat: bg-bg-base + border-[var(--paper-line)], no glass/big-shadow/28px-radius
+ *   - Single radius token: rounded-[18px]
  *   - Whitespace via padding, not via outer glow
  */
 
@@ -27,7 +27,7 @@ export function Panel({
 }) {
     return (
         <section
-            className={`rounded-cv-lg border border-white/[0.06] bg-black/[0.22] shadow-[0_4px_16px_rgb(0_0_0/0.3)] ${className}`}
+            className={`paper ${className}`}
         >
             {children}
         </section>
@@ -49,7 +49,7 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 border-b border-white/[0.06] px-5 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[var(--paper-line)] px-[26px] py-4 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
                 {eyebrow && (
                     <p className="mb-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
@@ -81,16 +81,17 @@ export function ActionButton({
     variant?: 'primary' | 'secondary' | 'danger'
     disabled?: boolean
 }) {
+    // Apple 樣式：主要＝實心品牌色膠囊、次要＝灰色毛玻璃、危險＝紅字灰底
     const variants = {
-        primary: 'bg-accent text-[var(--text-on-accent,#fff)] hover:opacity-90',
-        secondary: 'border border-border-subtle bg-bg-surface text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06]',
-        danger: 'border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20',
+        primary: 'btn-primary',
+        secondary: 'btn-secondary',
+        danger: 'btn-danger',
     }
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`inline-flex h-9 shrink-0 min-w-max items-center justify-center gap-2 rounded-full px-4 text-sm font-medium whitespace-nowrap transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]}`}
+            className={`btn !h-10 !px-[18px] !text-[14px] shrink-0 min-w-max ${variants[variant]}`}
         >
             {children}
         </button>
@@ -108,7 +109,7 @@ export function StatusPill({ active }: { active: boolean }) {
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
                 active
                     ? 'border-accent/20 bg-accent/10 text-accent'
-                    : 'border-border-subtle bg-bg-surface text-text-secondary'
+                    : 'border-[var(--paper-line)] bg-[var(--chip)] text-text-secondary'
             }`}
         >
             <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent' : 'bg-text-secondary'}`} />
@@ -128,7 +129,7 @@ export function RoleBadge({ role }: { role: AdminUserRole }) {
     const styles = {
         admin: 'border-accent/20 bg-accent/10 text-accent',
         engineer: 'border-accent/20 bg-accent/10 text-accent',
-        user: 'border-border-subtle bg-bg-surface text-text-secondary',
+        user: 'border-[var(--paper-line)] bg-[var(--chip)] text-text-secondary',
     }
     const roleLabels = {
         admin: t('admin.users.role.admin', { defaultValue: 'Admin' }),
@@ -179,7 +180,7 @@ export function ModalFrame({
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className={`relative w-full ${maxWidth} rounded-cv-lg border border-white/[0.08] bg-[rgb(28,28,30)] p-6 text-text-primary shadow-[0_24px_80px_rgb(0_0_0/0.5),inset_0_1px_0_rgb(255_255_255/0.06)] pointer-events-auto`}
+                    className={`relative w-full ${maxWidth} paper !rounded-[32px] p-6 text-text-primary pointer-events-auto`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {children}
@@ -218,7 +219,7 @@ export function Field({
 // ---------------------------------------------------------------------------
 
 export const inputClass =
-    'w-full rounded-cv-lg border border-border-subtle/80 bg-bg-elevated/80 px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-bg-elevated focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
+    'w-full rounded-[10px] snow-field px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
 
 export const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B6B6B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_1rem_center] bg-no-repeat pr-10`
 
@@ -227,7 +228,7 @@ export const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url
 // ---------------------------------------------------------------------------
 
 export const tableHeadRowClass =
-    'border-b border-border-subtle bg-bg-elevated/40 text-left text-xs uppercase tracking-wider text-text-secondary'
+    'border-b border-[var(--paper-line)] bg-[var(--chip)] text-left text-xs uppercase tracking-wider text-text-secondary'
 
 export const tableBodyClass = 'divide-y divide-border-subtle'
 

@@ -5,6 +5,7 @@
  * 最後送進 prompt 的 context 長度——口試老師會愛。
  */
 
+import { ChevronRight } from '@/components/snow/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MaterialIcon from '@/components/icons/MaterialIcon'
@@ -64,17 +65,9 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
             {/* 收合/展開按鈕 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors group"
+                className="flex items-center gap-2 pl-3 text-xs text-text-secondary transition-colors group"
             >
-                <svg
-                    className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                >
-                    <polyline points="9 18 15 12 9 6" />
-                </svg>
+                <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 <span className="font-mono inline-flex items-center gap-1.5">
                     <MaterialIcon name="search" size={14} aria-hidden />
                     檢索細節（{sources.length} 個段落）
@@ -89,17 +82,17 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
 
             {/* 展開的除錯面板 */}
             {isExpanded && (
-                <div className="mt-2 space-y-2 border border-border-subtle rounded-xl p-3 bg-bg-base/50 backdrop-blur-sm">
+                <div className="mt-2 space-y-2 snow-well rounded-[18px] p-3">
                     {/* 統計概覽 */}
                     {debug && (
-                        <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-border-subtle">
+                        <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-[var(--paper-line)]">
                             <span className="px-2 py-1 rounded-md bg-light-accent/10 text-light-accent">
                                 Route: {debug.route}
                             </span>
-                            <span className="px-2 py-1 rounded-md bg-bg-surface text-text-secondary">
+                            <span className="px-2 py-1 rounded-md bg-[var(--chip)] text-text-secondary">
                                 Context: {debug.context_length} chars
                             </span>
-                            <span className="px-2 py-1 rounded-md bg-bg-surface text-text-secondary">
+                            <span className="px-2 py-1 rounded-md bg-[var(--chip)] text-text-secondary">
                                 Prompt: {debug.prompt_length} chars
                             </span>
                         </div>
@@ -109,7 +102,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                     {sources.map((source, index) => (
                         <div
                             key={source.chunk_id}
-                            className={`rounded-lg border p-3 ${scoreBg(source.score)}`}
+                            className={`rounded-[10px] border p-3 ${scoreBg(source.score)}`}
                         >
                             {/* Header: 分數 + 文件名 */}
                             <div className="flex items-center justify-between mb-1">

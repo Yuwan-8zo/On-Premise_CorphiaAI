@@ -84,7 +84,7 @@ class Settings(BaseSettings):
 
     # RAG 可調參數（Phase 3 預留）
     chat_history_messages: int = 4  # 每次帶給模型的歷史訊息數（約兩輪問答）；越多越慢
-    rag_top_k: int = 3  # 3 段已足夠回答；每多一段，CPU 要多讀約 10～20 秒
+    rag_top_k: int = 2  # 純 CPU 筆電讀資料很慢：每多一段，7B 約多讀 20～30 秒；2 段已涵蓋展示問題的關鍵段落
     rag_similarity_threshold: float = 0.25
     rag_bm25_weight: float = 0.3
 

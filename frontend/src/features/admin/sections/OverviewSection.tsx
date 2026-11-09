@@ -28,7 +28,7 @@ import {
     MessageSquare,
     ShieldCheck,
     Users,
-} from 'lucide-react'
+} from '@/components/snow/icons'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -171,7 +171,7 @@ export default function OverviewSection({
                                 className={`pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full blur-2xl ${item.glow}`}
                             />
                             <div className="relative flex items-center gap-2">
-                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-cv-sm ${item.iconBg} ${item.iconColor}`}>
+                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[13px] ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
                                 <div className="min-w-0 flex-1">

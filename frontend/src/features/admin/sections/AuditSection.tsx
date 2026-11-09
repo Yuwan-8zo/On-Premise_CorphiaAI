@@ -19,8 +19,9 @@ import {
     ChevronRight,
     Download,
     Search,
+    Shield,
     X,
-} from 'lucide-react'
+} from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { spring } from '@/lib/motionPresets'
@@ -56,7 +57,7 @@ function getActionPillClass(action: string): string {
     if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
         return 'border-sky-500/30 bg-sky-500/10 text-sky-500'
     }
-    return 'border-border-subtle bg-bg-surface text-text-primary'
+    return 'border-[var(--paper-line)] bg-[var(--chip)] text-text-primary'
 }
 
 // 嚴重度分級：區分 critical / warning / info
@@ -159,22 +160,24 @@ export default function AuditSection({
                                 <option value="model">{t('admin.audit.resourceTypes.model')}</option>
                             </select>
                         </Field>
-                        {/* 資安事件 filter chip */}
-                        <button
-                            onClick={() => {
-                                const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
-                                onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
-                            }}
-                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                                auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
-                                    ? 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30'
-                                    : 'bg-bg-elevated border border-border-subtle text-text-secondary hover:border-border-strong'
-                            }`}
-                        >
-                            {t('admin.audit.securityEventsOnly', '只看資安事件')}
-                        </button>
-
                         <div className="flex gap-2">
+                            {/* 資安事件篩選：和匯出鈕同尺寸的膠囊，選取時改紅色 */}
+                            <button
+                                type="button"
+                                aria-pressed={!!(auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed'))}
+                                onClick={() => {
+                                    const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
+                                    onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
+                                }}
+                                className={`btn !h-10 !px-[18px] !text-[14px] whitespace-nowrap ${
+                                    auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
+                                        ? 'btn-danger-solid'
+                                        : 'btn-secondary'
+                                }`}
+                            >
+                                <Shield className="h-4 w-4" />
+                                {t('admin.audit.securityEventsOnly', '只看資安事件')}
+                            </button>
                             <ActionButton variant="secondary" onClick={onExportCSV}>
                                 <Download className="h-4 w-4" />
                                 CSV
@@ -200,7 +203,7 @@ export default function AuditSection({
                       因為內容（table）不會超出 Panel 邊界，不需要 overflow:hidden 截切。
                 */}
                 <Panel>
-                    <div className="sticky top-0 z-20 bg-bg-base rounded-t-cv-lg">
+                    <div className="sticky top-0 z-20 bg-[var(--glass-card)] backdrop-blur-xl rounded-t-[25px]">
                         <SectionHeader
                             title={t('admin.audit.title')}
                             eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
@@ -229,7 +232,7 @@ export default function AuditSection({
                         {/* Column header row — same grid template as the tbody rows
                             手機板僅顯示 時間 + 操作；resource / user / ip 在 sm+ 才出現
                             點任一列仍可開 drawer 看完整資料 */}
-                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_140px] border-b border-border-subtle text-left text-xs uppercase tracking-wider text-text-secondary">
+                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_140px] border-b border-[var(--paper-line)] text-left text-xs uppercase tracking-wider text-text-secondary">
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.time')}</div>
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.action')}</div>
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.resource')}</div>
@@ -274,7 +277,7 @@ export default function AuditSection({
                                     auditLogs.map((log) => (
                                         <tr
                                             key={log.id}
-                                            className={`transition cursor-pointer ${getSeverityClass(log.action)} hover:bg-white/[0.08] dark:hover:bg-white/[0.08]`}
+                                            className={`transition cursor-pointer ${getSeverityClass(log.action)}  `}
                                             onClick={() => setAuditDrawer(log)}
                                         >
                                             <td className="px-3 sm:px-5 py-2 text-[11px] sm:text-sm text-text-secondary whitespace-nowrap">
@@ -327,11 +330,11 @@ export default function AuditSection({
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-bg-surface/90 supports-[backdrop-filter]:bg-bg-surface/72 backdrop-blur-2xl border-l border-white/40 dark:border-white/20 z-50 overflow-y-auto custom-scrollbar shadow-[0_0_60px_rgb(0_0_0/0.18)]"
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] paper !rounded-none sm:!rounded-l-[25px] z-50 overflow-y-auto custom-scrollbar"
                             role="dialog"
                             aria-label="audit detail"
                         >
-                            <div className="sticky top-0 bg-bg-surface border-b border-border-subtle px-5 py-4 flex items-center justify-between">
+                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl border-b border-[var(--paper-line)] px-[26px] py-4 flex items-center justify-between">
                                 <div>
                                     <p className="text-[12px] font-bold uppercase tracking-wider text-accent">
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
@@ -344,7 +347,7 @@ export default function AuditSection({
                                 </div>
                                 <button
                                     onClick={() => setAuditDrawer(null)}
-                                    className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-base transition-colors"
+                                    className="btn-icon !w-10 !h-10 text-text-secondary"
                                     aria-label={t('common.close', '關閉')}
                                 >
                                     <X className="h-5 w-5" />
@@ -377,7 +380,7 @@ export default function AuditSection({
                                     <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
                                         {t('admin.audit.detailPayload', 'Payload')}
                                     </p>
-                                    <pre className="p-4 rounded-[12px] border border-border-subtle bg-bg-base text-[12px] text-text-primary overflow-x-auto">
+                                    <pre className="p-4 rounded-[14px] snow-well text-[12px] text-text-primary overflow-x-auto">
                                         {JSON.stringify(auditDrawer.details, null, 2)}
                                     </pre>
                                 </div>

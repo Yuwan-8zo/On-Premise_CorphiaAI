@@ -23,14 +23,14 @@
 }
 
 .ios-list {
-  background-color: rgb(var(--bg-base));
-  border-radius: 14px;
+  background: var(--chip);
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgb(var(--border-subtle));
+  border: 0;
 }
 
 .ios-list > * + * {
-  border-top: 1px solid rgb(var(--border-subtle) / 0.6);
+  border-top: 0.5px solid var(--paper-line);
 }
 
 .ios-list-row {
@@ -42,11 +42,7 @@
   transition: background-color var(--duration-press) ease-out;
 }
 
-@media (hover: hover) {
-  .ios-list-row:hover {
-    background-color: rgb(var(--bg-surface) / 0.6);
-  }
-}
+
 
 .hairline {
   height: 1px;

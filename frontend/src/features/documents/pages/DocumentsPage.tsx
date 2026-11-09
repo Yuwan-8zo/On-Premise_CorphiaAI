@@ -2,6 +2,8 @@
  * 文件管理頁面
  */
 
+import { ChevronLeft, Download, FileText, Moon, Search, Sun, Trash2, Upload, X } from '@/components/snow/icons'
+import { parseServerDate } from '@/lib/utils'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -25,9 +27,7 @@ interface Document {
 
 // Icons
 const UploadIcon = () => (
-    <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-    </svg>
+    <Upload className="w-12 h-12" />
 )
 
 const FileIcon = ({ type }: { type: string }) => {
@@ -44,10 +44,8 @@ const FileIcon = ({ type }: { type: string }) => {
     }
 
     return (
-        <div className={`w-10 h-10 rounded-[16px] bg-bg-surface  flex items-center justify-center ${colors[type] || 'text-text-secondary'}`}>
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-            </svg>
+        <div className={`w-10 h-10 rounded-[16px] bg-[var(--chip)]  flex items-center justify-center ${colors[type] || 'text-text-secondary'}`}>
+            <FileText className="w-5 h-5" />
         </div>
     )
 }
@@ -86,15 +84,13 @@ function isAcceptedFile(file: File): boolean {
 }
 
 const TrashIcon = () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
+    <Trash2 className="w-4 h-4" />
 )
 
 const StatusBadge = ({ status }: { status: Document['status'] }) => {
     const styles = {
         pending: 'bg-yellow-100/50 text-yellow-700  border border-yellow-200',
-        processing: 'bg-accent text-corphia-bronze  border border-border-subtle',
+        processing: 'bg-accent text-corphia-bronze  border border-[var(--paper-line)]',
         completed: 'bg-green-100/50 text-green-700  border border-green-200',
         failed: 'bg-red-100/50 text-red-700  border border-red-200',
     }
@@ -338,17 +334,15 @@ export default function Documents() {
                 </svg>
             </div>
             {/* 頂部導覽列 —— 玻璃感 sticky bar */}
-            <header className="relative z-10 h-16 sm:h-[80px] border-b border-white/40 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-2xl transition-colors sticky top-0">
+            <header className="relative z-10 h-16 sm:h-[80px] border-b border-[var(--paper-line)] flex items-center justify-between px-4 sm:px-8 bg-[var(--glass-card)] backdrop-blur-2xl transition-colors sticky top-0">
                 <div className="flex items-center gap-3">
                     <Tooltip label={t('common.backToChat')}>
                         <Link
                             to="/chat"
                             aria-label={t('common.backToChat')}
-                            className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+                            className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary   transition-colors"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
-                            </svg>
+                            <ChevronLeft className="w-5 h-5" />
                         </Link>
                     </Tooltip>
                     <h1 className="text-xl font-semibold text-text-primary tracking-wide flex items-center gap-2">
@@ -358,16 +352,12 @@ export default function Documents() {
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06] rounded-full transition-colors"
+                    className="btn-icon !w-10 !h-10 text-text-secondary"
                 >
                     {theme === 'dark' ? (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m12.728 0l-1.414-1.414M6.343 6.343L4.929 4.929M12 17a5 5 0 100-10 5 5 0 000 10z" />
-                        </svg>
+                        <Sun className="w-5 h-5" />
                     ) : (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
+                        <Moon className="w-5 h-5" />
                     )}
                 </button>
             </header>
@@ -375,9 +365,9 @@ export default function Documents() {
             <div className="relative z-10 max-w-5xl mx-auto p-4 sm:p-8 pt-6 sm:pt-10">
                 {/* 上傳區域 —— 玻璃感虛線框 */}
                 <div
-                    className={`relative border-2 border-dashed rounded-cv-lg p-5 sm:p-10 mb-4 sm:mb-6 transition-colors backdrop-blur-xl ${dragActive
+                    className={`relative border-2 border-dashed rounded-[18px] p-5 sm:p-10 mb-4 sm:mb-6 transition-colors backdrop-blur-xl ${dragActive
                             ? 'border-corphia-bronze bg-accent/10 supports-[backdrop-filter]:bg-accent/8'
-                            : 'border-white/40 dark:border-white/10 bg-bg-base/60 supports-[backdrop-filter]:bg-bg-base/45 hover:border-corphia-bronze/50'
+                            : 'border-[var(--paper-line)] bg-[var(--glass-card)]'
                         } shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)]`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -409,11 +399,9 @@ export default function Documents() {
                             href={sampleHref}
                             download
                             onClick={(e) => e.stopPropagation()}
-                            className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                            className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent "
                         >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-                            </svg>
+                            <Download className="w-3.5 h-3.5" />
                             {t('documents.downloadSample', '下載範例檔試試看')}
                         </a>
                     </div>
@@ -421,8 +409,8 @@ export default function Documents() {
 
                 {/* 上傳佇列 — 每筆檔案一條進度條 */}
                 {uploadQueue.length > 0 && (
-                    <div className="mb-6 rounded-cv-lg border border-white/40 dark:border-white/10 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] shadow-sm dark:shadow-none overflow-hidden">
-                        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
+                    <div className="mb-6 paper !rounded-[25px]  overflow-hidden">
+                        <div className="flex items-center justify-between border-b border-[var(--paper-line)] px-5 py-3">
                             <p className="text-sm font-semibold text-text-primary">
                                 {t('documents.uploadQueueTitle', '上傳中')}
                                 <span className="ml-2 text-text-secondary font-normal">
@@ -434,7 +422,7 @@ export default function Documents() {
                             {!isUploading && uploadQueue.every((i) => i.status !== 'uploading') && (
                                 <button
                                     onClick={() => setUploadQueue([])}
-                                    className="text-xs font-medium text-text-secondary hover:text-text-primary transition"
+                                    className="text-xs font-medium text-text-secondary  transition"
                                 >
                                     {t('common.clearAll', '全部清除')}
                                 </button>
@@ -491,18 +479,16 @@ export default function Documents() {
                                                     <Tooltip label={t('common.dismiss', '關閉')}>
                                                         <button
                                                             onClick={() => dismissUpload(item.id)}
-                                                            className="p-1 text-text-muted hover:text-text-primary transition rounded-full"
+                                                            className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
                                                         >
-                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                            </svg>
+                                                            <X className="w-3.5 h-3.5" />
                                                         </button>
                                                     </Tooltip>
                                                 )}
                                             </div>
                                         </div>
                                         {/* 進度條 */}
-                                        <div className="h-1.5 bg-bg-surface rounded-full overflow-hidden">
+                                        <div className="h-1.5 bg-[var(--chip)] rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all duration-200 ${
                                                     isFailed
@@ -531,7 +517,7 @@ export default function Documents() {
 
                 {/* 錯誤訊息 */}
                 {error && (
-                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-cv-lg text-red-600 shadow-sm">
+                    <div className="mb-8 p-4 glass-chip rounded-[18px] text-red-600 dark:text-red-400 ">
                         {error}
                     </div>
                 )}
@@ -558,7 +544,7 @@ export default function Documents() {
                         ].map((card) => (
                             <div
                                 key={card.step}
-                                className="rounded-cv-lg border border-white/40 dark:border-white/10 bg-bg-base/70 supports-[backdrop-filter]:bg-bg-base/55 backdrop-blur-xl shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)] p-5 shadow-sm dark:shadow-none"
+                                className="paper !rounded-[25px] p-5 "
                             >
                                 <p className="text-xs font-semibold tracking-[0.18em] text-text-muted mb-2">{card.step}</p>
                                 <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>
@@ -569,28 +555,21 @@ export default function Documents() {
                 )}
 
                 {/* 文件列表 */}
-                <div className="bg-bg-base rounded-cv-lg border border-border-subtle overflow-hidden shadow-sm dark:shadow-none transition-colors">
-                    <div className="px-8 py-4 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                <div className="paper !rounded-[25px] overflow-hidden transition-colors">
+                    <div className="px-8 py-4 border-b border-[var(--paper-line)] flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                         <h2 className="font-semibold text-text-primary">
                             {t('documents.uploadedTitle', '已上傳文件')} ({visibleDocuments.length}
                             {searchQuery.trim() ? ` / ${documents.length}` : ''})
                         </h2>
                         {documents.length > 0 && (
                             <div className="relative max-w-xs w-full">
-                                <svg
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M16 10a6 6 0 11-12 0 6 6 0 0112 0z" />
-                                </svg>
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                                 <input
                                     type="search"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder={t('documents.searchPlaceholder', '搜尋檔名…')}
-                                    className="w-full pl-9 pr-3 py-1.5 text-sm rounded-full bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-muted outline-none focus:border-accent"
+                                    className="w-full pl-9 pr-3 py-1.5 text-sm rounded-full snow-field text-text-primary placeholder:text-text-muted outline-none"
                                 />
                             </div>
                         )}
@@ -609,7 +588,7 @@ export default function Documents() {
                     ) : (
                         <div className="divide-y divide-border-subtle dark:divide-border-subtle">
                             {visibleDocuments.map(doc => (
-                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5 hover:bg-bg-base transition-colors">
+                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5  transition-colors">
                                     <FileIcon type={doc.fileType} />
 
                                     <div className="flex-1 min-w-0">
@@ -621,7 +600,7 @@ export default function Documents() {
                                             <span>•</span>
                                             <span>{doc.chunkCount} 分塊</span>
                                             <span>•</span>
-                                            <span>{new Date(doc.createdAt).toLocaleDateString('zh-TW')}</span>
+                                            <span>{parseServerDate(doc.createdAt).toLocaleDateString('zh-TW')}</span>
                                         </div>
                                     </div>
 
@@ -630,7 +609,7 @@ export default function Documents() {
                                     <Tooltip label={t('common.delete', '刪除')}>
                                         <button
                                             onClick={() => deleteDocument(doc.id)}
-                                            className="p-2 md:p-2.5 ml-4 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                            className="btn-icon btn-icon-plain !w-10 !h-10 ml-4 text-text-muted"
                                         >
                                             <TrashIcon />
                                         </button>

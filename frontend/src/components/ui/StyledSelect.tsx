@@ -54,7 +54,7 @@ export default function StyledSelect({
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setOpen((prev) => !prev)}
-                className="w-full flex items-center justify-between rounded-[16px] border border-border-subtle bg-bg-base px-4 py-2.5 text-sm text-text-primary transition-colors hover:border-accent/60 focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-between rounded-[16px] snow-field px-4 py-2.5 text-sm text-text-primary transition-colors/60 focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
@@ -72,7 +72,7 @@ export default function StyledSelect({
             {open && (
                 <ul
                     role="listbox"
-                    className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-[16px] border border-border-subtle bg-bg-base shadow-lg backdrop-blur-md py-1"
+                    className="absolute z-50 mt-1 w-full max-h-60 overflow-auto paper !rounded-[20px] p-1.5"
                 >
                     {options.map((opt) => {
                         const isSelected = opt.value === value
@@ -88,7 +88,7 @@ export default function StyledSelect({
                                 className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer transition-colors ${
                                     isSelected
                                         ? 'bg-accent/15 text-accent font-medium'
-                                        : 'text-text-primary hover:bg-white/[0.06] dark:hover:bg-white/[0.06]'
+                                        : 'text-text-primary '
                                 }`}
                             >
                                 <span>{opt.label}</span>

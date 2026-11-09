@@ -40,7 +40,7 @@ const CopyButton = ({ code }: { code: string }) => {
         <button
             type="button"
             onClick={handleCopy}
-            className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-bg-surface hover:bg-white/[0.06] rounded transition-colors"
+            className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)]  rounded transition-colors"
         >
             <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
             {copied ? '已複製' : '複製'}
@@ -57,7 +57,7 @@ const MarkdownCodeBlock = memo(({
 }) => (
     <div className="relative group my-4">
         {language && (
-            <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-bg-surface rounded-tl rounded-br">
+            <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded-tl rounded-br">
                 {language}
             </div>
         )}

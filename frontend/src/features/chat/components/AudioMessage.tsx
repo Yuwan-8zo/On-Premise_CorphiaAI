@@ -90,10 +90,10 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
     return (
         <div
             className={[
-                'flex items-center gap-3 min-w-[220px] max-w-[320px] py-2 pl-2 pr-3 rounded-2xl',
+                'flex items-center gap-3 min-w-[220px] max-w-[320px] py-2 pl-2 pr-3 rounded-[18px]',
                 isUser
                     ? 'bg-white/10 backdrop-blur-sm'
-                    : 'bg-bg-surface',
+                    : 'glass-chip',
             ].join(' ')}
         >
             {/* 隱藏的 audio 元素 */}
@@ -111,8 +111,8 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                 className={[
                     'shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95',
                     isUser
-                        ? 'bg-white text-accent hover:bg-white/90'
-                        : 'bg-accent text-text-on-accent hover:bg-accent-hover',
+                        ? 'bg-white text-accent '
+                        : 'bg-accent text-text-on-accent ',
                 ].join(' ')}
                 aria-label={isPlaying ? 'pause' : 'play'}
             >

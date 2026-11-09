@@ -9,6 +9,8 @@ export default {
             colors: tokens.palette,
             fontFamily: {
                 sans: [
+                    '"Noto Sans TC"',
+                    '"Source Han Sans TC"',
                     '-apple-system',
                     'BlinkMacSystemFont',
                     '"SF Pro Text"',

@@ -132,12 +132,12 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                     //  - user → accent（bronze）醒目，跟使用者氣泡呼應
                     //  - assistant → 中性灰，跟 track 對比夠但不搶
                     const colorClass = marker.role === 'user'
-                        ? 'bg-accent shadow-sm shadow-accent/30'
-                        : 'bg-text-primary/50 hover:bg-text-primary/80 dark:bg-text-secondary/70'
+                        ? 'bg-accent  '
+                        : 'bg-text-primary/50  dark:bg-text-secondary/70'
                     return (
                         <div
                             key={marker.id}
-                            className={`absolute w-[14px] min-h-[14px] rounded-full transition-all duration-200 hover:w-[20px] hover:min-h-[20px] cursor-pointer ${colorClass}`}
+                            className={`absolute w-[14px] min-h-[14px] rounded-full transition-all duration-200   cursor-pointer ${colorClass}`}
                             style={{
                                 top: `${marker.top + marker.height / 2}%`,
                                 left: '50%',
@@ -169,7 +169,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                       - 用 right: calc(100% + 8px) 把右邊緣鎖到 marker 左側 8px
                     */
                     <div
-                        className="absolute z-50 pointer-events-none flex items-start gap-2 rounded-lg border border-border-subtle bg-bg-elevated px-3 py-2 shadow-lg break-words"
+                        className="absolute z-50 pointer-events-none flex items-start gap-2 paper !rounded-[14px] px-3 py-2 break-words"
                         style={{
                             top: `${hoveredMarker.top + hoveredMarker.height / 2}%`,
                             right: 'calc(100% + 8px)',

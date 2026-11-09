@@ -1,3 +1,7 @@
+// 思源黑體：打包在前端，內網離線也能顯示
+import '@fontsource/noto-sans-tc/400.css'
+import '@fontsource/noto-sans-tc/500.css'
+import '@fontsource/noto-sans-tc/700.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

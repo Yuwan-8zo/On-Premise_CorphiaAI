@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useRef } from 'react'
+import { ArrowLeft } from '@/components/snow/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { conversationsApi } from '@/api/conversations'
@@ -56,7 +57,7 @@ export default function Share() {
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
-                <div className="max-w-md w-full bg-bg-base rounded-cv-lg p-8 shadow-xl text-center">
+                <div className="max-w-md w-full paper !rounded-[32px] p-8 text-center">
                     <h2 className="text-xl font-bold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
                     <p className="text-text-secondary mb-8">
                         {t('share.loginDesc')}
@@ -87,7 +88,7 @@ export default function Share() {
                 <p className="text-text-secondary mb-6">{error}</p>
                 <button
                     onClick={() => navigate('/')}
-                    className="px-6 py-2.5 rounded-full bg-bg-surface text-text-primary hover:bg-bg-surface"
+                    className="btn btn-secondary"
                 >
                     {t('share.backToHome')}
                 </button>
@@ -98,15 +99,13 @@ export default function Share() {
     return (
         <div className={`flex flex-col h-[100dvh] bg-bg-base  ${theme === 'dark' ? 'dark' : ''}`}>
             {/* Header */}
-            <header className="shrink-0 h-[60px] flex items-center justify-between px-4 border-b border-border-subtle bg-bg-base/80 /80 backdrop-blur-xl z-10">
+            <header className="shrink-0 h-[60px] flex items-center justify-between px-4 border-b border-[var(--paper-line)] bg-[var(--glass-card)] backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 -ml-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-base transition-colors"
+                        className="p-2 -ml-2 rounded-full text-text-secondary   transition-colors"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <h1 className="font-semibold text-text-primary text-[15px]">

@@ -67,7 +67,7 @@ interface SystemHealth {
 /** 使用率百分比的打條 */
 function UsageBar({ percent, color }: { percent: number; color: string }) {
     return (
-        <div className="w-full h-2 rounded-full bg-bg-surface overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-[var(--chip)] overflow-hidden">
             <div
                 className={`h-full rounded-full transition-all duration-500 ${color}`}
                 style={{ width: `${Math.min(percent, 100)}%` }}
@@ -134,11 +134,7 @@ export function SystemMonitorPanel() {
         <div className="space-y-4 text-sm">
             {/* 離線 / 在線狀態 (A4) */}
             {network && (
-                <div className={`rounded-xl border p-3 ${
-                    network.data_sovereignty
-                        ? 'border-green-300/50 bg-green-50/50'
-                        : 'border-yellow-300/50 bg-yellow-50/50'
-                }`}>
+                <div className={`snow-well rounded-[14px] p-3`}>
                     <div className="flex items-center gap-2">
                         <MaterialIcon
                             name={network.data_sovereignty ? 'verified' : 'warning'}
@@ -163,7 +159,7 @@ export function SystemMonitorPanel() {
 
             {/* CPU / 記憶體 */}
             {health?.cpu && !health.cpu.error && (
-                <div className="rounded-xl border border-border-subtle p-3 space-y-2">
+                <div className="snow-well rounded-[14px] p-3 space-y-2">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
                             <MaterialIcon name="memory" size={14} aria-hidden /> CPU
@@ -189,7 +185,7 @@ export function SystemMonitorPanel() {
 
             {/* GPU */}
             {health?.gpu?.available && health.gpu.devices.map((gpu) => (
-                <div key={gpu.index} className="rounded-xl border border-border-subtle p-3 space-y-2">
+                <div key={gpu.index} className="snow-well rounded-[14px] p-3 space-y-2">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
                             <MaterialIcon name="developer_board" size={14} aria-hidden />
@@ -215,7 +211,7 @@ export function SystemMonitorPanel() {
             ))}
 
             {!health?.gpu?.available && (
-                <div className="rounded-xl border border-border-subtle p-3">
+                <div className="snow-well rounded-[14px] p-3">
                     <p className="text-xs text-text-muted text-center">
                         未偵測到 GPU — 模型以 CPU 模式運行
                     </p>
@@ -224,7 +220,7 @@ export function SystemMonitorPanel() {
 
             {/* LLM 模型狀態 */}
             {health?.llm && (
-                <div className="rounded-xl border border-border-subtle p-3 space-y-1">
+                <div className="snow-well rounded-[14px] p-3 space-y-1">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
                             <MaterialIcon name="smart_toy" size={14} aria-hidden /> LLM 模型

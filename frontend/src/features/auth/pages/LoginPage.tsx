@@ -4,6 +4,7 @@
  * 卡片內排版改為靈活設計：1:1 正方形
  */
 
+import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +13,7 @@ import { useUIStore } from '@/store/uiStore'
 import { useToastStore } from '@/store/toastStore'
 import { authApi } from '@/api/auth'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { MessageSquare, FileText, Shield, HelpCircle, X } from 'lucide-react'
+import { AlertTriangle, FileText, Globe, HelpCircle, MessageSquare, Moon, Shield, Sun, X } from '@/components/snow/icons'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { BackendBootSplash, BackendStatusPill, FloatingInput, type BackendStatus } from '@/features/auth'
 import { springSnappy } from '@/lib/motionPresets'
@@ -298,7 +299,7 @@ export default function Login() {
 
                         <div className="space-y-7">
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center relative">
                                     <MessageSquare className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
                                 </div>
@@ -309,7 +310,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-corphia-bronze" />
                                 </div>
                                 <div className="flex flex-col">
@@ -319,7 +320,7 @@ export default function Login() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full bg-bg-elevated dark:bg-[#202022] border border-transparent dark:border-white/5 flex items-center justify-center relative">
+                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center relative">
                                     <Shield className="w-6 h-6 text-corphia-bronze" />
                                     <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
                                 </div>
@@ -335,16 +336,17 @@ export default function Login() {
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col relative z-30">
-                <div className="flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
+                <div className="relative z-40 flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
                     <div className="lg:hidden">
                         <BackendStatusPill status={backendStatus} compact />
                     </div>
 
-                    <div className="flex gap-2 ml-auto">
+                    {/* 主題／語言：兩顆獨立玻璃圓鈕，大小與後台「回上一頁」相同（36） */}
+                    <div className="flex items-center gap-2 ml-auto">
                         <Tooltip label={t('settings.theme')}>
                             <button
                                 onClick={toggleTheme}
-                                className="relative w-10 h-10 flex items-center justify-center text-text-muted hover:text-text-secondary transition-colors"
+                                className="btn-icon !w-9 !h-9 text-text-secondary"
                                 aria-label={t('settings.theme')}
                             >
                             {/*
@@ -369,9 +371,7 @@ export default function Login() {
                                 aria-hidden="true"
                             >
                                 {/* Sun (太陽) — 深色模式時顯示，提示「點一下切到淺色」 */}
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m12.728 0l-1.414-1.414M6.343 6.343L4.929 4.929M12 17a5 5 0 100-10 5 5 0 000 10z" />
-                                </svg>
+                                <Sun className="w-5 h-5" />
                             </span>
                             <span
                                 className="absolute inset-0 flex items-center justify-center transition-all duration-500"
@@ -383,9 +383,7 @@ export default function Login() {
                                 aria-hidden="true"
                             >
                                 {/* Moon (月亮) — 淺色模式時顯示，提示「點一下切到深色」 */}
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
+                                <Moon className="w-5 h-5" />
                             </span>
                             </button>
                         </Tooltip>
@@ -394,11 +392,9 @@ export default function Login() {
                             <Tooltip label={t('settings.language')}>
                                 <button
                                     onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                                    className={`p-2 transition-colors rounded-full ${isLangMenuOpen ? 'text-text-primary bg-bg-surface' : 'text-text-muted hover:text-text-secondary hover:bg-bg-base'}`}
+                                    className={`btn-icon !w-9 !h-9 ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
                                 >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                </svg>
+                                <Globe className="w-5 h-5" />
                             </button>
                             </Tooltip>
 
@@ -409,23 +405,23 @@ export default function Login() {
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                        className="absolute right-0 mt-2 w-28 bg-bg-base border border-border-subtle shadow-xl rounded-cv-lg overflow-hidden z-50 flex flex-col p-1.5"
+                                        className="absolute right-0 mt-2 w-32 paper !rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
                                     >
                                         <button
                                             onClick={() => handleLanguageSelect('zh-TW')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-white font-semibold bg-accent' : 'text-text-secondary hover:bg-bg-base'}`}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
                                         >
                                             繁體中文
                                         </button>
                                         <button
                                             onClick={() => handleLanguageSelect('en-US')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-white font-semibold bg-accent' : 'text-text-secondary hover:bg-bg-base'}`}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
                                         >
                                             English
                                         </button>
                                         <button
                                             onClick={() => handleLanguageSelect('ja-JP')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-white font-semibold bg-accent' : 'text-text-secondary hover:bg-bg-base'}`}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
                                         >
                                             日本語
                                         </button>
@@ -456,7 +452,7 @@ export default function Login() {
                     <form
                         onSubmit={handleSubmit}
                         noValidate
-                        className="w-full max-w-[360px] bg-bg-base/60 backdrop-blur-2xl shadow-lg dark:shadow-black/30 border border-border-subtle rounded-[38px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[360px] paper !rounded-[46px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                             {/*
                               切換動畫策略：
@@ -472,47 +468,20 @@ export default function Login() {
                                 Login   → A = B = C   (3 個等寬空隙)
                                 Register → D = E = F = G (4 個等寬空隙)
                             */}
-                            <div
-                                className="relative flex rounded-full select-none cursor-pointer bg-bg-base border border-border-subtle transition-colors shrink-0"
-                                style={{ padding: '5px' }}
-                            >
-                                <motion.div
-                                    className="absolute top-[5px] bottom-[5px] w-[calc(50%-5px)] bg-bg-elevated shadow-sm rounded-full border border-border-subtle"
-                                    initial={false}
-                                    animate={{ x: activeTab === 'login' ? 0 : '100%' }}
-                                    transition={springSnappy}
-                                    style={{ left: '5px', zIndex: 1 }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setActiveTab('login')
-                                        setFieldErrors({})
-                                    }}
-                                    style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                    className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                        activeTab === 'login' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
-                                    }`}
-                                >
-                                    {t('auth.login')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setActiveTab('register')
-                                        setFieldErrors({})
-                                        // 切換到註冊：把「忘記密碼?」按鈕收掉，登入失敗的訊息也清掉。
-                                        // email/password 沿用（這就是「轉移文字到註冊頁」的意思）。
-                                        setLoginFailedOnce(false)
-                                    }}
-                                    style={{ position: 'relative', zIndex: 2, WebkitTapHighlightColor: 'transparent' }}
-                                    className={`flex-1 py-2 text-center rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                        activeTab === 'register' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
-                                    }`}
-                                >
-                                    {t('auth.register')}
-                                </button>
-                            </div>
+                            {/* 分段切換：照範本拉桿旋鈕，按住放大變玻璃、可拖動 */}
+                            <GlassSegmented
+                                className="shrink-0 h-[52px]"
+                                pad={5}
+                                value={activeTab}
+                                onChange={(v) => {
+                                    setActiveTab(v)
+                                    setFieldErrors({})
+                                }}
+                                options={[
+                                    { value: 'login', label: t('auth.login') },
+                                    { value: 'register', label: t('auth.register') },
+                                ]}
+                            />
 
                             {/* Gap A / D */}
                             <div className="flex-1" />
@@ -611,10 +580,8 @@ export default function Login() {
                                                 exit={{ opacity: 0, scale: 0.95, height: 0, marginTop: 0 }}
                                                 className="w-full text-center overflow-hidden"
                                             >
-                                                <div className="inline-flex items-center gap-2 justify-center px-4 py-2 bg-red-50 text-red-600 rounded-full text-sm font-medium border border-red-200 shadow-sm transition-colors">
-                                                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                    </svg>
+                                                <div className="inline-flex items-center gap-2 justify-center px-4 py-2 glass-chip text-red-600 dark:text-red-400 rounded-full text-sm font-medium transition-colors">
+                                                    <AlertTriangle className="w-4 h-4 shrink-0" />
                                                     <span>{error}</span>
                                                 </div>
                                             </motion.div>
@@ -634,10 +601,7 @@ export default function Login() {
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="flex-1 min-w-0 py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-white font-semibold rounded-full text-[15px]
- focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-corphia-ivory focus:ring-corphia-bronze
- disabled:opacity-50 disabled:cursor-not-allowed
- transition-all border border-transparent shadow-sm"
+                                            className="btn btn-lg btn-primary flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                                         >
                                             {isLoading ? (
                                                 <span className="flex items-center justify-center">
@@ -663,7 +627,7 @@ export default function Login() {
                                                         exit={{ opacity: 0, scale: 0.5, width: 0 }}
                                                         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                                                         aria-label={t('auth.forgotPassword')}
-                                                        className="shrink-0 h-[42px] rounded-full border border-corphia-bronze/30 bg-bg-base/60 text-corphia-bronze hover:bg-corphia-bronze/10 flex items-center justify-center shadow-sm overflow-hidden"
+                                                        className="shrink-0 h-[42px] btn-icon !w-[42px] !h-[42px] [--R:21px] text-corphia-bronze flex items-center justify-center  overflow-hidden"
                                                     >
                                                         <HelpCircle className="w-5 h-5 shrink-0" />
                                                     </motion.button>
@@ -706,12 +670,12 @@ export default function Login() {
                                 role="dialog"
                                 aria-modal="true"
                                 aria-labelledby="reset-modal-title"
-                                className="pointer-events-auto w-full max-w-sm bg-bg-base rounded-3xl shadow-2xl border border-border-subtle p-6 relative"
+                                className="pointer-events-auto w-full max-w-sm dialog-sheet relative"
                             >
                                 <button
                                     type="button"
                                     onClick={() => setShowResetModal(false)}
-                                    className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+                                    className="btn-icon !w-9 !h-9 absolute top-4 right-4 text-text-secondary"
                                     aria-label={t('common.close', '關閉')}
                                 >
                                     <X className="w-4 h-4" />
@@ -738,7 +702,7 @@ export default function Login() {
                                 <button
                                     type="button"
                                     onClick={() => setShowResetModal(false)}
-                                    className="mt-5 w-full py-2.5 bg-corphia-bronze hover:bg-opacity-90 text-white font-semibold rounded-full text-[15px] transition-all shadow-sm"
+                                    className="btn btn-lg btn-primary btn-block mt-5"
                                 >
                                     {t('common.confirm', '我知道了')}
                                 </button>

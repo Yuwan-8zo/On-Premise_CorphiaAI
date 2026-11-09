@@ -47,7 +47,7 @@ apiClient.interceptors.request.use(
 
 let refreshInflight: Promise<string | null> | null = null
 
-async function refreshAccessTokenOnce(): Promise<string | null> {
+export async function refreshAccessTokenOnce(): Promise<string | null> {
     if (refreshInflight) return refreshInflight
 
     refreshInflight = (async () => {
@@ -73,9 +73,13 @@ async function refreshAccessTokenOnce(): Promise<string | null> {
                 useAuthStore.setState({ refreshToken: refresh_token })
             }
             return access_token as string
-        } catch {
-            // Refresh 失敗才登出，且只執行一次（其他等待者都拿到 null，不會重複 redirect）
-            useAuthStore.getState().clearAuth()
+        } catch (err) {
+            // 只有伺服器明確拒絕（401/403：憑證失效或已用過）才登出；
+            // 連不上或伺服器錯誤（系統重啟中）保留登入狀態，讓呼叫端稍後重試
+            const status = (err as AxiosError)?.response?.status
+            if (status === 401 || status === 403) {
+                useAuthStore.getState().clearAuth()
+            }
             return null
         }
     })()
@@ -128,10 +132,8 @@ apiClient.interceptors.response.use(
                 return apiClient(originalRequest)
             }
 
-            // Refresh 失敗（refresh token 不存在或 server 拒絕）→ 跳登入頁。
-            // clearAuth 已經在 refreshAccessTokenOnce 裡做過了，這裡只負責導頁；
-            // 多個並發 401 都走到這條路徑也只會執行一次 location 變更。
-            useAuthStore.getState().clearAuth()
+            // Refresh 失敗：伺服器拒絕時 refreshAccessTokenOnce 已經登出；
+            // 若只是暫時連不上，refresh token 還在，不要登出
         }
 
         return Promise.reject(error)

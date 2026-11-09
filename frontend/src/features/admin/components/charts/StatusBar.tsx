@@ -2,7 +2,7 @@
  * StatusBar — 文件處理狀態的水平堆疊條
  * --------------------------------------
  * 把 documents 依 status 分組（pending / processing / completed / failed），
- * 顯示一條 bg-bg-surface 軌道上不同色的水平 segment + 下方 legend。
+ * 顯示一條 bg-[var(--chip)] 軌道上不同色的水平 segment + 下方 legend。
  *
  * 用 div + flex 而非 recharts 因為這個圖很簡單（一條線 4 段），
  * 用 recharts 反而 overkill；自製比較精簡也不會有 ResponsiveContainer 高度問題。
@@ -65,7 +65,7 @@ export default function StatusBar({
             </div>
 
             {/* 堆疊條 */}
-            <div className="flex h-2 w-full overflow-hidden rounded-full bg-bg-surface">
+            <div className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--chip)]">
                 {data.map((item) => {
                     const pct = (item.count / total) * 100
                     if (pct === 0) return null
