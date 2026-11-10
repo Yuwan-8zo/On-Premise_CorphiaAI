@@ -1,14 +1,35 @@
 import React, {
+    Children,
     Fragment,
+    createContext,
     createElement,
     forwardRef,
+    isValidElement,
+    useContext,
+    useEffect,
     useImperativeHandle,
     useLayoutEffect,
     useMemo,
     useRef,
+    useState,
 } from 'react'
 import { gsap } from '@/lib/gsap'
 import { MOTION } from '@/design-system'
+
+/*
+ * 高級感切換（全站自動套用）：
+ *   進場：淡入的元件同時由模糊 8px 對焦到清楚
+ *   離場：AnimatePresence 留住被拿掉的元件，0.2 秒淡出＋失焦 6px（規範：淡出／小過場 0.2 秒、減速曲線）
+ */
+const ENTER_BLUR = 8
+const EXIT_BLUR = 6
+const EXIT_SECONDS = 0.2
+
+const PresenceContext = createContext<{ exiting: boolean; skipInitial: boolean }>({ exiting: false, skipInitial: false })
+
+function prefersReducedMotion() {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}
 
 type GsapVars = Record<string, unknown>
 
@@ -114,7 +135,7 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
         const {
             initial,
             animate,
-            exit: _exit,
+            exit,
             transition,
             layout: _layout,
             whileHover,
@@ -135,16 +156,24 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
         const motionVariants = variants as MotionLikeProps['variants']
         const { domStyle, motionStyle } = useMemo(() => splitStyle(style as AnyMotionProps['style']), [stableKey(style)])
 
+        const presence = useContext(PresenceContext)
+
         useImperativeHandle(forwardedRef, () => innerRef.current as HTMLElement)
 
         useLayoutEffect(() => {
             const element = innerRef.current
-            if (!element) return
+            if (!element || presence.exiting) return
 
+            let focusIn = false
             if (!hasMounted.current) {
-                const initialVars = stripForReducedMotion(resolveMotionValue(motionInitial, motionVariants))
+                const skip = presence.skipInitial || motionInitial === false
+                const initialVars = skip ? undefined : stripForReducedMotion(resolveMotionValue(motionInitial, motionVariants))
                 if (Object.keys(motionStyle).length > 0) gsap.set(element, motionStyle)
-                if (initialVars) gsap.set(element, initialVars)
+                if (initialVars) {
+                    // 高級感：淡入的元件同時「由模糊對焦到清楚」（Apple 的進場方式）；減少動態效果時不加
+                    focusIn = initialVars.opacity === 0 && initialVars.filter === undefined && !prefersReducedMotion()
+                    gsap.set(element, focusIn ? { ...initialVars, filter: `blur(${ENTER_BLUR}px)` } : initialVars)
+                }
                 hasMounted.current = true
             }
 
@@ -152,11 +181,41 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
             if (animateVars) {
                 gsap.to(element, {
                     ...animateVars,
+                    ...(focusIn ? { filter: 'blur(0px)', clearProps: 'filter' } : {}),
                     ...transitionVars(transition as MotionLikeProps['transition']),
                     overwrite: 'auto',
                 })
             }
         }, [stableKey(motionAnimate), stableKey(motionInitial), stableKey(motionStyle), stableKey(transition), stableKey(motionVariants)])
+
+        // 離場：被 AnimatePresence 留住的元件，照 exit（沒寫就倒放進場）淡出＋失焦，期間不能點
+        const wasExiting = useRef(false)
+        useLayoutEffect(() => {
+            const element = innerRef.current
+            if (!element) return
+            if (!presence.exiting) {
+                // 離場途中又被加回來（例如快速開關選單）：直接回到顯示狀態
+                if (wasExiting.current) {
+                    wasExiting.current = false
+                    const back = resolveMotionValue(motionAnimate, motionVariants) ?? { opacity: 1 }
+                    gsap.to(element, { ...back, filter: 'blur(0px)', clearProps: 'filter,pointerEvents', duration: MOTION.durationSeconds.fast, ease: MOTION.gsapEase.default, overwrite: 'auto' })
+                }
+                return
+            }
+            wasExiting.current = true
+            const exitVars = stripForReducedMotion(
+                (exit as GsapVars | undefined) ?? resolveMotionValue(motionInitial, motionVariants) ?? { opacity: 0 },
+            ) as GsapVars
+            const blur = exitVars.opacity === 0 && exitVars.filter === undefined && !prefersReducedMotion()
+            gsap.to(element, {
+                ...exitVars,
+                ...(blur ? { filter: `blur(${EXIT_BLUR}px)` } : {}),
+                pointerEvents: 'none',
+                duration: EXIT_SECONDS,
+                ease: MOTION.gsapEase.default,
+                overwrite: 'auto',
+            })
+        }, [presence.exiting])
 
         const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
             if (whileHover && innerRef.current) {
@@ -209,8 +268,81 @@ export const motion = {
     section: createMotionElement('section'),
 } as Record<'aside' | 'button' | 'div' | 'label' | 'p' | 'section', React.ComponentType<AnyMotionProps>>
 
-export function AnimatePresence({ children }: { children?: React.ReactNode; [key: string]: unknown }) {
-    return <Fragment>{children}</Fragment>
+/**
+ * AnimatePresence：被拿掉的子元件先留著播完離場動畫（EXIT_SECONDS）再真的移除。
+ *   mode="wait"：舊的離場完才放新的進來（例如側欄「一般／專案」清單互換）
+ *   initial={false}：第一次出現的子元件不播進場
+ */
+export function AnimatePresence({
+    children,
+    mode,
+    initial = true,
+}: {
+    children?: React.ReactNode
+    mode?: 'wait' | 'sync' | 'popLayout'
+    initial?: boolean
+    [key: string]: unknown
+}) {
+    const [, rerender] = useState(0)
+    const exitingRef = useRef(new Map<React.Key, React.ReactElement>())
+    const timersRef = useRef(new Map<React.Key, number>())
+    const lastRef = useRef<React.ReactElement[]>([])
+    const firstKeysRef = useRef<Set<React.Key> | null>(null)
+
+    const present = Children.toArray(children).filter(isValidElement) as React.ReactElement[]
+    const presentKeys = new Set(present.map((c) => c.key as React.Key))
+    if (firstKeysRef.current === null) firstKeysRef.current = initial ? new Set() : presentKeys
+
+    for (const c of lastRef.current) {
+        const k = c.key as React.Key
+        if (!presentKeys.has(k) && !exitingRef.current.has(k)) exitingRef.current.set(k, c)
+    }
+    for (const k of presentKeys) exitingRef.current.delete(k)
+
+    // 離場中的元件留在原本的位置
+    let out: React.ReactElement[] = [...present]
+    lastRef.current.forEach((c, i) => {
+        const k = c.key as React.Key
+        const leaving = exitingRef.current.get(k)
+        if (leaving && !out.some((o) => o.key === k)) out.splice(Math.min(i, out.length), 0, leaving)
+    })
+    if (mode === 'wait' && exitingRef.current.size > 0) out = out.filter((c) => exitingRef.current.has(c.key as React.Key))
+    lastRef.current = mode === 'wait' && exitingRef.current.size > 0 ? [...out, ...present.filter((c) => !out.includes(c))] : out
+
+    useEffect(() => {
+        for (const k of exitingRef.current.keys()) {
+            if (timersRef.current.has(k)) continue
+            timersRef.current.set(
+                k,
+                window.setTimeout(() => {
+                    timersRef.current.delete(k)
+                    exitingRef.current.delete(k)
+                    lastRef.current = lastRef.current.filter((c) => c.key !== k)
+                    rerender((n) => n + 1)
+                }, EXIT_SECONDS * 1000 + 30),
+            )
+        }
+        for (const [k, t] of timersRef.current) {
+            if (!exitingRef.current.has(k)) {
+                window.clearTimeout(t)
+                timersRef.current.delete(k)
+            }
+        }
+    })
+    useEffect(() => () => timersRef.current.forEach((t) => window.clearTimeout(t)), [])
+
+    return (
+        <Fragment>
+            {out.map((c) => {
+                const k = c.key as React.Key
+                return (
+                    <PresenceContext.Provider key={k} value={{ exiting: exitingRef.current.has(k), skipInitial: firstKeysRef.current!.has(k) }}>
+                        {c}
+                    </PresenceContext.Provider>
+                )
+            })}
+        </Fragment>
+    )
 }
 
 export function LayoutGroup({ children }: { children?: React.ReactNode }) {

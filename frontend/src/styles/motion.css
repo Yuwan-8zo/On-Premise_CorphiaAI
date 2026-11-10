@@ -67,20 +67,24 @@
   }
 }
 
+/* 換頁過場（高級感）：淡入＋從 0.985 放大到原尺寸＋模糊 10px 對焦到清楚；0.42 秒減速（規範換頁時間）。
+ * 結束時 transform／filter 一定回到 none，不然會變成 fixed 子元件的定位基準 */
 @keyframes pageEnter {
   0% {
     opacity: 0;
-    transform: translateY(12px);
+    transform: scale(0.985);
+    filter: blur(10px);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
+    filter: none;
   }
 }
 
 .page-transition {
-  animation: pageEnter var(--duration-normal) var(--ease-apple) forwards;
+  animation: pageEnter var(--dur-page) var(--ease-out) both;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -105,4 +109,25 @@
     animation-iteration-count: 1 !important;
   }
 
+}
+
+/* 骨架畫面 → 真正內容：內容掛上來時淡入＋模糊 6px 對焦，不會「啪」一下換掉（0.42 秒減速） */
+.page-transition > :not([role='status']) {
+  animation: contentReveal var(--dur-page) var(--ease-out) both;
+}
+@keyframes contentReveal {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-transition,
+  .page-transition > :not([role='status']) {
+    animation: none;
+  }
 }

@@ -2,7 +2,8 @@
 檔案簽章 / 副檔名驗證
 
 SECURITY:
-- ALLOWED_EXTENSIONS 是白名單，未列入的副檔名一律拒絕（含 .exe / .sh / .py / .html 等）
+- ALLOWED_EXTENSIONS 是白名單，未列入的副檔名一律拒絕（含 .exe / .sh / .py / .svg 等）
+- .html／.htm 允許上傳：系統只抽出純文字給檢索用（腳本、樣式整段丟掉），也沒有任何路徑會把原始檔當網頁送回瀏覽器，所以沒有 XSS 風險
 - 對應副檔名要驗證 magic bytes 開頭，防止攻擊者把 .exe rename 成 .pdf 上傳
 - 純文字檔（txt/md/csv）沒固定 header，但會嘗試解碼確認不是 binary
 """
@@ -15,8 +16,9 @@ MAGIC_BYTES = {
     "jpg": b"\xff\xd8\xff",
 }
 
-# 白名單：只接受這些副檔名。任何不在這裡的（包括 .exe / .bat / .sh / .ps1 / .py / .html / .svg）一律拒絕。
-ALLOWED_EXTENSIONS = {"pdf", "docx", "xlsx", "pptx", "txt", "md", "csv"}
+# 白名單：只接受這些副檔名。任何不在這裡的（包括 .exe / .bat / .sh / .ps1 / .py / .svg）一律拒絕。
+# html／htm 只做文字抽取（見 document_service._parse_html），原始檔不會被當網頁送出。
+ALLOWED_EXTENSIONS = {"pdf", "docx", "xlsx", "pptx", "txt", "md", "csv", "html", "htm"}
 
 
 def validate_file_signature(file_bytes: bytes, filename: str, content_type: str) -> bool:
@@ -31,7 +33,7 @@ def validate_file_signature(file_bytes: bytes, filename: str, content_type: str)
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
     # SECURITY-FIX: 白名單檢查（取代原本「未記錄的格式 return True」的鬆綁）
-    # 未列入白名單的副檔名一律拒絕，含可執行檔、腳本、HTML（XSS 風險）等。
+    # 未列入白名單的副檔名一律拒絕，含可執行檔、腳本等。
     if ext not in ALLOWED_EXTENSIONS:
         return False
 
@@ -43,7 +45,7 @@ def validate_file_signature(file_bytes: bytes, filename: str, content_type: str)
         # OOXML 都是 ZIP 容器；只需驗 ZIP magic 即可擋改副檔名的可執行檔
         return file_bytes.startswith(MAGIC_BYTES["zip"])
 
-    if ext in {"txt", "md", "csv"}:
+    if ext in {"txt", "md", "csv", "html", "htm"}:
         # 純文字嘗試解碼；不只試 utf-8，也試 utf-8-sig（BOM）跟常見的 cp950 / big5
         # （台灣使用者匯出的舊 csv 常見 big5 編碼）
         # Only the first 1 KB is sampled; that cut can land in the middle of a

@@ -8,6 +8,7 @@ import type { Conversation, Message } from '@/types/chat'
 import MessageBubble from '@/features/chat/components/MessageBubble'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { SkelMessages } from '@/components/ui/Skeleton'
 
 export default function Share() {
     const { t } = useTranslation()
@@ -75,8 +76,8 @@ export default function Share() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[100dvh] bg-bg-base">
-                <div className="w-8 h-8 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
+            <div className="min-h-[100dvh] bg-bg-base">
+                <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
             </div>
         )
     }

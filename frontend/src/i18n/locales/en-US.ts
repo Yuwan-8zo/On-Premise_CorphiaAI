@@ -187,14 +187,14 @@ export default {
     // Documents
     documents: {
         dropZoneTitle: 'Drop files here, or click to select (multiple)',
-        dropZoneSubtitle: 'Supports PDF, Word, Excel, PowerPoint, TXT, Markdown · max 50MB',
+        dropZoneSubtitle: 'Supports PDF, Word, Excel, PowerPoint, TXT, Markdown, HTML · max 50MB',
         downloadSample: 'Download a sample file',
         uploadedTitle: 'Uploaded',
         searchPlaceholder: 'Search filename…',
         noMatch: 'No matching files',
         empty: 'No documents uploaded yet',
         onboard1Title: 'What to upload',
-        onboard1Desc: 'PDF, Word, Excel, PowerPoint, plain text, or Markdown. Drop multiple files at once.',
+        onboard1Desc: 'PDF, Word, Excel, PowerPoint, plain text, Markdown, or HTML. Drop multiple files at once.',
         onboard2Title: 'What happens next',
         onboard2Desc: 'The file is chunked, embedded, and indexed automatically. The status badge shows progress.',
         onboard3Title: 'How to use it with RAG',

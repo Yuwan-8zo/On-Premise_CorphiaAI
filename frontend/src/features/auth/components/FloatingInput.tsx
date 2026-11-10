@@ -41,7 +41,7 @@ export default function FloatingInput({
                     setIsFocused(false)
                     onBlur?.(event)
                 }}
-                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${error ? 'pr-28' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -116,10 +116,9 @@ export default function FloatingInput({
             </motion.label>
 
             {error && (
-                <div className={`absolute top-[2px] bottom-[2px] flex items-center pointer-events-none z-10 ${isPasswordType && isFilled ? 'right-10' : 'right-[2px]'}`}>
-                    <div className="h-full flex items-center pr-4 pl-1">
-                        <span className="text-xs font-semibold text-red-500 whitespace-nowrap">{error}</span>
-                    </div>
+                /* 錯誤訊息放在輸入框正下方（Footnote 13／18），不擠進框裡蓋到內容 */
+                <div className="absolute left-5 right-5 top-full mt-1.5 pointer-events-none z-10">
+                    <span className="block text-[13px] leading-[18px] font-medium text-[var(--danger-ink)] truncate">{error}</span>
                 </div>
             )}
 

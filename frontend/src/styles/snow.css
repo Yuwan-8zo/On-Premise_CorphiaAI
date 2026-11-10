@@ -553,7 +553,7 @@ html:not(.dark) .paper .seg-track {
   --glass-card: rgba(255, 255, 255, 0.92);
 }
 html.dark {
-  --glass-card: rgba(34, 34, 37, 0.92);
+  --glass-card: rgba(38, 38, 41, 0.92); /* 同 App.tsx 設定值，重整第一幀就一致 */
 }
 
 .paper,
@@ -1728,6 +1728,7 @@ html:not(.dark) .menu-item.is-danger {
   from {
     opacity: 0;
     transform: translateX(14px);
+    filter: blur(8px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1787,6 +1788,7 @@ html:not(.dark) .menu-item.is-danger {
   from {
     opacity: 0;
     transform: translateY(-20px) scale(0.96);
+    filter: blur(8px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1870,6 +1872,7 @@ html:not(.dark) .dock-wrap {
   to {
     opacity: 0;
     transform: translateY(-20px) scale(0.96);
+    filter: blur(6px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1930,4 +1933,44 @@ ul.paper > .set-row.has-icon + .set-row::before {
 }
 html.dark {
   --rim-out: rgb(var(--wave-d3, 0 0 0) / 0.85);
+}
+
+/* 來源文件：拖曳放入（整張卡片可放；拖曳中蓋一層提示） */
+.drop-hint {
+  position: absolute;
+  inset: 8px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 17px; /* 卡片 25 − 內縮 8，同心 */
+  border: 2px dashed rgb(var(--accent) / 0.7);
+  background: color-mix(in srgb, var(--glass-card) 88%, rgb(var(--accent)));
+  color: rgb(var(--accent));
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+  pointer-events: none;
+  animation: fadeIn var(--dur-fade) var(--ease-out);
+}
+.drop-hint svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* 骨架畫面（讀取中）：灰色預留方塊緩慢呼吸；「減少動態效果」時靜止（元件見 components/ui/Skeleton.tsx） */
+.skel {
+  display: block;
+  border-radius: 9999px;
+  background: var(--chip);
+  animation: skelBreath 0.9s var(--ease-out) infinite alternate;
+}
+@keyframes skelBreath {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel { animation: none; }
 }

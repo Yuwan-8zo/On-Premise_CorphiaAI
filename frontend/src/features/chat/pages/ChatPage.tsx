@@ -9,9 +9,13 @@ import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
+import { SkelMessages } from '@/components/ui/Skeleton'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
+    // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
+    const [dragOver, setDragOver] = useState(false)
+    const dragDepth = useRef(0)
 
     // 第一次進入 chat 觸發引導；旗標寫在 localStorage，已看過就不再顯示
     // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
@@ -78,7 +82,23 @@ export default function Chat() {
                             <p className="mt-2 text-[15px] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
-                        <div className="paper !rounded-[25px] flex flex-col flex-1 min-h-0 overflow-hidden">
+                        {/* 整張卡片都可以把檔案拖進來；拖曳中顯示「放開即可加入」的提示 */}
+                        <div
+                            className="paper !rounded-[25px] flex flex-col flex-1 min-h-0 overflow-hidden"
+                            onDragEnter={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); dragDepth.current++; setDragOver(true) } }}
+                            onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
+                            onDragLeave={() => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (dragDepth.current === 0) setDragOver(false) }}
+                            onDrop={(e) => {
+                                e.preventDefault(); dragDepth.current = 0; setDragOver(false)
+                                mainProps.uploadFiles(Array.from(e.dataTransfer.files))
+                            }}
+                        >
+                            {dragOver && (
+                                <div className="drop-hint" aria-hidden>
+                                    <PlusIcon />
+                                    <span>放開即可加入來源</span>
+                                </div>
+                            )}
                             <div className="px-6 py-4 border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
                                 <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
@@ -94,7 +114,7 @@ export default function Chat() {
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <Copy className="w-16 h-16 mx-auto text-text-secondary mb-4 stroke-1" />
                                     <p className="text-[17px] font-semibold text-text-secondary mb-1">尚無文獻來源</p>
-                                    <p className="text-[14px] text-text-muted">點擊右上角新增，建立專案護城河</p>
+                                    <p className="text-[14px] text-text-muted">把檔案拖曳到這裡，或點右上角「新增來源」</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border-subtle dark:divide-border-subtle">
@@ -190,9 +210,7 @@ export default function Chat() {
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
                         {mainProps.isLoadingMore && (
-                            <div className="flex justify-center items-center py-2 text-text-secondary">
-                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--paper-line)] border-t-text-primary"></span>
-                            </div>
+                            <SkelMessages count={2} className="w-full max-w-3xl mx-auto px-4 md:px-0 py-2" />
                         )}
                         {mainProps.messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖

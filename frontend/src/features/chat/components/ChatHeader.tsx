@@ -64,7 +64,8 @@ export default function ChatHeader({
                 {/* Left: Corphia title - hidden on mobile to give space to model selector */}
                 {/* 品牌字：和登入頁同一個字標（含星星） */}
                 <h1 className={`hidden sm:flex items-center transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                    <CorphiaWordmark className="h-[28px] w-auto object-contain object-left pointer-events-none select-none" />
+                    {/* 字標圖片上下有留白：圖高 63、看得到的字（含 p 的下伸）＝40，跟右側按鈕同高同位；負邊距加在外層（星星那層跟著圖片對齊），讓排版仍佔 40 */}
+                    <span className="-mt-[2px] -mb-[21px] flex"><CorphiaWordmark className="h-[63px] w-auto object-contain object-left pointer-events-none select-none" /></span>
                     <span className="sr-only">Corphia</span>
                 </h1>
             </div>

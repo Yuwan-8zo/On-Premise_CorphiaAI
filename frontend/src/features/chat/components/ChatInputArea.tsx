@@ -58,7 +58,7 @@ export default function ChatInputArea({
                 ref={fileInputRef}
                 onChange={handleFileUpload}
                 className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md"
+                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md,.html,.htm"
                 multiple
             />
         )
@@ -188,7 +188,7 @@ export default function ChatInputArea({
                 ref={fileInputRef}
                 onChange={handleFileUpload}
                 className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md"
+                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md,.html,.htm"
                 multiple
             />
         </>

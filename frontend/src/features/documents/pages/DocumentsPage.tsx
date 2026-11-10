@@ -12,6 +12,7 @@ import { documentsApi } from '@/api/documents'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
+import { SkelRows } from '@/components/ui/Skeleton'
 
 interface Document {
     id: string
@@ -54,7 +55,7 @@ const FileIcon = ({ type }: { type: string }) => {
 // 副檔名白名單 — 跟後端能成功解析的格式對齊。
 // 舊版 office 格式 (.doc / .xls / .ppt) 後端會拒絕（python-pptx / python-docx 解析
 // 不穩或不支援），這邊就不放進 accept 讓使用者能選到。
-const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.csv', '.txt', '.md']
+const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.csv', '.txt', '.md', '.html', '.htm']
 const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(',')
 
 /**
@@ -388,7 +389,7 @@ export default function Documents() {
                         <p className="text-[12px] sm:text-sm text-text-secondary leading-relaxed">
                             {t(
                                 'documents.dropZoneSubtitle',
-                                '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown · 最大 50MB',
+                                '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown、HTML · 最大 50MB',
                             )}
                         </p>
                         <a
@@ -572,9 +573,7 @@ export default function Documents() {
                 </div>
                 <div className="paper !rounded-[25px] overflow-hidden">
                     {isLoading ? (
-                        <div className="p-10 text-center text-text-secondary">
-                            {t('common.loading', '載入中...')}
-                        </div>
+                        <SkelRows count={6} />
                     ) : visibleDocuments.length === 0 ? (
                         <div className="p-10 text-center text-text-secondary">
                             {searchQuery.trim()

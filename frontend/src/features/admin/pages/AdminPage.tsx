@@ -45,6 +45,7 @@ import { documentsApi } from '@/api/documents'
 import StyledSelect from '@/components/ui/StyledSelect'
 import { useTranslation } from 'react-i18next'
 import WaveBackground from '@/components/ui/WaveBackground'
+import { SkelCards } from '@/components/ui/Skeleton'
 
 interface UserData {
     id: string
@@ -667,7 +668,7 @@ export default function Admin() {
                         )}
 
                         {activeSection === 'users' && (
-                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
+                            <Suspense fallback={<div className="grid gap-4 p-5"><SkelCards count={3} className="h-[120px]" /></div>}>
                             <UsersSection
                                 users={users}
                                 activeUsers={activeUsers}
@@ -682,7 +683,7 @@ export default function Admin() {
                         )}
 
                         {activeSection === 'models' && (
-                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
+                            <Suspense fallback={<div className="grid gap-4 p-5"><SkelCards count={3} className="h-[120px]" /></div>}>
                             <ModelsSection
                                 models={models}
                                 modelsDir={modelsDir}
@@ -695,7 +696,7 @@ export default function Admin() {
                         )}
 
                         {activeSection === 'audit' && (
-                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
+                            <Suspense fallback={<div className="grid gap-4 p-5"><SkelCards count={3} className="h-[120px]" /></div>}>
                             <AuditSection
                                 auditSearchInput={auditSearchInput}
                                 setAuditSearchInput={setAuditSearchInput}
@@ -719,7 +720,7 @@ export default function Admin() {
                         {/* 'system' tab 已移除：資訊跟 OverviewSection 的系統資源 / LLM 健康面板重複 */}
 
                         {activeSection === 'tenants' && (
-                            <Suspense fallback={<div className="p-8 text-center text-text-muted">載入中…</div>}>
+                            <Suspense fallback={<div className="grid gap-4 p-5"><SkelCards count={3} className="h-[120px]" /></div>}>
                             <TenantsSection
                                 tenants={tenants}
                                 activeTenants={activeTenants}

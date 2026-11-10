@@ -36,6 +36,8 @@ class DocumentService:
         ".txt": "text/plain",
         ".md": "text/markdown",
         ".csv": "text/csv",
+        ".html": "text/html",
+        ".htm": "text/html",
     }
     
     # 分塊設定
@@ -290,6 +292,8 @@ class DocumentService:
             return await self._parse_powerpoint(file_path)
         elif ext == "csv":
             return await self._parse_csv(file_path)
+        elif ext in ["html", "htm"]:
+            return await self._parse_html(file_path)
         else:
             raise ValueError(f"不支援的檔案類型: {ext}")
     
@@ -308,6 +312,61 @@ class DocumentService:
             
         return await asyncio.to_thread(_process)
     
+    async def _parse_html(self, file_path: Path) -> str:
+        """解析 HTML：只抽出看得到的文字，script／style／noscript／template 整段丟掉；區塊元素換行"""
+        from html.parser import HTMLParser
+
+        # 網頁幾乎都是 UTF-8：先照 UTF-8 解，失敗才交給自動偵測（短檔案自動偵測常誤判成 Big5）
+        try:
+            raw = file_path.read_bytes().decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raw = await self._parse_text_file(file_path)
+
+        class _TextExtractor(HTMLParser):
+            SKIP = {"script", "style", "noscript", "template", "svg", "head"}
+            BLOCK = {"p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6",
+                     "section", "article", "header", "footer", "table", "ul", "ol", "pre", "blockquote", "title"}
+
+            def __init__(self):
+                super().__init__(convert_charrefs=True)
+                self.parts: list[str] = []
+                self.skip_depth = 0
+                self.title = ""
+                self._in_title = False
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "title":
+                    self._in_title = True
+                elif tag in self.SKIP:
+                    self.skip_depth += 1
+                elif tag in self.BLOCK:
+                    self.parts.append("\n")
+
+            def handle_endtag(self, tag):
+                if tag == "title":
+                    self._in_title = False
+                elif tag in self.SKIP and self.skip_depth:
+                    self.skip_depth -= 1
+                elif tag in self.BLOCK:
+                    self.parts.append("\n")
+
+            def handle_data(self, data):
+                if self._in_title:
+                    self.title += data
+                elif not self.skip_depth:
+                    self.parts.append(data)
+
+        p = _TextExtractor()
+        p.feed(raw)
+        p.close()
+        import re
+        text = "".join(p.parts)
+        text = re.sub(r"[ \t\r\f\v]+", " ", text)
+        text = re.sub(r"\s*\n\s*", "\n", text)
+        text = re.sub(r"\n{3,}", "\n\n", text).strip()
+        title = p.title.strip()
+        return f"{title}\n\n{text}" if title else text
+
     async def _parse_pdf(self, file_path: Path) -> str:
         """解析 PDF 檔案"""
         import asyncio

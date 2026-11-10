@@ -27,6 +27,7 @@ import {
 } from '@/features/admin/components/AdminPrimitives'
 import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
+import { SkelTableRows } from '@/components/ui/Skeleton'
 
 export interface AdminUserRow {
     id: string
@@ -205,11 +206,7 @@ export default function UsersSection({
                     </thead>
                     <tbody className={tableBodyClass}>
                         {isLoading ? (
-                            <tr>
-                                <td className={tableEmptyCellClass} colSpan={6}>
-                                    {t('common.loading', '載入中')}
-                                </td>
-                            </tr>
+                            <SkelTableRows rows={4} cols={6} />
                         ) : users.length === 0 ? (
                             <tr>
                                 <td className={tableEmptyCellClass} colSpan={6}>

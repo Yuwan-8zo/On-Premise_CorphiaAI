@@ -187,14 +187,14 @@ export default {
     // ドキュメント
     documents: {
         dropZoneTitle: 'ファイルをここにドロップ、またはクリックして選択（複数可）',
-        dropZoneSubtitle: 'PDF、Word、Excel、PowerPoint、TXT、Markdown 対応 · 最大 50MB',
+        dropZoneSubtitle: 'PDF、Word、Excel、PowerPoint、TXT、Markdown、HTML 対応 · 最大 50MB',
         downloadSample: 'サンプルファイルをダウンロード',
         uploadedTitle: 'アップロード済み',
         searchPlaceholder: 'ファイル名で検索…',
         noMatch: '一致するファイルがありません',
         empty: 'まだファイルがありません',
         onboard1Title: 'アップロードできるもの',
-        onboard1Desc: 'PDF、Word、Excel、PowerPoint、プレーンテキスト、Markdown 対応。複数ファイルを一度にドロップ可能。',
+        onboard1Desc: 'PDF、Word、Excel、PowerPoint、プレーンテキスト、Markdown、HTML 対応。複数ファイルを一度にドロップ可能。',
         onboard2Title: 'アップロード後の処理',
         onboard2Desc: '自動でチャンク化・ベクトル化・インデックス化されます。ステータスで進捗が確認できます。',
         onboard3Title: 'RAG で使う方法',

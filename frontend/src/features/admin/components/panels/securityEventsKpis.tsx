@@ -25,8 +25,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '個資命中',
         valueKey: 'pii_detected',
         icon: ShieldCheckIcon,
-        colorClass: 'text-red-400 bg-red-950/70 ring-1 ring-red-500/30',
-        valueColor: 'text-red-400',
+        colorClass: 'text-red-500 dark:text-red-400 bg-red-500/15',
+        valueColor: 'text-red-500 dark:text-red-400',
         borderAccent: 'border-red-500/40',
     },
     {
@@ -34,8 +34,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '注入攔截',
         valueKey: 'prompt_injection_blocked',
         icon: TriangleAlertIcon,
-        colorClass: 'text-orange-300 bg-orange-950/70 ring-1 ring-orange-500/30',
-        valueColor: 'text-orange-300',
+        colorClass: 'text-orange-500 dark:text-orange-300 bg-orange-500/15',
+        valueColor: 'text-orange-500 dark:text-orange-300',
         borderAccent: 'border-orange-500/40',
     },
     {
@@ -43,8 +43,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: 'DLP 命中',
         valueKey: 'dlp_hit',
         icon: FileDescriptionIcon,
-        colorClass: 'text-amber-300 bg-amber-950/70 ring-1 ring-amber-500/30',
-        valueColor: 'text-amber-300',
+        colorClass: 'text-amber-500 dark:text-amber-300 bg-amber-500/15',
+        valueColor: 'text-amber-500 dark:text-amber-300',
         borderAccent: 'border-amber-500/40',
     },
     {
@@ -52,8 +52,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '登入失敗',
         valueKey: 'login_failed',
         icon: LockIcon,
-        colorClass: 'text-blue-300 bg-blue-950/70 ring-1 ring-blue-500/30',
-        valueColor: 'text-blue-300',
+        colorClass: 'text-blue-500 dark:text-blue-300 bg-blue-500/15',
+        valueColor: 'text-blue-500 dark:text-blue-300',
         borderAccent: 'border-blue-500/40',
     },
 ]

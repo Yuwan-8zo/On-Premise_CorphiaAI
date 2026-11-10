@@ -26,6 +26,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { spring } from '@/lib/motionPresets'
+import { SkelTableRows } from '@/components/ui/Skeleton'
 
 import {
     ACTION_LABELS,
@@ -259,11 +260,7 @@ export default function AuditSection({
                             </thead>
                             <tbody className={tableBodyClass}>
                                 {isLoadingAudit ? (
-                                    <tr>
-                                        <td className={tableEmptyCellClass} colSpan={5}>
-                                            {t('common.loading')}
-                                        </td>
-                                    </tr>
+                                    <SkelTableRows rows={10} cols={5} />
                                 ) : auditLogs.length === 0 ? (
                                     <tr>
                                         <td className={tableEmptyCellClass} colSpan={5}>

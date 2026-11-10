@@ -3,7 +3,7 @@
  */
 
 import GlassNav from '@/components/ui/GlassNav'
-import { AlertTriangle, Book, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Globe, Info, Lock, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
+import { AlertTriangle, Book, Check, ChevronLeft, ChevronRight, Edit2, Eye, EyeOff, Globe, Info, Lock, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -279,7 +279,7 @@ export default function SettingsModal() {
                 onClick={() => setSettingsOpen(false)}
             />
             <div
-                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-[opacity,transform] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95]' : 'opacity-100 scale-100'}`}
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-[opacity,transform,filter] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95] [filter:blur(8px)]' : 'opacity-100 scale-100 [filter:none]'}`}
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
@@ -315,13 +315,13 @@ export default function SettingsModal() {
                             {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
                             {(user?.role === 'admin' || user?.role === 'engineer') && (
                                 <div className="p-4 pt-2">
-                                    <div className="set-group">
+                                    <div className="set-group !rounded-full">
                                         <button
                                             type="button"
                                             onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                            className="set-row set-row-btn has-icon"
+                                            className="set-row set-row-btn has-icon !rounded-full"
                                         >
-                                            <span className="set-icon"><ShieldIcon /></span>
+                                            <span className="flex w-[30px] flex-none items-center justify-center"><ShieldIcon /></span>
                                             <span className="set-label">{t('settings.adminLabel')}</span>
                                             <ChevronRight className="set-chevron" />
                                         </button>
@@ -388,7 +388,8 @@ export default function SettingsModal() {
                                                     <button type="button" className="set-row set-row-btn" onClick={() => { setEditName(user?.name || ''); setIsEditingName(true) }}>
                                                         <span className="set-label">{t('settings.nameLabel', '名稱')}</span>
                                                         <span className="set-value">{user?.name}</span>
-                                                        <ChevronRight className="set-chevron" />
+                                                        {/* 筆：表示名稱可以直接編輯 */}
+                                                        <Edit2 className="set-chevron" />
                                                     </button>
                                                 )}
                                                 <div className="set-row">

@@ -58,14 +58,18 @@ html.dark {
   /* 深色外觀：Apple 系統色（《Liquid Glass 元件規範》CSS 29–30）
    *   頁面 #000000 → 卡片 #1C1C1E → 卡片內區塊 #2C2C2E；分隔線 #38383A
    *   文字 #FFFFFF／#B6B6C0／#85858F */
-  background-color: #000000;
+  /* 跟 App.tsx 執行後設定的值一致（黑色漸層最上方 24）：重整第一幀就是正確底色，不會先閃純黑 */
+  background-color: #18181A;
   color: #FFFFFF;
 
-  --bg-canvas: 0 0 0;
-  --bg-base: 0 0 0;
-  --bg-main: 0 0 0;
-  --bg-surface: 28 28 30;
-  --bg-elevated: 44 44 46;
+  --bg-canvas: 24 24 26;
+  --bg-base: 24 24 26;
+  --bg-main: 24 24 26;
+  --bg-surface: 32 32 35;
+  --bg-elevated: 46 46 49;
+  --wave-d1: 17 17 19;
+  --wave-d2: 10 10 11;
+  --wave-d3: 3 3 4;
   --text-primary: 255 255 255;
   --text-secondary: 182 182 192;
   --text-muted: 133 133 143;

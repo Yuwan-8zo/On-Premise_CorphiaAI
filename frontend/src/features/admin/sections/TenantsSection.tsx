@@ -18,6 +18,7 @@ import {
 } from '@/features/admin/components/AdminPrimitives'
 import { adminApi, type TenantUsageStats } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
+import { SkelCards } from '@/components/ui/Skeleton'
 
 export interface TenantsSectionProps {
     tenants: Tenant[]
@@ -70,9 +71,7 @@ export default function TenantsSection({
             />
             <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
                 {isLoadingTenants ? (
-                    <div className="col-span-full py-10 text-center text-text-secondary">
-                        {t('common.loading', '載入中')}
-                    </div>
+                    <SkelCards count={3} className="h-[180px]" />
                 ) : tenants.length === 0 ? (
                     <div className="col-span-full py-10 text-center text-text-secondary">
                         {t('admin.tenants.noTenants', '暫無租戶')}

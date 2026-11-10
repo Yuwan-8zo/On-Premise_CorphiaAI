@@ -32,13 +32,10 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Desktop sidecar boot gate — 在桌面 app 啟動時等待後端 ready 才放行
 import BackendGate from './components/boot/BackendGate'
+import { SkelPage } from '@/components/ui/Skeleton'
 
 // Global UI Components
-const FallbackLoader = () => (
-    <div className="flex items-center justify-center h-[100dvh] w-full bg-bg-base">
-        <div className="w-8 h-8 rounded-full border-2 border-accent/20 border-t-accent animate-spin"></div>
-    </div>
-)
+const FallbackLoader = () => <SkelPage />
 
 export default function App() {
     const { isAuthenticated, isBootstrapped } = useAuthStore()
@@ -92,28 +89,22 @@ export default function App() {
         html.style.setProperty('--color-ios-accent-dark', preset.rgbDark)
         html.style.setProperty('--text-on-accent', '#FFFFFF')
 
-        // 深色頁面底色＝主題色 18%＋深灰（畫面最上方的顏色），換主題色背景跟著變；淺色維持 Apple 淺灰
-        const [ar, ag, ab] = preset.rgbDark.split(/\s+/).map(Number)
-        const mix = (a: number, base: number, k: number) => Math.round(base * (1 - k) + a * k)
-        const tone = (k: number, [r, g, b]: number[]) => `${mix(ar, r, k)} ${mix(ag, g, k)} ${mix(ab, b, k)}`
-        const darkBase = tone(0.18, [16, 19, 26])
-        // 深色背景波浪：同一個品牌色、一層比一層深的實色色帶（上淺下深，跟淺色模式同方向）
-        const darkWaves = [tone(0.16, [11, 14, 20]), tone(0.14, [8, 10, 16]), tone(0.12, [5, 7, 11])]
+        // 深色：黑色漸層（不帶品牌色）。畫面最上方 24 → 三層波浪 17／10／3，一層比一層黑（上淺下深，跟淺色模式同方向）
+        const darkBase = '24 24 26'
+        const darkWaves = ['17 17 19', '10 10 11', '3 3 4']
         darkWaves.forEach((c, i) => {
             if (isDark) html.style.setProperty(`--wave-d${i + 1}`, c)
             else html.style.removeProperty(`--wave-d${i + 1}`)
         })
-        const darkDeep = `${mix(ar, 1, 0.025)} ${mix(ag, 1, 0.025)} ${mix(ab, 2, 0.025)}`
         for (const k of ['--bg-base', '--bg-canvas', '--bg-main']) {
             if (isDark) html.style.setProperty(k, darkBase)
             else html.style.removeProperty(k)
         }
-        // 卡片／側欄／對話框（玻璃，九成二不透明）與不透明浮層（選單）：跟背景同一個品牌色調，只是更亮
-        const card = tone(0.14, [32, 35, 42]).split(' ').join(', ')
+        // 卡片／側欄／對話框（玻璃，九成二不透明）與不透明浮層（選單）：中性深灰，比背景亮一階；光邊由卡片色自動算（snow.css）
         if (isDark) {
-            html.style.setProperty('--glass-card', `rgba(${card}, 0.92)`)
-            html.style.setProperty('--bg-surface', tone(0.14, [28, 31, 38]))
-            html.style.setProperty('--bg-elevated', tone(0.13, [42, 45, 52]))
+            html.style.setProperty('--glass-card', 'rgba(38, 38, 41, 0.92)')
+            html.style.setProperty('--bg-surface', '32 32 35')
+            html.style.setProperty('--bg-elevated', '46 46 49')
         } else {
             for (const k of ['--glass-card', '--bg-surface', '--bg-elevated']) html.style.removeProperty(k)
         }
@@ -135,7 +126,8 @@ export default function App() {
         // html/body 背景色即時更新（不依賴 CSS transition）
         // 深色用整片漸層（主題色深色調 → 更深），淺色用單一 baseBg
         if (isDark) {
-            html.style.background = `linear-gradient(135deg, rgb(${darkBase}) 0%, rgb(${darkDeep}) 100%)`
+            // 單色底（跟重整前 index.html 寫的同一色），上淺下深的層次交給頁面的波浪背景：重整、換頁淡入時底色都不跳
+            html.style.background = `rgb(${darkBase})`
             document.body.style.background = 'transparent'
         } else {
             html.style.background = baseBg
@@ -176,7 +168,8 @@ export default function App() {
         <BackendGate>
             {/* 頁面切換動畫：每當 location.pathname 改變時，新頁面會從下方淡入 */}
             <div
-                key={location.pathname}
+                // 只有換「頁區」（聊天／文件／後台／登入…）才重播換頁過場；同一區內換網址不重掛整頁
+                key={location.pathname.split('/')[1] === 'chat' ? '' : location.pathname.split('/')[1]}
                 className="page-transition h-full overflow-hidden"
             >
                 <Suspense fallback={<FallbackLoader />}>

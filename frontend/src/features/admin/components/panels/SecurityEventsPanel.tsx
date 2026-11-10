@@ -44,7 +44,7 @@ export default function SecurityEventsPanel({
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex items-center gap-3 p-3 rounded-[16px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-[var(--paper-line)]'}`}
+                                className={`flex items-center gap-3 p-3 rounded-[16px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />

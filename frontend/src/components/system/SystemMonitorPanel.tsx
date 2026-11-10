@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { systemApi } from '../../api/system'
 import MaterialIcon from '../icons/MaterialIcon'
+import { SkelRows } from '@/components/ui/Skeleton'
 
 interface CPUInfo {
     cpu_percent: number
@@ -114,9 +115,7 @@ export function SystemMonitorPanel() {
 
     if (loading) {
         return (
-            <div className="p-4 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
-            </div>
+            <SkelRows count={3} />
         )
     }
 

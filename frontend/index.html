@@ -46,7 +46,7 @@
       值與 frontend/src/index.css 的 --bg-base / --bg-surface 同步。
     -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F4F0" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#18181A" />
     <meta id="color-scheme-meta" name="color-scheme" content="light dark" />
     <!-- PWA 全螢幕能力標記
          apple-mobile-web-app-capable 是舊版（已 deprecated），但仍要保留供舊 iOS Safari 用；
@@ -72,7 +72,7 @@
       (function() {
         try {
           // 同步 design-system/tokens.js
-          var DARK_BASE = '#202022';
+          var DARK_BASE = '#18181A'; // 同深色頁面底色（App.tsx 黑色漸層最上方 24,24,26），重整不閃色
           var DARK_SURFACE = '#28282A';
           var LIGHT_BASE = '#F6F4F0';
           var LIGHT_SURFACE = '#F2EFEA';

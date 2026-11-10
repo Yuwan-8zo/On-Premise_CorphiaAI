@@ -187,14 +187,14 @@ export default {
     // 文件管理
     documents: {
         dropZoneTitle: '拖放文件到此處，或點擊選擇（可多選）',
-        dropZoneSubtitle: '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown · 最大 50MB',
+        dropZoneSubtitle: '支援 PDF、Word、Excel、PowerPoint、TXT、Markdown、HTML · 最大 50MB',
         downloadSample: '下載範例檔試試看',
         uploadedTitle: '已上傳文件',
         searchPlaceholder: '搜尋檔名…',
         noMatch: '沒有符合搜尋的檔案',
         empty: '尚無上傳的文件',
         onboard1Title: '上傳什麼檔案',
-        onboard1Desc: '支援 PDF、Word、Excel、PowerPoint、純文字與 Markdown。可一次拖入多個檔案。',
+        onboard1Desc: '支援 PDF、Word、Excel、PowerPoint、純文字、Markdown 與 HTML。可一次拖入多個檔案。',
         onboard2Title: '上傳後會發生什麼',
         onboard2Desc: '系統會自動切塊、向量化並寫入索引，狀態列會顯示處理中／已完成。',
         onboard3Title: '怎麼用 RAG 問答',

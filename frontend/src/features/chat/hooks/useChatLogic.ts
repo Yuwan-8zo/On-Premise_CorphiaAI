@@ -497,7 +497,12 @@ export function useChatLogic() {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const fileList = e.target.files
         if (!fileList || fileList.length === 0) return
-        const files = Array.from(fileList)
+        await uploadFiles(Array.from(fileList))
+    }
+
+    /** 上傳一批檔案（檔案選擇器與拖曳放入共用） */
+    const uploadFiles = async (files: File[]) => {
+        if (files.length === 0) return
 
         setIsUploading(true)
         setUploadProgress(0)
@@ -1160,6 +1165,7 @@ export function useChatLogic() {
             submitNewFolder
         },
         mainProps: {
+            uploadFiles,
             selectedFolder,
             folderDocuments,
             handleToggleDocActive,

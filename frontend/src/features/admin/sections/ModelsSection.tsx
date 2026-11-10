@@ -20,6 +20,7 @@ import {
 import Tooltip from '@/components/ui/Tooltip'
 import { adminApi, type ModelIntegrityInfo } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
+import { SkelCards } from '@/components/ui/Skeleton'
 
 export interface ModelsSectionProps {
     models: ModelItem[]
@@ -88,9 +89,7 @@ export default function ModelsSection({
                 />
                 <div className="grid gap-4 p-5">
                     {isLoadingModels ? (
-                        <div className="py-10 text-center text-text-secondary">
-                            {t('common.loading', '載入中')}
-                        </div>
+                        <SkelCards count={3} className="h-[86px]" />
                     ) : models.length === 0 ? (
                         <div className="py-10 text-center text-text-secondary">
                             {t('admin.models.noModels', '暫無模型')}
