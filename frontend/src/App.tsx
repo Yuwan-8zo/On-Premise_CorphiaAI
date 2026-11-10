@@ -108,9 +108,15 @@ export default function App() {
             if (isDark) html.style.setProperty(k, darkBase)
             else html.style.removeProperty(k)
         }
-        // 深色卡片跟背景同一個色調（主題色 5%＋中性灰），九成二不透明：背景帶主題色時卡片不會是突兀的中性灰
-        if (isDark) html.style.setProperty('--glass-card', `rgba(${mix(ar, 34, 0.05)}, ${mix(ag, 34, 0.05)}, ${mix(ab, 37, 0.05)}, 0.92)`)
-        else html.style.removeProperty('--glass-card')
+        // 卡片／側欄／對話框（玻璃，九成二不透明）與不透明浮層（選單）：跟背景同一個品牌色調，只是更亮
+        const card = tone(0.14, [32, 35, 42]).split(' ').join(', ')
+        if (isDark) {
+            html.style.setProperty('--glass-card', `rgba(${card}, 0.92)`)
+            html.style.setProperty('--bg-surface', tone(0.14, [28, 31, 38]))
+            html.style.setProperty('--bg-elevated', tone(0.13, [42, 45, 52]))
+        } else {
+            for (const k of ['--glass-card', '--bg-surface', '--bg-elevated']) html.style.removeProperty(k)
+        }
 
         // 分隔線：Apple opaqueSeparator（深色 #38383A、淺色 #C6C6C8），不跟強調色走
         html.style.setProperty('--border-subtle', isDark ? '56 56 58' : '198 198 200')

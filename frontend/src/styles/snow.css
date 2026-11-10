@@ -1922,3 +1922,12 @@ ul.paper > .set-row.has-icon + .set-row::before {
 .dark .wave-bg path:nth-child(1) { fill: rgb(var(--wave-d1)); }
 .dark .wave-bg path:nth-child(2) { fill: rgb(var(--wave-d2)); }
 .dark .wave-bg path:nth-child(3) { fill: rgb(var(--wave-d3)); }
+
+/* 卡片光邊跟著卡片配色：亮邊用卡片本身的品牌色調提亮（規範 CSS 12 公式），深色模式外側暗線改用品牌色最深一階，不用純黑 */
+.paper,
+.dialog-sheet {
+  --rimC: oklch(from var(--glass-card) min(0.97, calc(l + 0.35)) calc(c * (1.4 - l)) h);
+}
+html.dark {
+  --rim-out: rgb(var(--wave-d3, 0 0 0) / 0.85);
+}
