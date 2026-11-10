@@ -157,7 +157,7 @@ export default function OverviewSection({
                     return (
                         <Panel
                             key={item.label}
-                            className="p-2.5"
+                            className="px-[16.75px] py-2.5 !rounded-[29px]"
                         >
                             <div className="relative flex items-center gap-2">
                                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[13px] ${item.iconBg} ${item.iconColor}`}>

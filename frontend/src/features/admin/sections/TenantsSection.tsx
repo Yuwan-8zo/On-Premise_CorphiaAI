@@ -58,7 +58,7 @@ export default function TenantsSection({
     }
 
     return (
-        <Panel className="overflow-hidden">
+        <Panel className="overflow-hidden !rounded-[41px]">
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
                 eyebrow={t('admin.tenants.activeTenants', { count: activeTenants })}
@@ -84,7 +84,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="snow-well rounded-[10px] p-5 flex flex-col"
+                                className="snow-well rounded-[23.5px] p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">

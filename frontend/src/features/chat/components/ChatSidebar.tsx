@@ -145,12 +145,12 @@ export default function ChatSidebar({
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' 
                 : 'w-[75vw] max-w-[260px] md:w-[72px] -translate-x-full md:translate-x-0'
-                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[35px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
+                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[36px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             {/* 收合時固定排在最左邊 72 寬的範圍裡置中：寬度縮的過程中位置不動（往左收合，不會先置中再移動） */}
-            <div className={`flex items-center p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between' : 'w-full md:w-[72px] justify-center md:px-0'}`}>
+            <div className={`flex items-center p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between md:pr-[16px]' : 'w-full md:w-[72px] justify-center md:px-0'}`}>
                 {/* 品牌圖示：展開時的位置和收合時一致（圖示中心離側欄左緣 36＝收合直條的正中間） */}
                 <div className={`flex items-center overflow-hidden ${wide ? 'w-10 mr-2 md:w-auto md:ml-[8px] md:px-0' : 'w-10 mr-2 md:hidden'}`}>
                     <CorphiaLogo className="w-[28px] h-[28px] shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
@@ -382,7 +382,7 @@ export default function ChatSidebar({
             </div>
 
             {/* 底部：使用者卡片 */}
-            <div className="w-full px-[14px] pb-3 mt-auto flex flex-col items-start">
+            <div className="w-full px-[14px] pb-[14px] mt-auto flex flex-col items-start">
                 
                     <button
                         data-tour="settings-button"

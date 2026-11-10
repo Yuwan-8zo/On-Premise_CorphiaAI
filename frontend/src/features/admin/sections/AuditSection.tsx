@@ -114,7 +114,7 @@ export default function AuditSection({
         <>
             <div className="space-y-5">
                 {/* Filter bar */}
-                <Panel className="p-4">
+                <Panel className="p-4 !rounded-[34px]">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
                     <div className="flex flex-wrap items-center gap-2">
                         <label className="admin-search flex-1 min-w-[220px]">
@@ -167,7 +167,7 @@ export default function AuditSection({
                                     const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
                                     onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
                                 }}
-                                className={`btn !h-10 !px-[18px] !text-[14px] whitespace-nowrap ${
+                                className={`btn !h-[40px] !px-[18px] !text-[14px] whitespace-nowrap ${
                                     auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
                                         ? 'btn-danger-solid'
                                         : 'btn-secondary'
@@ -200,8 +200,8 @@ export default function AuditSection({
                     - 圓角靠 SectionHeader 上方 + 表格底端的 rounded class 各自處理；
                       因為內容（table）不會超出 Panel 邊界，不需要 overflow:hidden 截切。
                 */}
-                <Panel>
-                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[25px]">
+                <Panel className="!rounded-[41px]">
+                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[41px]">
                         <SectionHeader
                             title={t('admin.audit.title')}
                             eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}

@@ -571,7 +571,7 @@ export default function Documents() {
                         </div>
                     )}
                 </div>
-                <div className="paper !rounded-[25px] overflow-hidden">
+                <div className="paper !rounded-[33.5px] overflow-hidden">
                     {isLoading ? (
                         <SkelRows count={6} />
                     ) : visibleDocuments.length === 0 ? (
@@ -583,7 +583,7 @@ export default function Documents() {
                     ) : (
                         <div className="py-1">
                             {visibleDocuments.map(doc => (
-                                <div key={doc.id} className="set-row has-icon !py-3 !px-5">
+                                <div key={doc.id} className="set-row has-icon !py-3 !px-5 first:!pt-[12.5px] last:!pb-[12.5px]">
                                     <FileIcon type={doc.fileType} />
                                     <span className="set-label">
                                         <span className="block truncate font-medium">{doc.originalFilename}</span>

@@ -1212,10 +1212,16 @@ html:not(.dark) .seg-track {
   line-height: 16px;
   color: rgb(var(--text-secondary));
 }
+/* 分組卡圓角：多列 32（開關圓角 16＋離右緣 16，同心）；只有一列 → 膠囊。
+ * 設定視窗外框 68＝32＋內容離外框 36，同心 */
 .set-group {
   background: var(--chip);
-  border-radius: 14px;
+  border-radius: 32px;
   overflow: hidden;
+}
+.set-group:has(> .set-row:only-child),
+.set-group:has(> button.set-row:only-child) {
+  border-radius: 9999px;
 }
 .set-row {
   position: relative;
@@ -1224,7 +1230,8 @@ html:not(.dark) .seg-track {
   gap: 16px;
   width: 100%;
   min-height: 44px;
-  padding: 10px 16px;
+  /* 左 20：分組卡圓角 32，文字離圓角遠一點；右 16：開關／箭頭跟卡片角同心（16＋16＝32） */
+  padding: 10px 16px 10px 20px;
   text-align: left;
   font-size: 15px;
   line-height: 20px;
@@ -1235,13 +1242,13 @@ html:not(.dark) .seg-track {
   position: absolute;
   top: 0;
   right: 0;
-  left: 16px;
+  left: 20px;
   height: 0.5px;
   background: var(--paper-line);
 }
 .set-row.has-icon + .set-row::before,
 .set-row.has-icon + .set-row.has-icon::before {
-  left: 62px;
+  left: 66px;
 }
 .set-row-btn {
   cursor: pointer;
@@ -1311,7 +1318,7 @@ html:not(.dark) .set-danger {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 10px;
+  border-radius: 18px; /* 同心：外觀卡 32 − 內距 14 */
   overflow: hidden;
   box-shadow: 0 0 0 0.5px var(--paper-line);
 }
@@ -1397,6 +1404,8 @@ html:not(.dark) .seg-track .lens.is-active {
  *   .side-children    子項目縮排到和資料夾名稱對齊，不畫導引線 */
 .side-header {
   display: block;
+  white-space: nowrap; /* 側欄寬度變化（收合／展開）途中不折成直排 */
+  overflow: hidden;
   padding: 0 10px;
   margin: 4px 0 6px;
   font-size: 13px;
@@ -1973,4 +1982,28 @@ html.dark {
 }
 @media (prefers-reduced-motion: reduce) {
   .skel { animation: none; }
+}
+
+/* 膠囊分組（只有一列，高 50、圓角 25）裡的圖示方塊：改成圓形（半徑 15），離左 10＝離上下 10，同心 */
+.set-group:has(> .set-row:only-child) .set-icon,
+.set-group:has(> button.set-row:only-child) .set-icon {
+  border-radius: 9999px;
+}
+.set-group:has(> .set-row:only-child) > .set-row:has(> .set-icon:first-child),
+.set-group:has(> button.set-row:only-child) > button.set-row:has(> .set-icon:first-child) {
+  padding-left: 10px;
+}
+
+/* 骨架淡出層：真正內容掛上後，骨架蓋在最上面 0.42 秒淡出（不是瞬間消失），重整／登入不會閃 */
+.skel-fade-out {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  animation: skelFadeOut var(--dur-page) var(--ease-out) forwards;
+}
+@keyframes skelFadeOut {
+  to {
+    opacity: 0;
+  }
 }

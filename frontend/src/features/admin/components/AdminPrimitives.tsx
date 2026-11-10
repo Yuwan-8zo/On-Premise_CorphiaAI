@@ -49,7 +49,7 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 px-[26px] pt-5 pb-2 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 pl-[26px] pr-[21px] pt-[21px] pb-2 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
                 <h2 className="truncate text-[17px] leading-[22px] font-semibold text-text-primary">
@@ -88,7 +88,7 @@ export function ActionButton({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`btn !h-10 !px-[18px] !text-[14px] shrink-0 min-w-max ${variants[variant]}`}
+            className={`btn !h-[40px] !px-[18px] !text-[14px] shrink-0 min-w-max ${variants[variant]}`}
         >
             {children}
         </button>

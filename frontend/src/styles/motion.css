@@ -71,7 +71,7 @@
  * 結束時 transform／filter 一定回到 none，不然會變成 fixed 子元件的定位基準 */
 @keyframes pageEnter {
   0% {
-    opacity: 0;
+    opacity: 0.4; /* 不從 0 開始：避免換頁那一下整片變暗 */
     transform: scale(0.985);
     filter: blur(10px);
   }
@@ -115,13 +115,12 @@
 .page-transition > :not([role='status']) {
   animation: contentReveal var(--dur-page) var(--ease-out) both;
 }
+/* 不從全透明開始（全透明會露出底色＝看起來閃黑）；只做模糊對焦，骨架另外蓋在上面淡出 */
 @keyframes contentReveal {
   from {
-    opacity: 0;
     filter: blur(6px);
   }
   to {
-    opacity: 1;
     filter: none;
   }
 }

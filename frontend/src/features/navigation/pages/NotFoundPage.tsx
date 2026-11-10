@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { CorphiaBrandLogo } from '@/components/icons/CorphiaIcons'
 import { Home, ArrowLeft } from '@/components/snow/icons'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 export default function NotFound() {
     const navigate = useNavigate()
 
     return (
         <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-bg-base relative overflow-hidden transition-colors">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
             {/* 頂部 Logo */}
             <div className="absolute top-8 left-8 flex items-center gap-1.5 select-none">
                 <CorphiaBrandLogo className="w-auto h-8 text-text-primary" />

@@ -428,7 +428,7 @@ export default function Login() {
                     <form
                         onSubmit={handleSubmit}
                         noValidate
-                        className="w-full max-w-[360px] paper !rounded-[46px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[360px] paper !rounded-[43.5px] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                             {/*
                               切換動畫策略：

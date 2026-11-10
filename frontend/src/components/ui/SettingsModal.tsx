@@ -283,24 +283,26 @@ export default function SettingsModal() {
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
-                        className="relative w-full max-w-5xl h-auto md:h-full max-h-[90vh] md:max-h-[750px] paper !rounded-[34px] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
+                        className="relative w-full max-w-[800px] h-auto md:h-full max-h-[90vh] md:max-h-[750px] paper !rounded-[68px] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
-                            className="btn-icon !w-[36px] !h-[36px] absolute top-[16px] right-[16px] text-text-secondary z-20"
+                            className="btn-icon !w-[36px] !h-[36px] absolute top-[36px] right-[36px] text-text-secondary z-20"
                         >
                             <CloseIcon />
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
                         <div className={`md:w-64 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
-                            <div className="p-6 pb-2">
-                                <h2 className="text-xl font-bold text-text-primary tracking-wide">
+                            {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
+                            <div className="pl-[51px] pr-4 pt-[48px] pb-2">
+                                <h2 className="text-xl leading-[24px] font-bold text-text-primary tracking-wide">
                                     {t('settings.title')}
                                 </h2>
                             </div>
-              <nav className="flex-1 p-4 overflow-y-auto scrollbar-none">
+              {/* 導覽項跟下方「管理後台」膠囊左右對齊：左 36、右 14 */}
+              <nav className="flex-1 pl-[36px] pr-4 py-4 overflow-y-auto scrollbar-none">
                                 <GlassNav
                                     aria-label={t('settings.title')}
                                     value={activeSection}
@@ -314,12 +316,12 @@ export default function SettingsModal() {
 
                             {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
                             {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                <div className="p-4 pt-2">
+                                <div className="pl-[36px] pr-4 pt-2 pb-[36px]">
                                     <div className="set-group !rounded-full">
                                         <button
                                             type="button"
                                             onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                            className="set-row set-row-btn has-icon !rounded-full"
+                                            className="set-row set-row-btn has-icon !rounded-full !gap-2 !pl-[14px] !pr-[14px] whitespace-nowrap"
                                         >
                                             <span className="flex w-[30px] flex-none items-center justify-center"><ShieldIcon /></span>
                                             <span className="set-label">{t('settings.adminLabel')}</span>
@@ -331,8 +333,9 @@ export default function SettingsModal() {
                         </div>
 
                         {/* 主內容區域 */}
-                        <div className={`flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
-                            <div className="p-6 md:px-10 md:pt-14 md:pb-10 min-h-full">
+                        {/* 捲動區上下淡出（同聊天頁 .chat-scroll）：捲動時內容不會被外框硬切 */}
+                        <div className={`chat-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                            <div className="p-6 md:pl-10 md:pr-[36px] md:pt-14 md:pb-[36px] min-h-full">
                                 {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
                                 <button
                                     className="md:hidden mb-4 -ml-1 flex items-center text-accent text-[15px] font-medium"
@@ -354,7 +357,7 @@ export default function SettingsModal() {
 
                                         <section className="set-section">
                                             <div className="set-header">{t('settings.accountSection', '帳號')}</div>
-                                            <div className="set-group">
+                                            <div className="set-group pb-[10px]">
                                                 {isEditingName ? (
                                                     <div className="set-row">
                                                         <span className="set-label flex-none">{t('settings.nameLabel', '名稱')}</span>
@@ -396,7 +399,7 @@ export default function SettingsModal() {
                                                     <span className="set-label">{t('settings.emailLabel', '電子郵件')}</span>
                                                     <span className="set-value">{user?.email}</span>
                                                 </div>
-                                                <div className="set-row">
+                                                <div className="set-row !pr-[20px]">
                                                     <span className="set-label">{t('settings.roleLabel', '角色')}</span>
                                                     <span className={`tag ${user?.role === 'admin' || user?.role === 'engineer' ? 'tag-accent' : ''}`}>{user?.role}</span>
                                                 </div>
@@ -443,6 +446,7 @@ export default function SettingsModal() {
 
                                         <section className="set-section">
                                             <div className="set-header">{t('settings.appearanceSection', '外觀')}</div>
+                                            {/* 外觀卡：同其他多列分組 32；內距 14，縮圖同心 32−14＝18（見 .set-thumb） */}
                                             <div className="set-group p-4">
                                                 <div className="flex gap-4">
                                                     {APPEARANCE_MODES.map((mode) => (
@@ -464,8 +468,9 @@ export default function SettingsModal() {
                                         </section>
 
                                         <section className="set-section">
-                                            <div className="set-group">
-                                                <div className="set-row">
+                                            <div className="set-group !rounded-full">
+                                                {/* 右內距 10：最後一顆色點（32 的按鈕）圓心離右緣 26＝膠囊半圓的圓心，同心 */}
+                                                <div className="set-row !pr-[10px]">
                                                     <span className="set-label">{t('settings.accentColor', '強調顏色')}</span>
                                                     <div className="flex items-center gap-1">
                                                         {ACCENT_OPTIONS.map(([key, color]) => (

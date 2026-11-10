@@ -76,7 +76,7 @@ export default function ModelsSection({
 
     return (
         <div className="space-y-5">
-            <Panel>
+            <Panel className="!rounded-[41px]">
                 <SectionHeader
                     title={t('admin.models.title', '模型')}
                     eyebrow={`${t('admin.models.folder', '模型資料夾')}：${sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}`}
@@ -103,7 +103,7 @@ export default function ModelsSection({
                             return (
                                 <div
                                     key={model.name}
-                                    className={`flex flex-col gap-4 rounded-[10px] border p-5 md:flex-row md:items-center md:justify-between ${
+                                    className={`flex flex-col gap-4 rounded-[23.5px] border p-5 md:flex-row md:items-center md:justify-between ${
                                         model.is_current
                                             ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
                                             : 'border-[var(--paper-line)] bg-[var(--chip)]'

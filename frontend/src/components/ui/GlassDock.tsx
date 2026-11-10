@@ -158,10 +158,12 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const it = isBtn ? null : items[i - 1]
         const icon = isBtn ? (open ? <X /> : <MoreHorizontal />) : it!.icon
         const tone = it?.tone === 'danger' ? 'text-[#ff4245]' : it?.tone === 'success' ? 'text-[#30d158]' : 'text-text-primary'
+        // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除＝紅）
+        const lensTone = it?.tone === 'danger' || it?.tone === 'success' ? tone : 'text-accent'
         return (
             <span
                 key={i}
-                className={`dock-row ${wide ? 'is-wide' : ''} ${ghost ? 'text-accent' : tone}`}
+                className={`dock-row ${wide ? 'is-wide' : ''} ${ghost ? lensTone : lensY !== null ? 'text-text-primary' : tone}`}
                 style={{ width: wide ? ROW_W : BTN_N, height: rowH }}
             >
                 <span className="dock-icon">{icon}</span>

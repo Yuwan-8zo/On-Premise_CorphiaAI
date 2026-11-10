@@ -84,7 +84,7 @@ export default function Chat() {
                         
                         {/* 整張卡片都可以把檔案拖進來；拖曳中顯示「放開即可加入」的提示 */}
                         <div
-                            className="paper !rounded-[25px] flex flex-col flex-1 min-h-0 overflow-hidden"
+                            className="paper !rounded-[37px] flex flex-col flex-1 min-h-0 overflow-hidden"
                             onDragEnter={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); dragDepth.current++; setDragOver(true) } }}
                             onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
                             onDragLeave={() => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (dragDepth.current === 0) setDragOver(false) }}
@@ -99,7 +99,7 @@ export default function Chat() {
                                     <span>放開即可加入來源</span>
                                 </div>
                             )}
-                            <div className="px-6 py-4 border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
+                            <div className="px-[21px] py-[21px] border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
                                 <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}

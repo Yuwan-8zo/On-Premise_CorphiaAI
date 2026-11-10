@@ -57,14 +57,15 @@ export default function GuideSection() {
             {/* 二、專案模式與知識庫 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.project.title')}</div>
-                <div className="set-group">
+                {/* 編號圓圈（半徑 11）跟卡片角（32）同心：第一個圓圈離左、離上都是 21 */}
+                <div className="set-group pt-[11px]">
                     {[
                         t('guide.project.step1'),
                         <>{t('guide.project.step2Start')} <strong className="text-text-primary">{t('guide.project.step2Types')}</strong> {t('guide.project.step2End')}</>,
                         t('guide.project.step3'),
                         t('guide.project.step4'),
                     ].map((step, i) => (
-                        <div key={i} className="set-row !items-start">
+                        <div key={i} className="set-row !items-start !pl-[21px]">
                             <span className="w-[22px] h-[22px] flex-none rounded-full bg-[var(--chip)] text-[12px] font-semibold flex items-center justify-center">{i + 1}</span>
                             <span className="flex-1 min-w-0 text-[14px] leading-[20px] text-text-secondary">{step}</span>
                         </div>

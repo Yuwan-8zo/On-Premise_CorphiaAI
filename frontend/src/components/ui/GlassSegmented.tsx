@@ -135,7 +135,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         options.map((o, i) => {
             const on = i === index
             const common = {
-                className: `flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold text-center ${
+                className: `flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold text-center whitespace-nowrap ${
                     ghost || (on && !active) ? 'text-accent' : 'text-text-primary'
                 }`,
                 style: { [vertical ? 'height' : 'width']: sg || undefined, flex: 'none', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties,

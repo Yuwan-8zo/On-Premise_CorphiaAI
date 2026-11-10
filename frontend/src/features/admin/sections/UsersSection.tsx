@@ -172,7 +172,7 @@ export default function UsersSection({
     const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId
 
     return (
-        <Panel className="overflow-hidden">
+        <Panel className="overflow-hidden !rounded-[41px]">
             <SectionHeader
                 title={t('admin.users.title', '使用者') + ` (${users.length})`}
                 eyebrow={t('admin.users.activeOperators', { active: activeUsers })}

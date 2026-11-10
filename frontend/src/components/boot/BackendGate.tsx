@@ -15,11 +15,12 @@
  *   - 之後可選擇改成全域 store（如果有別的地方也要知道 backend 狀態）
  */
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 import { useSystemStore } from '@/store/systemStore'
 
 import BackendBootSplash from './BackendBootSplash'
+import { SkelPage } from '@/components/ui/Skeleton'
 
 interface BackendGateProps {
     children: ReactNode
@@ -39,5 +40,25 @@ export default function BackendGate({ children }: BackendGateProps) {
         )
     }
 
-    return <>{children}</>
+    return (
+        <>
+            {children}
+            <SkelFadeOverlay />
+        </>
+    )
+}
+
+/** 啟動骨架 → 真正內容：骨架留在最上層 0.42 秒淡出後移除 */
+function SkelFadeOverlay() {
+    const [show, setShow] = useState(true)
+    useEffect(() => {
+        const t = window.setTimeout(() => setShow(false), 460)
+        return () => window.clearTimeout(t)
+    }, [])
+    if (!show) return null
+    return (
+        <div className="skel-fade-out" aria-hidden>
+            <SkelPage />
+        </div>
+    )
 }

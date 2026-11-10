@@ -58,7 +58,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
     const ragReady = aiBoot?.rag === 'ready'
 
     return (
-        <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 ${className || ''}`}>
+        <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 !rounded-[33px] ${className || ''}`}>
             {/* 標題列：和其他卡片同一個共用標題（17／22 半粗、左右 26）；右邊放 LLM／RAG 狀態標籤 */}
             <SectionHeader
                 title={t('admin.overview.llmHealth', 'LLM 即時狀態')}

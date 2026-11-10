@@ -291,7 +291,8 @@ export function SkelPage() {
         : path.startsWith('/documents') ? <SkelDocuments />
         : path.startsWith('/admin') ? <SkelAdmin />
         : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
-        : <SkelChat />
+        : path === '/' || path.startsWith('/chat') ? <SkelChat />
+        : null /* 其他網址（例如 404）：只留底色與波浪，不要冒出別頁的骨架 */
     return (
         <div role="status" aria-label="載入中" className="relative h-[100dvh] w-full bg-bg-base">
             {/* 波浪背景跟真實頁面一樣，載入完成時背景不會閃 */}

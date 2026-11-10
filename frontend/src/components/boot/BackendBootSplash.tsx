@@ -15,6 +15,7 @@
 import { Check, X } from '@/components/snow/icons'
 import { useEffect, useRef, useState } from 'react'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
+import { SkelPage } from '@/components/ui/Skeleton'
 
 type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
@@ -204,7 +205,8 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
         }
     }, [allReady, onReady])
 
-    if (!firstChecked || readyAtFirstCheck.current) return null
+    // 等第一次健康檢查、或一開始就全部就緒時：顯示所在頁面的骨架（跟之後載入頁面的骨架接起來，重整不會有一段空白）
+    if (!firstChecked || readyAtFirstCheck.current) return <SkelPage />
 
     // ── 組出畫面上的每一列 ──────────────────────────────────────────
     const rows: Row[] = []

@@ -102,7 +102,7 @@ export default function ChatHeader({
                                     </span>
                                     <span className="hidden md:inline truncate">{selectedModel.name}</span>
                                 </>
-                            ) : 'Loading...'}
+                            ) : <span aria-label="載入中" className="skel align-middle h-[0.78em] w-[12em]" style={{ display: 'inline-block' }} />}
                         </span>
                         <ChevronDown className={`w-4 h-4 text-text-muted opacity-80 transition-transform shrink-0 ${modelDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
