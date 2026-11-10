@@ -24,7 +24,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+  font-family: 'Noto Sans TC', 'Source Han Sans TC', '思源黑體', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
@@ -132,8 +132,8 @@ code * {
  * ========================================================================== */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.4s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: var(--dur-page);
+  animation-timing-function: var(--ease-out);
 }
 
 /* 使用者開了 reduce-motion → 取消 cross-fade（拉短到 1ms 等於沒動畫） */
@@ -141,5 +141,37 @@ code * {
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 1ms;
+  }
+}
+
+/* 全站同一個字型：按鈕、輸入框、下拉選單不用瀏覽器預設字型 */
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * 全站動畫規範（《Liquid Glass 元件規範》時間與曲線總表，Apple）——自動套用
+ *   曲線只有兩條：--ease-out 減速 cubic-bezier(.23,1,.32,1)、--ease-sp 彈性 cubic-bezier(.32,.72,0,1)；不用先加速的曲線
+ *   時間：--dur-press 按壓 0.17 秒、--dur-fade 淡出／小過場 0.2 秒、--dur-menu 選單展開收合 0.3 秒、--dur-page 換頁 0.42 秒
+ *   進場從 0.95 開始；隨時可以打斷；「減少動態效果」時只留淡入淡出
+ *   下面這條讓「沒有自己指定曲線」的過渡與動畫自動用減速曲線；Tailwind 的 ease-*、transition 也已在 tailwind.config 對到減速
+ * ════════════════════════════════════════════════════════════════ */
+:root {
+  --dur-press: 0.17s;
+  --dur-fade: 0.2s;
+  --dur-menu: 0.3s;
+  --dur-page: 0.42s;
+}
+*,
+*::before,
+*::after {
+  transition-timing-function: var(--ease-out);
+  animation-timing-function: var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
   }
 }

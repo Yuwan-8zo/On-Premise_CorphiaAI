@@ -11,7 +11,7 @@ import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
 import { Edit2, Check, X, RefreshCw } from '@/components/snow/icons'
-import { CopyIcon, ItshoverIcon, ShieldCheckIcon } from '@/components/icons/itshover'
+import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
 import { motion } from '@/lib/gsapMotion'
@@ -204,33 +204,49 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             )}
                         </>
                     ) : (
-                        <div className={`glass-chip text-text-primary rounded-[22px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative selectable-text ${isEditing ? 'w-full' : ''}`}>
-                            {isEditing ? (
-                                <div className="flex flex-col gap-2 w-full">
-                                    <textarea
-                                        ref={editTextareaRef}
-                                        value={editContent}
-                                        onChange={(e) => setEditContent(e.target.value)}
-                                        className="w-full snow-field text-text-primary rounded-[16px] p-3 outline-none resize-none max-h-[40vh] overflow-y-auto custom-scrollbar"
-                                        rows={1}
-                                    />
-                                    <div className="flex justify-end gap-2 mt-1">
-                                        <Tooltip label="取消"><button onClick={() => { setEditContent(message.content); setIsEditing(false); }} className="btn-icon !w-9 !h-9 text-text-secondary">
-                                            <X className="w-4 h-4" />
-                                        </button></Tooltip>
-                                        <Tooltip label="儲存修改"><button onClick={handleSaveEdit} className="btn-icon !w-9 !h-9 !bg-accent !text-[var(--text-on-accent)]">
-                                            <Check className="w-4 h-4" />
-                                        </button></Tooltip>
-                                    </div>
+                        isEditing ? (
+                            // 編輯訊息（iMessage 編輯）：整個氣泡就是一個玻璃輸入欄位；右下角兩顆 30 小圓鈕（取消／確認）
+                            // 欄位圓角 22 ＝ 按鈕圓角 15 ＋ 離邊 7（同心）
+                            <div className="msg-edit glass-field w-full">
+                                <textarea
+                                    ref={editTextareaRef}
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Escape') { setEditContent(message.content); setIsEditing(false) }
+                                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveEdit()
+                                    }}
+                                    aria-label="編輯訊息"
+                                    className="msg-edit-input scrollbar-none"
+                                    rows={1}
+                                />
+                                <div className="msg-edit-actions">
+                                    <button
+                                        onClick={() => { setEditContent(message.content); setIsEditing(false) }}
+                                        aria-label="取消"
+                                        className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--chip)] text-text-primary"
+                                    >
+                                        <X className="w-[15px] h-[15px]" />
+                                    </button>
+                                    <button
+                                        onClick={handleSaveEdit}
+                                        aria-label="儲存修改"
+                                        disabled={!editContent.trim()}
+                                        className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--accent-fill)] !text-[var(--text-on-accent)] disabled:opacity-40"
+                                    >
+                                        <Check className="w-[15px] h-[15px]" />
+                                    </button>
                                 </div>
-                            ) : (
-                                message.content
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="glass-chip text-text-primary rounded-[22px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative selectable-text">
+                                {message.content}
+                            </div>
+                        )
                     )}
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
-                            <Tooltip label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+                            <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                 {isCopied ? (
                                     <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
                                 ) : (
@@ -239,7 +255,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             </button></Tooltip>
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
-                                <Tooltip label="編輯"><button onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+                                <Tooltip placement="bottom" label="編輯"><button aria-label="編輯" onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     <Edit2 className="w-3.5 h-3.5" />
                                 </button></Tooltip>
                             )}
@@ -262,14 +278,6 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 >
                                     {message.tokens.toLocaleString()} tok
                                 </span>
-                            )}
-                            {message.content_hash && (
-                                <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
-                                    <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
-                                    <div className="absolute right-0 bottom-full mb-1 hidden group-hover/hash:block snow-tip !h-auto text-[11px] px-2.5 py-1.5 whitespace-nowrap  z-50 border border-black/10 dark:border-white/10">
-                                        Verified: {message.content_hash.substring(0, 16)}...
-                                    </div>
-                                </div></Tooltip>
                             )}
                         </div>
                     )}
@@ -321,7 +329,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                         {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
-                                <Tooltip label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+                                <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     {isCopied ? (
                                     <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
                                 ) : (
@@ -338,21 +346,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
                                 {message.tokens > 0 && (
-                                    <Tooltip label={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}>
+                                    <Tooltip placement="bottom" label={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}>
                                         <span
                                             className="ml-1 text-[11px] tabular-nums text-text-muted/80"
                                         >
                                             {message.tokens.toLocaleString()} tok
                                         </span>
                                     </Tooltip>
-                                )}
-                                {message.content_hash && (
-                                    <Tooltip label={`防篡改雜湊驗證\nHash: ${message.content_hash}`}><div className="p-1 group/hash relative cursor-help">
-                                        <ItshoverIcon icon={ShieldCheckIcon} size={14} className="text-emerald-500" interactive />
-                                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover/hash:block snow-tip !h-auto text-[11px] px-2.5 py-1.5 whitespace-nowrap  z-50 border border-black/10 dark:border-white/10">
-                                            Verified: {message.content_hash.substring(0, 16)}...
-                                        </div>
-                                    </div></Tooltip>
                                 )}
                             </div>
                         )}

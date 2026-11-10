@@ -7,6 +7,7 @@
  * - 強制登出按鈕
  */
 
+import LensMenu from '@/components/ui/LensMenu'
 import { parseServerDate } from '@/lib/utils'
 import { Plus, Trash2, UserRoundCog, LogOut, MoreHorizontal } from '@/components/snow/icons'
 import { createPortal } from 'react-dom'
@@ -221,7 +222,7 @@ export default function UsersSection({
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold  "
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-fill text-xs font-bold  "
                                                 style={{ color: 'var(--text-on-accent, #fff)' }}
                                             >
                                                 {item.name.charAt(0).toUpperCase()}
@@ -303,6 +304,7 @@ export default function UsersSection({
                         transform: menuPos.up ? 'translateY(-100%)' : undefined,
                     }}
                 >
+                    <LensMenu className="">
                     <button
                         type="button"
                         role="menuitem"
@@ -310,7 +312,7 @@ export default function UsersSection({
                             closeMenu()
                             onEditUser(openUser)
                         }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-text-primary  "
+                        className="menu-item"
                     >
                         <UserRoundCog className="h-4 w-4 shrink-0" />
                         {t('common.edit', '編輯')}
@@ -324,12 +326,12 @@ export default function UsersSection({
                             closeMenu()
                             onForceLogout(openUser)
                         }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-text-primary  "
+                        className="menu-item"
                     >
                         <LogOut className="h-4 w-4 shrink-0" />
                         {t('admin.users.forceLogout', '強制登出')}
                     </button>
-                    <div className="h-px bg-border-subtle" />
+                    <div className="menu-sep" />
                     <button
                         type="button"
                         role="menuitem"
@@ -339,11 +341,12 @@ export default function UsersSection({
                             closeMenu()
                             onDeleteUser(openUser)
                         }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled: text-red-500 "
+                        className="menu-item is-danger"
                     >
                         <Trash2 className="h-4 w-4 shrink-0" />
                         {t('common.delete', '刪除')}
                     </button>
+                    </LensMenu>
                 </div>,
                 document.body,
             )}

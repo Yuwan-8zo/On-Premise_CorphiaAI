@@ -9,9 +9,9 @@
  * - 底部使用者卡片
  */
 
-import { ChevronRight, Folder, MessageSquare, MoreHorizontal, Plus, Trash2 } from '@/components/snow/icons'
+import { Folder, MessageSquare, MoreHorizontal, Plus, Trash2 } from '@/components/snow/icons'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -78,145 +78,100 @@ export default function ChatSidebar({
 
     const [isSidebarHovered, setIsSidebarHovered] = useState(false)
 
-    /*
-     * 「飄浮選取膠囊」狀態
-     * ─────────────────────────────────────────────────────────────
-     * 原本每個 item 自帶 ::before 偽元素當左側藍色短線，切換對話時是「啪」
-     * 一下換到下一個 item，沒有平移動畫。改成 scroll 容器裡放一個 absolute
-     * 定位的單一膠囊，依當前 currentConversationId 對應 item 的位置滑動。
-     *
-     * 為什麼用 scroll 容器而不是 list 容器：
-     *   - General 跟 Project 兩個 tab 是 motion.div 切換的兄弟節點
-     *   - Project 模式下對話又巢狀在資料夾的展開區
-     *   - 把膠囊提升到「最近的共同祖先」 = scroll container
-     *     兩種模式都能共用同一顆膠囊
-     *
-     * 為什麼用 getBoundingClientRect + scrollTop：
-     *   - offsetTop 走 offsetParent 鏈，巢狀 motion.div + 多層 div 計算麻煩
-     *   - getBoundingClientRect 給絕對視窗座標，差一下就是相對位置，乾淨
-     *   - 加 scrollTop 補上「已捲動」量 → 膠囊定位在 scroll-content 的絕對位置，
-     *     列表捲動時膠囊會一起被推上去，不需要監聽 scroll 事件
-     */
+    // 對話列的 DOM 參考（捲動到目前對話用）
+    // 長按對話列 0.32 秒直接拉出選單（不用先找右邊的「⋯」）；移動超過 6px 視為捲動，取消長按
+    const longPress = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null)
+    const pressHandlers = (convId: string) => ({
+        onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+            if (e.button > 0) return
+            const row = e.currentTarget
+            const x = e.clientX, y = e.clientY
+            longPress.current = {
+                x, y, fired: false,
+                timer: window.setTimeout(() => {
+                    if (!longPress.current) return
+                    longPress.current.fired = true
+                    const anchorEl = row.querySelector<HTMLElement>('button[aria-label="選項"]') || row
+                    handleOpenMenu({ stopPropagation() {}, currentTarget: anchorEl } as unknown as React.MouseEvent, convId)
+                }, 320),
+            }
+        },
+        onPointerMove: (e: React.PointerEvent) => {
+            const lp = longPress.current
+            if (lp && !lp.fired && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 6) { clearTimeout(lp.timer); longPress.current = null }
+        },
+        onPointerUp: () => { const lp = longPress.current; if (lp && !lp.fired) { clearTimeout(lp.timer); longPress.current = null } },
+        onPointerCancel: () => { const lp = longPress.current; if (lp) clearTimeout(lp.timer); longPress.current = null },
+        onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    })
+    // 「⋯」按下就打開選單；不放開直接拖到項目上放開＝執行那一項（規範右下選單：按住拖曳、放開選取）
+    const dragOpenMenu = (e: React.PointerEvent<HTMLButtonElement>, convId: string) => {
+        if (e.button > 0) return
+        e.stopPropagation()
+        handleOpenMenu(e as unknown as React.MouseEvent, convId)
+        const x0 = e.clientX, y0 = e.clientY
+        let dragged = false
+        let last: Element | null = null
+        const itemAt = (x: number, y: number) => document.elementFromPoint(x, y)?.closest('.menu-item') ?? null
+        const onMove = (ev: PointerEvent) => {
+            if (!dragged && Math.hypot(ev.clientX - x0, ev.clientY - y0) > 6) dragged = true
+            const it = itemAt(ev.clientX, ev.clientY)
+            if (it !== last) { last?.classList.remove('is-pressed'); it?.classList.add('is-pressed'); last = it }
+        }
+        const onUp = (ev: PointerEvent) => {
+            window.removeEventListener('pointermove', onMove)
+            window.removeEventListener('pointerup', onUp)
+            last?.classList.remove('is-pressed')
+            if (!dragged) return
+            const it = itemAt(ev.clientX, ev.clientY) as HTMLElement | null
+            it?.click()
+        }
+        window.addEventListener('pointermove', onMove)
+        window.addEventListener('pointerup', onUp)
+    }
+    // 長按已經拉出選單時，放開不要再當成「點一下選取對話」
+    const consumeLongPress = () => {
+        if (longPress.current?.fired) { longPress.current = null; return true }
+        return false
+    }
+    // 收合／展開＝變形（不是淡入淡出）：外框寬度、切換軌道（橫↔直）、新對話鈕（膠囊↔圓鈕）、頭像列同時過渡 0.3 秒
+    //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
+    const wide = sidebarOpen
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const scrollRef = useRef<HTMLDivElement>(null)
-    const [activePillTop, setActivePillTop] = useState(0)
-    const [activePillLeft, setActivePillLeft] = useState(0)
-    const [activePillHeight, setActivePillHeight] = useState(0)
-    const [pillVisible, setPillVisible] = useState(false)
-
-    useLayoutEffect(() => {
-        // 取出計算邏輯成一個函式，可被多個觸發點重用：
-        //   1) effect deps 變化（initial run）
-        //   2) requestAnimationFrame 在 paint 後再算一次（catch layout shift）
-        //   3) ResizeObserver 偵測到 list 容器 / item 高度變化
-        //
-        // 為什麼需要多次算：useLayoutEffect 在 commit 後跑，但這時瀏覽器還沒做完整 layout pass。
-        // 新對話被 prepend 時，舊對話 DOM 被 React 用 insertBefore 移動，但 getBoundingClientRect
-        // 在某些瀏覽器（特別是 Chrome 跟 Safari）會回傳「移動前的快照值」 → 膠囊定到錯位置。
-        // 補一次 rAF callback，在 paint 前再算 → 拿到 settle 後的真實值。
-        const compute = () => {
-            if (!currentConversationId) {
-                setPillVisible(false)
-                return
-            }
-            const el = itemRefs.current[currentConversationId]
-            const scroll = scrollRef.current
-            if (!el || !scroll) {
-                setPillVisible(false)
-                return
-            }
-            const elRect = el.getBoundingClientRect()
-            // 高度 0 通常表示元素被 display:none 或 unmount 中（折疊資料夾、切換 tab 中）
-            if (elRect.height === 0) {
-                setPillVisible(false)
-                return
-            }
-            const scrollRect = scroll.getBoundingClientRect()
-            const itemH = elRect.height
-            // 膠囊高度 = item 高度的 50%，最小 16px（避免太矮）
-            const pillH = Math.max(16, itemH * 0.5)
-            const visibleTop = elRect.top - scrollRect.top
-            const visibleLeft = elRect.left - scrollRect.left
-            const top = visibleTop + scroll.scrollTop + (itemH - pillH) / 2
-            // 膠囊靠在 item 左邊緣往左 6px：剛好「貼著但不疊到 rounded-[14px] 圓角」，
-            // 視覺上是獨立的 indicator，又不會跟 bubble 距離過遠。
-            const left = visibleLeft + scroll.scrollLeft - 6
-            setActivePillTop(top)
-            setActivePillLeft(left)
-            setActivePillHeight(pillH)
-            setPillVisible(true)
-        }
-
-        // Pass 1：立刻算（initial / dep change）
-        compute()
-        // Pass 2：rAF 後再算，捕捉新增對話時 React reorder DOM 帶來的 layout shift
-        const rafId = requestAnimationFrame(() => {
-            compute()
-            // Pass 3：再 rAF 一次，給 motion.div / transition 完整一個 frame settle
-            requestAnimationFrame(compute)
-        })
-
-        // ResizeObserver：當 scroll 容器尺寸或內容尺寸變動時也重算
-        // （視窗 resize、items 增減、長標題換行等）
-        const scroll = scrollRef.current
-        let ro: ResizeObserver | null = null
-        if (scroll && typeof ResizeObserver !== 'undefined') {
-            ro = new ResizeObserver(() => compute())
-            ro.observe(scroll)
-            // 也觀察當前 active item，捕捉其本身高度變化（例如 hover 動畫導致高度微變）
-            const activeEl = currentConversationId
-                ? itemRefs.current[currentConversationId]
-                : null
-            if (activeEl) ro.observe(activeEl)
-        }
-
-        // 切換一般／專案時清單會從旁邊滑入（約 0.3 秒），側邊欄開合也有 0.3 秒動畫；
-        // 動畫中量到的位置會偏移，所以在動畫結束後再量一次，避免直線疊到文字上
-        const timers = [350, 700].map(ms => window.setTimeout(compute, ms))
-        const aside = scroll?.closest('aside')
-        const onAnimEnd = () => compute()
-        aside?.addEventListener('transitionend', onAnimEnd)
-        aside?.addEventListener('animationend', onAnimEnd)
-
-        return () => {
-            cancelAnimationFrame(rafId)
-            timers.forEach(id => window.clearTimeout(id))
-            aside?.removeEventListener('transitionend', onAnimEnd)
-            aside?.removeEventListener('animationend', onAnimEnd)
-            ro?.disconnect()
-        }
-    }, [currentConversationId, conversations, chatMode, expandedFolders, sidebarOpen])
 
     return (
         <aside
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' 
                 : 'w-[75vw] max-w-[260px] md:w-[72px] -translate-x-full md:translate-x-0'
-                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[35px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-in-out shrink-0 flex flex-col z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
+                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[35px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
         >
+                        <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
-            <div className={`flex items-center w-full p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${sidebarOpen ? 'justify-between' : 'justify-center md:px-0'}`}>
-                <div className={`flex items-center overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-10 opacity-100 mr-2 md:w-10 md:px-1' : 'w-10 opacity-100 mr-2 md:w-0 md:opacity-0 md:mr-0 md:px-0'}`}>
-                    <CorphiaLogo className="w-8 h-8 shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
+            {/* 收合時固定排在最左邊 72 寬的範圍裡置中：寬度縮的過程中位置不動（往左收合，不會先置中再移動） */}
+            <div className={`flex items-center p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between' : 'w-full md:w-[72px] justify-center md:px-0'}`}>
+                {/* 品牌圖示：展開時的位置和收合時一致（圖示中心離側欄左緣 36＝收合直條的正中間） */}
+                <div className={`flex items-center overflow-hidden ${wide ? 'w-10 mr-2 md:w-auto md:ml-[8px] md:px-0' : 'w-10 mr-2 md:hidden'}`}>
+                    <CorphiaLogo className="w-[28px] h-[28px] shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
                 </div>
-                <Tooltip label={sidebarOpen ?"收合側邊欄" :"開啟側邊欄"}>
-                    <button
+                <button
                         onClick={toggleSidebar}
+                        aria-label={sidebarOpen ? '收合側邊欄' : '開啟側邊欄'}
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         className="btn-icon btn-icon-plain hidden md:inline-flex !w-11 !h-11 text-text-secondary"
                     >
-                    {sidebarOpen || isSidebarHovered ? (
+                    {wide || isSidebarHovered ? (
                         <SidebarIcon className="w-[20px] h-[20px]" />
                     ) : (
-                        <CorphiaLogo className="w-[30px] h-[30px] rounded-[7px] text-text-primary" />
+                        <CorphiaLogo className="!w-[28px] !h-[28px] shrink-0 rounded-full overflow-hidden text-text-primary" />
                     )}
                     </button>
-                </Tooltip>
             </div>
 
             {/* 頂端控制區（包含新對話按鈕與切換器） */}
-            <div className={`w-full transition-all duration-300 lg:p-4 p-3 flex flex-col gap-4 py-4 ${!sidebarOpen ? 'items-center' : ''}`}>
+            <div className="w-full px-[14px] py-4 flex flex-col items-start gap-4">
                 
                 {/* 一般 / 專案 切換膠囊 (比照 Login.tsx)
                   容器底色：
@@ -226,50 +181,28 @@ export default function ChatSidebar({
                             → 改用 bg-white/5（在深色面板上加一層淡白），
                               跟 sidebar 同色階更柔和，但仍保留可見的容器邊界
                 */}
-                {sidebarOpen ? (
+                <div
+                    className="side-morph shrink-0"
+                    style={{ width: wide ? 232 : 50, height: wide ? 44 : 110, marginLeft: wide ? 0 : -3 }}
+                >
                     <GlassSegmented
+                        vertical={!wide}
                         data-tour="mode-toggle"
-                        className="w-full shrink-0 h-[44px]"
-                        pad={5}
+                        className="w-full h-full"
+                        pad={wide ? 5 : 2}
+                        growLong={wide ? 8 : 11.5}
+                        growCross={wide ? 8 : 4.5}
                         value={chatMode}
                         onChange={(v) => setChatMode(v)}
-                        options={[
+                        options={wide ? [
                             { value: 'general', label: t('chat.general') },
                             { value: 'project', label: t('chat.project') },
+                        ] : [
+                            { value: 'general', name: t('chat.general'), label: <MessageSquare className="w-[27px] h-[27px]" strokeWidth={1.6} /> },
+                            { value: 'project', name: t('chat.project'), label: <Folder className="w-[27px] h-[27px]" strokeWidth={1.6} /> },
                         ]}
                     />
-                ) : (
-                    <div
-                        data-tour="mode-toggle"
-                        className="seg-track relative rounded-full cursor-pointer shrink-0"
-                        style={{ width: '46px', height: '86px' }}
-                        onClick={(e) => {
-                            // 依點的位置決定模式（上半＝一般、下半＝專案），不要用「切換」：
-                            // 否則已在專案模式時點專案圖示反而會切回一般
-                            const rect = e.currentTarget.getBoundingClientRect()
-                            const next = e.clientY - rect.top < rect.height / 2 ? 'general' : 'project'
-                            setChatMode(next)
-                            // 收合狀態下看不到資料夾清單；切到專案時自動展開側邊欄
-                            if (next === 'project') setSidebarOpen(true)
-                        }}
-                    >
-                        <div className="absolute snow-knob rounded-full"
-                            style={{
-                                width: '40px', height: '40px', top: '3px', left: '3px',
-                                transform: `translateY(${chatMode === 'general' ? '0px' : '40px'})`,
-                                transition: 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)', zIndex: 1,
-                            }}
-                        />
-                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'general' ? 'text-text-primary ' : 'text-text-secondary '}`}
-                            style={{ top: '3px', left: '3px', width: '40px', height: '40px' }}>
-                            <MessageSquare className="w-[20px] h-[20px]" />
-                        </div>
-                        <div className={`absolute flex items-center justify-center z-10 transition-colors duration-300 ${chatMode === 'project' ? 'text-text-primary ' : 'text-text-secondary '}`}
-                            style={{ top: '43px', left: '3px', width: '40px', height: '40px' }}>
-                            <Folder className="w-[20px] h-[20px]" />
-                        </div>
-                    </div>
-                )}
+                </div>
 
                 {/* 新對話 / 新資料夾 按鈕 (比照 Login.tsx 的 Input) */}
                 <button
@@ -281,21 +214,19 @@ export default function ChatSidebar({
                             createNewConversation()
                         }
                     }}
-                    className={`relative flex items-center bg-accent border border-transparent text-text-on-accent transition-all  overflow-hidden group ${sidebarOpen ? 'w-full h-[44px] px-4 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                    aria-label={chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}
+                    className="side-morph relative flex items-center h-[44px] pl-[8px] gap-3 rounded-full overflow-hidden shrink-0 bg-accent-fill text-text-on-accent"
+                    style={{ width: wide ? 232 : 44 }}
                 >
                     <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
                         <Plus className="w-[20px] h-[20px]" />
                     </div>
-                    {sidebarOpen && (
-                        <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[15px] truncate text-left m-0 leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</p>
-                        </div>
-                    )}
+                    <span className="whitespace-nowrap font-medium text-[15px] leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>
                 </button>
             </div>
 
             {/* 對話列表 — overflow-x-hidden 避免長資料夾名稱撐出水平捲軸 */}
-            <div ref={scrollRef} className={`flex-1 overflow-y-auto overflow-x-hidden mt-2 custom-scrollbar w-full transition-opacity duration-300 relative ${sidebarOpen ? 'opacity-100 px-4' : 'opacity-0 px-0 overflow-hidden pointer-events-none'}`}>
+            <div ref={scrollRef} className={`flex-1 overflow-y-auto overflow-x-hidden mt-2 custom-scrollbar w-full transition-opacity duration-300 relative ${wide ? 'opacity-100 px-4' : 'hidden'}`}>
                 {/*
                   共享飄浮選取膠囊：absolute 定位在 scroll container 裡，跟著
                   currentConversationId 對應的 item（可能在 general 清單或 project
@@ -308,48 +239,33 @@ export default function ChatSidebar({
                   膠囊 left = item 左邊緣 - 6px，視覺上是獨立的小膠囊「黏」在 bubble 左側。
                   rounded-full（兩端圓）讓它變成真正的 pill shape，不是 rounded-r 的半邊。
                 */}
-                <div
-                    aria-hidden
-                    className="absolute z-[1] w-[3px] bg-accent rounded-full pointer-events-none"
-                    style={{
-                        top: 0,
-                        left: 0,
-                        height: activePillHeight,
-                        transform: `translate(${activePillLeft}px, ${activePillTop}px)`,
-                        opacity: pillVisible ? 1 : 0,
-                        transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1), height 220ms ease-out, opacity 200ms ease-out',
-                    }}
-                />
                 <AnimatePresence mode="wait">
                     {chatMode === 'general' ? (
                         <motion.div
                             key="general"
-                            initial={{ x: -20, opacity: 0 }}
+                            initial={{ x: -14, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: 20, opacity: 0 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            exit={{ x: 14, opacity: 0 }}
+                            transition={{ duration: 0.42 }}
                             className="absolute inset-0 px-4"
                         >
-                            <div className="mb-2 pl-3 mt-1">
-                                <span className="text-[12px] text-text-secondary tracking-wider font-medium">{t('chat.generalChat')}</span>
-                            </div>
-                            <div className="space-y-1 transition-colors px-2">
+                            <span className="side-header">{t('chat.generalChat')}</span>
+                            <div className="space-y-0.5">
                                 {(() => {
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
-                                    if (filtered.length === 0) return <p className="text-text-muted text-[13px] py-4 pl-3">{t('chat.noChats')}</p>
+                                    if (filtered.length === 0) return <p className="text-text-secondary text-[13px] py-3 px-[10px]">{t('chat.noChats')}</p>
                                     return filtered.map((conv) => (
                                         <div key={conv.id}
                                             ref={(el) => { itemRefs.current[conv.id] = el }}
-                                            onClick={() => selectConversation(conv)}
-                                            className={`relative w-full flex items-center justify-between text-left px-3 py-2.5 rounded-[14px] text-[14px] transition-colors group cursor-pointer ${currentConversationId === conv.id
-                                                ? 'bg-[var(--chip)] text-text-primary font-semibold'
-                                                : 'text-text-secondary  '}`}
+                                            {...pressHandlers(conv.id)}
+                                            onClick={() => { if (consumeLongPress()) return; selectConversation(conv) }}
+                                            className={`side-item group ${!selectedFolder && currentConversationId === conv.id ? 'is-current' : ''}`}
                                         >
-                                            <span className="truncate pr-2">{conv.title}</span>
-                                            <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                                            <span className="flex-1 min-w-0 truncate">{conv.title}</span>
+                                            <div className={`side-actions transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                 <Tooltip label="選項">
-                                                    <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                        className={`p-1.5 rounded-full  ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-muted'}`}>
+                                                    <button onPointerDown={(e) => dragOpenMenu(e, conv.id)} onClick={(e) => e.stopPropagation()}
+                                                        aria-label="選項" className={`p-1.5 rounded-full ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
                                                         <MoreHorizontal className="w-4 h-4" />
                                                     </button>
                                                 </Tooltip>
@@ -362,15 +278,13 @@ export default function ChatSidebar({
                     ) : (
                         <motion.div
                             key="project"
-                            initial={{ x: 20, opacity: 0 }}
+                            initial={{ x: 14, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -20, opacity: 0 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            exit={{ x: -14, opacity: 0 }}
+                            transition={{ duration: 0.42 }}
                             className="absolute inset-0 px-4"
                         >
-                            <div className="mb-2 pl-3 mt-1">
-                                <span className="text-[12px] text-text-muted tracking-wider font-medium">{t('chat.projectFolderLabel')}</span>
-                            </div>
+                            <span className="side-header">{t('chat.projectFolderLabel')}</span>
                             {(() => {
                                 const convFolders = conversations
                                     .filter(c => Boolean(c.settings?.isProject))
@@ -379,9 +293,7 @@ export default function ChatSidebar({
 
                                 if (allFolders.length === 0) {
                                     return (
-                                        <div className="px-2 space-y-1 transition-colors">
-                                            <p className="text-text-muted text-[13px] py-4 pl-3">{t('chat.noProjects')}</p>
-                                        </div>
+                                        <p className="text-text-secondary text-[13px] py-3 px-[10px]">{t('chat.noProjects')}</p>
                                     )
                                 }
 
@@ -395,62 +307,61 @@ export default function ChatSidebar({
                                     })
 
                                 return (
-                                    <div className="px-2 space-y-2 mt-2">
+                                    <div className="space-y-0.5">
                                         {allFolders.map((folderName) => {
                                             const isExpanded = expandedFolders.has(folderName)
                                             return (
                                                 <div key={folderName} className="flex flex-col">
+                                                    {/* 資料夾列（沒有展開箭頭）：點一下選取並展開；再點一次已選取的資料夾就收合 */}
                                                     <div
                                                         onClick={() => {
                                                             // 切換到資料夾管理視圖；
                                                             // 注意：不清掉 currentConversation，這樣在背景串流中的對話可以繼續，
                                                             // 使用者切回該對話時不會中斷 AI 思考。
+                                                            if (selectedFolder === folderName) {
+                                                                setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next })
+                                                                return
+                                                            }
                                                             setSelectedFolder(folderName)
                                                             setExpandedFolders(prev => new Set(prev).add(folderName))
                                                             if (window.innerWidth < 768) setSidebarOpen(false)
                                                         }}
-                                                        className={`flex items-center justify-between text-[14px] font-medium px-2 py-1.5 transition-colors cursor-pointer w-full text-left rounded-[10px] group ${selectedFolder === folderName ? 'bg-[var(--chip)] text-accent' : ' text-text-secondary '}`}
+                                                        aria-expanded={isExpanded}
+                                                        className={`side-item group ${selectedFolder === folderName ? 'is-current' : ''}`}
                                                     >
-                                                        <div className="flex items-center gap-1 min-w-0">
-                                                            <button onClick={(e) => { e.stopPropagation(); setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next }) }}
-                                                                className={`p-0.5 rounded-md  transition-colors ${isExpanded ? 'text-text-secondary' : 'text-text-muted'}`}>
-                                                                <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                                                            </button>
-                                                            <span className="truncate">{folderName}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                        <Folder className="side-icon" />
+                                                        <span className="flex-1 min-w-0 truncate">{folderName}</span>
+                                                        <div className="side-actions gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                             <Tooltip label="在此資料夾新增對話">
-                                                                <button onClick={(e) => createConvInFolder(folderName, e)} className="p-1 text-text-muted  rounded ">
+                                                                <button onClick={(e) => createConvInFolder(folderName, e)} aria-label="在此資料夾新增對話" className="p-1.5 rounded-full text-text-secondary">
                                                                     <Plus className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
                                                             <Tooltip label="刪除資料夾及內容">
-                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} className="p-1 text-text-muted  rounded ">
+                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label="刪除資料夾及內容" className="p-1.5 rounded-full text-text-secondary">
                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
                                                         </div>
                                                     </div>
 
-                                                    {isExpanded && (
-                                                        // 子對話清單：左邊加一條導引線，視覺上清楚「這些對話屬於上方那個資料夾」
-                                                        // ml-3 對齊 chevron 中心；border-l 1px subtle；pl-3 給對話內容呼吸空間
-                                                        <div className="ml-3 mt-1 pl-3 border-l border-[var(--paper-line)] space-y-0.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    {/* 子對話：縮排到資料夾名稱的起點（Apple 側欄），不畫導引線；展開／收合有高度動畫 */}
+                                                    <div className={`side-collapse ${isExpanded ? 'is-open' : ''}`} aria-hidden={!isExpanded}>
+                                                        <div className="side-children space-y-0.5">
                                                             {(grouped[folderName] || []).map((conv) => (
                                                                 <div key={conv.id} className="relative">
                                                                     <div
                                                                         ref={(el) => { itemRefs.current[conv.id] = el }}
-                                                                        onClick={() => selectConversation(conv)}
-                                                                        className={`relative w-full flex items-center justify-between text-left px-3 py-2 rounded-[14px] text-[13px] transition-colors group cursor-pointer border border-transparent ${currentConversationId === conv.id
-                                                                            ? 'bg-[var(--chip)] text-text-primary font-semibold'
-                                                                            : 'text-text-secondary  '}`}
+                                                                        {...pressHandlers(conv.id)}
+                                            onClick={() => { if (consumeLongPress()) return; selectConversation(conv) }}
+                                                                        className={`side-item group ${!selectedFolder && currentConversationId === conv.id ? 'is-current' : ''}`}
                                                                     >
-                                                                        <span className="truncate pr-2">{conv.title}</span>
-                                                                        <div className={`flex items-center gap-1 transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                                                                        <span className="flex-1 min-w-0 truncate">{conv.title}</span>
+                                                                        <div className={`side-actions transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                                                             <Tooltip label="選項">
-                                                                                <button onClick={(e) => handleOpenMenu(e, conv.id)}
-                                                                                    className={`p-1 rounded-full  ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-muted'}`}>
-                                                                                    <MoreHorizontal className="w-3.5 h-3.5" />
+                                                                                <button onPointerDown={(e) => dragOpenMenu(e, conv.id)} onClick={(e) => e.stopPropagation()}
+                                                                                    aria-label="選項" className={`p-1.5 rounded-full ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
+                                                                                    <MoreHorizontal className="w-4 h-4" />
                                                                                 </button>
                                                                             </Tooltip>
                                                                         </div>
@@ -458,7 +369,7 @@ export default function ChatSidebar({
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
                                             )
                                         })}
@@ -471,17 +382,19 @@ export default function ChatSidebar({
             </div>
 
             {/* 底部：使用者卡片 */}
-            <div className={`w-full transition-all duration-300 p-3 mt-auto flex flex-col ${!sidebarOpen ? 'items-center' : ''}`}>
-                <Tooltip label="前往設定">
+            <div className="w-full px-[14px] pb-3 mt-auto flex flex-col items-start">
+                
                     <button
                         data-tour="settings-button"
                         onClick={() => setSettingsOpen(true)}
-                        className={`relative flex items-center bg-transparent  transition-colors text-left overflow-hidden group ${sidebarOpen ? 'w-full px-3 py-2 justify-start rounded-full gap-3' : 'w-12 h-12 justify-center rounded-full shrink-0 gap-0'}`}
+                        aria-label={user?.name || user?.email || '設定'}
+                        className="side-morph relative flex items-center h-[44px] pl-[6px] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
+                        style={{ width: wide ? 232 : 44 }}
                     >
-                    <div className="w-[32px] h-[32px] rounded-full bg-accent text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[14px]">
+                    <div className="w-[32px] h-[32px] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[14px]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
-                    {sidebarOpen && (
+                    {(
                         <div className="flex-1 min-w-0">
                             {/*
                               fallback 從「Local User」改成 email → 「…」。
@@ -495,7 +408,8 @@ export default function ChatSidebar({
                         </div>
                     )}
                     </button>
-                </Tooltip>
+                
+            </div>
             </div>
         </aside>
     )

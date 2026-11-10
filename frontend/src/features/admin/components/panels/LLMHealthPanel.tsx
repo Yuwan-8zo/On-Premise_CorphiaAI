@@ -29,12 +29,6 @@ export interface LLMHealthPanelProps {
     aiBoot?: { llm: string; rag: string } | null
 }
 
-const bootLabel: Record<string, string> = {
-    loading: '載入中',
-    ready: '就緒',
-    unavailable: '未掛載',
-    error: '錯誤',
-}
 
 export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProps) {
     const { t } = useTranslation()
@@ -65,36 +59,25 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
 
     return (
         <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 ${className || ''}`}>
-            {/* 標題列：eyebrow + LLM/RAG 狀態 badge 並排 */}
-            <div className="flex items-start justify-between px-5 py-3 border-b border-[var(--paper-line)]">
-                <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">LLM Health</p>
-                    <h2 className="text-[15px] font-semibold tracking-tight text-text-primary">
-                        {t('admin.overview.llmHealth', 'LLM 即時狀態')}
-                    </h2>
-                </div>
-                {aiBoot && (
-                    <div className="flex gap-1.5 mt-0.5">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide border ${llmReady ? 'bg-emerald-950/70 text-emerald-400 border-emerald-500/30' : 'bg-[var(--chip)] text-text-muted border-transparent'}`}>
-                            <span className={`h-1 w-1 rounded-full ${llmReady ? 'bg-emerald-400' : 'bg-text-muted'}`} />
-                            LLM
-                        </span>
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide border ${ragReady ? 'bg-blue-950/70 text-blue-400 border-blue-500/30' : 'bg-[var(--chip)] text-text-muted border-transparent'}`}>
-                            <span className={`h-1 w-1 rounded-full ${ragReady ? 'bg-blue-400' : 'bg-text-muted'}`} />
-                            RAG
-                        </span>
+            {/* 標題列：和其他卡片同一個共用標題（17／22 半粗、左右 26）；右邊放 LLM／RAG 狀態標籤 */}
+            <SectionHeader
+                title={t('admin.overview.llmHealth', 'LLM 即時狀態')}
+                action={aiBoot && (
+                    <div className="flex gap-1.5">
+                        <span className={`tag ${llmReady ? 'tag-green' : ''}`}>LLM</span>
+                        <span className={`tag ${ragReady ? 'tag-accent' : ''}`}>RAG</span>
                     </div>
                 )}
-            </div>
+            />
 
-            <div className="flex-1 min-h-0 flex flex-col gap-2 p-2.5">
+            <div className="flex-1 min-h-0 flex flex-col gap-2 px-4 pb-4">
                 {/* 模型名稱 — 主要資訊 */}
                 <div className="flex items-center gap-2.5 px-3 py-2 rounded-[10px] bg-[var(--chip)] border border-transparent">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-accent/10 text-accent">
                         <Cpu className="h-3.5 w-3.5" />
                     </span>
                     <div className="min-w-0">
-                        <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-text-muted">
+                        <p className="text-[12px] font-medium text-text-secondary">
                             {t('admin.overview.modelLoaded', '當前模型')}
                         </p>
                         <p className="text-[13px] font-medium text-text-primary truncate leading-tight">
@@ -108,7 +91,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                     <div className="flex flex-col gap-1 px-3 py-2.5 rounded-[10px] bg-[var(--chip)] border border-transparent  transition-colors">
                         <div className="flex items-center gap-1.5">
                             <Zap className="h-3 w-3 text-amber-400" />
-                            <p className="text-[8px] font-medium uppercase tracking-[0.1em] text-text-muted">
+                            <p className="text-[12px] font-medium text-text-secondary">
                                 {t('admin.overview.tokensPerSec', 'Tokens/秒')}
                             </p>
                         </div>
@@ -120,7 +103,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                     <div className="flex flex-col gap-1 px-3 py-2.5 rounded-[10px] bg-[var(--chip)] border border-transparent  transition-colors">
                         <div className="flex items-center gap-1.5">
                             <Cpu className="h-3 w-3 text-violet-400" />
-                            <p className="text-[8px] font-medium uppercase tracking-[0.1em] text-text-muted">
+                            <p className="text-[12px] font-medium text-text-secondary">
                                 {t('admin.overview.totalGenerations', '推論次數')}
                             </p>
                         </div>

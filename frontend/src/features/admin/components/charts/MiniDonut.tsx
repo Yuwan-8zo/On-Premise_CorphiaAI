@@ -12,7 +12,7 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { makeAccentShades, useAccentColor } from '../../hooks/useAccentColor'
+import { appleCategoryColors } from '../../hooks/useAccentColor'
 
 export interface MiniDonutDatum {
     /** Display label */
@@ -51,7 +51,7 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
     return (
         <div className="paper !rounded-[14px] px-3 py-2 text-xs">
             <p className="font-medium text-text-primary">{item.name}</p>
-            <p className="mt-0.5 font-mono text-text-secondary tabular-nums">
+            <p className="mt-0.5 text-text-secondary tabular-nums">
                 {item.count.toLocaleString()} · {pct}%
             </p>
         </div>
@@ -64,9 +64,8 @@ export default function MiniDonut({
     centerEyebrow,
     emptyText = '尚無資料',
 }: MiniDonutProps) {
-    const accent = useAccentColor()
     const total = data.reduce((sum, d) => sum + d.count, 0)
-    const colors = makeAccentShades(accent, data.length, { from: 0.95, to: 0.35 })
+    const colors = appleCategoryColors(data.length)
 
     if (total === 0) {
         return (
@@ -93,8 +92,7 @@ export default function MiniDonut({
                             startAngle={90}
                             endAngle={-270}
                             paddingAngle={1.5}
-                            stroke="rgb(var(--bg-base))"
-                            strokeWidth={1.5}
+                        stroke="none"
                         >
                             {data.map((_, i) => (
                                 <Cell key={i} fill={colors[i]} />
@@ -108,7 +106,7 @@ export default function MiniDonut({
                         {centerLabel ?? total.toLocaleString()}
                     </p>
                     {centerEyebrow && (
-                        <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-text-muted">
+                        <p className="mt-1 text-[12px] text-text-secondary">
                             {centerEyebrow}
                         </p>
                     )}
@@ -131,7 +129,7 @@ export default function MiniDonut({
                             <span className="flex-1 truncate text-text-secondary">
                                 {item.name}
                             </span>
-                            <span className="font-mono text-text-primary tabular-nums">
+                            <span className=" text-text-primary tabular-nums">
                                 {pct}%
                             </span>
                         </li>

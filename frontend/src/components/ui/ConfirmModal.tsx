@@ -28,7 +28,7 @@ export const ConfirmModal: React.FC = () => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.18 }}
-                    className="fixed inset-0 z-50 bg-black/35 backdrop-blur-md"
+                    className="fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md"
                 />
             )}
             {confirmConfig && (

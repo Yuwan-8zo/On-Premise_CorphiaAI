@@ -95,3 +95,16 @@ export function makeAccentShades(
         return accent.alpha(from + (to - from) * t)
     })
 }
+
+
+/**
+ * 圖表分類色：Apple 系統色（藍、綠、橘、紅、紫、青、黃、粉、靛、灰），每一類一個明顯不同的色相，
+ * 不用同一個顏色的深淺（太相近、分不出來）。深色外觀用 Apple 深色版，淺色外觀用淺色版。
+ */
+const APPLE_CATEGORY_DARK = ['#0A84FF', '#30D158', '#FF9F0A', '#FF453A', '#BF5AF2', '#64D2FF', '#FFD60A', '#FF375F', '#5E5CE6', '#8E8E93']
+const APPLE_CATEGORY_LIGHT = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#5AC8FA', '#FFCC00', '#FF2D55', '#5856D6', '#8E8E93']
+export function appleCategoryColors(n: number): string[] {
+    const dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+    const base = dark ? APPLE_CATEGORY_DARK : APPLE_CATEGORY_LIGHT
+    return Array.from({ length: n }, (_, i) => base[i % base.length])
+}

@@ -2,7 +2,8 @@
  * 設定頁面 (Modal)
  */
 
-import { AlertTriangle, Book, Check, ChevronLeft, ChevronRight, Edit2, Eye, EyeOff, Globe, Info, Lock, Moon, Palette, ShieldCheck, Sun, User, X } from '@/components/snow/icons'
+import GlassNav from '@/components/ui/GlassNav'
+import { AlertTriangle, Book, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Globe, Info, Lock, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -15,6 +16,7 @@ import { ACCENT_COLORS } from '@/design-system'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
 import Tooltip from '@/components/ui/Tooltip'
+import GlassSwitch from '@/components/ui/GlassSwitch'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -41,22 +43,6 @@ const BookIcon = () => (
     <Book className="w-5 h-5" />
 )
 
-/** 亮色模式 Icon */
-const SunIcon = () => (
-    <Sun className="w-10 h-10 text-amber-400" />
-)
-
-/** 深色模式 Icon */
-const MoonIcon = () => (
-    <Moon className="w-10 h-10 text-text-secondary" />
-)
-
-
-
-const LockIcon = () => (
-    <Lock className="w-5 h-5" />
-)
-
 /** 盾牌 Icon 用於管理後台入口 */
 const ShieldIcon = () => (
     <ShieldCheck className="w-5 h-5" />
@@ -64,15 +50,6 @@ const ShieldIcon = () => (
 
 type SettingSection = 'profile' | 'appearance' | 'language' | 'guide' | 'about'
 
-/**
- * 主題卡的選中／未選中外觀。獨立成常數避免在 JSX 內重複貼三次同樣的字串，
- * 也順便修掉 `bg-[rgb(...)/0.05]` 缺一個右括號的舊 bug。
- */
-const THEME_CARD_BASE = 'flex-1 p-2 pb-3 rounded-[24px] transition-all snow-well'
-const THEME_CARD_SELECTED =
-    '!bg-accent/10 ring-2 ring-accent'
-const THEME_CARD_UNSELECTED =
-    ''
 const ACCENT_OPTIONS = Object.entries(ACCENT_COLORS) as [AccentColorType, (typeof ACCENT_COLORS)[string]][]
 
 export default function SettingsModal() {
@@ -99,7 +76,7 @@ export default function SettingsModal() {
      * 開：isSettingsOpen true → isVisible true → 下一 frame 自動進入動畫尾態
      * 關：isSettingsOpen false → isClosing true → 等 ANIM_MS 後 isVisible false unmount
      */
-    const ANIM_MS = 220
+    const ANIM_MS = 300
     const [isVisible, setIsVisible] = useState(false)
     const [isClosing, setIsClosing] = useState(false)
     useEffect(() => {
@@ -298,11 +275,11 @@ export default function SettingsModal() {
     return (
         <>
             <div
-                className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+                className={`fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={() => setSettingsOpen(false)}
             />
             <div
-                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-all duration-200 ease-out ${isClosing ? 'opacity-0 scale-[0.97] translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-[opacity,transform] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95]' : 'opacity-100 scale-100'}`}
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
@@ -311,92 +288,82 @@ export default function SettingsModal() {
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
-                            className="btn-icon !w-9 !h-9 absolute top-[18px] right-[18px] text-text-secondary z-20"
+                            className="btn-icon !w-[36px] !h-[36px] absolute top-[16px] right-[16px] text-text-secondary z-20"
                         >
                             <CloseIcon />
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
-                        <div className={`md:w-64 border-r border-[var(--paper-line)] flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div className={`md:w-64 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-6 pb-2">
                                 <h2 className="text-xl font-bold text-text-primary tracking-wide">
                                     {t('settings.title')}
                                 </h2>
                             </div>
-                            <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-                                {menuItems.map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            setActiveSection(item.id)
-                                            setMobileView('content')
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all ${
-                                            activeSection === item.id
-                                                ? 'bg-[var(--chip)] text-text-primary font-semibold border border-transparent'
-                                                : 'text-text-secondary bg-transparent font-medium border border-transparent'
-                                        }`}
-                                    >
-                                        <div className={`${activeSection === item.id ? 'text-accent' : 'text-text-secondary'}`}>
-                                            {item.icon}
-                                        </div>
-                                        <span>{item.label}</span>
-                                    </button>
-                                ))}
+              <nav className="flex-1 p-4 overflow-y-auto scrollbar-none">
+                                <GlassNav
+                                    aria-label={t('settings.title')}
+                                    value={activeSection}
+                                    onChange={(id) => {
+                                        setActiveSection(id)
+                                        setMobileView('content')
+                                    }}
+                                    items={menuItems.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                                />
                             </nav>
 
-                            {/* 底部按鈕區 */}
-                            <div className="p-4 border-t border-[var(--paper-line)] space-y-2">
-                                {/* 管理後台入口：僅 admin / engineer 可見 */}
-                                {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                    <Tooltip label={t('settings.enterAdmin')}>
+                            {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
+                            {(user?.role === 'admin' || user?.role === 'engineer') && (
+                                <div className="p-4 pt-2">
+                                    <div className="set-group">
                                         <button
+                                            type="button"
                                             onClick={() => { setSettingsOpen(false); navigate('/admin') }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-[18px] text-text-secondary bg-[var(--chip)] transition-all font-medium text-sm group"
+                                            className="set-row set-row-btn has-icon"
                                         >
-                                        <span className="w-5 h-5 flex items-center justify-center text-text-secondary group-hover:text-text-primary transition-colors">
-                                            <ShieldIcon />
-                                        </span>
-                                        <span>{t('settings.adminLabel')}</span>
-                                        <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-40 group-hover:opacity-70 transition-opacity" />
+                                            <span className="set-icon"><ShieldIcon /></span>
+                                            <span className="set-label">{t('settings.adminLabel')}</span>
+                                            <ChevronRight className="set-chevron" />
                                         </button>
-                                    </Tooltip>
-                                )}
-                            </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* 主內容區域 */}
-                        <div className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
-                            <div className="p-6 md:p-10 min-h-full">
-                                {/* 手機版返回導航*/}
-                                <button 
-                                    className="md:hidden mb-6 flex items-center text-corphia-bronze font-medium  transition-opacity"
+                        <div className={`flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                            <div className="p-6 md:px-10 md:pt-14 md:pb-10 min-h-full">
+                                {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
+                                <button
+                                    className="md:hidden mb-4 -ml-1 flex items-center text-accent text-[15px] font-medium"
                                     onClick={() => setMobileView('menu')}
                                 >
-                                    <ChevronLeft className="w-5 h-5 mr-1" />
-                                    {t('common.cancel', '取消')}
+                                    <ChevronLeft className="w-5 h-5" />
+                                    {t('settings.title')}
                                 </button>
-                                {/* 個人資料 */}
+                                {/* 個人資料（Apple 帳號頁：置中頭像＋分組清單） */}
                                 {activeSection === 'profile' && (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                        <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
-                                            {t('settings.profile')}
-                                        </h2>
-
-                                    {/* 頭像與名稱*/}
-                                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 mb-10 text-center md:text-left">
-                                        <div className="w-24 h-24 rounded-full bg-accent text-text-on-accent flex items-center justify-center text-4xl font-bold  shrink-0">
-                                            {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+                                    <motion.div className="set-page" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.42 }}>
+                                        <div className="set-section set-hero">
+                                            <div className="w-20 h-20 rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center text-[32px] font-bold mb-2">
+                                                {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+                                            </div>
+                                            <h2 className="text-[22px] leading-[28px] font-bold text-text-primary">{user?.name}</h2>
+                                            <p className="text-[15px] text-text-secondary">{user?.email}</p>
                                         </div>
-                                        <div className="flex flex-col items-center md:items-start">
-                                            <div className="flex items-center gap-3 mb-1">
+
+                                        <section className="set-section">
+                                            <div className="set-header">{t('settings.accountSection', '帳號')}</div>
+                                            <div className="set-group">
                                                 {isEditingName ? (
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="set-row">
+                                                        <span className="set-label flex-none">{t('settings.nameLabel', '名稱')}</span>
                                                         <input
                                                             type="text"
                                                             value={editName}
                                                             onChange={(e) => setEditName(e.target.value)}
-                                                            className="text-xl font-bold text-text-primary snow-field rounded-[14px] px-3 py-1 outline-none w-48"
+                                                            aria-label={t('settings.nameLabel', '名稱')}
+                                                            className="flex-1 min-w-0 text-right bg-transparent outline-none text-[15px] text-text-primary"
                                                             autoFocus
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') handleUpdateName()
@@ -406,264 +373,175 @@ export default function SettingsModal() {
                                                                 }
                                                             }}
                                                         />
-                                                        <button 
-                                                            onClick={handleUpdateName}
-                                                            disabled={isUpdatingName}
-                                                            className="btn btn-sm btn-primary flex-shrink-0"
-                                                        >
-                                                            {isUpdatingName ? t('common.loading') : t('common.save')}
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => {
-                                                                setEditName(user?.name || '')
-                                                                setIsEditingName(false)
-                                                            }}
+                                                        <button
+                                                            onClick={() => { setEditName(user?.name || ''); setIsEditingName(false) }}
                                                             disabled={isUpdatingName}
                                                             className="btn btn-sm btn-secondary flex-shrink-0"
                                                         >
                                                             {t('common.cancel', '取消')}
                                                         </button>
+                                                        <button onClick={handleUpdateName} disabled={isUpdatingName} className="btn btn-sm btn-primary flex-shrink-0">
+                                                            {isUpdatingName ? t('common.loading') : t('common.save')}
+                                                        </button>
                                                     </div>
                                                 ) : (
-                                                    <>
-                                                        <h3 className="text-[28px] leading-none font-bold text-text-primary tracking-tight">
-                                                            {user?.name}
-                                                        </h3>
-                                                        <Tooltip label={t('common.changeName')}>
-                                                            <button
-                                                                onClick={() => setIsEditingName(true)}
-                                                                className="text-text-muted  transition-colors p-1 rounded-full "
-                                                            >
-                                                            <Edit2 className="w-5 h-5" />
-                                                            </button>
-                                                        </Tooltip>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <p className="text-[15px] font-medium text-text-secondary mb-3">
-                                                {user?.email}
-                                            </p>
-                                            <span className="inline-block px-4 py-1 text-[13px] font-bold bg-accent/10 text-accent rounded-full border border-accent/20 tracking-wide uppercase">
-                                                {user?.role}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* 帳號操作區塊 */}
-                                    <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-[var(--paper-line)] pt-8">
-                                        <button
-                                            onClick={() => {
-                                                setShowPasswordForm(true)
-                                                setPasswordError('')
-                                                setPasswordSuccess('')
-                                                setCurrentPassword('')
-                                                setNewPassword('')
-                                                setConfirmNewPassword('')
-                                                setPasswordStrength(null)
-                                            }}
-                                            className="btn btn-secondary w-full sm:w-auto"
-                                        >
-                                            <LockIcon /> {t('auth.changePassword', '修改密碼')}
-                                        </button>
-
-                                        <button
-                                            onClick={handleLogout}
-                                            className="btn btn-danger w-full sm:w-auto"
-                                        >
-                                            {t('auth.logout')}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* 外觀設定 */}
-                            {activeSection === 'appearance' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
-                                        {t('settings.theme')}
-                                    </h2>
-
-                                    <div className="grid grid-cols-3 gap-4 max-w-2xl">
-                                        {/* 淺色模式 */}
-                                        <button
-                                            onClick={() => setThemePreference('light')}
-                                            className={`${THEME_CARD_BASE} ${themePreference === 'light' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
-                                        >
-                                            <div className="w-full h-24 rounded-[16px] bg-[#F6F4F0] mb-3 flex items-center justify-center">
-                                                <SunIcon />
-                                            </div>
-                                            <p className={`text-[15px] font-semibold ${themePreference === 'light' ? 'text-accent' : 'text-text-primary'}`}>
-                                                {t('settings.themeLight')}
-                                            </p>
-                                        </button>
-
-                                        {/* 深色模式 */}
-                                        <button
-                                            onClick={() => setThemePreference('dark')}
-                                            className={`${THEME_CARD_BASE} ${themePreference === 'dark' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
-                                        >
-                                            <div className="w-full h-24 rounded-[16px] bg-[#28282A] mb-3 flex items-center justify-center">
-                                                <MoonIcon />
-                                            </div>
-                                            <p className={`text-[15px] font-semibold ${themePreference === 'dark' ? 'text-accent' : 'text-text-primary'}`}>
-                                                {t('settings.themeDark')}
-                                            </p>
-                                        </button>
-
-                                        {/* 跟隨系統 */}
-                                        <Tooltip label={t('settings.themeSystemHint')} className="flex-1 min-w-0 flex">
-                                            <button
-                                                onClick={() => setThemePreference('system')}
-                                                className={`w-full ${THEME_CARD_BASE} ${themePreference === 'system' ? THEME_CARD_SELECTED : THEME_CARD_UNSELECTED}`}
-                                            >
-                                            <div className="w-full h-24 rounded-[17px] mb-3 flex items-center justify-center overflow-hidden">
-                                                {/* 半邊太陽半邊月亮，呼應 prefers-color-scheme */}
-                                                <div className="flex w-full h-full">
-                                                    <div className="flex-1 bg-[#F6F4F0] flex items-center justify-center">
-                                                        <SunIcon />
-                                                    </div>
-                                                    <div className="flex-1 bg-[#28282A] flex items-center justify-center">
-                                                        <MoonIcon />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className={`text-[15px] font-semibold ${themePreference === 'system' ? 'text-accent' : 'text-text-primary'}`}>
-                                                {t('settings.themeSystem')}
-                                            </p>
-                                            </button>
-                                        </Tooltip>
-                                    </div>
-
-                                    {/* 強調色設定*/}
-                                    <div className="mt-12">
-                                        <h3 className="text-xl font-bold text-text-primary mb-6">
-                                            {t('settings.accentColor', '強調顏色')}
-                                        </h3>
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            {ACCENT_OPTIONS.map(([key, color]) => (
-                                                <Tooltip key={key} label={color.label}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAccentColor(key)}
-                                                        className={`tap h-11 w-11 rounded-full border p-1 transition-all ${
-                                                            accentColor === key
-                                                                ? 'border-accent ring-4 ring-accent/20'
-                                                                : 'border-[var(--paper-line)] '
-                                                        }`}
-                                                    >
-                                                    <span
-                                                        className="block h-full w-full rounded-full "
-                                                        style={{ backgroundColor: color.hex }}
-                                                    />
+                                                    <button type="button" className="set-row set-row-btn" onClick={() => { setEditName(user?.name || ''); setIsEditingName(true) }}>
+                                                        <span className="set-label">{t('settings.nameLabel', '名稱')}</span>
+                                                        <span className="set-value">{user?.name}</span>
+                                                        <ChevronRight className="set-chevron" />
                                                     </button>
-                                                </Tooltip>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* iOS Settings 風格群組：把進階開關集中在一個帶髮絲線的容器裡 */}
-                                    <div className="mt-12 max-w-md">
-                                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted mb-2 px-1">
-                                            {t('settings.advancedSection', '進階')}
-                                        </h3>
-                                        <div className="ios-list">
-                                            {/* RAG Debug */}
-                                            <label className="ios-list-row cursor-pointer">
-                                                <div className="flex flex-col gap-0.5 min-w-0">
-                                                    <span className="text-[15px] font-medium text-text-primary">
-                                                        {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
-                                                    </span>
-                                                    <span className="text-[12px] text-text-secondary leading-snug">
-                                                        {t('settings.ragDebugHint', '每次 AI 回覆下方顯示檢索文件、相似度與來源。')}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    role="switch"
-                                                    aria-checked={ragDebugMode}
-                                                    onClick={() => setRAGDebugMode(!ragDebugMode)}
-                                                    className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
-                                                        ragDebugMode
-                                                            ? 'bg-accent'
-                                                            : 'bg-[var(--well)]'
-                                                    }`}
-                                                >
-                                                    <span
-                                                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_0.5px_4px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.1)] transition-transform ${
-                                                            ragDebugMode ? 'translate-x-6' : 'translate-x-1'
-                                                        }`}
-                                                    />
-                                                </button>
-                                            </label>
-
-                                            {/* Demo Mode */}
-                                            <label className="ios-list-row cursor-pointer">
-                                                <div className="flex flex-col gap-0.5 min-w-0">
-                                                    <span className="text-[15px] font-medium text-text-primary">
-                                                        {t('settings.demoModeToggle', '隱藏敏感資訊')}
-                                                    </span>
-                                                    <span className="text-[12px] text-text-secondary leading-snug">
-                                                        {t('settings.demoModeHint', '對外展示時隱藏絕對路徑等敏感字串。')}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    role="switch"
-                                                    aria-checked={demoMode}
-                                                    onClick={() => setDemoMode(!demoMode)}
-                                                    className={`tap relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
-                                                        demoMode
-                                                            ? 'bg-accent'
-                                                            : 'bg-[var(--well)]'
-                                                    }`}
-                                                >
-                                                    <span
-                                                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_0.5px_4px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.1)] transition-transform ${
-                                                            demoMode ? 'translate-x-6' : 'translate-x-1'
-                                                        }`}
-                                                    />
-                                                </button>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* 語言設定 */}
-                            {activeSection === 'language' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-                                    <h2 className="text-2xl font-bold text-text-primary mb-8 pb-4 border-b border-[var(--paper-line)]">
-                                        {t('settings.language')}
-                                    </h2>
-
-                                    <div className="space-y-3 max-w-md">
-                                        {languages.map(lang => (
-                                            <button
-                                                key={lang.code}
-                                                onClick={() => handleLanguageChange(lang.code)}
-                                                className={`w-full flex items-center justify-between px-5 py-4 rounded-[18px] transition-all ${i18n.language === lang.code
-                                                        ? 'bg-accent/10 text-accent ring-2 ring-accent'
-                                                        : 'snow-well text-text-primary'
-                                                    }`}
-                                            >
-                                                <span className="font-semibold text-[16px]">{lang.label}</span>
-                                                {i18n.language === lang.code && (
-                                                    <Check className="w-6 h-6" />
                                                 )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
+                                                <div className="set-row">
+                                                    <span className="set-label">{t('settings.emailLabel', '電子郵件')}</span>
+                                                    <span className="set-value">{user?.email}</span>
+                                                </div>
+                                                <div className="set-row">
+                                                    <span className="set-label">{t('settings.roleLabel', '角色')}</span>
+                                                    <span className={`tag ${user?.role === 'admin' || user?.role === 'engineer' ? 'tag-accent' : ''}`}>{user?.role}</span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section className="set-section">
+                                            <div className="set-header">{t('settings.securitySection', '安全性')}</div>
+                                            <div className="set-group">
+                                                <button
+                                                    type="button"
+                                                    className="set-row set-row-btn has-icon"
+                                                    onClick={() => {
+                                                        setShowPasswordForm(true)
+                                                        setPasswordError('')
+                                                        setPasswordSuccess('')
+                                                        setCurrentPassword('')
+                                                        setNewPassword('')
+                                                        setConfirmNewPassword('')
+                                                        setPasswordStrength(null)
+                                                    }}
+                                                >
+                                                    <span className="set-icon"><Lock className="w-[18px] h-[18px]" /></span>
+                                                    <span className="set-label">{t('auth.changePassword', '修改密碼')}</span>
+                                                    <ChevronRight className="set-chevron" />
+                                                </button>
+                                            </div>
+                                        </section>
+
+                                        <section className="set-section">
+                                            <div className="set-group">
+                                                <button type="button" className="set-row set-row-btn set-danger" onClick={handleLogout}>
+                                                    {t('auth.logout')}
+                                                </button>
+                                            </div>
+                                        </section>
+                                    </motion.div>
+                                )}
+
+                                {/* 外觀（Apple：外觀預覽圖、強調色、進階開關） */}
+                                {activeSection === 'appearance' && (
+                                    <motion.div className="set-page" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.42 }}>
+                                        <h2 className="set-title">{t('settings.theme')}</h2>
+
+                                        <section className="set-section">
+                                            <div className="set-header">{t('settings.appearanceSection', '外觀')}</div>
+                                            <div className="set-group p-4">
+                                                <div className="flex gap-4">
+                                                    {APPEARANCE_MODES.map((mode) => (
+                                                        <button
+                                                            key={mode}
+                                                            type="button"
+                                                            aria-pressed={themePreference === mode}
+                                                            onClick={() => setThemePreference(mode)}
+                                                            className={`set-appearance ${themePreference === mode ? 'is-current' : ''}`}
+                                                        >
+                                                            <span className="set-thumb">
+                                                                <AppearancePreview mode={mode} />
+                                                            </span>
+                                                            {mode === 'light' ? t('settings.themeLight') : mode === 'dark' ? t('settings.themeDark') : t('settings.themeSystem')}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section className="set-section">
+                                            <div className="set-group">
+                                                <div className="set-row">
+                                                    <span className="set-label">{t('settings.accentColor', '強調顏色')}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        {ACCENT_OPTIONS.map(([key, color]) => (
+                                                            <Tooltip key={key} label={color.label}>
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label={color.label}
+                                                                    aria-pressed={accentColor === key}
+                                                                    onClick={() => setAccentColor(key)}
+                                                                    className={`set-swatch ${accentColor === key ? 'is-current' : ''}`}
+                                                                >
+                                                                    <span style={{ backgroundColor: color.hex }} />
+                                                                </button>
+                                                            </Tooltip>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section className="set-section">
+                                            <div className="set-header">{t('settings.advancedSection', '進階')}</div>
+                                            <div className="set-group">
+                                                <label className="set-row cursor-pointer">
+                                                    <span className="set-label">
+                                                        {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
+                                                        <span className="set-sub">{t('settings.ragDebugHint', '每次 AI 回覆下方顯示檢索文件、相似度與來源。')}</span>
+                                                    </span>
+                                                    <GlassSwitch checked={ragDebugMode} onChange={() => setRAGDebugMode(!ragDebugMode)} />
+                                                </label>
+                                                <label className="set-row cursor-pointer">
+                                                    <span className="set-label">
+                                                        {t('settings.demoModeToggle', '隱藏敏感資訊')}
+                                                        <span className="set-sub">{t('settings.demoModeHint', '對外展示時隱藏絕對路徑等敏感字串。')}</span>
+                                                    </span>
+                                                    <GlassSwitch checked={demoMode} onChange={() => setDemoMode(!demoMode)} />
+                                                </label>
+                                            </div>
+                                        </section>
+                                    </motion.div>
+                                )}
+
+                                {/* 語言（Apple：勾選清單） */}
+                                {activeSection === 'language' && (
+                                    <motion.div className="set-page" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.42 }}>
+                                        <h2 className="set-title">{t('settings.language')}</h2>
+                                        <section className="set-section">
+                                            <div className="set-group" role="radiogroup" aria-label={t('settings.language')}>
+                                                {languages.map((lang) => {
+                                                    const on = i18n.language === lang.code
+                                                    return (
+                                                        <button
+                                                            key={lang.code}
+                                                            type="button"
+                                                            role="radio"
+                                                            aria-checked={on}
+                                                            onClick={() => handleLanguageChange(lang.code)}
+                                                            className="set-row set-row-btn"
+                                                        >
+                                                            <span className="set-label">{lang.label}</span>
+                                                            {on && <Check className="w-[18px] h-[18px] text-accent" />}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </section>
+                                    </motion.div>
+                                )}
 
                             {/* 使用指南 */}
                             {activeSection === 'guide' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
+                                <motion.div initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.42 }} className="h-full flex-1 min-h-0 flex flex-col">
                                     <GuideSection />
                                 </motion.div>
                             )}
                             {activeSection === 'about' && (
-                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="h-full flex-1 min-h-0 flex flex-col">
+                                <motion.div initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.42 }} className="h-full flex-1 min-h-0 flex flex-col">
                                     <AboutSection />
                                 </motion.div>
                             )}
@@ -684,7 +562,7 @@ export default function SettingsModal() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         onClick={() => setShowPasswordForm(false)}
-                        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
+                        className="fixed inset-0 z-[60] bg-black/20 dark:bg-black/45 backdrop-blur-md"
                     />
                 )}
                 {showPasswordForm && (
@@ -696,166 +574,76 @@ export default function SettingsModal() {
                         transition={{ type:"spring", stiffness: 300, damping: 28 }}
                         className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
                     >
-                        {/* Card 內排版改為靈活設計：1:1 正方形 */}
-                        <div
-                            className="relative w-full max-w-[640px] paper !rounded-[38px] p-9 flex flex-col gap-6 transition-colors overflow-hidden pointer-events-auto"
-                        >
-                            {/* Close button */}
+                        {/* 修改密碼（Apple 表單：三個欄位一組清單，規則與強度放在組下說明，最下面一顆主要按鈕） */}
+                        <div className="relative w-full max-w-[460px] dialog-sheet flex flex-col pointer-events-auto">
                             <button
                                 onClick={() => setShowPasswordForm(false)}
-                                className="btn-icon !w-9 !h-9 absolute top-5 right-5 text-text-secondary"
+                                aria-label={t('common.close', '關閉')}
+                                className="btn-icon dialog-close absolute text-text-secondary"
                             >
                                 <CloseIcon />
                             </button>
 
-                            {/* Title */}
-                            <div>
-                                <h3 className="text-[22px] font-bold text-text-primary tracking-tight">
-                                    {t('auth.changePassword', '修改密碼')}
-                                </h3>
+                            <h3 className="dialog-title text-center">{t('auth.changePassword', '修改密碼')}</h3>
+
+                            <div className="set-group mt-5">
+                                <PwdRow label={t('settings.currentPassword')} value={currentPassword} onChange={(v) => { setCurrentPassword(v); setPasswordError('') }} />
+                                <PwdRow label={t('settings.newPassword')} value={newPassword} onChange={handleNewPasswordChange} />
+                                <PwdRow label={t('settings.confirmNewPassword')} value={confirmNewPassword} onChange={(v) => { setConfirmNewPassword(v); setPasswordError('') }} />
                             </div>
 
-                            {/* 左右分欄排版：密碼規則 + 輸入區域 */}
-                            <div className="flex gap-6">
-                                {/* 左側：密碼規則 */}
-                                <div className="flex-1 snow-well rounded-[20px] p-5 text-[13px] text-text-secondary space-y-2.5">
-                                    <p className="font-semibold text-text-primary text-[14px] mb-2">{t('settings.pwdRequirements')}</p>
-                                    {[
-                                        t('settings.pwdRuleLength'),
-                                        t('settings.pwdRuleUpper'),
-                                        t('settings.pwdRuleLower'),
-                                        t('settings.pwdRuleNumber'),
-                                        t('settings.pwdRuleSpecial'),
-                                    ].map((rule, i) => {
-                                        const passed = passwordStrength
-                                            ? !passwordStrength.errors.some(e => e === rule)
-                                            : null
-                                        return (
-                                            <div key={i} className={`flex items-center gap-1.5 transition-colors ${
-                                                passed === true ? 'text-green-600 ' :
-                                                passed === false ? 'text-red-500 ' : ''
-                                            }`}>
-                                                {passed === true ? (
-                                                    <Check className="w-3.5 h-3.5 shrink-0" />
-                                                ) : passed === false ? (
-                                                    <X className="w-3.5 h-3.5 shrink-0" />
-                                                ) : (
-                                                    <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">-</span>
-                                                )}
-                                                <span>{rule}</span>
-                                            </div>
-                                        )
-                                    })}
-
-                                    {/* 密碼強度評估：固定於左側底部 */}
-                                    <AnimatePresence>
-                                        {passwordStrength && (
-                                            <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                className="pt-3 mt-1 border-t border-[var(--paper-line)] /10 overflow-hidden"
-                                            >
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[11px] text-text-secondary">{t('settings.pwdStrengthLabel')}</span>
-                                                    <span className={`text-[11px] font-semibold ml-auto ${
-                                                        passwordStrength.level === 'very_strong' ? 'text-green-600 ' :
-                                                        passwordStrength.level === 'strong' ? 'text-light-accent ' :
-                                                        passwordStrength.level === 'medium' ? 'text-yellow-600 ' :
-                                                        'text-red-600 '
-                                                    }`}>
-                                                        {getStrengthLabel(passwordStrength.level)}
-                                                    </span>
-                                                </div>
-                                                <div className="h-2 bg-[var(--chip)] rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`}
-                                                        style={{ width: `${passwordStrength.score}%` }}
-                                                    />
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-
-                                {/* 右側：輸入欄位 */}
-                                <div className="flex-1 flex flex-col gap-4 justify-center">
-                                    {/* 目前密碼 */}
-                                    <PwdFloatingInput
-                                        label={t('settings.currentPassword')}
-                                        value={currentPassword}
-                                        onChange={v => { setCurrentPassword(v); setPasswordError('') }}
-                                    />
-
-                                    {/* 新密碼 */}
-                                    <PwdFloatingInput
-                                        label={t('settings.newPassword')}
-                                        value={newPassword}
-                                        onChange={handleNewPasswordChange}
-                                    />
-
-                                    {/* 確認新密碼 */}
-                                    <div>
-                                        <PwdFloatingInput
-                                            label={t('settings.confirmNewPassword')}
-                                            value={confirmNewPassword}
-                                            onChange={v => { setConfirmNewPassword(v); setPasswordError('') }}
-                                        />
-                                        <AnimatePresence>
-                                            {confirmNewPassword && newPassword !== confirmNewPassword && (
-                                                <motion.p
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="mt-1 pl-3 text-[11px] font-medium text-red-500 overflow-hidden"
-                                                >
-                                                    {t('settings.pwdMismatch')}                                                </motion.p>
-                                            )}
-                                        </AnimatePresence>
+                            {/* 組下說明：密碼規則（逐條打勾）＋強度 */}
+                            <div className="set-footer space-y-1.5">
+                                {[
+                                    t('settings.pwdRuleLength'),
+                                    t('settings.pwdRuleUpper'),
+                                    t('settings.pwdRuleLower'),
+                                    t('settings.pwdRuleNumber'),
+                                    t('settings.pwdRuleSpecial'),
+                                ].map((rule, i) => {
+                                    const passed = passwordStrength ? !passwordStrength.errors.some((e) => e === rule) : null
+                                    return (
+                                        <div key={i} className={`flex items-center gap-1.5 ${passed === true ? 'text-[#30d158]' : passed === false ? 'text-[var(--danger-ink,#ff4245)]' : ''}`}>
+                                            {passed === true ? <Check className="w-3.5 h-3.5 shrink-0" /> : passed === false ? <X className="w-3.5 h-3.5 shrink-0" /> : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">·</span>}
+                                            <span>{rule}</span>
+                                        </div>
+                                    )
+                                })}
+                                {passwordStrength && (
+                                    <div className="pt-2">
+                                        <div className="flex items-center mb-1">
+                                            <span>{t('settings.pwdStrengthLabel')}</span>
+                                            <span className="ml-auto font-semibold text-text-primary">{getStrengthLabel(passwordStrength.level)}</span>
+                                        </div>
+                                        <div className="h-1.5 bg-[var(--chip)] rounded-full overflow-hidden">
+                                            <div className={`h-full rounded-full transition-all duration-500 ${getStrengthColor(passwordStrength.level)}`} style={{ width: `${passwordStrength.score}%` }} />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+                                {confirmNewPassword && newPassword !== confirmNewPassword && (
+                                    <p className="pt-1 text-[var(--danger-ink,#ff4245)]">{t('settings.pwdMismatch')}</p>
+                                )}
                             </div>
 
-                            {/* 關閉按鈕 */}
-                            <AnimatePresence>
-                                {(passwordError || passwordSuccess) && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -8, height: 0 }}
-                                        animate={{ opacity: 1, y: 0, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                    >
-                                        {passwordError && (
-                                            <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-red-50 text-red-600 rounded-full text-[13px] font-medium border border-red-200">
-                                                <AlertTriangle className="w-4 h-4 shrink-0" />
-                                                {passwordError}
-                                            </div>
-                                        )}
-                                        {passwordSuccess && (
-                                            <div className="inline-flex items-center gap-2 px-4 py-2.5 w-full bg-green-50 text-green-600 rounded-full text-[13px] font-medium border border-green-200">
-                                                <Check className="w-4 h-4 shrink-0" />
-                                                {passwordSuccess}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {(passwordError || passwordSuccess) && (
+                                <div className={`mt-4 flex items-center gap-2 text-[13px] font-medium ${passwordError ? 'text-[var(--danger-ink,#ff4245)]' : 'text-[#30d158]'}`}>
+                                    {passwordError ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
+                                    {passwordError || passwordSuccess}
+                                </div>
+                            )}
 
-                            {/* 處理按鈕：使用與登入頁面相同的設計 */}
-                            <button
-                                onClick={handleChangePassword}
-                                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                                className="btn btn-lg btn-primary btn-block focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                            >
-                                {isChangingPassword ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        修改中...
-                                    </span>
-                                ) : t('auth.changePassword', '確認修改密碼')}
-                            </button>
+                            <div className="dialog-actions">
+                                <button onClick={() => setShowPasswordForm(false)} className="btn btn-lg btn-secondary">
+                                    {t('common.cancel', '取消')}
+                                </button>
+                                <button
+                                    onClick={handleChangePassword}
+                                    disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                                    className="btn btn-lg btn-primary"
+                                >
+                                    {isChangingPassword ? t('common.loading') : t('settings.pwdSubmit', '更改')}
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -865,56 +653,65 @@ export default function SettingsModal() {
     )
 }
 
-// ── 密碼輸入框：套用登入頁的 FloatingInput 樣式 ──
-interface PwdFloatingInputProps {
+// ── 密碼欄位（Apple 表單列：左標籤、右輸入、最右顯示／隱藏） ──
+interface PwdRowProps {
     label: string
     value: string
     onChange: (v: string) => void
 }
 
-function PwdFloatingInput({ label, value, onChange }: PwdFloatingInputProps) {
+function PwdRow({ label, value, onChange }: PwdRowProps) {
     const [visible, setVisible] = useState(false)
-    const isFilled = value.length > 0
     return (
-        <div className="relative w-full">
+        <label className="set-row cursor-text">
+            <span className="w-[96px] flex-none">{label}</span>
             <input
                 type={visible ? 'text' : 'password'}
                 value={value}
-                onChange={e => onChange(e.target.value)}
-                placeholder={label}
-                className={`peer w-full px-5 py-3.5 rounded-full bg-[var(--chip)] border border-transparent text-text-primary text-[15px] outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-transparent ${isFilled ? 'pr-12' : ''}`}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="必填"
+                aria-label={label}
+                className="flex-1 min-w-0 bg-transparent outline-none text-[15px] text-text-primary placeholder:text-text-muted"
             />
-            <label className={`absolute left-4 -translate-y-1/2 transition-all duration-300 pointer-events-none px-2 origin-left whitespace-nowrap
-                ${isFilled
-                    ? 'top-0 scale-[0.82] bg-transparent text-text-primary font-semibold py-0.5 rounded-full'
-                    : 'top-1/2 scale-100 bg-transparent text-text-secondary py-0'}
-                peer-focus:top-0 peer-focus:scale-[0.82] peer-focus:bg-transparent peer-focus:text-accent peer-focus:font-semibold peer-focus:py-0.5 peer-focus:rounded-full
-            `}>
-                {label}
-            </label>
-            <AnimatePresence>
-                {isFilled && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute right-4 inset-y-0 flex items-center"
-                    >
-                        <button
-                            type="button"
-                            tabIndex={-1}
-                            onClick={() => setVisible(v => !v)}
-                            className="p-1 text-text-muted  transition-colors"
-                        >
-                            {visible ? (
-                                <Eye className="w-4 h-4" />
-                            ) : (
-                                <EyeOff className="w-4 h-4" />
-                            )}
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+            {value.length > 0 && (
+                <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={visible ? '隱藏密碼' : '顯示密碼'}
+                    onClick={() => setVisible((v) => !v)}
+                    className="flex-none text-text-secondary"
+                >
+                    {visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+            )}
+        </label>
+    )
+}
+
+const APPEARANCE_MODES = ['light', 'dark', 'system'] as const
+
+// ── 外觀預覽圖（Apple 系統設定的迷你視窗）：淺色、深色、自動（左右各半） ──
+function AppearancePreview({ mode }: { mode: 'light' | 'dark' | 'system' }) {
+    const win = (dark: boolean) => {
+        const page = dark ? '#000000' : '#F2F2F7'
+        const card = dark ? '#1C1C1E' : '#FFFFFF'
+        return (
+            <span className="absolute inset-0 block" style={{ background: page }}>
+                {/* 側欄 */}
+                <span className="absolute left-[8%] top-[12%] bottom-[12%] w-[24%] rounded-[5px]" style={{ background: card }} />
+                {/* 內容卡 */}
+                <span className="absolute left-[36%] right-[8%] top-[12%] h-[34%] rounded-[5px]" style={{ background: card }} />
+                <span className="absolute left-[36%] right-[8%] top-[52%] bottom-[12%] rounded-[5px]" style={{ background: card }} />
+                {/* 強調色按鈕 */}
+                <span className="absolute left-[42%] top-[22%] w-[22%] h-[12%] rounded-full" style={{ background: 'rgb(var(--accent))' }} />
+            </span>
+        )
+    }
+    if (mode !== 'system') return win(mode === 'dark')
+    return (
+        <>
+            {win(false)}
+            <span className="absolute inset-0 block" style={{ clipPath: 'inset(0 0 0 50%)' }}>{win(true)}</span>
+        </>
     )
 }

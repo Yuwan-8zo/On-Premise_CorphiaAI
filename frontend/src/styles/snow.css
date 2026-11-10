@@ -25,20 +25,25 @@
   /* 動態曲線（iOS 抽屜／彈簧） */
   --ease-sp: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-io: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-io: var(--ease-out); /* 規範不用先加速的曲線 */
 
-  /* 材質：顏色取自 Corphia 墨色（43 39 34），不引入新色 */
-  --paper: rgb(var(--bg-elevated));
+  /* 材質（《Liquid Glass 元件規範》CSS 01、29–32）
+   *   卡片＝實色（--paper）；分隔線 0.5px（--paper-line）；小方塊底（--chip＝fill）
+   *   玻璃（控制元件）＝白 15%＋模糊 12；凹陷底盤（--well）＝黑 38%＋內凹陰影 */
+  --paper: rgb(var(--bg-surface));
   --paper-line: rgb(var(--border-subtle));
   --glass: rgba(255, 255, 255, 0.42);
   --glass-ctl: rgba(255, 255, 255, 0.58);
-  --glass-ctl-hover: rgba(120, 112, 100, 0.18);
-  --glass-shade: rgba(43, 39, 34, 0.18);
-  --well: rgba(43, 39, 34, 0.08);
+  --glass-ctl-hover: rgba(255, 255, 255, 0.58);
+  --glass-shade: rgba(0, 0, 0, 0.12);
+  --well: rgba(0, 0, 0, 0.08);
+  --well-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
   --rim-hi: rgba(255, 255, 255, 0.8);
-  --chip: rgba(43, 39, 34, 0.06);
-  --shadow-paper: 0 1px 2px rgba(43, 39, 34, 0.05), 0 20px 44px -30px rgba(43, 39, 34, 0.28);
+  --chip: rgba(118, 118, 128, 0.12);
+  --shadow-paper: 0 24px 50px -30px var(--glass-shade);
   --shadow-float: 0 16px 36px -14px var(--glass-shade);
+  /* 光邊顏色依「玻璃後面的背景」推算：浮在頁面上用頁面底色，卡片裡用卡片色 */
+  --glass-bg: rgb(var(--bg-base));
   /* 輸入欄位：實色底（比白紙深一階），浮動標籤的遮色片也用它 */
   --field: rgb(243 241 237);
   --field-line: rgba(43, 39, 34, 0.1);
@@ -47,14 +52,14 @@
 html.dark {
   --paper: rgb(var(--bg-surface));
   --glass: rgba(255, 255, 255, 0.1);
-  --glass-ctl: rgba(255, 255, 255, 0.14);
-  --glass-ctl-hover: rgba(255, 255, 255, 0.18);
+  --glass-ctl: rgba(255, 255, 255, 0.15);
+  --glass-ctl-hover: rgba(255, 255, 255, 0.15);
   --glass-shade: rgba(0, 0, 0, 0.45);
   --well: rgba(0, 0, 0, 0.38);
-  --rim-hi: rgba(255, 255, 255, 0.4);
-  --chip: rgba(255, 255, 255, 0.08);
-  --shadow-paper: 0 1px 2px rgba(0, 0, 0, 0.25), 0 24px 50px -30px rgba(0, 0, 0, 0.6);
-  --field: rgb(54 54 57);
+  --well-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
+  --rim-hi: rgba(255, 255, 255, 0.28);
+  --chip: rgba(190, 202, 219, 0.1);
+  --field: rgb(44 44 46);
   --field-line: rgba(255, 255, 255, 0.1);
 }
 
@@ -75,26 +80,6 @@ select {
   border: 1px solid var(--paper-line);
   border-radius: var(--r-card);
   box-shadow: var(--shadow-paper);
-}
-
-.paper-pad {
-  padding: var(--pad-card);
-}
-
-/* 區段標題：卡片裡的「六天總覽」那一級 */
-.section-title {
-  font-size: 18px;
-  line-height: 26px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: rgb(var(--text-primary));
-}
-
-/* ---------- 玻璃材質 ---------- */
-.glass-ctl {
-  background: var(--glass-ctl);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 /* ---------- 按鈕：直接照「北海道雪見六日」HTML 的 Dock／.rb 規格 ----------
@@ -159,11 +144,10 @@ html.dark {
 
 /* 主要：實心品牌色 */
 .btn-primary {
-  background: rgb(var(--accent));
+  background: var(--accent-fill);
   color: var(--text-on-accent, #fff);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
 }
-
 
 /* 次要：HTML 的玻璃材質（glass-ctl＋模糊 12＋亮邊） */
 .btn-secondary {
@@ -173,7 +157,6 @@ html.dark {
   backdrop-filter: blur(12px);
   box-shadow: var(--rim-glass);
 }
-
 
 .btn-danger {
   background: var(--glass-ctl);
@@ -216,17 +199,15 @@ html.dark .btn-danger {
     color 0.26s var(--ease-out);
 }
 
-/* 圖示：50 的按鈕配 27px（約 54%），線寬 1.6 */
+/* 圖示：50 的按鈕配 27px（約 54%，規範：選單與換頁鈕 27×27、線條 1.6） */
 .btn-icon > svg {
   width: 54%;
   height: 54%;
-  stroke-width: 1.6;
 }
 
-
-
+/* 規範：圓形玻璃按鈕按下縮到 0.92（一般按鈕 0.97） */
 .btn-icon:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.92);
 }
 
 .btn-icon:disabled {
@@ -237,7 +218,6 @@ html.dark .btn-danger {
 .btn-icon.is-current {
   color: rgb(var(--accent));
 }
-
 
 /* 不要玻璃底的圖示鈕（只剩懸停圓盤） */
 .btn-icon-plain {
@@ -268,12 +248,6 @@ html.dark .btn-danger {
   box-shadow: none;
 }
 
-/* 舊用法相容：.is-current 用在非圖示元素時，也給凹陷底盤 */
-.is-current:not(.btn-icon) {
-  background: var(--well);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
-}
-
 /* 提示泡泡（HTML 的 .tip）：高 28、圓角 14、玻璃底、13px 粗體 */
 .snow-tip {
   height: 28px;
@@ -286,37 +260,18 @@ html.dark .btn-danger {
   line-height: 18px;
   font-weight: 600;
   color: rgb(var(--text-primary));
+  /* 照範本 .tip：玻璃色底＋光邊、不模糊 */
   background: var(--glass-ctl);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow: var(--rim-glass);
-}
-
-/* 分段切換的滑塊（HTML 的 .bs-knob）：白色、圓角＝高度一半、極淡陰影 */
-.snow-knob {
-  background: #fff;
-  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
-  border: 0 !important;
-}
-
-html.dark .snow-knob {
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.28);
 }
 
 /* ---------- 對話框（Apple Alert） ---------- */
 .dialog-sheet {
   border-radius: calc(var(--btn-h-lg) / 2 + var(--dialog-pad));
   padding: calc(var(--dialog-pad) + 10px) var(--dialog-pad) var(--dialog-pad);
-  background: rgb(var(--bg-elevated) / 0.86);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
   box-shadow: var(--shadow-float);
-  border: 1px solid var(--paper-line);
-}
-
-html.dark .dialog-sheet {
-  background: rgb(var(--bg-elevated) / 0.82);
 }
 
 .dialog-title {
@@ -341,54 +296,6 @@ html.dark .dialog-sheet {
   grid-auto-columns: 1fr;
   gap: 10px;
   margin-top: 22px;
-}
-
-/* ---------- 列表列（圖示方塊＋標題＋小字＋箭頭） ---------- */
-.snow-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 0;
-}
-
-/* 列與列之間的細線：從圖示右側開始（HTML：left 52px） */
-.snow-row + .snow-row::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 50px;
-  height: 0.5px;
-  background: var(--paper-line);
-}
-
-/* 可點的列：左右各外推 12px，懸停／按下時整列浮出圓角淡底 */
-button.snow-row,
-a.snow-row {
-  margin: 0 -12px;
-  padding: 12px;
-  width: calc(100% + 24px) !important;
-  border-radius: 16px;
-  transition: background-color 0.2s var(--ease-out);
-}
-
-button.snow-row + button.snow-row::before,
-a.snow-row + a.snow-row::before {
-  left: 62px;
-  right: 12px;
-}
-
-@media (hover: hover) {
-  button.snow-row:hover,
-  a.snow-row:hover {
-    background-color: color-mix(in srgb, var(--chip) 60%, transparent);
-  }
-}
-
-button.snow-row:active,
-a.snow-row:active {
-  background-color: var(--chip);
 }
 
 .snow-row-icon {
@@ -429,70 +336,42 @@ a.snow-row:active {
   backdrop-filter: none;
 }
 
-
 /* ---------- 分段切換（GlassSegmented）：照範本拉桿旋鈕 .bs-knob ----------
  * 靜止：白色滑塊＋極淡陰影；按住：放大（約 1.12×1.3，略微溢出軌道）、變玻璃、亮邊浮出
  * 位移與放大分開：translateX 跟手指（拖動時由程式每幀更新、不加過渡），scale 用 0.32s 抽屜曲線 */
 .seg-track {
-  background: var(--chip);
   cursor: pointer;
-}
-
-.seg-knob {
-  position: absolute;
-  z-index: 1;
-  border-radius: 9999px;
-  background: #fff;
-  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
-  /* 位置與尺寸由 GlassSegmented 每幀繪製（範本 drawLens），這裡只過場顏色 */
-  transition:
-    background-color 0.32s var(--ease-sp),
-    box-shadow 0.32s var(--ease-sp);
-}
-
-html.dark .seg-knob {
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.28);
-}
-
-
-.seg-knob.is-pressed {
-  background: var(--glass-ctl);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--rim-glass), 0 8px 20px -10px var(--glass-shade);
-}
-
-html.dark .seg-knob.is-pressed {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .seg-knob {
-    transition: none;
-  }
 }
 
 /* 使用者要求：滑鼠懸停時按鈕不變色（底色、圖示、文字都維持原樣），只保留按下的縮放 */
 
-/* ---------- 圖示：照範本 .ic（24 格、線條不填色、圓頭圓角、線寬 1.8） ----------
- * 用 :where() 讓這條規則權重為 0：按鈕裡的 1.6（.btn-icon）等更具體的規則會蓋過它；
- * 但仍會蓋過內嵌 SVG 上的 stroke-width 屬性，全站線條粗細一致。轉圈的讀取圖示不套用。 */
-:where(svg[stroke='currentColor']:not(.animate-spin)) :where(path, line, polyline, polygon, circle, rect, ellipse) {
+/* ---------- 圖示（規範 CSS 39）：全站 Ionicons 線條款；線寬用 --ion-sw（512 格單位） ----------
+ *   內容圖示 1.8（＝38.4／512）、選單與圖示鈕 1.6（＝34.1）；線頭與轉角都是圓的 */
+.ic {
+  --ion-sw: 38.4;
+}
+:is(.btn-icon, .btn-group, .menu-item, .nav-item) .ic {
+  --ion-sw: 34.1;
+}
+/* 視覺置中（規範 CSS 42）：箭頭往尖端推 1、實心三角形（播放）往尖端推 2；對稱圖示不調 */
+.ic-ChevronRight,
+.ic-ArrowRight {
+  translate: 1px 0;
+}
+.ic-ChevronLeft,
+.ic-ArrowLeft {
+  translate: -1px 0;
+}
+.ic-Play {
+  translate: 2px 0;
+}
+
+/* 其他內嵌的 24 格 SVG（非圖示庫）：線寬 1.8、圓頭圓角 */
+:where(svg[viewBox='0 0 24 24'][stroke='currentColor']:not(.animate-spin)) :where(path, line, polyline, polygon, circle, rect, ellipse) {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
-:where(.btn-icon) :where(svg[stroke='currentColor']) :where(path, line, polyline, polygon, circle, rect, ellipse) {
-  stroke-width: 1.6;
-}
-
-/* 三點選單的點要粗才看得見（範本用 .01 線段＋圓頭畫點） */
-.ic-MoreHorizontal path {
-  stroke-width: 3.2 !important;
-}
-
 
 /* ════════════════════════════════════════════════════════════════
  * Liquid Glass 光邊 —— 直接照範本第 26 區（依系統按鈕逐點實測）
@@ -502,8 +381,7 @@ html.dark .seg-knob.is-pressed {
  * 顏色換成 Corphia：淺色紙＝白 → 亮線近白；深色紙（40,40,42）提亮到 L0.6 ≈ 中灰
  * ════════════════════════════════════════════════════════════════ */
 :root {
-  --rimC: #f7f6f3;
-  --rim-out: rgba(43, 39, 34, 0.16);
+  --rim-out: rgba(0, 0, 0, 0.16);
 }
 
 /* 玻璃卡片裡的小膠囊（浮動標籤）：卡片內模糊無效，改用比卡片亮一階的實底 */
@@ -515,7 +393,6 @@ html.dark {
 }
 
 html.dark {
-  --rimC: #86837f;
   --rim-out: rgba(0, 0, 0, 0.6);
 }
 
@@ -526,9 +403,10 @@ html.dark {
 .snow-tip,
 .glass-chip,
 .glass-field,
-.seg-track,
-.seg-knob.is-pressed {
+.seg-rim {
   --R: 25px;
+  /* 規範 CSS 12：亮度 min(0.97, 背景亮度＋0.35)、彩度×(1.4−背景亮度)、色相不變 */
+  --rimC: oklch(from var(--glass-bg) min(0.97, calc(l + 0.35)) calc(c * (1.4 - l)) h);
   --rimD: linear-gradient(180deg, transparent 0, transparent calc(var(--R) * 0.45), var(--rim-out) calc(var(--R) * 0.8), var(--rim-out) calc(100% - var(--R) * 0.8), transparent calc(100% - var(--R) * 0.45), transparent 100%);
   --rimA: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) calc(var(--R) * 0.13), rgba(0, 0, 0, 0.25) calc(var(--R) * 0.3), rgba(0, 0, 0, 0.1) calc(var(--R) * 0.5), transparent calc(var(--R) * 0.75), transparent calc(100% - var(--R) * 0.75), rgba(0, 0, 0, 0.1) calc(100% - var(--R) * 0.5), rgba(0, 0, 0, 0.25) calc(100% - var(--R) * 0.3), rgba(0, 0, 0, 0.45) calc(100% - var(--R) * 0.13), #000 100%);
   --glowA: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.38) 0.35px, rgba(0, 0, 0, 0.24) 1px, rgba(0, 0, 0, 0.13) 2px, rgba(0, 0, 0, 0.07) 3px, transparent 5px, transparent calc(100% - 5px), rgba(0, 0, 0, 0.07) calc(100% - 3px), rgba(0, 0, 0, 0.13) calc(100% - 2px), rgba(0, 0, 0, 0.24) calc(100% - 1px), rgba(0, 0, 0, 0.38) calc(100% - 0.35px), rgba(0, 0, 0, 0.55) 100%);
@@ -552,10 +430,8 @@ html.dark {
 
 .snow-tip {
   --R: 14px;
-}
-
-.seg-knob.is-pressed {
-  --R: 22px;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 /* 亮線＋內光暈 */
@@ -566,8 +442,7 @@ html.dark {
 .snow-tip::before,
 .glass-chip::before,
 .glass-field::before,
-.seg-track::before,
-.seg-knob.is-pressed::before {
+.seg-rim::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -589,8 +464,7 @@ html.dark {
 .snow-tip::after,
 .glass-chip::after,
 .glass-field::after,
-.seg-track::after,
-.seg-knob.is-pressed::after {
+.seg-rim::after {
   content: '';
   display: block;
   position: absolute;
@@ -644,62 +518,58 @@ html.dark {
 .glass-field {
   --R: 25px;
   background: var(--glass-ctl);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 0;
   border-radius: 25px;
 }
 
 /* 分段切換軌道：玻璃膠囊（範本 .grp 同材質），高度約 46 → 圓角 23 */
 .seg-track {
-  --R: 23px;
-  background: var(--glass-ctl);
+  background: transparent;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
 /* 光邊要在內容上面、但不擋點擊；軌道裡的滑塊／按鈕維持原本層次 */
 .glass-field > :not(.absolute, .fixed),
-.seg-track > :not(.absolute, .fixed, .seg-knob) {
+.seg-track > :not(.absolute, .fixed) {
   position: relative;
 }
-.seg-track > .seg-knob {
-  position: absolute;
-}
 
-/* 玻璃放在白紙卡片裡（側邊欄、登入卡）時，白玻璃會跟紙同色：軌道改用淡墨色，光邊照常 */
-.paper .seg-track {
-  background: var(--chip);
+/* 淺色模式：白玻璃放在白卡片裡會看不見，改用淡墨色（光邊照常）；深色模式照範本維持玻璃色 */
+html:not(.dark) .paper .seg-track {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
-
 /* ════════════════════════════════════════════════════════════════
- * 全系統液態玻璃：卡片、側邊欄、選單、對話框、後台面板（原本的 .paper 紙張）
- * 半透明＋模糊 24＋飽和 180%，邊緣用範本第 26 區光邊（亮線＋內光暈＋左右暗線），不再用實線邊框
+ * 全系統 Liquid Glass（使用者 2026-11-11 決定：卡片、側欄、對話框、後台面板也全部玻璃，不用平面實色）
+ *   半透明＋背景模糊 24（不加飽和度）；邊緣用規範的三層光邊（亮線＋內光暈＋左右暗線），不用實線邊框
+ *   下拉選單等會蓋在內容上的浮層另用 .paper-solid（不透明）
  * ════════════════════════════════════════════════════════════════ */
 :root {
-  --glass-card: rgba(255, 255, 255, 0.62);
+  /* 卡片：九成二不透明（保留玻璃材質與光邊，後面的波浪不會透上來）；深色由 App.tsx 依主題色調一點點色調 */
+  --glass-card: rgba(255, 255, 255, 0.92);
 }
-
 html.dark {
-  --glass-card: rgba(52, 52, 55, 0.55);
+  --glass-card: rgba(34, 34, 37, 0.92);
 }
 
 .paper,
 .dialog-sheet {
   --R: 25px;
+  --rimC: oklch(from var(--glass-bg) min(0.97, calc(l + 0.35)) calc(c * (1.4 - l)) h);
   --rimD: linear-gradient(180deg, transparent 0, transparent calc(var(--R) * 0.45), var(--rim-out) calc(var(--R) * 0.8), var(--rim-out) calc(100% - var(--R) * 0.8), transparent calc(100% - var(--R) * 0.45), transparent 100%);
   --rimA: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) calc(var(--R) * 0.13), rgba(0, 0, 0, 0.25) calc(var(--R) * 0.3), rgba(0, 0, 0, 0.1) calc(var(--R) * 0.5), transparent calc(var(--R) * 0.75), transparent calc(100% - var(--R) * 0.75), rgba(0, 0, 0, 0.1) calc(100% - var(--R) * 0.5), rgba(0, 0, 0, 0.25) calc(100% - var(--R) * 0.3), rgba(0, 0, 0, 0.45) calc(100% - var(--R) * 0.13), #000 100%);
   --glowA: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.38) 0.35px, rgba(0, 0, 0, 0.24) 1px, rgba(0, 0, 0, 0.13) 2px, rgba(0, 0, 0, 0.07) 3px, transparent 5px, transparent calc(100% - 5px), rgba(0, 0, 0, 0.07) calc(100% - 3px), rgba(0, 0, 0, 0.13) calc(100% - 2px), rgba(0, 0, 0, 0.24) calc(100% - 1px), rgba(0, 0, 0, 0.38) calc(100% - 0.35px), rgba(0, 0, 0, 0.55) 100%);
   background: var(--glass-card);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   border: 0;
-  box-shadow: 0 20px 44px -28px var(--glass-shade);
+  box-shadow: var(--shadow-paper);
 }
-
+/* 亮線＋內光暈 */
 .paper::before,
 .dialog-sheet::before {
   content: '';
@@ -714,7 +584,7 @@ html.dark {
   -webkit-mask-composite: source-over, source-in, xor;
   mask: var(--glowA) add, var(--rimA) intersect, linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-
+/* 左右兩側外面的細暗線 */
 .paper::after,
 .dialog-sheet::after {
   content: '';
@@ -732,7 +602,7 @@ html.dark {
 }
 
 /* 玻璃卡片裡的輸入欄位、分段軌道維持淡墨色（見上方），不疊第二層模糊 */
-.paper .glass-field {
+html:not(.dark) .paper .glass-field {
   background: var(--chip);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -753,8 +623,8 @@ html.dark {
 .glass-chip {
   --R: 18px;
   background: var(--glass-ctl);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 0 !important;
 }
 
@@ -779,11 +649,1276 @@ html.dark {
 
 /* 40 高的按鈕群（和後台返回鈕同尺寸）：內含 36 的按鈕、內距 2、圓角 20（同心） */
 /* 小號群組：外高 36（與後台「回上一頁」同大小），內距 2 → 內鈕 32、圓角 16 */
+/* 頂部列的膠囊：高 40（按鈕 36＋內距 2），圓角 20，和右邊 40 的選單鈕一樣高 */
 .btn-group.btn-group-36 {
-  --R: 18px;
-  border-radius: 18px;
+  --R: 20px;
+  border-radius: 20px;
 }
 .btn-group.btn-group-36 .btn-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* 深色模式：品牌色（古銅）直接當文字太暗，對比不到 3。只在「文字」用途提亮（混 40% 白），底色、按鈕不變 */
+html.dark .text-accent,
+html.dark .\!text-accent {
+  color: color-mix(in srgb, rgb(var(--accent)) 60%, #fff) !important;
+}
+html.dark .text-red-500 {
+  color: rgb(252 165 165);
+}
+
+/* 寫在元件 style 裡的品牌色／錯誤色文字，用變數取得深色提亮版本 */
+:root {
+  --accent-ink: rgb(var(--accent));
+  --danger-ink: #ef4444;
+}
+html.dark {
+  --accent-ink: color-mix(in srgb, rgb(var(--accent)) 60%, #fff);
+  --danger-ink: #fca5a5;
+}
+
+/* 範本玻璃：只模糊、不加飽和度（飽和度會放大邊緣光暈） */
+
+/* ---------- 放大鏡共用參數（《Liquid Glass 元件規範》CSS 35 --lens-*）---------- */
+:root {
+  --lens-sx: 0.93;   /* 鏡內的底：沿長邊縮放 */
+  --lens-sy: 0.768;  /* 鏡內的底：垂直長邊縮放（凹進去、上下露出底面） */
+  --lens-grow: 0.12s;
+  --lens-grow-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --lens-shrink: 0.28s;
+  --lens-veil-out: 0.1s;
+  --lens-veil-in: 0.12s;
+  --lens-veil-wait: 0.03s;
+  --lens-edge: rgba(255, 255, 255, 0.42);
+  --lens-ring: 0 0 0 1px rgba(0, 0, 0, 0.32), 0 3px 8px rgba(0, 0, 0, 0.2);
+  --lens-ring-knob: 0 0 0 1px rgba(0, 0, 0, 0.42), 0 3px 8px rgba(0, 0, 0, 0.2);
+  /* 鏡片的玻璃：底面亮 9%，兩端往邊緣漸暗（橫的／直的） */
+  --lens-glass: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
+  --lens-glass-v: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
+  /* 亮邊只在長邊兩緣 */
+  --lens-dish: inset 0 1.1px 0.6px -0.3px var(--lens-edge), inset 0 -1.1px 0.6px -0.3px var(--lens-edge);
+}
+
+/* ---------- 選單放大鏡：規範的鏡片材質（不模糊、底面亮 9%、亮邊只在長邊、外圈細線＋淡陰影）；
+ * 0.12 秒長大（先快後慢）、淡入從 0.95 開始 ---------- */
+.menu-lens {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  scale: 0.95;
+  background: var(--lens-glass);
+  box-shadow: var(--lens-dish), var(--lens-ring);
+  transition:
+    opacity var(--lens-grow) var(--lens-grow-ease),
+    scale var(--lens-grow) var(--lens-grow-ease);
+}
+.menu-lens.on {
+  opacity: 1;
+  scale: 1;
+}
+/* 放開：放大鏡留在原地 0.3 秒淡出並縮到 0.95（規範：右下選單「放開」） */
+.menu-lens:not(.on) {
+  transition:
+    opacity 0.3s var(--ease-out),
+    scale 0.3s var(--ease-out);
+}
+/* 放大鏡內的項目：強調色、不畫底盤、無動畫（範本 .lens .menu a） */
+.menu-lens * {
+  color: var(--accent-ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+.menu-lens *::before,
+.menu-lens *::after {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * 通用：選單項目／側欄導覽項目（全站選單共用，不要在元件裡另寫一長串樣式）
+ *   .menu-item   彈出選單的一列：膠囊、圖示 18、按下淡底＋0.98；
+ *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，品牌色實底）
+ *   .menu-sep    選單分隔線
+ *   .nav-item    側欄導覽的一列：膠囊；目前頁面加 .is-current（淡底＋粗體，圖示用品牌色）
+ * 選單容器一律用 .paper，內容包在 <LensMenu>（長按放大鏡）
+ * ════════════════════════════════════════════════════════════════ */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 9999px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: rgb(var(--text-primary));
+  transition:
+    transform 0.17s var(--ease-out),
+    background-color 0.17s var(--ease-out);
+}
+.menu-item > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.menu-item:active {
+  background: var(--chip);
+  transform: scale(0.98);
+}
+.menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.menu-item.is-danger {
+  color: #ff4245;
+}
+.menu-item.is-success {
+  color: rgb(5 150 105);
+}
+html.dark .menu-item.is-success {
+  color: rgb(52 211 153);
+}
+.menu-item.is-selected {
+  background: rgb(var(--accent));
+  color: var(--text-on-accent, #fff);
+  font-weight: 600;
+}
+.menu-sep {
+  margin: 4px 10px;
+  border-top: 1px solid var(--paper-line);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 9999px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgb(var(--text-secondary));
+  transition: transform 0.15s var(--ease-out);
+}
+.nav-item:active {
+  transform: scale(0.98);
+}
+.nav-item.is-current {
+  /* 規範：目前項目＝凹陷底盤＋強調色（圖示與文字） */
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.nav-item.is-current > :first-child {
+  color: var(--accent-ink);
+}
+
+/* 放大鏡出現時，手指一開始按住的那一項不維持「按下中」的底色與縮放 */
+.lens-on :is(.menu-item, .nav-item, button):active {
+  background: transparent;
+  transform: none;
+}
+
+/* 通用：只在桌機（lg 以上）顯示卡片外框；手機版拿掉外框，避免「卡片裡又一層膠囊」的雙層框 */
+@media (max-width: 1023.98px) {
+  .paper.paper-lg {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .paper.paper-lg::before,
+  .paper.paper-lg::after {
+    display: none;
+  }
+}
+
+/* 放大鏡出現時（範本 .grp.wide）：不顯示目前項目的底盤、目前項目文字改回墨色；只有放大鏡裡那份用強調色。
+ * 規則只作用在真選單（LensMenu 的第一層），放大鏡裡的複本不受影響 */
+.lens-on > :first-child :is(.is-current, .is-selected) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.lens-on > :first-child :is(.is-current, .is-selected),
+.lens-on > :first-child :is(.is-current, .is-selected) * {
+  color: rgb(var(--text-primary)) !important;
+  font-weight: 500;
+}
+.lens-on > :first-child [data-lens-plate] {
+  opacity: 0 !important; /* 底盤位置寫在行內樣式，需 !important 才蓋得過 */
+}
+
+/* 選取底盤（LensMenu plate）：跟著目前項目滑動；有底盤時項目本身不再畫底色 */
+.lens-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  border-radius: 9999px;
+  transition:
+    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    width 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    height 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.has-plate .is-current {
+  background: transparent;
+  box-shadow: none;
+}
+.has-plate > :not(.lens-plate) {
+  position: relative;
+  z-index: 1;
+}
+/* 用放大鏡選取：放開後底盤直接出現在新位置（不從舊位置滑過來），與放大鏡淡出同步 */
+.lens-out > :first-child .lens-plate {
+  transition: none !important;
+}
+
+/* 通用：不透明浮層（下拉選單等會蓋在內容上、透出來會干擾閱讀的浮層）——97% 實底、不模糊，光邊與陰影照常 */
+:root {
+  --paper-solid: var(--paper);
+}
+html.dark {
+  --paper-solid: var(--paper);
+}
+.paper.paper-solid {
+  background: var(--paper-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* 選單裡的「目前選取」（下拉選單的已選值）：強調色字＋粗體，搭配右側勾號 */
+.menu-item.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/* ---------- 標籤膠囊（規範「標籤膠囊」）：高 24、圓角 12、12/16、不換行、平面無光邊 ----------
+ * 語意色＝「語意色 30% 的底＋主要文字色」（小字直接用語意色在深色底上對比不足）
+ *   .tag（一般：小方塊底）/ .tag-accent（強調）/ .tag-green（完成）/ .tag-orange（注意）/ .tag-red（警示） */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--chip);
+  color: rgb(var(--text-primary));
+}
+.tag-accent { background: color-mix(in srgb, rgb(var(--accent)) 30%, transparent); }
+.tag-green { background: color-mix(in srgb, #30d158 30%, transparent); }
+.tag-orange { background: color-mix(in srgb, #ff9230 30%, transparent); }
+.tag-red { background: color-mix(in srgb, #ff4245 34%, transparent); }
+
+/* 提示泡泡進場：縮放滑入（規範：不用整體透明度淡入），0.2 秒減速 */
+@keyframes tipIn {
+  from { transform: scale(0.95) translateY(2px); }
+  to { transform: none; }
+}
+.snow-tip[role='tooltip'] {
+  animation: tipIn 0.2s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .snow-tip[role='tooltip'] { animation: none; }
+}
+
+/* 強調色實底＋白字（主要按鈕、新對話、送出、頭像）：強調色加深 18%，白字對比 ≥ 4.5（規範：文字對比至少 4.5:1）。
+ * 強調色本身（文字、圖示、選取）不變 */
+:root {
+  --accent-fill: color-mix(in srgb, rgb(var(--accent)) 82%, #000);
+}
+.bg-accent-fill {
+  background-color: var(--accent-fill) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * 凹進去的放大鏡（規範 CSS 35：分段切換器、側欄、切換開關共用；程式在 components/ui/lensKit.ts）
+ *   底（軌道／列）：顏色畫在裡面一層，放大鏡底下挖洞
+ *   .lens          放大鏡本身；平常只顯示最上層的 .lens-veil（凹陷底盤／白色旋鈕），作用中加 .is-active
+ *   .lens-ink      鏡內：縮小的底（.lens-bar）＋肩（.lens-wall），同一個容器、同一個顏色（--lens-ink-c × --lens-ink-a）
+ *   .lens-dish     亮邊，只在長邊兩緣
+ * 規則：鏡內和鏡外的底永遠同一個顏色；鏡片不補實色，只有 --lens-glass（底面亮 9%、兩端漸暗）
+ * ════════════════════════════════════════════════════════════════ */
+.lens {
+  pointer-events: none;
+  overflow: hidden;
+}
+.lens.is-active {
+  background: var(--lens-glass);
+  box-shadow: var(--lens-ring);
+}
+.lens-ink {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  opacity: var(--lens-ink-a);
+}
+.lens-bar {
+  position: absolute;
+  background: var(--lens-ink-c);
+}
+.lens-wall {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  -webkit-mask: var(--lens-wall-mask) center / 100% 100% no-repeat;
+  mask: var(--lens-wall-mask) center / 100% 100% no-repeat;
+}
+.lens-wall > i {
+  position: absolute;
+  inset: 0;
+  background: var(--lens-ink-c);
+  transition: opacity 0.1s linear;
+}
+.lens-wall > i.l {
+  clip-path: inset(0 50% 0 0);
+}
+.lens-wall > i.r {
+  clip-path: inset(0 0 0 50%);
+}
+.lens-dish {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: var(--lens-dish);
+}
+.lens-veil {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* 直的放大鏡（規範「右下選單」）：兩端漸暗改成上下、亮邊在左右兩條長邊 */
+.lens.is-v.is-active {
+  background: var(--lens-glass-v);
+}
+.lens.is-v .lens-dish {
+  box-shadow: inset 1.1px 0 0.6px -0.3px var(--lens-edge), inset -1.1px 0 0.6px -0.3px var(--lens-edge);
+}
+/* 分段切換器：鏡內只用頁面上已經有的兩種顏色——
+ *   縮小的軌道＝和鏡外軌道同一個填色（--seg-fill，不透明度 1）；上下兩條底面＝直接透出軌道後面的顏色（不另外加亮、兩端不漸暗）
+ *   規範的「白 9%＋白 6.6%」只在軌道放在單色舞台上才會跟背景一致；放在玻璃卡片上會多出第三種顏色，所以改成直接用同色 */
+.seg-track .lens.is-active {
+  background: none;
+}
+/* 鏡內的底照規範的畫法：不透明的顏色＋容器透明度（縮小的軌道和肩疊在一起也不會變濃），數值＝軌道填色 */
+.seg-track {
+  --lens-ink-c: #fff !important;
+  --lens-ink-a: 0.15 !important; /* ＝ --glass-ctl 深色的白 15% */
+}
+html:not(.dark) .seg-track {
+  --lens-ink-c: #fff !important;
+  --lens-ink-a: 0.58 !important; /* ＝ --glass-ctl 淺色的白 58% */
+}
+html:not(.dark) .paper .seg-track {
+  --lens-ink-c: rgb(118, 118, 128) !important;
+  --lens-ink-a: 0.12 !important; /* ＝ --chip */
+}
+/* 軌道的背景模糊也搬到內層（.seg-blur），在鏡片底下一起挖洞：底面才會和軌道外面完全同色 */
+.seg-track {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.seg-blur {
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+/* 卡片本身已經是玻璃（有模糊）：卡片裡的軌道不再疊第二層模糊，軌道才是「卡片色＋填色」，和鏡內一致 */
+.paper .seg-blur {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* 分段切換器、側欄：平常的樣子＝凹陷底盤 */
+.seg-veil {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+}
+
+/* ---------- 分段切換器（規範 CSS 26／35）----------
+ * 軌道的玻璃分三層：背景模糊（軌道本身，不挖洞）、底色（.seg-bgf，挖洞）、光邊（.seg-rim，挖洞）
+ * 鏡內的底：深色＝白 6.6%（疊上鏡片的 9% 剛好等於軌道的 15%）；淺色＝軌道同色 */
+.seg-track {
+  --seg-fill: var(--glass-ctl);
+  --lens-ink-c: #fff;
+  --lens-ink-a: 0.066;
+}
+html:not(.dark) .paper .seg-track {
+  --seg-fill: var(--chip);
+}
+html:not(.dark) .seg-track {
+  --lens-ink-c: var(--seg-fill);
+  --lens-ink-a: 1;
+}
+.seg-bgf {
+  inset: 0;
+  pointer-events: none;
+}
+/* 底色畫在 ::before：有圓角又有底色的元素挖洞時，圓角的反鋸齒會在洞裡留下一道弧線 */
+.seg-bgf::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--seg-fill);
+}
+/* 光邊四周多留 1px：光邊有半個像素畫在軌道外面，不多留會被挖洞的遮罩切掉 */
+.seg-rim {
+  inset: -1px;
+  border-radius: 9999px;
+  pointer-events: none;
+  --R: 23px;
+}
+.seg-rim::before {
+  inset: 1px;
+}
+.seg-rim::after {
+  inset: 0.5px;
+}
+
+/* ---------- 玻璃切換開關（規範：玻璃切換開關、CSS 32／35）----------
+ * 軌道：開＝綠 #30D158、關＝主要文字色 20%；鏡外的軌道、鏡內縮小的軌道、肩全部同一種畫法、同一段 0.4 秒變色
+ * 平常的樣子＝白色旋鈕（.sw-veil）；作用中外圈 --lens-ring-knob */
+@property --sw-a {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.2;
+}
+.glass-switch {
+  --sw-solid: rgb(var(--text-primary));
+  --sw-a: 0.2;
+  --lens-ink-c: var(--sw-solid);
+  --lens-ink-a: var(--sw-a);
+  transition: --sw-a 0.4s linear;
+}
+.glass-switch.is-on {
+  --sw-solid: #30d158;
+  --sw-a: 1;
+}
+.glass-switch-track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: var(--sw-solid);
+  opacity: var(--sw-a);
+  transition: background-color 0.4s linear;
+}
+.glass-switch .lens-bar,
+.glass-switch .lens-wall > i {
+  transition: background-color 0.4s linear, opacity 0.1s linear;
+}
+.glass-switch .lens.is-active {
+  box-shadow: var(--lens-ring-knob);
+}
+.sw-veil {
+  background: #fff;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
+}
+.glass-switch:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+/* ---------- 直向分段切換（GlassNav：側欄導覽）----------
+ * 橫膠囊直向滑動：列沒有軌道，鏡內不畫縮小的底，只有鏡片玻璃與強調色文字 */
+.glass-nav .is-current {
+  background: transparent;
+  box-shadow: none;
+}
+.nav-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+/* 小尺寸（後台側欄） */
+.nav-item.nav-item-sm {
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- 設定頁（Apple 系統設定的分組清單；規範「清單列」）----------
+ *   .set-page     內容欄：置中、最寬 600
+ *   .set-title    頁面標題（22／28 粗體，標題下不畫分隔線）
+ *   .set-hero     個人資料頁頂端：置中頭像＋名稱＋信箱
+ *   .set-section  一個分組（組與組相隔 26）；.set-header 組名（13／18 次要字，在卡片上方）；.set-footer 組下說明
+ *   .set-group    圓角群組卡（小方塊底，圓角 14）；裡面每一列 .set-row（最小高 44、左右 16、圖示與文字間隔 16）
+ *   列與列之間 0.5px 分隔線，從文字起點開始（有圖示的列從圖示右邊開始）
+ *   .set-icon 圖示方塊 30×30、圓角 8；.set-label 主要字；.set-value 次要字靠右；.set-chevron 右箭頭
+ *   .set-row-btn  整列可點（按下 scale .98，懸停不變色） */
+.set-page {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.set-title {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+  color: rgb(var(--text-primary));
+  margin-bottom: 20px;
+}
+.set-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 8px 0 4px;
+}
+.set-section {
+  margin-top: 26px;
+}
+.set-section:first-child {
+  margin-top: 0;
+}
+.set-header {
+  padding: 0 16px 8px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+}
+.set-footer {
+  padding: 8px 16px 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(var(--text-secondary));
+}
+.set-group {
+  background: var(--chip);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.set-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 15px;
+  line-height: 20px;
+  color: rgb(var(--text-primary));
+}
+.set-row + .set-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  height: 0.5px;
+  background: var(--paper-line);
+}
+.set-row.has-icon + .set-row::before,
+.set-row.has-icon + .set-row.has-icon::before {
+  left: 62px;
+}
+.set-row-btn {
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+}
+.set-row-btn:active {
+  transform: scale(0.98);
+}
+.set-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--chip);
+  color: rgb(var(--text-primary));
+}
+.set-label {
+  flex: 1;
+  min-width: 0;
+}
+.set-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(var(--text-secondary));
+}
+.set-value {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--text-secondary));
+}
+.set-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--text-secondary));
+}
+/* 破壞性動作列（登出、刪除）：Apple 系統紅、置中、一般字重（深色用規範的警示紅 #FF4245，淺色用 #FF3B30） */
+.set-danger {
+  color: #ff4245;
+  font-weight: 400;
+  justify-content: center;
+}
+html:not(.dark) .set-danger {
+  color: #ff3b30;
+}
+/* 外觀預覽圖（迷你視窗）：選取＝強調色外框 */
+.set-appearance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: rgb(var(--text-primary));
+}
+.set-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px var(--paper-line);
+}
+.set-appearance.is-current .set-thumb {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgb(var(--accent));
+}
+.set-appearance.is-current {
+  font-weight: 600;
+}
+/* 強調色圓點：22 的色點放在 32 的按鈕裡；選取時中間一個白點 */
+.set-swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
+  border-radius: 9999px;
+  transition: transform 0.15s var(--ease-out);
 }
+.set-swatch:active {
+  transform: scale(0.92);
+}
+.set-swatch > span {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+}
+.set-swatch.is-current > span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 9999px;
+  background: #fff;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * 淺色模式的軌道與放大鏡：照 iPadOS 26 App Store 右側分頁列（使用者提供的參考圖）
+ *   軌道＝白色玻璃（白 72%＋模糊）＋0.5px 淡灰細邊＋柔和陰影（卡片裡也一樣，不再用淡墨色）
+ *   目前項目＝淡灰平面膠囊（黑 6%，不加內凹陰影）
+ *   放大鏡＝亮白鏡片：外圈 0.5px 淡灰細線＋浮起陰影；亮邊用白色
+ *   深色模式不變
+ * ════════════════════════════════════════════════════════════════ */
+html:not(.dark) {
+  --well: rgba(0, 0, 0, 0.06);
+  --well-shadow: none;
+  --lens-ring: 0 0 0 0.5px rgba(0, 0, 0, 0.14), 0 6px 18px rgba(0, 0, 0, 0.14);
+  --lens-ring-knob: 0 0 0 0.5px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.16);
+  --lens-dish: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+}
+html:not(.dark) .seg-track,
+html:not(.dark) .paper .seg-track {
+  --seg-fill: rgba(255, 255, 255, 0.72);
+  --lens-ink-c: #fff !important;
+  --lens-ink-a: 0.72 !important;
+}
+html:not(.dark) .seg-bgf::before {
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+/* 淺色：不在卡片裡的軌道才有模糊；卡片裡的軌道不疊第二層模糊（模糊層被挖洞時會失去圓角裁切，左端出現直角） */
+html:not(.dark) .seg-blur {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+html:not(.dark) .paper .seg-blur {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* 淺色放大鏡：鏡片本身帶一層很淡的白，讓鏡片看起來是亮的 */
+html:not(.dark) .lens.is-active,
+html:not(.dark) .seg-track .lens.is-active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- 聊天側欄清單（Apple 側欄：備忘錄／檔案）----------
+ *   .side-header  組名（13／18 半粗、次要字）
+ *   .side-item    一列（最小高 36、膠囊、14 字）；目前項目加 .is-current＝凹陷底盤＋強調色
+ *   .side-children    子項目縮排到和資料夾名稱對齊，不畫導引線 */
+.side-header {
+  display: block;
+  padding: 0 10px;
+  margin: 4px 0 6px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+}
+.side-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 6px 0 10px;
+  border-radius: 9999px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(var(--text-primary));
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+}
+.side-item:active {
+  transform: scale(0.98);
+}
+.side-item.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.side-item .side-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: rgb(var(--text-secondary));
+}
+.side-item.is-current .side-icon {
+  color: var(--accent-ink);
+}
+/* 子項目：文字起點對齊資料夾名稱（資料夾列內距 10＋圖示 18＋間距 8 ＝ 36；子項目自己有內距 10 → 縮排 26） */
+.side-children {
+  padding-left: 26px;
+  margin-top: 2px;
+}
+.side-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex: none;
+}
+
+/* 對話框右上角的關閉鈕：36 圓鈕，與對話框圓角同心（離上、右各＝對話框圓角 44 − 按鈕圓角 18 ＝ 26） */
+.dialog-close {
+  position: absolute;
+  top: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - 18px);
+  right: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - 18px);
+  width: 36px !important;
+  height: 36px !important;
+}
+/* 對話框標題的中線對齊關閉鈕的中線 */
+.dialog-sheet > .dialog-title:first-of-type {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - 18px - (var(--dialog-pad) + 10px));
+}
+
+/* ---------- 對話裡的表格（Apple 分組清單樣式）----------
+ *   跟訊息氣泡同材質（玻璃＋模糊＋光邊、圓角 22）；表頭＝13／18 半粗次要字、不填底
+ *   列與列之間 0.5px 分隔線；第一欄是項目名稱（主要字、半粗、不換行）；其他欄 15／22 主要字
+ *   表格裡的粗體不加螢光底（螢光底只給內文） */
+/* 材質跟使用者訊息氣泡一樣（.glass-chip：玻璃底＋模糊 12＋光邊），圓角 22 */
+.md-table {
+  border-radius: 22px;
+  --R: 22px;
+}
+.md-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.md-table th,
+.md-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+.md-table th {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+  white-space: nowrap;
+}
+.md-table td {
+  font-size: 15px;
+  line-height: 22px;
+  color: rgb(var(--text-primary));
+  border-top: 0.5px solid var(--paper-line);
+}
+.md-table td:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.markdown-body .md-table strong,
+html.dark .markdown-body .md-table strong {
+  background: none;
+  padding: 0;
+  color: inherit;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+/* ---------- 編輯訊息（iMessage 編輯）----------
+ *   整個氣泡＝玻璃輸入欄位（圓角 22）；文字 15.5／1.6；右下兩顆 30 小圓鈕，離邊 7（22 ＝ 15 ＋ 7，同心） */
+.msg-edit {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border-radius: 22px;
+  --R: 22px;
+  padding: 7px 7px 7px 18px;
+}
+.msg-edit-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 40vh;
+  padding: 5px 0;
+  overflow-y: auto;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgb(var(--text-primary));
+}
+.msg-edit-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+.msg-edit-btn {
+  width: 30px !important;
+  height: 30px !important;
+}
+.md-table td:first-child *,
+.md-table th * {
+  white-space: nowrap !important;
+}
+
+/* ---------- 玻璃選單鈕（GlassDock：規範右下選單的邏輯，放在右上角往下展開）----------
+ *   .dock-wrap   佔位（40×40，選單鈕的位置）；.dock-shell 玻璃外殼（從正中間長寬，往下長高）
+ *   .dock-row    一列（窄：36 圓鈕、只有圖示；寬：75×62、圖示＋文字 11／13）
+ *   .dock-lens   放大鏡（93×88、圓角 40）；放開後 .is-leaving 原地 0.3 秒淡出並縮到 0.95 */
+.dock-wrap {
+  position: relative;
+  flex: none;
+}
+.dock-shell {
+  position: absolute !important;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition:
+    width 0.26s var(--ease-out),
+    height 0.3s var(--ease-out),
+    border-radius 0.26s var(--ease-out),
+    transform 0.26s var(--ease-out);
+}
+.dock-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dock-btn {
+  display: block;
+  border-radius: 9999px;
+  transition: transform 0.17s var(--ease-out);
+}
+.dock-btn:active {
+  transform: scale(0.92);
+}
+.dock-row {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 9999px;
+}
+.dock-icon {
+  display: flex;
+}
+.dock-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.dock-row.is-wide .dock-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.dock-label {
+  font-size: 11px;
+  line-height: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dock-lens {
+  position: absolute;
+  z-index: 60;
+  pointer-events: none;
+}
+.dock-lens.is-leaving {
+  animation: dockLensOut 0.3s var(--ease-out) forwards;
+}
+@keyframes dockLensOut {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-shell {
+    transition: none;
+  }
+}
+
+/* 資料夾展開／收合：高度從 0 長出來＋淡入（規範：選單展開、收合約 0.3 秒，減速曲線） */
+.side-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.3s var(--ease-out),
+    opacity 0.2s var(--ease-out);
+}
+.side-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.side-collapse > .side-children {
+  min-height: 0;
+  overflow: hidden;
+}
+.side-collapse:not(.is-open) {
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-collapse {
+    transition: opacity 0.2s linear;
+  }
+}
+
+/* 表格裡的條列：凸排（符號凸出在左邊，換行後對齊文字），符號用「•」 */
+.md-hang {
+  display: block;
+  position: relative;
+  padding-left: 1em;
+}
+.md-hang::before {
+  content: '•';
+  position: absolute;
+  left: 0.15em;
+}
+
+html:not(.dark) .menu-item.is-danger {
+  color: #ff3b30;
+}
+
+/* 聊天捲動區：上下緣 24px 漸層淡出（內容捲到頂部列、輸入列底下時不會有硬切的分割感） */
+.chat-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* ---------- 後台 ----------
+ *   .admin-search      Apple 搜尋欄（高 40、圓角 20、小方塊底、左邊放大鏡）
+ *   .admin-sticky-bar  捲動時黏在上方的標題列：九成實色＋模糊 24（Apple 頂部列材質），下面的列不會透上來
+ *   .admin-page-enter  切換分頁：新頁從右邊 14px 滑進來＋淡入，0.42 秒減速（規範換頁） */
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px 0 8px;
+  border-radius: 20px;
+  background: var(--chip);
+}
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+  color: rgb(var(--text-primary));
+}
+.admin-search input::placeholder {
+  color: rgb(var(--text-secondary));
+}
+.admin-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  color: rgb(var(--text-secondary));
+}
+.admin-sticky-bar {
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+.admin-page-enter {
+  animation: adminPageIn 0.42s var(--ease-out) both;
+}
+@keyframes adminPageIn {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-page-enter {
+    animation: adminPageFade 0.2s linear both;
+  }
+  @keyframes adminPageFade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* 選單拖曳選取時，手指底下那一項（和按下時同一個樣子） */
+.menu-item.is-pressed {
+  background: var(--chip);
+}
+/* 圖示的光學大小校正（Apple 選單做法）：四個常用圖示畫出來的寬度差很多（分享 11、垃圾桶 12、鉛筆 13.5、資料夾 16），
+ * 中心雖然對齊，看起來左緣不齊、大小不一。在選單、側欄、右上選單裡統一成視覺上約 14 寬 */
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Folder) {
+  transform: scale(0.88);
+}
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Share) {
+  transform: scale(1.12);
+}
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Trash2) {
+  transform: scale(1.06);
+}
+
+/* ---------- 全域通知（規範 .toast）：頂端置中玻璃膠囊、沒有圖示與關閉鈕、不擋點擊 ---------- */
+.toast-stack {
+  position: fixed;
+  top: 26px;
+  left: 50%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+.toast-pill {
+  --R: 22px;
+  border-radius: 9999px;
+  padding: 13px 22px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  text-align: center;
+  color: rgb(var(--text-primary));
+  animation: toastIn 0.23s var(--ease-out) both;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-pill {
+    animation: toastFade 0.2s linear both;
+  }
+  @keyframes toastFade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* 右上選單的放大鏡（規範右下選單 .dock .lens）：鏡片自己做一整片模糊；直的鏡片玻璃；亮邊在左右；肩在上下 */
+.dock-lens.is-active {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.dock-wrap {
+  --lens-ink-c: #fff;
+  --lens-ink-a: 0.066; /* 鏡片已讓底面亮 9%，再疊 6.6% 的白＝選單的 15% */
+}
+html:not(.dark) .dock-wrap {
+  --lens-ink-a: 0.54;
+}
+.lens-wall > i.t {
+  clip-path: inset(0 0 50% 0);
+}
+.lens-wall > i.b {
+  clip-path: inset(50% 0 0 0);
+}
+
+/* 模型選單的一列（Apple 清單列）：標題 15 一般粗細；副標 13 次要字、純文字用「・」相連；目前選取＝凹陷底盤 */
+.model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  text-align: left;
+  transition: transform 0.17s var(--ease-out);
+}
+.model-row:active {
+  transform: scale(0.98);
+}
+.model-row.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+}
+.model-row-title {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  color: rgb(var(--text-primary));
+  word-break: break-all;
+}
+.model-row-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: rgb(var(--text-secondary));
+}
+
+/* 側欄收到底換成直條時淡入（規範：舊內容淡出 0.2 秒） */
+.side-rail-in {
+  animation: sideRailIn 0.2s var(--ease-out) both;
+}
+@keyframes sideRailIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 通知退場：反向播放進場（淡出、往上 20px、縮到 0.96），0.23 秒 */
+.toast-pill.is-leaving {
+  animation: toastOut 0.23s var(--ease-out) both;
+}
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-pill.is-leaving {
+    animation: toastFadeOut 0.2s linear both;
+  }
+  @keyframes toastFadeOut {
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* 側欄收合：展開內容淡出 0.15 秒；展開：展開內容延後 0.15 秒淡入（外框變寬時不露出被切掉的文字） */
+.side-fade-out {
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out);
+}
+.side-wide-in {
+  animation: sideRailIn 0.2s var(--ease-out) 0.15s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-wide-in {
+    animation-delay: 0s;
+  }
+}
+
+/* 側欄變形：寬高、位置和外框同步過渡 0.3 秒（減速），不做淡入淡出 */
+.side-morph {
+  transition:
+    width 0.3s var(--ease-out),
+    height 0.3s var(--ease-out),
+    margin 0.3s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-morph {
+    transition: none;
+  }
+}
+
+
+/* 登入頁歡迎卡：清單列的分隔線從文字起點畫（左內距 18＋圖示 36＋間距 16） */
+ul.paper > .set-row.has-icon + .set-row::before {
+  left: 70px;
+}
+
+/* 背景波浪：主題色，深淺模式各自的透明度（見 WaveBackground.tsx） */
+.wave-bg path { fill: rgb(var(--accent)); opacity: var(--wl); transition: opacity var(--dur-fade), fill var(--dur-fade); }
+.dark .wave-bg path { opacity: 1; }
+.dark .wave-bg path:nth-child(1) { fill: rgb(var(--wave-d1)); }
+.dark .wave-bg path:nth-child(2) { fill: rgb(var(--wave-d2)); }
+.dark .wave-bg path:nth-child(3) { fill: rgb(var(--wave-d3)); }

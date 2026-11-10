@@ -1,100 +1,47 @@
-﻿import { motion } from '@/lib/gsapMotion'
+﻿/**
+ * 關於（Apple「關於本機」風格）：置中 App 圖示＋名稱＋版本，下面一組「左標籤、右數值」的清單，最下方版權說明
+ * 樣式用 snow.css 的 .set-*（設定頁共用）
+ */
 import { useTranslation } from 'react-i18next'
-
 import { CorphiaLogoSymbol } from '../icons/CorphiaIcons'
 
 export default function AboutSection() {
     const { t } = useTranslation()
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-        }
-    }
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 15 },
-        show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
-    }
-
-    const badgeVariants = {
-        hidden: { opacity: 0, scale: 0.9 },
-        show: { opacity: 1, scale: 1, transition: { type: 'spring' as const, stiffness: 300, damping: 20 } }
-    }
+    const rows: [string, string][] = [
+        [t('about.frontend'), 'React + FastAPI'],
+        [t('about.inference'), 'llama.cpp'],
+        [t('about.vector'), 'pgvector'],
+        [t('about.dataCore'), 'PostgreSQL'],
+    ]
 
     return (
-        <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col items-center pb-8"
-        >
-            {/* 懸浮機器人圖標 */}
-            <motion.div 
-                variants={itemVariants}
-                className="relative mb-6"
-            >
-                <div
-                    className="relative z-10 inline-flex items-center justify-center w-28 h-28 rounded-[28px] glass-chip [--R:28px]"
-                >
-                    <CorphiaLogoSymbol className="w-16 h-16" />
+        <div className="set-page">
+            <div className="set-section set-hero">
+                <div className="w-20 h-20 rounded-[18px] set-group flex items-center justify-center mb-2">
+                    <CorphiaLogoSymbol className="w-12 h-12" />
                 </div>
-            </motion.div>
+                <h2 className="text-[22px] leading-[28px] font-bold text-text-primary">Corphia AI Platform</h2>
+                <p className="text-[15px] text-text-secondary">{t('about.version')} 2.3.0</p>
+            </div>
 
-            {/* 系統標題 */}
-            <motion.div variants={itemVariants} className="text-center mb-6">
-                <h3 className="text-[28px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight leading-tight mb-2">
-                    Corphia AI Platform
-                </h3>
-                <div className="flex items-center justify-center gap-2">
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-[var(--chip)] text-text-secondary rounded-full">
-                        {t('about.version')} 2.3.0
-                    </span>
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-green-500/15 text-green-600 dark:text-green-400 rounded-full flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        {t('about.systemStable')}
-                    </span>
+            <section className="set-section">
+                <div className="set-group">
+                    <div className="set-row">
+                        <span className="set-label">{t('about.statusLabel', '系統狀態')}</span>
+                        <span className="tag tag-green">{t('about.systemStable')}</span>
+                    </div>
+                    {rows.map(([label, value]) => (
+                        <div key={label} className="set-row">
+                            <span className="set-label">{label}</span>
+                            <span className="set-value">{value}</span>
+                        </div>
+                    ))}
                 </div>
-            </motion.div>
+                <p className="set-footer">{t('about.description')}</p>
+            </section>
 
-            {/* 描述 */}
-            <motion.p variants={itemVariants} className="text-[15px] text-text-secondary text-center max-w-sm leading-relaxed mb-8">
-                {t('about.description')}
-            </motion.p>
-
-            {/* 技術棧標籤卡塊 */}
-            <motion.div variants={itemVariants} className="w-full snow-well rounded-[20px] p-6">
-                <div className="grid grid-cols-2 gap-y-5 gap-x-4">
-                    <motion.div variants={badgeVariants} className="flex flex-col">
-                        <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.frontend')}</span>
-                        <span className="text-[15px] font-semibold text-text-primary">React + FastAPI</span>
-                    </motion.div>
-                    
-                    <motion.div variants={badgeVariants} className="flex flex-col">
-                        <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.inference')}</span>
-                        <span className="text-[15px] font-semibold text-text-primary">llama.cpp</span>
-                    </motion.div>
-
-                    <motion.div variants={badgeVariants} className="flex flex-col">
-                        <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.vector')}</span>
-                        <span className="text-[15px] font-semibold text-text-primary">pgvector</span>
-                    </motion.div>
-
-                    <motion.div variants={badgeVariants} className="flex flex-col">
-                        <span className="text-[12px] font-medium text-text-muted mb-1 uppercase tracking-wider">{t('about.dataCore')}</span>
-                        <span className="text-[15px] font-semibold text-text-primary">PostgreSQL</span>
-                    </motion.div>
-                </div>
-            </motion.div>
-
-            {/* 底部版權 */}
-            <motion.div variants={itemVariants} className="mt-6 text-center">
-                <p className="text-[13px] font-medium text-text-muted">
-                    {t('about.copyright')}
-                </p>
-            </motion.div>
-        </motion.div>
+            <p className="set-footer text-center mt-6">{t('about.copyright')}</p>
+        </div>
     )
 }

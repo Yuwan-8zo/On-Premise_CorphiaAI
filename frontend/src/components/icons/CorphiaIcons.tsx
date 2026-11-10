@@ -1,6 +1,7 @@
 import React from 'react';
-import CorphiaLogoLight from '../../assets/Corphia_LOGO_Light.png';
-import CorphiaLogoDark from '../../assets/Corphia_LOGO_Dark.png';
+import CorphiaLogoLight from '../../assets/Corphia_LOGO_Light_nostar.png';
+import CorphiaLogoDark from '../../assets/Corphia_LOGO_Dark_nostar.png';
+import CorphiaLogoStar from '../../assets/Corphia_LOGO_star.png';
 
 // 極簡直球對決：C + AI Spark
 // 保留極高的辨識度，黑底白字，一眼就看出是 Corphia 的「C」與 AI 的結合。
@@ -32,12 +33,33 @@ export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> =
  */
 export const CorphiaWordmark: React.FC<{ className?: string; color?: string }> = ({
     className = 'h-14 w-auto',
-}) => (
-    <>
-        <img src={CorphiaLogoLight} alt="Corphia Logo" className={`dark:hidden ${className}`} draggable={false} style={{ userSelect: 'none' }} />
-        <img src={CorphiaLogoDark} alt="Corphia Logo" className={`hidden dark:block ${className}`} draggable={false} style={{ userSelect: 'none' }} />
-    </>
-);
+}) => <LogoWithStar className={className} alt="Corphia Logo" />;
+
+/**
+ * 字樣圖片（已去掉星星）＋ 用強調色填滿的星星遮罩，星星會跟著系統強調色變。
+ * 遮罩和圖片同尺寸，位置對齊方式跟著 object-left / 置中。
+ */
+const LogoWithStar: React.FC<{ className: string; alt: string }> = ({ className, alt }) => {
+    const pos = /object-left/.test(className) ? 'left center' : 'center'
+    const star: React.CSSProperties = {
+        backgroundColor: 'rgb(var(--accent))',
+        WebkitMaskImage: `url(${CorphiaLogoStar})`,
+        maskImage: `url(${CorphiaLogoStar})`,
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskPosition: pos,
+        maskPosition: pos,
+    }
+    return (
+        <span className="relative inline-block max-w-full align-middle select-none pointer-events-none">
+            <img src={CorphiaLogoLight} alt={alt} className={`dark:hidden ${className}`} draggable={false} />
+            <img src={CorphiaLogoDark} alt={alt} className={`hidden dark:block ${className}`} draggable={false} />
+            <span aria-hidden className="absolute inset-0" style={star} />
+        </span>
+    )
+}
 
 
 
@@ -83,10 +105,5 @@ export const CorphiaThinkingIcon: React.FC<{ className?: string, color?: string 
 // ============================================================================
 export const CorphiaBrandLogo: React.FC<{ className?: string, color?: string }> = ({ 
     className = 'w-auto h-12' 
-}) => (
-    <>
-        <img src={CorphiaLogoLight} alt="Corphia Brand Logo" className={`dark:hidden ${className}`} draggable={false} style={{ userSelect: 'none' }} />
-        <img src={CorphiaLogoDark} alt="Corphia Brand Logo" className={`hidden dark:block ${className}`} draggable={false} style={{ userSelect: 'none' }} />
-    </>
-);
+}) => <LogoWithStar className={className} alt="Corphia Brand Logo" />;
 

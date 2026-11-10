@@ -15,7 +15,7 @@ import {
     WifiOffIcon,
 } from '@/components/icons/itshover'
 import SidebarIconBadge from './SidebarIconBadge'
-import ToggleSwitch from './ToggleSwitch'
+import GlassSwitch from '@/components/ui/GlassSwitch'
 import Tooltip from '@/components/ui/Tooltip'
 
 interface NgrokInfo {
@@ -88,7 +88,7 @@ export default function NgrokSidebarWidget({
                         />
                     </SidebarIconBadge>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[8px] font-medium uppercase tracking-[0.16em] text-text-muted leading-none">
+                        <p className="text-[12px] font-medium text-text-secondary leading-none">
                             Remote
                         </p>
                         <p className={statusTextClass}>{statusText}</p>
@@ -119,7 +119,7 @@ export default function NgrokSidebarWidget({
                     <span className="text-[10px] font-medium text-text-secondary">
                         {t('admin.ngrok.toggleOnLabel', '啟用')}
                     </span>
-                    <ToggleSwitch
+                    <GlassSwitch
                         checked={isActive}
                         loading={isLoading}
                         onChange={() => {

@@ -7,7 +7,6 @@ import { PromptMenu } from './PromptMenu'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
-import Tooltip from '@/components/ui/Tooltip'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null

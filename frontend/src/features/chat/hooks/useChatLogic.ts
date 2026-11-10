@@ -121,6 +121,8 @@ export function useChatLogic() {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
+            // 按在「⋯」本身不算點外面：它是按下就打開、可以直接拖到項目上的觸發鈕
+            if ((e.target as Element | null)?.closest?.('button[aria-label="選項"]')) return
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
                 setActiveMenu(null)
             }
@@ -255,7 +257,7 @@ export function useChatLogic() {
         }
     }, [selectedFolder, loadFolderDocuments])
 
-    // 有文件還在「處理中」時每 3 秒重新讀一次，處理完自動變成「已處理」，不必手動重新整理
+    // 有文件還在「處理中」時每 3 秒重新讀一次，處理完自動變成「可讀取」，不必手動重新整理
     const hasProcessingDocs = folderDocuments.some(d => d.status !== 'completed' && d.status !== 'failed')
     useEffect(() => {
         if (!selectedFolder || !hasProcessingDocs) return
@@ -327,11 +329,30 @@ export function useChatLogic() {
         return () => container.removeEventListener('scroll', handleScroll)
     }, [])
 
+    // 切換聊天室或一次載入整段對話時：直接定位到最底部（不從最上面滑下來）；
+    // 聊天中新增訊息（數量只多 1～2 則、或串流中內容變長）才平滑往下捲
+    const lastConvIdRef = useRef<string | undefined>(undefined)
+    const lastCountRef = useRef(0)
     useEffect(() => {
-        // 訊息改變時 → 只有「使用者目前還貼在底部」才自動往下；否則尊重使用者閱讀位置
+        const convId = currentConversation?.id
+        const switched = convId !== lastConvIdRef.current
+        const bulk = messages.length - lastCountRef.current > 2 || (lastCountRef.current === 0 && messages.length > 0)
+        lastConvIdRef.current = convId
+        lastCountRef.current = messages.length
+        if (switched || bulk) {
+            autoFollowRef.current = true
+            const container = scrollContainerRef.current
+            if (container) container.scrollTop = container.scrollHeight
+            requestAnimationFrame(() => {
+                const c = scrollContainerRef.current
+                if (c) c.scrollTop = c.scrollHeight
+            })
+            return
+        }
+        // 只有「使用者目前還貼在底部」才自動往下；否則尊重使用者閱讀位置
         if (!autoFollowRef.current) return
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
+    }, [messages, currentConversation?.id])
 
     useEffect(() => {
         if (inputRef.current) {
@@ -699,9 +720,9 @@ export function useChatLogic() {
             const res = await conversationsApi.verifyChain(convId)
             if (res.valid) {
                 // 展示時要讓評審看清楚，停留 6 秒
-                useToastStore.getState().add(`✅ 對話完整性驗證通過：共 ${res.total_messages} 則訊息皆未被竄改（雜湊鏈）`, 'success', 6000)
+                useToastStore.getState().add(`對話完整性驗證通過：共 ${res.total_messages} 則訊息皆未被竄改（雜湊鏈）`, 'success', 6000)
             } else {
-                useToastStore.getState().add(`⛔ 對話紀錄遭竄改！第 ${res.first_broken_index} 則訊息的雜湊鏈斷裂`, 'error', 8000)
+                useToastStore.getState().add(`對話紀錄遭竄改！第 ${res.first_broken_index} 則訊息的雜湊鏈斷裂`, 'error', 8000)
             }
         } catch (err) {
             console.error('驗證失敗', err)

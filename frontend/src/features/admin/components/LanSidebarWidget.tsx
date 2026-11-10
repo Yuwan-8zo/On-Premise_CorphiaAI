@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 
 import { GlobeIcon, ItshoverIcon, LockIcon } from '@/components/icons/itshover'
 import SidebarIconBadge from './SidebarIconBadge'
-import ToggleSwitch from './ToggleSwitch'
+import GlassSwitch from '@/components/ui/GlassSwitch'
 import Tooltip from '@/components/ui/Tooltip'
 
 export interface LanSidebarWidgetProps {
@@ -37,7 +37,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                         <ItshoverIcon icon={enabled ? GlobeIcon : LockIcon} size={12} />
                     </SidebarIconBadge>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[8px] font-medium uppercase tracking-[0.16em] text-text-muted leading-none">
+                        <p className="text-[12px] font-medium text-text-secondary leading-none">
                             LAN
                         </p>
                         <p className="text-[10px] text-text-secondary leading-tight mt-0.5">
@@ -62,7 +62,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                     <span className="text-[10px] font-medium text-text-secondary">
                         {t('admin.lan.toggleLabel', '區域網路')}
                     </span>
-                    <ToggleSwitch
+                    <GlassSwitch
                         checked={enabled}
                         loading={isLoading}
                         onChange={() => onToggle(!enabled)}
@@ -78,7 +78,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                         </p>
                         <div className="mt-1 space-y-0.5">
                             {lanIps.slice(0, 3).map((ip) => (
-                                <div key={ip} className="text-[10px] text-text-secondary font-mono">
+                                <div key={ip} className="text-[10px] text-text-secondary tabular-nums">
                                     {ip}
                                 </div>
                             ))}

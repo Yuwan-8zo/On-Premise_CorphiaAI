@@ -7,7 +7,6 @@
 
 import { ChevronRight } from '@/components/snow/icons'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 
 interface RAGSource {
@@ -53,7 +52,6 @@ const ROUTE_LABELS: Record<string, { label: string; icon: string }> = {
 }
 
 export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
-    const { t } = useTranslation()
     const [isExpanded, setIsExpanded] = useState(false)
 
     if (!sources || sources.length === 0) return null
@@ -68,7 +66,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 className="flex items-center gap-2 pl-3 text-xs text-text-secondary transition-colors group"
             >
                 <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                <span className="font-mono inline-flex items-center gap-1.5">
+                <span className="tabular-nums inline-flex items-center gap-1.5">
                     <MaterialIcon name="search" size={14} aria-hidden />
                     檢索細節（{sources.length} 個段落）
                     {routeInfo && (
@@ -85,14 +83,14 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 <div className="mt-2 space-y-2 snow-well rounded-[18px] p-3">
                     {/* 統計概覽 */}
                     {debug && (
-                        <div className="flex flex-wrap gap-3 text-xs font-mono mb-3 pb-2 border-b border-[var(--paper-line)]">
-                            <span className="px-2 py-1 rounded-md bg-light-accent/10 text-light-accent">
+                        <div className="flex flex-wrap gap-3 text-xs tabular-nums mb-3 pb-2 border-b border-[var(--paper-line)]">
+                            <span className="px-2 py-1 rounded-[8px] bg-accent/15 text-accent">
                                 Route: {debug.route}
                             </span>
-                            <span className="px-2 py-1 rounded-md bg-[var(--chip)] text-text-secondary">
+                            <span className="px-2 py-1 rounded-[8px] bg-[var(--chip)] text-text-secondary">
                                 Context: {debug.context_length} chars
                             </span>
-                            <span className="px-2 py-1 rounded-md bg-[var(--chip)] text-text-secondary">
+                            <span className="px-2 py-1 rounded-[8px] bg-[var(--chip)] text-text-secondary">
                                 Prompt: {debug.prompt_length} chars
                             </span>
                         </div>
@@ -115,11 +113,11 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs font-mono font-bold ${scoreColor(source.score)}`}>
+                                    <span className={`text-xs tabular-nums font-bold ${scoreColor(source.score)}`}>
                                         {(source.score * 100).toFixed(1)}%
                                     </span>
                                     {source.distance !== undefined && (
-                                        <span className="text-[10px] font-mono text-text-muted">
+                                        <span className="text-[10px] tabular-nums text-text-muted">
                                             d={source.distance}
                                         </span>
                                     )}

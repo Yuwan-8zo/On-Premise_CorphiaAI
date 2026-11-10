@@ -1,20 +1,23 @@
 /**
- * GlassSegmented — 分段切換（照「北海道雪見六日」範本第 6 區 Dock 放大鏡 .lens 的做法）
+ * GlassSegmented — 分段切換器（《Liquid Glass 元件規範》：分段切換器、CSS 26／34／35、JS 00）
  *
- * 範本規格（design.js moveLens／drawLens）：
- *   - 放大鏡中心限制在「第一個選項中心 ～ 最後一個選項中心」之間，只允許多出的半邊溢出軌道
- *   - 每幀追手指 30%（cur += (t - cur) * 0.3），放開吸附到最近的選項
- *   - 放大鏡裡有一份選項文字的複本（ghost），用選取色、放大 1.12 倍，
- *     並反向位移讓文字和底下對齊 → 字色跟著放大鏡走
- *   - 底下真正的文字在放大鏡位置挖洞（mask xor），不會重影
- *   - 靜止：白色滑塊；按住：滑塊長大（寬 ×1.12、高 ×1.3）並變成玻璃
- * 放大用「改變實際尺寸」而不是 CSS scale：scale 會把位移量一起放大，越往右偏越多。
+ * 平常：軌道＝控制元件玻璃＋光邊；目前項目＝凹陷底盤＋強調色文字；其他項目＝主要文字色
+ * 按住：凹陷底盤就是放大鏡最上面的一層（.lens-veil），跟著鏡片長大（四邊各加 8）並淡掉，露出「凹進去」的放大鏡：
+ *   - 軌道的底色與光邊在鏡片底下真的挖洞（背景模糊不挖）；鏡片本身只有 --lens-glass（底面亮 9%、兩端漸暗）
+ *   - 鏡內：一份縮小的「整條軌道」（長邊 0.93、短邊 0.768，以鏡片中心為準）＋從鏡緣進來的肩，
+ *     同一個容器、同一個顏色（深色＝白 6.6%：疊上鏡片的 9% 剛好等於軌道的 15%）——鏡內鏡外同一個顏色
+ *   - 鏡內文字用強調色、以鏡片中心放大 1.12 倍（規範右下選單）；真正的文字在鏡片位置挖洞；亮邊只在長邊兩緣；外圈 --lens-ring
+ * vertical：直的軌道（側欄收合時用）；做法相同、方向轉 90 度（規範「右下選單」：鏡片用 --lens-glass-v、肩在上下）
+ * 拖曳每幀追 30%、兩端硬鎖在第一格～最後一格；鍵盤 ← →（直的用 ↑ ↓）Home End。時間表與共用工具在 lensKit.ts。
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, sideBandMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
     value: T
     label: React.ReactNode
+    /** 只有圖示時給報讀軟體的名稱 */
+    name?: string
 }
 
 interface Props<T extends string> {
@@ -22,58 +25,35 @@ interface Props<T extends string> {
     value: T
     onChange: (value: T) => void
     className?: string
-    /** 軌道內距（px） */
+    /** 軌道內距（px），規範 4 */
     pad?: number
+    /** 直的軌道 */
+    vertical?: boolean
+    /** 放大鏡沿長邊、垂直長邊各加多少（px）；分段切換器 8／8，浮動工具列（只有圖示）11.5／4.5 */
+    growLong?: number
+    growCross?: number
+    /** 格子之間的空隙（沿長邊，px）；右下選單規格：按鈕 46、列距 53 → 空隙 7 */
+    gap?: number
     'data-tour'?: string
 }
 
-const GROW_X = 1.12
-const GROW_Y = 1.3
-const MAG = 1.12
-
-export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad = 4, ...rest }: Props<T>) {
+export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad = 4, vertical = false, growLong = 8, growCross = 8, gap = 0, ...rest }: Props<T>) {
     const trackRef = useRef<HTMLDivElement | null>(null)
     const [size, setSize] = useState({ w: 0, h: 0 })
-    const [pressed, setPressed] = useState(false)
     const n = options.length
     const index = Math.max(0, options.findIndex((o) => o.value === value))
+    const sgRef = useRef(0)
 
-    // 位置（0 ~ n-1 連續值）與放大程度（0 靜止 ~ 1 按住）都由同一個每幀迴圈驅動，
-    // 外框與裡面的文字複本永遠同一幀更新，不會錯位
-    const [frame, setFrame] = useState({ pos: index, grow: 0 })
-    const cur = useRef({ pos: index, grow: 0 })
-    const goal = useRef({ pos: index, grow: 0 })
-    const raf = useRef(0)
-    const running = useRef(false)
-    const pointer = useRef<{ id: number; sx: number; moved: boolean } | null>(null)
-
-    const tick = () => {
-        const c = cur.current, g = goal.current
-        c.pos += (g.pos - c.pos) * 0.3
-        c.grow += (g.grow - c.grow) * 0.3
-        const done = Math.abs(g.pos - c.pos) < 0.002 && Math.abs(g.grow - c.grow) < 0.002
-        if (done) { c.pos = g.pos; c.grow = g.grow }
-        setFrame({ pos: c.pos, grow: c.grow })
-        if (done && !pointer.current) { running.current = false; return }
-        raf.current = requestAnimationFrame(tick)
-    }
-    const kick = () => {
-        if (running.current) return
-        running.current = true
-        raf.current = requestAnimationFrame(tick)
-    }
-
-    useEffect(() => () => { cancelAnimationFrame(raf.current); running.current = false }, [])
+    const lens = useLensMotion(index, (a, b) => Math.abs(a - b) * sgRef.current)
+    const drag = useRef<{ id: number; s: number; moved: boolean } | null>(null)
 
     // 外部改變選項（鍵盤、程式切換）→ 滑過去
     useEffect(() => {
-        if (pointer.current) return
-        goal.current.pos = index
-        kick()
+        if (drag.current) return
+        if (Math.abs(lens.current.current.pos - index) > 0.001) lens.glideTo(index)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [index])
 
-    // 量軌道尺寸（放大鏡的位置、挖洞都用像素算）
     useLayoutEffect(() => {
         const el = trackRef.current
         if (!el) return
@@ -85,68 +65,80 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         return () => ro.disconnect()
     }, [])
 
-    // 指標的 x → 連續位置；限制在第一格～最後一格中心之間（範本 top/bot 限制）
-    const posFromX = (x: number) => {
+    const coord = (e: { clientX: number; clientY: number }) => (vertical ? e.clientY : e.clientX)
+    // 指標位置 → 連續位置；兩端硬鎖在第一格～最後一格中心
+    const posFrom = (v: number) => {
         const r = trackRef.current!.getBoundingClientRect()
-        const sg = (r.width - pad * 2) / n
-        const p = (x - r.left - pad - sg / 2) / sg
-        return Math.max(0, Math.min(n - 1, p))
+        const len = vertical ? r.height : r.width
+        const start = vertical ? r.top : r.left
+        const sg = (len - pad * 2 - gap * (n - 1)) / n
+        return Math.max(0, Math.min(n - 1, (v - start - pad - sg / 2) / (sg + gap)))
     }
 
     const onPointerDown = (e: React.PointerEvent) => {
         if (e.button > 0) return
-        pointer.current = { id: e.pointerId, sx: e.clientX, moved: false }
+        drag.current = { id: e.pointerId, s: coord(e), moved: false }
         try { trackRef.current?.setPointerCapture(e.pointerId) } catch { /* 部分瀏覽器不支援 */ }
-        setPressed(true)
-        goal.current.grow = 1
-        kick()
+        lens.press()
     }
-
     const onPointerMove = (e: React.PointerEvent) => {
-        const p = pointer.current
-        if (!p || p.id !== e.pointerId) return
-        if (!p.moved && Math.abs(e.clientX - p.sx) < 6) return
-        p.moved = true
-        goal.current.pos = posFromX(e.clientX)
+        const d = drag.current
+        if (!d || d.id !== e.pointerId) return
+        if (!d.moved && Math.abs(coord(e) - d.s) < 6) return
+        d.moved = true
+        lens.follow(posFrom(coord(e)))
     }
-
     const finish = (e: React.PointerEvent, commit: boolean) => {
-        const p = pointer.current
-        if (!p || p.id !== e.pointerId) return
-        pointer.current = null
-        setPressed(false)
-        goal.current.grow = 0
-        // 拖動 → 吸附到最近；輕點 → 點到的那一格；取消 → 回原位
-        const next = commit ? Math.round(p.moved ? goal.current.pos : posFromX(e.clientX)) : index
-        goal.current.pos = next
-        kick()
-        const v = options[next]?.value
-        if (commit && v !== undefined && v !== value) onChange(v)
+        const d = drag.current
+        if (!d || d.id !== e.pointerId) return
+        drag.current = null
+        lens.follow(null)
+        const next = commit ? Math.round(d.moved ? lens.current.current.pos : posFrom(coord(e))) : index
+        lens.glideTo(next)
+        const val = options[next]?.value
+        if (commit && val !== undefined && val !== value) onChange(val)
     }
 
-    // ── 幾何（像素，相對軌道左上角）──
-    const rowW = Math.max(0, size.w - pad * 2)
-    const rowH = Math.max(0, size.h - pad * 2)
-    const seg = n ? rowW / n : 0
-    const { pos, grow } = frame
-    const cx = pad + (pos + 0.5) * seg
-    const cy = size.h / 2
-    const lw = seg * (1 + (GROW_X - 1) * grow)
-    const lh = rowH * (1 + (GROW_Y - 1) * grow)
-    const L = cx - lw / 2
-    const T = cy - lh / 2
-    const sc = 1 + (MAG - 1) * grow
-    const ready = size.w > 0
+    // ── 幾何：先用「長邊／短邊」算，再對應到 x、y ──
+    const W = size.w, H = size.h
+    const long = vertical ? H : W
+    const cross = vertical ? W : H
+    const rowLong = Math.max(0, long - pad * 2)
+    const rowCross = Math.max(0, cross - pad * 2)
+    const sg = n ? (rowLong - gap * (n - 1)) / n : 0 // 一格的大小
+    const pitch = sg + gap // 相鄰兩格中心的距離
+    sgRef.current = pitch
+    const f = lens.frame
+    const cl = pad + f.pos * pitch + sg / 2 // 鏡心在長邊上的位置
+    const ll = sg + growLong * 2 * f.grow
+    const lc = rowCross + growCross * 2 * f.grow
+    const L = vertical ? cross / 2 - lc / 2 : cl - ll / 2
+    const T = vertical ? cl - ll / 2 : cross / 2 - lc / 2
+    const lw = vertical ? lc : ll
+    const lh = vertical ? ll : lc
+    const ready = W > 0
+    const active = ready && lensActive(f)
 
-    // 選項列（真的文字與放大鏡裡的複本共用同一份排版）
+    // 肩：照放大鏡長大後的大小畫。兩端一律接上（第一格、最後一格也一樣），
+    // 鏡內只露出上下兩條底面，不會在鏡片一端多出一圈較暗的弧形（對照規範截圖）
+    const LLf = sg + growLong * 2, LCf = rowCross + growCross * 2
+    const shl = 1
+    const shr = 1
+    const sLong = 1 - (1 - LENS_SX) * f.grow
+    const sCross = 1 - (1 - LENS_SY) * f.grow
+    // 鏡內的底用「橫的」等效座標：鏡片沿長邊在 hL、沿短邊在 hT（直的時整組轉 90 度）
+    const hL = cl - ll / 2
+    const hT = cross / 2 - lc / 2
+    const wallMask = shoulderMask(LLf, LCf, (LCf - cross) / 2, cross)
+
     const row = (ghost: boolean) =>
         options.map((o, i) => {
-            const active = i === index
+            const on = i === index
             const common = {
                 className: `flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold text-center ${
-                    ghost ? 'text-text-primary' : 'text-text-secondary'
+                    ghost || (on && !active) ? 'text-accent' : 'text-text-primary'
                 }`,
-                style: { width: seg || undefined, WebkitTapHighlightColor: 'transparent' } as React.CSSProperties,
+                style: { [vertical ? 'height' : 'width']: sg || undefined, flex: 'none', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties,
             }
             if (ghost) return <span key={o.value} {...common}>{o.label}</span>
             return (
@@ -154,10 +146,17 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
                     key={o.value}
                     type="button"
                     role="tab"
-                    aria-selected={active}
-                    onClick={(e) => {
-                        // 指標操作已在 pointerup 處理；這裡只處理鍵盤（Enter／空白鍵）
-                        if (e.detail === 0 && !active) onChange(o.value)
+                    aria-selected={on}
+                    aria-label={o.name}
+                    onClick={(e) => { if (e.detail === 0 && !on) onChange(o.value) }}
+                    onKeyDown={(e) => {
+                        const go = (k: number) => { e.preventDefault(); const t = options[k]; if (t && k !== index) onChange(t.value) }
+                        const next = vertical ? 'ArrowDown' : 'ArrowRight'
+                        const prev = vertical ? 'ArrowUp' : 'ArrowLeft'
+                        if (e.key === next) go(Math.min(n - 1, index + 1))
+                        else if (e.key === prev) go(Math.max(0, index - 1))
+                        else if (e.key === 'Home') go(0)
+                        else if (e.key === 'End') go(n - 1)
                     }}
                     {...common}
                 >
@@ -166,63 +165,72 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
             )
         })
 
-    // 真文字在放大鏡位置挖洞（只顯示放大鏡裡那份，不重影）
-    const hole = ready
-        ? {
-              WebkitMaskImage: 'linear-gradient(#000 0 0), linear-gradient(#000 0 0)',
-              WebkitMaskSize: `100% 100%, ${lw}px ${lh}px`,
-              WebkitMaskPosition: `0 0, ${L - pad}px ${T - pad}px`,
-              WebkitMaskRepeat: 'no-repeat',
-              WebkitMaskComposite: 'xor',
-              maskImage: 'linear-gradient(#000 0 0), linear-gradient(#000 0 0)',
-              maskSize: `100% 100%, ${lw}px ${lh}px`,
-              maskPosition: `0 0, ${L - pad}px ${T - pad}px`,
-              maskRepeat: 'no-repeat',
-              maskComposite: 'exclude',
-          } as React.CSSProperties
-        : undefined
+    const rowW = vertical ? rowCross : rowLong
+    const rowH = vertical ? rowLong : rowCross
 
     return (
         <div
             ref={trackRef}
             role="tablist"
+            aria-orientation={vertical ? 'vertical' : 'horizontal'}
             data-tour={rest['data-tour']}
             className={`seg-track relative rounded-full select-none touch-none ${className}`}
-            style={{ padding: pad }}
+            style={{ padding: pad, ['--R' as string]: `${cross / 2}px` }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={(e) => finish(e, true)}
             onPointerCancel={(e) => finish(e, false)}
             onLostPointerCapture={(e) => finish(e, false)}
         >
-            {/* 底下真正的選項（未選取色），放大鏡位置挖洞 */}
-            <div className="relative z-[2] flex h-full" style={hole}>
-                {row(false)}
-            </div>
+            {/* 軌道的底色與光邊（放大鏡底下挖洞） */}
+            <span aria-hidden="true" className="seg-blur absolute" style={active ? capsuleHole(L, T, lw, lh) : undefined} />
+            <span aria-hidden="true" className="seg-bgf absolute" style={active ? capsuleHole(L, T, lw, lh) : undefined} />
+            <span aria-hidden="true" className="seg-rim absolute" style={{ ['--R' as string]: `${cross / 2}px`, ...(active ? capsuleHole(L + 1, T + 1, lw, lh) : {}) }} />
 
-            {/* 放大鏡／滑塊 */}
+            {/* 放大鏡（平常＝凹陷底盤） */}
             {ready && (
                 <div
                     aria-hidden="true"
-                    className={`seg-knob overflow-hidden ${pressed ? 'is-pressed' : ''}`}
-                    style={{ left: L, top: T, width: lw, height: lh, zIndex: 3 }}
+                    className={`lens absolute ${vertical ? 'is-v' : ''} ${active ? 'is-active' : ''}`}
+                    style={{ left: L, top: T, width: lw, height: lh, borderRadius: Math.min(lw, lh) / 2, zIndex: 1 }}
                 >
-                    {/* 放大鏡裡的那份選項：選取色、放大 1.12，反向位移讓文字跟著放大鏡走 */}
-                    <div
-                        className="absolute left-0 top-0 flex pointer-events-none"
-                        style={{
-                            width: rowW,
-                            height: rowH,
-                            transformOrigin: '0 0',
-                            transform:
-                                `translate(${lw / 2}px, ${lh / 2}px) scale(${sc}) translate(${-lw / 2}px, ${-lh / 2}px) ` +
-                                `translate(${pad - L}px, ${pad - T}px)`,
-                        }}
-                    >
-                        {row(true)}
-                    </div>
+                    {active && (
+                        <>
+                                                        {vertical ? (
+                                // 直的：鏡內整片底色，左右挖兩條上下圓頭的底面（寬＝鏡片寬減去縮成 0.768 倍的軌道寬，除以 2）
+                                <span className="lens-ink" style={sideBandMask(lw, lh, (lw - cross * sCross) / 2, Math.min(lw / 2, lh / 4))}>
+                                    <span className="lens-bar" style={{ inset: 0 }} />
+                                </span>
+                            ) : (
+                                // 橫的：照規範，縮小的軌道（長邊 0.93、短邊 0.768）＋兩端的肩，上下露出底面
+                                <span className="lens-ink">
+                                    <span
+                                        className="lens-bar"
+                                        style={{ left: -hL, top: -hT, width: long, height: cross, borderRadius: cross / 2, transformOrigin: `${hL + ll / 2}px ${hT + lc / 2}px`, transform: `scale(${sLong}, ${sCross})` }}
+                                    />
+                                    <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: wallMask }}>
+                                        <i className="l" style={{ opacity: shl }} />
+                                        <i className="r" style={{ opacity: shr }} />
+                                    </span>
+                                </span>
+                            )}
+                            <div
+                                className={`absolute left-0 top-0 flex ${vertical ? 'flex-col' : ''} pointer-events-none`}
+                                style={{ width: rowW, height: rowH, gap, transformOrigin: '0 0', transform: `translate(${lw / 2}px, ${lh / 2}px) scale(${1 + (LENS_MAG - 1) * f.grow}) translate(${-lw / 2}px, ${-lh / 2}px) translate(${pad - L}px, ${pad - T}px)` }}
+                            >
+                                {row(true)}
+                            </div>
+                            <span className="lens-dish" />
+                        </>
+                    )}
+                    <span className="lens-veil seg-veil" style={{ opacity: f.veil }} />
                 </div>
             )}
+
+            {/* 選項（鏡片位置挖洞） */}
+            <div className={`relative z-[2] flex ${vertical ? 'flex-col w-full' : ''} h-full`} style={{ gap, ...(active ? capsuleHole(L - pad, T - pad, lw, lh) : {}) }}>
+                {row(false)}
+            </div>
         </div>
     )
 }

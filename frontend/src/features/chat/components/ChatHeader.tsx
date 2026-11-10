@@ -1,7 +1,9 @@
 ﻿import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { Check, ChevronDown, Edit2, Folder, MoreHorizontal, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import LensMenu from '@/components/ui/LensMenu'
+import GlassDock from '@/components/ui/GlassDock'
+import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
+import { Check, ChevronDown, Edit2, Folder, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
 import { SidebarIcon } from './ChatIcons'
-import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
 import { useSystemStore } from '@/store/systemStore'
@@ -42,7 +44,6 @@ export default function ChatHeader({
     isModelLoading, setIsModelLoading,
     selectedModel, setSelectedModel,
     availableModels, setAvailableModels,
-    headerMenuOpen, setHeaderMenuOpen,
     currentConversation,
     handleShareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
@@ -51,7 +52,7 @@ export default function ChatHeader({
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
-        <header className="shrink-0 w-full p-3 md:p-4 md:px-6 flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
+        <header className="shrink-0 w-full p-3 md:pt-[21px] md:pb-4 md:px-[21px] flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
@@ -61,8 +62,10 @@ export default function ChatHeader({
                 </button>
 
                 {/* Left: Corphia title - hidden on mobile to give space to model selector */}
-                <h1 className={`hidden sm:flex text-[20px] font-semibold text-text-primary tracking-[0.3px] items-center gap-3 transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                    Corphia
+                {/* 品牌字：和登入頁同一個字標（含星星） */}
+                <h1 className={`hidden sm:flex items-center transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
+                    <CorphiaWordmark className="h-[28px] w-auto object-contain object-left pointer-events-none select-none" />
+                    <span className="sr-only">Corphia</span>
                 </h1>
             </div>
 
@@ -72,9 +75,9 @@ export default function ChatHeader({
                     <button
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                         disabled={isModelLoading}
-                        className="flex items-center gap-1.5 md:gap-2 h-8 px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[180px] md:max-w-none"
+                        className="flex items-center gap-1.5 md:gap-2 h-[36px] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[180px] md:max-w-none"
                     >
-                        <span className="text-[12px] md:text-[14px] font-semibold font-mono tracking-tight transition-colors flex items-center gap-2 min-w-0">
+                        <span className="text-[12px] md:text-[14px] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-[var(--paper-line)] border-t-transparent rounded-full animate-spin shrink-0" />
@@ -114,6 +117,7 @@ export default function ChatHeader({
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
                                     className="absolute right-0 top-full mt-2 w-[340px] paper overflow-hidden z-50 p-2"
                                 >
+                                    <LensMenu className="">
                                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">無可用模型，請掃描目錄。</div>
@@ -140,24 +144,20 @@ export default function ChatHeader({
                                                             setIsModelLoading(false);
                                                         }
                                                     }}
-                                                    className={`w-full text-left px-4 py-3 mb-1 rounded-[16px] flex items-center justify-between transition-colors ${selectedModel?.name === model.name ? 'bg-[var(--chip)]' : ''}`}
+                                                    className={`model-row ${selectedModel?.name === model.name ? 'is-current' : ''}`}
                                                 >
                                                     <div className="flex flex-col min-w-0 pr-3">
-                                                        <span className={`font-semibold text-[14px] break-all ${selectedModel?.name === model.name ? 'text-text-primary ' : 'text-text-primary '}`}>{model.name}</span>
-                                                        <span className="text-[12px] text-text-secondary mt-1 flex items-center gap-2">
-                                                            <span>{model.size_gb.toFixed(1)} GB</span>
-                                                            {model.quantization && (
-                                                                <span className="bg-[var(--chip)] px-1.5 py-0.5 rounded-full text-[10px] uppercase">{model.quantization}</span>
-                                                            )}
-                                                            {loadState && (
-                                                                <span className={preloaded ? 'text-emerald-500' : 'text-text-muted'}>
-                                                                    {preloaded ? '已載入・可立即切換' : loadState === 'loading' ? '載入中…' : '未預先載入・切換約需 1～2 分鐘'}
-                                                                </span>
-                                                            )}
+                                                        <span className="model-row-title">{model.name}</span>
+                                                        <span className="model-row-sub">
+                                                            {[
+                                                                `${model.size_gb.toFixed(1)} GB`,
+                                                                model.quantization,
+                                                                loadState ? (preloaded ? '已載入，可立即切換' : loadState === 'loading' ? '載入中…' : '未預先載入，切換約需 1～2 分鐘') : null,
+                                                            ].filter(Boolean).join('・')}
                                                         </span>
                                                     </div>
                                                     {selectedModel?.name === model.name && (
-                                                        <Check className="w-5 h-5 ml-2 text-corphia-bronze shrink-0" />
+                                                        <Check className="w-5 h-5 ml-2 text-accent shrink-0" />
                                                     )}
                                                 </button>
                                                 )
@@ -185,78 +185,27 @@ export default function ChatHeader({
                                             <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
                                         </button>
                                     </div>
+                                    </LensMenu>
                                 </motion.div>
                             </>
                         )}
                     </AnimatePresence>
                 </div>
 
-                {/* 右側：三個點選單 */}
-                <div className="relative">
-                    <button 
-                        onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                        className={`btn-icon !w-9 !h-9 ${headerMenuOpen ? 'is-current' : 'text-text-secondary'}`}
-                    >
-                        <MoreHorizontal className="w-[20px] h-[20px]" />
-                    </button>
-
-                    <AnimatePresence>
-                        {headerMenuOpen && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setHeaderMenuOpen(false)} />
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[200px] paper overflow-hidden z-50 p-1.5 flex flex-col gap-0.5 text-text-primary"
-                                >
-                                    <button 
-                                        onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleShareConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[18px] flex items-center gap-3 transition-colors  active:bg-[var(--chip)]"
-                                    >
-                                        <Share className="w-[18px] h-[18px]" />
-                                        <span className="font-medium text-[15px]">分享</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleRenameConversation(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[18px] flex items-center gap-3 transition-colors  active:bg-[var(--chip)]"
-                                    >
-                                        <Edit2 className="w-[18px] h-[18px]" />
-                                        <span className="font-medium text-[15px]">重新命名</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleMoveToProject(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[18px] flex items-center gap-3 transition-colors  active:bg-[var(--chip)]"
-                                    >
-                                        <Folder className="w-[18px] h-[18px]" />
-                                        <span className="font-medium text-[15px]">移至專案</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => { setHeaderMenuOpen(false); if(currentConversation) handleVerifyChain(currentConversation.id) }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[18px] flex items-center gap-3 transition-colors  text-emerald-600 active:bg-emerald-100"
-                                    >
-                                        <ShieldCheck className="w-[18px] h-[18px]" />
-                                        <span className="font-medium text-[15px]">驗證防篡改鏈</span>
-                                    </button>
-                                    <div className="my-1 border-t border-[var(--paper-line)]" />
-                                    <button 
-                                        onClick={(e) => { 
-                                            setHeaderMenuOpen(false); 
-                                            if(currentConversation) {
-                                                handleDeleteConversation(currentConversation.id, e)
-                                            } 
-                                        }}
-                                        className="w-full text-left px-3 py-2.5 rounded-[18px] flex items-center gap-3 transition-colors  text-red-500 active:bg-red-100"
-                                    >
-                                        <Trash2 className="w-[18px] h-[18px]" />
-                                        <span className="font-medium text-[15px]">刪除</span>
-                                    </button>
-                                </motion.div>
-                            </>
-                        )}
-                    </AnimatePresence>
-                </div>
+                {/* 右側：玻璃選單鈕（規範右下選單的邏輯：點一下展開圖示；長按或直接往下滑才出現文字與放大鏡） */}
+                <GlassDock
+                    aria-label="對話選項"
+                    items={[
+                        { id: 'share', label: '分享', icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
+                        { id: 'rename', label: '重新命名', icon: <Edit2 />, onSelect: () => { if (currentConversation) handleRenameConversation(currentConversation.id) } },
+                        { id: 'move', label: '移至專案', icon: <Folder />, onSelect: () => { if (currentConversation) handleMoveToProject(currentConversation.id) } },
+                        { id: 'verify', label: '驗證防篡改鏈', tone: 'success', icon: <ShieldCheck />, onSelect: () => { if (currentConversation) handleVerifyChain(currentConversation.id) } },
+                        {
+                            id: 'delete', label: '刪除', tone: 'danger', icon: <Trash2 />,
+                            onSelect: () => { if (currentConversation) handleDeleteConversation(currentConversation.id, { stopPropagation() {} } as unknown as React.MouseEvent) },
+                        },
+                    ]}
+                />
             </div>
         </header>
     )

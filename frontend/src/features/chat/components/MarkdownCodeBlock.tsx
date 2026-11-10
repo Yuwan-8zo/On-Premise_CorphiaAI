@@ -1,7 +1,7 @@
 /**
  * 程式碼高亮 — 僅註冊常用語言，縮小 markdown chunk。
  */
-import React, { memo, useState } from 'react'
+import { memo, useState } from 'react'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx'

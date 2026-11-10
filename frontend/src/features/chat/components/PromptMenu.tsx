@@ -1,4 +1,5 @@
-import { Sparkles } from '@/components/snow/icons'
+import LensMenu from '@/components/ui/LensMenu'
+import { Reader } from '@/components/snow/icons'
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -100,15 +101,15 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     onClick={() => setIsOpen(!isOpen)}
                     disabled={disabled}
                     className={`btn-icon ${inline ? '!w-[38px] !h-[38px] [--R:19px]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
-                        transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]
+                        transition-[transform,background-color,border-color,color] duration-200 ease-apple
                         active:scale-90
                         ${isOpen
                             ? 'is-current text-accent'
                             : 'text-text-secondary'}`}
                     aria-expanded={isOpen}
                 >
-                    {/* 閃亮圖示 (Sparkles)，open 時跟著旋轉 + 加倍體積感 */}
-                    <Sparkles className={`w-5 h-5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isOpen ? 'rotate-[12deg] scale-110' : 'rotate-0 scale-100'}`} />
+                    {/* 提示詞模板圖示（文件＋文字行） */}
+                    <Reader className="w-5 h-5 shrink-0" />
                 </button>
             </Tooltip>
 
@@ -123,10 +124,11 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                         bottom: pos.bottom,
                         opacity: isAnimating ? 1 : 0,
                         transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
-                        transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                        transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
                 >
+                    <LensMenu className="">
                     <div className="flex flex-col">
                         <div className="px-3 pt-2 pb-1.5 text-[12px] font-semibold text-text-muted tracking-wider">
                             {t('chat.promptTemplatesTitle') || '提示詞模版'}
@@ -138,12 +140,13 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                                     onSelect(item.prompt)
                                     setIsOpen(false)
                                 }}
-                                className="w-full text-left px-3 h-11 rounded-[16px] text-[15px] font-medium text-text-primary transition-transform active:scale-[0.98] active:bg-[var(--chip)] focus-visible:bg-[var(--chip)] outline-none"
+                                className="menu-item"
                             >
                                 {item.title}
                             </button>
                         ))}
                     </div>
+                    </LensMenu>
                 </div>,
                 document.body,
             )}

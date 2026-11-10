@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 
 import type { BackendStatus } from './BackendStatusPill'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 interface BackendBootSplashProps {
     status: BackendStatus
@@ -45,22 +46,7 @@ export default function BackendBootSplash({ status }: BackendBootSplashProps) {
         >
             {/* 背景柔光斑點，跟登入頁同個調 */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <svg
-                    className="absolute w-full h-full"
-                    preserveAspectRatio="none"
-                    viewBox="0 0 1440 900"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <path
-                        className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02]"
-                        d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z"
-                    />
-                    <path
-                        className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03]"
-                        d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z"
-                    />
-                </svg>
+                <WaveBackground />
             </div>
 
             {/* 中央內容 */}
@@ -74,7 +60,7 @@ export default function BackendBootSplash({ status }: BackendBootSplashProps) {
                     <div
                         aria-hidden
                         className={`pointer-events-none absolute inset-0 -z-10 blur-3xl opacity-30 ${
-                            isOffline ? 'bg-[#FF453A]/30' : 'bg-corphia-bronze/30'
+                            isOffline ? 'bg-[#FF453A]/30' : 'bg-accent/30'
                         }`}
                     />
                 </div>
@@ -95,14 +81,14 @@ export default function BackendBootSplash({ status }: BackendBootSplashProps) {
                     {/* 拖尾 / 已走過的部分 */}
                     <span
                         aria-hidden
-                        className={`absolute inset-y-0 left-0 rounded-full animate-[bootSplashFill_2.2s_cubic-bezier(0.65,0,0.35,1)_infinite] ${
+                        className={`absolute inset-y-0 left-0 rounded-full animate-[bootSplashFill_2.2s_var(--ease-out)_infinite] ${
                             isOffline ? 'bg-[#FF453A]/35' : 'bg-text-primary/30'
                         }`}
                     />
                     {/* 圓球 (前緣指引) — top-1/2 + translateY-1/2 確保垂直置中、不被 overflow-hidden 切掉 */}
                     <span
                         aria-hidden
-                        className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full  animate-[bootSplashBall_2.2s_cubic-bezier(0.65,0,0.35,1)_infinite] ${
+                        className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full  animate-[bootSplashBall_2.2s_var(--ease-out)_infinite] ${
                             isOffline ? 'bg-[#FF453A]' : 'bg-text-primary'
                         }`}
                     />

@@ -121,7 +121,7 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                     }
                     st.setMessages(msgs)
                 }
-                useToastStore.getState().add('🔒 偵測到個人資料，已自動遮罩後才交給 AI', 'info', SECURITY_TOAST_MS)
+                useToastStore.getState().add('偵測到個人資料，已自動遮罩後才交給 AI', 'info', SECURITY_TOAST_MS)
                 break
 
             // A2: Prompt Injection 偵測警告 — 後端 guard 偵測到可疑模式
@@ -135,14 +135,14 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                     },
                     timestamp: Date.now(),
                 })
-                useToastStore.getState().add('⚠️ 偵測到提示詞注入攻擊，已寫入稽核日誌', 'error', SECURITY_TOAST_MS)
+                useToastStore.getState().add('偵測到提示詞注入攻擊，已寫入稽核日誌', 'error', SECURITY_TOAST_MS)
                 break
 
             // A2: 高風險 Prompt Injection → 後端已攔阻，不會有 stream content
             case 'injection_block':
                 setStreaming(false)
                 appendToLastMessage(
-                    `⛔ **已攔阻高風險提示詞注入攻擊**
+                    `**已攔阻高風險提示詞注入攻擊**
 
 ${data.message || '請求未送入 AI 模型。'}
 
@@ -158,7 +158,7 @@ ${data.message || '請求未送入 AI 模型。'}
                 // The backend never streams an answer for a blocked message, so fill the
                 // empty assistant bubble with a visible notice instead of leaving it blank.
                 appendToLastMessage(
-                    `⛔ **此訊息已被 DLP 資料外洩防護政策攔阻**
+                    `**此訊息已被 DLP 資料外洩防護政策攔阻**
 
 ${data.message || '訊息包含列管字詞。'}
 
@@ -173,7 +173,7 @@ ${data.message || '訊息包含列管字詞。'}
                     },
                     timestamp: Date.now(),
                 })
-                useToastStore.getState().add('⛔ 訊息含列管機密字詞，已依 DLP 政策攔阻', 'error', SECURITY_TOAST_MS)
+                useToastStore.getState().add('訊息含列管機密字詞，已依 DLP 政策攔阻', 'error', SECURITY_TOAST_MS)
                 break
         }
     }

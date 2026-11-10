@@ -11,6 +11,7 @@ import { useUIStore } from '@/store/uiStore'
 import { documentsApi } from '@/api/documents'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import Tooltip from '@/components/ui/Tooltip'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 interface Document {
     id: string
@@ -89,21 +90,21 @@ const TrashIcon = () => (
 
 const StatusBadge = ({ status }: { status: Document['status'] }) => {
     const styles = {
-        pending: 'bg-yellow-100/50 text-yellow-700  border border-yellow-200',
-        processing: 'bg-accent text-corphia-bronze  border border-[var(--paper-line)]',
-        completed: 'bg-green-100/50 text-green-700  border border-green-200',
-        failed: 'bg-red-100/50 text-red-700  border border-red-200',
+        pending: 'tag-orange',
+        processing: 'tag-accent',
+        completed: 'tag-green',
+        failed: 'tag-red',
     }
 
     const labels = {
-        pending: '等待中',
+        pending: '等待處理',
         processing: '處理中',
-        completed: '已完成',
-        failed: '失敗',
+        completed: '可讀取', // AI 已經能讀這份檔案
+        failed: '讀取失敗',
     }
 
     return (
-        <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status]}`}>
+        <span className={`tag ${styles[status]}`}>
             {labels[status]}
         </span>
     )
@@ -327,32 +328,27 @@ export default function Documents() {
         >
             {/* 背景弧線 SVG —— 跟登入/Admin/Chat 同款 */}
             <div aria-hidden className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
-                </svg>
+                <WaveBackground />
             </div>
             {/* 頂部導覽列 —— 玻璃感 sticky bar */}
-            <header className="relative z-10 h-16 sm:h-[80px] border-b border-[var(--paper-line)] flex items-center justify-between px-4 sm:px-8 bg-[var(--glass-card)] backdrop-blur-2xl transition-colors sticky top-0">
+            <header className="relative z-10 h-16 sm:h-[80px] flex items-center justify-between px-4 sm:px-8 bg-[var(--glass-card)] backdrop-blur-2xl transition-colors sticky top-0">
                 <div className="flex items-center gap-3">
-                    <Tooltip label={t('common.backToChat')}>
+                    
                         <Link
                             to="/chat"
                             aria-label={t('common.backToChat')}
-                            className="flex items-center justify-center w-9 h-9 rounded-full text-text-secondary   transition-colors"
+                            className="btn-icon !w-[34px] !h-[34px] shrink-0 text-text-secondary"
                         >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-[18px] h-[18px]" />
                         </Link>
-                    </Tooltip>
-                    <h1 className="text-xl font-semibold text-text-primary tracking-wide flex items-center gap-2">
-                        <MaterialIcon name="folder" size={22} />
+                    
+                    <h1 className="text-[22px] leading-[28px] font-bold text-text-primary">
                         {t('nav.documents')}
                     </h1>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="btn-icon !w-10 !h-10 text-text-secondary"
+                    className="btn-icon !w-[40px] !h-[40px] text-text-secondary"
                 >
                     {theme === 'dark' ? (
                         <Sun className="w-5 h-5" />
@@ -366,7 +362,7 @@ export default function Documents() {
                 {/* 上傳區域 —— 玻璃感虛線框 */}
                 <div
                     className={`relative border-2 border-dashed rounded-[18px] p-5 sm:p-10 mb-4 sm:mb-6 transition-colors backdrop-blur-xl ${dragActive
-                            ? 'border-corphia-bronze bg-accent/10 supports-[backdrop-filter]:bg-accent/8'
+                            ? 'border-accent bg-accent/10 supports-[backdrop-filter]:bg-accent/8'
                             : 'border-[var(--paper-line)] bg-[var(--glass-card)]'
                         } shadow-[0_8px_28px_rgb(0_0_0/0.06)] dark:shadow-[0_8px_28px_rgb(0_0_0/0.32)]`}
                     onDragEnter={handleDrag}
@@ -383,7 +379,7 @@ export default function Documents() {
                     />
 
                     <div className="text-center flex flex-col items-center">
-                        <div className="text-corphia-bronze mb-2 sm:mb-4">
+                        <div className="text-accent mb-2 sm:mb-4">
                             <UploadIcon />
                         </div>
                         <p className="text-text-primary font-medium mb-1.5 sm:mb-2 text-[15px] sm:text-lg leading-tight">
@@ -454,24 +450,24 @@ export default function Documents() {
                                             <div className="shrink-0 flex items-center gap-2">
                                                 {/* 狀態指示器 */}
                                                 {isDone && (
-                                                    <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 inline-flex items-center gap-0.5">
+                                                    <span className="text-[12px] font-semibold text-green-600 dark:text-green-400 inline-flex items-center gap-0.5">
                                                         <MaterialIcon name="check_circle" size={13} aria-hidden />
                                                         {t('documents.uploadDone', '已完成')}
                                                     </span>
                                                 )}
                                                 {isFailed && (
-                                                    <span className="text-[11px] font-semibold text-red-500 inline-flex items-center gap-0.5">
+                                                    <span className="text-[12px] font-semibold text-red-500 inline-flex items-center gap-0.5">
                                                         <MaterialIcon name="error" size={13} aria-hidden />
                                                         {t('documents.uploadFailed', '失敗')}
                                                     </span>
                                                 )}
                                                 {isUploadingNow && (
-                                                    <span className="text-[11px] font-mono tabular-nums text-text-secondary">
+                                                    <span className="text-[12px] tabular-nums text-text-secondary">
                                                         {item.progress}%
                                                     </span>
                                                 )}
                                                 {item.status === 'queued' && (
-                                                    <span className="text-[11px] font-medium text-text-muted">
+                                                    <span className="text-[12px] font-medium text-text-secondary">
                                                         {t('documents.uploadQueued', '排隊中')}
                                                     </span>
                                                 )}
@@ -546,35 +542,35 @@ export default function Documents() {
                                 key={card.step}
                                 className="paper !rounded-[25px] p-5 "
                             >
-                                <p className="text-xs font-semibold tracking-[0.18em] text-text-muted mb-2">{card.step}</p>
-                                <h3 className="text-base font-semibold text-text-primary mb-2">{card.title}</h3>
+                                <span className="mb-3 w-[26px] h-[26px] rounded-full bg-[var(--chip)] text-[13px] font-semibold text-text-primary flex items-center justify-center">{Number(card.step)}</span>
+                                <h3 className="text-[17px] leading-[22px] font-semibold text-text-primary mb-1">{card.title}</h3>
                                 <p className="text-[13px] text-text-secondary leading-relaxed">{card.desc}</p>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* 文件列表 */}
-                <div className="paper !rounded-[25px] overflow-hidden transition-colors">
-                    <div className="px-8 py-4 border-b border-[var(--paper-line)] flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                        <h2 className="font-semibold text-text-primary">
-                            {t('documents.uploadedTitle', '已上傳文件')} ({visibleDocuments.length}
-                            {searchQuery.trim() ? ` / ${documents.length}` : ''})
-                        </h2>
-                        {documents.length > 0 && (
-                            <div className="relative max-w-xs w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                                <input
-                                    type="search"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder={t('documents.searchPlaceholder', '搜尋檔名…')}
-                                    className="w-full pl-9 pr-3 py-1.5 text-sm rounded-full snow-field text-text-primary placeholder:text-text-muted outline-none"
-                                />
-                            </div>
-                        )}
-                    </div>
-
+                {/* 文件列表（Apple 分組清單：組名＋搜尋在卡片上方，每個檔案一列，分隔線從文字起點開始） */}
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between">
+                    <h2 className="set-header !p-0 sm:pl-4 sm:!pl-4">
+                        {t('documents.uploadedTitle', '已上傳文件')}（{visibleDocuments.length}
+                        {searchQuery.trim() ? ` / ${documents.length}` : ''}）
+                    </h2>
+                    {documents.length > 0 && (
+                        <div className="relative max-w-xs w-full mb-2">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
+                            <input
+                                type="search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder={t('documents.searchPlaceholder', '搜尋檔名…')}
+                                aria-label={t('documents.searchPlaceholder', '搜尋檔名…')}
+                                className="w-full h-9 pl-9 pr-3 text-[15px] rounded-[10px] bg-[var(--chip)] text-text-primary placeholder:text-text-secondary outline-none"
+                            />
+                        </div>
+                    )}
+                </div>
+                <div className="paper !rounded-[25px] overflow-hidden">
                     {isLoading ? (
                         <div className="p-10 text-center text-text-secondary">
                             {t('common.loading', '載入中...')}
@@ -586,30 +582,22 @@ export default function Documents() {
                                 : t('documents.empty', '尚無上傳的文件')}
                         </div>
                     ) : (
-                        <div className="divide-y divide-border-subtle dark:divide-border-subtle">
+                        <div className="py-1">
                             {visibleDocuments.map(doc => (
-                                <div key={doc.id} className="px-8 py-5 flex items-center gap-5  transition-colors">
+                                <div key={doc.id} className="set-row has-icon !py-3 !px-5">
                                     <FileIcon type={doc.fileType} />
-
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-[15px] text-text-primary truncate mb-0.5">
-                                            {doc.originalFilename}
-                                        </p>
-                                        <div className="flex items-center gap-2.5 text-sm text-text-secondary">
-                                            <span>{formatFileSize(doc.fileSize)}</span>
-                                            <span>•</span>
-                                            <span>{doc.chunkCount} 分塊</span>
-                                            <span>•</span>
-                                            <span>{parseServerDate(doc.createdAt).toLocaleDateString('zh-TW')}</span>
-                                        </div>
-                                    </div>
-
+                                    <span className="set-label">
+                                        <span className="block truncate font-medium">{doc.originalFilename}</span>
+                                        <span className="set-sub">
+                                            {formatFileSize(doc.fileSize)} · {doc.chunkCount} {t('documents.chunks', '分塊')} · {parseServerDate(doc.createdAt).toLocaleDateString('zh-TW')}
+                                        </span>
+                                    </span>
                                     <StatusBadge status={doc.status} />
-
                                     <Tooltip label={t('common.delete', '刪除')}>
                                         <button
                                             onClick={() => deleteDocument(doc.id)}
-                                            className="btn-icon btn-icon-plain !w-10 !h-10 ml-4 text-text-muted"
+                                            aria-label={t('common.delete', '刪除')}
+                                            className="btn-icon btn-icon-plain !w-9 !h-9 text-text-secondary"
                                         >
                                             <TrashIcon />
                                         </button>

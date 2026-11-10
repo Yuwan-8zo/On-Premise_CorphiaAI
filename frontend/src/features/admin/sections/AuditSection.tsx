@@ -14,6 +14,7 @@
  *   stays aligned with the body's `colgroup` while remaining sticky.
  */
 
+import StyledSelect from '@/components/ui/StyledSelect'
 import {
     ChevronLeft,
     ChevronRight,
@@ -36,9 +37,6 @@ import {
     Panel,
     SectionHeader,
     ActionButton,
-    Field,
-    inputClass,
-    selectClass,
     formatDate,
     tableBodyClass,
     tableEmptyCellClass,
@@ -115,51 +113,50 @@ export default function AuditSection({
         <>
             <div className="space-y-5">
                 {/* Filter bar */}
-                <Panel className="p-5">
-                    <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-                        <Field label={t('common.search')}>
-                            <div className="flex gap-2">
-                                <input
-                                    className={inputClass}
-                                    value={auditSearchInput}
-                                    onChange={(event) => setAuditSearchInput(event.target.value)}
-                                    onKeyDown={(event) => event.key === 'Enter' && onSearch()}
-                                    placeholder={t('admin.audit.searchPlaceholder')}
-                                />
-                                <ActionButton onClick={onSearch}>
-                                    <Search className="h-4 w-4" />
-                                    {t('common.search')}
-                                </ActionButton>
-                            </div>
-                        </Field>
-                        <Field label={t('admin.audit.action')}>
-                            <select
-                                className={selectClass}
+                <Panel className="p-4">
+                    {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <label className="admin-search flex-1 min-w-[220px]">
+                            <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
+                                <Search className="h-[16px] w-[16px]" />
+                            </button>
+                            <input
+                                type="search"
+                                aria-label={t('common.search')}
+                                value={auditSearchInput}
+                                onChange={(event) => setAuditSearchInput(event.target.value)}
+                                onKeyDown={(event) => event.key === 'Enter' && onSearch()}
+                                placeholder={t('admin.audit.searchPlaceholder')}
+                            />
+                        </label>
+                        <div className="w-[180px]">
+                            <StyledSelect
                                 value={auditFilter.action || ''}
-                                onChange={(event) => onFilterChange('action', event.target.value)}
-                            >
-                                <option value="">{t('admin.audit.allActions')}</option>
-                                <option value="login_success">{t('admin.audit.actionTypes.login_success')}</option>
-                                <option value="login_failed">{t('admin.audit.actionTypes.login_failed')}</option>
-                                <option value="user_update">{t('admin.audit.actionTypes.user_update')}</option>
-                                <option value="document_upload">{t('admin.audit.actionTypes.document_upload')}</option>
-                                <option value="document_delete">{t('admin.audit.actionTypes.document_delete')}</option>
-                            </select>
-                        </Field>
-                        <Field label={t('admin.audit.resource')}>
-                            <select
-                                className={selectClass}
+                                onChange={(v) => onFilterChange('action', v)}
+                                options={[
+                                    { value: '', label: t('admin.audit.allActions') },
+                                    { value: 'login_success', label: t('admin.audit.actionTypes.login_success') },
+                                    { value: 'login_failed', label: t('admin.audit.actionTypes.login_failed') },
+                                    { value: 'user_update', label: t('admin.audit.actionTypes.user_update') },
+                                    { value: 'document_upload', label: t('admin.audit.actionTypes.document_upload') },
+                                    { value: 'document_delete', label: t('admin.audit.actionTypes.document_delete') },
+                                ]}
+                            />
+                        </div>
+                        <div className="w-[180px]">
+                            <StyledSelect
                                 value={auditFilter.resource_type || ''}
-                                onChange={(event) => onFilterChange('resource_type', event.target.value)}
-                            >
-                                <option value="">{t('admin.audit.allResources')}</option>
-                                <option value="auth">{t('admin.audit.resourceTypes.auth')}</option>
-                                <option value="user">{t('admin.audit.resourceTypes.user')}</option>
-                                <option value="conversation">{t('admin.audit.resourceTypes.conversation')}</option>
-                                <option value="document">{t('admin.audit.resourceTypes.document')}</option>
-                                <option value="model">{t('admin.audit.resourceTypes.model')}</option>
-                            </select>
-                        </Field>
+                                onChange={(v) => onFilterChange('resource_type', v)}
+                                options={[
+                                    { value: '', label: t('admin.audit.allResources') },
+                                    { value: 'auth', label: t('admin.audit.resourceTypes.auth') },
+                                    { value: 'user', label: t('admin.audit.resourceTypes.user') },
+                                    { value: 'conversation', label: t('admin.audit.resourceTypes.conversation') },
+                                    { value: 'document', label: t('admin.audit.resourceTypes.document') },
+                                    { value: 'model', label: t('admin.audit.resourceTypes.model') },
+                                ]}
+                            />
+                        </div>
                         <div className="flex gap-2">
                             {/* 資安事件篩選：和匯出鈕同尺寸的膠囊，選取時改紅色 */}
                             <button
@@ -203,7 +200,7 @@ export default function AuditSection({
                       因為內容（table）不會超出 Panel 邊界，不需要 overflow:hidden 截切。
                 */}
                 <Panel>
-                    <div className="sticky top-0 z-20 bg-[var(--glass-card)] backdrop-blur-xl rounded-t-[25px]">
+                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[25px]">
                         <SectionHeader
                             title={t('admin.audit.title')}
                             eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
@@ -232,7 +229,7 @@ export default function AuditSection({
                         {/* Column header row — same grid template as the tbody rows
                             手機板僅顯示 時間 + 操作；resource / user / ip 在 sm+ 才出現
                             點任一列仍可開 drawer 看完整資料 */}
-                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_140px] border-b border-[var(--paper-line)] text-left text-xs uppercase tracking-wider text-text-secondary">
+                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_140px] border-b border-[var(--paper-line)] text-left text-[13px] font-semibold text-text-secondary">
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.time')}</div>
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.action')}</div>
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.resource')}</div>
@@ -300,7 +297,7 @@ export default function AuditSection({
                                             <td className="hidden sm:table-cell max-w-[180px] truncate px-5 py-2 text-sm text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
                                             </td>
-                                            <td className="hidden sm:table-cell px-5 py-2 font-mono text-xs text-text-secondary/70">
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary/70">
                                                 {log.ip_address || '-'}
                                             </td>
                                         </tr>
@@ -321,7 +318,7 @@ export default function AuditSection({
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/40 z-40"
+                            className="fixed inset-0 bg-black/20 dark:bg-black/45 z-40"
                             onClick={() => setAuditDrawer(null)}
                         />
                         <motion.aside
@@ -334,9 +331,9 @@ export default function AuditSection({
                             role="dialog"
                             aria-label="audit detail"
                         >
-                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl border-b border-[var(--paper-line)] px-[26px] py-4 flex items-center justify-between">
+                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl px-[26px] py-4 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[12px] font-bold uppercase tracking-wider text-accent">
+                                    <p className="text-[12px] font-bold text-accent">
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
                                     </p>
                                     <h3 className="mt-0.5 text-base font-semibold text-text-primary">
@@ -377,7 +374,7 @@ export default function AuditSection({
                             </dl>
                             {auditDrawer.details && Object.keys(auditDrawer.details).length > 0 && (
                                 <div className="px-5 pb-6">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
+                                    <p className="text-xs font-bold text-text-secondary mb-2">
                                         {t('admin.audit.detailPayload', 'Payload')}
                                     </p>
                                     <pre className="p-4 rounded-[14px] snow-well text-[12px] text-text-primary overflow-x-auto">

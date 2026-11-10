@@ -1,12 +1,16 @@
 /**
- * StyledSelect - 全站統一風格的下拉選單。
+ * StyledSelect — 全站統一的下拉選單（取代原生 <select>）
  *
- * 取代原生 <select>，避免不同 OS / 瀏覽器顯示成藍色 highlight 等不一致樣式。
- * 樣式對齊專案的 input/button：圓角、accent border、深色主題感知。
+ * 規範（design-system/README.md）：
+ *   - 觸發鈕：膠囊、實色輸入框底（.snow-field）、右側 ChevronDown
+ *   - 選單：.paper .paper-solid（不透明，避免透出後方內容），掛到 body，依觸發鈕位置定位；
+ *     下方空間不足時往上開，不會被對話框的捲動範圍裁切
+ *   - 選項：.menu-item 膠囊，目前選取＝.is-current（強調色字＋勾號），包在 <LensMenu>（長按放大鏡）
  */
-
-import { useEffect, useRef, useState } from 'react'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Check, ChevronDown } from '@/components/snow/icons'
+import LensMenu from '@/components/ui/LensMenu'
 
 export interface StyledSelectOption {
     value: string
@@ -22,83 +26,93 @@ interface StyledSelectProps {
     className?: string
 }
 
-export default function StyledSelect({
-    value,
-    options,
-    onChange,
-    placeholder,
-    disabled,
-    className = '',
-}: StyledSelectProps) {
-    const [open, setOpen] = useState(false)
-    const containerRef = useRef<HTMLDivElement>(null)
+const MENU_MAX = 280 // 選單最高 280px，超過可捲動
 
+export default function StyledSelect({ value, options, onChange, placeholder, disabled, className = '' }: StyledSelectProps) {
+    const [open, setOpen] = useState(false)
+    const [pos, setPos] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null)
+    const btnRef = useRef<HTMLButtonElement>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
     const selected = options.find((o) => o.value === value)
 
-    // 外部點擊關閉
+    // 依觸發鈕位置定位；下方放不下就往上開
+    useLayoutEffect(() => {
+        if (!open) return
+        const place = () => {
+            const r = btnRef.current?.getBoundingClientRect()
+            if (!r) return
+            const below = window.innerHeight - r.bottom
+            setPos(below < MENU_MAX + 16 && r.top > below
+                ? { left: r.left, width: r.width, bottom: window.innerHeight - r.top + 6 }
+                : { left: r.left, width: r.width, top: r.bottom + 6 })
+        }
+        place()
+        window.addEventListener('resize', place)
+        window.addEventListener('scroll', place, true)
+        return () => {
+            window.removeEventListener('resize', place)
+            window.removeEventListener('scroll', place, true)
+        }
+    }, [open])
+
+    // 點外面、按 Esc 關閉
     useEffect(() => {
         if (!open) return
-        const handler = (e: MouseEvent) => {
-            if (!containerRef.current) return
-            if (!containerRef.current.contains(e.target as Node)) {
-                setOpen(false)
-            }
+        const down = (e: MouseEvent) => {
+            const t = e.target as Node
+            if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) setOpen(false)
         }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
+        const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+        document.addEventListener('mousedown', down)
+        document.addEventListener('keydown', key)
+        return () => {
+            document.removeEventListener('mousedown', down)
+            document.removeEventListener('keydown', key)
+        }
     }, [open])
 
     return (
-        <div ref={containerRef} className={`relative ${className}`}>
+        <div className={`relative ${className}`}>
             <button
+                ref={btnRef}
                 type="button"
                 disabled={disabled}
-                onClick={() => !disabled && setOpen((prev) => !prev)}
-                className="w-full flex items-center justify-between rounded-[16px] snow-field px-4 py-2.5 text-sm text-text-primary transition-colors/60 focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => !disabled && setOpen((v) => !v)}
+                className="w-full h-11 flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[15px] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
-                <span className={selected ? '' : 'text-text-muted'}>
-                    {selected?.label ?? placeholder ?? ''}
-                </span>
-                <MaterialIcon
-                    name="expand_more"
-                    size={20}
-                    className={`text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`}
-                    aria-hidden
-                />
+                <span className={`truncate ${selected ? '' : 'text-text-muted'}`}>{selected?.label ?? placeholder ?? ''}</span>
+                <ChevronDown className={`w-[18px] h-[18px] shrink-0 text-text-secondary transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
-            {open && (
-                <ul
+            {open && pos && createPortal(
+                <div
+                    ref={menuRef}
                     role="listbox"
-                    className="absolute z-50 mt-1 w-full max-h-60 overflow-auto paper !rounded-[20px] p-1.5"
+                    className="fixed z-[1100] paper paper-solid !rounded-[22px] p-[6px] overflow-y-auto"
+                    style={{ left: pos.left, minWidth: pos.width, maxWidth: 360, top: pos.top, bottom: pos.bottom, maxHeight: MENU_MAX }}
                 >
-                    {options.map((opt) => {
-                        const isSelected = opt.value === value
-                        return (
-                            <li
-                                key={opt.value}
-                                role="option"
-                                aria-selected={isSelected}
-                                onClick={() => {
-                                    onChange(opt.value)
-                                    setOpen(false)
-                                }}
-                                className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer transition-colors ${
-                                    isSelected
-                                        ? 'bg-accent/15 text-accent font-medium'
-                                        : 'text-text-primary '
-                                }`}
-                            >
-                                <span>{opt.label}</span>
-                                {isSelected && (
-                                    <MaterialIcon name="check" size={16} className="text-accent" aria-hidden />
-                                )}
-                            </li>
-                        )
-                    })}
-                </ul>
+                    <LensMenu className="flex flex-col gap-0.5">
+                        {options.map((opt) => {
+                            const isSel = opt.value === value
+                            return (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSel}
+                                    onClick={() => { onChange(opt.value); setOpen(false) }}
+                                    className={`menu-item justify-between ${isSel ? 'is-current' : ''}`}
+                                >
+                                    <span className="whitespace-nowrap">{opt.label}</span>
+                                    {isSel && <Check />}
+                                </button>
+                            )
+                        })}
+                    </LensMenu>
+                </div>,
+                document.body,
             )}
         </div>
     )

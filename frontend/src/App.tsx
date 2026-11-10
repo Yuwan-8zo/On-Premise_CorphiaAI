@@ -36,7 +36,7 @@ import BackendGate from './components/boot/BackendGate'
 // Global UI Components
 const FallbackLoader = () => (
     <div className="flex items-center justify-center h-[100dvh] w-full bg-bg-base">
-        <div className="w-8 h-8 rounded-full border-2 border-corphia-bronze/20 border-t-accent animate-spin"></div>
+        <div className="w-8 h-8 rounded-full border-2 border-accent/20 border-t-accent animate-spin"></div>
     </div>
 )
 
@@ -86,37 +86,35 @@ export default function App() {
         const csOnly = isDark ? 'only dark' : 'only light'
         const html = document.documentElement
 
-        // 解析 accentColor (Hex -> RGB) 並計算對比色
-        const presetAccent = ACCENT_COLORS[accentColor]
-        const [r, g, b] = (presetAccent || ACCENT_COLORS.default).rgb.split(' ').map(Number)
-        
-        // 亮度公式 (Luminance) 來決定文字該用深色或淺色
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        const textOnAccent = luminance > 0.55 ? '#000000' : '#FFFFFF'
-        const rgbString = `${r} ${g} ${b}`
+        // 強調色：Apple 系統色，淺色與深色外觀各一組；強調色上的文字一律白色（Apple 做法）
+        const preset = ACCENT_COLORS[accentColor] || ACCENT_COLORS.blue
+        html.style.setProperty('--color-ios-accent-light', preset.rgb)
+        html.style.setProperty('--color-ios-accent-dark', preset.rgbDark)
+        html.style.setProperty('--text-on-accent', '#FFFFFF')
 
-        // 動態注入 CSS 變數
-        html.style.setProperty('--color-ios-accent-light', rgbString)
-        html.style.setProperty('--color-ios-accent-dark', rgbString)
-        html.style.setProperty('--text-on-accent', textOnAccent)
-
-        // ─────────────────────────────────────────────────────────────
-        // 邊框/分隔線跟著 accent 走
-        // FIX: 原本 7%/22% 在深色模式（bg 32,32,34）算出來幾乎看不見
-        // （subtle ≈ 39,37,37 跟 bg 只差 ±5）。提到 16%/38%：
-        //   - subtle  ~50,44,42 → 跟 bg 差 ±15，淡但能勾勒卡片邊
-        //   - strong  ~72,62,53 → 跟 bg 差 ±30，明顯但不刺眼
-        // 淺色模式 (bg 250,250,248) 同步提升，但因為背景亮，邊框會更清楚
-        // ─────────────────────────────────────────────────────────────
-        const baseRgb = isDark ? [32, 32, 34] : [250, 250, 248]
-        const mix = (ratio: number) => {
-            const mr = Math.round(r * ratio + baseRgb[0] * (1 - ratio))
-            const mg = Math.round(g * ratio + baseRgb[1] * (1 - ratio))
-            const mb = Math.round(b * ratio + baseRgb[2] * (1 - ratio))
-            return `${mr} ${mg} ${mb}`
+        // 深色頁面底色＝主題色 18%＋深灰（畫面最上方的顏色），換主題色背景跟著變；淺色維持 Apple 淺灰
+        const [ar, ag, ab] = preset.rgbDark.split(/\s+/).map(Number)
+        const mix = (a: number, base: number, k: number) => Math.round(base * (1 - k) + a * k)
+        const tone = (k: number, [r, g, b]: number[]) => `${mix(ar, r, k)} ${mix(ag, g, k)} ${mix(ab, b, k)}`
+        const darkBase = tone(0.18, [16, 19, 26])
+        // 深色背景波浪：同一個品牌色、一層比一層深的實色色帶（上淺下深，跟淺色模式同方向）
+        const darkWaves = [tone(0.16, [11, 14, 20]), tone(0.14, [8, 10, 16]), tone(0.12, [5, 7, 11])]
+        darkWaves.forEach((c, i) => {
+            if (isDark) html.style.setProperty(`--wave-d${i + 1}`, c)
+            else html.style.removeProperty(`--wave-d${i + 1}`)
+        })
+        const darkDeep = `${mix(ar, 1, 0.025)} ${mix(ag, 1, 0.025)} ${mix(ab, 2, 0.025)}`
+        for (const k of ['--bg-base', '--bg-canvas', '--bg-main']) {
+            if (isDark) html.style.setProperty(k, darkBase)
+            else html.style.removeProperty(k)
         }
-        html.style.setProperty('--border-subtle', mix(0.16))
-        html.style.setProperty('--border-strong', mix(0.38))
+        // 深色卡片跟背景同一個色調（主題色 5%＋中性灰），九成二不透明：背景帶主題色時卡片不會是突兀的中性灰
+        if (isDark) html.style.setProperty('--glass-card', `rgba(${mix(ar, 34, 0.05)}, ${mix(ag, 34, 0.05)}, ${mix(ab, 37, 0.05)}, 0.92)`)
+        else html.style.removeProperty('--glass-card')
+
+        // 分隔線：Apple opaqueSeparator（深色 #38383A、淺色 #C6C6C8），不跟強調色走
+        html.style.setProperty('--border-subtle', isDark ? '56 56 58' : '198 198 200')
+        html.style.setProperty('--border-strong', isDark ? '72 72 74' : '174 174 178')
         
         // 保留 data-accent 給一些可能的舊邏輯（如果有的話）
         html.setAttribute('data-accent', accentColor)
@@ -129,9 +127,9 @@ export default function App() {
         }
 
         // html/body 背景色即時更新（不依賴 CSS transition）
-        // 深色用整片漸層（從 darkBg 漸到 #101012），淺色用單一 baseBg
+        // 深色用整片漸層（主題色深色調 → 更深），淺色用單一 baseBg
         if (isDark) {
-            html.style.background = THEME_COLORS.darkBgGradient
+            html.style.background = `linear-gradient(135deg, rgb(${darkBase}) 0%, rgb(${darkDeep}) 100%)`
             document.body.style.background = 'transparent'
         } else {
             html.style.background = baseBg
@@ -150,7 +148,7 @@ export default function App() {
         existingThemeColors.forEach((m) => m.remove())
         const metaThemeColor = document.createElement('meta')
         metaThemeColor.setAttribute('name', 'theme-color')
-        metaThemeColor.setAttribute('content', topBarBg)
+        metaThemeColor.setAttribute('content', isDark ? `rgb(${darkBase})` : topBarBg)
         document.head.appendChild(metaThemeColor)
 
         // meta[color-scheme] 更新

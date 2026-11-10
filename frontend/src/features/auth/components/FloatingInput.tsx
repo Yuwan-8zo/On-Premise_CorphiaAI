@@ -98,9 +98,9 @@ export default function FloatingInput({
                 style={{
                     y: '-50%',
                     color: isFloating
-                        ? (error ? '#ef4444' : 'rgb(var(--accent))')
-                        : (error ? '#ef4444' : 'rgb(var(--text-secondary))'),
-                    transition: 'color 160ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        ? (error ? 'var(--danger-ink)' : 'var(--accent-ink)')
+                        : (error ? 'var(--danger-ink)' : 'rgb(var(--text-secondary))'),
+                    transition: 'color 170ms var(--ease-out)',
                 }}
             >
                 {/* 浮起時：跨在輸入框上緣的液態玻璃小膠囊（光邊 --R 12） */}
@@ -109,7 +109,7 @@ export default function FloatingInput({
                     className="absolute inset-0 rounded-full glass-chip [--R:12px] !bg-[var(--pill-solid)]"
                     style={{
                         opacity: isFloating ? 1 : 0,
-                        transition: 'opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'opacity 200ms var(--ease-out)',
                     }}
                 />
                 <span className="relative z-[3]">{label}</span>

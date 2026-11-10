@@ -132,7 +132,7 @@ export class ChatWebSocket {
                     if (last?.role === 'assistant') {
                         st.appendToLastMessage(
                             (last.content ? '\n\n' : '') +
-                            '⚠️ 與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
+                            '與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
                         )
                     }
                 }

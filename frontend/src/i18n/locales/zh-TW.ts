@@ -79,6 +79,8 @@ export default {
         rememberMe: '記住我',
         loginSuccess: '登入成功',
         loginFailed: '登入失敗，請檢查帳號密碼',
+        invalidEmail: '信箱格式不正確',
+        invalidPassword: '密碼格式不符合規定',
         registerSuccess: '註冊成功',
         registerFailed: '註冊失敗，請稍後再試',
         noAccount: '還沒有帳號？',

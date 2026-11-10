@@ -44,12 +44,12 @@ export const brandColors = {
 }
 
 export const accentColors = {
-    default: { label: 'Titanium Bronze', hex: '#896E53', rgb: '137 110 83' },
-    blue: { label: 'System Blue', hex: '#3F8EF7', rgb: '63 142 247' },
-    purple: { label: 'Electric Purple', hex: '#DB37F4', rgb: '219 55 244' },
-    pink: { label: 'Signal Pink', hex: '#F64066', rgb: '246 64 102' },
-    orange: { label: 'Warm Orange', hex: '#FB8D2D', rgb: '251 141 45' },
-    green: { label: 'Mint Green', hex: '#22D9C5', rgb: '34 217 197' },
+    // Apple 系統色（iOS 26）：rgb＝淺色外觀、rgbDark＝深色外觀。依《Liquid Glass 元件規範》CSS 29–30；棕色已移除
+    blue: { label: 'System Blue', hex: '#0091FF', rgb: '0 122 255', rgbDark: '0 145 255' },
+    purple: { label: 'System Purple', hex: '#BF5AF2', rgb: '175 82 222', rgbDark: '191 90 242' },
+    pink: { label: 'System Pink', hex: '#FF375F', rgb: '255 45 85', rgbDark: '255 55 95' },
+    orange: { label: 'System Orange', hex: '#FF9230', rgb: '255 149 0', rgbDark: '255 146 48' },
+    green: { label: 'System Green', hex: '#30D158', rgb: '52 199 89', rgbDark: '48 209 88' },
 }
 
 export const palette = {
@@ -143,37 +143,45 @@ export const boxShadow = {
     inner: 'inset 0 1px 3px rgb(0 0 0 / 0.08)',
 }
 
+/**
+ * 動畫（《Liquid Glass 元件規範》時間與曲線總表）
+ *   只用兩條曲線：減速 cubic-bezier(.23,1,.32,1)、彈性 cubic-bezier(.32,.72,0,1)；不用加速曲線
+ *   按壓 0.17 秒；舊頁淡出 0.2 秒；選單 0.3 秒；新頁進場 0.42 秒；進場從 0.95 開始；隨時可以打斷
+ */
 export const motion = {
     duration: {
         instant: '1ms',
-        press: '120ms',
-        fast: '150ms',
-        normal: '250ms',
-        medium: '300ms',
+        press: '170ms',
+        fast: '200ms',
+        normal: '300ms',
+        medium: '420ms',
         slow: '600ms',
         spin: '1s',
         pulse: '2s',
     },
     durationSeconds: {
-        press: 0.12,
-        fast: 0.15,
-        hover: 0.18,
-        normal: 0.25,
-        spring: 0.36,
+        press: 0.17,
+        fast: 0.2,
+        hover: 0.17,
+        normal: 0.3,
+        spring: 0.42,
+        page: 0.42,
         slow: 0.6,
     },
     easing: {
-        apple: 'cubic-bezier(0.23, 1, 0.32, 1)',
-        appleSoft: 'cubic-bezier(0.22, 1, 0.36, 1)',
-        standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
-        pulse: 'cubic-bezier(0.4, 0, 0.6, 1)',
-        pop: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        apple: 'cubic-bezier(0.23, 1, 0.32, 1)', // 減速
+        appleSoft: 'cubic-bezier(0.32, 0.72, 0, 1)', // 彈性
+        standard: 'cubic-bezier(0.23, 1, 0.32, 1)', // 舊的「先加速後減速」一律改成減速
+        pulse: 'cubic-bezier(0.4, 0, 0.6, 1)', // 只給載入中的呼吸燈（循環動畫，不是切換）
+        pop: 'cubic-bezier(0.32, 0.72, 0, 1)', // 舊的回彈過頭改成規範的彈性曲線
     },
+    // GSAP 用的曲線：quint.out ＝ cubic-bezier(.23,1,.32,1)；沒有加速曲線（in／inOut 也對到減速）
     gsapEase: {
-        default: 'power2.out',
-        in: 'power2.in',
-        out: 'power2.out',
-        inOut: 'power2.inOut',
+        default: 'quint.out',
+        in: 'quint.out',
+        out: 'quint.out',
+        inOut: 'quint.out',
+        spring: 'expo.out',
     },
     spring: {
         default: { type: 'spring', stiffness: 200, damping: 25, mass: 1 },
@@ -182,8 +190,8 @@ export const motion = {
     },
     fade: {
         type: 'tween',
-        duration: 0.18,
-        ease: [0.4, 0, 0.2, 1],
+        duration: 0.2,
+        ease: [0.23, 1, 0.32, 1],
     },
     keyframes: {
         'typing-bounce': {

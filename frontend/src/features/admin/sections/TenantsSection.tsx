@@ -117,7 +117,7 @@ export default function TenantsSection({
                                 {/* Usage stats — Glance 風格 */}
                                 <div className="mb-4 grid grid-cols-2 gap-3">
                                     <div>
-                                        <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
+                                        <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.users', '使用者')}
                                         </p>
                                         <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
@@ -125,7 +125,7 @@ export default function TenantsSection({
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
+                                        <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.documents', '文件')}
                                         </p>
                                         <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
@@ -133,7 +133,7 @@ export default function TenantsSection({
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
+                                        <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.messages24h', '24h 訊息')}
                                         </p>
                                         <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
@@ -141,7 +141,7 @@ export default function TenantsSection({
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
+                                        <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.events24h', '24h 事件')}
                                         </p>
                                         <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-red-500' : 'text-text-primary'}`}>

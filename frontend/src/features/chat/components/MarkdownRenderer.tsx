@@ -10,6 +10,44 @@ import remarkGfm from 'remark-gfm'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
 
+/** 模型輸出的 <br>、<br/> → 行分隔符號（U+2028）；不開放任意 HTML */
+const LINE_BREAK = '\u2028'
+const normalizeBreaks = (md: string) => md.replace(/<br\s*\/?>/gi, LINE_BREAK)
+
+/** 表格儲存格：有換行時一行一塊；「- 」「• 」「* 」開頭的行做成凸排條列（第二行對齊文字，不對齊符號） */
+function cellLines(children: React.ReactNode): React.ReactNode {
+    const arr = React.Children.toArray(children)
+    const text = arr.every((c) => typeof c === 'string') ? (arr as string[]).join('') : null
+    if (text === null || !text.includes(LINE_BREAK)) {
+        if (typeof text === 'string' && /^\s*[-•*]\s+/.test(text)) {
+            return <span className="md-hang">{text.replace(/^\s*[-•*]\s+/, '')}</span>
+        }
+        return withBreaks(children)
+    }
+    return text.split(LINE_BREAK).map((line, i) => {
+        const bullet = /^\s*[-•*]\s+/.test(line)
+        return (
+            <span key={i} className={bullet ? 'md-hang' : 'block'}>
+                {bullet ? line.replace(/^\s*[-•*]\s+/, '') : line}
+            </span>
+        )
+    })
+}
+
+/** 把文字裡的行分隔符號換成 <br />（只處理直接的文字節點） */
+function withBreaks(children: React.ReactNode): React.ReactNode {
+    return React.Children.map(children, (child) => {
+        if (typeof child !== 'string' || !child.includes(LINE_BREAK)) return child
+        const parts = child.split(LINE_BREAK)
+        return parts.map((part, i) => (
+            <React.Fragment key={i}>
+                {i > 0 && <br />}
+                {part}
+            </React.Fragment>
+        ))
+    })
+}
+
 interface MarkdownRendererProps {
     content: string
     className?: string
@@ -51,7 +89,7 @@ class MarkdownErrorBoundary extends React.Component<
 // 主元件
 const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProps) => {
     // 確保 content 一定是字串，防止因為 undefined 或 obj 導致 react-markdown 崩潰
-    const safeContent = typeof content === 'string' ? content : String(content || '')
+    const safeContent = normalizeBreaks(typeof content === 'string' ? content : String(content || ''))
     
     return (
         <MarkdownErrorBoundary fallbackContent={safeContent}>
@@ -117,7 +155,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         // 段落
                         p: ({ children }) => (
                             <p className="my-3 leading-relaxed text-text-primary">
-                                {children}
+                                {withBreaks(children)}
                             </p>
                         ),
 
@@ -133,7 +171,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             </ol>
                         ),
                         li: ({ children }) => (
-                            <li className="leading-relaxed">{children}</li>
+                            <li className="leading-relaxed">{withBreaks(children)}</li>
                         ),
 
                         // 引用
@@ -157,25 +195,12 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 表格
                         table: ({ children }) => (
-                            <div className="my-4 overflow-x-auto">
-                                <table className="min-w-full border border-[var(--paper-line)]">
-                                    {children}
-                                </table>
+                            <div className="md-table glass-chip my-4 overflow-x-auto overflow-y-hidden scrollbar-none">
+                                <table>{children}</table>
                             </div>
                         ),
-                        thead: ({ children }) => (
-                            <thead className="bg-[var(--chip)]">{children}</thead>
-                        ),
-                        th: ({ children }) => (
-                            <th className="px-4 py-2 text-left text-sm font-semibold text-text-primary border-b border-[var(--paper-line)]">
-                                {children}
-                            </th>
-                        ),
-                        td: ({ children }) => (
-                            <td className="px-4 py-2 text-sm text-text-secondary border-b border-[var(--paper-line)]">
-                                {children}
-                            </td>
-                        ),
+                        th: ({ children }) => <th>{withBreaks(children)}</th>,
+                        td: ({ children }) => <td>{cellLines(children)}</td>,
 
                         // 分隔線
                         hr: () => (

@@ -45,8 +45,8 @@ type Theme = 'light' | 'dark'
 type ThemePreference = 'system' | 'light' | 'dark'
 type Language = 'zh-TW' | 'en-US' | 'ja-JP'
 /** 只允許固定的品牌色（已移除自由配色） */
-export type AccentColorType = 'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'green'
-const ACCENT_KEYS: AccentColorType[] = ['default', 'blue', 'purple', 'pink', 'orange', 'green']
+export type AccentColorType = 'blue' | 'purple' | 'pink' | 'orange' | 'green'
+const ACCENT_KEYS: AccentColorType[] = ['blue', 'purple', 'pink', 'orange', 'green']
 
 interface ConfirmConfig {
     message: string
@@ -107,9 +107,9 @@ export const useUIStore = create<UIState>()(
             // 預設「跟隨系統」，這樣 iOS Safari 工具列才會與系統一致
             themePreference: 'system',
             language: 'zh-TW',
-            accentColor: 'default',
-            // Demo 模式：預設收起
-            sidebarOpen: false,
+            accentColor: 'blue',
+            // 側邊欄預設打開（手機版是蓋在畫面上的抽屜，預設收起）
+            sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             sidebarWidth: 280,
 
             // 設定主題（系統 prefers-color-scheme 自動同步用，不需動畫；
@@ -145,7 +145,7 @@ export const useUIStore = create<UIState>()(
             setLanguage: (language) => set({ language }),
 
             // 設定重點色
-            setAccentColor: (color) => set({ accentColor: ACCENT_KEYS.includes(color) ? color : 'default' }),
+            setAccentColor: (color) => set({ accentColor: ACCENT_KEYS.includes(color) ? color : 'blue' }),
 
             // 設定側邊欄開關
             setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -185,10 +185,18 @@ export const useUIStore = create<UIState>()(
         }),
         {
             name: 'ui-storage',
+            // v2：系統預設強調色改為藍色；舊版存的「預設（古銅）」一次性換成藍色，之後自選的照常保留
+            version: 3,
+            migrate: (persisted, version) => {
+                const p = (persisted || {}) as { accentColor?: string }
+                // v3：棕色（default）已移除，一律換成藍色
+                if (version < 3 && (!p.accentColor || p.accentColor === 'default')) p.accentColor = 'blue'
+                return p as never
+            },
             // 以前存過的自訂顏色（#RRGGBB）一律改回預設品牌色
             merge: (persisted, current) => {
                 const p = (persisted || {}) as Partial<typeof current>
-                const accent = ACCENT_KEYS.includes(p.accentColor as AccentColorType) ? p.accentColor : 'default'
+                const accent = ACCENT_KEYS.includes(p.accentColor as AccentColorType) ? p.accentColor : 'blue'
                 return { ...current, ...p, accentColor: accent as AccentColorType }
             },
             partialize: (state) => ({

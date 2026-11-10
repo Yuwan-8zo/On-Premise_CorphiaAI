@@ -1,129 +1,120 @@
 /**
- * Snow 圖示庫 —— 照「北海道雪見六日」範本的圖示規格（IC 物件 + .ic 樣式）
+ * Snow 圖示庫 —— 依《Liquid Glass 元件規範》：全站統一用 Ionicons 線條款（MIT 授權，https://ionic.io/ionicons）
  *
- *   24×24 格線、只用線條不填色、stroke: currentColor、線寬 1.8（Dock 27px 圖示用 1.6）、
- *   圓頭圓角；每個圖示是幾筆簡單的幾何線條，點用「.01 長度的線段＋圓頭」表示。
- *   範本有的圖示（警告、箭頭、大樓、盾牌、月亮、太陽、星星、地圖釘、上一頁／下一頁）直接沿用範本線條；
- *   系統需要但範本沒有的，照同一套規格重畫。
- *
- * 匯出名稱與 lucide-react 相同，原本 `from 'lucide-react'` 的地方直接換成這裡即可。
+ *   - 由 Ionicons 8.1.0 的 SVG 原始檔轉出（scratchpad/ion/gen_icons.py），匯出名稱維持原本的，呼叫端不用改
+ *   - 512 格；線寬用 CSS 變數 --ion-sw（512 格單位）：內容 1.8、選單／圖示鈕 1.6（換算見 snow.css）
+ *   - 實心元素（點、圓點）填目前文字色；線頭與轉角都是圓的
+ *   - Ionicons 沒有的（側欄開合、讀取圈）照同一套線條規格補畫
+ *   - 視覺置中（規範 CSS 42）在 snow.css：箭頭往尖端推 1、播放三角形推 2
  */
-import { forwardRef, type SVGProps } from 'react'
+import { forwardRef, type ReactNode, type SVGProps } from 'react'
 
 export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'ref'> {
     size?: number | string
+    /** 24 格單位的線寬（會換算成 512 格）；不給就用 snow.css 依情境設定的值 */
     strokeWidth?: number | string
     color?: string
 }
 
-const make = (name: string, d: string, extra?: (p: { color?: string }) => React.ReactNode) => {
-    const C = forwardRef<SVGSVGElement, IconProps>(({ size = 24, strokeWidth = 1.8, color = 'currentColor', className = '', ...rest }, ref) => (
+const make = (name: string, children: ReactNode) => {
+    const C = forwardRef<SVGSVGElement, IconProps>(({ size = 24, strokeWidth, color = 'currentColor', className = '', style, ...rest }, ref) => (
         <svg
             ref={ref}
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
+            viewBox="0 0 512 512"
             width={size}
             height={size}
             fill="none"
             stroke={color}
-            strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden={rest['aria-label'] ? undefined : true}
             className={`ic ic-${name} ${className}`}
+            style={strokeWidth !== undefined ? ({ ...style, ['--ion-sw' as string]: Number(strokeWidth) * (512 / 24) } as React.CSSProperties) : style}
             {...rest}
         >
-            {d && <path d={d} />}
-            {extra?.({ color })}
+            {children}
         </svg>
     ))
     C.displayName = name
     return C
 }
 
-const CIRCLE = 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0 -18'
-
-// ── 範本原有的線條 ──
-export const AlertTriangle = make('AlertTriangle', 'M12 3l9 16H3zM12 10v4M12 17h.01')
-export const ArrowLeft = make('ArrowLeft', 'M19 12H5M11 6l-6 6 6 6')
-export const ArrowRight = make('ArrowRight', 'M5 12h14M13 6l6 6-6 6')
-export const Building2 = make('Building2', 'M5 21V5l7-2v18M12 9h7v12M3 21h18M8 8h.01M8 12h.01M8 16h.01M15 13h.01M15 17h.01')
-export const ChevronLeft = make('ChevronLeft', 'M15 6l-6 6 6 6')
-export const ChevronRight = make('ChevronRight', 'M9 6l6 6-6 6')
-export const Shield = make('Shield', 'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z')
-export const ShieldCheck = make('ShieldCheck', 'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-4.5')
-export const Moon = make('Moon', 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z')
-export const Sun = make('Sun', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4')
-export const Star = make('Star', 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z')
-export const MapPin = make('MapPin', 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z')
-export const Menu = make('Menu', 'M5 7h14M5 12h14M5 17h14')
-
-// ── 同規格新畫 ──
-export const Activity = make('Activity', 'M3 12h4l3-7 4 14 3-7h4')
-export const AlertCircle = make('AlertCircle', `${CIRCLE}M12 7.5v5M12 16.4h.01`)
+export const AlertTriangle = make('AlertTriangle', <><path d="M85.57 446.25h340.86a32 32 0 0 0 28.17-47.17L284.18 82.58c-12.09-22.44-44.27-22.44-56.36 0L57.4 399.08a32 32 0 0 0 28.17 47.17" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m250.26 195.39 5.74 122 5.73-121.95a5.74 5.74 0 0 0-5.79-6h0a5.74 5.74 0 0 0-5.68 5.95" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 397.25a20 20 0 1 1 20-20 20 20 0 0 1-20 20" fill="currentColor" stroke="none" /></>)
+export const AlertCircle = make('AlertCircle', <><path d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M250.26 166.05 256 288l5.73-121.95a5.74 5.74 0 0 0-5.79-6h0a5.74 5.74 0 0 0-5.68 6" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 367.91a20 20 0 1 1 20-20 20 20 0 0 1-20 20" fill="currentColor" stroke="none" /></>)
+export const Info = make('Info', <><path d="M248 64C146.39 64 64 146.39 64 248s82.39 184 184 184 184-82.39 184-184S349.61 64 248 64Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M220 220h32v116" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M208 340h88" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M248 130a26 26 0 1 0 26 26 26 26 0 0 0-26-26" fill="currentColor" stroke="none" /></>)
+export const HelpCircle = make('HelpCircle', <><path d="M256 80a176 176 0 1 0 176 176A176 176 0 0 0 256 80Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M200 202.29s.84-17.5 19.57-32.57C230.68 160.77 244 158.18 256 158c10.93-.14 20.69 1.67 26.53 4.45 10 4.76 29.47 16.38 29.47 41.09 0 26-17 37.81-36.37 50.8S251 281.43 251 296" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 0.875)' }} /><circle cx="250" cy="348" r="20" fill="currentColor" stroke="none" /></>)
+export const Check = make('Check', <><path d="M416 128 192 384l-96-96" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const CheckCircle2 = make('CheckCircle2', <><path d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M352 176 217.6 336 160 272" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const X = make('X', <><path d="M368 368 144 144M368 144 144 368" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const ArrowLeft = make('ArrowLeft', <><path d="M244 400 100 256l144-144M120 256h292" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ArrowRight = make('ArrowRight', <><path d="m268 112 144 144-144 144M392 256H100" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ArrowUp = make('ArrowUp', <><path d="m112 244 144-144 144 144M256 120v292" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ArrowDown = make('ArrowDown', <><path d="m112 268 144 144 144-144M256 392V100" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ChevronLeft = make('ChevronLeft', <><path d="M328 112 184 256l144 144" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ChevronRight = make('ChevronRight', <><path d="m184 112 144 144-144 144" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ChevronUp = make('ChevronUp', <><path d="m112 328 144-144 144 144" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const ChevronDown = make('ChevronDown', <><path d="m112 184 144 144 144-144" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
+export const Undo = make('Undo', <><path d="M240 424v-96c116.4 0 159.39 33.76 208 96 0-119.23-39.57-240-208-240V88L64 256Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Regenerate = make('Regenerate', <><path d="M320 146s24.36-12-64-12a160 160 0 1 0 160 160" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m256 58 80 80-80 80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const RefreshCw = make('RefreshCw', <><path d="M434.67 285.59v-29.8c0-98.73-80.24-178.79-179.2-178.79a179 179 0 0 0-140.14 67.36m-38.53 82v29.8C76.8 355 157 435 256 435a180.45 180.45 0 0 0 140-66.92" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m32 256 44-44 46 44M480 256l-44 44-46-44" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Plus = make('Plus', <><path d="M256 112v288M400 256H112" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Menu = make('Menu', <><path d="M80 160h352M80 256h352M80 352h352" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const MoreHorizontal = make('MoreHorizontal', <><circle cx="256" cy="256" r="48" fill="currentColor" stroke="none" /><circle cx="416" cy="256" r="48" fill="currentColor" stroke="none" /><circle cx="96" cy="256" r="48" fill="currentColor" stroke="none" /></>)
+export const Search = make('Search', <><path d="M221.09 64a157.09 157.09 0 1 0 157.09 157.09A157.1 157.1 0 0 0 221.09 64Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M338.29 338.29 448 448" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Copy = make('Copy', <><rect x="128" y="128" width="336" height="336" rx="57" ry="57" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m383.5 128 .5-24a56.16 56.16 0 0 0-56-56H112a64.19 64.19 0 0 0-64 64v216a56.16 56.16 0 0 0 56 56h24" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Edit2 = make('Edit2', <><path d="M364.13 125.25 87 403l-23 45 44.99-23 277.76-277.13zM420.69 68.69l-22.62 22.62 22.62 22.63 22.62-22.63a16 16 0 0 0 0-22.62h0a16 16 0 0 0-22.62 0" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Trash2 = make('Trash2', <><path d="m112 112 20 320c.95 18.49 14.4 32 32 32h184c17.67 0 30.87-13.51 32-32l20-320" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M80 112h352" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M192 112V72h0a23.93 23.93 0 0 1 24-24h80a23.93 23.93 0 0 1 24 24h0v40M256 176v224M184 176l8 224M328 176l-8 224" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Download = make('Download', <><path d="M336 176h40a40 40 0 0 1 40 40v208a40 40 0 0 1-40 40H136a40 40 0 0 1-40-40V216a40 40 0 0 1 40-40h40" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m176 272 80 80 80-80M256 48v288" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Upload = make('Upload', <><path d="M320 367.79h76c55 0 100-29.21 100-83.6s-53-81.47-96-83.6c-8.89-85.06-71-136.8-144-136.8-69 0-113.44 45.79-128 91.2-60 5.7-112 43.88-112 106.4s54 106.4 120 106.4h56" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m320 255.79-64-64-64 64M256 448.21V207.79" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Share = make('Share', <><path d="M336 192h40a40 40 0 0 1 40 40v192a40 40 0 0 1-40 40H136a40 40 0 0 1-40-40V232a40 40 0 0 1 40-40h40M336 128l-80-80-80 80M256 321V48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const LogOut = make('LogOut', <><path d="M304 336v40a40 40 0 0 1-40 40H104a40 40 0 0 1-40-40V136a40 40 0 0 1 40-40h152c22.09 0 48 17.91 48 40v40M368 336l80-80-80-80M176 256h256" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Paperclip = make('Paperclip', <><path d="M216.08 192v143.85a40.08 40.08 0 0 0 80.15 0l.13-188.55a67.94 67.94 0 1 0-135.87 0v189.82a95.51 95.51 0 1 0 191 0V159.74" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Pointer = make('Pointer', <><path d="M448 64 64 240.14h200a8 8 0 0 1 8 8V448Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const SlidersHorizontal = make('SlidersHorizontal', <><path d="M368 128h80M64 128h240M368 384h80M64 384h240M208 256h240M64 256h80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="336" cy="128" r="32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="176" cy="256" r="32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="336" cy="384" r="32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const FileText = make('FileText', <><path d="M416 221.25V416a48 48 0 0 1-48 48H144a48 48 0 0 1-48-48V96a48 48 0 0 1 48-48h98.75a32 32 0 0 1 22.62 9.37l141.26 141.26a32 32 0 0 1 9.37 22.62Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 56v120a32 32 0 0 0 32 32h120M176 288h160M176 368h160" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Folder = make('Folder', <><path d="M440 432H72a40 40 0 0 1-40-40V120a40 40 0 0 1 40-40h75.89a40 40 0 0 1 22.19 6.72l27.84 18.56a40 40 0 0 0 22.19 6.72H440a40 40 0 0 1 40 40v240a40 40 0 0 1-40 40M32 192h448" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Book = make('Book', <><path d="M256 160c16-63.16 76.43-95.41 208-96a15.94 15.94 0 0 1 16 16v288a16 16 0 0 1-16 16c-128 0-177.45 25.81-208 64-30.37-38-80-64-208-64-9.88 0-16-8.05-16-17.93V80a15.94 15.94 0 0 1 16-16c131.57.59 192 32.84 208 96M256 160v288" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+// 提示詞模板：Ionicons reader-outline（帶文字行的文件）
+export const Reader = make('Reader', <><rect x="96" y="48" width="320" height="416" rx="48" ry="48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M176 128h160M176 208h160M176 288h80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Database = make('Database', <><ellipse cx="256" cy="112" rx="176" ry="80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M432 112v288c0 44.183-78.798 80-176 80S80 444.183 80 400V112" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M432 256c0 44.183-78.798 80-176 80S80 300.183 80 256" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Server = make('Server', <><ellipse cx="256" cy="112" rx="176" ry="80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M432 112v288c0 44.183-78.798 80-176 80S80 444.183 80 400V112" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M432 256c0 44.183-78.798 80-176 80S80 300.183 80 256" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Layers3 = make('Layers3', <><path d="m434.8 137.65-149.36-68.1c-16.19-7.4-42.69-7.4-58.88 0L77.3 137.65c-17.6 8-17.6 21.09 0 29.09l148 67.5c16.89 7.7 44.69 7.7 61.58 0l148-67.5c17.52-8 17.52-21.1-.08-29.09M160 308.52l-82.7 37.11c-17.6 8-17.6 21.1 0 29.1l148 67.5c16.89 7.69 44.69 7.69 61.58 0l148-67.5c17.6-8 17.6-21.1 0-29.1l-79.94-38.47" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m160 204.48-82.8 37.16c-17.6 8-17.6 21.1 0 29.1l148 67.49c16.89 7.7 44.69 7.7 61.58 0l148-67.49c17.7-8 17.7-21.1.1-29.1L352 204.48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Mail = make('Mail', <><rect x="48" y="96" width="416" height="320" rx="40" ry="40" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="m112 160 144 112 144-112" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Code = make('Code', <><path d="M160 368 32 256l128-112M352 368l128-112-128-112M304 96l-96 320" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const MessageSquare = make('MessageSquare', <><path d="M87.49 380c1.19-4.38-1.44-10.47-3.95-14.86a45 45 0 0 0-2.54-3.8 199.8 199.8 0 0 1-33-110C47.65 139.09 140.73 48 255.83 48 356.21 48 440 117.54 459.58 209.85a199 199 0 0 1 4.42 41.64c0 112.41-89.49 204.93-204.59 204.93-18.3 0-43-4.6-56.47-8.37s-26.92-8.77-30.39-10.11a31.1 31.1 0 0 0-11.12-2.07 30.7 30.7 0 0 0-12.09 2.43l-67.83 24.48a16 16 0 0 1-4.67 1.22 9.6 9.6 0 0 1-9.57-9.74 16 16 0 0 1 .6-3.29Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Cpu = make('Cpu', <><rect x="80" y="80" width="352" height="352" rx="48" ry="48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><rect x="144" y="144" width="224" height="224" rx="16" ry="16" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 80V48M336 80V48M176 80V48M256 464v-32M336 464v-32M176 464v-32M432 256h32M432 336h32M432 176h32M48 256h32M48 336h32M48 176h32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const HardDrive = make('HardDrive', <><path d="M380.93 57.37A32 32 0 0 0 358.3 48H94.22A46.21 46.21 0 0 0 48 94.22v323.56A46.21 46.21 0 0 0 94.22 464h323.56A46.36 46.36 0 0 0 464 417.78V153.7a32 32 0 0 0-9.37-22.63ZM256 416a64 64 0 1 1 64-64 63.92 63.92 0 0 1-64 64m48-224H112a16 16 0 0 1-16-16v-64a16 16 0 0 1 16-16h192a16 16 0 0 1 16 16v64a16 16 0 0 1-16 16" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const MonitorPlay = make('MonitorPlay', <><rect x="32" y="96" width="448" height="272" rx="32.14" ry="32.14" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M128 416h256" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Gauge = make('Gauge', <><path d="m326.1 231.9-47.5 75.5a31 31 0 0 1-7 7 30.11 30.11 0 0 1-35-49l75.5-47.5a10.23 10.23 0 0 1 11.7 0 10.06 10.06 0 0 1 2.3 14" fill="currentColor" stroke="none" /><path d="M256 64C132.3 64 32 164.2 32 287.9a223.18 223.18 0 0 0 56.3 148.5c1.1 1.2 2.1 2.4 3.2 3.5a25.19 25.19 0 0 0 37.1-.1 173.13 173.13 0 0 1 254.8 0 25.19 25.19 0 0 0 37.1.1l3.2-3.5A223.18 223.18 0 0 0 480 287.9C480 164.2 379.7 64 256 64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 128v32M416 288h-32M128 288H96M165.49 197.49l-22.63-22.63M346.51 197.49l22.63-22.63" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Activity = make('Activity', <><path d="M48 320h64l64-256 64 384 64-224 32 96h64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="432" cy="320" r="32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Zap = make('Zap', <><path d="M315.27 33 96 304h128l-31.51 173.23a2.36 2.36 0 0 0 2.33 2.77h0a2.36 2.36 0 0 0 1.89-.95L416 208H288l31.66-173.25a2.45 2.45 0 0 0-2.44-2.75h0a2.42 2.42 0 0 0-1.95 1" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Settings = make('Settings', <><path d="M262.29 192.31a64 64 0 1 0 57.4 57.4 64.13 64.13 0 0 0-57.4-57.4M416.39 256a154 154 0 0 1-1.53 20.79l45.21 35.46a10.81 10.81 0 0 1 2.45 13.75l-42.77 74a10.81 10.81 0 0 1-13.14 4.59l-44.9-18.08a16.11 16.11 0 0 0-15.17 1.75A164.5 164.5 0 0 1 325 400.8a15.94 15.94 0 0 0-8.82 12.14l-6.73 47.89a11.08 11.08 0 0 1-10.68 9.17h-85.54a11.11 11.11 0 0 1-10.69-8.87l-6.72-47.82a16.07 16.07 0 0 0-9-12.22 155 155 0 0 1-21.46-12.57 16 16 0 0 0-15.11-1.71l-44.89 18.07a10.81 10.81 0 0 1-13.14-4.58l-42.77-74a10.8 10.8 0 0 1 2.45-13.75l38.21-30a16.05 16.05 0 0 0 6-14.08c-.36-4.17-.58-8.33-.58-12.5s.21-8.27.58-12.35a16 16 0 0 0-6.07-13.94l-38.19-30A10.81 10.81 0 0 1 49.48 186l42.77-74a10.81 10.81 0 0 1 13.14-4.59l44.9 18.08a16.11 16.11 0 0 0 15.17-1.75A164.5 164.5 0 0 1 187 111.2a15.94 15.94 0 0 0 8.82-12.14l6.73-47.89A11.08 11.08 0 0 1 213.23 42h85.54a11.11 11.11 0 0 1 10.69 8.87l6.72 47.82a16.07 16.07 0 0 0 9 12.22 155 155 0 0 1 21.46 12.57 16 16 0 0 0 15.11 1.71l44.89-18.07a10.81 10.81 0 0 1 13.14 4.58l42.77 74a10.8 10.8 0 0 1-2.45 13.75l-38.21 30a16.05 16.05 0 0 0-6.05 14.08c.33 4.14.55 8.3.55 12.47" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Mic = make('Mic', <><path d="M192 448h128M384 208v32c0 70.4-57.6 128-128 128h0c-70.4 0-128-57.6-128-128v-32M256 368v80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 64a63.68 63.68 0 0 0-64 64v111c0 35.2 29 65 64 65s64-29 64-65V128c0-36-28-64-64-64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Bot = make('Bot', <><circle cx="184" cy="232" r="24" fill="currentColor" stroke="none" /><path d="M256.05 384c-45.42 0-83.62-29.53-95.71-69.83a8 8 0 0 1 7.82-10.17h175.69a8 8 0 0 1 7.82 10.17c-11.99 40.3-50.2 69.83-95.62 69.83" fill="currentColor" stroke="none" /><circle cx="328" cy="232" r="24" fill="currentColor" stroke="none" /><circle cx="256" cy="256" r="208" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Square = make('Square', <><path d="M416 448H96a32.09 32.09 0 0 1-32-32V96a32.09 32.09 0 0 1 32-32h320a32.09 32.09 0 0 1 32 32v320a32.09 32.09 0 0 1-32 32" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Play = make('Play', <><path d="M112 111v290c0 17.44 17 28.52 31 20.16l247.9-148.37c12.12-7.25 12.12-26.33 0-33.58L143 90.84c-14-8.36-31 2.72-31 20.16Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Pause = make('Pause', <><path d="M176 96h16v320h-16zM320 96h16v320h-16z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Home = make('Home', <><path d="M80 212v236a16 16 0 0 0 16 16h96V328a24 24 0 0 1 24-24h80a24 24 0 0 1 24 24v136h96a16 16 0 0 0 16-16V212" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M480 256 266.89 52c-5-5.28-16.69-5.34-21.78 0L32 256M400 179V64h-48v69" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const User = make('User', <><path d="M344 144c-3.92 52.87-44 96-88 96s-84.15-43.12-88-96c-4-55 35-96 88-96s92 42 88 96" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 304c-87 0-175.3 48-191.64 138.6C62.39 453.52 68.57 464 80 464h352c11.44 0 17.62-10.48 15.65-21.4C431.3 352 343 304 256 304Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Users = make('Users', <><path d="M402 168c-2.93 40.67-33.1 72-66 72s-63.12-31.32-66-72c-3-42.31 26.37-72 66-72s69 30.46 66 72" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M336 304c-65.17 0-127.84 32.37-143.54 95.41-2.08 8.34 3.15 16.59 11.72 16.59h263.65c8.57 0 13.77-8.25 11.72-16.59C463.85 335.36 401.18 304 336 304Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M200 185.94c-2.34 32.48-26.72 58.06-53 58.06s-50.7-25.57-53-58.06C91.61 152.15 115.34 128 147 128s55.39 24.77 53 57.94" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M206 306c-18.05-8.27-37.93-11.45-59-11.45-52 0-102.1 25.85-114.65 76.2-1.65 6.66 2.53 13.25 9.37 13.25H154" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const UserRoundCog = make('UserRoundCog', <><path d="M258.9 48C141.92 46.42 46.42 141.92 48 258.9c1.56 112.19 92.91 203.54 205.1 205.1 117 1.6 212.48-93.9 210.88-210.88C462.44 140.91 371.09 49.56 258.9 48m126.42 327.25a4 4 0 0 1-6.14-.32 124.3 124.3 0 0 0-32.35-29.59C321.37 329 289.11 320 256 320s-65.37 9-90.83 25.34a124.2 124.2 0 0 0-32.35 29.58 4 4 0 0 1-6.14.32A175.32 175.32 0 0 1 80 259c-1.63-97.31 78.22-178.76 175.57-179S432 158.81 432 256a175.32 175.32 0 0 1-46.68 119.25" fill="currentColor" stroke="none" /><path d="M256 144c-19.72 0-37.55 7.39-50.22 20.82s-19 32-17.57 51.93C191.11 256 221.52 288 256 288s64.83-32 67.79-71.24c1.48-19.74-4.8-38.14-17.68-51.82C293.39 151.44 275.59 144 256 144" fill="currentColor" stroke="none" /></>)
+export const Shield = make('Shield', <><path d="M463.1 112.37C373.68 96.33 336.71 84.45 256 48c-80.71 36.45-117.68 48.33-207.1 64.37C32.7 369.13 240.58 457.79 256 464c15.42-6.21 223.3-94.87 207.1-351.63" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const ShieldCheck = make('ShieldCheck', <><path d="M336 176 225.2 304 176 255.8" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M463.1 112.37C373.68 96.33 336.71 84.45 256 48c-80.71 36.45-117.68 48.33-207.1 64.37C32.7 369.13 240.58 457.79 256 464c15.42-6.21 223.3-94.87 207.1-351.63" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Moon = make('Moon', <><path d="M160 136c0-30.62 4.51-61.61 16-88C99.57 81.27 48 159.32 48 248c0 119.29 96.71 216 216 216 88.68 0 166.73-51.57 200-128-26.39 11.49-57.38 16-88 16-119.29 0-216-96.71-216-216" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Sun = make('Sun', <><path d="M256 48v48M256 416v48M403.08 108.92l-33.94 33.94M142.86 369.14l-33.94 33.94M464 256h-48M96 256H48M403.08 403.08l-33.94-33.94M142.86 142.86l-33.94-33.94" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="256" cy="256" r="80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Star = make('Star', <><path d="M480 208H308L256 48l-52 160H32l140 96-54 160 138-100 138 100-54-160Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const MapPin = make('MapPin', <><path d="M256 48c-79.5 0-144 61.39-144 137 0 87 96 224.87 131.25 272.49a15.77 15.77 0 0 0 25.5 0C304 409.89 400 272.07 400 185c0-75.61-64.5-137-144-137" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="256" cy="192" r="48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Sparkles = make('Sparkles', <><path d="M259.92 262.91 216.4 149.77a9 9 0 0 0-16.8 0l-43.52 113.14a9 9 0 0 1-5.17 5.17L37.77 311.6a9 9 0 0 0 0 16.8l113.14 43.52a9 9 0 0 1 5.17 5.17l43.52 113.14a9 9 0 0 0 16.8 0l43.52-113.14a9 9 0 0 1 5.17-5.17l113.14-43.52a9 9 0 0 0 0-16.8l-113.14-43.52a9 9 0 0 1-5.17-5.17M108 68 88 16 68 68 16 88l52 20 20 52 20-52 52-20zM426.67 117.33 400 48l-26.67 69.33L304 144l69.33 26.67L400 240l26.67-69.33L496 144z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Building2 = make('Building2', <><path d="M176 416v64M80 32h192a32 32 0 0 1 32 32v412a4 4 0 0 1-4 4H48h0V64a32 32 0 0 1 32-32M320 192h112a32 32 0 0 1 32 32v256h0-160 0V208a16 16 0 0 1 16-16" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M98.08 431.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M98.08 351.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M98.08 271.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M98.08 191.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M98.08 111.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M178.08 351.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M178.08 271.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M178.08 191.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M178.08 111.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M258.08 431.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M258.08 351.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M258.08 271.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79" fill="currentColor" stroke="none" /><ellipse cx="256" cy="176" rx="15.95" ry="16.03" fill="currentColor" stroke="none" /><path d="M258.08 111.87a16 16 0 1 1 13.79-13.79 16 16 0 0 1-13.79 13.79M400 400a16 16 0 1 0 16 16 16 16 0 0 0-16-16M400 320a16 16 0 1 0 16 16 16 16 0 0 0-16-16M400 240a16 16 0 1 0 16 16 16 16 0 0 0-16-16M336 400a16 16 0 1 0 16 16 16 16 0 0 0-16-16M336 320a16 16 0 1 0 16 16 16 16 0 0 0-16-16M336 240a16 16 0 1 0 16 16 16 16 0 0 0-16-16" fill="currentColor" stroke="none" /></>)
+export const Globe = make('Globe', <><path d="M256 48C141.13 48 48 141.13 48 256s93.13 208 208 208 208-93.13 208-208S370.87 48 256 48Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 48c-58.07 0-112.67 93.13-112.67 208S197.93 464 256 464s112.67-93.13 112.67-208S314.07 48 256 48Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M117.33 117.33c38.24 27.15 86.38 43.34 138.67 43.34s100.43-16.19 138.67-43.34M394.67 394.67c-38.24-27.15-86.38-43.34-138.67-43.34s-100.43 16.19-138.67 43.34" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 48v416M464 256H48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Languages = make('Languages', <><path d="M48 112h288M192 64v48M272 448l96-224 96 224M301.5 384h133M281.3 112S257 206 199 277 80 384 80 384" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 336s-35-27-72-75-56-85-56-85" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Lock = make('Lock', <><path d="M336 208v-95a80 80 0 0 0-160 0v95" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><rect x="96" y="208" width="320" height="272" rx="48" ry="48" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Palette = make('Palette', <><path d="M430.11 347.9c-6.6-6.1-16.3-7.6-24.6-9-11.5-1.9-15.9-4-22.6-10-14.3-12.7-14.3-31.1 0-43.8l30.3-26.9c46.4-41 46.4-108.2 0-149.2-34.2-30.1-80.1-45-127.8-45-55.7 0-113.9 20.3-158.8 60.1-83.5 73.8-83.5 194.7 0 268.5 41.5 36.7 97.5 55 152.9 55.4h1.7c55.4 0 110-17.9 148.8-52.4 14.4-12.7 11.99-36.6.1-47.7Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="144" cy="208" r="32" fill="currentColor" stroke="none" /><circle cx="152" cy="311" r="32" fill="currentColor" stroke="none" /><circle cx="224" cy="144" r="32" fill="currentColor" stroke="none" /><circle cx="256" cy="367" r="48" fill="currentColor" stroke="none" /><circle cx="328" cy="144" r="32" fill="currentColor" stroke="none" /></>)
+export const Eye = make('Eye', <><path d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 0 0-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 0 0 0-17.47C428.89 172.28 347.8 112 255.66 112" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><circle cx="256" cy="256" r="80" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const EyeOff = make('EyeOff', <><path d="M432 448a15.92 15.92 0 0 1-11.31-4.69l-352-352a16 16 0 0 1 22.62-22.62l352 352A16 16 0 0 1 432 448M255.66 384c-41.49 0-81.5-12.28-118.92-36.5-34.07-22-64.74-53.51-88.7-91v-.08c19.94-28.57 41.78-52.73 65.24-72.21a2 2 0 0 0 .14-2.94L93.5 161.38a2 2 0 0 0-2.71-.12c-24.92 21-48.05 46.76-69.08 76.92a31.92 31.92 0 0 0-.64 35.54c26.41 41.33 60.4 76.14 98.28 100.65C162 402 207.9 416 255.66 416a239.1 239.1 0 0 0 75.8-12.58 2 2 0 0 0 .77-3.31l-21.58-21.58a4 4 0 0 0-3.83-1 204.8 204.8 0 0 1-51.16 6.47M490.84 238.6c-26.46-40.92-60.79-75.68-99.27-100.53C349 110.55 302 96 255.66 96a227.3 227.3 0 0 0-74.89 12.83 2 2 0 0 0-.75 3.31l21.55 21.55a4 4 0 0 0 3.88 1 192.8 192.8 0 0 1 50.21-6.69c40.69 0 80.58 12.43 118.55 37 34.71 22.4 65.74 53.88 89.76 91a.13.13 0 0 1 0 .16 310.7 310.7 0 0 1-64.12 72.73 2 2 0 0 0-.15 2.95l19.9 19.89a2 2 0 0 0 2.7.13 343.5 343.5 0 0 0 68.64-78.48 32.2 32.2 0 0 0-.1-34.78" fill="currentColor" stroke="none" /><path d="M256 160a96 96 0 0 0-21.37 2.4 2 2 0 0 0-1 3.38l112.59 112.56a2 2 0 0 0 3.38-1A96 96 0 0 0 256 160M165.78 233.66a2 2 0 0 0-3.38 1 96 96 0 0 0 115 115 2 2 0 0 0 1-3.38Z" fill="currentColor" stroke="none" /></>)
+export const Clock = make('Clock', <><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M256 128v144h96" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const PanelLeft = make('PanelLeft', <><rect x="64" y="80" width="384" height="352" rx="64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M192 80v352" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const PanelLeftClose = make('PanelLeftClose', <><rect x="64" y="80" width="384" height="352" rx="64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M192 80v352M336 200l-56 56 56 56" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+export const Loader2 = make('Loader2', <><path d="M448 256a192 192 0 1 1-132.4-182.6" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
 export const CircleAlert = AlertCircle
-export const Check = make('Check', 'M5 12.5l4.5 4.5L19 7')
-export const CheckCircle2 = make('CheckCircle2', `${CIRCLE}M8.5 12l2.5 2.5 4.5-4.5`)
-export const Clock = make('Clock', `${CIRCLE}M12 7v5l3 2`)
-export const Copy = make('Copy', 'M9 8h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM16 8V5a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h2')
-export const Cpu = make('Cpu', 'M6 5h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3')
-export const Database = make('Database', 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3')
-export const Download = make('Download', 'M12 4v11M7 10l5 5 5-5M5 20h14')
-export const Upload = make('Upload', 'M12 20V9M7 14l5-5 5 5M5 4h14')
-export const Edit2 = make('Edit2', 'M15 4.5l4.5 4.5L8 20.5H3.5V16zM13 6.5l4.5 4.5')
-export const FileText = make('FileText', 'M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9 13h6M9 17h6')
-export const Folder = make('Folder', 'M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z')
-export const Gauge = make('Gauge', 'M4.6 18A9 9 0 1 1 19.4 18M12 14l4-5M12 14h.01')
-export const HardDrive = make('HardDrive', 'M3 13l2.5-7h13l2.5 7v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM3 13h18M7 16h.01M11 16h.01')
-export const HelpCircle = make('HelpCircle', `${CIRCLE}M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.4M12 16.6h.01`)
-export const Home = make('Home', 'M3 11l9-7 9 7M5 9.5V20h5v-5h4v5h5V9.5')
-export const Info = make('Info', `${CIRCLE}M12 10.5v5M12 7.6h.01`)
-export const Layers3 = make('Layers3', 'M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 17l9 5 9-5')
-export const Loader2 = make('Loader2', 'M21 12a9 9 0 1 1-6.2-8.6')
-export const LogOut = make('LogOut', 'M10 4H5v16h5M14 8l4 4-4 4M18 12H9')
-export const MessageSquare = make('MessageSquare', 'M5 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V5a1 1 0 0 1 1-1z')
-export const MonitorPlay = make('MonitorPlay', 'M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8 21h8M12 17v4M10.5 8.5v5l4-2.5z')
-// 三個點：範本用「.01 線段＋圓頭」畫點；這裡加粗到 3 讓點看得見
-export const MoreHorizontal = make('MoreHorizontal', '', () => (
-    <path d="M6 12h.01M12 12h.01M18 12h.01" strokeWidth={3.2} />
-))
-export const PanelLeftClose = make('PanelLeftClose', 'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM9 4v16M16 9.5L13.5 12l2.5 2.5')
-export const Plus = make('Plus', 'M12 5v14M5 12h14')
-export const RefreshCw = make('RefreshCw', 'M20 11a8 8 0 0 0-14.3-4.6L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.6L20 16M20 20v-4h-4')
-export const Search = make('Search', 'M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0 -14M16 16l4.5 4.5')
-export const Server = make('Server', 'M5 4h14a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM5 14h14a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1zM8 7h.01M8 17h.01')
-export const Settings = make('Settings', 'M12 3l2 2.4 3.1-.3.5 3.1L20 10l-1.4 2.4L20 15l-2.4 1.8-.5 3.1-3.1-.3L12 21l-2-2.4-3.1.3-.5-3.1L4 15l1.4-2.6L4 10l2.4-1.8.5-3.1 3.1.3zM12 9.2a2.8 2.8 0 1 0 0 5.6a2.8 2.8 0 1 0 0 -5.6')
-export const SlidersHorizontal = make('SlidersHorizontal', 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4')
-export const Sparkles = make('Sparkles', 'M11 4l1.6 4.4L17 10l-4.4 1.6L11 16l-1.6-4.4L5 10l4.4-1.6zM18.5 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z')
-export const Trash2 = make('Trash2', 'M4 7h16M10 3h4M6 7l1 13h10l1-13M10 11v6M14 11v6')
-export const UserRoundCog = make('UserRoundCog', 'M10 3a4 4 0 1 0 0 8a4 4 0 1 0 0 -8M3 21c0-3.9 3.1-7 7-7 1.3 0 2.5.3 3.5.9M18 14.5V16M18 20v1.5M21.5 18H20M16 18h-1.5M18 16.2a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0 -3.6')
-export const User = make('User', 'M12 3a4 4 0 1 0 0 8a4 4 0 1 0 0 -8M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7')
-export const Users = make('Users', 'M9 3a4 4 0 1 0 0 8a4 4 0 1 0 0 -8M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7M16 4.2a3.5 3.5 0 0 1 0 6.6M18 14.3c2.3.8 4 3 4 5.7')
-export const X = make('X', 'M6 6l12 12M18 6L6 18')
-export const Zap = make('Zap', 'M13 3L5 13.5h6L10 21l8-10.5h-6z')
-export const Mic = make('Mic', 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21')
-export const Paperclip = make('Paperclip', 'M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.7 17.2a1.7 1.7 0 0 1-2.4-2.4L15 7')
-export const ArrowUp = make('ArrowUp', 'M12 19V5M6 11l6-6 6 6')
-export const Share = make('Share', 'M12 15V3M7 8l5-5 5 5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6')
-export const Globe = make('Globe', `${CIRCLE}M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z`)
-export const Book = make('Book', 'M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h13v-4')
-export const Lock = make('Lock', 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM8 11V7a4 4 0 0 1 8 0v4')
-export const Palette = make('Palette', 'M12 3a9 9 0 0 0 0 18c1 0 1.6-.8 1.6-1.6 0-1-.8-1.4-.8-2.4 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.8 17 3 12 3zM7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01')
-export const Undo = make('Undo', 'M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11')
-export const Regenerate = make('Regenerate', 'M20 12a8 8 0 1 1-2.3-5.7M20 4v4.5h-4.5')
-
-// ── 對照內嵌圖示補畫（同規格） ──
-export const ChevronDown = make('ChevronDown', 'M6 9l6 6 6-6')
-export const ChevronUp = make('ChevronUp', 'M6 15l6-6 6 6')
-export const ArrowDown = make('ArrowDown', 'M12 5v14M6 13l6 6 6-6')
-export const Eye = make('Eye', 'M2.5 12C4.6 7.6 8 5.5 12 5.5s7.4 2.1 9.5 6.5c-2.1 4.4-5.5 6.5-9.5 6.5S4.6 16.4 2.5 12zM12 9.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0 -5')
-export const EyeOff = make('EyeOff', 'M4 4l16 16M10 6c.7-.3 1.3-.5 2-.5 4 0 7.4 2.1 9.5 6.5-.6 1.3-1.4 2.4-2.3 3.3M7 7.4C5.1 8.5 3.6 10 2.5 12c2.1 4.4 5.5 6.5 9.5 6.5 1.6 0 3-.3 4.3-1M10.2 10.3a2.5 2.5 0 0 0 3.5 3.5')
-export const Languages = make('Languages', 'M3 6h11M8.5 3v3M5 6c.8 3 3 5.6 6 7M12 6c-.9 3.4-3.5 6.7-7 8.5M13 21l4-9 4 9M14.4 18h5.2')
-export const Mail = make('Mail', 'M4 6h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zM3.5 7l8.5 6 8.5-6')
-export const Code = make('Code', 'M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16')
-export const PanelLeft = make('PanelLeft', 'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM9 4v16')
-export const Pointer = make('Pointer', 'M6 4l13 6.5-5.5 1.5-1.5 5.5zM13.5 13.5L19 19')
-export const Square = make('Square', 'M7 6h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z')
-export const Play = make('Play', 'M8 5.5v13l10.5-6.5z')
-export const Pause = make('Pause', 'M8 5v14M16 5v14')
-export const Bot = make('Bot', 'M7 8h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM12 4v4M9.5 13h.01M14.5 13h.01M3 13v2M21 13v2')

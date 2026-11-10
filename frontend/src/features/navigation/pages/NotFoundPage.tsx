@@ -1,10 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { CorphiaBrandLogo } from '@/components/icons/CorphiaIcons'
 import { Home, ArrowLeft } from '@/components/snow/icons'
 
 export default function NotFound() {
-    const { t } = useTranslation()
     const navigate = useNavigate()
 
     return (

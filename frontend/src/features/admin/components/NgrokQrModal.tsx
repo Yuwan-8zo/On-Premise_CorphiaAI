@@ -34,7 +34,7 @@ export default function NgrokQrModal({ url, isOpen, onClose }: NgrokQrModalProps
     return createPortal(
         // 背景：輕度 backdrop-blur（從 2xl→sm）+ 提高半透明，讓底層更看得清，玻璃感保留但不糊
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 dark:bg-black/45 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
             onClick={onClose}
             role="dialog"
             aria-modal="true"

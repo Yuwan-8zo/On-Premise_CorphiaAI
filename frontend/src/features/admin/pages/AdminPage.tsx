@@ -1,4 +1,6 @@
-﻿import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import GlassSegmented from '@/components/ui/GlassSegmented'
+import GlassNav from '@/components/ui/GlassNav'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     ActionButton,
@@ -6,16 +8,12 @@ import {
     Field,
     inputClass,
 } from '@/features/admin/components/AdminPrimitives'
-import Tooltip from '@/components/ui/Tooltip'
 import LanSidebarWidget from '@/features/admin/components/LanSidebarWidget'
 import OverviewSection from '@/features/admin/sections/OverviewSection'
 
 const AuditSection = lazy(() => import('@/features/admin/sections/AuditSection'))
 const UsersSection = lazy(() => import('@/features/admin/sections/UsersSection'))
 const ModelsSection = lazy(() => import('@/features/admin/sections/ModelsSection'))
-// SystemSection 已移除：內容跟 OverviewSection 的 LLMHealthPanel / SystemResourcePanel 重複，
-// 為避免重複資訊故下架。元件檔仍保留在 sections/ 內以備需要時恢復。
-// import SystemSection from '@/features/admin/sections/SystemSection'
 const TenantsSection = lazy(() => import('@/features/admin/sections/TenantsSection'))
 // Only icons still used at AdminPage level: tab icons + sidebar logo + back arrow.
 // Section-specific icons live inside each section module.
@@ -25,7 +23,6 @@ import {
     Cpu,
     FileText,
     Gauge,
-    Sparkles,
     Users,
 } from '@/components/snow/icons'
 
@@ -47,6 +44,7 @@ import { systemApi } from '@/api/system'
 import { documentsApi } from '@/api/documents'
 import StyledSelect from '@/components/ui/StyledSelect'
 import { useTranslation } from 'react-i18next'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 interface UserData {
     id: string
@@ -84,7 +82,7 @@ function getErrorMessage(err: unknown): string {
 // formatDate moved to AdminPrimitives (used by Overview / Audit sections)
 
 // Admin shared UI primitives (Panel, SectionHeader, ActionButton, StatusPill,
-// RoleBadge, ModalFrame, Field, inputClass, selectClass) extracted to
+// RoleBadge, ModalFrame, Field, inputClass) extracted to
 // ./components/AdminPrimitives — see the imports at the top of this file.
 
 export default function Admin() {
@@ -115,37 +113,6 @@ export default function Admin() {
 
     const [activeSection, setActiveSection] = useState<AdminSection>('overview')
 
-    /**
-     * Tab 切換滑動指示條：
-     * 用 ref Map 記每個 tab button 的 DOM，activeSection 變動後測 left/width/top/height，
-     * 把絕對定位的 pill 滑過去（CSS transition 處理動畫）。
-     */
-    const navRef = useRef<HTMLElement | null>(null)
-    const tabBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-    const [pillRect, setPillRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
-    const [pillReady, setPillReady] = useState(false)
-
-    useEffect(() => {
-        const measure = () => {
-            const btn = tabBtnRefs.current.get(activeSection)
-            const nav = navRef.current
-            if (!btn || !nav) return
-            const navRect = nav.getBoundingClientRect()
-            const btnRect = btn.getBoundingClientRect()
-            // 用 nav 的 scroll 位置算相對座標（手機板 nav 會水平 scroll）
-            setPillRect({
-                left: btnRect.left - navRect.left + nav.scrollLeft,
-                top: btnRect.top - navRect.top + nav.scrollTop,
-                width: btnRect.width,
-                height: btnRect.height,
-            })
-            // 第一次 mount 後 1 frame 才 enable transition，避免進場直接從 (0,0) 滑過去
-            requestAnimationFrame(() => setPillReady(true))
-        }
-        measure()
-        window.addEventListener('resize', measure)
-        return () => window.removeEventListener('resize', measure)
-    }, [activeSection])
     const [users, setUsers] = useState<UserData[]>([])
     const [stats, setStats] = useState<Stats>({
         totalUsers: 0,
@@ -572,27 +539,22 @@ export default function Admin() {
         >
             {/* 背景弧線 SVG —— 同登入頁 */}
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
-                </svg>
+                <WaveBackground />
             </div>
             <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col px-3 py-3 md:px-4 md:py-3">
                 {/*
                   簡化過的 header（壓低 mb / pb 留空間給內容）
                 */}
                 {/* 手機板 header 簡化：title + 工程師 pill 並排同一行，省垂直空間 */}
-                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 border-b border-[var(--paper-line)] pb-2 md:justify-between">
+                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 pb-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <Tooltip label={t('common.backToChat', '返回聊天')}>
-                            <button
-                                onClick={() => navigate('/')}
-                                className="btn-icon !w-9 !h-9 text-text-secondary"
-                            >
-                                <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
-                            </button>
-                        </Tooltip>
+                        <button
+                            onClick={() => navigate('/')}
+                            aria-label={t('common.backToChat', '返回聊天')}
+                            className="btn-icon !w-[34px] !h-[34px] shrink-0 text-text-secondary"
+                        >
+                            <ArrowLeft className="w-[18px] h-[18px]" />
+                        </button>
                         <h1 className="text-[16px] md:text-[22px] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
@@ -621,17 +583,14 @@ export default function Admin() {
                       桌機板（lg+）：h-full，aside 撐滿 grid row，wrapper 的 mt-auto 把 widget 推到底。
                       之前一律 h-full 的版本在手機板把 aside 撐滿整個 main → content 區被擠到 0 高度看不到。
                     */}
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden paper p-2">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden paper paper-lg lg:p-2">
                         {/* Model card 在手機板隱藏，騰出空間給內容 */}
                         <div className="hidden lg:block mb-2 rounded-[18px] border border-transparent bg-[var(--chip)] p-2.5">
                             <div className="mb-2 flex items-center justify-between gap-2">
                                 <div className="min-w-0">
-                                    <p className="text-[9px] uppercase tracking-[0.16em] text-text-secondary">{t('admin.currentModel')}</p>
+                                    <p className="text-[12px] text-text-secondary">{t('admin.currentModel')}</p>
                                     <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{currentModel?.name || t('admin.standby')}</p>
                                 </div>
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-accent/10">
-                                    <Sparkles className="h-3.5 w-3.5 text-accent" />
-                                </span>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
@@ -644,53 +603,29 @@ export default function Admin() {
                           scrollbar-width:none / -ms-overflow-style:none 處理 Firefox / IE。
                           relative + 內嵌絕對定位 pill 用 transition 滑動到 active button 位置。
                         */}
+                        {/* 手機版：分段切換（長按放大鏡、拖動、放開吸附，同登入／註冊）；側欄外框在手機版拿掉（.paper-lg），只留這一層膠囊 */}
+                        <GlassSegmented
+                            className="lg:hidden w-full h-[40px]"
+                            pad={4}
+                            value={activeSection}
+                            onChange={(v) => setActiveSection(v)}
+                            options={TABS_CONFIG.map((tb) => ({ value: tb.id, label: t(tb.i18nKey) }))}
+                        />
+                        {/* 桌機側欄：直向分段切換（按下即放大鏡）；py-2／-mx-2 px-2 留空間給放大鏡 */}
                         <nav
-                            ref={navRef}
-                            /* py-0.5 給 pill 上下一點呼吸空間 —— overflow-x-auto 會在 Y 軸自動 clip，
-                               所以 ring / shadow 會被吃掉，padding 讓它有地方畫。 */
-                            className="relative flex gap-1 py-0.5 overflow-x-auto lg:flex-col lg:overflow-y-auto shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:custom-scrollbar"
+                            className="relative hidden lg:flex gap-1 py-2 -mx-2 px-2 overflow-x-auto lg:flex-col lg:overflow-y-auto shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:custom-scrollbar"
                         >
-                            {/* 滑動 active pill —— 絕對定位、跟著 active button rect。
-                                ring-inset：把 ring 畫在 pill 內部，不會超出 rect 被 nav clip 掉。 */}
-                            {pillRect && (
-                                <div
-                                    aria-hidden
-                                    className="pointer-events-none absolute z-0 rounded-[14px] bg-[var(--chip)]"
-                                    style={{
-                                        left: pillRect.left,
-                                        top: pillRect.top,
-                                        width: pillRect.width,
-                                        height: pillRect.height,
-                                        transition: pillReady
-                                            ? 'left 0.35s cubic-bezier(0.23,1,0.32,1), top 0.35s cubic-bezier(0.23,1,0.32,1), width 0.35s cubic-bezier(0.23,1,0.32,1), height 0.35s cubic-bezier(0.23,1,0.32,1)'
-                                            : 'none',
-                                    }}
-                                />
-                            )}
-                            {TABS_CONFIG.map((tab) => {
-                                const Icon = tab.icon
-                                const active = activeSection === tab.id
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        ref={(el) => {
-                                            if (el) tabBtnRefs.current.set(tab.id, el)
-                                            else tabBtnRefs.current.delete(tab.id)
-                                        }}
-                                        onClick={() => setActiveSection(tab.id)}
-                                        /* 移除原本 active 的 bg / ring / shadow（交給 pill 處理），
-                                           只保留 text 顏色切換；relative + z-10 讓 button 內容浮在 pill 之上 */
-                                        className={`tap relative z-10 flex min-w-max items-center gap-2 rounded-[14px] px-3 py-2 text-left text-[13px] font-semibold transition-colors active:scale-[0.99] lg:min-w-0 ${
-                                            active
-                                                ? 'text-text-primary'
-                                                : 'text-text-secondary '
-                                        }`}
-                                    >
-                                        <Icon className={`h-3.5 w-3.5 transition-colors ${active ? 'text-accent' : 'text-text-muted'}`} />
-                                        {t(tab.i18nKey)}
-                                    </button>
-                                )
-                            })}
+                            <GlassNav
+                                size="sm"
+                                gap={4}
+                                aria-label={t('admin.title', '管理後台')}
+                                value={activeSection}
+                                onChange={(id) => setActiveSection(id)}
+                                items={TABS_CONFIG.map((tab) => {
+                                    const Icon = tab.icon
+                                    return { id: tab.id, label: t(tab.i18nKey), icon: <Icon className="h-3.5 w-3.5" /> }
+                                })}
+                            />
                         </nav>
 
                         {/*
@@ -720,7 +655,7 @@ export default function Admin() {
                       - 其他 tab（users / audit / models / 等）內容比較長，
                         靠這層的 overflow-y-auto 提供滾動。
                     */}
-                    <div className="flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 custom-scrollbar md:pr-2 lg:h-full lg:flex-none lg:pr-0 lg:-mr-3 lg:[scrollbar-gutter:stable]">
+                    <div key={activeSection} className="admin-page-enter flex-1 min-h-0 min-w-0 overflow-y-auto scrollbar-none lg:h-full lg:flex-none">
                         {activeSection === 'overview' && (
                             <OverviewSection
                                 stats={stats}

@@ -30,30 +30,30 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
             >
-                <MaterialIcon name="security" size={18} className="text-amber-600" aria-hidden />
-                <span className="font-medium text-amber-700 flex-1">
+                <MaterialIcon name="security" size={18} className="text-amber-600 dark:text-amber-300" aria-hidden />
+                <span className="font-medium text-amber-700 dark:text-amber-300 flex-1">
                     {message}
                 </span>
                 <ChevronDown className={`w-3 h-3 text-amber-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
 
             {isExpanded && (
-                <div className="mt-2 pt-2 border-t border-amber-200/50 /30 space-y-1">
+                <div className="mt-2 pt-2 border-t border-[var(--paper-line)] space-y-1">
                     {maskMap.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[11px]">
-                            <span className="px-1.5 py-0.5 rounded bg-amber-200/60 /40 text-amber-700 font-mono">
+                            <span className="px-1.5 py-0.5 rounded-[6px] bg-amber-500/15 text-amber-700 dark:text-amber-300 tabular-nums">
                                 {item.label}
                             </span>
-                            <span className="text-text-secondary font-mono">
+                            <span className="text-text-secondary tabular-nums">
                                 {item.original_preview}
                             </span>
                             <span className="text-text-muted">→</span>
-                            <span className="text-amber-600 font-mono">
+                            <span className="text-amber-600 dark:text-amber-300 tabular-nums">
                                 {item.masked}
                             </span>
                         </div>
                     ))}
-                    <p className="text-[10px] text-amber-600/60 /60 mt-1">
+                    <p className="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
                         送入 AI 模型的是遮罩後的內容，原始敏感資訊不會進入模型。
                     </p>
                 </div>
@@ -82,13 +82,13 @@ const RISK_COLORS: Record<string, { border: string; bg: string; text: string; ic
     medium: {
         border: '',
         bg: '',
-        text: 'text-orange-700',
+        text: 'text-orange-700 dark:text-orange-300',
         icon: 'warning',
     },
     high: {
         border: '',
         bg: '',
-        text: 'text-red-700',
+        text: 'text-red-700 dark:text-red-400',
         icon: 'crisis_alert',
     },
 }
@@ -107,7 +107,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                 <span className={`font-medium ${colors.text} flex-1`}>
                     {message}
                 </span>
-                <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] uppercase tracking-wider ${colors.text} ${colors.bg}`}>
+                <span className={`px-1.5 py-0.5 rounded tabular-nums text-[12px] ${colors.text} ${colors.bg}`}>
                     {riskLevel}
                 </span>
             </button>
@@ -120,7 +120,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                     {matchedPatterns.map((pattern, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[11px]">
                             <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 shrink-0" />
-                            <span className={`font-mono ${colors.text}`}>
+                            <span className={`tabular-nums ${colors.text}`}>
                                 {pattern}
                             </span>
                         </div>

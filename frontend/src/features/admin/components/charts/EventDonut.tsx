@@ -1,13 +1,13 @@
 /**
  * EventDonut — audit logs 依 action 分布甜甜圈
  *
- * 多片切片用 accent 色階，從深 → 淺漸變（最大占比那塊最深）。
+ * 每一類用一個 Apple 系統色（色相明顯不同），切片之間只留很小的間隔，不畫外框線。
  * 中央放總事件數。配色跟著使用者品牌色變。
  */
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { useAccentColor, makeAccentShades } from '../../hooks/useAccentColor'
+import { appleCategoryColors } from '../../hooks/useAccentColor'
 import type { ActionCount } from '../../utils/auditAggregations'
 
 interface EventDonutProps {
@@ -31,7 +31,7 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
     return (
         <div className="paper !rounded-[14px] px-3 py-2 text-xs">
             <p className="font-medium text-text-primary">{item.name}</p>
-            <p className="mt-0.5 font-mono text-text-secondary tabular-nums">
+            <p className="mt-0.5 text-text-secondary tabular-nums">
                 {item.count.toLocaleString()} 筆 · {pct}%
             </p>
         </div>
@@ -39,9 +39,8 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
 }
 
 export default function EventDonut({ data, height = 220 }: EventDonutProps) {
-    const accent = useAccentColor()
     const total = data.reduce((sum, d) => sum + d.count, 0)
-    const colors = makeAccentShades(accent, data.length, { from: 0.95, to: 0.35 })
+    const colors = appleCategoryColors(data.length)
 
     if (total === 0) {
         return (
@@ -55,7 +54,7 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
     }
 
     return (
-        <div className="relative" style={{ height }}>
+        <div className="relative [container-type:size]" style={{ height }}>
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
@@ -69,8 +68,7 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
                         startAngle={90}
                         endAngle={-270}
                         paddingAngle={1.5}
-                        stroke="rgb(var(--bg-base))"
-                        strokeWidth={2}
+                        stroke="none"
                     >
                         {data.map((_, i) => (
                             <Cell key={i} fill={colors[i]} />
@@ -82,10 +80,10 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
 
             {/* Center label, absolutely positioned over the donut hole. */}
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-[26px] font-light leading-none text-text-primary tabular-nums">
+                <p className="text-[clamp(15px,13cqmin,26px)] font-light leading-none text-text-primary tabular-nums">
                     {total.toLocaleString()}
                 </p>
-                <p className="mt-1.5 text-[11px] uppercase tracking-[0.18em] text-text-muted">
+                <p className="mt-[clamp(2px,2cqmin,6px)] text-[clamp(8px,4.5cqmin,11px)] text-text-secondary">
                     Total
                 </p>
             </div>
@@ -98,9 +96,8 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
  * Exported so OverviewSection can render it next to the donut.
  */
 export function EventDonutLegend({ data }: { data: ActionCount[] }) {
-    const accent = useAccentColor()
     const total = data.reduce((sum, d) => sum + d.count, 0)
-    const colors = makeAccentShades(accent, data.length, { from: 0.95, to: 0.35 })
+    const colors = appleCategoryColors(data.length)
 
     if (data.length === 0) return null
 
@@ -120,7 +117,7 @@ export function EventDonutLegend({ data }: { data: ActionCount[] }) {
                         <span className="flex-1 truncate text-text-secondary">
                             {item.name}
                         </span>
-                        <span className="font-mono text-text-primary tabular-nums">
+                        <span className=" text-text-primary tabular-nums">
                             {pct}%
                         </span>
                     </li>

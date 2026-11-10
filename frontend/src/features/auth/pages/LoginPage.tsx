@@ -4,6 +4,7 @@
  * 卡片內排版改為靈活設計：1:1 正方形
  */
 
+import LensMenu from '@/components/ui/LensMenu'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -16,8 +17,8 @@ import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { AlertTriangle, FileText, Globe, HelpCircle, MessageSquare, Moon, Shield, Sun, X } from '@/components/snow/icons'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { BackendBootSplash, BackendStatusPill, FloatingInput, type BackendStatus } from '@/features/auth'
-import { springSnappy } from '@/lib/motionPresets'
 import Tooltip from '@/components/ui/Tooltip'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 export default function Login() {
     const { t, i18n } = useTranslation()
@@ -207,13 +208,11 @@ export default function Login() {
             } else if (status === 422) {
                 const details = (data as { error?: { details?: Array<{ field: string; message: string }> } })?.error?.details
                 if (details && details.length > 0) {
-                    const pwdError = details.find(d => d.field?.includes('password'))
-                    if (pwdError) {
-                        const cleaned = pwdError.message.replace(/^Value error,\s*/i, '')
-                        setFieldErrors({ password: cleaned })
-                    } else {
-                        setFieldErrors({ password: details.map(d => d.message.replace(/^Value error,\s*/i, '')).join(', ') })
-                    }
+                    // 後端驗證訊息是英文：依欄位改成中文提示，標在對應的輸入框
+                    const errs: { email?: string; password?: string } = {}
+                    if (details.some(d => d.field?.includes('email'))) errs.email = t('auth.invalidEmail', '信箱格式不正確')
+                    if (details.some(d => d.field?.includes('password'))) errs.password = t('auth.invalidPassword', '密碼格式不符合規定')
+                    setFieldErrors(Object.keys(errs).length ? errs : { password: activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed') })
                 } else {
                     setFieldErrors({ password: activeTab === 'login' ? t('auth.loginFailed') : t('auth.registerFailed') })
                 }
@@ -236,8 +235,8 @@ export default function Login() {
     //   dark  bg (32, 32, 34)  → ~39 37 37（極淡的深棕）
     // store 的 theme 已是 resolved 過的 'light' | 'dark'，'system' 在 themePreference 裡
     const isDark = theme === 'dark'
-    const loginBorderSubtle = isDark ? '39 37 37' : '242 240 236'
-    const loginBorderStrong = isDark ? '55 49 45' : '225 219 212'
+    const loginBorderSubtle = isDark ? '56 56 58' : '198 198 200'
+    const loginBorderStrong = isDark ? '72 72 74' : '174 174 178'
 
     // ── 後端首次檢查前蓋全螢幕 splash —————————————————————————
     // 只在「第一次 health check 還沒完成」時顯示，避免 backend offline 時永遠卡 splash。
@@ -246,7 +245,7 @@ export default function Login() {
     }
 
     return (
-        // 登入/註冊頁強制鎖品牌色（Titanium Bronze）—— 跟全域 accent 解耦。
+        // 登入/註冊頁跟隨系統強調色（預設藍色）；以前鎖古銅色，改預設藍後會出現一半藍一半古銅。
         //
         // 注意：CSS custom property 是 early binding —— `--accent: var(--color-ios-accent-light)`
         // 在 :root 被計算時就 resolve 成具體 RGB 值，子樹繼承的是已 resolve 的值，
@@ -260,13 +259,6 @@ export default function Login() {
             // 用多重 vh 單位做 fallback，避免在某些 WebView/內嵌瀏覽器 dvh 計算異常造成版面上下偏移
             className="min-h-screen min-h-[100svh] min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
             style={{
-                ['--color-ios-accent-light' as string]: '137 110 83',
-                ['--color-ios-accent-dark' as string]: '137 110 83',
-                // 直接覆蓋 --accent 系列（不能依靠 var(--color-ios-accent-light) 重新解析）
-                ['--accent' as string]: '137 110 83',
-                ['--accent-hover' as string]: '137 110 83',
-                ['--accent-active' as string]: '137 110 83',
-                ['--accent-soft' as string]: '137 110 83',
                 ['--border-subtle' as string]: loginBorderSubtle,
                 ['--border-strong' as string]: loginBorderStrong,
                 // iOS safe-area —— 避免 Dynamic Island / 底部 Home Indicator 蓋到 Online pill / 內容
@@ -275,17 +267,14 @@ export default function Login() {
             }}
         >
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
-                </svg>
+                <WaveBackground />
             </div>
 
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
                 <BackendStatusPill status={backendStatus} />
 
-                <div className="flex-1 flex items-center justify-center w-full">
+                {/* 左側整塊往右推約 4% 視窗寬，視覺重心不要太靠左 */}
+                <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
                     <div className="mx-auto max-w-[460px] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
                         <h2 className="text-[44px] xl:text-[52px] font-bold text-text-primary tracking-[-0.025em] leading-tight relative z-10 transition-colors">
                             {t('auth.welcomeTitle')}
@@ -293,42 +282,27 @@ export default function Login() {
                         <div className="mt-5 -mb-6 relative z-0 flex items-center">
                             <CorphiaWordmark className="h-[96px] w-auto max-w-full object-contain object-left pointer-events-none select-none" />
                         </div>
-                        <p className="mt-2 mb-10 text-[13px] tracking-[0.18em] uppercase text-text-secondary/80">
-                            Enterprise Knowledge Engine · {t('auth.localDeploy', '地端部署')}
+                        {/* 副標（規範：不放眉標；Apple 副標 17／22 次要字，不用全大寫加字距） */}
+                        <p className="mt-2 mb-10 text-[17px] leading-[22px] text-text-secondary">
+                            {t('auth.engineSubtitle', '企業知識引擎')} · <span className="whitespace-nowrap">{t('auth.localDeploy', '地端部署')}</span>
                         </p>
 
                         <div className="space-y-7">
-                            <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center relative">
-                                    <MessageSquare className="w-6 h-6 text-corphia-bronze" />
-                                    <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[-2px]">AI</span>
+                            {[
+                                { icon: <MessageSquare className="w-6 h-6 text-accent" />, title: t('auth.feature1'), desc: t('auth.feature1Desc') },
+                                { icon: <FileText className="w-6 h-6 text-accent" />, title: t('auth.feature2'), desc: t('auth.feature2Desc') },
+                                { icon: <Shield className="w-6 h-6 text-accent" />, title: t('auth.feature3'), desc: t('auth.feature3Desc') },
+                            ].map((f) => (
+                                <div key={f.title} className="flex items-center gap-4">
+                                    <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center relative">
+                                        {f.icon}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[17px] leading-[22px] font-semibold text-text-primary mb-0.5">{f.title}</span>
+                                        <span className="text-[15px] leading-[20px] text-text-secondary">{f.desc}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature1')}</span>
-                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature1Desc')}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center">
-                                    <FileText className="w-6 h-6 text-corphia-bronze" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature2')}</span>
-                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature2Desc')}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 w-[52px] h-[52px] rounded-full glass-chip flex items-center justify-center relative">
-                                    <Shield className="w-6 h-6 text-corphia-bronze" />
-                                    <span className="absolute text-[10px] font-bold text-corphia-bronze mt-[2px]">A</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[1.1rem] font-medium text-text-primary transition-colors leading-tight mb-1">{t('auth.feature3')}</span>
-                                    <span className="text-sm text-text-secondary transition-colors">{t('auth.feature3Desc')}</span>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -343,7 +317,7 @@ export default function Login() {
 
                     {/* 主題／語言：兩顆獨立玻璃圓鈕，大小與後台「回上一頁」相同（36） */}
                     <div className="flex items-center gap-2 ml-auto">
-                        <Tooltip label={t('settings.theme')}>
+                        
                             <button
                                 onClick={toggleTheme}
                                 className="btn-icon !w-9 !h-9 text-text-secondary"
@@ -364,7 +338,7 @@ export default function Login() {
                             <span
                                 className="absolute inset-0 flex items-center justify-center transition-all duration-500"
                                 style={{
-                                    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                                    transitionTimingFunction: 'var(--ease-out)',
                                     opacity: theme === 'dark' ? 1 : 0,
                                     transform: theme === 'dark' ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
                                 }}
@@ -376,7 +350,7 @@ export default function Login() {
                             <span
                                 className="absolute inset-0 flex items-center justify-center transition-all duration-500"
                                 style={{
-                                    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                                    transitionTimingFunction: 'var(--ease-out)',
                                     opacity: theme === 'light' ? 1 : 0,
                                     transform: theme === 'light' ? 'rotate(0deg) scale(1)' : 'rotate(90deg) scale(0.5)',
                                 }}
@@ -386,17 +360,17 @@ export default function Login() {
                                 <Moon className="w-5 h-5" />
                             </span>
                             </button>
-                        </Tooltip>
+                        
 
                         <div className="relative" ref={langMenuRef}>
-                            <Tooltip label={t('settings.language')}>
+                            
                                 <button
                                     onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                                     className={`btn-icon !w-9 !h-9 ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
                                 >
                                 <Globe className="w-5 h-5" />
                             </button>
-                            </Tooltip>
+                            
 
                             <AnimatePresence>
                                 {isLangMenuOpen && (
@@ -405,26 +379,28 @@ export default function Login() {
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                                        className="absolute right-0 mt-2 w-32 paper !rounded-[20px] overflow-hidden z-50 flex flex-col p-1.5"
+                    className="absolute right-0 mt-2 w-32 paper !rounded-[20px] overflow-hidden z-50 p-1.5"
                                     >
+                                        <LensMenu className="flex flex-col">
                                         <button
                                             onClick={() => handleLanguageSelect('zh-TW')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between ${language === 'zh-TW' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
+                                            className={`menu-item !text-[14px] ${language === 'zh-TW' ? 'is-selected' : '!text-text-secondary'}`}
                                         >
                                             繁體中文
                                         </button>
                                         <button
                                             onClick={() => handleLanguageSelect('en-US')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'en-US' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
+                                            className={`menu-item !text-[14px] mt-1 ${language === 'en-US' ? 'is-selected' : '!text-text-secondary'}`}
                                         >
                                             English
                                         </button>
                                         <button
                                             onClick={() => handleLanguageSelect('ja-JP')}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors rounded-full flex items-center justify-between mt-1 ${language === 'ja-JP' ? 'text-white font-semibold bg-accent' : 'text-text-secondary '}`}
+                                            className={`menu-item !text-[14px] mt-1 ${language === 'ja-JP' ? 'is-selected' : '!text-text-secondary'}`}
                                         >
                                             日本語
                                         </button>
+                                        </LensMenu>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -627,7 +603,7 @@ export default function Login() {
                                                         exit={{ opacity: 0, scale: 0.5, width: 0 }}
                                                         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                                                         aria-label={t('auth.forgotPassword')}
-                                                        className="shrink-0 h-[42px] btn-icon !w-[42px] !h-[42px] [--R:21px] text-corphia-bronze flex items-center justify-center  overflow-hidden"
+                                                        className="shrink-0 h-[42px] btn-icon !w-[42px] !h-[42px] [--R:21px] text-accent flex items-center justify-center  overflow-hidden"
                                                     >
                                                         <HelpCircle className="w-5 h-5 shrink-0" />
                                                     </motion.button>
@@ -655,7 +631,7 @@ export default function Login() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-sm"
                             onClick={() => setShowResetModal(false)}
                         />
                         <motion.div
@@ -675,14 +651,14 @@ export default function Login() {
                                 <button
                                     type="button"
                                     onClick={() => setShowResetModal(false)}
-                                    className="btn-icon !w-9 !h-9 absolute top-4 right-4 text-text-secondary"
+                                    className="btn-icon dialog-close absolute text-text-secondary"
                                     aria-label={t('common.close', '關閉')}
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
 
                                 <div className="flex flex-col items-center text-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-corphia-bronze/10 text-corphia-bronze flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-accent/10 text-accent flex items-center justify-center">
                                         <HelpCircle className="w-6 h-6" />
                                     </div>
                                     <h3

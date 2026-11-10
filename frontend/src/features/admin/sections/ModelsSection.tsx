@@ -78,7 +78,7 @@ export default function ModelsSection({
             <Panel>
                 <SectionHeader
                     title={t('admin.models.title', '模型')}
-                    eyebrow={t('admin.models.modelDirectory', '模型目錄')}
+                    eyebrow={`${t('admin.models.folder', '模型資料夾')}：${sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}`}
                     action={
                         <ActionButton onClick={onRefreshModels} disabled={isLoadingModels}>
                             <RefreshCw className="h-4 w-4" />
@@ -86,12 +86,6 @@ export default function ModelsSection({
                         </ActionButton>
                     }
                 />
-                {/* 路徑在 hover tooltip 顯示 */}
-                <Tooltip label={sanitizePath(modelsDir) || 'ai_model'}>
-                    <div className="border-b border-[var(--paper-line)] px-5 py-2 font-mono text-[11px] text-text-muted truncate">
-                        {sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}
-                    </div>
-                </Tooltip>
                 <div className="grid gap-4 p-5">
                     {isLoadingModels ? (
                         <div className="py-10 text-center text-text-secondary">
@@ -127,7 +121,7 @@ export default function ModelsSection({
                                                 </span>
                                             )}
                                             {model.quantization && (
-                                                <span className="rounded-full snow-well px-3 py-1 text-xs font-mono text-text-secondary">
+                                                <span className="rounded-full snow-well px-3 py-1 text-xs tabular-nums text-text-secondary">
                                                     {model.quantization}
                                                 </span>
                                             )}
@@ -144,7 +138,7 @@ export default function ModelsSection({
                                         {/* Hash 和效能統計 */}
                                         <div className="mt-3 flex flex-wrap gap-4 text-xs">
                                             {/* SHA256 */}
-                                            <div className="flex items-center gap-2 font-mono">
+                                            <div className="flex items-center gap-2 tabular-nums">
                                                 <span className="text-text-muted">Hash:</span>
                                                 <Tooltip label={integrity?.sha256 || '計算中'}>
                                                     <span className="text-text-secondary">

@@ -79,6 +79,8 @@ export default {
         rememberMe: 'ログイン状態を保持する',
         loginSuccess: 'ログインしました',
         loginFailed: 'ログインに失敗しました。認証情報を確認してください',
+        invalidEmail: 'メールアドレスの形式が正しくありません',
+        invalidPassword: 'パスワードが要件を満たしていません',
         registerSuccess: '登録が完了しました',
         registerFailed: '登録に失敗しました。後でもう一度お試しください',
         noAccount: 'アカウントをお持ちではありませんか？',

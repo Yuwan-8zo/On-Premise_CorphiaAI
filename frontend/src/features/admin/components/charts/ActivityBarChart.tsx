@@ -40,11 +40,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     if (!item) return null
     return (
         <div className="paper !rounded-[14px] px-3 py-2 text-xs">
-            <p className="font-mono font-medium text-text-primary tabular-nums">
+            <p className=" font-medium text-text-primary tabular-nums">
                 {item.date}
             </p>
             <p className="text-text-secondary">{item.weekday}</p>
-            <p className="mt-1 font-mono text-sm text-accent tabular-nums">
+            <p className="mt-1 text-sm text-accent tabular-nums">
                 {item.count.toLocaleString()} 筆
             </p>
         </div>

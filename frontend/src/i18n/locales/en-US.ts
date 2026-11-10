@@ -79,6 +79,8 @@ export default {
         rememberMe: 'Remember me',
         loginSuccess: 'Login successful',
         loginFailed: 'Login failed. Please check your credentials.',
+        invalidEmail: 'Invalid email format',
+        invalidPassword: 'Password does not meet the requirements',
         registerSuccess: 'Registration successful',
         registerFailed: 'Registration failed. Please try again.',
         noAccount:"Don't have an account?",

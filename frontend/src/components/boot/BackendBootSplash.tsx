@@ -14,8 +14,7 @@
 
 import { Check, X } from '@/components/snow/icons'
 import { useEffect, useRef, useState } from 'react'
-import CorphiaLogoForLight from '@/assets/Corphia_Icon_Light.png'
-import CorphiaLogoForDark from '@/assets/Corphia_Icon_Dark.png'
+import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 
 type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
@@ -156,6 +155,9 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const [now, setNow] = useState(() => Date.now() / 1000)
     const firstSeen = useRef(Date.now() / 1000)
     const readyFired = useRef(false)
+    // 第一次檢查完成前不畫任何東西；第一次就全部就緒（例如登出後重新載入）→ 直接進入，不閃啟動畫面
+    const [firstChecked, setFirstChecked] = useState(false)
+    const readyAtFirstCheck = useRef(false)
 
     useEffect(() => {
         let cancelled = false
@@ -168,6 +170,14 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
             setLauncher(l)
             setHealth(h)
             setNow(Date.now() / 1000)
+            setFirstChecked((was) => {
+                if (!was) {
+                    const ms = h?.models ?? []
+                    readyAtFirstCheck.current = h?.status === 'ok' && h?.llm === 'ready' && h?.rag === 'ready' &&
+                        !ms.some((m) => m.state === 'pending' || m.state === 'loading' || m.state === 'error')
+                }
+                return true
+            })
         }
         tick()
         const id = setInterval(tick, POLL_MS)
@@ -188,11 +198,13 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     useEffect(() => {
         if (allReady && !readyFired.current) {
             readyFired.current = true
-            // 讓使用者看到「全部完成」一下再進入
-            const t = setTimeout(onReady, 900)
+            // 一開始就全部就緒：直接進入；啟動過程中才停一下讓使用者看到「全部完成」
+            const t = setTimeout(onReady, readyAtFirstCheck.current ? 0 : 900)
             return () => clearTimeout(t)
         }
     }, [allReady, onReady])
+
+    if (!firstChecked || readyAtFirstCheck.current) return null
 
     // ── 組出畫面上的每一列 ──────────────────────────────────────────
     const rows: Row[] = []
@@ -243,8 +255,8 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
 
             <div className="relative z-10 w-full max-w-xl px-6 py-10">
                 <div className="mb-6 flex items-center gap-4">
-                    <img src={CorphiaLogoForLight} alt="Corphia AI" className="h-12 w-12 select-none dark:hidden" draggable={false} />
-                    <img src={CorphiaLogoForDark} alt="Corphia AI" className="hidden h-12 w-12 select-none dark:block" draggable={false} />
+                    {/* 向量標誌：C 跟文字色、星星跟系統強調色 */}
+                    <CorphiaLogo className="h-12 w-12 select-none text-text-primary" />
                     <div className="flex-1">
                         <h1 className="text-xl font-semibold tracking-tight text-text-primary">Corphia AI 啟動中</h1>
                         <p className="text-sm text-text-muted">

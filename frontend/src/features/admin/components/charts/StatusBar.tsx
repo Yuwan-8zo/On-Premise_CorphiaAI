@@ -59,7 +59,7 @@ export default function StatusBar({
                 <span className="text-[20px] font-light leading-none text-text-primary tabular-nums">
                     {total.toLocaleString()}
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.16em] text-text-muted">
+                <span className="text-[12px] text-text-secondary">
                     Total
                 </span>
             </div>
@@ -96,7 +96,7 @@ export default function StatusBar({
                         <span className="flex-1 truncate text-text-secondary">
                             {item.label}
                         </span>
-                        <span className="font-mono text-text-primary tabular-nums">
+                        <span className=" text-text-primary tabular-nums">
                             {item.count}
                         </span>
                     </li>

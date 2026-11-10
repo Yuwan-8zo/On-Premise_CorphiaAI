@@ -40,12 +40,15 @@ interface Position {
     left: number
 }
 
+/** 上一個提示收起的時間：用來判斷「移到下一顆立刻換字」 */
+let lastTipHiddenAt = 0
+
 export default function Tooltip({
     label,
     children,
     placement = 'top',
     className = '',
-    delay = 0,
+    delay = 350,
 }: TooltipProps) {
     const wrapperRef = useRef<HTMLSpanElement | null>(null)
     const tooltipRef = useRef<HTMLSpanElement | null>(null)
@@ -61,7 +64,7 @@ export default function Tooltip({
         // tooltip 還沒 mount 時用估計值，之後 effect 會 reposition
         const ttW = tooltipEl?.offsetWidth ?? 100
         const ttH = tooltipEl?.offsetHeight ?? 32
-        const gap = 8
+        const gap = 12 // 規範：距按鈕 12
 
         let top = 0
         let left = 0
@@ -95,7 +98,12 @@ export default function Tooltip({
         setPosition({ top, left })
     }
 
-    const handleEnter = () => {
+    // 規範：停留 0.35 秒出現；已經有提示顯示時（剛關掉 0.3 秒內）移到下一顆立刻換字；鍵盤聚焦立刻出現；觸控不顯示
+    const handleEnter = (immediate = false) => {
+        if (immediate || Date.now() - lastTipHiddenAt < 300) {
+            setIsVisible(true)
+            return
+        }
         if (delay > 0) {
             showTimerRef.current = window.setTimeout(() => {
                 setIsVisible(true)
@@ -109,6 +117,7 @@ export default function Tooltip({
             clearTimeout(showTimerRef.current)
             showTimerRef.current = null
         }
+        if (isVisible) lastTipHiddenAt = Date.now()
         setIsVisible(false)
     }
 
@@ -141,9 +150,9 @@ export default function Tooltip({
         <span
             ref={wrapperRef}
             className={`relative inline-flex ${className}`}
-            onMouseEnter={handleEnter}
-            onMouseLeave={handleLeave}
-            onFocus={handleEnter}
+            onPointerEnter={(e) => { if (e.pointerType === 'mouse') handleEnter() }}
+            onPointerLeave={handleLeave}
+            onFocus={(e) => { if (e.target.matches(':focus-visible')) handleEnter(true) }}
             onBlur={handleLeave}
         >
             {children}

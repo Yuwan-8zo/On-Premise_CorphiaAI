@@ -1,6 +1,6 @@
-import { Check, ChevronRight, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
+import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
 import { parseServerDate } from '@/lib/utils'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import OnboardingTour, { isOnboardingDone } from '@/components/onboarding/OnboardingTour'
 import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '@/features/chat/components'
@@ -8,6 +8,7 @@ import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
 import Tooltip from '@/components/ui/Tooltip'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
@@ -24,9 +25,12 @@ export default function Chat() {
         }
     }, [])
 
+    // 只有「這次停留期間」重看次數又增加才打開。
+    // 以前用 token > 0 判斷：按過一次重看後，從管理後台等頁面回來（頁面重新掛載）就會一直再跳出引導
+    const seenReplayToken = useRef(onboardingReplayToken)
     useEffect(() => {
-        // replay token 變動才開（>0 代表使用者按了重看）
-        if (onboardingReplayToken > 0) {
+        if (onboardingReplayToken !== seenReplayToken.current) {
+            seenReplayToken.current = onboardingReplayToken
             setShowOnboarding(true)
         }
     }, [onboardingReplayToken])
@@ -43,11 +47,7 @@ export default function Chat() {
         >
             {/* 背景弧線 SVG —— 跟登入/Admin 同款 */}
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <svg className="absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.03] dark:opacity-[0.02] transition-colors duration-300" d="M0,0 C400,400 1000,500 1440,200 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.06] dark:opacity-[0.03] transition-colors duration-300" d="M0,300 C500,800 1100,700 1440,400 L1440,900 L0,900 Z" />
-                    <path className="fill-corphia-bronze dark:fill-white opacity-[0.02] dark:opacity-[0.01] transition-colors duration-300" d="M0,600 C600,900 1200,600 1440,700 L1440,900 L0,900 Z" />
-                </svg>
+                <WaveBackground />
             </div>
 
             {/* --- Mobile Sidebar Overlay --- */}
@@ -72,7 +72,7 @@ export default function Chat() {
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 pb-6 md:px-10 max-w-4xl mx-auto w-full">
                         <div className="mb-8 pl-2 shrink-0">
                             <h2 className="text-[22px] font-bold text-text-primary flex items-center gap-3">
-                                <Folder className="w-8 h-8 text-corphia-bronze" />
+                                <Folder className="w-8 h-8 text-accent" />
                                 {mainProps.selectedFolder}
                             </h2>
                             <p className="mt-2 text-[15px] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
@@ -105,7 +105,7 @@ export default function Chat() {
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-corphia-bronze checked:bg-accent checked:before:bg-accent dark:checked:border-accent dark:checked:bg-accent dark:checked:before:bg-accent "
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[8px] border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
@@ -128,12 +128,8 @@ export default function Chat() {
                                             </div>
                                             
                                             <div className="flex items-center gap-4">
-                                                <span className={`text-[12px] px-2.5 py-1 rounded-full font-medium ${
-                                                    doc.status === 'completed' ? 'bg-green-100 text-green-700 ' :
-                                                    doc.status === 'failed' ? 'bg-red-100 text-red-700 ' :
-                                                    'bg-[var(--chip)] text-text-secondary '
-                                                }`}>
-                                                    {doc.status === 'completed' ? '已處理' : doc.status === 'failed' ? '失敗' : '處理中'}
+                                                <span className={`tag ${doc.status === 'completed' ? 'tag-green' : doc.status === 'failed' ? 'tag-red' : doc.status === 'pending' ? 'tag-orange' : 'tag-accent'}`}>
+                                                    {doc.status === 'completed' ? '可讀取' : doc.status === 'failed' ? '讀取失敗' : doc.status === 'pending' ? '等待處理' : '處理中'}
                                                 </span>
                                                 
                                                 <Tooltip label="刪除">
@@ -166,10 +162,10 @@ export default function Chat() {
                         {mainProps.isUploading && mainProps.selectedFolder && (
                             <div className="mt-6 p-4 glass-chip rounded-[18px] flex items-center justify-between animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze border-t-transparent animate-spin" />
-                                    <span className="text-corphia-bronze text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+                                    <span className="text-accent text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
                                 </div>
-                                <span className="text-corphia-bronze font-semibold">{mainProps.uploadProgress}%</span>
+                                <span className="text-accent font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
                         )}
                         
@@ -190,7 +186,7 @@ export default function Chat() {
                       右側已有 ChatMinimap（縮圖式導覽）+ ScrollToBottomButton 處理視覺指引，
                       傳統 scrollbar 在這裡是噪音不是訊號。
                     */}
-                    <div ref={mainProps.scrollContainerRef} className="flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
+                    <div ref={mainProps.scrollContainerRef} className="chat-scroll flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
                         {mainProps.isLoadingMore && (

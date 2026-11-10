@@ -73,20 +73,29 @@ function splitStyle(style?: AnyMotionProps['style']) {
 }
 
 function normalizeEase(ease?: string | number[]) {
-    if (Array.isArray(ease)) return MOTION.gsapEase.default
-    if (ease === 'easeInOut') return MOTION.gsapEase.inOut
-    if (ease === 'easeIn') return MOTION.gsapEase.in
-    if (ease === 'easeOut') return MOTION.gsapEase.out
-    return ease || MOTION.gsapEase.default
+    // 規範不用加速曲線：陣列、easeIn、easeInOut、自訂字串一律換成減速（quint.out ＝ cubic-bezier(.23,1,.32,1)）
+    void ease
+    return MOTION.gsapEase.default
 }
 
 function transitionVars(transition?: MotionLikeProps['transition']) {
     if (!transition) return { duration: MOTION.durationSeconds.normal, ease: MOTION.gsapEase.default }
+    const spring = transition.type === 'spring'
     return {
         delay: transition.delay,
-        duration: transition.duration ?? (transition.type === 'spring' ? MOTION.durationSeconds.spring : MOTION.durationSeconds.normal),
-        ease: normalizeEase(transition.ease),
+        duration: transition.duration ?? (spring ? MOTION.durationSeconds.spring : MOTION.durationSeconds.normal),
+        // 規範只有減速與彈性兩條曲線：spring 走彈性，其餘一律減速（不用加速曲線）
+        ease: spring ? MOTION.gsapEase.spring : normalizeEase(transition.ease),
     }
+}
+
+/** 系統「減少動態效果」：拿掉位移與縮放，只留淡入淡出（規範：換頁只留 0.12＋0.2 秒淡入淡出） */
+const REDUCED_KEYS = ['x', 'y', 'scale', 'scaleX', 'scaleY', 'rotate', 'xPercent', 'yPercent']
+export function stripForReducedMotion<T extends Record<string, unknown> | undefined>(vars: T): T {
+    if (!vars || typeof window === 'undefined' || !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return vars
+    const out = { ...vars } as Record<string, unknown>
+    for (const k of REDUCED_KEYS) delete out[k]
+    return out as T
 }
 
 function mergeRefs<T>(node: T | null, innerRef: React.MutableRefObject<T | null>, forwardedRef: React.ForwardedRef<T>) {
@@ -133,7 +142,7 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
             if (!element) return
 
             if (!hasMounted.current) {
-                const initialVars = resolveMotionValue(motionInitial, motionVariants)
+                const initialVars = stripForReducedMotion(resolveMotionValue(motionInitial, motionVariants))
                 if (Object.keys(motionStyle).length > 0) gsap.set(element, motionStyle)
                 if (initialVars) gsap.set(element, initialVars)
                 hasMounted.current = true

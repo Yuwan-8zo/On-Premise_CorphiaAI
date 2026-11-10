@@ -346,11 +346,11 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 )}
 
                 {/* × 略過 */}
-                <Tooltip label={t('common.skip', '略過')}>
+                <Tooltip label={t('common.skip', '略過')} className="!absolute top-2.5 right-2.5 z-10">
                     <button
                         type="button"
                         onClick={handleClose}
-                        className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full text-text-muted   transition"
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted   transition"
                         aria-label={t('common.skip', '略過')}
                     >
                         <X className="h-3.5 w-3.5" />

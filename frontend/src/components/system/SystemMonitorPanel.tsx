@@ -6,7 +6,6 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import { systemApi } from '../../api/system'
 import MaterialIcon from '../icons/MaterialIcon'
 
@@ -84,7 +83,6 @@ function percentColor(val: number): string {
 }
 
 export function SystemMonitorPanel() {
-    const { t } = useTranslation()
     const [health, setHealth] = useState<SystemHealth | null>(null)
     const [network, setNetwork] = useState<NetworkStatus | null>(null)
     const [loading, setLoading] = useState(true)
@@ -117,7 +115,7 @@ export function SystemMonitorPanel() {
     if (loading) {
         return (
             <div className="p-4 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-corphia-bronze/20 border-t-accent animate-spin" />
+                <div className="w-5 h-5 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
             </div>
         )
     }
@@ -139,12 +137,12 @@ export function SystemMonitorPanel() {
                         <MaterialIcon
                             name={network.data_sovereignty ? 'verified' : 'warning'}
                             size={20}
-                            className={network.data_sovereignty ? 'text-green-600' : 'text-yellow-600'}
+                            className={network.data_sovereignty ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-300'}
                         />
                         <span className={`font-medium text-xs ${
                             network.data_sovereignty
-                                ? 'text-green-700 '
-                                : 'text-yellow-700 '
+                                ? 'text-green-700 dark:text-green-400'
+                                : 'text-amber-700 dark:text-amber-300'
                         }`}>
                             {network.message}
                         </span>
@@ -164,19 +162,19 @@ export function SystemMonitorPanel() {
                         <span className="font-medium text-xs text-text-secondary inline-flex items-center gap-1">
                             <MaterialIcon name="memory" size={14} aria-hidden /> CPU
                         </span>
-                        <span className="text-xs font-mono text-text-secondary">{health.cpu.cpu_cores} 核心</span>
+                        <span className="text-xs tabular-nums text-text-secondary">{health.cpu.cpu_cores} 核心</span>
                     </div>
                     <div>
                         <div className="flex justify-between text-xs text-text-secondary mb-1">
                             <span>CPU 使用率</span>
-                            <span className="font-mono">{health.cpu.cpu_percent}%</span>
+                            <span className="tabular-nums">{health.cpu.cpu_percent}%</span>
                         </div>
                         <UsageBar percent={health.cpu.cpu_percent} color={percentColor(health.cpu.cpu_percent)} />
                     </div>
                     <div>
                         <div className="flex justify-between text-xs text-text-secondary mb-1">
                             <span>記憶體</span>
-                            <span className="font-mono">{health.cpu.memory_used_gb} / {health.cpu.memory_total_gb} GB</span>
+                            <span className="tabular-nums">{health.cpu.memory_used_gb} / {health.cpu.memory_total_gb} GB</span>
                         </div>
                         <UsageBar percent={health.cpu.memory_percent} color={percentColor(health.cpu.memory_percent)} />
                     </div>
@@ -191,19 +189,19 @@ export function SystemMonitorPanel() {
                             <MaterialIcon name="developer_board" size={14} aria-hidden />
                             GPU #{gpu.index}
                         </span>
-                        <span className="text-xs font-mono text-text-secondary truncate max-w-[160px]">{gpu.name}</span>
+                        <span className="text-xs tabular-nums text-text-secondary truncate max-w-[160px]">{gpu.name}</span>
                     </div>
                     <div>
                         <div className="flex justify-between text-xs text-text-secondary mb-1">
                             <span>GPU 使用率</span>
-                            <span className="font-mono">{gpu.gpu_utilization}%</span>
+                            <span className="tabular-nums">{gpu.gpu_utilization}%</span>
                         </div>
                         <UsageBar percent={gpu.gpu_utilization} color={percentColor(gpu.gpu_utilization)} />
                     </div>
                     <div>
                         <div className="flex justify-between text-xs text-text-secondary mb-1">
                             <span>VRAM</span>
-                            <span className="font-mono">{gpu.vram_used_mb} / {gpu.vram_total_mb} MB</span>
+                            <span className="tabular-nums">{gpu.vram_used_mb} / {gpu.vram_total_mb} MB</span>
                         </div>
                         <UsageBar percent={gpu.vram_percent} color={percentColor(gpu.vram_percent)} />
                     </div>
@@ -227,13 +225,13 @@ export function SystemMonitorPanel() {
                         </span>
                         <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                             health.llm.model_loaded
-                                ? 'bg-green-100 text-green-700 '
-                                : 'bg-yellow-100 text-yellow-700 '
+                                ? 'bg-green-500/15 text-green-700 dark:text-green-400'
+                                : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
                         }`}>
                             {health.llm.model_loaded ? '已載入' : '模擬模式'}
                         </span>
                     </div>
-                    <div className="text-[11px] text-text-secondary space-y-0.5 font-mono">
+                    <div className="text-[11px] text-text-secondary space-y-0.5 tabular-nums">
                         <p>Context Size: {health.llm.context_size}</p>
                         <p>GPU Layers: {health.llm.n_gpu_layers}</p>
                         {health.llm.n_vocab && <p>Vocab Size: {health.llm.n_vocab}</p>}
@@ -243,7 +241,7 @@ export function SystemMonitorPanel() {
 
             {/* 平台資訊 */}
             {health?.platform && (
-                <div className="text-[10px] text-text-muted text-center font-mono">
+                <div className="text-[10px] text-text-muted text-center tabular-nums">
                     {health.platform.system} {health.platform.machine} · Python {health.platform.python_version}
                 </div>
             )}

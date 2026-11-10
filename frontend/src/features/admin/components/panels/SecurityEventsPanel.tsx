@@ -36,7 +36,6 @@ export default function SecurityEventsPanel({
         <Panel className={`overflow-hidden flex flex-col min-h-[160px] lg:min-h-0 ${className || ''}`}>
             <SectionHeader
                 title={t('admin.overview.securityEvents', '資安事件 (24h)')}
-                eyebrow="Security Events"
             />
             <div className="flex-1 min-h-0 p-2.5">
                 <div className="grid grid-cols-2 gap-2 h-full">
@@ -47,11 +46,11 @@ export default function SecurityEventsPanel({
                                 key={kpi.valueKey}
                                 className={`flex items-center gap-3 p-3 rounded-[16px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-[var(--paper-line)]'}`}
                             >
-                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${kpi.colorClass}`}>
+                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />
                                 </span>
 
-                                <p className="flex-1 min-w-0 text-[11px] font-medium uppercase tracking-[0.1em] text-text-muted truncate">
+                                <p className="flex-1 min-w-0 text-[12px] font-medium text-text-secondary truncate">
                                     {t(kpi.labelKey, kpi.labelFallback)}
                                 </p>
 

@@ -8,7 +8,9 @@
  * - NewFolderModal（新建資料夾）
  */
 
-import { ChevronDown, ChevronRight, Edit2, Folder, Share, Trash2 } from '@/components/snow/icons'
+import StyledSelect from '@/components/ui/StyledSelect'
+import LensMenu from '@/components/ui/LensMenu'
+import { ChevronRight, Edit2, Folder, Share, Trash2 } from '@/components/snow/icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -41,35 +43,35 @@ export function ConversationContextMenu({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.1 }}
-                    className="fixed z-[100] w-[170px] paper !rounded-[20px] overflow-hidden p-1.5 text-[14px] font-medium text-text-primary"
+                    transition={{ duration: 0.3 }}
+                    className="fixed z-[100] w-max min-w-[190px] paper !rounded-[20px] overflow-hidden p-1.5 text-text-primary"
                     style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
                 >
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px]  transition-colors text-left"
+                    <LensMenu className="">
+                    <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onShare(id), 50) }}>
-                        <Share className="w-4 h-4 opacity-70" />
+                        <Share />
                         分享
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px]  transition-colors text-left"
+                    <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
-                        <Edit2 className="w-4 h-4 opacity-70" />
+                        <Edit2 />
                         重新命名
                     </button>
-                    <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px]  transition-colors text-left group"
+                    <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), 50) }}>
-                        <div className="flex items-center gap-3">
-                            <Folder className="w-4 h-4 opacity-70" />
-                            <span>{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-50" />
+                        <Folder />
+                        <span className="flex-1">{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
+                        <ChevronRight className="set-chevron !w-[14px] !h-[14px] -mr-1" />
                     </button>
-                    <div className="h-[1px] bg-[var(--chip)] my-1 mx-3" />
+                    <div className="menu-sep" />
                     <button 
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onDelete(id, e as unknown as React.MouseEvent), 50) }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px]  text-red-500 transition-colors text-left group">
-                        <Trash2 className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                        className="menu-item is-danger">
+                        <Trash2 />
                         刪除
                     </button>
+                    </LensMenu>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -94,7 +96,7 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
                 <motion.div
                     key="rename-backdrop"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
                 />
             )}
             {renameModal && (
@@ -145,7 +147,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                 <motion.div
                     key="move-backdrop"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
                 />
             )}
             {moveModal && (
@@ -177,17 +179,12 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                                             return (
                                                 <div className="mb-4">
                                                     <p className="text-[13px] text-text-secondary mb-2">選擇現有專案：</p>
-                                                    <div className="relative">
-                                                        <select value={allFolders.includes(moveInput) ? moveInput : ''}
-                                                            onChange={e => setMoveInput(e.target.value)}
-                                                            className="snow-input w-full text-[15px] text-text-primary cursor-pointer appearance-none">
-                                                            <option value="" disabled>請選擇專案...</option>
-                                                            {allFolders.map(folder => (<option key={folder} value={folder}>{folder}</option>))}
-                                                        </select>
-                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
-                                                            <ChevronDown className="w-4 h-4" />
-                                                        </div>
-                                                    </div>
+                                                    <StyledSelect
+                                                        value={allFolders.includes(moveInput) ? moveInput : ''}
+                                                        onChange={setMoveInput}
+                                                        placeholder="請選擇專案..."
+                                                        options={allFolders.map((folder) => ({ value: folder, label: folder }))}
+                                                    />
                                                 </div>
                                             )
                                         }
@@ -230,7 +227,7 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
                 <motion.div
                     key="folder-backdrop"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md" onClick={onClose}
+                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
                 />
             )}
             {show && (

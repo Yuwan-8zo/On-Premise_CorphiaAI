@@ -65,7 +65,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
     return (
         <AnimatePresence mode="wait">
             {showTypingPill ? (
-                <Tooltip label="AI 正在輸入，點擊回到底部" placement="bottom">
+                
                     <motion.button
                         key="typing-pill"
                         initial={{ opacity: 0, y: 15, scale: 0.9 }}
@@ -83,7 +83,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         </span>
                         <span className="text-[12.5px] font-medium leading-none">正在輸入</span>
                     </motion.button>
-                </Tooltip>
+                
             ) : showToBottom ? (
                 <Tooltip label="回到底部" placement="bottom">
                     <motion.button

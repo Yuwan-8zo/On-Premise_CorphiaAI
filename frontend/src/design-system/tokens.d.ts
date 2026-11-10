@@ -3,7 +3,7 @@ declare const tokens: {
     fontSize: Record<string, [string, string]>
     themeColors: Record<string, string>
     brandColors: Record<string, string>
-    accentColors: Record<string, { label: string; hex: string; rgb: string }>
+    accentColors: Record<string, { label: string; hex: string; rgb: string; rgbDark: string }>
     palette: Record<string, unknown>
     boxShadow: Record<string, string>
     motion: {

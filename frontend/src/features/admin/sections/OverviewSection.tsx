@@ -16,7 +16,7 @@
  *   - Ngrok Remote Access strip（已移到 AdminPage sidebar 底部 NgrokSidebarWidget）
  *
  * 配色：
- *   全部走 accent / corphia-bronze / bg-* 系列，跟著使用者選的品牌色變
+ *   全部走 accent / bg-* 系列，跟著使用者選的品牌色變
  *   圖表 fill / stroke 透過 useAccentColor 把 CSS var 轉成具體 RGB 字串
  */
 
@@ -104,7 +104,6 @@ export default function OverviewSection({
             icon: Users,
             iconBg: 'bg-blue-950/70 ring-1 ring-blue-500/25',
             iconColor: 'text-blue-400',
-            glow: 'bg-blue-500/15',
         },
         {
             label: t('admin.overview.conversations'),
@@ -112,7 +111,6 @@ export default function OverviewSection({
             icon: MessageSquare,
             iconBg: 'bg-emerald-950/70 ring-1 ring-emerald-500/25',
             iconColor: 'text-emerald-400',
-            glow: 'bg-emerald-500/15',
         },
         {
             label: t('admin.overview.documents'),
@@ -120,7 +118,6 @@ export default function OverviewSection({
             icon: Layers3,
             iconBg: 'bg-violet-950/70 ring-1 ring-violet-500/25',
             iconColor: 'text-violet-400',
-            glow: 'bg-violet-500/15',
         },
         {
             label: t('admin.overview.messages'),
@@ -128,7 +125,6 @@ export default function OverviewSection({
             icon: FileText,
             iconBg: 'bg-amber-950/70 ring-1 ring-amber-500/25',
             iconColor: 'text-amber-400',
-            glow: 'bg-amber-500/15',
         },
         {
             label: t('admin.overview.activeUsers', '活躍使用者'),
@@ -136,7 +132,6 @@ export default function OverviewSection({
             icon: Activity,
             iconBg: 'bg-teal-950/70 ring-1 ring-teal-500/25',
             iconColor: 'text-teal-400',
-            glow: 'bg-teal-500/15',
         },
         {
             label: t('admin.overview.eventsToday', '今日事件'),
@@ -144,14 +139,13 @@ export default function OverviewSection({
             icon: ShieldCheck,
             iconBg: 'bg-red-950/70 ring-1 ring-red-500/25',
             iconColor: 'text-red-400',
-            glow: 'bg-red-500/15',
         },
     ]
 
     return (
         // 手機板：用自然高度逐區堆疊，外層 AdminPage 會處理垂直滾動。
         // 桌機板（lg+）：回到「滿視窗 dashboard」3-row 設計，圖表自動填滿剩餘空間。
-        <div className="grid gap-2 lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <div className="grid gap-2 lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)]">
             {/* ─────────────────────────────────────────────────────────────
               Row 1 · KPI strip（6 張小卡，shrink-0）
               斷點降到 lg 是因為使用者實際 CSS 寬度大概在 1100px（高 DPR），
@@ -163,19 +157,14 @@ export default function OverviewSection({
                     return (
                         <Panel
                             key={item.label}
-                            className="relative overflow-hidden p-2.5 lift-on-hover"
+                            className="p-2.5"
                         >
-                            {/* 角落柔光斑點 — 各自顏色 */}
-                            <div
-                                aria-hidden
-                                className={`pointer-events-none absolute -right-5 -top-5 h-14 w-14 rounded-full blur-2xl ${item.glow}`}
-                            />
                             <div className="relative flex items-center gap-2">
                                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[13px] ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[9px] font-medium uppercase tracking-[0.14em] text-text-muted">
+                                    <p className="truncate text-[12px] font-medium text-text-secondary">
                                         {item.label}
                                     </p>
                                     <p className={`text-[18px] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
@@ -197,7 +186,6 @@ export default function OverviewSection({
                 <Panel className="overflow-hidden flex flex-col min-h-[180px] lg:col-span-7 lg:min-h-0">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
-                        eyebrow="Activity Trend"
                     />
                     <div className="flex-1 min-h-0 px-2 pb-1 pt-0.5 sm:px-3">
                         <ActivityBarChart data={dailySeries} height="100%" />
@@ -207,7 +195,6 @@ export default function OverviewSection({
                 <Panel className="overflow-hidden flex flex-col min-h-[180px] lg:col-span-5 lg:min-h-0">
                     <SectionHeader
                         title={t('admin.overview.distributionTitle', '事件分布')}
-                        eyebrow="Distribution"
                     />
                     {/*
                       grid-rows-[minmax(0,1fr)]：明確告訴 grid「這列的高度等於容器高度」，

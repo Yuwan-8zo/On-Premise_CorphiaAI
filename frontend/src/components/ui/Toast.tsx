@@ -1,74 +1,22 @@
 ﻿/**
- * Toast 通知元件
- * 固定於右上角，支援 success / error / info 三種樣式
+ * 全域通知（《Liquid Glass 元件規範》HTML 10 / CSS：.toast）
+ *   畫面頂端置中、離上 26；玻璃膠囊＋光邊（.glass-chip）、內距 13 × 22、文字 13／18 粗體、主要文字色
+ *   沒有圖示、沒有關閉鈕；出現與消失不影響版面、不擋點擊（role="status"，報讀軟體會唸出來）
+ *   同一時間一則、顯示 2 秒（toastStore）；進場：從上方 20px、縮小 0.96 滑進來＋淡入，0.23 秒減速；退場反向播放
+ *   「減少動態效果」時只淡入淡出
  */
-import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { Check, X, Info } from '@/components/snow/icons'
-import { useToastStore, type Toast } from '../../store/toastStore'
-
-const icons = {
-    success: <Check className="w-4 h-4 text-emerald-500" />,
-    error: <X className="w-4 h-4 text-red-500" />,
-    info: <Info className="w-4 h-4 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]" />,
-}
-
-const borderColors = {
-    success: 'border-emerald-500/30',
-    error: 'border-red-500/30',
-    info: 'border-[rgb(var(--color-ios-accent-light)/0.3)] (var(--color-ios-accent-dark)/0.3)]',
-}
-
-function ToastItem({ toast }: { toast: Toast }) {
-    const { remove } = useToastStore()
-    const [progress, setProgress] = useState(100)
-
-    // 進度條動畫
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setProgress((p) => Math.max(0, p - 100 / 30))
-        }, 100)
-        return () => clearInterval(interval)
-    }, [])
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 60, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 60, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            onClick={() => remove(toast.id)}
-            className={`relative overflow-hidden flex items-start gap-3 min-w-[260px] max-w-[360px] px-4 py-3.5 rounded-[16px] cursor-pointer
-                paper !rounded-[18px]`}
-        >
-            <span className="shrink-0 mt-0.5">{icons[toast.type]}</span>
-            <p className="text-[14px] leading-snug text-text-primary flex-1 pr-1">
-                {toast.message}
-            </p>
-            <button onClick={() => remove(toast.id)} className="shrink-0 text-text-muted  transition-colors">
-                <X className="w-3.5 h-3.5" />
-            </button>
-            {/* 底部進度條 */}
-            <div
-                className="absolute bottom-0 left-0 h-[2px] bg-current opacity-20 transition-none"
-                style={{ width: `${progress}%`, color: toast.type === 'error' ? 'rgb(239,68,68)' : toast.type === 'success' ? 'rgb(16,185,129)' : 'rgb(var(--color-ios-accent-light))' }}
-            />
-        </motion.div>
-    )
-}
+import { useToastStore } from '../../store/toastStore'
 
 export function ToastContainer() {
     const { toasts } = useToastStore()
 
     return (
-        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 items-end pointer-events-none">
-            <AnimatePresence mode="popLayout">
-                {toasts.map((toast) => (
-                    <div key={toast.id} className="pointer-events-auto">
-                        <ToastItem toast={toast} />
-                    </div>
-                ))}
-            </AnimatePresence>
+        <div className="toast-stack" aria-live="polite">
+            {toasts.map((toast) => (
+                <div key={toast.id} role="status" className={`toast-pill glass-chip ${toast.leaving ? 'is-leaving' : ''}`}>
+                    {toast.message}
+                </div>
+            ))}
         </div>
     )
 }

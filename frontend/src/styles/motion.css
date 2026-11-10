@@ -1,11 +1,11 @@
 :root {
-  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-apple-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-apple: var(--ease-out); /* 規範：減速 */
+  --ease-apple-soft: var(--ease-sp); /* 規範：彈性 */
+  --ease-standard: var(--ease-out);
   --ease-pulse: cubic-bezier(0.4, 0, 0.6, 1);
-  --duration-press: 120ms;
-  --duration-fast: 150ms;
-  --duration-hover: 180ms;
+  --duration-press: 170ms;
+  --duration-fast: 200ms;
+  --duration-hover: 170ms;
   --duration-normal: 250ms;
   --duration-medium: 300ms;
   --duration-slow: 600ms;
@@ -67,19 +67,6 @@
   }
 }
 
-.animate-fade-in {
-  opacity: 0;
-  animation: fadeIn var(--duration-slow) var(--ease-apple) forwards;
-}
-
-.delay-75 {
-  animation-delay: 75ms;
-}
-
-.delay-150 {
-  animation-delay: 150ms;
-}
-
 @keyframes pageEnter {
   0% {
     opacity: 0;
@@ -100,22 +87,6 @@
   outline: none;
 }
 
-.no-transition,
-.no-transition *,
-.no-transition *::before,
-.no-transition *::after {
-  transition: none !important;
-  animation-duration: 0.01ms !important;
-}
-
-@media (min-width: 768px) {
-  .theme-transition * {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-timing-function: var(--ease-standard);
-    transition-duration: var(--duration-medium);
-  }
-}
-
 @media (max-width: 767px) {
   .transition-colors,
   .transition-all {
@@ -123,33 +94,15 @@
   }
 }
 
-.tap {
-  transition:
-    transform var(--duration-fast) var(--ease-apple),
-    opacity var(--duration-fast) var(--ease-apple);
-}
-
-.tap:active {
-  transform: scale(0.97);
-}
-
-@media (hover: hover) {
-  .tap:hover {
-    opacity: 0.92;
-  }
-}
+/* 懸停不變化（只保留按下縮放） */
 
 @media (prefers-reduced-motion: reduce) {
   .page-transition,
-  .animate-fade-in,
-  .animate-typing-bounce,
-  .animate-pulse,
-  .animate-spin {
+.animate-typing-bounce,
+.animate-pulse,
+.animate-spin {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
 
-  .tap {
-    transition: none;
-  }
 }

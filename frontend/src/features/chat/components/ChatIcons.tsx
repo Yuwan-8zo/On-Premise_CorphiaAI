@@ -15,7 +15,7 @@ export const PlusIcon = () => (
 
 /** 發送按鈕（藍色圓形 + 向上箭頭） */
 export const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-[background-color,transform] duration-200 ${disabled ? 'bg-[var(--chip)] text-text-secondary' : 'bg-accent text-text-on-accent'}`}>
+    <div className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-[background-color,transform] duration-200 ${disabled ? 'bg-[var(--chip)] text-text-secondary' : 'bg-accent-fill text-text-on-accent'}`}>
         <ArrowUp className="w-[18px] h-[18px]" />
     </div>
 )

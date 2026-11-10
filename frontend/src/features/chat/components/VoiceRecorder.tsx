@@ -262,7 +262,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
                 </span>
-                <span className="text-[14px] font-mono tabular-nums text-text-primary min-w-[44px]">
+                <span className="text-[14px] tabular-nums text-text-primary min-w-[44px]">
                     {formatDuration(elapsedMs)}
                 </span>
             </div>
@@ -280,7 +280,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     type="button"
                     onClick={handleSend}
                     disabled={!isReady}
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent-fill text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                     aria-label={t('chat.voice.send')}
                 >
                     <MaterialIcon name="send" size={18} filled />

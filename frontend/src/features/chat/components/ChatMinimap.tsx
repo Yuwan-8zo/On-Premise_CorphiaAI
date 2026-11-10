@@ -187,7 +187,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                             }`}
                         />
                         <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-text-muted leading-none mb-1">
+                            <p className="text-[12px] font-medium text-text-secondary leading-none mb-1">
                                 {hoveredMarker.role === 'user' ? '您' : 'Corphia AI'}
                             </p>
                             <p className="text-xs text-text-primary leading-snug">

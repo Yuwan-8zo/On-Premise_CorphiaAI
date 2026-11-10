@@ -35,7 +35,7 @@ export function Panel({
 }
 
 // ---------------------------------------------------------------------------
-// SectionHeader — title strip at the top of a Panel, with optional eyebrow
+// SectionHeader — title strip at the top of a Panel, with optional subtitle (shown below the title)
 // and right-aligned action slot.
 // ---------------------------------------------------------------------------
 
@@ -49,16 +49,13 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 border-b border-[var(--paper-line)] px-[26px] py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 px-[26px] pt-5 pb-2 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
-                {eyebrow && (
-                    <p className="mb-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
-                        {eyebrow}
-                    </p>
-                )}
-                <h2 className="truncate text-[17px] font-semibold tracking-tight text-text-primary">
+                {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
+                <h2 className="truncate text-[17px] leading-[22px] font-semibold text-text-primary">
                     {title}
                 </h2>
+                {eyebrow && <p className="mt-0.5 text-[13px] leading-[18px] text-text-secondary">{eyebrow}</p>}
             </div>
             {action}
         </div>
@@ -99,27 +96,22 @@ export function ActionButton({
 }
 
 // ---------------------------------------------------------------------------
-// StatusPill — green dot for active, grey for disabled.
+// StatusPill — tag capsule: green (完成) when active, plain when disabled.
 // ---------------------------------------------------------------------------
 
 export function StatusPill({ active }: { active: boolean }) {
     const { t } = useTranslation()
     return (
         <span
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
-                active
-                    ? 'border-accent/20 bg-accent/10 text-accent'
-                    : 'border-[var(--paper-line)] bg-[var(--chip)] text-text-secondary'
-            }`}
+            className={`tag ${active ? 'tag-green' : ''}`}
         >
-            <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent' : 'bg-text-secondary'}`} />
             {active ? t('common.active') : t('common.disabled')}
         </span>
     )
 }
 
 // ---------------------------------------------------------------------------
-// RoleBadge — uppercase pill for user roles.
+// RoleBadge — tag capsule for user roles (規範：標籤膠囊).
 // ---------------------------------------------------------------------------
 
 export type AdminUserRole = 'engineer' | 'admin' | 'user'
@@ -127,9 +119,9 @@ export type AdminUserRole = 'engineer' | 'admin' | 'user'
 export function RoleBadge({ role }: { role: AdminUserRole }) {
     const { t } = useTranslation()
     const styles = {
-        admin: 'border-accent/20 bg-accent/10 text-accent',
-        engineer: 'border-accent/20 bg-accent/10 text-accent',
-        user: 'border-[var(--paper-line)] bg-[var(--chip)] text-text-secondary',
+        admin: 'tag-accent',
+        engineer: 'tag-accent',
+        user: '',
     }
     const roleLabels = {
         admin: t('admin.users.role.admin', { defaultValue: 'Admin' }),
@@ -138,7 +130,7 @@ export function RoleBadge({ role }: { role: AdminUserRole }) {
     }
     return (
         <span
-            className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[role]}`}
+            className={`tag ${styles[role]}`}
         >
             {roleLabels[role]}
         </span>
@@ -168,7 +160,7 @@ export function ModalFrame({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
+                className="fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md"
                 onClick={onClose}
             />
             <motion.div
@@ -204,7 +196,7 @@ export function Field({
 }) {
     return (
         <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-secondary">
+            <span className="mb-2 block text-xs font-semibold text-text-secondary">
                 {label}
             </span>
             {children}
@@ -221,14 +213,13 @@ export function Field({
 export const inputClass =
     'w-full rounded-[10px] snow-field px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
 
-export const selectClass = `${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B6B6B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_1rem_center] bg-no-repeat pr-10`
 
 // ---------------------------------------------------------------------------
 // Table helpers — keep Admin tables consistent (Users / Audit / etc.).
 // ---------------------------------------------------------------------------
 
 export const tableHeadRowClass =
-    'border-b border-[var(--paper-line)] bg-[var(--chip)] text-left text-xs uppercase tracking-wider text-text-secondary'
+    'border-b border-[var(--paper-line)] bg-[var(--chip)] text-left text-xs text-text-secondary'
 
 export const tableBodyClass = 'divide-y divide-border-subtle'
 

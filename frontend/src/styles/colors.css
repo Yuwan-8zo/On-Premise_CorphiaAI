@@ -1,17 +1,19 @@
 :root {
-  /* 亮色：暖米色基底，柔和不刺眼 */
-  --bg-canvas: 246 244 240;
-  --bg-base: 250 250 248;
-  --bg-main: 247 246 244;
-  --bg-surface: 242 239 234;
-  --bg-elevated: 255 255 255;
-  --text-primary: 43 43 43;
-  --text-secondary: 107 107 107;
-  --text-muted: 140 134 125;
-  --text-disabled: 180 180 180;
+  /* 淺色外觀：Apple 系統色（對應《Liquid Glass 元件規範》深色角色的淺色版）
+   *   頁面 #F2F2F7（systemGroupedBackground）→ 卡片 #FFFFFF → 卡片內區塊 #F2F2F7
+   *   文字 #000000／#6C6C70（次要，調深以達 4.5:1）／#8E8E93（第三層） */
+  --bg-canvas: 242 242 247;
+  --bg-base: 242 242 247;
+  --bg-main: 242 242 247;
+  --bg-surface: 255 255 255;
+  --bg-elevated: 242 242 247;
+  --text-primary: 0 0 0;
+  --text-secondary: 108 108 112;
+  --text-muted: 142 142 147;
+  --text-disabled: 199 199 204;
   --text-on-accent: #fff;
-  --border-subtle: 232 228 223;
-  --border-strong: 139 115 85;
+  --border-subtle: 198 198 200;
+  --border-strong: 174 174 178;
 
   /*
    * --accent 系列改用「指向 --color-ios-accent-light」的方式，
@@ -31,8 +33,8 @@
    *   hover/active 暫時都指向同一個動態值，不再做漸深；按鈕的 hover 視覺
    *   主要靠 hover:opacity-90 提供回饋（已是現有大多數按鈕的寫法）。
    */
-  --color-ios-accent-light: 137 110 83;
-  --color-ios-accent-dark: 137 110 83;
+  --color-ios-accent-light: 0 122 255;
+  --color-ios-accent-dark: 0 145 255;
 
   /* --color-primary 也綁到品牌色（Corphia logo 的星芒用） */
   --color-primary: rgb(var(--color-ios-accent-light));
@@ -44,58 +46,34 @@
   --scrollbar-thumb-hover: 161 161 161;
 }
 
-html[data-accent='default'] {
-  --color-ios-accent-light: 137 110 83;
-  --color-ios-accent-dark: 137 110 83;
-}
 
-html[data-accent='blue'] {
-  --color-ios-accent-light: 63 142 247;
-  --color-ios-accent-dark: 63 142 247;
-}
 
-html[data-accent='purple'] {
-  --color-ios-accent-light: 219 55 244;
-  --color-ios-accent-dark: 219 55 244;
-}
 
-html[data-accent='pink'] {
-  --color-ios-accent-light: 246 64 102;
-  --color-ios-accent-dark: 246 64 102;
-}
 
-html[data-accent='orange'] {
-  --color-ios-accent-light: 251 141 45;
-  --color-ios-accent-dark: 251 141 45;
-}
 
-html[data-accent='green'] {
-  --color-ios-accent-light: 34 217 197;
-  --color-ios-accent-dark: 34 217 197;
-}
 
 html.dark {
   color-scheme: only dark;
 
-  /* 深色：深灰漸層，比純黑柔和 */
-  background-color: #202022;
-  background-image: linear-gradient(135deg, #202022 0%, #101012 100%);
-  background-attachment: fixed;
-  color: #F6F4F0;
+  /* 深色外觀：Apple 系統色（《Liquid Glass 元件規範》CSS 29–30）
+   *   頁面 #000000 → 卡片 #1C1C1E → 卡片內區塊 #2C2C2E；分隔線 #38383A
+   *   文字 #FFFFFF／#B6B6C0／#85858F */
+  background-color: #000000;
+  color: #FFFFFF;
 
-  --bg-canvas: 32 32 34;
-  --bg-base: 32 32 34;
-  --bg-main: 24 24 22;
-  --bg-surface: 40 40 42;
-  --bg-elevated: 46 46 48;
-  --text-primary: 246 244 240;
-  --text-secondary: 154 154 154;
-  --text-muted: 100 100 100;
-  --text-disabled: 80 80 80;
-  --border-subtle: 58 50 42;
-  --border-strong: 139 115 85;
-  --scrollbar-thumb: 74 74 74;
-  --scrollbar-thumb-hover: 90 90 90;
+  --bg-canvas: 0 0 0;
+  --bg-base: 0 0 0;
+  --bg-main: 0 0 0;
+  --bg-surface: 28 28 30;
+  --bg-elevated: 44 44 46;
+  --text-primary: 255 255 255;
+  --text-secondary: 182 182 192;
+  --text-muted: 133 133 143;
+  --text-disabled: 99 99 102;
+  --border-subtle: 56 56 58;
+  --border-strong: 72 72 74;
+  --scrollbar-thumb: 99 99 102;
+  --scrollbar-thumb-hover: 133 133 143;
 
   /*
    * 深色模式重新指向 --color-ios-accent-dark。
@@ -111,18 +89,7 @@ html.dark {
 
 html.dark body {
   background-color: transparent;
-  color: #F6F4F0;
-}
-
-.highlighter-marker {
-  background-color: rgb(var(--color-ios-accent-light) / 0.15);
-  border-radius: 4px;
-  padding: 0.1em 0.3em;
-  margin: 0 -0.1em;
-}
-
-html.dark .highlighter-marker {
-  background-color: rgb(var(--color-ios-accent-dark) / 0.15);
+  color: #FFFFFF;
 }
 
 /*

@@ -112,7 +112,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                     'shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95',
                     isUser
                         ? 'bg-white text-accent '
-                        : 'bg-accent text-text-on-accent ',
+                        : 'bg-accent-fill text-text-on-accent ',
                 ].join(' ')}
                 aria-label={isPlaying ? 'pause' : 'play'}
             >
@@ -146,7 +146,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                     />
                 </div>
                 <div className={[
-                    'mt-1 flex items-center justify-between text-[11px] font-mono tabular-nums',
+                    'mt-1 flex items-center justify-between text-[11px] tabular-nums',
                     isUser ? 'text-white/80' : 'text-text-muted',
                 ].join(' ')}>
                     <span>{formatDuration(currentSec)}</span>
