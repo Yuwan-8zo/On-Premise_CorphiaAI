@@ -165,6 +165,34 @@ export function capsuleHole(x: number, y: number, w: number, h: number): React.C
 }
 
 /**
+ * 在元素上挖一個圓角方形的洞（x, y, w, h＝洞的位置與大小，r＝圓角）：整片減掉四個角的圓＋橫、直兩塊長方形
+ */
+export function roundRectHole(x: number, y: number, w: number, h: number, r: number): React.CSSProperties {
+    const R = Math.min(r, w / 2, h / 2)
+    const circle = (cx: number, cy: number) => `radial-gradient(circle at ${cx}px ${cy}px, #000 ${R - 0.5}px, transparent ${R}px)`
+    const layers = [
+        'linear-gradient(#000 0 0)',
+        circle(x + R, y + R), circle(x + w - R, y + R), circle(x + R, y + h - R), circle(x + w - R, y + h - R),
+        'linear-gradient(#000 0 0)', 'linear-gradient(#000 0 0)',
+    ]
+    const size = ['100% 100%', '100% 100%', '100% 100%', '100% 100%', '100% 100%', `${Math.max(0, w - 2 * R)}px ${h}px`, `${w}px ${Math.max(0, h - 2 * R)}px`].join(', ')
+    const pos = ['0 0', '0 0', '0 0', '0 0', '0 0', `${x + R}px ${y}px`, `${x}px ${y + R}px`].join(', ')
+    const img = layers.join(', ')
+    return {
+        WebkitMaskImage: img,
+        WebkitMaskSize: size,
+        WebkitMaskPosition: pos,
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskComposite: 'source-out, source-over, source-over, source-over, source-over, source-over',
+        maskImage: img,
+        maskSize: size,
+        maskPosition: pos,
+        maskRepeat: 'no-repeat',
+        maskComposite: 'subtract, add, add, add, add, add',
+    } as React.CSSProperties
+}
+
+/**
  * 肩的遮罩（規範 JS：maskURI）。W、H＝放大鏡長大後的寬高；o＝放大鏡比底多出去的量；barH＝底的高度。
  * 底的上緣在鏡緣上的交點是 xr；底面從 xr 再往裡 2 開始，用圓弧從「底原本的上緣」彎到「縮小後的上緣」，
  * 兩端各留一塊（寬 zw）給肩，沿鏡緣另有一條往中間消失的細線
