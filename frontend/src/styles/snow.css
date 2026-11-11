@@ -1811,10 +1811,13 @@ html:not(.dark) .menu-item.is-danger {
   }
 }
 
-/* 右上選單的放大鏡：和分段切換器（一般／專案）同一套——鏡片不另外補色、不另外模糊（不然比較霧），
-   鏡內只用選單本身的填色（＝ --glass-ctl），左右兩條底面直接透出後面 */
+/* 右上選單的放大鏡：和分段切換器（一般／專案）同一套——鏡片不另外補色（不然比較霧），
+   鏡內只用選單本身的填色（＝ --glass-ctl）。
+   但鏡片會凸出選單外、蓋到旁邊的模型按鈕，所以保留和選單外殼一樣的模糊（blur 12），底下的東西才會霧在鏡片下面 */
 .dock-lens.is-active {
   background: none;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .dock-wrap {
   --lens-ink-c: #fff;
