@@ -2,13 +2,13 @@
  * 使用說明（Apple「使用技巧」風格的分組清單）
  *   頁面標題＋一句說明 → 「重新觀看引導」膠囊 → 依使用者要做的事分組：
  *   開始對話／用你的文件回答問題（編號步驟）／管理對話／資料安全／帳號與權限
- *   每列＝彩色圖示方塊（Apple 系統色）＋標題（15／20 半粗）＋白話說明（13／18 次要字）
+ *   每列＝彩色圓形圖示（Apple 系統色，半徑 15、離左 16、垂直置中，跟卡片角 32 同心）＋標題（15／20 半粗）＋白話說明（13／18 次要字）
  *   樣式用 snow.css 的 .set-*（設定頁共用）
  */
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-    Lock, MessageSquare, Mic, MoreHorizontal, Share, Shield, ShieldCheck, Sparkles, User, UserRoundCog, Users, Cpu, Server,
+    Lock, MessageSquare, Mic, MoreHorizontal, Play, Reader, Share, Shield, ShieldCheck, User, UserRoundCog, Users, Cpu, Server,
 } from '@/components/snow/icons'
 
 import { resetOnboarding } from '@/components/onboarding/OnboardingTour'
@@ -19,9 +19,9 @@ type Tone = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal'
 /** 一列：彩色圖示方塊＋標題＋說明 */
 function TipRow({ icon, tone, title, desc }: { icon: ReactNode; tone: Tone; title: string; desc: string }) {
     return (
-        <div className="set-row has-icon !items-start">
+        <div className="set-row has-icon !pl-[16px]">
             <span
-                className="set-icon mt-[1px] text-white"
+                className="set-icon !rounded-full text-white"
                 style={{ background: `var(--sys-${tone})` }}
                 aria-hidden
             >
@@ -59,7 +59,7 @@ export default function GuideSection() {
             <section className="set-section">
                 <div className="set-group">
                     <button type="button" onClick={handleReplayOnboarding} className="set-row set-row-btn has-icon">
-                        <span className="set-icon text-accent"><Sparkles className="w-[18px] h-[18px]" /></span>
+                        <span className="set-icon text-accent"><Play className="w-[16px] h-[16px] -translate-x-[0.5px]" /></span>
                         <span className="set-label text-accent font-semibold">{t('settings.replayTour', '重新觀看引導')}</span>
                     </button>
                 </div>
@@ -68,9 +68,9 @@ export default function GuideSection() {
             {/* 開始對話 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.chat.title')}</div>
-                <div className="set-group">
+                <div className="set-group guide-group">
                     <TipRow tone="blue" icon={<MessageSquare className={ic} />} title={t('guide.chat.newTitle')} desc={t('guide.chat.newDesc')} />
-                    <TipRow tone="orange" icon={<Sparkles className={ic} />} title={t('guide.chat.promptTitle')} desc={t('guide.chat.promptDesc')} />
+                    <TipRow tone="orange" icon={<Reader className={ic} />} title={t('guide.chat.promptTitle')} desc={t('guide.chat.promptDesc')} />
                     <TipRow tone="red" icon={<Mic className={ic} />} title={t('guide.chat.voiceTitle')} desc={t('guide.chat.voiceDesc')} />
                     <TipRow tone="purple" icon={<Cpu className={ic} />} title={t('guide.chat.modelTitle')} desc={t('guide.chat.modelDesc')} />
                 </div>
@@ -79,13 +79,13 @@ export default function GuideSection() {
             {/* 用你的文件回答問題：編號步驟 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.project.title')}</div>
-                <div className="set-group">
+                <div className="set-group guide-group">
                     {steps.map((step, i) => (
-                        <div key={i} className="set-row has-icon !items-start">
-                            <span className="set-icon mt-[1px] !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--sys-blue)] text-[13px] font-bold tabular-nums">
+                        <div key={i} className="set-row has-icon !pl-[16px] !py-[16px]">
+                            <span className="set-icon !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--sys-blue)] text-[13px] font-bold tabular-nums">
                                 {i + 1}
                             </span>
-                            <span className="set-label pt-[5px] text-[15px] leading-[20px] text-text-primary">{step}</span>
+                            <span className="set-label text-[15px] leading-[20px] text-text-primary">{step}</span>
                         </div>
                     ))}
                 </div>
@@ -95,7 +95,7 @@ export default function GuideSection() {
             {/* 管理對話 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.manage.title')}</div>
-                <div className="set-group">
+                <div className="set-group guide-group">
                     <TipRow tone="teal" icon={<MoreHorizontal className={ic} />} title={t('guide.manage.menuTitle')} desc={t('guide.manage.menuDesc')} />
                     <TipRow tone="green" icon={<ShieldCheck className={ic} />} title={t('guide.manage.verifyTitle')} desc={t('guide.manage.verifyDesc')} />
                     <TipRow tone="blue" icon={<Share className={ic} />} title={t('guide.manage.shareTitle')} desc={t('guide.manage.shareDesc')} />
@@ -105,7 +105,7 @@ export default function GuideSection() {
             {/* 資料安全 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.security.title')}</div>
-                <div className="set-group">
+                <div className="set-group guide-group">
                     <TipRow tone="green" icon={<Server className={ic} />} title={t('guide.security.localTitle')} desc={t('guide.security.localDesc')} />
                     <TipRow tone="orange" icon={<Lock className={ic} />} title={t('guide.security.piiTitle')} desc={t('guide.security.piiDesc')} />
                     <TipRow tone="red" icon={<Shield className={ic} />} title={t('guide.security.blockTitle')} desc={t('guide.security.blockDesc')} />
@@ -115,7 +115,7 @@ export default function GuideSection() {
             {/* 帳號與權限 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.roles.title')}</div>
-                <div className="set-group">
+                <div className="set-group guide-group">
                     <TipRow tone="blue" icon={<User className={ic} />} title={t('guide.roles.user')} desc={t('guide.roles.userDesc')} />
                     <TipRow tone="purple" icon={<UserRoundCog className={ic} />} title={t('guide.roles.engineer')} desc={t('guide.roles.engineerDesc')} />
                     <TipRow tone="orange" icon={<Users className={ic} />} title={t('guide.roles.admin')} desc={t('guide.roles.adminDesc')} />

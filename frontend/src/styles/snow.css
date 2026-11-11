@@ -2101,3 +2101,14 @@ html.dark {
   outline: 2px solid rgb(var(--accent));
   outline-offset: -2px;
 }
+
+/* 使用說明的分組：分隔線從文字起點畫（左內距 16＋圖示 30＋間距 16） */
+.guide-group > .set-row + .set-row::before {
+  left: 62px;
+}
+
+/* 側欄（.glass-nav）的放大鏡：跟一般／專案切換器一樣，鏡片不補底色、兩端不壓暗，
+ * 直接透出後面的卡片，只留亮邊＋外圈細線 */
+.glass-nav .lens.is-active {
+  background: none;
+}
