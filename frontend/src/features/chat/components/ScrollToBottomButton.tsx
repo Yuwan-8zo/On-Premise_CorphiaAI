@@ -2,6 +2,7 @@ import { ArrowDown } from '@/components/snow/icons'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import Tooltip from '@/components/ui/Tooltip'
+import { useTranslation } from 'react-i18next'
 
 interface ScrollToBottomButtonProps {
     containerRef: React.RefObject<HTMLDivElement | null>
@@ -10,6 +11,7 @@ interface ScrollToBottomButtonProps {
 }
 
 export default function ScrollToBottomButton({ containerRef, dependsOn, isStreaming }: ScrollToBottomButtonProps) {
+    const { t } = useTranslation()
     const [showToBottom, setShowToBottom] = useState(false)
 
     useEffect(() => {
@@ -74,18 +76,18 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         transition={{ duration: 0.2 }}
                         onClick={scrollToBottom}
                         className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 btn-secondary [--R:16px] rounded-full text-text-secondary"
-                        aria-label="AI 正在輸入，點擊回到底部"
+                        aria-label={t('ui.scroll.typingAria')}
                     >
                         <span className="flex items-center gap-1" aria-hidden="true">
                             <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
                             <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
                             <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
                         </span>
-                        <span className="text-[length:var(--fs-12d5)] font-medium leading-none">正在輸入</span>
+                        <span className="text-[length:var(--fs-12d5)] font-medium leading-none">{t('ui.scroll.typing')}</span>
                     </motion.button>
                 
             ) : showToBottom ? (
-                <Tooltip label="回到底部" placement="bottom">
+                <Tooltip label={t('ui.scroll.toBottom')} placement="bottom">
                     <motion.button
                         key="to-bottom-arrow"
                         initial={{ opacity: 0, y: 15, scale: 0.9 }}

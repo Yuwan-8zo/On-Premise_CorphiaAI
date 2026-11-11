@@ -127,7 +127,7 @@ export default function ChatInputArea({
                                     {isUploading && (
                                         <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] text-accent">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />
-                                            <span>上傳中... {uploadProgress}%</span>
+                                            <span>{t('ui.misc.uploading', { percent: uploadProgress })}</span>
                                         </div>
                                     )}
                                 </div>
@@ -201,13 +201,14 @@ export default function ChatInputArea({
 
                                 <div className="shrink-0 flex">
                                     {isStreaming ? (
-                                        <button onClick={handleStop} className="flex transition-transform active:scale-95">
+                                        <button onClick={handleStop} aria-label={t('chat.stopGeneration')} className="flex transition-transform active:scale-95">
                                             <StopIcon />
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => handleSend()}
                                             disabled={!input.trim() || isConnecting || !llmReady}
+                                            aria-label={t('chat.sendMessage')}
                                             className="flex transition-transform active:scale-95"
                                         >
                                             <SendDotBtn disabled={!input.trim() || isConnecting || !llmReady} />

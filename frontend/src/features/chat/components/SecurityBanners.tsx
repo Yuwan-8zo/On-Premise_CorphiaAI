@@ -8,6 +8,7 @@
 import { ChevronDown } from '@/components/snow/icons'
 import { useState } from 'react'
 import MaterialIcon from '@/components/icons/MaterialIcon'
+import { useTranslation } from 'react-i18next'
 
 // ── PII 遮罩警告 ──────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ interface PIIWarningProps {
 }
 
 export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
+    const { t } = useTranslation()
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
@@ -54,7 +56,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                         </div>
                     ))}
                     <p className="text-[length:var(--fs-11)] text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] dark:text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] mt-1">
-                        送入 AI 模型的是遮罩後的內容，原始敏感資訊不會進入模型。
+                        {t('ui.security.maskedNote')}
                     </p>
                 </div>
             )}
@@ -94,6 +96,7 @@ const RISK_COLORS: Record<string, { border: string; bg: string; text: string; ic
 }
 
 export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: InjectionWarningProps) {
+    const { t } = useTranslation()
     const [isExpanded, setIsExpanded] = useState(false)
     const colors = RISK_COLORS[riskLevel] || RISK_COLORS.medium
 
@@ -115,7 +118,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-current/10 space-y-1">
                     <p className="text-[length:var(--fs-11)] text-text-secondary mb-1">
-                        偵測到的模式:
+                        {t('ui.security.patterns')}
                     </p>
                     {matchedPatterns.map((pattern, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[length:var(--fs-11)]">
@@ -126,7 +129,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                         </div>
                     ))}
                     <p className="text-[length:var(--fs-10)] text-text-muted mt-2">
-                        系統已自動清除危險標記（如 ChatML 標籤），並記錄此事件於審計日誌。
+                        {t('ui.security.injectionCleaned')}
                     </p>
                 </div>
             )}

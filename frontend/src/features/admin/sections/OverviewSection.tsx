@@ -75,7 +75,7 @@ export default function OverviewSection({
     activeUsers,
     auditLogs: auditLogsOrNull,
 }: OverviewSectionProps) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const auditLoading = auditLogsOrNull === null
     const auditLogs = useMemo(() => auditLogsOrNull ?? [], [auditLogsOrNull])
 
@@ -86,8 +86,10 @@ export default function OverviewSection({
     )
 
     // 前端聚合圖表所需 series（memoised — 來源資料沒變就不重算）
-    const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7), [auditLogs])
-    const actionSeries = useMemo(() => aggregateByAction(auditLogs, 5), [auditLogs])
+    // 星期、分類名稱跟著介面語言，換語言時重算
+    const lang = i18n.language
+    const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7, lang), [auditLogs, lang])
+    const actionSeries = useMemo(() => aggregateByAction(auditLogs, 5, lang), [auditLogs, lang])
 
     // 今日事件數 — 從 auditLogs（即近 7 天的 summary）篩出 created_at 在今天的
     const todayEventCount = useMemo(() => {
@@ -205,7 +207,7 @@ export default function OverviewSection({
                       grid-rows-[minmax(0,1fr)]：明確告訴 grid「這列的高度等於容器高度」，
                       不然 grid row 預設 auto 會跟 height:100% 的子元素互鎖變成 0。
                     */}
-                    <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,120px)] grid-rows-[minmax(0,1fr)] gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
+                    <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)] gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                         <div className="min-h-0 h-full">
                             {auditLoading ? <Skel className="h-full w-full rounded-full" /> : <EventDonut data={actionSeries} height="100%" />}
                         </div>

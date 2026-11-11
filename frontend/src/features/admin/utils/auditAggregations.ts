@@ -13,6 +13,7 @@
 import { parseServerDate } from '@/lib/utils'
 import type { AuditLogItem } from '@/api/auditLogs'
 import { ACTION_LABELS } from '@/api/auditLogs'
+import i18n from '@/i18n'
 
 /* ────────────────────────────────────────────────────────────────────────
    通用 categorical 聚合 — 給 dashboard 各種「類別 → 數量」分布圖共用
@@ -71,8 +72,6 @@ export interface ActionCount {
     count: number
 }
 
-const WEEK_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六']
-
 /**
  * 把 audit logs 依日期 bucket 成過去 N 天（含今天）的計數。
  * 結果按時間順序排序（最早 → 今天，最右為今日）。
@@ -80,6 +79,8 @@ const WEEK_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五',
 export function aggregateByDay(
     logs: AuditLogItem[],
     days = 7,
+    /** 介面語言（星期幾的寫法） */
+    lang: string = i18n.language,
 ): DailyCount[] {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -90,7 +91,7 @@ export function aggregateByDay(
         d.setDate(today.getDate() - i)
         buckets.push({
             date: `${d.getMonth() + 1}/${d.getDate()}`,
-            weekday: WEEK_LABELS[d.getDay()],
+            weekday: d.toLocaleDateString(lang || undefined, { weekday: 'short' }), // 跟著介面語言（週一／Mon／月）
             iso: d.toISOString(),
             count: 0,
         })
@@ -124,7 +125,10 @@ const EXCLUDED_FROM_DASHBOARD = new Set([
 export function aggregateByAction(
     logs: AuditLogItem[],
     topN = 5,
+    /** 介面語言（分類名稱） */
+    lang: string = i18n.language,
 ): ActionCount[] {
+    const t = i18n.getFixedT(lang)
     const counts = new Map<string, number>()
     for (const log of logs) {
         if (EXCLUDED_FROM_DASHBOARD.has(log.action)) continue
@@ -134,7 +138,7 @@ export function aggregateByAction(
     const sorted: ActionCount[] = Array.from(counts.entries())
         .map(([rawAction, count]) => ({
             rawAction,
-            name: ACTION_LABELS[rawAction] ?? rawAction,
+            name: t(`admin.audit.actionTypes.${rawAction}`, { defaultValue: ACTION_LABELS[rawAction] ?? rawAction }),
             count,
         }))
         .sort((a, b) => b.count - a.count)
@@ -146,7 +150,7 @@ export function aggregateByAction(
         .slice(topN)
         .reduce((sum, item) => sum + item.count, 0)
     if (otherCount > 0) {
-        top.push({ rawAction: '__other__', name: '其他', count: otherCount })
+        top.push({ rawAction: '__other__', name: t('ui.charts.other'), count: otherCount })
     }
     return top
 }

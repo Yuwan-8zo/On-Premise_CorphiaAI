@@ -7,6 +7,8 @@
 import { ChevronDown, FileText } from '@/components/snow/icons'
 import { useState } from 'react'
 import type { MessageSource } from '@/types/chat'
+import { useTranslation } from 'react-i18next'
+import i18n from '@/i18n'
 
 interface SourceCitationsProps {
     sources: MessageSource[]
@@ -32,7 +34,7 @@ function groupByDocument(sources: MessageSource[]): SourceGroup[] {
     const map = new Map<string, SourceGroup>()
     for (const s of sources) {
         const key = s.document_id || s.document_name || s.chunk_id
-        const g = map.get(key) ?? { key, name: s.document_name || '未知文件', best: 0, chunks: [] }
+        const g = map.get(key) ?? { key, name: s.document_name || i18n.t('ui.sources.unknownDoc'), best: 0, chunks: [] }
         g.chunks.push(s)
         g.best = Math.max(g.best, s.score || 0)
         map.set(key, g)
@@ -41,6 +43,7 @@ function groupByDocument(sources: MessageSource[]): SourceGroup[] {
 }
 
 export default function SourceCitations({ sources }: SourceCitationsProps) {
+    const { t } = useTranslation()
     const [isExpanded, setIsExpanded] = useState(false)
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
@@ -70,9 +73,9 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
                     <DocumentIcon />
                     <span>
-                        參考來源：{groups.length} 份文件
+                        {t('ui.sources.title', { count: groups.length })}
                         {sources.length > groups.length && (
-                            <span className="text-text-muted">（共引用 {sources.length} 個段落）</span>
+                            <span className="text-text-muted">{t('ui.sources.cited', { count: sources.length })}</span>
                         )}
                     </span>
                 </div>
@@ -93,7 +96,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                     </span>
                                     <span className="text-text-secondary truncate">{group.name}</span>
                                     <span className="flex-shrink-0 text-xs text-text-muted">
-                                        （{group.chunks.length} 個段落・最高 {Math.round(group.best * 100)}% 相關）
+                                        {t('ui.sources.group', { count: group.chunks.length, best: Math.round(group.best * 100) })}
                                     </span>
                                 </div>
                                 <ChevronIcon isOpen={expandedItems.has(group.key)} />
@@ -104,7 +107,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                     {group.chunks.map((chunk, i) => (
                                         <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[var(--r-12)] text-sm text-text-secondary leading-relaxed">
                                             <p className="mb-1 text-xs text-text-muted">
-                                                段落 {i + 1}・{Math.round((chunk.score || 0) * 100)}% 相關
+                                                {t('ui.sources.chunk', { n: i + 1, score: Math.round((chunk.score || 0) * 100) })}
                                             </p>
                                             {chunk.content}
                                         </div>

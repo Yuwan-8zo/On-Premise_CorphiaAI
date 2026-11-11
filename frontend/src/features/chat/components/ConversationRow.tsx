@@ -6,6 +6,7 @@ import type { HTMLAttributes, PointerEvent } from 'react'
 import { MoreHorizontal } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import type { Conversation } from '@/types/chat'
+import { useTranslation } from 'react-i18next'
 
 interface ConversationRowProps {
     conv: Conversation
@@ -21,6 +22,7 @@ interface ConversationRowProps {
 }
 
 export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = false, rowRef, pressProps, onSelect, onMenuPointerDown }: ConversationRowProps) {
+    const { t } = useTranslation()
     return (
         <div
             ref={rowRef}
@@ -29,11 +31,11 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = 
             className={`side-item group ${isCurrent ? 'is-current' : ''}`}
         >
             <span className="flex-1 min-w-0 truncate">{conv.title}</span>
-            {isBusy && <span className="conv-busy" role="status" aria-label="正在回答" />}
+            {isBusy && <span className="conv-busy" role="status" aria-label={t('ui.sidebar.answering')} />}
             <div className={`side-actions transition-opacity ${isMenuOpen ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                <Tooltip label="選項">
+                <Tooltip label={t('ui.sidebar.options')}>
                     <button onPointerDown={onMenuPointerDown} onClick={(e) => e.stopPropagation()}
-                        aria-label="選項" className={`p-1.5 rounded-full ${isMenuOpen ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
+                        data-conv-menu aria-label={t('ui.sidebar.options')} className={`p-1.5 rounded-full ${isMenuOpen ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
                 </Tooltip>

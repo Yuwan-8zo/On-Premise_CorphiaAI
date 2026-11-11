@@ -87,7 +87,7 @@ export default function ChatSidebar({
                 timer: window.setTimeout(() => {
                     if (!longPress.current) return
                     longPress.current.fired = true
-                    const anchorEl = row.querySelector<HTMLElement>('button[aria-label="選項"]') || row
+                    const anchorEl = row.querySelector<HTMLElement>('button[data-conv-menu]') || row
                     handleOpenMenu({ stopPropagation() {}, currentTarget: anchorEl } as unknown as React.MouseEvent, convId)
                 }, 320),
             }
@@ -169,7 +169,7 @@ export default function ChatSidebar({
                 </div>
                 <button
                         onClick={toggleSidebar}
-                        aria-label={sidebarOpen ? '收合側邊欄' : '開啟側邊欄'}
+                        aria-label={sidebarOpen ? t('ui.sidebar.collapse') : t('ui.sidebar.expand')}
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
                         className="btn-icon btn-icon-plain hidden md:inline-flex !w-11 !h-11 text-text-secondary"
@@ -327,13 +327,13 @@ export default function ChatSidebar({
                                                         <Folder className="side-icon" />
                                                         <span className="flex-1 min-w-0 truncate">{folderName}</span>
                                                         <div className="side-actions gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                            <Tooltip label="在此資料夾新增對話">
-                                                                <button onClick={(e) => createConvInFolder(folderName, e)} aria-label="在此資料夾新增對話" className="p-1.5 rounded-full text-text-secondary">
+                                                            <Tooltip label={t('ui.sidebar.newInFolder')}>
+                                                                <button onClick={(e) => createConvInFolder(folderName, e)} aria-label={t('ui.sidebar.newInFolder')} className="p-1.5 rounded-full text-text-secondary">
                                                                     <Plus className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
-                                                            <Tooltip label="刪除資料夾及內容">
-                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label="刪除資料夾及內容" className="p-1.5 rounded-full text-text-secondary">
+                                                            <Tooltip label={t('ui.sidebar.deleteFolder')}>
+                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label={t('ui.sidebar.deleteFolder')} className="p-1.5 rounded-full text-text-secondary">
                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
@@ -367,7 +367,7 @@ export default function ChatSidebar({
                     <button
                         data-tour="settings-button"
                         onClick={() => setSettingsOpen(true)}
-                        aria-label={user?.name || user?.email || '設定'}
+                        aria-label={user?.name || user?.email || t('settings.title')}
                         className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
                         style={{ width: wide ? 232 : 44 }}
                     >

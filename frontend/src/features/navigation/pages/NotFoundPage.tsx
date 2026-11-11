@@ -2,8 +2,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CorphiaBrandLogo } from '@/components/icons/CorphiaIcons'
 import { Home, ArrowLeft } from '@/components/snow/icons'
 import WaveBackground from '@/components/ui/WaveBackground'
+import { useTranslation } from 'react-i18next'
 
 export default function NotFound() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
 
     return (
@@ -61,11 +63,11 @@ export default function NotFound() {
 
                 {/* 標題與內文 */}
                 <h1 className="text-xl md:text-[length:var(--fs-22)] font-bold text-text-primary mb-4 tracking-wide">
-                    找不到你要的頁面
+                    {t('ui.notFound.title')}
                 </h1>
                 <p className="text-[length:var(--fs-13)] md:text-[length:var(--fs-14)] text-text-muted text-center max-w-[var(--sz-420)] mb-10 leading-relaxed font-medium">
-                    抱歉，這個頁面可能已被移除、重新命名或暫時無法使用。<br className="hidden md:block"/>
-                    你可以回到首頁，或使用搜尋功能繼續探索 Corphia AI。
+                    {t('ui.notFound.body1')}<br className="hidden md:block"/>
+                    {t('ui.notFound.body2')}
                 </p>
 
                 {/* 按鈕群組 */}
@@ -76,7 +78,7 @@ export default function NotFound() {
                         className="btn btn-primary w-full sm:w-auto"
                     >
                         <Home className="w-[var(--sz-18)] h-[var(--sz-18)]" />
-                        <span>回到首頁</span>
+                        <span>{t('ui.notFound.home')}</span>
                     </Link>
 
                     {/* 返回上一頁 */}
@@ -85,7 +87,7 @@ export default function NotFound() {
                         className="btn btn-secondary w-full sm:w-auto"
                     >
                         <ArrowLeft className="w-[var(--sz-18)] h-[var(--sz-18)]" />
-                        <span>返回上一頁</span>
+                        <span>{t('ui.notFound.back')}</span>
                     </button>
                 </div>
 

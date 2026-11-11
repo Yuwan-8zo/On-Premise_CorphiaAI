@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Message } from '@/types/chat'
+import { useTranslation } from 'react-i18next'
 
 interface ChatMinimapProps {
     messages: Message[]
@@ -25,6 +26,7 @@ interface Marker {
  *   - hover 顯示訊息預覽（前 40 字），點擊跳轉
  */
 export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps) {
+    const { t } = useTranslation()
     const [markers, setMarkers] = useState<Marker[]>([])
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -103,7 +105,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
     const previewText = (() => {
         if (!hoveredMessage) return ''
         const raw = (hoveredMessage.content || '').replace(/\s+/g, ' ').trim()
-        if (!raw) return '（無內容）'
+        if (!raw) return t('ui.minimap.empty')
         return raw.length > 40 ? raw.slice(0, 40) + '…' : raw
     })()
 
@@ -188,7 +190,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                         />
                         <div className="min-w-0 flex-1">
                             <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none mb-1">
-                                {hoveredMarker.role === 'user' ? '您' : 'Corphia AI'}
+                                {hoveredMarker.role === 'user' ? t('ui.minimap.you') : 'Corphia AI'}
                             </p>
                             <p className="text-xs text-text-primary leading-snug">
                                 {previewText}

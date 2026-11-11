@@ -1,4 +1,4 @@
-﻿import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
 import GlassDock from '@/components/ui/GlassDock'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
@@ -8,6 +8,7 @@ import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
 import { useSystemStore } from '@/store/systemStore'
 import type { Conversation } from '@/types/chat'
+import { useTranslation } from 'react-i18next'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -48,6 +49,7 @@ export default function ChatHeader({
     handleShareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
+    const { t } = useTranslation()
     // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
@@ -56,6 +58,7 @@ export default function ChatHeader({
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
+                    aria-label={t('ui.sidebar.expand')}
                     className={`p-2 -ml-1 rounded-full  transition-colors md:hidden shrink-0 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-text-secondary'}`}
                 >
                     <SidebarIcon className="w-5 h-5" />
@@ -82,8 +85,8 @@ export default function ChatHeader({
                             {isModelLoading ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-[var(--paper-line)] border-t-transparent rounded-full animate-spin shrink-0" />
-                                    <span className="hidden md:inline">正在處理模型...</span>
-                                    <span className="md:hidden">載入中</span>
+                                    <span className="hidden md:inline">{t('ui.header.processingModel')}</span>
+                                    <span className="md:hidden">{t('common.loading')}</span>
                                 </>
                             ) : selectedModel ? (
                                 <>
@@ -102,7 +105,7 @@ export default function ChatHeader({
                                     </span>
                                     <span className="hidden md:inline truncate">{selectedModel.name}</span>
                                 </>
-                            ) : <span aria-label="載入中" className="skel align-middle h-[0.78em] w-[12em]" style={{ display: 'inline-block' }} />}
+                            ) : <span aria-label={t('common.loading')} className="skel align-middle h-[0.78em] w-[12em]" style={{ display: 'inline-block' }} />}
                         </span>
                         <ChevronDown className={`w-4 h-4 text-text-muted opacity-80 transition-transform shrink-0 ${modelDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -121,7 +124,7 @@ export default function ChatHeader({
                                     <LensMenu className="">
                                     <div className="max-h-[var(--sz-300)] overflow-y-auto custom-scrollbar">
                                         {availableModels.length === 0 ? (
-                                            <div className="p-4 text-center text-sm text-text-secondary">無可用模型，請掃描目錄。</div>
+                                            <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
                                         ) : (
                                             availableModels.map(model => {
                                                 const loadState = modelStates.find(m => m.name === model.name)?.state
@@ -133,7 +136,7 @@ export default function ChatHeader({
                                                         if (isModelLoading) return;
                                                         // 沒有預先載入的大模型（如 14B）切換要等很久，先確認避免展示時誤點
                                                         if (!preloaded && selectedModel?.name !== model.name &&
-                                                            !window.confirm(`${model.name} 沒有預先載入，切換需要從硬碟載入 ${model.size_gb.toFixed(1)} GB，約 1～2 分鐘，期間無法回答問題。確定要切換嗎？`)) return;
+                                                            !window.confirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }))) return;
                                                         try {
                                                             setIsModelLoading(true);
                                                             await modelsApi.selectModel(model.name);
@@ -153,7 +156,7 @@ export default function ChatHeader({
                                                             {[
                                                                 `${model.size_gb.toFixed(1)} GB`,
                                                                 model.quantization,
-                                                                loadState ? (preloaded ? '已載入，可立即切換' : loadState === 'loading' ? '載入中…' : '未預先載入，切換約需 1～2 分鐘') : null,
+                                                                loadState ? t(preloaded ? 'ui.header.preloaded' : loadState === 'loading' ? 'ui.header.loadingModel' : 'ui.header.notPreloaded') : null,
                                                             ].filter(Boolean).join('・')}
                                                         </span>
                                                     </div>
@@ -183,7 +186,7 @@ export default function ChatHeader({
                                             className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors  text-text-secondary group"
                                         >
                                             <RefreshCw className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" />
-                                            <span className="font-semibold text-[length:var(--fs-14)]">掃描最新模型庫...</span>
+                                            <span className="font-semibold text-[length:var(--fs-14)]">{t('ui.header.scanModels')}</span>
                                         </button>
                                     </div>
                                     </LensMenu>
@@ -195,14 +198,14 @@ export default function ChatHeader({
 
                 {/* 右側：玻璃選單鈕（規範右下選單的邏輯：點一下展開圖示；長按或直接往下滑才出現文字與放大鏡） */}
                 <GlassDock
-                    aria-label="對話選項"
+                    aria-label={t('ui.header.convOptions')}
                     items={[
-                        { id: 'share', label: '分享', icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
-                        { id: 'rename', label: '重新命名', icon: <Edit2 />, onSelect: () => { if (currentConversation) handleRenameConversation(currentConversation.id) } },
-                        { id: 'move', label: '移至專案', icon: <Folder />, onSelect: () => { if (currentConversation) handleMoveToProject(currentConversation.id) } },
-                        { id: 'verify', label: '驗證防篡改鏈', tone: 'success', icon: <ShieldCheck />, onSelect: () => { if (currentConversation) handleVerifyChain(currentConversation.id) } },
+                        { id: 'share', label: t('chat.shareChat'), icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
+                        { id: 'rename', label: t('chat.renameChat'), icon: <Edit2 />, onSelect: () => { if (currentConversation) handleRenameConversation(currentConversation.id) } },
+                        { id: 'move', label: t('chat.moveToProject'), icon: <Folder />, onSelect: () => { if (currentConversation) handleMoveToProject(currentConversation.id) } },
+                        { id: 'verify', label: t('ui.header.verifyChain'), tone: 'success', icon: <ShieldCheck />, onSelect: () => { if (currentConversation) handleVerifyChain(currentConversation.id) } },
                         {
-                            id: 'delete', label: '刪除', tone: 'danger', icon: <Trash2 />,
+                            id: 'delete', label: t('common.delete'), tone: 'danger', icon: <Trash2 />,
                             onSelect: () => { if (currentConversation) handleDeleteConversation(currentConversation.id, { stopPropagation() {} } as unknown as React.MouseEvent) },
                         },
                     ]}

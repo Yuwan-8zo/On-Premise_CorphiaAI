@@ -48,15 +48,15 @@ import { formatDate } from '@/features/admin/utils/formatDate'
 function getActionPillClass(action: string): string {
     const a = (action || '').toLowerCase()
     if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] text-[var(--ink-red)]'
+        return 'tag-red'
     }
     if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-green)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-green)_10%,transparent)] text-[var(--ink-green)]'
+        return 'tag-green'
     }
     if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-blue)_10%,transparent)] text-[var(--ink-blue)]'
+        return 'tag-accent'
     }
-    return 'border-[var(--paper-line)] bg-[var(--chip)] text-text-primary'
+    return ''
 }
 
 // 嚴重度分級：區分 critical / warning / info
@@ -269,7 +269,7 @@ export default function AuditSection({
                                             </td>
                                             <td className="px-3 sm:px-5 py-2">
                                                 <span
-                                                    className={`inline-block whitespace-nowrap rounded-full border px-2 sm:px-3 py-0.5 text-[length:var(--fs-10)] sm:text-xs font-semibold ${getActionPillClass(log.action)}`}
+                                                    className={`tag ${getActionPillClass(log.action)}`}
                                                 >
                                                     {t(`admin.audit.actionTypes.${log.action}`, {
                                                         defaultValue: ACTION_LABELS[log.action] || log.action,
@@ -284,7 +284,7 @@ export default function AuditSection({
                                             <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
                                             </td>
-                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary/70">
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary">
                                                 {log.ip_address || '-'}
                                             </td>
                                         </tr>

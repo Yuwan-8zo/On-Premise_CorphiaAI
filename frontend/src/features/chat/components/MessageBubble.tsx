@@ -151,7 +151,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
     const copyButton = (
-        <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} aria-label="複製" className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
                 <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
@@ -225,21 +225,21 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         if (e.key === 'Escape') { setEditContent(message.content); setIsEditing(false) }
                                         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveEdit()
                                     }}
-                                    aria-label="編輯訊息"
+                                    aria-label={t('ui.message.editMessage')}
                                     className="msg-edit-input scrollbar-none"
                                     rows={1}
                                 />
                                 <div className="msg-edit-actions">
                                     <button
                                         onClick={() => { setEditContent(message.content); setIsEditing(false) }}
-                                        aria-label="取消"
+                                        aria-label={t('common.cancel')}
                                         className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--chip)] text-text-primary"
                                     >
                                         <X className="w-[var(--sz-15)] h-[var(--sz-15)]" />
                                     </button>
                                     <button
                                         onClick={handleSaveEdit}
-                                        aria-label="儲存修改"
+                                        aria-label={t('ui.message.saveEdit')}
                                         disabled={!editContent.trim()}
                                         className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--accent-fill)] !text-[var(--text-on-accent)] disabled:opacity-40"
                                     >
@@ -258,7 +258,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
-                                <Tooltip placement="bottom" label="編輯"><button aria-label="編輯" onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     <Edit2 className="w-3.5 h-3.5" />
                                 </button></Tooltip>
                             )}
@@ -343,7 +343,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
                                 {message.tokens > 0 && (
-                                    <Tooltip placement="bottom" label={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}>
+                                    <Tooltip placement="bottom" label={t('ui.message.tokensUsed', { n: message.tokens.toLocaleString() })}>
                                         <span
                                             className="ml-1 text-[length:var(--fs-11)] tabular-nums text-text-muted/80"
                                         >

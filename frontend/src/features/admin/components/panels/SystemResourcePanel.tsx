@@ -9,6 +9,7 @@ import { Cpu, HardDrive } from '@/components/snow/icons'
 
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
+import { Skel } from '@/components/ui/Skeleton'
 
 export interface SystemResourcePanelProps {
     className?: string
@@ -66,10 +67,10 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                                 {item.icon}
                                 <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">{item.label}</p>
                             </div>
-                            <p className="whitespace-nowrap text-[length:var(--fs-11)] text-text-muted">{item.note}</p>
+                            <p className="whitespace-nowrap text-[length:var(--fs-11)] text-text-muted">{info ? item.note : <Skel className="inline-block h-[var(--sz-12)] w-[var(--sz-64)] align-middle" />}</p>
                         </div>
                         <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
-                            {item.percent.toFixed(1)}<span className="ml-0.5 text-[length:var(--fs-15)] font-medium text-text-secondary">%</span>
+                            {info ? <>{item.percent.toFixed(1)}<span className="ml-0.5 text-[length:var(--fs-15)] font-medium text-text-secondary">%</span></> : <Skel className="inline-block h-[var(--sz-24)] w-[var(--sz-64)] align-middle" />}
                         </p>
                         <div className="h-1.5 rounded-full bg-[rgb(var(--text-primary)/0.12)] overflow-hidden">
                             <div

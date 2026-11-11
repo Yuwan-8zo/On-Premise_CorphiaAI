@@ -17,6 +17,7 @@ import {
 
 import { useAccentColor } from '../../hooks/useAccentColor'
 import type { DailyCount } from '../../utils/auditAggregations'
+import { useTranslation } from 'react-i18next'
 
 interface ActivityBarChartProps {
     data: DailyCount[]
@@ -35,6 +36,7 @@ type CustomTooltipProps = {
 }
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
+    const { t } = useTranslation()
     if (!active || !payload?.length) return null
     const item = payload[0]?.payload
     if (!item) return null
@@ -45,7 +47,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             </p>
             <p className="text-text-secondary">{item.weekday}</p>
             <p className="mt-1 text-sm text-accent tabular-nums">
-                {item.count.toLocaleString()} 筆
+                {t('ui.charts.count', { n: item.count.toLocaleString() })}
             </p>
         </div>
     )

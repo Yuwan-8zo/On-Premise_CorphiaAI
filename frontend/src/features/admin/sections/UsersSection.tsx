@@ -28,6 +28,7 @@ import { formatDate } from '@/features/admin/utils/formatDate'
 import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { SkelTableRows } from '@/components/ui/Skeleton'
+import i18n from '@/i18n'
 
 export interface AdminUserRow {
     id: string
@@ -64,10 +65,10 @@ function formatRelativeTime(isoString?: string): string {
     const diffHour = Math.floor(diffMin / 60)
     const diffDay = Math.floor(diffHour / 24)
 
-    if (diffSec < 60) return '剛剛'
-    if (diffMin < 60) return `${diffMin} 分鐘前`
-    if (diffHour < 24) return `${diffHour} 小時前`
-    if (diffDay < 30) return `${diffDay} 天前`
+    if (diffSec < 60) return i18n.t('ui.time.justNow')
+    if (diffMin < 60) return i18n.t('ui.time.minutesAgo', { count: diffMin })
+    if (diffHour < 24) return i18n.t('ui.time.hoursAgo', { count: diffHour })
+    if (diffDay < 30) return i18n.t('ui.time.daysAgo', { count: diffDay })
     return formatDate(isoString)
 }
 
@@ -79,23 +80,23 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.is_locked) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--ink-red)] dark:text-[var(--ink-red)]">
+            <div className="tag tag-red">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-red)]" />
-                {lockoutStatus.minutes_until_unlock ? `鎖定中 ${lockoutStatus.minutes_until_unlock}m` : '鎖定中'}
+                {lockoutStatus.minutes_until_unlock ? i18n.t('ui.users.lockedFor', { minutes: lockoutStatus.minutes_until_unlock }) : i18n.t('ui.users.locked')}
             </div>
         )
     }
 
     if (lockoutStatus.failures_last_7d >= 3) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-orange)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--ink-orange)] dark:text-[var(--ink-orange)]">
+            <div className="tag tag-orange">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-orange)]" />
-                {lockoutStatus.failures_last_7d} 次失敗
+                {i18n.t('ui.users.failures', { count: lockoutStatus.failures_last_7d })}
             </div>
         )
     }
 
-    return <span className="text-xs text-text-secondary">正常</span>
+    return <span className="text-xs text-text-secondary">{i18n.t('ui.users.normal')}</span>
 }
 
 export default function UsersSection({
@@ -318,7 +319,7 @@ export default function UsersSection({
                         type="button"
                         role="menuitem"
                         disabled={isSelf(openUser)}
-                        title={isSelf(openUser) ? '不能對自己強制登出' : undefined}
+                        title={isSelf(openUser) ? t('ui.users.cantLogoutSelf') : undefined}
                         onClick={() => {
                             closeMenu()
                             onForceLogout(openUser)
@@ -333,7 +334,7 @@ export default function UsersSection({
                         type="button"
                         role="menuitem"
                         disabled={isSelf(openUser)}
-                        title={isSelf(openUser) ? '不能刪除自己的帳號' : undefined}
+                        title={isSelf(openUser) ? t('ui.users.cantDeleteSelf') : undefined}
                         onClick={() => {
                             closeMenu()
                             onDeleteUser(openUser)

@@ -78,14 +78,14 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
                 {phaseLabels[displayPhase]}
                 <DotEllipsis />
                 {elapsed >= 3 && (
-                    <span className="ml-1 text-text-muted font-normal tabular-nums">（已等待 {elapsed} 秒）</span>
+                    <span className="ml-1 text-text-muted font-normal tabular-nums">{t('ui.thinking.waited', { seconds: elapsed })}</span>
                 )}
             </span>
             {elapsed >= 15 && (
                 <span className="mt-1 text-[length:var(--fs-12)] text-text-muted">
                     {readingDocs
-                        ? 'AI 在本機處理器上運算，資料不會離開這台電腦；正在閱讀找到的文件段落，需要一點時間，請稍候'
-                        : 'AI 在本機處理器上運算，資料不會離開這台電腦，請稍候'}
+                        ? t('ui.thinking.localRag')
+                        : t('ui.thinking.local')}
                 </span>
             )}
         </div>

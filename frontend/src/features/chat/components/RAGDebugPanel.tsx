@@ -8,6 +8,7 @@
 import { ChevronRight } from '@/components/snow/icons'
 import { useState } from 'react'
 import MaterialIcon from '@/components/icons/MaterialIcon'
+import { useTranslation } from 'react-i18next'
 
 interface RAGSource {
     chunk_id: string
@@ -47,11 +48,12 @@ function scoreBg(score: number): string {
 
 /** 路由決策的中文（icon 為 Material Symbols 名稱） */
 const ROUTE_LABELS: Record<string, { label: string; icon: string }> = {
-    rag: { label: '知識庫檢索', icon: 'menu_book' },
-    chat: { label: '一般對話', icon: 'chat' },
+    rag: { label: 'ui.sources.modeRag', icon: 'menu_book' },
+    chat: { label: 'ui.sources.modeChat', icon: 'chat' },
 }
 
 export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
+    const { t } = useTranslation()
     const [isExpanded, setIsExpanded] = useState(false)
 
     if (!sources || sources.length === 0) return null
@@ -68,11 +70,11 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 <span className="tabular-nums inline-flex items-center gap-1.5">
                     <MaterialIcon name="search" size={14} aria-hidden />
-                    檢索細節（{sources.length} 個段落）
+                    {t('ui.sources.details', { count: sources.length })}
                     {routeInfo && (
                         <span className="ml-2 inline-flex items-center gap-1">
                             <MaterialIcon name={routeInfo.icon} size={14} aria-hidden />
-                            {routeInfo.label}
+                            {t(routeInfo.label)}
                         </span>
                     )}
                 </span>
@@ -109,7 +111,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                         #{index + 1}
                                     </span>
                                     <span className="text-xs text-text-secondary truncate max-w-[var(--sz-200)]">
-                                        {source.document_name || '未知文件'}
+                                        {source.document_name || t('ui.sources.unknownDoc')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">

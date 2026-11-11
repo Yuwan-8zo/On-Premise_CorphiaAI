@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
+import { Skel } from '@/components/ui/Skeleton'
 
 export interface LLMHealthPanelProps {
     className?: string
@@ -60,7 +61,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                             {t('admin.overview.modelLoaded', '當前模型')}
                         </p>
                         <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-text-primary truncate">
-                            {modelName}
+                            {data ? modelName : <Skel className="inline-block h-[var(--sz-16)] w-[var(--sz-140)] align-middle" />}
                         </p>
                     </div>
                 </div>
@@ -76,7 +77,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                             </p>
                         </div>
                         <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
-                            {tokensPerSec.toFixed(1)}
+                            {data ? tokensPerSec.toFixed(1) : <Skel className="inline-block h-[var(--sz-24)] w-[var(--sz-40)] align-middle" />}
                         </p>
                     </div>
 
@@ -88,7 +89,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                             </p>
                         </div>
                         <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
-                            {totalGenerations.toLocaleString()}
+                            {data ? totalGenerations.toLocaleString() : <Skel className="inline-block h-[var(--sz-24)] w-[var(--sz-40)] align-middle" />}
                         </p>
                     </div>
                 </div>

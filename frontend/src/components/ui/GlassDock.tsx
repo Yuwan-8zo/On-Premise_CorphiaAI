@@ -15,6 +15,7 @@ import { useCssPx } from '@/lib/cssVars'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { useTranslation } from 'react-i18next'
 
 export interface DockItem {
     id: string
@@ -34,7 +35,9 @@ interface Props {
 const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h'] as const
 const LONG_PRESS_MS = LENS_CFG.pressWait
 
-export default function GlassDock({ items, className = '', 'aria-label': ariaLabel = '選單' }: Props) {
+export default function GlassDock({ items, className = '', 'aria-label': ariaLabelProp }: Props) {
+    const { t } = useTranslation()
+    const ariaLabel = ariaLabelProp ?? t('ui.dock.menu')
     const [open, setOpen] = useState(false)
     const [wide, setWide] = useState(false)
     const [lensY, setLensY] = useState<number | null>(null) // 放大鏡中心（相對外殼頂端）
@@ -175,7 +178,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                 style={{ width: wide ? ROW_W : BTN_N, height: rowH }}
             >
                 <span className="dock-icon">{icon}</span>
-                {wide && <span className="dock-label">{isBtn ? '關閉' : it!.label}</span>}
+                {wide && <span className="dock-label">{isBtn ? t('common.close') : it!.label}</span>}
             </span>
         )
     }
@@ -211,11 +214,11 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                         // 圖示模式：滑鼠停留時在左邊顯示名稱（長按展開有文字時不顯示）
                         if (wide) return node
                         return (
-                            <Tooltip key={i} placement="left" label={isBtn ? (open ? '關閉' : ariaLabel) : items[i - 1].label}>
+                            <Tooltip key={i} placement="left" label={isBtn ? (open ? t('common.close') : ariaLabel) : items[i - 1].label}>
                                 <button
                                     type="button"
                                     role={isBtn ? undefined : 'menuitem'}
-                                    aria-label={isBtn ? (open ? '關閉選單' : ariaLabel) : items[i - 1].label}
+                                    aria-label={isBtn ? (open ? t('ui.dock.closeMenu') : ariaLabel) : items[i - 1].label}
                                     aria-expanded={isBtn ? open : undefined}
                                     onKeyDown={(e) => {
                                         if (e.key !== 'Enter' && e.key !== ' ') return

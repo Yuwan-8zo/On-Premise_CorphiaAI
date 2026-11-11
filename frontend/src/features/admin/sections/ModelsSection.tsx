@@ -107,12 +107,12 @@ export default function ModelsSection({
                                                 {model.name}
                                             </p>
                                             {model.is_current && (
-                                                <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-bold text-accent">
+                                                <span className="tag tag-accent">
                                                     {t('admin.models.current', '當前')}
                                                 </span>
                                             )}
                                             {model.quantization && (
-                                                <span className="rounded-full snow-well px-3 py-1 text-xs tabular-nums text-text-secondary">
+                                                <span className="tag tabular-nums">
                                                     {model.quantization}
                                                 </span>
                                             )}
@@ -131,13 +131,13 @@ export default function ModelsSection({
                                             {/* SHA256 */}
                                             <div className="flex items-center gap-2 tabular-nums">
                                                 <span className="text-text-muted">Hash:</span>
-                                                <Tooltip label={integrity?.sha256 || '計算中'}>
+                                                <Tooltip label={integrity?.sha256 || t('ui.models.computing')}>
                                                     <span className="text-text-secondary">
                                                         {sha256Short}
                                                     </span>
                                                 </Tooltip>
                                                 {integrity?.sha256 && (
-                                                    <Tooltip label={isCopied ? '已複製' : '複製 Hash'}>
+                                                    <Tooltip label={isCopied ? t('ui.message.copied') : t('ui.models.copyHash')}>
                                                         <button
                                                             onClick={() => {
                                                                 // narrow null：上面 `integrity?.sha256 &&` 已保證不為 null，
@@ -156,7 +156,7 @@ export default function ModelsSection({
                                             {/* 推論統計（僅當前模型） */}
                                             {model.is_current && integrityData?.throughput && (
                                                 <div className="text-text-muted">
-                                                    {`推論：${(integrityData.throughput.last_tokens_per_sec || 0).toFixed(1)} tokens/s`}
+                                                    {t('ui.models.inference', { value: (integrityData.throughput.last_tokens_per_sec || 0).toFixed(1) })}
                                                 </div>
                                             )}
                                         </div>

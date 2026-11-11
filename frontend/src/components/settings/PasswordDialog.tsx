@@ -162,7 +162,7 @@ function PwdRow({ label, value, onChange }: { label: string; value: string; onCh
                 type={visible ? 'text' : 'password'}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder="必填"
+                placeholder={t('ui.misc.required')}
                 aria-label={label}
                 className="flex-1 min-w-0 bg-transparent outline-none text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
             />

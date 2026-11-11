@@ -10,6 +10,7 @@
  */
 import type { CSSProperties } from 'react'
 import WaveBackground from '@/components/ui/WaveBackground'
+import i18n from '@/i18n'
 
 export function Skel({ className = '', style }: { className?: string; style?: CSSProperties }) {
     return <span aria-hidden className={`skel ${className}`} style={style} />
@@ -17,7 +18,7 @@ export function Skel({ className = '', style }: { className?: string; style?: CS
 
 export function SkelRows({ count = 5, className = '' }: { count?: number; className?: string }) {
     return (
-        <div role="status" aria-label="載入中" className={className}>
+        <div role="status" aria-label={i18n.t('common.loading')} className={className}>
             {Array.from({ length: count }, (_, i) => (
                 <div key={i} className="flex items-center gap-4 px-6 py-4">
                     <Skel className="h-9 w-9 !rounded-full shrink-0" />
@@ -36,7 +37,7 @@ export function SkelCards({ count = 3, className = '' }: { count?: number; class
     return (
         <>
             {Array.from({ length: count }, (_, i) => (
-                <div key={i} role="status" aria-label="載入中" className={`rounded-[var(--r-16)] bg-[var(--chip)] p-4 flex flex-col gap-3 ${className}`}>
+                <div key={i} role="status" aria-label={i18n.t('common.loading')} className={`rounded-[var(--r-16)] bg-[var(--chip)] p-4 flex flex-col gap-3 ${className}`}>
                     <Skel className="h-[var(--sz-16)] w-1/2" />
                     <Skel className="h-[var(--sz-12)] w-1/3" />
                     <Skel className="h-[var(--sz-12)] w-2/3 mt-1" />
@@ -48,7 +49,7 @@ export function SkelCards({ count = 3, className = '' }: { count?: number; class
 
 export function SkelMessages({ count = 3, className = '' }: { count?: number; className?: string }) {
     return (
-        <div role="status" aria-label="載入中" className={`flex flex-col gap-4 ${className}`}>
+        <div role="status" aria-label={i18n.t('common.loading')} className={`flex flex-col gap-4 ${className}`}>
             {Array.from({ length: count }, (_, i) =>
                 i % 2 === 0 ? (
                     <div key={i} className="flex justify-end">
@@ -272,7 +273,7 @@ export function SkelPage() {
         : path === '/' || path.startsWith('/chat') ? <SkelChat />
         : null /* 其他網址（例如 404）：只留底色與波浪，不要冒出別頁的骨架 */
     return (
-        <div role="status" aria-label="載入中" className="relative h-[100dvh] w-full bg-bg-base">
+        <div role="status" aria-label={i18n.t('common.loading')} className="relative h-[100dvh] w-full bg-bg-base">
             {/* 波浪背景跟真實頁面一樣，載入完成時背景不會閃 */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
             <div className="relative h-full">{view}</div>

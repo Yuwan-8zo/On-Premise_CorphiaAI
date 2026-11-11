@@ -9,6 +9,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { appleCategoryColors } from '../../hooks/useAccentColor'
 import type { ActionCount } from '../../utils/auditAggregations'
+import { useTranslation } from 'react-i18next'
 
 interface EventDonutProps {
     data: ActionCount[]
@@ -24,6 +25,7 @@ type DonutTooltipProps = {
 }
 
 function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
+    const { t } = useTranslation()
     if (!active || !payload?.length) return null
     const item = payload[0]?.payload
     if (!item) return null
@@ -32,13 +34,14 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
         <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-xs">
             <p className="font-medium text-text-primary">{item.name}</p>
             <p className="mt-0.5 text-text-secondary tabular-nums">
-                {item.count.toLocaleString()} 筆 · {pct}%
+                {t('ui.charts.count', { n: item.count.toLocaleString() })} · {pct}%
             </p>
         </div>
     )
 }
 
 export default function EventDonut({ data, height = 220 }: EventDonutProps) {
+    const { t } = useTranslation()
     const total = data.reduce((sum, d) => sum + d.count, 0)
     const colors = appleCategoryColors(data.length)
 
@@ -48,7 +51,7 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
                 className="flex items-center justify-center text-sm text-text-secondary"
                 style={{ height }}
             >
-                尚無事件可分析
+                {t('ui.charts.noEvents')}
             </div>
         )
     }

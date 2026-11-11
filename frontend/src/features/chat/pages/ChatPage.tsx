@@ -77,7 +77,7 @@ export default function Chat() {
                                 <Folder className="w-8 h-8 text-accent" />
                                 {mainProps.selectedFolder}
                             </h2>
-                            <p className="mt-2 text-[length:var(--fs-15)] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
+                            <p className="mt-2 text-[length:var(--fs-15)] text-text-secondary">{mainProps.t('ui.folder.intro')}</p>
                         </div>
                         
                         {/* 整張卡片都可以把檔案拖進來；拖曳中顯示「放開即可加入」的提示 */}
@@ -94,16 +94,16 @@ export default function Chat() {
                             {dragOver && (
                                 <div className="drop-hint" aria-hidden>
                                     <PlusIcon />
-                                    <span>放開即可加入來源</span>
+                                    <span>{mainProps.t('ui.folder.dropHint')}</span>
                                 </div>
                             )}
                             <div className="px-[var(--sp-21)] py-[var(--sp-21)] border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
-                                <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
+                                <h3 className="font-semibold text-text-primary">{mainProps.t('ui.folder.sources', { count: mainProps.folderDocuments.length })}</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
                                     className="btn btn-primary !h-9 !px-4 !text-[length:var(--fs-14)] gap-1.5"
                                 >
-                                    <PlusIcon /> <span className="mr-1">新增來源</span>
+                                    <PlusIcon /> <span className="mr-1">{mainProps.t('ui.folder.addSource')}</span>
                                 </button>
                             </div>
                             
@@ -111,8 +111,8 @@ export default function Chat() {
                                 {mainProps.folderDocuments.length === 0 ? (
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <Copy className="w-16 h-16 mx-auto text-text-secondary mb-4 stroke-1" />
-                                    <p className="text-[length:var(--fs-17)] font-semibold text-text-secondary mb-1">尚無文獻來源</p>
-                                    <p className="text-[length:var(--fs-14)] text-text-muted">把檔案拖曳到這裡，或點右上角「新增來源」</p>
+                                    <p className="text-[length:var(--fs-17)] font-semibold text-text-secondary mb-1">{mainProps.t('ui.folder.emptyTitle')}</p>
+                                    <p className="text-[length:var(--fs-14)] text-text-muted">{mainProps.t('ui.folder.emptyHint')}</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border-subtle dark:divide-border-subtle">
@@ -147,10 +147,10 @@ export default function Chat() {
                                             
                                             <div className="flex items-center gap-4">
                                                 <span className={`tag ${doc.status === 'completed' ? 'tag-green' : doc.status === 'failed' ? 'tag-red' : doc.status === 'pending' ? 'tag-orange' : 'tag-accent'}`}>
-                                                    {doc.status === 'completed' ? '可讀取' : doc.status === 'failed' ? '讀取失敗' : doc.status === 'pending' ? '等待處理' : '處理中'}
+                                                    {mainProps.t(doc.status === 'completed' ? 'ui.folder.statusReady' : doc.status === 'failed' ? 'ui.folder.statusFailed' : doc.status === 'pending' ? 'ui.folder.statusPending' : 'ui.folder.statusProcessing')}
                                                 </span>
                                                 
-                                                <Tooltip label="刪除">
+                                                <Tooltip label={mainProps.t('common.delete')}>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation()

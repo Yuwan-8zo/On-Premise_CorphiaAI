@@ -14,6 +14,7 @@ import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import { copyText } from '@/lib/clipboard'
+import { useTranslation } from 'react-i18next'
 
 SyntaxHighlighter.registerLanguage('tsx', tsx)
 SyntaxHighlighter.registerLanguage('typescript', typescript)
@@ -25,6 +26,7 @@ SyntaxHighlighter.registerLanguage('sql', sql)
 SyntaxHighlighter.registerLanguage('markdown', markdown)
 
 const CopyButton = ({ code }: { code: string }) => {
+    const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
 
     const handleCopy = async () => {
@@ -41,7 +43,7 @@ const CopyButton = ({ code }: { code: string }) => {
             className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)]  rounded transition-colors"
         >
             <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
-            {copied ? '已複製' : '複製'}
+            {copied ? t('ui.message.copied') : t('ui.message.copy')}
         </button>
     )
 }

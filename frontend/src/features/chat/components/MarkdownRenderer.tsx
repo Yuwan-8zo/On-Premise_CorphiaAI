@@ -7,6 +7,7 @@
 import React, { lazy, memo, Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import i18n from '@/i18n'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
 
@@ -75,7 +76,7 @@ class MarkdownErrorBoundary extends React.Component<
         if (this.state.hasError) {
             return (
                 <div className="text-[var(--ink-red)] p-4 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] rounded-[var(--r-10)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]">
-                    <p className="font-bold mb-2">解析訊息內容時發生錯誤</p>
+                    <p className="font-bold mb-2">{i18n.t('ui.misc.parseError')}</p>
                     <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}
                     </div>
