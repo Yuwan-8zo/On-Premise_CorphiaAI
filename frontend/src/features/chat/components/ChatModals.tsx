@@ -14,6 +14,8 @@ import { ChevronRight, Edit2, Folder, Share, Trash2 } from '@/components/snow/ic
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import DialogShell from '@/components/ui/DialogShell'
+import { dialogSheet } from '@/lib/motionPresets'
 
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 
@@ -40,10 +42,7 @@ export function ConversationContextMenu({
             {activeMenu && (
                 <motion.div 
                     ref={menuRef}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3 }}
+                    {...dialogSheet}
                     className="fixed z-[100] w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
                     style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
                 >
@@ -51,12 +50,12 @@ export function ConversationContextMenu({
                     <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onShare(id), 50) }}>
                         <Share />
-                        分享
+                        {t('chat.shareChat', '分享')}
                     </button>
                     <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
                         <Edit2 />
-                        重新命名
+                        {t('chat.renameChat', '重新命名')}
                     </button>
                     <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), 50) }}>
@@ -69,12 +68,27 @@ export function ConversationContextMenu({
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onDelete(id, e as unknown as React.MouseEvent), 50) }}
                         className="menu-item is-danger">
                         <Trash2 />
-                        刪除
+                        {t('common.delete', '刪除')}
                     </button>
                     </LensMenu>
                 </motion.div>
             )}
         </AnimatePresence>
+    )
+}
+
+/* ── 對話框共用：寬度、輸入框、按鈕列（外殼用 DialogShell） ── */
+
+const SHEET_W = 'w-[var(--sz-360)] max-w-[calc(100vw-32px)]'
+const INPUT_CLASS = 'snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted'
+
+function DialogActions({ onCancel, onOk, okLabel }: { onCancel: () => void; onOk: () => void; okLabel?: string }) {
+    const { t } = useTranslation()
+    return (
+        <div className="dialog-actions">
+            <button onClick={onCancel} className="btn btn-lg btn-secondary">{t('common.cancel', '取消')}</button>
+            <button onClick={onOk} className="btn btn-lg btn-primary">{okLabel ?? t('common.confirm', '確定')}</button>
+        </div>
     )
 }
 
@@ -90,39 +104,19 @@ interface RenameModalProps {
 }
 
 export function RenameModal({ renameModal, renameInput, renameInputRef, setRenameInput, submitRename, onClose }: RenameModalProps) {
+    const { t } = useTranslation()
     return (
-        <AnimatePresence>
-            {renameModal && (
-                <motion.div
-                    key="rename-backdrop"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
-                />
-            )}
-            {renameModal && (
-                <motion.div
-                    key="rename-modal"
-                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
-                >
-                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
-                        <div className="px-2">
-                            <h3 className="dialog-title !px-0 mb-4">重新命名</h3>
-                            <input ref={renameInputRef} type="text" value={renameInput}
-                                onChange={e => setRenameInput(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') onClose() }}
-                                className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
-                                placeholder="對話名稱" autoComplete="off" />
-                        </div>
-                        <div className="dialog-actions">
-                            <button onClick={onClose} className="btn btn-lg btn-secondary">取消</button>
-                            <button onClick={submitRename} className="btn btn-lg btn-primary">確定</button>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <DialogShell open={!!renameModal} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+            <div className="px-2">
+                <h3 className="dialog-title !px-0 mb-4">{t('chat.renameChat', '重新命名')}</h3>
+                <input ref={renameInputRef} type="text" value={renameInput}
+                    onChange={e => setRenameInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') submitRename() }}
+                    className={INPUT_CLASS}
+                    placeholder={t('chat.conversationName', '對話名稱')} autoComplete="off" />
+            </div>
+            <DialogActions onCancel={onClose} onOk={submitRename} />
+        </DialogShell>
     )
 }
 
@@ -140,72 +134,46 @@ interface MoveModalProps {
 
 export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFolders, conversations, submitMove, onClose }: MoveModalProps) {
     const { t } = useTranslation()
+    const allFolders = Array.from(new Set([
+        ...savedFolders,
+        ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER),
+    ]))
 
     return (
-        <AnimatePresence>
-            {moveModal && (
-                <motion.div
-                    key="move-backdrop"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
-                />
-            )}
-            {moveModal && (
-                <motion.div
-                    key="move-modal"
-                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
-                >
-                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
-                        {moveModal.isProject ? (
-                            <>
-                                <div className="px-2">
-                                    <h3 className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
-                                    <p className="text-[length:var(--fs-14)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
-                                </div>
-                                <div className="dialog-actions">
-                            <button onClick={onClose} className="btn btn-lg btn-secondary">取消</button>
-                            <button onClick={() => submitMove()} className="btn btn-lg btn-primary">確定</button>
-                        </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="px-2">
-                                    <h3 className="dialog-title !px-0 mb-4">移至專案</h3>
-                                    {(() => {
-                                        const allFolders = Array.from(new Set([...savedFolders, ...conversations.filter(c => Boolean(c.settings?.isProject)).map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)]))
-                                        if (allFolders.length > 0) {
-                                            return (
-                                                <div className="mb-4">
-                                                    <p className="text-[length:var(--fs-13)] text-text-secondary mb-2">選擇現有專案：</p>
-                                                    <StyledSelect
-                                                        value={allFolders.includes(moveInput) ? moveInput : ''}
-                                                        onChange={setMoveInput}
-                                                        placeholder="請選擇專案..."
-                                                        options={allFolders.map((folder) => ({ value: folder, label: folder }))}
-                                                    />
-                                                </div>
-                                            )
-                                        }
-                                        return null
-                                    })()}
-                                    <p className="text-[length:var(--fs-13)] text-text-secondary mb-3">或輸入新專案名稱：</p>
-                                    <input type="text" value={moveInput} onChange={e => setMoveInput(e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter') submitMove(); if (e.key === 'Escape') onClose() }}
-                                        className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
-                                        placeholder="新資料夾" autoFocus autoComplete="off" />
-                                </div>
-                                <div className="dialog-actions">
-                            <button onClick={onClose} className="btn btn-lg btn-secondary">取消</button>
-                            <button onClick={() => submitMove()} className="btn btn-lg btn-primary">確定</button>
-                        </div>
-                            </>
-                        )}
+        <DialogShell open={!!moveModal} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+            {moveModal?.isProject ? (
+                <>
+                    <div className="px-2">
+                        <h3 className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
+                        <p className="text-[length:var(--fs-14)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
                     </div>
-                </motion.div>
+                    <DialogActions onCancel={onClose} onOk={() => submitMove()} />
+                </>
+            ) : (
+                <>
+                    <div className="px-2">
+                        <h3 className="dialog-title !px-0 mb-4">{t('chat.moveToProject', '移至專案')}</h3>
+                        {allFolders.length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-[length:var(--fs-13)] text-text-secondary mb-2">{t('chat.chooseProject', '選擇現有專案：')}</p>
+                                <StyledSelect
+                                    value={allFolders.includes(moveInput) ? moveInput : ''}
+                                    onChange={setMoveInput}
+                                    placeholder={t('chat.chooseProjectPlaceholder', '請選擇專案...')}
+                                    options={allFolders.map((folder) => ({ value: folder, label: folder }))}
+                                />
+                            </div>
+                        )}
+                        <p className="text-[length:var(--fs-13)] text-text-secondary mb-3">{t('chat.orNewProject', '或輸入新專案名稱：')}</p>
+                        <input type="text" value={moveInput} onChange={e => setMoveInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') submitMove() }}
+                            className={INPUT_CLASS}
+                            placeholder={t('chat.newFolder', '新資料夾')} autoFocus autoComplete="off" />
+                    </div>
+                    <DialogActions onCancel={onClose} onOk={() => submitMove()} />
+                </>
             )}
-        </AnimatePresence>
+        </DialogShell>
     )
 }
 
@@ -221,39 +189,19 @@ interface NewFolderModalProps {
 }
 
 export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onClose }: NewFolderModalProps) {
+    const { t } = useTranslation()
     return (
-        <AnimatePresence>
-            {show && (
-                <motion.div
-                    key="folder-backdrop"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[200] bg-black/20 dark:bg-black/45 backdrop-blur-md" onClick={onClose}
-                />
-            )}
-            {show && (
-                <motion.div
-                    key="folder-modal"
-                    initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.93, opacity: 0 }}
-                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
-                >
-                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
-                        <div className="px-2">
-                            <h3 className="dialog-title !px-0 mb-1">新建資料夾</h3>
-                            <p className="text-[length:var(--fs-13)] text-text-secondary mb-4">建立資料夾並自動加入一筆新對話</p>
-                            <input ref={inputRef} type="text" value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onClose() }}
-                                className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
-                                placeholder="資料夾名稱" autoComplete="off" />
-                        </div>
-                        <div className="dialog-actions">
-                            <button onClick={onClose} className="btn btn-lg btn-secondary">取消</button>
-                            <button onClick={onSubmit} className="btn btn-lg btn-primary">建立</button>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <DialogShell open={show} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+            <div className="px-2">
+                <h3 className="dialog-title !px-0 mb-1">{t('chat.newFolder', '新資料夾')}</h3>
+                <p className="text-[length:var(--fs-13)] text-text-secondary mb-4">{t('chat.newFolderHint', '建立資料夾並自動加入一筆新對話')}</p>
+                <input ref={inputRef} type="text" value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') onSubmit() }}
+                    className={INPUT_CLASS}
+                    placeholder={t('chat.folderName', '資料夾名稱')} autoComplete="off" />
+            </div>
+            <DialogActions onCancel={onClose} onOk={onSubmit} okLabel={t('chat.create', '建立')} />
+        </DialogShell>
     )
 }

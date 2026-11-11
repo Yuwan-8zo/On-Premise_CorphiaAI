@@ -1,0 +1,64 @@
+/* 版面：對話進行中標記、後台大卡片、租戶田字格、整頁外框、後台圓角（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* 側欄：正在回答的對話（可能在背景）右邊一顆強調色小圓點，慢慢呼吸 */
+.conv-busy {
+  flex: none;
+  width: var(--sz-7);
+  height: var(--sz-7);
+  margin-left: var(--sp-6);
+  border-radius: var(--r-9999);
+  background: rgb(var(--accent));
+  animation: convBusy 1.4s ease-in-out infinite;
+}
+@keyframes convBusy {
+  50% {
+    transform: scale(0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conv-busy {
+    animation: none;
+  }
+}
+
+/* 後台分頁的大卡片：填滿內容區（底部和左側欄一樣留間距），四角保持圓角；
+   內容多時在卡片「裡面」捲動（.admin-fill-body），不讓外層捲動把卡片直直切掉 */
+.admin-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.admin-fill > :not(.admin-fill-body) {
+  flex-shrink: 0;
+}
+.admin-fill-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.admin-fill-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* 租戶卡片：中等寬度以上分成「田」字四格（兩欄、每列高＝這一區的一半），卡片填滿格子 */
+@media (min-width: 768px) {
+  .tenant-quads {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: calc((100% - var(--space)) / 2); /* 100%＝這一區扣掉內距後的高度；再扣列距 */
+  }
+}
+
+/* 整頁外框（聊天頁、管理後台共用）：照舊留出 Home 橫條的安全區 */
+.edge-shell {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 管理後台的圓角：卡片 --admin-r；卡片裡的小方塊 --admin-in＝卡片圓角 − 間距（同心）。
+   電腦版＝33／21（間距 12）；Duo 版在下面改成與螢幕同心 */
+.admin-shell {
+  --admin-r: var(--r-33);
+  --admin-in: calc(var(--admin-r) - var(--space));
+}

@@ -1,0 +1,87 @@
+/* 基礎：設定說明、字型、卡片（紙張）（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ============================================================================
+ * Snow 設計系統（參考「北海道雪見六日」設計研究）
+ * ----------------------------------------------------------------------------
+ * 只換「形狀、材質、間距、動態、按鈕」；顏色沿用 Corphia 原本配色（colors.css）。
+ * 規則：
+ *   - 同心圓角：外圓角 ＝ 內圓角 ＋ 間距
+ *   - 卡片：實色紙張＋細邊＋柔和長陰影，圓角 25、內距 26
+ *   - 按鈕：Apple 膠囊（主要＝實心品牌色、次要＝灰色毛玻璃），圖示鈕＝圓形毛玻璃
+ *   - 字型：思源黑體（打包在前端，內網離線也能顯示）
+ * ========================================================================== */
+
+:root {
+  /* 圓角與間距 */
+  --r-card: calc(25 * var(--ui-unit));     /* 內容卡片 */
+  --pad-card: calc(26 * var(--ui-unit));   /* 卡片內距 */
+  --r-in: max(calc(var(--r-card) - var(--pad-card) / 2), calc(10 * var(--ui-unit))); /* 卡片裡的圖片、列 */
+  --r-row: calc(18 * var(--ui-unit));      /* 列表列、輸入框 */
+  --r-ctl: calc(24 * var(--ui-unit));      /* 控制項群組 */
+  --r-xl: calc(46 * var(--ui-unit));       /* 大型浮層 */
+  --edge: calc(16 * var(--ui-unit));       /* 貼著視窗邊的元素 */
+  --space: calc(12 * var(--ui-unit));      /* 版面間距（唯一一個）：區塊之間、大卡片與畫面邊、卡片之間；Tailwind 寫 p-[var(--space)]、gap-[var(--space)]… */
+  --stat-min: calc(88 * var(--ui-unit));   /* 數字小卡的最小寬：放不下就自動換列 */
+  --btn-h: calc(44 * var(--ui-unit));      /* 一般按鈕高度（Apple 最小觸控尺寸） */
+  --btn-h-lg: calc(52 * var(--ui-unit));   /* 對話框主按鈕 */
+  --dialog-pad: calc(18 * var(--ui-unit)); /* 對話框內距：對話框圓角 ＝ 按鈕圓角 26 ＋ 18 ＝ 44 */
+
+  /* 動態曲線（iOS 抽屜／彈簧） */
+  --ease-sp: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-io: var(--ease-out); /* 規範不用先加速的曲線 */
+
+  /* 材質（《Liquid Glass 元件規範》CSS 01、29–32）
+   *   卡片＝實色（--paper）；分隔線 0.5px（--paper-line）；小方塊底（--chip＝fill）
+   *   玻璃（控制元件）＝白 15%＋模糊 12；凹陷底盤（--well）＝黑 38%＋內凹陰影 */
+  --paper: rgb(var(--bg-surface));
+  --paper-line: rgb(var(--border-subtle));
+  --glass: rgba(255, 255, 255, 0.42);
+  --glass-ctl: rgba(255, 255, 255, 0.58);
+  --glass-ctl-hover: rgba(255, 255, 255, 0.58);
+  --glass-shade: rgba(0, 0, 0, 0.12);
+  --well: rgba(0, 0, 0, 0.08);
+  --well-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+  --rim-hi: rgba(255, 255, 255, 0.8);
+  --chip: rgba(118, 118, 128, 0.12);
+  --shadow-paper: 0 24px 50px -30px var(--glass-shade);
+  --shadow-float: 0 16px 36px -14px var(--glass-shade);
+  /* 光邊顏色依「玻璃後面的背景」推算：浮在頁面上用頁面底色，卡片裡用卡片色 */
+  --glass-bg: rgb(var(--bg-base));
+  /* 輸入欄位：實色底（比白紙深一階），浮動標籤的遮色片也用它 */
+  --field: rgb(243 241 237);
+  --field-line: rgba(43, 39, 34, 0.1);
+}
+
+html.dark {
+  --paper: rgb(var(--bg-surface));
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-ctl: rgba(255, 255, 255, 0.15);
+  --glass-ctl-hover: rgba(255, 255, 255, 0.15);
+  --glass-shade: rgba(0, 0, 0, 0.45);
+  --well: rgba(0, 0, 0, 0.38);
+  --well-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
+  --rim-hi: rgba(255, 255, 255, 0.28);
+  --chip: rgba(190, 202, 219, 0.1);
+  --field: rgb(44 44 46);
+  --field-line: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- 字型：思源黑體 ---------- */
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: 'Noto Sans TC', 'Source Han Sans TC', '思源黑體', -apple-system, BlinkMacSystemFont,
+    'Microsoft JhengHei', sans-serif;
+}
+
+/* ---------- 卡片（紙張） ---------- */
+.paper {
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-paper);
+}

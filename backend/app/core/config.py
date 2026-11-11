@@ -9,7 +9,7 @@ import secrets
 from functools import lru_cache
 from typing import List
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 logger = logging.getLogger(__name__)
@@ -192,10 +192,7 @@ class Settings(BaseSettings):
             raise ValueError(f"max_upload_size_mb 必須在 1-1024 之間，目前 {v}")
         return v
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 @lru_cache

@@ -38,23 +38,23 @@ import {
     Panel,
     SectionHeader,
     ActionButton,
-    formatDate,
     tableBodyClass,
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
+import { formatDate } from '@/features/admin/utils/formatDate'
 
 // Pure helper — colors the action pill based on the verb.
 // Lifted to module scope so it doesn't need to live on the component.
 function getActionPillClass(action: string): string {
     const a = (action || '').toLowerCase()
     if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] text-[var(--sys-red)]'
+        return 'border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] text-[var(--ink-red)]'
     }
     if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-green)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-green)_10%,transparent)] text-[var(--sys-green)]'
+        return 'border-[color-mix(in_srgb,var(--sys-green)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-green)_10%,transparent)] text-[var(--ink-green)]'
     }
     if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
-        return 'border-[color-mix(in_srgb,var(--sys-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-blue)_10%,transparent)] text-[var(--sys-blue)]'
+        return 'border-[color-mix(in_srgb,var(--sys-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-blue)_10%,transparent)] text-[var(--ink-blue)]'
     }
     return 'border-[var(--paper-line)] bg-[var(--chip)] text-text-primary'
 }

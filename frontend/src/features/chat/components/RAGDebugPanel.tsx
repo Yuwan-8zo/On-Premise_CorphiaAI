@@ -32,10 +32,10 @@ interface RAGDebugPanelProps {
 
 /** 相似度分數的色彩對應 */
 function scoreColor(score: number): string {
-    if (score >= 0.8) return 'text-[var(--sys-green)]'
-    if (score >= 0.6) return 'text-[var(--sys-yellow)]'
-    if (score >= 0.4) return 'text-[var(--sys-orange)]'
-    return 'text-[var(--sys-red)]'
+    if (score >= 0.8) return 'text-[var(--ink-green)]'
+    if (score >= 0.6) return 'text-[var(--ink-yellow)]'
+    if (score >= 0.4) return 'text-[var(--ink-orange)]'
+    return 'text-[var(--ink-red)]'
 }
 
 function scoreBg(score: number): string {

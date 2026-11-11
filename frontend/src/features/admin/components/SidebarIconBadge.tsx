@@ -6,7 +6,7 @@ type SidebarIconBadgeVariant = 'accent' | 'warning'
 
 const VARIANT_CLASS: Record<SidebarIconBadgeVariant, string> = {
     accent: 'bg-accent/10 text-accent',
-    warning: 'bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--sys-orange)] dark:text-[var(--sys-orange)]',
+    warning: 'bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--ink-orange)] dark:text-[var(--ink-orange)]',
 }
 
 interface SidebarIconBadgeProps {

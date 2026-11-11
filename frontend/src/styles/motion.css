@@ -83,6 +83,46 @@
   }
 }
 
+/* 換頁（規範）：新頁 0.42 秒減速從一側滑進 14＋淡入＋模糊對焦；方向照順序——
+ * 往後從右邊進來、往回（data-dir="back"）從左邊進來。方向由 lib/usePageDirection 算。
+ * 後台分頁、設定分頁、手機設定的選單與內容、開機畫面共用 */
+.page-in {
+  --page-from: var(--sp-14);
+  animation: pageIn var(--dur-page) var(--ease-out) both;
+}
+.page-in[data-dir='back'] {
+  --page-from: calc(var(--sp-14) * -1);
+}
+/* 設定的選單欄只有手機會切換（選單↔內容）；平板以上一直顯示，不重播動畫 */
+@media (min-width: 768px) {
+  .settings-menu.page-in {
+    animation: none;
+  }
+}
+/* 手機上只能從選單進入內容，所以內容一律從右邊進來（平板以上照分頁順序） */
+@media (max-width: 767.98px) {
+  .settings-content.page-in {
+    --page-from: var(--sp-14);
+  }
+}
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateX(var(--page-from));
+    filter: blur(var(--blur-8));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
+    animation: pageInFade var(--dur-fade) linear both;
+  }
+  @keyframes pageInFade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
 .page-transition {
   animation: pageEnter var(--dur-page) var(--ease-out) both;
   width: 100%;

@@ -13,6 +13,24 @@ function unwrapEnvelope<T = unknown>(body: unknown): T {
     return body as T
 }
 
+/** /system/health/detailed 的內容（後台「LLM 即時狀態」「系統資源」共用） */
+export interface HealthDetailed {
+    llm?: {
+        model_loaded: boolean
+        provider: string
+        model_path: string
+        throughput?: { last_tokens_per_sec: number; total_generations: number }
+    }
+    /** 後端把 CPU 與記憶體都放在 cpu 這一塊 */
+    cpu?: {
+        cpu_percent: number
+        cpu_cores: number
+        memory_total_gb: number
+        memory_used_gb: number
+        memory_percent: number
+    }
+}
+
 export interface LanStatus {
     enabled: boolean
     lan_ips: string[]
@@ -53,9 +71,9 @@ export const systemApi = {
     /**
      * 取得詳細系統健康（CPU / GPU / VRAM / LLM 統計）
      */
-    getHealthDetailed: async () => {
+    getHealthDetailed: async (): Promise<HealthDetailed> => {
         const response = await apiClient.get('/system/health/detailed')
-        return unwrapEnvelope(response.data)
+        return unwrapEnvelope(response.data) as HealthDetailed
     },
 
     /**

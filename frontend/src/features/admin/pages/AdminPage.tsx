@@ -22,6 +22,7 @@ import { useAdminTenants } from '../hooks/useAdminTenants'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
 import { useFitToHost } from '../hooks/useFitToHost'
+import { usePageDirection } from '@/lib/usePageDirection'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
@@ -49,6 +50,8 @@ export default function Admin() {
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
     const [activeSection, setActiveSection] = useState<AdminSection>('overview')
+    // 換頁方向：照分頁順序（往後從右邊進、往回從左邊進）
+    const pageDir = usePageDirection(TABS.findIndex((tab) => tab.id === activeSection))
 
     const stats = useAdminStats()
     const users = useAdminUsers()
@@ -155,7 +158,7 @@ export default function Admin() {
                     </aside>
 
                     {/* 內容區：總覽是不捲動的滿版儀表板，其他分頁靠這層捲動 */}
-                    <div key={activeSection} data-fit-check className="admin-page-enter flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none lg:h-full lg:flex-none">
+                    <div key={activeSection} data-fit-check data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none lg:h-full lg:flex-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} />

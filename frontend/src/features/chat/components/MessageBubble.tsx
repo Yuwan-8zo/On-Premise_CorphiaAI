@@ -155,7 +155,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
                 <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
-                {isCopied && <Check className="absolute inset-0 m-auto w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />}
+                {isCopied && <Check className="absolute inset-0 m-auto w-3.5 h-3.5 text-[var(--ink-green)]" aria-hidden />}
             </span>
         </button></Tooltip>
     )
@@ -202,7 +202,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.error && (
-                                <div className="mt-1.5 max-w-full rounded-[var(--r-14)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--sys-red)]">
+                                <div className="mt-1.5 max-w-full rounded-[var(--r-14)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--ink-red)]">
                                     {t('chat.voice.transcribeFailed')}
                                 </div>
                             )}

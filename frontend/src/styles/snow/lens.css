@@ -1,0 +1,229 @@
+/* 放大鏡共用參數與選單放大鏡（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 放大鏡共用參數（《Liquid Glass 元件規範》CSS 35 --lens-*）---------- */
+:root {
+  --lens-sx: 0.93;   /* 鏡內的底：沿長邊縮放 */
+  --lens-sy: 0.768;  /* 鏡內的底：垂直長邊縮放（凹進去、上下露出底面） */
+  --lens-grow: 0.12s;
+  --lens-grow-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --lens-shrink: 0.28s;
+  --lens-veil-out: 0.1s;
+  --lens-veil-in: 0.12s;
+  --lens-veil-wait: 0.03s;
+  --lens-edge: rgba(255, 255, 255, 0.42);
+  --lens-ring: 0 0 0 1px rgba(0, 0, 0, 0.32), 0 3px 8px rgba(0, 0, 0, 0.2);
+  --lens-ring-knob: 0 0 0 1px rgba(0, 0, 0, 0.42), 0 3px 8px rgba(0, 0, 0, 0.2);
+  /* 鏡片的玻璃：底面亮 9%，兩端往邊緣漸暗（橫的／直的） */
+  --lens-glass: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
+  --lens-glass-v: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
+  /* 亮邊只在長邊兩緣 */
+  --lens-dish: inset 0 1.1px 0.6px -0.3px var(--lens-edge), inset 0 -1.1px 0.6px -0.3px var(--lens-edge);
+}
+
+/* ---------- 選單放大鏡：規範的鏡片材質（不模糊、底面亮 9%、亮邊只在長邊、外圈細線＋淡陰影）；
+ * 0.12 秒長大（先快後慢）、淡入從 0.95 開始 ---------- */
+.menu-lens {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  scale: 0.95;
+  background: var(--lens-glass);
+  box-shadow: var(--lens-dish), var(--lens-ring);
+  transition:
+    opacity var(--lens-grow) var(--lens-grow-ease),
+    scale var(--lens-grow) var(--lens-grow-ease);
+}
+.menu-lens.on {
+  opacity: 1;
+  scale: 1;
+}
+/* 放開：放大鏡留在原地 0.3 秒淡出並縮到 0.95（規範：右下選單「放開」） */
+.menu-lens:not(.on) {
+  transition:
+    opacity 0.3s var(--ease-out),
+    scale 0.3s var(--ease-out);
+}
+/* 放大鏡內的項目：強調色、不畫底盤、無動畫（範本 .lens .menu a） */
+.menu-lens * {
+  color: var(--accent-ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+.menu-lens *::before,
+.menu-lens *::after {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * 通用：選單項目／側欄導覽項目（全站選單共用，不要在元件裡另寫一長串樣式）
+ *   .menu-item   彈出選單的一列：膠囊、圖示 18、按下淡底＋0.98；
+ *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，品牌色實底）
+ *   .menu-sep    選單分隔線
+ *   .nav-item    側欄導覽的一列：膠囊；目前頁面加 .is-current（淡底＋粗體，圖示用品牌色）
+ * 選單容器一律用 .paper，內容包在 <LensMenu>（長按放大鏡）
+ * ════════════════════════════════════════════════════════════════ */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  width: 100%;
+  padding: var(--sp-10) var(--sp-14);
+  border-radius: var(--r-9999);
+  text-align: left;
+  font-size: var(--fs-15);
+  font-weight: 500;
+  white-space: nowrap;
+  color: rgb(var(--text-primary));
+  transition:
+    transform 0.17s var(--ease-out),
+    background-color 0.17s var(--ease-out);
+}
+.menu-item > svg {
+  width: var(--sz-18);
+  height: var(--sz-18);
+  flex: none;
+}
+.menu-item:active {
+  background: var(--chip);
+  transform: scale(0.98);
+}
+.menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.menu-item.is-danger {
+  color: #ff4245;
+}
+.menu-item.is-success {
+  color: rgb(5 150 105);
+}
+html.dark .menu-item.is-success {
+  color: rgb(52 211 153);
+}
+.menu-item.is-selected {
+  background: rgb(var(--accent));
+  color: var(--text-on-accent, #fff);
+  font-weight: 600;
+}
+.menu-sep {
+  margin: var(--sp-4) var(--sp-10);
+  border-top: 1px solid var(--paper-line);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  width: 100%;
+  padding: var(--sp-12) var(--sp-16);
+  border-radius: var(--r-9999);
+  text-align: left;
+  font-size: var(--fs-15);
+  font-weight: 500;
+  color: rgb(var(--text-secondary));
+  transition: transform 0.15s var(--ease-out);
+}
+.nav-item:active {
+  transform: scale(0.98);
+}
+.nav-item.is-current {
+  /* 規範：目前項目＝凹陷底盤＋強調色（圖示與文字） */
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.nav-item.is-current > :first-child {
+  color: var(--accent-ink);
+}
+
+/* 放大鏡出現時，手指一開始按住的那一項不維持「按下中」的底色與縮放 */
+.lens-on :is(.menu-item, .nav-item, button):active {
+  background: transparent;
+  transform: none;
+}
+
+/* 通用：只在桌機（lg 以上）顯示卡片外框；手機版拿掉外框，避免「卡片裡又一層膠囊」的雙層框 */
+/* 條件＝tailwind.config.js 的 lg 反過來：直放且窄於 1024、或寬 < 768、或窄於 1024 且高 < 500 */
+@media (max-width: 1023.98px) and (orientation: portrait), (max-width: 767.98px), (max-width: 1023.98px) and (max-height: 499.98px) {
+  .paper.paper-lg {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .paper.paper-lg::before,
+  .paper.paper-lg::after {
+    display: none;
+  }
+}
+
+/* 放大鏡出現時（範本 .grp.wide）：不顯示目前項目的底盤、目前項目文字改回墨色；只有放大鏡裡那份用強調色。
+ * 規則只作用在真選單（LensMenu 的第一層），放大鏡裡的複本不受影響 */
+.lens-on > :first-child :is(.is-current, .is-selected) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.lens-on > :first-child :is(.is-current, .is-selected),
+.lens-on > :first-child :is(.is-current, .is-selected) * {
+  color: rgb(var(--text-primary)) !important;
+  font-weight: 500;
+}
+.lens-on > :first-child [data-lens-plate] {
+  opacity: 0 !important; /* 底盤位置寫在行內樣式，需 !important 才蓋得過 */
+}
+
+/* 選取底盤（LensMenu plate）：跟著目前項目滑動；有底盤時項目本身不再畫底色 */
+.lens-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  border-radius: var(--r-9999);
+  transition:
+    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    width 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    height 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.has-plate .is-current {
+  background: transparent;
+  box-shadow: none;
+}
+.has-plate > :not(.lens-plate) {
+  position: relative;
+  z-index: 1;
+}
+/* 用放大鏡選取：放開後底盤直接出現在新位置（不從舊位置滑過來），與放大鏡淡出同步 */
+.lens-out > :first-child .lens-plate {
+  transition: none !important;
+}
+
+/* 通用：不透明浮層（下拉選單等會蓋在內容上、透出來會干擾閱讀的浮層）——97% 實底、不模糊，光邊與陰影照常 */
+:root {
+  --paper-solid: var(--paper);
+}
+html.dark {
+  --paper-solid: var(--paper);
+}
+.paper.paper-solid {
+  background: var(--paper-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* 選單裡的「目前選取」（下拉選單的已選值）：強調色字＋粗體，搭配右側勾號 */
+.menu-item.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}

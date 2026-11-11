@@ -19,12 +19,12 @@ import {
     ActionButton,
     StatusPill,
     RoleBadge,
-    formatDate,
     type AdminUserRole,
     tableHeadRowClass,
     tableBodyClass,
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
+import { formatDate } from '@/features/admin/utils/formatDate'
 import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { SkelTableRows } from '@/components/ui/Skeleton'
@@ -79,7 +79,7 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.is_locked) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--sys-red)] dark:text-[var(--sys-red)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--ink-red)] dark:text-[var(--ink-red)]">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-red)]" />
                 {lockoutStatus.minutes_until_unlock ? `鎖定中 ${lockoutStatus.minutes_until_unlock}m` : '鎖定中'}
             </div>
@@ -88,7 +88,7 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.failures_last_7d >= 3) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-orange)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--sys-orange)] dark:text-[var(--sys-orange)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-orange)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--ink-orange)] dark:text-[var(--ink-orange)]">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-orange)]" />
                 {lockoutStatus.failures_last_7d} 次失敗
             </div>

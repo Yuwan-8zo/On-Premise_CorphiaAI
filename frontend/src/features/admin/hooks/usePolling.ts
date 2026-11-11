@@ -58,3 +58,51 @@ export function usePolling<T>(
 
     return { data, error, refetch }
 }
+
+// ---------------------------------------------------------------------------
+// useSharedPolling — 多個元件要同一份資料時共用一次輪詢（同一個 key 只打一次 API）。
+// 第一個使用的元件開始輪詢、最後一個離開時停止；新加入的元件立刻拿到目前的資料。
+// ---------------------------------------------------------------------------
+type Shared = { data: unknown; listeners: Set<(d: unknown) => void>; timer: ReturnType<typeof setInterval> | null }
+const sharedPolls = new Map<string, Shared>()
+
+export function useSharedPolling<T>(key: string, fetcher: () => Promise<T>, intervalMs: number): T | null {
+    const fetcherRef = useRef(fetcher)
+    fetcherRef.current = fetcher
+    const [data, setData] = useState<T | null>(() => (sharedPolls.get(key)?.data as T | undefined) ?? null)
+
+    useEffect(() => {
+        let entry = sharedPolls.get(key)
+        if (!entry) {
+            entry = { data: null, listeners: new Set(), timer: null }
+            sharedPolls.set(key, entry)
+        }
+        const e = entry
+        const listener = (d: unknown) => setData(d as T)
+        e.listeners.add(listener)
+        if (e.data !== null) setData(e.data as T)
+
+        if (!e.timer) {
+            const tick = async () => {
+                if (typeof document !== 'undefined' && document.hidden) return
+                try {
+                    e.data = await fetcherRef.current()
+                    e.listeners.forEach((l) => l(e.data))
+                } catch {
+                    /* 下一輪再試 */
+                }
+            }
+            void tick()
+            e.timer = setInterval(tick, intervalMs)
+        }
+        return () => {
+            e.listeners.delete(listener)
+            if (!e.listeners.size) {
+                if (e.timer) clearInterval(e.timer)
+                sharedPolls.delete(key)
+            }
+        }
+    }, [key, intervalMs])
+
+    return data
+}

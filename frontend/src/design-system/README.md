@@ -9,7 +9,10 @@
 |---|---|
 | `design-system/tokens.js` | 唯一的設計數值來源：品牌色（6 種固定強調色，預設藍 `#0A68E4`）、圓角、字級 |
 | `styles/colors.css` | 淺色／深色的底色、文字色、強調色變數 |
-| `styles/snow.css` | 全站共用的元件類別（本文件第 3 節），玻璃、光邊、按鈕、選單都在這裡 |
+| `styles/snow.css` | 全站共用的元件類別（本文件第 3 節）。依主題拆在 `styles/snow/*.css`（foundation 基礎、controls 按鈕與對話框、glass 玻璃、lens／lens-controls 放大鏡元件、settings、chat、dock、admin、system-colors、layout、duo…），`snow.css` 只負責照順序載入，**順序不要調換** |
+| `styles/motion.css` | 動畫：換頁 `.page-in`（搭配 `lib/usePageDirection`，方向照順序）等 |
+| `lib/motionPresets.ts` | 動畫參數：規範的兩條曲線 `EASE_DECEL`／`EASE_SPRING`、對話框進出 `dialogBackdrop`／`dialogSheet` |
+| `components/ui/DialogShell.tsx` | 所有對話框共用的外殼：遮罩、置中、進出動畫、Esc、放到最上層。新對話框一律用它，不要自己寫 |
 | `components/snow/icons.tsx` | 全站唯一的圖示庫：Apple SF Symbols「Regular」風格（自行繪製）。24 格、線寬 1.8（圖示鈕內 1.6）、圓頭圓角、矩形大圓角、點用實心小圓。新增圖示用檔內的 `rr()`（圓角矩形）、`circ()`（圓）輔助函式 |
 | `components/ui/*` | 共用元件（第 4 節） |
 
@@ -23,6 +26,7 @@
 - **玻璃**：卡片／對話框／彈出選單＝半透明＋模糊＋光邊；控制元件（圓鈕、按鈕群、次要按鈕、膠囊、輸入列、分段切換）＝範本 Dock 按鈕同款「玻璃色底＋模糊 12＋光邊」；提示泡泡＝玻璃色底＋光邊、不模糊。**不加飽和度**（範本規定）。光邊亮線顏色照範本由背景色推算（深色：`oklch(from 背景 0.6 c×1.4 h)`）。唯一例外：淺色模式下卡片裡的輸入列／分段切換用淡墨色（白玻璃放白卡片會看不見）。
 - **不做大範圍懸停重繪**（例如 `*:hover`）：會讓玻璃卡片在顯示卡繪圖時留下殘影。
 - **深色模式**：品牌色當文字會自動提亮；元件 `style` 裡要用品牌色文字時用 `var(--accent-ink)`、錯誤色用 `var(--danger-ink)`。
+- **系統色當文字**：用 `text-[var(--ink-red)]`…（淺色模式自動換成白底看得清楚的加深版）；`--sys-*` 只用在圖示底色、進度條等非文字。
 - **文字**：介面文字走 i18n（`zh-TW`／`en-US`／`ja-JP` 三份都要補）。
 
 ## 3. 通用類別（`styles/snow.css`）

@@ -252,7 +252,7 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
             {/* 背景：系統的波浪圖（同登入、聊天頁） */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
 
-            <div className="relative z-10 my-auto w-full max-w-[var(--sz-560)] px-6 py-8 admin-page-enter">
+            <div className="relative z-10 my-auto w-full max-w-[var(--sz-560)] px-6 py-8 page-in">
                 {/* 標題：品牌圖示＋Title2 22／28 粗體＋Subheadline 15／20 次要字 */}
                 <div className="mb-[var(--sp-20)] flex items-center gap-4 px-[var(--sp-12)]">
                     <CorphiaLogo className="h-[var(--sz-44)] w-[var(--sz-44)] shrink-0 select-none text-text-primary" />

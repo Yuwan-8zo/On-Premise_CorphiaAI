@@ -1,0 +1,73 @@
+/* iPhone Duo 專用（.fold-wide）與加入主畫面（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ===== iPhone Duo 專用：<html> 有 .fold-wide 時才套用（由 lib/foldScreen.ts 判斷：觸控、橫拿、
+   畫面寬比裝置回報的螢幕長邊還寬＝打開的折疊手機）。電腦、平板、一般手機維持原本設計。
+   同心原則：外圈間距 --gutter，貼邊元件圓角 --edge-r＝螢幕圓角 55 − 間距 */
+/* 上下左右只用外圈間距，不另加安全區（橫條很細，落在這段空白裡） */
+.fold-wide .edge-shell {
+  padding-bottom: 0;
+  /* 上方也不另加保留空間：Safari 工具列收起後頁面延伸到最頂端，網址只剩中間一顆小膠囊，不會碰到左右的元件 */
+  padding-top: 0 !important;
+}
+/* 左側收合欄：離上、下、左都是外圈間距，圓角與螢幕同心 */
+.fold-wide .chat-shell .chat-side {
+  height: calc(100% - 2 * var(--gutter));
+  margin: var(--gutter) 0 var(--gutter) var(--gutter);
+  border-radius: var(--edge-r);
+}
+/* 輸入框外層：左右、下方＝外圈間距（側欄到輸入框也因此是同一個間距）；頂部列右邊同樣 */
+.fold-wide .chat-shell .chat-input-wrap {
+  padding-inline: var(--gutter);
+  padding-bottom: var(--gutter);
+}
+.fold-wide .chat-shell .chat-head {
+  padding-right: var(--gutter);
+}
+/* 輸入框：膠囊圓角和左側收合欄一樣（高＝2 × --edge-n）；內距、按鈕、圖示照同一個比例放大，按鈕置中所以和外框同心 */
+.fold-wide .chat-shell {
+  --field-scale: calc(2 * var(--edge-n) / var(--field-n));
+}
+/* 聊天訊息左右內縮＝外圈間距＋輸入框內距：訊息邊緣對齊輸入框裡的按鈕，輸入框變大時一起跟著動 */
+.fold-wide .chat-shell .msg-col {
+  --msg-inset: calc(var(--gutter) + var(--field-pad));
+  padding-inline: var(--msg-inset);
+  max-width: calc(48rem + 2 * var(--gutter)); /* 和輸入框外層同寬（48rem＋左右外圈），所以文字左右剛好對齊輸入框裡的按鈕 */
+}
+
+/* iPhone Duo 加入主畫面（全螢幕、沒有瀏覽器網址列）：右上角直接蓋著狀態列，
+   右上的按鈕往左讓出狀態列的寬度（--duo-status），再留一個外圈間距 */
+/* 後台：間距（外圈、卡片之間、卡片內距）統一成外圈間距，卡片圓角＝螢幕圓角 − 間距，小方塊跟著同心 */
+.fold-wide .admin-shell {
+  --space: var(--gutter);
+  --admin-r: var(--edge-r);
+}
+/* Duo 橫拿畫面矮：左側導覽上下不另外留白（區塊之間已有間距），側欄才放得下 */
+.fold-wide .admin-shell .admin-nav {
+  padding-block: 0;
+}
+/* 管理後台：寬版時放不下就整頁（標題列、左側欄、內容）等比例縮小到剛好一個畫面（--fit 由 useFitToHost 算），不捲動 */
+.admin-fit {
+  zoom: var(--fit, 1);
+  padding: calc(var(--space) / var(--fit, 1)); /* 外圈間距除回比例：縮放後在畫面上仍是原本的間距 */
+  max-width: calc(var(--sz-1500) / var(--fit, 1)); /* 最大寬度同樣除回比例，縮放後兩側不會多出空白 */
+}
+
+@media (display-mode: standalone) {
+  /* 只在折疊手機橫拿（.fold-wide）時 */
+  .fold-wide .chat-shell .chat-head {
+    padding-right: calc(var(--duo-status) + var(--gutter));
+  }
+  /* 後台：狀態列只蓋住最上面一段（標題列和總覽第一排），只讓這些往左讓出狀態列寬度；
+     下面的卡片照常延伸到右邊外圈間距。外層本來就有一圈間距，所以只補狀態列寬度 */
+  /* 整頁有等比例縮放（--fit），讓開的寬度要除回比例，才是狀態列的實際寬度 */
+  .fold-wide .admin-shell .admin-head {
+    padding-right: calc(var(--duo-status) / var(--fit, 1));
+  }
+  .fold-wide .admin-shell .admin-overview > :first-child {
+    margin-right: calc(var(--duo-status) / var(--fit, 1));
+  }
+  /* 其他分頁的內容從最上面就開始，整欄讓開 */
+  .fold-wide .admin-shell .admin-page-enter:not(:has(.admin-overview)) {
+    padding-right: calc(var(--duo-status) / var(--fit, 1));
+  }
+}

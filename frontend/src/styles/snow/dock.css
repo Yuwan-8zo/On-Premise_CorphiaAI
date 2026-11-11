@@ -1,0 +1,132 @@
+/* 右上玻璃選單（GlassDock）（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 玻璃選單鈕（GlassDock：規範右下選單的邏輯，放在右上角往下展開）----------
+ *   .dock-wrap   佔位（40×40，選單鈕的位置）；.dock-shell 玻璃外殼（從正中間長寬，往下長高）
+ *   .dock-row    一列（窄：36 圓鈕、只有圖示；寬：75×62、圖示＋文字 11／13）
+ *   .dock-lens   放大鏡（93×88、圓角 40）；放開後 .is-leaving 原地 0.3 秒淡出並縮到 0.95 */
+.dock-wrap {
+  position: relative;
+  flex: none;
+}
+.dock-shell {
+  position: absolute !important;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition:
+    width 0.26s var(--ease-out),
+    height 0.3s var(--ease-out),
+    border-radius 0.26s var(--ease-out),
+    transform 0.26s var(--ease-out);
+}
+.dock-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dock-btn {
+  display: block;
+  border-radius: var(--r-9999);
+  transition: transform 0.17s var(--ease-out);
+}
+.dock-btn:active {
+  transform: scale(0.92);
+}
+.dock-row {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  border-radius: var(--r-9999);
+}
+.dock-icon {
+  display: flex;
+}
+.dock-icon svg {
+  width: var(--sz-20);
+  height: var(--sz-20);
+}
+.dock-row.is-wide .dock-icon svg {
+  width: var(--sz-22);
+  height: var(--sz-22);
+}
+.dock-label {
+  font-size: var(--fs-11);
+  line-height: var(--lh-13);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dock-lens {
+  position: absolute;
+  z-index: 60;
+  pointer-events: none;
+}
+.dock-lens.is-leaving {
+  animation: dockLensOut 0.3s var(--ease-out) forwards;
+}
+@keyframes dockLensOut {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-shell {
+    transition: none;
+  }
+}
+
+/* 資料夾展開／收合：高度從 0 長出來＋淡入（規範：選單展開、收合約 0.3 秒，減速曲線） */
+.side-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.3s var(--ease-out),
+    opacity 0.2s var(--ease-out);
+}
+.side-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.side-collapse > .side-children {
+  min-height: 0;
+  overflow: hidden;
+}
+.side-collapse:not(.is-open) {
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-collapse {
+    transition: opacity 0.2s linear;
+  }
+}
+
+/* 表格裡的條列：凸排（符號凸出在左邊，換行後對齊文字），符號用「•」 */
+.md-hang {
+  display: block;
+  position: relative;
+  padding-left: 1em;
+}
+.md-hang::before {
+  content: '•';
+  position: absolute;
+  left: 0.15em;
+}
+
+html:not(.dark) .menu-item.is-danger {
+  color: #ff3b30;
+}
+
+/* 聊天捲動區：上下緣 24px 漸層淡出（內容捲到頂部列、輸入列底下時不會有硬切的分割感） */
+.chat-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}

@@ -9,7 +9,7 @@
   --bg-elevated: 242 242 247;
   --text-primary: 0 0 0;
   --text-secondary: 108 108 112;
-  --text-muted: 142 142 147;
+  --text-muted: 118 118 123; /* 第三層：在白色卡片上達 4.5:1，仍比次要文字淡一階 */
   --text-disabled: 199 199 204;
   --text-on-accent: #fff;
   --border-subtle: 198 198 200;

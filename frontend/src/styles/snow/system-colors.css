@@ -1,0 +1,42 @@
+/* Apple 系統色與文字專用色（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* Apple 系統色（淺色／深色各一組）：後台圖示、數字、狀態一律用這組，不用 Tailwind 的淡色 */
+:root {
+  --sys-red: #ff3b30;
+  --sys-orange: #ff9500;
+  --sys-yellow: #ffcc00;
+  --sys-green: #34c759;
+  --sys-teal: #30b0c7;
+  --sys-blue: #007aff;
+  --sys-purple: #af52de;
+}
+html.dark {
+  --sys-red: #ff453a;
+  --sys-orange: #ff9f0a;
+  --sys-yellow: #ffd60a;
+  --sys-green: #30d158;
+  --sys-teal: #40c8e0;
+  --sys-blue: #0a84ff;
+  --sys-purple: #bf5af2;
+}
+/* 系統色「當文字用」時（數字、狀態字、警示字）：淺色底上黃、橙、綠太淡看不見，
+ * 改用 Apple 為白底設計的加深版（Accessible 色）；深色外觀直接用原本的系統色。
+ * 圖示底色、進度條等非文字仍用 --sys-* */
+:root {
+  --ink-red: #d70015;
+  --ink-orange: #c93400;
+  --ink-yellow: #a05a00;
+  --ink-green: #248a3d;
+  --ink-teal: #0071a4;
+  --ink-blue: #0040dd;
+  --ink-purple: #8944ab;
+}
+html.dark {
+  --ink-red: var(--sys-red);
+  --ink-orange: var(--sys-orange);
+  --ink-yellow: var(--sys-yellow);
+  --ink-green: var(--sys-green);
+  --ink-teal: var(--sys-teal);
+  --ink-blue: var(--sys-blue);
+  --ink-purple: var(--sys-purple);
+}

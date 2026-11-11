@@ -11,7 +11,7 @@ import {
     Lock, MessageSquare, Mic, MoreHorizontal, Play, Reader, Share, Shield, ShieldCheck, User, UserRoundCog, Users, Cpu, Server,
 } from '@/components/snow/icons'
 
-import { resetOnboarding } from '@/components/onboarding/OnboardingTour'
+import { resetOnboarding } from '@/components/onboarding/onboardingFlag'
 import { useUIStore } from '@/store/uiStore'
 
 type Tone = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal'
@@ -82,7 +82,7 @@ export default function GuideSection() {
                 <div className="set-group guide-group">
                     {steps.map((step, i) => (
                         <div key={i} className="set-row has-icon !pl-[var(--sp-16)] !py-[var(--sp-16)]">
-                            <span className="set-icon !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--sys-blue)] text-[length:var(--fs-13)] font-bold tabular-nums">
+                            <span className="set-icon !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--ink-blue)] text-[length:var(--fs-13)] font-bold tabular-nums">
                                 {i + 1}
                             </span>
                             <span className="set-label text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary">{step}</span>

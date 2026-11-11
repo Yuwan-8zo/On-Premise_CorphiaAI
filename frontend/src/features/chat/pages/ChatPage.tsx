@@ -2,7 +2,8 @@ import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/
 import { parseServerDate } from '@/lib/utils'
 import { useEffect, useRef, useState } from 'react'
 
-import OnboardingTour, { isOnboardingDone } from '@/components/onboarding/OnboardingTour'
+import OnboardingTour from '@/components/onboarding/OnboardingTour'
+import { isOnboardingDone } from '@/components/onboarding/onboardingFlag'
 import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '@/features/chat/components'
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'

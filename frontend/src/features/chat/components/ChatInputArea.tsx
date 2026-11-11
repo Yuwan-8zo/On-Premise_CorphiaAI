@@ -95,7 +95,7 @@ export default function ChatInputArea({
                 className="chat-input-wrap shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
                 {!llmReady && (
-                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--sys-orange)] dark:text-[var(--sys-orange)] mb-2">
+                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--ink-orange)] dark:text-[var(--ink-orange)] mb-2">
                         {t('chat.llmWarming', 'AI 模型載入中，完成後即可對話…')}
                     </p>
                 )}

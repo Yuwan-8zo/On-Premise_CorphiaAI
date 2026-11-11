@@ -1,0 +1,126 @@
+/* 設定捲動淡出、提示詞模板面板、工具列（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* 設定內容捲動後：頂端淡出拉長到關閉鈕下緣（離頂 36＋高 36），內容不會滑到關閉鈕底下；沒捲動時不淡出，標題完整 */
+.settings-scroll.is-scrolled {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* 提示詞模板面板：外框 26、內距 10 → 裡面的搜尋框、類別膠囊、列都是同心的 16 */
+.prompt-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  height: var(--sz-40);
+  padding: 0 var(--sp-14);
+  border-radius: var(--r-9999);
+  background: var(--chip);
+}
+/* 類別工具列（GlassSegmented toolbar） */
+.prompt-cats {
+  margin: var(--sp-10) 0 var(--sp-2);
+}
+
+/* 浮動玻璃工具列：整條高 52（每格 44）；長按時只有放大鏡裡那一格顯示名稱，
+   等放大鏡長大（0.12 秒）後才讓圖示上移、文字淡入；放開立刻淡掉。整條不長高，其他格不顯示文字 */
+.seg-tools {
+  height: var(--sz-52);
+}
+.seg-tools .seg-ico {
+  display: flex;
+  transition: transform 0.2s var(--ease-out);
+}
+.seg-tools.is-wide .lens .seg-ico {
+  /* 圖示和文字都要落在上下兩條底面之間 */
+  transform: translateY(calc(var(--sp-7) * -1)) scale(0.9);
+  transition-delay: 0.12s;
+}
+.seg-lab {
+  position: absolute;
+  left: calc(var(--sp-6) * -1);
+  right: calc(var(--sp-6) * -1);
+  bottom: var(--sp-5);
+  font-size: var(--fs-11);
+  line-height: var(--lh-13);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.1s var(--ease-out);
+}
+.seg-tools.is-wide .lens .seg-lab {
+  opacity: 1;
+  transition: opacity 0.18s var(--ease-out) 0.14s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg-tools .seg-ico,
+  .seg-lab {
+    transition: none !important;
+  }
+}
+
+.prompt-group {
+  padding: var(--sp-12) var(--sp-10) var(--sp-4);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+}
+/* 模板列＝圖示方塊＋標題＋一行預覽；列圓角 16、內距 6 → 圖示圓角 10（同心） */
+.prompt-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  width: 100%;
+  padding: var(--sp-6);
+  border-radius: var(--r-16);
+  text-align: left;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+/* 分隔線從文字起點畫（內距 6＋圖示 32＋間距 12） */
+.prompt-item + .prompt-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--sp-50);
+  right: var(--sp-6);
+  height: var(--sz-0d5);
+  background: rgb(var(--border-subtle));
+}
+.prompt-item:active {
+  transform: scale(0.98);
+  background: var(--chip);
+}
+.prompt-item:focus {
+  outline: none;
+}
+.prompt-item:focus-visible {
+  background: var(--chip);
+}
+.prompt-item:focus-visible::before,
+.prompt-item:focus-visible + .prompt-item::before {
+  opacity: 0;
+}
+.prompt-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sz-32);
+  height: var(--sz-32);
+  border-radius: var(--r-10);
+  background: var(--chip);
+  color: rgb(var(--accent));
+}
+
+/* 使用說明的分組：分隔線從文字起點畫（左內距 16＋圖示 30＋間距 16） */
+.guide-group > .set-row + .set-row::before {
+  left: var(--sp-62);
+}
+
+/* 側欄（.glass-nav）的放大鏡：跟一般／專案切換器一樣，鏡片不補底色、兩端不壓暗，
+ * 直接透出後面的卡片，只留亮邊＋外圈細線 */
+.glass-nav .lens.is-active {
+  background: none;
+}

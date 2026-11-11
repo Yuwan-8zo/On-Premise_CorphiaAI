@@ -1,0 +1,57 @@
+/* 後台：搜尋欄、黏住的標題列、分頁內容區（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 後台 ----------
+ *   .admin-search      Apple 搜尋欄（高 40、圓角 20、小方塊底、左邊放大鏡）
+ *   .admin-sticky-bar  捲動時黏在上方的標題列：九成實色＋模糊 24（Apple 頂部列材質），下面的列不會透上來
+ *   .admin-page-enter  分頁內容區（換頁動畫用共用的 .page-in，見 motion.css） */
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  height: var(--sz-40);
+  padding: 0 var(--sp-14) 0 var(--sp-8);
+  border-radius: var(--r-20);
+  background: var(--chip);
+}
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: var(--fs-15);
+  color: rgb(var(--text-primary));
+}
+.admin-search input::placeholder {
+  color: rgb(var(--text-secondary));
+}
+.admin-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sz-28);
+  height: var(--sz-28);
+  border-radius: var(--r-9999);
+  color: rgb(var(--text-secondary));
+}
+.admin-sticky-bar {
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  -webkit-backdrop-filter: blur(var(--blur-24));
+  backdrop-filter: blur(var(--blur-24));
+}
+
+/* 選單拖曳選取時，手指底下那一項（和按下時同一個樣子） */
+.menu-item.is-pressed {
+  background: var(--chip);
+}
+/* 圖示的光學大小校正（Apple 選單做法）：四個常用圖示畫出來的寬度差很多（分享 11、垃圾桶 12、鉛筆 13.5、資料夾 16），
+ * 中心雖然對齊，看起來左緣不齊、大小不一。在選單、側欄、右上選單裡統一成視覺上約 14 寬 */
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Folder) {
+  transform: scale(0.88);
+}
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Share) {
+  transform: scale(1.12);
+}
+:is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Trash2) {
+  transform: scale(1.06);
+}

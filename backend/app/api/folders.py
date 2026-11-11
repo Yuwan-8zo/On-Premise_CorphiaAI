@@ -6,7 +6,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.folder import Folder
@@ -24,8 +24,7 @@ class FolderResponse(BaseModel):
     id: str
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("", response_model=list[FolderResponse])

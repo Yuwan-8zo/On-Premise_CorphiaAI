@@ -25,8 +25,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '個資命中',
         valueKey: 'pii_detected',
         icon: ShieldCheckIcon,
-        colorClass: 'text-[var(--sys-red)] bg-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]',
-        valueColor: 'text-[var(--sys-red)]',
+        colorClass: 'text-[var(--ink-red)] bg-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]',
+        valueColor: 'text-[var(--ink-red)]',
         borderAccent: 'border-[color-mix(in_srgb,var(--sys-red)_55%,transparent)]',
     },
     {
@@ -34,8 +34,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '注入攔截',
         valueKey: 'prompt_injection_blocked',
         icon: TriangleAlertIcon,
-        colorClass: 'text-[var(--sys-orange)] bg-[color-mix(in_srgb,var(--sys-orange)_20%,transparent)]',
-        valueColor: 'text-[var(--sys-orange)]',
+        colorClass: 'text-[var(--ink-orange)] bg-[color-mix(in_srgb,var(--sys-orange)_20%,transparent)]',
+        valueColor: 'text-[var(--ink-orange)]',
         borderAccent: 'border-[color-mix(in_srgb,var(--sys-orange)_55%,transparent)]',
     },
     {
@@ -43,8 +43,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: 'DLP 命中',
         valueKey: 'dlp_hit',
         icon: FileDescriptionIcon,
-        colorClass: 'text-[var(--sys-yellow)] bg-[color-mix(in_srgb,var(--sys-yellow)_20%,transparent)]',
-        valueColor: 'text-[var(--sys-yellow)]',
+        colorClass: 'text-[var(--ink-yellow)] bg-[color-mix(in_srgb,var(--sys-yellow)_20%,transparent)]',
+        valueColor: 'text-[var(--ink-yellow)]',
         borderAccent: 'border-[color-mix(in_srgb,var(--sys-yellow)_55%,transparent)]',
     },
     {
@@ -52,8 +52,8 @@ export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: st
         labelFallback: '登入失敗',
         valueKey: 'login_failed',
         icon: LockIcon,
-        colorClass: 'text-[var(--sys-blue)] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)]',
-        valueColor: 'text-[var(--sys-blue)]',
+        colorClass: 'text-[var(--ink-blue)] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)]',
+        valueColor: 'text-[var(--ink-blue)]',
         borderAccent: 'border-[color-mix(in_srgb,var(--sys-blue)_55%,transparent)]',
     },
 ]

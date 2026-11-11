@@ -1,0 +1,219 @@
+/* 放大鏡元件：挖洞與肩、分段切換器、開關、直向導覽（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ════════════════════════════════════════════════════════════════
+ * 凹進去的放大鏡（規範 CSS 35：分段切換器、側欄、切換開關共用；程式在 components/ui/lensKit.ts）
+ *   底（軌道／列）：顏色畫在裡面一層，放大鏡底下挖洞
+ *   .lens          放大鏡本身；平常只顯示最上層的 .lens-veil（凹陷底盤／白色旋鈕），作用中加 .is-active
+ *   .lens-ink      鏡內：縮小的底（.lens-bar）＋肩（.lens-wall），同一個容器、同一個顏色（--lens-ink-c × --lens-ink-a）
+ *   .lens-dish     亮邊，只在長邊兩緣
+ * 規則：鏡內和鏡外的底永遠同一個顏色；鏡片不補實色，只有 --lens-glass（底面亮 9%、兩端漸暗）
+ * ════════════════════════════════════════════════════════════════ */
+.lens {
+  pointer-events: none;
+  overflow: hidden;
+}
+.lens.is-active {
+  background: var(--lens-glass);
+  box-shadow: var(--lens-ring);
+}
+.lens-ink {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  opacity: var(--lens-ink-a);
+}
+.lens-bar {
+  position: absolute;
+  background: var(--lens-ink-c);
+}
+.lens-wall {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  -webkit-mask: var(--lens-wall-mask) center / 100% 100% no-repeat;
+  mask: var(--lens-wall-mask) center / 100% 100% no-repeat;
+}
+.lens-wall > i {
+  position: absolute;
+  inset: 0;
+  background: var(--lens-ink-c);
+  transition: opacity 0.1s linear;
+}
+.lens-wall > i.l {
+  clip-path: inset(0 50% 0 0);
+}
+.lens-wall > i.r {
+  clip-path: inset(0 0 0 50%);
+}
+/* 肩的一半：移到最邊的格子時淡掉，露出縮小軌道的圓頭 */
+.lens-shoulder {
+  transition: opacity 0.1s linear;
+}
+.lens-dish {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: var(--lens-dish);
+}
+.lens-veil {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* 直的放大鏡（規範「右下選單」）：兩端漸暗改成上下、亮邊在左右兩條長邊 */
+.lens.is-v.is-active {
+  background: var(--lens-glass-v);
+}
+.lens.is-v .lens-dish {
+  box-shadow: inset 1.1px 0 0.6px -0.3px var(--lens-edge), inset -1.1px 0 0.6px -0.3px var(--lens-edge);
+}
+/* 分段切換器：鏡內只用頁面上已經有的兩種顏色——
+ *   縮小的軌道＝和鏡外軌道同一個填色（--seg-fill，不透明度 1）；上下兩條底面＝直接透出軌道後面的顏色（不另外加亮、兩端不漸暗）
+ *   規範的「白 9%＋白 6.6%」只在軌道放在單色舞台上才會跟背景一致；放在玻璃卡片上會多出第三種顏色，所以改成直接用同色 */
+.seg-track .lens.is-active {
+  background: none;
+}
+/* 鏡內的底照規範的畫法：不透明的顏色＋容器透明度（縮小的軌道和肩疊在一起也不會變濃），數值＝軌道填色 */
+.seg-track {
+  --lens-ink-c: #fff !important;
+  --lens-ink-a: 0.15 !important; /* ＝ --glass-ctl 深色的白 15% */
+}
+html:not(.dark) .seg-track {
+  --lens-ink-c: #fff !important;
+  --lens-ink-a: 0.58 !important; /* ＝ --glass-ctl 淺色的白 58% */
+}
+html:not(.dark) .paper .seg-track {
+  --lens-ink-c: rgb(118, 118, 128) !important;
+  --lens-ink-a: 0.12 !important; /* ＝ --chip */
+}
+/* 軌道的背景模糊也搬到內層（.seg-blur），在鏡片底下一起挖洞：底面才會和軌道外面完全同色 */
+.seg-track {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.seg-blur {
+  inset: 0;
+  border-radius: var(--r-9999);
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(var(--blur-12));
+  backdrop-filter: blur(var(--blur-12));
+}
+/* 卡片本身已經是玻璃（有模糊）：卡片裡的軌道不再疊第二層模糊，軌道才是「卡片色＋填色」，和鏡內一致 */
+.paper .seg-blur {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* 分段切換器、側欄：平常的樣子＝凹陷底盤 */
+.seg-veil {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+}
+
+/* ---------- 分段切換器（規範 CSS 26／35）----------
+ * 軌道的玻璃分三層：背景模糊（軌道本身，不挖洞）、底色（.seg-bgf，挖洞）、光邊（.seg-rim，挖洞）
+ * 鏡內的底：深色＝白 6.6%（疊上鏡片的 9% 剛好等於軌道的 15%）；淺色＝軌道同色 */
+.seg-track {
+  --seg-fill: var(--glass-ctl);
+  --lens-ink-c: #fff;
+  --lens-ink-a: 0.066;
+}
+html:not(.dark) .paper .seg-track {
+  --seg-fill: var(--chip);
+}
+html:not(.dark) .seg-track {
+  --lens-ink-c: var(--seg-fill);
+  --lens-ink-a: 1;
+}
+.seg-bgf {
+  inset: 0;
+  pointer-events: none;
+}
+/* 底色畫在 ::before：有圓角又有底色的元素挖洞時，圓角的反鋸齒會在洞裡留下一道弧線 */
+.seg-bgf::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-9999);
+  background: var(--seg-fill);
+}
+/* 光邊四周多留 1px：光邊有半個像素畫在軌道外面，不多留會被挖洞的遮罩切掉 */
+.seg-rim {
+  inset: calc(var(--sp-1) * -1);
+  border-radius: var(--r-9999);
+  pointer-events: none;
+  --R: calc(23 * var(--ui-unit));
+}
+.seg-rim::before {
+  inset: var(--sp-1);
+}
+.seg-rim::after {
+  inset: var(--sp-0d5);
+}
+
+/* ---------- 玻璃切換開關（規範：玻璃切換開關、CSS 32／35）----------
+ * 軌道：開＝綠 #30D158、關＝主要文字色 20%；鏡外的軌道、鏡內縮小的軌道、肩全部同一種畫法、同一段 0.4 秒變色
+ * 平常的樣子＝白色旋鈕（.sw-veil）；作用中外圈 --lens-ring-knob */
+@property --sw-a {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.2;
+}
+.glass-switch {
+  --sw-solid: rgb(var(--text-primary));
+  --sw-a: 0.2;
+  --lens-ink-c: var(--sw-solid);
+  --lens-ink-a: var(--sw-a);
+  transition: --sw-a 0.4s linear;
+}
+.glass-switch.is-on {
+  --sw-solid: #30d158;
+  --sw-a: 1;
+}
+.glass-switch-track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-9999);
+  background-color: var(--sw-solid);
+  opacity: var(--sw-a);
+  transition: background-color 0.4s linear;
+}
+.glass-switch .lens-bar,
+.glass-switch .lens-wall > i {
+  transition: background-color 0.4s linear, opacity 0.1s linear;
+}
+.glass-switch .lens.is-active {
+  box-shadow: var(--lens-ring-knob);
+}
+.sw-veil {
+  background: #fff;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.14);
+}
+.glass-switch:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+/* ---------- 直向分段切換（GlassNav：側欄導覽）----------
+ * 橫膠囊直向滑動：列沒有軌道，鏡內不畫縮小的底，只有鏡片玻璃與強調色文字 */
+.glass-nav .is-current {
+  background: transparent;
+  box-shadow: none;
+}
+.nav-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+/* 小尺寸（後台側欄） */
+.nav-item.nav-item-sm {
+  gap: var(--sp-8);
+  padding: var(--sp-8) var(--sp-12);
+  font-size: var(--fs-13);
+  font-weight: 600;
+}

@@ -3,11 +3,10 @@
  *   密碼規則逐條打勾；強度分四級（弱／中／強／很強）
  */
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Check, Eye, EyeOff, X } from '@/components/snow/icons'
 import { authApi } from '@/api/auth'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import DialogShell from '@/components/ui/DialogShell'
 
 const SPECIAL = /[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/
 
@@ -96,89 +95,65 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
         setConfirm('')
     }
 
-    // 放到 body：設定內容區有進場動畫（transform），留在裡面的話 fixed 只會蓋住內容區
-    return createPortal(
-        <AnimatePresence>
-            {open && (
-                <motion.div
-                    key="pwd-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={resetAndClose}
-                    className="fixed inset-0 z-[60] bg-black/20 dark:bg-black/45 backdrop-blur-md"
-                />
-            )}
-            {open && (
-                <motion.div
-                    key="pwd-modal"
-                    initial={{ opacity: 0, scale: 0.95, y: 16 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 16 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
-                >
-                    <div className="relative w-full max-w-[var(--sz-460)] dialog-sheet flex flex-col pointer-events-auto">
-                        <button onClick={resetAndClose} aria-label={t('common.close', '關閉')} className="btn-icon dialog-close absolute text-text-secondary">
-                            <X className="w-5 h-5" />
-                        </button>
+    // 外殼共用 DialogShell（會放到 body，不受設定內容區的進場動畫影響）；疊在設定視窗上面，所以層級較高
+    return (
+        <DialogShell open={open} onClose={resetAndClose} layer="z-[60]" className="w-full max-w-[var(--sz-460)] flex flex-col">
+            <button onClick={resetAndClose} aria-label={t('common.close', '關閉')} className="btn-icon dialog-close absolute text-text-secondary">
+                <X className="w-5 h-5" />
+            </button>
 
-                        <h3 className="dialog-title text-center">{t('auth.changePassword', '修改密碼')}</h3>
+            <h3 className="dialog-title text-center">{t('auth.changePassword', '修改密碼')}</h3>
 
-                        <div className="set-group mt-5">
-                            <PwdRow label={t('settings.currentPassword')} value={current} onChange={(v) => { setCurrent(v); setError('') }} />
-                            <PwdRow label={t('settings.newPassword')} value={next} onChange={(v) => { setNext(v); setError(''); setSuccess('') }} />
-                            <PwdRow label={t('settings.confirmNewPassword')} value={confirm} onChange={(v) => { setConfirm(v); setError('') }} />
+            <div className="set-group mt-5">
+                <PwdRow label={t('settings.currentPassword')} value={current} onChange={(v) => { setCurrent(v); setError('') }} />
+                <PwdRow label={t('settings.newPassword')} value={next} onChange={(v) => { setNext(v); setError(''); setSuccess('') }} />
+                <PwdRow label={t('settings.confirmNewPassword')} value={confirm} onChange={(v) => { setConfirm(v); setError('') }} />
+            </div>
+
+            <div className="set-footer space-y-1.5">
+                {RULES.map(([key]) => {
+                    const passed = strength ? !strength.failed.includes(key) : null
+                    return (
+                        <div key={key} className={`flex items-center gap-1.5 ${passed === true ? SUCCESS : passed === false ? DANGER : ''}`}>
+                            {passed === true ? <Check className="w-3.5 h-3.5 shrink-0" /> : passed === false ? <X className="w-3.5 h-3.5 shrink-0" /> : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">·</span>}
+                            <span>{t(key)}</span>
                         </div>
-
-                        <div className="set-footer space-y-1.5">
-                            {RULES.map(([key]) => {
-                                const passed = strength ? !strength.failed.includes(key) : null
-                                return (
-                                    <div key={key} className={`flex items-center gap-1.5 ${passed === true ? SUCCESS : passed === false ? DANGER : ''}`}>
-                                        {passed === true ? <Check className="w-3.5 h-3.5 shrink-0" /> : passed === false ? <X className="w-3.5 h-3.5 shrink-0" /> : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">·</span>}
-                                        <span>{t(key)}</span>
-                                    </div>
-                                )
-                            })}
-                            {strength && (
-                                <div className="pt-2">
-                                    <div className="flex items-center mb-1">
-                                        <span>{t('settings.pwdStrengthLabel')}</span>
-                                        <span className="ml-auto font-semibold text-text-primary">{t(LEVEL_STYLE[strength.level].key)}</span>
-                                    </div>
-                                    <div className="h-1.5 bg-[var(--chip)] rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full transition-all duration-500 ${LEVEL_STYLE[strength.level].bar}`} style={{ width: `${strength.score}%` }} />
-                                    </div>
-                                </div>
-                            )}
-                            {confirm && next !== confirm && <p className={`pt-1 ${DANGER}`}>{t('settings.pwdMismatch')}</p>}
+                    )
+                })}
+                {strength && (
+                    <div className="pt-2">
+                        <div className="flex items-center mb-1">
+                            <span>{t('settings.pwdStrengthLabel')}</span>
+                            <span className="ml-auto font-semibold text-text-primary">{t(LEVEL_STYLE[strength.level].key)}</span>
                         </div>
-
-                        {(error || success) && (
-                            <div className={`mt-4 flex items-center gap-2 text-[length:var(--fs-13)] font-medium ${error ? DANGER : SUCCESS}`}>
-                                {error ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
-                                {error || success}
-                            </div>
-                        )}
-
-                        <div className="dialog-actions">
-                            <button onClick={resetAndClose} className="btn btn-lg btn-secondary">{t('common.cancel', '取消')}</button>
-                            <button onClick={submit} disabled={isSaving || !current || !next || !confirm} className="btn btn-lg btn-primary">
-                                {isSaving ? t('common.loading') : t('settings.pwdSubmit', '更改')}
-                            </button>
+                        <div className="h-1.5 bg-[var(--chip)] rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${LEVEL_STYLE[strength.level].bar}`} style={{ width: `${strength.score}%` }} />
                         </div>
                     </div>
-                </motion.div>
+                )}
+                {confirm && next !== confirm && <p className={`pt-1 ${DANGER}`}>{t('settings.pwdMismatch')}</p>}
+            </div>
+
+            {(error || success) && (
+                <div className={`mt-4 flex items-center gap-2 text-[length:var(--fs-13)] font-medium ${error ? DANGER : SUCCESS}`}>
+                    {error ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
+                    {error || success}
+                </div>
             )}
-        </AnimatePresence>,
-        document.body,
+
+            <div className="dialog-actions">
+                <button onClick={resetAndClose} className="btn btn-lg btn-secondary">{t('common.cancel', '取消')}</button>
+                <button onClick={submit} disabled={isSaving || !current || !next || !confirm} className="btn btn-lg btn-primary">
+                    {isSaving ? t('common.loading') : t('settings.pwdSubmit', '更改')}
+                </button>
+            </div>
+        </DialogShell>
     )
 }
 
 /** 密碼欄位（Apple 表單列：左標籤、右輸入、最右顯示／隱藏） */
 function PwdRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+    const { t } = useTranslation()
     const [visible, setVisible] = useState(false)
     return (
         <label className="set-row cursor-text">
@@ -195,7 +170,7 @@ function PwdRow({ label, value, onChange }: { label: string; value: string; onCh
                 <button
                     type="button"
                     tabIndex={-1}
-                    aria-label={visible ? '隱藏密碼' : '顯示密碼'}
+                    aria-label={visible ? t('common.hidePassword', '隱藏密碼') : t('common.showPassword', '顯示密碼')}
                     onClick={() => setVisible((v) => !v)}
                     className="flex-none text-text-secondary"
                 >

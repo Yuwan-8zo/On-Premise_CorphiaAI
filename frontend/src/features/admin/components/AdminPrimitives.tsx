@@ -9,10 +9,8 @@
  *   - Whitespace via padding, not via outer glow
  */
 
-import { parseServerDate } from '@/lib/utils'
-import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import DialogShell from '@/components/ui/DialogShell'
 
 // ---------------------------------------------------------------------------
 // Panel — flat surface card with hairline border.
@@ -153,34 +151,11 @@ export function ModalFrame({
     onClose: () => void
     maxWidth?: string
 }) {
-    return createPortal(
-        <AnimatePresence>
-            <motion.div
-                key="admin-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md"
-                onClick={onClose}
-            />
-            <motion.div
-                key="admin-modal"
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-            >
-                <div
-                    className={`relative w-full ${maxWidth} paper !rounded-[var(--r-32)] p-6 text-text-primary pointer-events-auto`}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {children}
-                </div>
-            </motion.div>
-        </AnimatePresence>,
-        document.body,
+    // 外殼（遮罩、置中、動畫、Esc）共用 DialogShell；後台視窗用卡片外觀
+    return (
+        <DialogShell open onClose={onClose} sheet={false} className={`w-full ${maxWidth} paper !rounded-[var(--r-32)] p-6 text-text-primary`}>
+            {children}
+        </DialogShell>
     )
 }
 
@@ -226,18 +201,3 @@ export const tableBodyClass = 'divide-y divide-border-subtle'
 
 export const tableEmptyCellClass = 'px-5 py-10 text-center text-text-secondary'
 
-// ---------------------------------------------------------------------------
-// formatDate — shared by Overview / Audit / Users sections.
-// Renders ISO timestamps as compact MM/DD am/pm HH:mm in zh-TW locale.
-// Returns '-' when value is falsy.
-// ---------------------------------------------------------------------------
-
-export function formatDate(value?: string): string {
-    if (!value) return '-'
-    return parseServerDate(value).toLocaleString('zh-TW', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    })
-}

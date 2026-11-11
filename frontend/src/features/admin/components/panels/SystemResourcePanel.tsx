@@ -8,24 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Cpu, HardDrive } from '@/components/snow/icons'
 
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
-import { usePolling } from '@/features/admin/hooks/usePolling'
-import { systemApi } from '@/api/system'
-
-/**
- * 對應 backend `_get_cpu_info()` 的回傳結構（`/system/health/detailed` 中的 `cpu` 區塊）
- * 後端目前把 CPU 跟 RAM 資訊都裝在同一個 `cpu` 物件裡，名稱用底線格式
- */
-interface CpuAndMemoryInfo {
-    cpu_percent: number
-    cpu_cores: number
-    memory_total_gb: number
-    memory_used_gb: number
-    memory_percent: number
-}
-
-interface DetailedHealthData {
-    cpu: CpuAndMemoryInfo
-}
+import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
 
 export interface SystemResourcePanelProps {
     className?: string
@@ -40,14 +23,7 @@ function getResourceColor(percent: number): string {
 export default function SystemResourcePanel({ className }: SystemResourcePanelProps) {
     const { t } = useTranslation()
 
-    const { data } = usePolling(
-        async () => {
-            const result = await systemApi.getHealthDetailed()
-            return result as DetailedHealthData
-        },
-        5000,
-        true,
-    )
+    const data = useHealthDetailed()
 
     const info = data?.cpu
 
@@ -60,14 +36,14 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
     const items = [
         {
             key: 'cpu',
-            icon: <Cpu className="h-3 w-3 text-[var(--sys-blue)]" />,
+            icon: <Cpu className="h-3 w-3 text-[var(--ink-blue)]" />,
             label: t('admin.overview.cpuUsage', 'CPU'),
             percent: cpuPercent,
             note: `${coreCount} ${coreCount === 1 ? 'core' : 'cores'}`,
         },
         {
             key: 'ram',
-            icon: <HardDrive className="h-3 w-3 text-[var(--sys-teal)]" />,
+            icon: <HardDrive className="h-3 w-3 text-[var(--ink-teal)]" />,
             label: t('admin.overview.ramUsage', '記憶體'),
             percent: memoryPercent,
             note: `${totalMemoryGb.toFixed(1)} GB total`,

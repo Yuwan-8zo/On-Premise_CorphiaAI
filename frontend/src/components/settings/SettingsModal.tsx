@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Book, ChevronLeft, ChevronRight, Globe, Info, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
-import { motion } from '@/lib/gsapMotion'
+import { usePageDirection } from '@/lib/usePageDirection'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import AboutSection from './AboutSection'
@@ -27,6 +27,9 @@ const PAGES: Record<SettingSection, () => React.ReactElement> = {
     guide: GuideSection,
     about: AboutSection,
 }
+/** 選單順序（換頁方向照這個順序） */
+const SECTION_ORDER: SettingSection[] = ['profile', 'appearance', 'language', 'guide', 'about']
+
 /** 使用說明、關於自己有 .set-page；其他分頁由外層包 */
 const PAGE_CLASS: Record<SettingSection, string> = {
     profile: 'set-page',
@@ -46,6 +49,9 @@ export default function SettingsModal() {
     const { isSettingsOpen, setSettingsOpen } = useUIStore()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
     const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu')
+    // 換頁方向：分頁照選單順序；手機上返回選單＝往回（進入內容一律往後，見 motion.css .settings-content）
+    const sectionDir = usePageDirection(SECTION_ORDER.indexOf(activeSection))
+    const mobileDir = usePageDirection(mobileView === 'menu' ? 0 : 1)
 
     /*
      * 開關動畫：延遲卸載
@@ -102,7 +108,7 @@ export default function SettingsModal() {
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
-                        <div className={`md:w-64 flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div key={`menu-${mobileView}`} data-dir={mobileDir} className={`settings-menu page-in md:w-64 flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
                             <div className="pl-[var(--sp-51)] pr-4 pt-[var(--sp-48)] pb-2">
                                 <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary tracking-wide">
@@ -152,15 +158,13 @@ export default function SettingsModal() {
                                     <ChevronLeft className="w-5 h-5" />
                                     {t('settings.title')}
                                 </button>
-                                <motion.div
-                                    key={activeSection}
-                                    className={PAGE_CLASS[activeSection]}
-                                    initial={{ opacity: 0, x: 14 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.42 }}
+                                <div
+                                    key={`${activeSection}-${mobileView}`}
+                                    data-dir={sectionDir}
+                                    className={`${PAGE_CLASS[activeSection]} settings-content page-in`}
                                 >
                                     <ActivePage />
-                                </motion.div>
+                                </div>
                             </div>
                         </div>
                     </div>

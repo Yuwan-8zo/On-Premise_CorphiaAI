@@ -38,31 +38,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 
-export const ONBOARDING_FLAG_KEY = 'corphia.onboarding.v1.done'
-
-export function isOnboardingDone(): boolean {
-    try {
-        return localStorage.getItem(ONBOARDING_FLAG_KEY) === '1'
-    } catch {
-        return true
-    }
-}
-
-export function markOnboardingDone() {
-    try {
-        localStorage.setItem(ONBOARDING_FLAG_KEY, '1')
-    } catch {
-        /* noop */
-    }
-}
-
-export function resetOnboarding() {
-    try {
-        localStorage.removeItem(ONBOARDING_FLAG_KEY)
-    } catch {
-        /* noop */
-    }
-}
+import { markOnboardingDone } from './onboardingFlag'
 
 interface TourStep {
     /** 對應 data-tour 屬性；undefined = 中央卡片（沒有 spotlight） */

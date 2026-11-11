@@ -7,22 +7,7 @@ import { Cpu, Zap } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
-import { usePolling } from '@/features/admin/hooks/usePolling'
-import { systemApi } from '@/api/system'
-
-interface LLMStats {
-    model_loaded: boolean
-    provider: string
-    model_path: string
-    throughput?: {
-        last_tokens_per_sec: number
-        total_generations: number
-    }
-}
-
-interface DetailedHealthData {
-    llm: LLMStats
-}
+import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
 
 export interface LLMHealthPanelProps {
     className?: string
@@ -33,14 +18,7 @@ export interface LLMHealthPanelProps {
 export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProps) {
     const { t } = useTranslation()
 
-    const { data } = usePolling(
-        async () => {
-            const result = await systemApi.getHealthDetailed()
-            return result as DetailedHealthData
-        },
-        5000,
-        true,
-    )
+    const data = useHealthDetailed()
 
     // 從 model_path 抽出檔名（去掉路徑）
     const getModelName = (path: string | undefined): string => {
@@ -74,7 +52,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
             <div className="flex-1 flex flex-col gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {/* 模型名稱 — 主要資訊 */}
                 <div className="flex items-center gap-[var(--sp-10)] p-[var(--sp-10)] rounded-[var(--admin-in)] bg-[var(--chip)]">
-                    <span className="flex h-[var(--sz-32)] w-[var(--sz-32)] shrink-0 items-center justify-center rounded-[var(--r-11)] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)] text-[var(--sys-blue)]">
+                    <span className="flex h-[var(--sz-32)] w-[var(--sz-32)] shrink-0 items-center justify-center rounded-[var(--r-11)] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)] text-[var(--ink-blue)]">
                         <Cpu className="h-[var(--sz-16)] w-[var(--sz-16)]" />
                     </span>
                     <div className="min-w-0">
@@ -92,7 +70,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                 <div className="grid flex-1 grid-cols-2 gap-[var(--space)]">
                     <div className="flex flex-col justify-center gap-[var(--sp-2)] px-[var(--sp-16)] py-[var(--sp-10)] rounded-[var(--admin-in)] bg-[var(--chip)]">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <Zap className="h-3 w-3 text-[var(--sys-orange)]" />
+                            <Zap className="h-3 w-3 text-[var(--ink-orange)]" />
                             <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                 {t('admin.overview.tokensPerSec', 'Tokens/秒')}
                             </p>
@@ -104,7 +82,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
 
                     <div className="flex flex-col justify-center gap-[var(--sp-2)] px-[var(--sp-16)] py-[var(--sp-10)] rounded-[var(--admin-in)] bg-[var(--chip)]">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <Cpu className="h-3 w-3 text-[var(--sys-purple)]" />
+                            <Cpu className="h-3 w-3 text-[var(--ink-purple)]" />
                             <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                 {t('admin.overview.totalGenerations', '推論次數')}
                             </p>

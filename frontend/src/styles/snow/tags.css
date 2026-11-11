@@ -1,0 +1,44 @@
+/* 標籤膠囊、提示泡泡、強調色實底（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 標籤膠囊（規範「標籤膠囊」）：高 24、圓角 12、12/16、不換行、平面無光邊 ----------
+ * 語意色＝「語意色 30% 的底＋主要文字色」（小字直接用語意色在深色底上對比不足）
+ *   .tag（一般：小方塊底）/ .tag-accent（強調）/ .tag-green（完成）/ .tag-orange（注意）/ .tag-red（警示） */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  height: var(--sz-24);
+  padding: 0 var(--sp-10);
+  border-radius: var(--r-12);
+  font-size: var(--fs-12);
+  line-height: var(--lh-16);
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--chip);
+  color: rgb(var(--text-primary));
+}
+.tag-accent { background: color-mix(in srgb, rgb(var(--accent)) 30%, transparent); }
+.tag-green { background: color-mix(in srgb, #30d158 30%, transparent); }
+.tag-orange { background: color-mix(in srgb, #ff9230 30%, transparent); }
+.tag-red { background: color-mix(in srgb, #ff4245 34%, transparent); }
+
+/* 提示泡泡進場：縮放滑入（規範：不用整體透明度淡入），0.2 秒減速 */
+@keyframes tipIn {
+  from { transform: scale(0.95) translateY(var(--sp-2)); }
+  to { transform: none; }
+}
+.snow-tip[role='tooltip'] {
+  animation: tipIn 0.2s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .snow-tip[role='tooltip'] { animation: none; }
+}
+
+/* 強調色實底＋白字（主要按鈕、新對話、送出、頭像）：強調色加深 18%，白字對比 ≥ 4.5（規範：文字對比至少 4.5:1）。
+ * 強調色本身（文字、圖示、選取）不變 */
+:root {
+  --accent-fill: color-mix(in srgb, rgb(var(--accent)) 82%, #000);
+}
+.bg-accent-fill {
+  background-color: var(--accent-fill) !important;
+}

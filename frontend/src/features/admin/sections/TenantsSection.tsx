@@ -98,7 +98,7 @@ export default function TenantsSection({
                                         </div>
                                     </div>
                                     {hasSecurityEvents && (
-                                        <div className="shrink-0 text-[var(--sys-red)]">
+                                        <div className="shrink-0 text-[var(--ink-red)]">
                                             <AlertTriangle className="h-4 w-4" />
                                         </div>
                                     )}
@@ -144,7 +144,7 @@ export default function TenantsSection({
                                         <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.events24h', '24h 事件')}
                                         </p>
-                                        <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-[var(--sys-red)]' : 'text-text-primary'}`}>
+                                        <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-[var(--ink-red)]' : 'text-text-primary'}`}>
                                             {usage?.security_events_24h ?? '--'}
                                         </p>
                                     </div>

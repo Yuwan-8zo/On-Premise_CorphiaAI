@@ -1,0 +1,251 @@
+/* 通知、選單列、側欄收合、骨架、拖曳上傳等細節（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 全域通知（規範 .toast）：頂端置中玻璃膠囊、沒有圖示與關閉鈕、不擋點擊 ---------- */
+.toast-stack {
+  position: fixed;
+  top: var(--sp-26);
+  left: 50%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-8);
+  transform: translateX(-50%);
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - var(--sz-32));
+}
+.toast-pill {
+  --R: calc(22 * var(--ui-unit));
+  border-radius: var(--r-9999);
+  padding: var(--sp-13) var(--sp-22);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  font-weight: 700;
+  text-align: center;
+  color: rgb(var(--text-primary));
+  animation: toastIn 0.23s var(--ease-out) both;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--sp-20) * -1)) scale(0.96);
+    filter: blur(var(--blur-8));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-pill {
+    animation: toastFade 0.2s linear both;
+  }
+  @keyframes toastFade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* 右上選單的放大鏡：和分段切換器（一般／專案）同一套——鏡片不另外補色（不然比較霧），
+   鏡內只用選單本身的填色（＝ --glass-ctl）。
+   但鏡片會凸出選單外、蓋到旁邊的模型按鈕，所以保留和選單外殼一樣的模糊（blur 12），底下的東西才會霧在鏡片下面 */
+.dock-lens.lens.is-active {
+  /* 要比 .lens.is-v.is-active（直向鏡片玻璃：白 9%＋上下暗邊）更優先，不然會被蓋回去而變霧 */
+  background: none;
+  -webkit-backdrop-filter: blur(var(--blur-12));
+  backdrop-filter: blur(var(--blur-12));
+}
+.dock-wrap {
+  --lens-ink-c: #fff;
+  --lens-ink-a: 0.15; /* ＝ --glass-ctl 深色的白 15% */
+}
+html:not(.dark) .dock-wrap {
+  --lens-ink-a: 0.58; /* ＝ --glass-ctl 淺色的白 58% */
+}
+.lens-wall > i.t {
+  clip-path: inset(0 0 50% 0);
+}
+.lens-wall > i.b {
+  clip-path: inset(50% 0 0 0);
+}
+
+/* 模型選單的一列（Apple 清單列）：標題 15 一般粗細；副標 13 次要字、純文字用「・」相連；目前選取＝凹陷底盤 */
+.model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-10) var(--sp-14);
+  border-radius: var(--r-16);
+  text-align: left;
+  transition: transform 0.17s var(--ease-out);
+}
+.model-row:active {
+  transform: scale(0.98);
+}
+.model-row.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+}
+.model-row-title {
+  font-size: var(--fs-15);
+  line-height: var(--lh-20);
+  font-weight: 500;
+  color: rgb(var(--text-primary));
+  word-break: break-all;
+}
+.model-row-sub {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  color: rgb(var(--text-secondary));
+}
+
+/* 側欄收到底換成直條時淡入（規範：舊內容淡出 0.2 秒） */
+.side-rail-in {
+  animation: sideRailIn 0.2s var(--ease-out) both;
+}
+@keyframes sideRailIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 通知退場：反向播放進場（淡出、往上 20px、縮到 0.96），0.23 秒 */
+.toast-pill.is-leaving {
+  animation: toastOut 0.23s var(--ease-out) both;
+}
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--sp-20) * -1)) scale(0.96);
+    filter: blur(var(--blur-6));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-pill.is-leaving {
+    animation: toastFadeOut 0.2s linear both;
+  }
+  @keyframes toastFadeOut {
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* 側欄收合：展開內容淡出 0.15 秒；展開：展開內容延後 0.15 秒淡入（外框變寬時不露出被切掉的文字） */
+.side-fade-out {
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out);
+}
+.side-wide-in {
+  animation: sideRailIn 0.2s var(--ease-out) 0.15s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-wide-in {
+    animation-delay: 0s;
+  }
+}
+
+/* 側欄變形：寬高、位置和外框同步過渡 0.3 秒（減速），不做淡入淡出 */
+.side-morph {
+  transition:
+    width 0.3s var(--ease-out),
+    height 0.3s var(--ease-out),
+    margin 0.3s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-morph {
+    transition: none;
+  }
+}
+
+
+/* 登入頁歡迎卡：清單列的分隔線從文字起點畫（左內距 18＋圖示 36＋間距 16） */
+ul.paper > .set-row.has-icon + .set-row::before {
+  left: var(--sp-70);
+}
+
+/* 背景波浪：主題色，深淺模式各自的透明度（見 WaveBackground.tsx） */
+.wave-bg path { fill: rgb(var(--accent)); opacity: var(--wl); transition: opacity var(--dur-fade), fill var(--dur-fade); }
+.dark .wave-bg path { opacity: 1; }
+.dark .wave-bg path:nth-child(1) { fill: rgb(var(--wave-d1)); }
+.dark .wave-bg path:nth-child(2) { fill: rgb(var(--wave-d2)); }
+.dark .wave-bg path:nth-child(3) { fill: rgb(var(--wave-d3)); }
+
+/* 卡片光邊跟著卡片配色：亮邊用卡片本身的品牌色調提亮（規範 CSS 12 公式），深色模式外側暗線改用品牌色最深一階，不用純黑 */
+.paper,
+.dialog-sheet {
+  --rimC: oklch(from var(--glass-card) min(0.97, calc(l + 0.35)) calc(c * (1.4 - l)) h);
+}
+html.dark {
+  --rim-out: rgb(var(--wave-d3, 0 0 0) / 0.85);
+}
+
+/* 來源文件：拖曳放入（整張卡片可放；拖曳中蓋一層提示） */
+.drop-hint {
+  position: absolute;
+  inset: var(--sp-8);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  border-radius: var(--r-29); /* 專案來源卡 37 − 內縮 8，同心 */
+  border: 2px dashed rgb(var(--accent) / 0.7);
+  background: color-mix(in srgb, var(--glass-card) 88%, rgb(var(--accent)));
+  color: rgb(var(--accent));
+  font-size: var(--fs-17);
+  line-height: var(--lh-22);
+  font-weight: 600;
+  pointer-events: none;
+  animation: fadeIn var(--dur-fade) var(--ease-out);
+}
+.drop-hint svg {
+  width: var(--sz-28);
+  height: var(--sz-28);
+}
+
+/* 骨架畫面（讀取中）：灰色預留方塊緩慢呼吸；「減少動態效果」時靜止（元件見 components/ui/Skeleton.tsx） */
+.skel {
+  display: block;
+  border-radius: var(--r-9999);
+  background: var(--chip);
+  animation: skelBreath 0.9s var(--ease-out) infinite alternate;
+}
+@keyframes skelBreath {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel { animation: none; }
+}
+
+/* 膠囊分組（只有一列，高 54、圓角 27）裡的圖示方塊：改成圓形（半徑 15），離左 12＝離上下 12，同心 */
+.set-group:has(> .set-row:only-child) .set-icon,
+.set-group:has(> button.set-row:only-child) .set-icon {
+  border-radius: var(--r-9999);
+}
+.set-group:has(> .set-row:only-child) > .set-row:has(> .set-icon:first-child),
+.set-group:has(> button.set-row:only-child) > button.set-row:has(> .set-icon:first-child) {
+  padding-left: var(--sp-12);
+}
+
+/* 骨架淡出層：真正內容掛上後，骨架蓋在最上面 0.42 秒淡出（不是瞬間消失），重整／登入不會閃 */
+.skel-fade-out {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  animation: skelFadeOut var(--dur-page) var(--ease-out) forwards;
+}
+@keyframes skelFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+/* 啟動畫面清單：分隔線從文字起點畫（左內距 12＋圖示 28＋間距 12） */
+.boot-list > .set-row + .set-row::before {
+  left: var(--sp-52);
+}

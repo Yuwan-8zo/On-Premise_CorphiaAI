@@ -1,0 +1,163 @@
+/* 聊天：側欄清單、對話表格、編輯訊息（由 snow.css 拆出；載入順序見 snow.css） */
+
+/* ---------- 聊天側欄清單（Apple 側欄：備忘錄／檔案）----------
+ *   .side-header  組名（13／18 半粗、次要字）
+ *   .side-item    一列（最小高 36、膠囊、14 字）；目前項目加 .is-current＝凹陷底盤＋強調色
+ *   .side-children    子項目縮排到和資料夾名稱對齊，不畫導引線 */
+.side-header {
+  display: block;
+  white-space: nowrap; /* 側欄寬度變化（收合／展開）途中不折成直排 */
+  overflow: hidden;
+  padding: 0 var(--sp-10);
+  margin: var(--sp-4) 0 var(--sp-6);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+}
+.side-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  width: 100%;
+  min-height: var(--sz-36);
+  padding: 0 var(--sp-6) 0 var(--sp-10);
+  border-radius: var(--r-9999);
+  text-align: left;
+  font-size: var(--fs-14);
+  line-height: var(--lh-20);
+  color: rgb(var(--text-primary));
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+}
+.side-item:active {
+  transform: scale(0.98);
+}
+.side-item.is-current {
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.side-item .side-icon {
+  flex: none;
+  width: var(--sz-18);
+  height: var(--sz-18);
+  color: rgb(var(--text-secondary));
+}
+.side-item.is-current .side-icon {
+  color: var(--accent-ink);
+}
+/* 子項目：文字起點對齊資料夾名稱（資料夾列內距 10＋圖示 18＋間距 8 ＝ 36；子項目自己有內距 10 → 縮排 26） */
+.side-children {
+  padding-left: var(--sp-26);
+  margin-top: var(--sp-2);
+}
+.side-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex: none;
+}
+
+/* 對話框右上角的關閉鈕：36 圓鈕，與對話框圓角同心（離上、右各＝對話框圓角 44 − 按鈕圓角 18 ＝ 26） */
+.dialog-close {
+  position: absolute;
+  top: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - var(--sp-18));
+  right: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - var(--sp-18));
+  width: var(--sz-36) !important;
+  height: var(--sz-36) !important;
+}
+/* 對話框標題的中線對齊關閉鈕的中線 */
+.dialog-sheet > .dialog-title:first-of-type {
+  min-height: var(--sz-36);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: calc(var(--btn-h-lg) / 2 + var(--dialog-pad) - var(--sp-18) - (var(--dialog-pad) + var(--sp-10)));
+}
+
+/* ---------- 對話裡的表格（Apple 分組清單樣式）----------
+ *   跟訊息氣泡同材質（玻璃＋模糊＋光邊、圓角 22）；表頭＝13／18 半粗次要字、不填底
+ *   列與列之間 0.5px 分隔線；第一欄是項目名稱（主要字、半粗、不換行）；其他欄 15／22 主要字
+ *   表格裡的粗體不加螢光底（螢光底只給內文） */
+/* 材質跟使用者訊息氣泡一樣（.glass-chip：玻璃底＋模糊 12＋光邊），圓角 22 */
+.md-table {
+  border-radius: var(--r-22);
+  --R: calc(22 * var(--ui-unit));
+}
+.md-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.md-table th,
+.md-table td {
+  padding: var(--sp-12) var(--sp-16);
+  text-align: left;
+  vertical-align: top;
+}
+.md-table th {
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+  white-space: nowrap;
+}
+.md-table td {
+  font-size: var(--fs-15);
+  line-height: var(--lh-22);
+  color: rgb(var(--text-primary));
+  border-top: 0.5px solid var(--paper-line);
+}
+.md-table td:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.markdown-body .md-table strong,
+html.dark .markdown-body .md-table strong {
+  background: none;
+  padding: 0;
+  color: inherit;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+/* ---------- 編輯訊息（iMessage 編輯）----------
+ *   整個氣泡＝玻璃輸入欄位（圓角 22）；文字 15.5／1.6；右下兩顆 30 小圓鈕，離邊 7（22 ＝ 15 ＋ 7，同心） */
+.msg-edit {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-8);
+  border-radius: var(--r-22);
+  --R: calc(22 * var(--ui-unit));
+  padding: var(--sp-7) var(--sp-7) var(--sp-7) var(--sp-18);
+}
+.msg-edit-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 40vh;
+  padding: var(--sp-5) 0;
+  overflow-y: auto;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-15d5);
+  line-height: 1.6;
+  color: rgb(var(--text-primary));
+}
+.msg-edit-actions {
+  display: flex;
+  flex: none;
+  gap: var(--sp-6);
+}
+.msg-edit-btn {
+  width: var(--sz-30) !important;
+  height: var(--sz-30) !important;
+}
+.md-table td:first-child *,
+.md-table th * {
+  white-space: nowrap !important;
+}

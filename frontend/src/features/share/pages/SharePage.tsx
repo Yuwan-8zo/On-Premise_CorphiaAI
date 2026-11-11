@@ -53,7 +53,7 @@ export default function Share() {
             }
         }
         fetchChat()
-    }, [conversationId, isAuthenticated])
+    }, [conversationId, isAuthenticated, t])
 
     if (!isAuthenticated) {
         return (

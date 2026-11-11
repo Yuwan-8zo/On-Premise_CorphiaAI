@@ -30,25 +30,25 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
             >
-                <MaterialIcon name="security" size={18} className="text-[var(--sys-orange)] dark:text-[var(--sys-orange)]" aria-hidden />
-                <span className="font-medium text-[var(--sys-orange)] dark:text-[var(--sys-orange)] flex-1">
+                <MaterialIcon name="security" size={18} className="text-[var(--ink-orange)] dark:text-[var(--ink-orange)]" aria-hidden />
+                <span className="font-medium text-[var(--ink-orange)] dark:text-[var(--ink-orange)] flex-1">
                     {message}
                 </span>
-                <ChevronDown className={`w-3 h-3 text-[var(--sys-orange)] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-[var(--ink-orange)] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
 
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-[var(--paper-line)] space-y-1">
                     {maskMap.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[length:var(--fs-11)]">
-                            <span className="px-1.5 py-0.5 rounded-[var(--r-6)] bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
+                            <span className="px-1.5 py-0.5 rounded-[var(--r-6)] bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--ink-orange)] dark:text-[var(--ink-orange)] tabular-nums">
                                 {item.label}
                             </span>
                             <span className="text-text-secondary tabular-nums">
                                 {item.original_preview}
                             </span>
                             <span className="text-text-muted">→</span>
-                            <span className="text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
+                            <span className="text-[var(--ink-orange)] dark:text-[var(--ink-orange)] tabular-nums">
                                 {item.masked}
                             </span>
                         </div>
@@ -82,13 +82,13 @@ const RISK_COLORS: Record<string, { border: string; bg: string; text: string; ic
     medium: {
         border: '',
         bg: '',
-        text: 'text-[var(--sys-orange)] dark:text-[var(--sys-orange)]',
+        text: 'text-[var(--ink-orange)] dark:text-[var(--ink-orange)]',
         icon: 'warning',
     },
     high: {
         border: '',
         bg: '',
-        text: 'text-[var(--sys-red)] dark:text-[var(--sys-red)]',
+        text: 'text-[var(--ink-red)] dark:text-[var(--ink-red)]',
         icon: 'crisis_alert',
     },
 }
