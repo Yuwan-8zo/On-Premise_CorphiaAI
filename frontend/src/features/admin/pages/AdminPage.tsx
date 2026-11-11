@@ -86,7 +86,7 @@ export default function Admin() {
             {/* 間距統一 12px（外圍四邊＝標題列到內容＝卡片之間）；根字級比 16 小，一律用 px */}
             <div className="relative z-10 mx-auto flex h-full max-w-[var(--sz-1500)] flex-col p-[var(--space)]">
                 {/* 頂端：返回、標題、連線狀態、目前使用者 */}
-                <header className="admin-head mb-[var(--space)] flex shrink-0 items-center gap-2 md:justify-between">
+                <header className="mb-[var(--space)] flex shrink-0 items-center gap-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}

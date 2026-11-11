@@ -2384,13 +2384,18 @@ html.dark {
 .fold-wide .admin-shell .admin-nav {
   padding-block: 0;
 }
+/* 總覽：放不下時整個等比例縮小到剛好一個畫面（--fit 由 useFitToHost 算），不捲動 */
+.fold-wide .admin-overview {
+  zoom: var(--fit, 1);
+}
 
 @media (display-mode: standalone) {
   /* 只在折疊手機橫拿（.fold-wide）時 */
   .fold-wide .chat-shell .chat-head {
     padding-right: calc(var(--duo-status) + var(--gutter));
   }
-  .fold-wide .admin-head {
-    padding-right: var(--duo-status); /* 後台外層已有一圈間距，這裡只補狀態列寬度，讓按鈕到狀態列的距離＝外圈間距 */
+  /* 後台：狀態列會往下蓋到第一排卡片，所以整頁右側讓出狀態列寬度（外層本來就有一圈間距） */
+  .fold-wide .admin-shell {
+    padding-right: var(--duo-status);
   }
 }
