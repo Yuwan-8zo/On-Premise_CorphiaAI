@@ -135,10 +135,17 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
 export const lensActive = (f: LensFrame) => f.grow > 0.001 || f.veil < 0.999
 
 /**
- * 在元素上挖一個膠囊形的洞（x, y, w, h＝洞在元素座標裡的位置與大小；橫的或直的膠囊都可以）。
+ * 接縫規則：洞一律比鏡片「內縮」HOLE_INSET（1px），讓鏡片蓋住洞的邊緣。
+ * 洞和鏡片一樣大時，兩邊的邊緣各只蓋到半個像素，中間會透出後面的顏色，變成一圈隱約的黑線。
+ */
+export const HOLE_INSET = 1
+
+/**
+ * 在元素上挖一個膠囊形的洞（x, y, w, h＝鏡片在元素座標裡的位置與大小；橫的或直的膠囊都可以），自動內縮 HOLE_INSET。
  * 照規範：整片減掉兩個圓＋中間長方形
  */
-export function capsuleHole(x: number, y: number, w: number, h: number): React.CSSProperties {
+export function capsuleHole(x0: number, y0: number, w0: number, h0: number): React.CSSProperties {
+    const x = x0 + HOLE_INSET, y = y0 + HOLE_INSET, w = Math.max(0, w0 - HOLE_INSET * 2), h = Math.max(0, h0 - HOLE_INSET * 2)
     const r = Math.min(h, w) / 2
     const vertical = h > w
     const [c1x, c1y, c2x, c2y] = vertical ? [x + w / 2, y + r, x + w / 2, y + h - r] : [x + r, y + h / 2, x + w - r, y + h / 2]
@@ -165,10 +172,12 @@ export function capsuleHole(x: number, y: number, w: number, h: number): React.C
 }
 
 /**
- * 在元素上挖一個圓角方形的洞（x, y, w, h＝洞的位置與大小，r＝圓角）：整片減掉四個角的圓＋橫、直兩塊長方形
+ * 在元素上挖一個圓角方形的洞（x, y, w, h＝鏡片的位置與大小，r＝鏡片圓角），自動內縮 HOLE_INSET（圓角同心縮小）。
+ * 整片減掉四個角的圓＋橫、直兩塊長方形
  */
-export function roundRectHole(x: number, y: number, w: number, h: number, r: number): React.CSSProperties {
-    const R = Math.min(r, w / 2, h / 2)
+export function roundRectHole(x0: number, y0: number, w0: number, h0: number, r0: number): React.CSSProperties {
+    const x = x0 + HOLE_INSET, y = y0 + HOLE_INSET, w = Math.max(0, w0 - HOLE_INSET * 2), h = Math.max(0, h0 - HOLE_INSET * 2)
+    const R = Math.min(r0 - HOLE_INSET, w / 2, h / 2)
     const circle = (cx: number, cy: number) => `radial-gradient(circle at ${cx}px ${cy}px, #000 ${R - 0.5}px, transparent ${R}px)`
     const layers = [
         'linear-gradient(#000 0 0)',
@@ -194,8 +203,9 @@ export function roundRectHole(x: number, y: number, w: number, h: number, r: num
 
 /**
  * 肩的遮罩（規範 JS：maskURI）。W、H＝放大鏡長大後的寬高；o＝放大鏡比底多出去的量；barH＝底的高度。
- * 底的上緣在鏡緣上的交點是 xr；底面從 xr 再往裡 2 開始，用圓弧從「底原本的上緣」彎到「縮小後的上緣」，
- * 兩端各留一塊（寬 zw）給肩，沿鏡緣另有一條往中間消失的細線
+ * 底的上緣在鏡緣上的交點是 xr；底面從 xr 再往裡 2 開始，用圓弧從「底原本的上緣」彎到「縮小後的上緣」，兩端各留一塊（寬 zw）給肩。
+ * 接縫規則：肩是單一形狀（整片減掉上下兩條底面），不另外畫沿鏡緣的細線、不疊漸層——
+ * 規範 maskURI 原本那條「往中間消失的細線」會和縮小的底交界，在底面兩端留下隱約的線（違反「鏡內不疊線」）
  */
 const maskCache = new Map<string, string>()
 /** vertical＝直的放大鏡：W、H 仍是「長邊、短邊」，畫好後整組轉 90 度，輸出寬 H、高 W 的遮罩；rad＝鏡片圓角（預設膠囊 H/2） */
@@ -209,23 +219,14 @@ export function shoulderMask(W: number, H: number, o: number, barH: number, vert
     const bandY = f(H / 2 - (barH * LENS_SY) / 2 + 0.2)
     const cs = f(xr + 2)
     const rx = f(bandY - o + 1.3)
-    const zw = f(cs + rx + 3)
     const [vw, vh] = vertical ? [H, W] : [W, H]
     const svg =
         `<svg xmlns='http://www.w3.org/2000/svg' width='${f(vw * 10)}' height='${f(vh * 10)}' viewBox='0 0 ${f(vw)} ${f(vh)}' preserveAspectRatio='none'>` +
-        `<defs><linearGradient id='k'><stop offset='0' stop-opacity='0'/><stop offset='.19' stop-opacity='0'/><stop offset='.42' stop-opacity='1'/><stop offset='.58' stop-opacity='1'/><stop offset='.81' stop-opacity='0'/><stop offset='1' stop-opacity='0'/></linearGradient>` +
-        `<clipPath id='c'><rect x='1.5' y='1.5' width='${f(W - 3)}' height='${f(H - 3)}' rx='${f(r - 1.5)}'/></clipPath>` +
-        `<mask id='m'><rect width='${f(W)}' height='${f(H)}' fill='#000'/>` +
-        `<rect x='0' y='0' width='${zw}' height='${f(H)}' fill='#fff'/><rect x='${f(W - zw)}' y='0' width='${zw}' height='${f(H)}' fill='#fff'/>` +
-        `<rect x='.75' y='.75' width='${f(W - 1.5)}' height='${f(H - 1.5)}' rx='${f(r - 0.75)}' fill='none' stroke='#fff' stroke-width='1.5'/>` +
-        `<g clip-path='url(#c)'><rect x='${cs}' y='-8' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}'/><rect x='${cs}' y='${f(H - bandY)}' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}'/></g>` +
-        `<rect x='0' y='0' width='${f(W)}' height='${bandY}' fill='url(#k)'/><rect x='0' y='${f(H - bandY)}' width='${f(W)}' height='${bandY}' fill='url(#k)'/>` +
+        `<defs><mask id='m'><rect width='${f(W)}' height='${f(H)}' fill='#fff'/>` +
+        `<rect x='${cs}' y='-8' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/><rect x='${cs}' y='${f(H - bandY)}' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/>` +
         `</mask></defs><g${vertical ? ` transform='translate(${f(H)} 0) rotate(90)'` : ''}><rect width='${f(W)}' height='${f(H)}' fill='#fff' mask='url(#m)'/></g></svg>`
     const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
     maskCache.set(key, url)
     return url
 }
 
-/** 切換開關的肩（規範 CSS 35 .sw-wall 原樣，68×44 的單位） */
-export const SWITCH_WALL_MASK =
-    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='680' height='440' viewBox='0 0 68 44' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='k'%3E%3Cstop offset='0' stop-opacity='0'/%3E%3Cstop offset='.19' stop-opacity='0'/%3E%3Cstop offset='.42' stop-opacity='1'/%3E%3Cstop offset='.58' stop-opacity='1'/%3E%3Cstop offset='.81' stop-opacity='0'/%3E%3Cstop offset='1' stop-opacity='0'/%3E%3C/linearGradient%3E%3CclipPath id='c'%3E%3Crect x='1.5' y='1.5' width='65' height='41' rx='20.5'/%3E%3C/clipPath%3E%3Cmask id='m'%3E%3Crect width='68' height='44' fill='%23000'/%3E%3Crect x='0' y='0' width='16' height='44' fill='%23fff'/%3E%3Crect x='52' y='0' width='16' height='44' fill='%23fff'/%3E%3Crect x='.75' y='.75' width='66.5' height='42.5' rx='21.25' fill='none' stroke='%23fff' stroke-width='1.5'/%3E%3Cg clip-path='url%28%23c%29'%3E%3Crect x='9.2' y='-6' width='49.6' height='15.75' rx='5'/%3E%3Crect x='9.2' y='34.25' width='49.6' height='15.75' rx='5'/%3E%3C/g%3E%3Crect x='0' y='0' width='68' height='9.5' fill='url%28%23k%29'/%3E%3Crect x='0' y='34.5' width='68' height='9.5' fill='url%28%23k%29'/%3E%3C/mask%3E%3C/defs%3E%3Crect width='68' height='44' fill='%23fff' mask='url%28%23m%29'/%3E%3C/svg%3E")`

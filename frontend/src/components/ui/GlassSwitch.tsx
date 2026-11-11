@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef } from 'react'
 import { Loader2 } from '@/components/snow/icons'
-import { LENS_SX, LENS_SY, SWITCH_WALL_MASK, capsuleHole, lensActive, useLensMotion } from './lensKit'
+import { LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -115,7 +115,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
                                 className="lens-bar"
                                 style={{ left: -L, top: -T, width: W, height: H, borderRadius: H / 2, transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`, transform: `scale(${sx}, ${sy})` }}
                             />
-                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: SWITCH_WALL_MASK }}>
+                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: shoulderMask(67 * s, 44 * s, 6 * s, H) /* 同一組公式：鏡片 67×44、比軌道凸出 6、軌道高 32 */ }}>
                                 <i className="l" style={{ opacity: shl }} />
                                 <i className="r" style={{ opacity: shr }} />
                             </span>

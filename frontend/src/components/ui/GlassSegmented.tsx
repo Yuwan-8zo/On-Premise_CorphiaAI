@@ -216,7 +216,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
             {/* 軌道的底色與光邊（放大鏡底下挖洞） */}
             <span aria-hidden="true" className="seg-blur absolute" style={active ? capsuleHole(L, T, lw, lh) : undefined} />
             <span aria-hidden="true" className="seg-bgf absolute" style={active ? capsuleHole(L, T, lw, lh) : undefined} />
-            <span aria-hidden="true" className="seg-rim absolute" style={{ ['--R' as string]: `${cross / 2}px`, ...(active ? capsuleHole(L + 1, T + 1, lw, lh) : {}) }} />
+            <span aria-hidden="true" className="seg-rim absolute" style={{ ['--R' as string]: `${cross / 2}px`, ...(active ? capsuleHole(L + 1, T + 1, lw, lh) /* 光邊這層四周多留 1px，座標跟著位移 */ : {}) }} />
 
             {/* 放大鏡（平常＝凹陷底盤） */}
             {ready && (
