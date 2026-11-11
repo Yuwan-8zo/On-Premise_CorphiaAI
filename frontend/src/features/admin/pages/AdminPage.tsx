@@ -77,8 +77,8 @@ export default function Admin() {
 
     return (
         <div
-            className="relative h-[100dvh] overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
-            style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+            className="edge-shell relative h-[100dvh] overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <WaveBackground />

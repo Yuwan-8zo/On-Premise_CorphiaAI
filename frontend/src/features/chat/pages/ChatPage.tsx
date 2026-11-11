@@ -43,7 +43,7 @@ export default function Chat() {
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
         // 與 LoginPage / Admin 同款：bg-bg-base + 三條弧線 SVG，sidebar / main 玻璃化
         <div
-            className="chat-shell flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
+            className="edge-shell chat-shell flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
             {/* 背景弧線 SVG —— 跟登入/Admin 同款 */}
@@ -268,7 +268,7 @@ export default function Chat() {
                             </div>
                         ) : (
                             // 聊天紀錄
-                            <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
+                            <div className="msg-col max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
                                 {mainProps.messages.map((message, index) => {
                                     const isLastAssistant =
                                         message.role === 'assistant' &&

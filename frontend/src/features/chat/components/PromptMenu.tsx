@@ -119,10 +119,11 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
     useLayoutEffect(() => {
         if (!isVisible) return
         const place = () => {
-            const r = btnRef.current?.getBoundingClientRect()
+            // 在輸入框裡時，以整個輸入框為準（左緣對齊、上方留 8）；輸入框尺寸會隨裝置變，所以用量的，不寫死內距
+            const anchor = (inline ? btnRef.current?.closest('.glass-field') : null) ?? btnRef.current
+            const r = anchor?.getBoundingClientRect()
             if (!r) return
-            const gap = inline ? 6 : 0
-            setPos({ left: r.left - gap, bottom: window.innerHeight - r.top + (inline ? 14 : 8) })
+            setPos({ left: r.left, bottom: window.innerHeight - r.top + 8 })
         }
         place()
         window.addEventListener('resize', place)
@@ -172,7 +173,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     disabled={disabled}
-                    className={`btn-icon ${inline ? '!w-[var(--sz-38)] !h-[var(--sz-38)] [--R:19px]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
+                    className={`btn-icon ${inline ? '!w-[var(--field-btn)] !h-[var(--field-btn)] [--R:calc(var(--field-btn)/2)]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
                         transition-[transform,background-color,border-color,color] duration-200 ease-apple
                         active:scale-90
                         ${isOpen
@@ -181,7 +182,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     aria-expanded={isOpen}
                 >
                     {/* 提示詞模板圖示（文件＋文字行） */}
-                    <Reader className="w-5 h-5 shrink-0" />
+                    <Reader className="w-[calc(1.25rem*var(--field-bk,1))] h-[calc(1.25rem*var(--field-bk,1))] shrink-0" />
                 </button>
             </Tooltip>
 

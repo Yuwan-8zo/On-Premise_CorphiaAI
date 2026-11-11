@@ -14,15 +14,15 @@ export const PlusIcon = () => (
 
 /** 發送按鈕（藍色圓形 + 向上箭頭） */
 export const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
-    <div className={`w-[var(--sz-38)] h-[var(--sz-38)] rounded-full flex items-center justify-center transition-[background-color,transform] duration-200 ${disabled ? 'bg-[var(--chip)] text-text-secondary' : 'bg-accent-fill text-text-on-accent'}`}>
-        <ArrowUp className="w-[var(--sz-18)] h-[var(--sz-18)]" />
+    <div className={`w-[var(--field-btn,var(--sz-38))] h-[var(--field-btn,var(--sz-38))] rounded-full flex items-center justify-center transition-[background-color,transform] duration-200 ${disabled ? 'bg-[var(--chip)] text-text-secondary' : 'bg-accent-fill text-text-on-accent'}`}>
+        <ArrowUp className="w-[calc(var(--sz-18)*var(--field-bk,1))] h-[calc(var(--sz-18)*var(--field-bk,1))]" />
     </div>
 )
 
 /** 停止生成按鈕（Apple 樣式：灰色毛玻璃圓＋實心方塊） */
 export const StopIcon = () => (
-    <div className="w-[var(--sz-38)] h-[var(--sz-38)] rounded-full bg-[var(--glass-ctl)] text-text-primary flex items-center justify-center transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <div className="w-[var(--field-btn,var(--sz-38))] h-[var(--field-btn,var(--sz-38))] rounded-full bg-[var(--glass-ctl)] text-text-primary flex items-center justify-center transition-colors">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-[calc(var(--sz-14)*var(--field-bk,1))] h-[calc(var(--sz-14)*var(--field-bk,1))]">
             <rect x="5" y="5" width="14" height="14" rx="3" />
         </svg>
     </div>
