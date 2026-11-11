@@ -27,7 +27,8 @@ export function Panel({
 }) {
     return (
         <section
-            className={`paper ${className}`}
+            // 後台所有卡片統一圓角 33；裡面的元件照同心公式（元件圓角＋離邊＝33）
+            className={`paper !rounded-[33px] ${className}`}
         >
             {children}
         </section>
@@ -49,7 +50,7 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 pl-[26px] pr-[21px] pt-[21px] pb-2 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 pl-[21px] pr-[16px] pt-[16px] pb-[12px] md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
                 <h2 className="truncate text-[17px] leading-[22px] font-semibold text-text-primary">

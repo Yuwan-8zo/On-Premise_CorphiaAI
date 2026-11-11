@@ -32,17 +32,17 @@ interface RAGDebugPanelProps {
 
 /** 相似度分數的色彩對應 */
 function scoreColor(score: number): string {
-    if (score >= 0.8) return 'text-green-500'
-    if (score >= 0.6) return 'text-yellow-500'
-    if (score >= 0.4) return 'text-orange-500'
-    return 'text-red-500'
+    if (score >= 0.8) return 'text-[var(--sys-green)]'
+    if (score >= 0.6) return 'text-[var(--sys-yellow)]'
+    if (score >= 0.4) return 'text-[var(--sys-orange)]'
+    return 'text-[var(--sys-red)]'
 }
 
 function scoreBg(score: number): string {
-    if (score >= 0.8) return 'bg-green-500/10 border-green-500/20'
-    if (score >= 0.6) return 'bg-yellow-500/10 border-yellow-500/20'
-    if (score >= 0.4) return 'bg-orange-500/10 border-orange-500/20'
-    return 'bg-red-500/10 border-red-500/20'
+    if (score >= 0.8) return 'bg-[color-mix(in_srgb,var(--sys-green)_10%,transparent)] border-[color-mix(in_srgb,var(--sys-green)_20%,transparent)]'
+    if (score >= 0.6) return 'bg-[color-mix(in_srgb,var(--sys-yellow)_10%,transparent)] border-[color-mix(in_srgb,var(--sys-yellow)_20%,transparent)]'
+    if (score >= 0.4) return 'bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)] border-[color-mix(in_srgb,var(--sys-orange)_20%,transparent)]'
+    return 'bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]'
 }
 
 /** 路由決策的中文（icon 為 Material Symbols 名稱） */

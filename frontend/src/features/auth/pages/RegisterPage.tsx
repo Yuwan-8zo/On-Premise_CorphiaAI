@@ -125,7 +125,7 @@ export default function Register() {
 
                     {/* 錯誤訊息 */}
                     {error && (
-                        <div className="mb-6 p-3 glass-chip rounded-[14px] text-red-300 text-sm text-center">
+                        <div className="mb-6 p-3 glass-chip rounded-[14px] text-[var(--sys-red)] text-sm text-center">
                             {error}
                         </div>
                     )}

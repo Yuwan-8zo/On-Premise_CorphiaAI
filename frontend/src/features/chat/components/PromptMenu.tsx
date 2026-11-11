@@ -1,6 +1,5 @@
-import LensMenu from '@/components/ui/LensMenu'
-import { Reader } from '@/components/snow/icons'
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { Reader, Search } from '@/components/snow/icons'
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
@@ -8,6 +7,12 @@ import Tooltip from '@/components/ui/Tooltip'
 interface PromptTemplate {
     title: string
     prompt: string
+}
+
+interface PromptCategory {
+    id: string
+    name: string
+    items: PromptTemplate[]
 }
 
 interface PromptMenuProps {
@@ -38,8 +43,33 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
     const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null)
     const { t } = useTranslation()
 
-    // 從 i18n 取出 templates 陣列
-    const templates = t('chat.promptTemplates', { returnObjects: true }) as PromptTemplate[]
+    // 從 i18n 取出分類好的模板庫
+    const library = t('chat.promptLibrary', { returnObjects: true }) as PromptCategory[]
+    const [query, setQuery] = useState('')
+    const [cat, setCat] = useState<string>('all')
+    const searchRef = useRef<HTMLInputElement>(null)
+
+    // 依類別與搜尋字過濾（搜尋同時比對標題、內容與類別名；搜尋時不分類別）
+    const groups = useMemo(() => {
+        if (!Array.isArray(library)) return []
+        const q = query.trim().toLowerCase()
+        return library
+            .filter((c) => q || cat === 'all' || c.id === cat)
+            .map((c) => ({
+                ...c,
+                items: q ? c.items.filter((it) => (it.title + it.prompt + c.name).toLowerCase().includes(q)) : c.items,
+            }))
+            .filter((c) => c.items.length > 0)
+    }, [library, query, cat])
+
+    // 打開時清空搜尋、聚焦搜尋框
+    useEffect(() => {
+        if (isOpen) {
+            setQuery('')
+            const id = window.setTimeout(() => searchRef.current?.focus(), 60)
+            return () => window.clearTimeout(id)
+        }
+    }, [isOpen])
 
     // 進/退場動畫排程
     useEffect(() => {
@@ -88,13 +118,13 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
     }, [isVisible, inline])
 
     // 如果沒有設定模板或格式不對，不顯示按鈕
-    if (!Array.isArray(templates) || templates.length === 0) {
+    if (!Array.isArray(library) || library.length === 0) {
         return null
     }
 
     return (
         <div className="relative flex items-center" ref={menuRef}>
-            <Tooltip label={isOpen ? '' : (t('chat.promptTemplatesTitle') || '提示詞模版')}>
+            <Tooltip label={isOpen ? '' : t('chat.promptTemplatesTitle')}>
                 <button
                     ref={btnRef}
                     type="button"
@@ -113,40 +143,85 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                 </button>
             </Tooltip>
 
-            {/* 下拉選單：portal 到 body，毛玻璃才會模糊到後面的頁面。
-                外框圓角 22、內距 6 → 項目圓角 16（同心）；懸停不變色 */}
+            {/* 模板面板：portal 到 body（毛玻璃才模糊得到後面）
+                外框圓角 26、內距 10 → 搜尋框、類別膠囊、列都是同心的 16（26 − 10）；懸停不變色
+                結構：標題 → 搜尋框 → 類別膠囊（可橫向捲動）→ 依類別分組的模板清單（標題＋一行預覽） */}
             {isVisible && pos && createPortal(
                 <div
                     ref={popRef}
-                    className="fixed w-52 sm:w-60 paper !rounded-[22px] p-[6px] transform-gpu z-[60] origin-bottom-left"
+                    role="dialog"
+                    aria-label={t('chat.promptTemplatesTitle')}
+                    className="prompt-panel fixed w-[min(380px,calc(100vw-24px))] paper !rounded-[26px] p-[10px] transform-gpu z-[60] origin-bottom-left flex flex-col"
                     style={{
                         left: pos.left,
                         bottom: pos.bottom,
+                        maxHeight: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
                         opacity: isAnimating ? 1 : 0,
                         transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
                         transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
                 >
-                    <LensMenu className="">
-                    <div className="flex flex-col">
-                        <div className="px-3 pt-2 pb-1.5 text-[12px] font-semibold text-text-muted tracking-wider">
-                            {t('chat.promptTemplatesTitle') || '提示詞模版'}
+                    <div className="shrink-0 px-[10px] pt-[6px] pb-[10px] text-[17px] leading-[22px] font-semibold text-text-primary">
+                        {t('chat.promptTemplatesTitle')}
+                    </div>
+
+                    {/* 搜尋框 */}
+                    <label className="prompt-search shrink-0">
+                        <Search className="h-[16px] w-[16px] shrink-0 text-text-muted" />
+                        <input
+                            ref={searchRef}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t('chat.promptSearch')}
+                            className="min-w-0 flex-1 bg-transparent text-[15px] leading-[20px] text-text-primary outline-none placeholder:text-text-muted"
+                        />
+                    </label>
+
+                    {/* 類別膠囊：搜尋時隱藏 */}
+                    {!query.trim() && (
+                        <div className="prompt-cats shrink-0" role="tablist">
+                            {[{ id: 'all', name: t('chat.promptAll') }, ...library.map((c) => ({ id: c.id, name: c.name }))].map((c) => (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={cat === c.id}
+                                    onClick={() => setCat(c.id)}
+                                    className={`prompt-cat ${cat === c.id ? 'is-current' : ''}`}
+                                >
+                                    {c.name}
+                                </button>
+                            ))}
                         </div>
-                        {templates.map((item, index) => (
-                            <button
-                                key={index}
-                                onClick={() => {
-                                    onSelect(item.prompt)
-                                    setIsOpen(false)
-                                }}
-                                className="menu-item"
-                            >
-                                {item.title}
-                            </button>
+                    )}
+
+                    {/* 模板清單 */}
+                    <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none">
+                        {groups.length === 0 && (
+                            <p className="px-[10px] py-[24px] text-center text-[15px] leading-[20px] text-text-muted">{t('chat.promptEmpty')}</p>
+                        )}
+                        {groups.map((g) => (
+                            <div key={g.id}>
+                                {(cat === 'all' || query.trim()) && <div className="prompt-group">{g.name}</div>}
+                                {g.items.map((item) => (
+                                    <button
+                                        key={g.id + item.title}
+                                        type="button"
+                                        onClick={() => {
+                                            onSelect(item.prompt)
+                                            setIsOpen(false)
+                                        }}
+                                        className="prompt-item"
+                                    >
+                                        <span className="block truncate text-[15px] leading-[20px] font-semibold text-text-primary">{item.title}</span>
+                                        <span className="block truncate text-[13px] leading-[18px] text-text-secondary">{item.prompt.trim()}</span>
+                                    </button>
+                                ))}
+                            </div>
                         ))}
                     </div>
-                    </LensMenu>
                 </div>,
                 document.body,
             )}

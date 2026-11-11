@@ -259,8 +259,8 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
             {/* 錄音指示燈 + 計時 */}
             <div className="flex items-center gap-2 shrink-0">
                 <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--sys-red)] opacity-75 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--sys-red)]" />
                 </span>
                 <span className="text-[14px] tabular-nums text-text-primary min-w-[44px]">
                     {formatDuration(elapsedMs)}

@@ -30,8 +30,8 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
         : t('admin.lan.disabled', '已關閉')
 
     return (
-        <div className="pt-3">
-            <div className="rounded-[18.5px] border border-transparent bg-[var(--chip)] p-2 shrink-0">
+        <div className="pt-[12px]">
+            <div className="rounded-[21px] border border-transparent bg-[var(--chip)] p-[9.5px] shrink-0">
                 <div className="flex items-start gap-1.5">
                     <SidebarIconBadge>
                         <ItshoverIcon icon={enabled ? GlobeIcon : LockIcon} size={12} />

@@ -556,7 +556,7 @@ export default function Login() {
                                                 exit={{ opacity: 0, scale: 0.95, height: 0, marginTop: 0 }}
                                                 className="w-full text-center overflow-hidden"
                                             >
-                                                <div className="inline-flex items-center gap-2 justify-center px-4 py-2 glass-chip text-red-600 dark:text-red-400 rounded-full text-sm font-medium transition-colors">
+                                                <div className="inline-flex items-center gap-2 justify-center px-4 py-2 glass-chip text-[var(--sys-red)] dark:text-[var(--sys-red)] rounded-full text-sm font-medium transition-colors">
                                                     <AlertTriangle className="w-4 h-4 shrink-0" />
                                                     <span>{error}</span>
                                                 </div>

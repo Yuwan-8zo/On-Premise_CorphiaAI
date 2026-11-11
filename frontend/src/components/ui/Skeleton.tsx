@@ -188,22 +188,6 @@ function SkelLogin() {
     )
 }
 
-/** 文件頁：頂列（返回鈕＋標題＋右側圓鈕）、上傳區、檔案清單 */
-function SkelDocuments() {
-    return (
-        <div className="flex h-full w-full flex-col">
-            <div className="flex h-[80px] items-center justify-between px-8">
-                <div className="flex items-center gap-3"><Skel className="h-[36px] w-[36px] !rounded-full" /><Skel className="h-[22px] w-[60px]" /></div>
-                <Skel className="h-[36px] w-[36px] !rounded-full" />
-            </div>
-            <div className="mx-auto flex w-full max-w-[760px] flex-col gap-6 px-4 pt-4">
-                <SkelPanel className="h-[180px]" />
-                <SkelPanel><SkelRows count={6} /></SkelPanel>
-            </div>
-        </div>
-    )
-}
-
 /*
  * 管理後台骨架（總覽頁）：外層沿用 AdminPage／OverviewSection 的寫法
  *   頂列：返回鈕 34、標題 16／22 號字、右側兩顆狀態膠囊（12 號字）
@@ -288,7 +272,6 @@ function SkelAdmin() {
 export function SkelPage() {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/'
     const view = path.startsWith('/login') || path.startsWith('/register') ? <SkelLogin />
-        : path.startsWith('/documents') ? <SkelDocuments />
         : path.startsWith('/admin') ? <SkelAdmin />
         : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
         : path === '/' || path.startsWith('/chat') ? <SkelChat />

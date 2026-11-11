@@ -205,8 +205,6 @@ export const useUIStore = create<UIState>()(
                 language: state.language,
                 accentColor: state.accentColor,
                 sidebarWidth: state.sidebarWidth,
-                ragDebugMode: state.ragDebugMode,
-                demoMode: state.demoMode,
             }),
         }
     )

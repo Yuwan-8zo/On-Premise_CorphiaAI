@@ -16,6 +16,7 @@ import { Check, X } from '@/components/snow/icons'
 import { useEffect, useRef, useState } from 'react'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SkelPage } from '@/components/ui/Skeleton'
+import WaveBackground from '@/components/ui/WaveBackground'
 
 type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
@@ -117,24 +118,22 @@ function fmtSec(row: Row, now: number): string {
     return s >= 60 ? `${Math.floor(s / 60)} 分 ${s % 60} 秒` : `${s} 秒`
 }
 
+/** 狀態圖示：28 的圓形（Apple 清單列的圖示底），讀取中不轉圈、用強調色圓點呼吸 */
 function StateIcon({ state }: { state: StepState }) {
-    if (state === 'running') {
-        return <div className="h-4 w-4 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
-    }
-    if (state === 'done') {
-        return (
-            <Check className="h-4 w-4 text-emerald-500" />
-        )
-    }
-    if (state === 'error') {
-        return (
-            <X className="h-4 w-4 text-red-500" />
-        )
-    }
-    if (state === 'skipped') {
-        return <div className="h-0.5 w-3 rounded bg-text-muted/50" />
-    }
-    return <div className="h-2 w-2 rounded-full bg-text-muted/40" />
+    const tone =
+        state === 'done' ? 'bg-[#30d158]/15 text-[#30d158]'
+        : state === 'error' ? 'bg-[#ff4245]/15 text-[#ff4245]'
+        : state === 'running' ? 'bg-accent/15 text-accent'
+        : 'bg-[var(--chip)] text-text-muted'
+    return (
+        <span className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full ${tone}`}>
+            {state === 'done' && <Check className="h-[14px] w-[14px]" />}
+            {state === 'error' && <X className="h-[14px] w-[14px]" />}
+            {state === 'running' && <span className="skel h-[10px] w-[10px] !rounded-full !bg-current" />}
+            {state === 'skipped' && <span className="h-[2px] w-[10px] rounded-full bg-current" />}
+            {state === 'pending' && <span className="h-[6px] w-[6px] rounded-full bg-current opacity-60" />}
+        </span>
+    )
 }
 
 const STATE_TEXT: Record<StepState, string> = {
@@ -249,53 +248,50 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const doneCount = rows.filter((r) => r.state === 'done' || r.state === 'skipped').length
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-bg-base">
-            <div
-                className="absolute inset-0 pointer-events-none opacity-50"
-                style={{ background: 'radial-gradient(ellipse 800px 400px at 50% 20%, rgba(180, 148, 102, 0.08), transparent 70%)' }}
-            />
+        <div className="fixed inset-0 z-[10000] flex justify-center overflow-y-auto bg-bg-base">
+            {/* 背景：系統的波浪圖（同登入、聊天頁） */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
 
-            <div className="relative z-10 w-full max-w-xl px-6 py-10">
-                <div className="mb-6 flex items-center gap-4">
-                    {/* 向量標誌：C 跟文字色、星星跟系統強調色 */}
-                    <CorphiaLogo className="h-12 w-12 select-none text-text-primary" />
-                    <div className="flex-1">
-                        <h1 className="text-xl font-semibold tracking-tight text-text-primary">Corphia AI 啟動中</h1>
-                        <p className="text-sm text-text-muted">
+            <div className="relative z-10 my-auto w-full max-w-[560px] px-6 py-8 admin-page-enter">
+                {/* 標題：品牌圖示＋Title2 22／28 粗體＋Subheadline 15／20 次要字 */}
+                <div className="mb-[20px] flex items-center gap-4 px-[12px]">
+                    <CorphiaLogo className="h-[44px] w-[44px] shrink-0 select-none text-text-primary" />
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-[22px] leading-[28px] font-bold text-text-primary">Corphia AI 啟動中</h1>
+                        <p className="mt-0.5 text-[15px] leading-[20px] text-text-secondary tabular-nums">
                             {allReady ? '全部就緒，正在進入系統…' : `已完成 ${doneCount} / ${rows.length} 項・已經過 ${totalSec >= 60 ? `${Math.floor(totalSec / 60)} 分 ${totalSec % 60} 秒` : `${totalSec} 秒`}`}
                         </p>
                     </div>
                 </div>
 
-                <ul className="divide-y divide-[var(--paper-line)] overflow-hidden rounded-[20px] snow-well">
+                {/* 清單：Liquid Glass 卡（圓角 26＝狀態圖示 14＋離邊 12，同心）；列 15／20＋13／18，每列 52 高 */}
+                <ul className="boot-list paper !rounded-[26px] overflow-hidden">
                     {rows.map((r) => (
-                        <li key={r.key} className="flex items-center gap-3 px-4 py-3">
-                            <div className="flex w-5 justify-center">
-                                <StateIcon state={r.state} />
-                            </div>
+                        <li key={r.key} className="set-row !min-h-0 !gap-[12px] !px-[12px] !py-[8px]">
+                            <StateIcon state={r.state} />
                             <div className="min-w-0 flex-1">
-                                <p className={`text-sm font-medium ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
-                                {r.detail && <p className={`truncate text-xs ${r.state === 'error' ? 'text-red-500' : 'text-text-muted'}`}>{r.detail}</p>}
+                                <p className={`text-[15px] leading-[20px] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
+                                {r.detail && <p className={`truncate text-[13px] leading-[18px] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
                             </div>
                             <div className="shrink-0 text-right">
-                                <p className={`text-xs font-medium ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-emerald-500' : r.state === 'error' ? 'text-red-500' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
-                                <p className="text-[11px] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
+                                <p className={`text-[13px] leading-[18px] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[#30d158]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
+                                <p className="text-[12px] leading-[16px] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
                             </div>
                         </li>
                     ))}
                 </ul>
 
                 {(launcherError || launcherStale || stopped) && (
-                    <div className="mt-4 rounded-[14px] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-text-primary">
-                        <p className="font-medium">
+                    <div className="paper !rounded-[26px] mt-4 px-[20px] py-[14px]">
+                        <p className="text-[15px] leading-[20px] font-semibold text-[var(--danger-ink)]">
                             {stopped ? '系統目前是關閉狀態' : launcherError ? '啟動過程發生錯誤' : '啟動程式沒有回應'}
                         </p>
-                        {launcherError && launcher?.message && <p className="mt-1 break-words text-xs text-text-secondary">{launcher.message}</p>}
-                        <p className="mt-1 text-xs text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
+                        {launcherError && launcher?.message && <p className="mt-1 break-words text-[13px] leading-[18px] text-text-secondary">{launcher.message}</p>}
+                        <p className="mt-1 text-[13px] leading-[18px] text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
                     </div>
                 )}
 
-                <p className="mt-6 text-center text-[11px] text-text-muted/70">地端部署 · 所有回答都由本機 AI 產生 · 資料 100% 留在本機</p>
+                <p className="mt-[20px] text-center text-[12px] leading-[16px] text-text-muted">地端部署・所有回答都由本機 AI 產生・資料 100% 留在本機</p>
             </div>
         </div>
     )

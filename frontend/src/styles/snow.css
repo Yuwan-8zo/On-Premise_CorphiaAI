@@ -1200,14 +1200,14 @@ html:not(.dark) .seg-track {
   margin-top: 0;
 }
 .set-header {
-  padding: 0 16px 8px;
+  padding: 0 20px 8px; /* 跟列裡的文字左對齊 */
   font-size: 13px;
   line-height: 18px;
   font-weight: 600;
   color: rgb(var(--text-secondary));
 }
 .set-footer {
-  padding: 8px 16px 0;
+  padding: 8px 20px 0;
   font-size: 12px;
   line-height: 16px;
   color: rgb(var(--text-secondary));
@@ -1230,8 +1230,8 @@ html:not(.dark) .seg-track {
   gap: 16px;
   width: 100%;
   min-height: 44px;
-  /* 左 20：分組卡圓角 32，文字離圓角遠一點；右 16：開關／箭頭跟卡片角同心（16＋16＝32） */
-  padding: 10px 16px 10px 20px;
+  /* 依視覺：左右都 20（右側的值、筆、標籤、開關對齊同一條線），上下 12（多行說明不擠） */
+  padding: 12px 20px;
   text-align: left;
   font-size: 15px;
   line-height: 20px;
@@ -1954,7 +1954,7 @@ html.dark {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 17px; /* 卡片 25 − 內縮 8，同心 */
+  border-radius: 29px; /* 專案來源卡 37 − 內縮 8，同心 */
   border: 2px dashed rgb(var(--accent) / 0.7);
   background: color-mix(in srgb, var(--glass-card) 88%, rgb(var(--accent)));
   color: rgb(var(--accent));
@@ -1984,14 +1984,14 @@ html.dark {
   .skel { animation: none; }
 }
 
-/* 膠囊分組（只有一列，高 50、圓角 25）裡的圖示方塊：改成圓形（半徑 15），離左 10＝離上下 10，同心 */
+/* 膠囊分組（只有一列，高 54、圓角 27）裡的圖示方塊：改成圓形（半徑 15），離左 12＝離上下 12，同心 */
 .set-group:has(> .set-row:only-child) .set-icon,
 .set-group:has(> button.set-row:only-child) .set-icon {
   border-radius: 9999px;
 }
 .set-group:has(> .set-row:only-child) > .set-row:has(> .set-icon:first-child),
 .set-group:has(> button.set-row:only-child) > button.set-row:has(> .set-icon:first-child) {
-  padding-left: 10px;
+  padding-left: 12px;
 }
 
 /* 骨架淡出層：真正內容掛上後，骨架蓋在最上面 0.42 秒淡出（不是瞬間消失），重整／登入不會閃 */
@@ -2006,4 +2006,98 @@ html.dark {
   to {
     opacity: 0;
   }
+}
+
+/* 啟動畫面清單：分隔線從文字起點畫（左內距 12＋圖示 28＋間距 12） */
+.boot-list > .set-row + .set-row::before {
+  left: 52px;
+}
+
+/* Apple 系統色（淺色／深色各一組）：後台圖示、數字、狀態一律用這組，不用 Tailwind 的淡色 */
+:root {
+  --sys-red: #ff3b30;
+  --sys-orange: #ff9500;
+  --sys-yellow: #ffcc00;
+  --sys-green: #34c759;
+  --sys-teal: #30b0c7;
+  --sys-blue: #007aff;
+  --sys-purple: #af52de;
+}
+html.dark {
+  --sys-red: #ff453a;
+  --sys-orange: #ff9f0a;
+  --sys-yellow: #ffd60a;
+  --sys-green: #30d158;
+  --sys-teal: #40c8e0;
+  --sys-blue: #0a84ff;
+  --sys-purple: #bf5af2;
+}
+
+/* 設定內容捲動後：頂端淡出拉長到關閉鈕下緣（離頂 36＋高 36），內容不會滑到關閉鈕底下；沒捲動時不淡出，標題完整 */
+.settings-scroll.is-scrolled {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* 提示詞模板面板：外框 26、內距 10 → 裡面的搜尋框、類別膠囊、列都是同心的 16 */
+.prompt-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  background: var(--chip);
+}
+.prompt-cats {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.prompt-cats::-webkit-scrollbar {
+  display: none;
+}
+.prompt-cat {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+  background: var(--chip);
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.prompt-cat:active {
+  transform: scale(0.96);
+}
+.prompt-cat.is-current {
+  color: #fff;
+  background: rgb(var(--accent));
+}
+.prompt-group {
+  padding: 12px 10px 4px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+}
+.prompt-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 16px;
+  text-align: left;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.prompt-item:active {
+  transform: scale(0.98);
+  background: var(--chip);
+}
+.prompt-item:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: -2px;
 }

@@ -26,9 +26,8 @@ export default function AboutSection() {
             </div>
 
             <section className="set-section">
-                {/* 「系統穩定」標籤（24 高、半徑 12）跟卡片角（32）同心：離右、離上都是 20 */}
-                <div className="set-group pt-[10px]">
-                    <div className="set-row !pr-[20px]">
+                <div className="set-group">
+                    <div className="set-row">
                         <span className="set-label">{t('about.statusLabel', '系統狀態')}</span>
                         <span className="tag tag-green">{t('about.systemStable')}</span>
                     </div>

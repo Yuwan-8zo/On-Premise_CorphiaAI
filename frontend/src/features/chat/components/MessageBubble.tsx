@@ -193,7 +193,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.error && (
-                                <div className="mt-1.5 max-w-full rounded-[14px] border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs text-red-500">
+                                <div className="mt-1.5 max-w-full rounded-[14px] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--sys-red)]">
                                     {t('chat.voice.transcribeFailed')}
                                 </div>
                             )}
@@ -248,7 +248,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
                             <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                 {isCopied ? (
-                                    <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
+                                    <Check className="w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />
                                 ) : (
                                     <ItshoverIcon icon={CopyIcon} size={14} interactive />
                                 )}
@@ -331,7 +331,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
                                 <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
                                     {isCopied ? (
-                                    <Check className="w-3.5 h-3.5 text-green-500" aria-hidden />
+                                    <Check className="w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />
                                 ) : (
                                     <ItshoverIcon icon={CopyIcon} size={14} interactive />
                                 )}

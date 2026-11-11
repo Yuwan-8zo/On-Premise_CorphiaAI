@@ -58,7 +58,7 @@ export default function TenantsSection({
     }
 
     return (
-        <Panel className="overflow-hidden !rounded-[41px]">
+        <Panel className="overflow-hidden">
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
                 eyebrow={t('admin.tenants.activeTenants', { count: activeTenants })}
@@ -69,7 +69,7 @@ export default function TenantsSection({
                     </ActionButton>
                 }
             />
-            <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-[12px] px-[12px] pb-[12px] md:grid-cols-2 xl:grid-cols-3">
                 {isLoadingTenants ? (
                     <SkelCards count={3} className="h-[180px]" />
                 ) : tenants.length === 0 ? (
@@ -84,7 +84,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="snow-well rounded-[23.5px] p-5 flex flex-col"
+                                className="snow-well rounded-[21px] p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -97,7 +97,7 @@ export default function TenantsSection({
                                         </div>
                                     </div>
                                     {hasSecurityEvents && (
-                                        <div className="shrink-0 text-red-500">
+                                        <div className="shrink-0 text-[var(--sys-red)]">
                                             <AlertTriangle className="h-4 w-4" />
                                         </div>
                                     )}
@@ -143,7 +143,7 @@ export default function TenantsSection({
                                         <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.events24h', '24h 事件')}
                                         </p>
-                                        <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-red-500' : 'text-text-primary'}`}>
+                                        <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-[var(--sys-red)]' : 'text-text-primary'}`}>
                                             {usage?.security_events_24h ?? '--'}
                                         </p>
                                     </div>

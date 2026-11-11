@@ -37,14 +37,14 @@ export default function SecurityEventsPanel({
             <SectionHeader
                 title={t('admin.overview.securityEvents', '資安事件 (24h)')}
             />
-            <div className="flex-1 min-h-0 p-2.5">
-                <div className="grid grid-cols-2 gap-2 h-full">
+            <div className="flex-1 min-h-0 px-[12px] pb-[12px]">
+                <div className="grid grid-cols-2 gap-[12px] h-full">
                     {SECURITY_KPI_DEFINITIONS.map((kpi) => {
                         const value = data?.[kpi.valueKey] ?? 0
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex items-center gap-3 p-3 rounded-[16px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
+                                className={`flex items-center gap-3 px-[14px] py-3 rounded-[21px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />

@@ -30,9 +30,9 @@ export interface SystemResourcePanelProps {
 }
 
 function getResourceColor(percent: number): string {
-    if (percent < 50) return 'bg-green-500'
-    if (percent < 80) return 'bg-yellow-500'
-    return 'bg-red-500'
+    if (percent < 50) return 'bg-[var(--sys-green)]'
+    if (percent < 80) return 'bg-[var(--sys-yellow)]'
+    return 'bg-[var(--sys-red)]'
 }
 
 export default function SystemResourcePanel({ className }: SystemResourcePanelProps) {
@@ -59,8 +59,8 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
             <SectionHeader
                 title={t('admin.overview.systemResources', '系統資源')}
             />
-            <div className="flex-1 min-h-0 px-[26px] pb-5 pt-1">
-                <div className="flex flex-col gap-5">
+            <div className="flex-1 min-h-0 px-[21px] pb-[16px]">
+                <div className="flex flex-col gap-[12px]">
                     {/* CPU 進度條 */}
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">

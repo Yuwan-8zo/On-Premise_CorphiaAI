@@ -16,7 +16,6 @@ import { ACCENT_COLORS } from '@/design-system'
 import GuideSection from './GuideSection'
 import AboutSection from './AboutSection'
 import Tooltip from '@/components/ui/Tooltip'
-import GlassSwitch from '@/components/ui/GlassSwitch'
 
 // --- Icons ---
 const CloseIcon = () => (
@@ -58,9 +57,7 @@ export default function SettingsModal() {
     const {
         theme, accentColor, setAccentColor,
         isSettingsOpen, setSettingsOpen,
-        ragDebugMode, setRAGDebugMode,
         themePreference, setThemePreference,
-        demoMode, setDemoMode,
     } = useUIStore()
 
     const navigate = useNavigate()
@@ -255,10 +252,10 @@ export default function SettingsModal() {
     /** 密碼強度顯示顏色與文字 */
     const getStrengthColor = (level: string) => {
         switch (level) {
-            case 'very_strong': return 'bg-green-500'
+            case 'very_strong': return 'bg-[var(--sys-green)]'
             case 'strong': return 'bg-light-accent'
-            case 'medium': return 'bg-yellow-500'
-            default: return 'bg-red-500'
+            case 'medium': return 'bg-[var(--sys-yellow)]'
+            default: return 'bg-[var(--sys-red)]'
         }
     }
     const getStrengthLabel = (level: string) => {
@@ -334,7 +331,7 @@ export default function SettingsModal() {
 
                         {/* 主內容區域 */}
                         {/* 捲動區上下淡出（同聊天頁 .chat-scroll）：捲動時內容不會被外框硬切 */}
-                        <div className={`chat-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                        <div onScroll={(e) => { const el = e.currentTarget; el.classList.toggle('is-scrolled', el.scrollTop > 4) }} className={`chat-scroll settings-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
                             <div className="p-6 md:pl-10 md:pr-[36px] md:pt-14 md:pb-[36px] min-h-full">
                                 {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
                                 <button
@@ -357,7 +354,7 @@ export default function SettingsModal() {
 
                                         <section className="set-section">
                                             <div className="set-header">{t('settings.accountSection', '帳號')}</div>
-                                            <div className="set-group pb-[10px]">
+                                            <div className="set-group">
                                                 {isEditingName ? (
                                                     <div className="set-row">
                                                         <span className="set-label flex-none">{t('settings.nameLabel', '名稱')}</span>
@@ -399,7 +396,7 @@ export default function SettingsModal() {
                                                     <span className="set-label">{t('settings.emailLabel', '電子郵件')}</span>
                                                     <span className="set-value">{user?.email}</span>
                                                 </div>
-                                                <div className="set-row !pr-[20px]">
+                                                <div className="set-row">
                                                     <span className="set-label">{t('settings.roleLabel', '角色')}</span>
                                                     <span className={`tag ${user?.role === 'admin' || user?.role === 'engineer' ? 'tag-accent' : ''}`}>{user?.role}</span>
                                                 </div>
@@ -469,8 +466,8 @@ export default function SettingsModal() {
 
                                         <section className="set-section">
                                             <div className="set-group !rounded-full">
-                                                {/* 右內距 10：最後一顆色點（32 的按鈕）圓心離右緣 26＝膠囊半圓的圓心，同心 */}
-                                                <div className="set-row !pr-[10px]">
+                                                {/* 右內距 12：膠囊高 56，最後一顆色點（32 的按鈕）圓心離右緣 28＝膠囊半圓的圓心，同心 */}
+                                                <div className="set-row !pr-[12px]">
                                                     <span className="set-label">{t('settings.accentColor', '強調顏色')}</span>
                                                     <div className="flex items-center gap-1">
                                                         {ACCENT_OPTIONS.map(([key, color]) => (
@@ -491,25 +488,6 @@ export default function SettingsModal() {
                                             </div>
                                         </section>
 
-                                        <section className="set-section">
-                                            <div className="set-header">{t('settings.advancedSection', '進階')}</div>
-                                            <div className="set-group">
-                                                <label className="set-row cursor-pointer">
-                                                    <span className="set-label">
-                                                        {t('settings.ragDebugToggle', '顯示 RAG Debug 資訊')}
-                                                        <span className="set-sub">{t('settings.ragDebugHint', '每次 AI 回覆下方顯示檢索文件、相似度與來源。')}</span>
-                                                    </span>
-                                                    <GlassSwitch checked={ragDebugMode} onChange={() => setRAGDebugMode(!ragDebugMode)} />
-                                                </label>
-                                                <label className="set-row cursor-pointer">
-                                                    <span className="set-label">
-                                                        {t('settings.demoModeToggle', '隱藏敏感資訊')}
-                                                        <span className="set-sub">{t('settings.demoModeHint', '對外展示時隱藏絕對路徑等敏感字串。')}</span>
-                                                    </span>
-                                                    <GlassSwitch checked={demoMode} onChange={() => setDemoMode(!demoMode)} />
-                                                </label>
-                                            </div>
-                                        </section>
                                     </motion.div>
                                 )}
 

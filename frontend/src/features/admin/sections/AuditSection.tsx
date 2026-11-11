@@ -48,13 +48,13 @@ import {
 function getActionPillClass(action: string): string {
     const a = (action || '').toLowerCase()
     if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
-        return 'border-red-500/30 bg-red-500/10 text-red-500'
+        return 'border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] text-[var(--sys-red)]'
     }
     if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
-        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'
+        return 'border-[color-mix(in_srgb,var(--sys-green)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-green)_10%,transparent)] text-[var(--sys-green)]'
     }
     if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
-        return 'border-sky-500/30 bg-sky-500/10 text-sky-500'
+        return 'border-[color-mix(in_srgb,var(--sys-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-blue)_10%,transparent)] text-[var(--sys-blue)]'
     }
     return 'border-[var(--paper-line)] bg-[var(--chip)] text-text-primary'
 }
@@ -65,10 +65,10 @@ function getSeverityClass(action: string): string {
     const WARNING_ACTIONS = ['login_failed', 'token_revoke', 'ngrok_start']
 
     if (CRITICAL_ACTIONS.includes(action)) {
-        return 'border-l-4 border-l-red-500 bg-red-500/10'
+        return 'border-l-4 border-l-red-500 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)]'
     }
     if (WARNING_ACTIONS.includes(action)) {
-        return 'border-l-4 border-l-amber-500 bg-amber-500/10'
+        return 'border-l-4 border-l-amber-500 bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)]'
     }
     return ''
 }
@@ -112,11 +112,11 @@ export default function AuditSection({
 
     return (
         <>
-            <div className="space-y-5">
+            <div className="space-y-[12px]">
                 {/* Filter bar */}
-                <Panel className="p-4 !rounded-[34px]">
+                <Panel className="p-[12px]">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-[12px]">
                         <label className="admin-search flex-1 min-w-[220px]">
                             <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
                                 <Search className="h-[16px] w-[16px]" />
@@ -200,8 +200,8 @@ export default function AuditSection({
                     - 圓角靠 SectionHeader 上方 + 表格底端的 rounded class 各自處理；
                       因為內容（table）不會超出 Panel 邊界，不需要 overflow:hidden 截切。
                 */}
-                <Panel className="!rounded-[41px]">
-                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[41px]">
+                <Panel>
+                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[33px]">
                         <SectionHeader
                             title={t('admin.audit.title')}
                             eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}

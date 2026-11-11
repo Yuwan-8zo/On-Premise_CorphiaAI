@@ -74,7 +74,7 @@ class MarkdownErrorBoundary extends React.Component<
     render() {
         if (this.state.hasError) {
             return (
-                <div className="text-red-500 p-4 bg-red-500/10 rounded-[10px] border border-red-500/20">
+                <div className="text-[var(--sys-red)] p-4 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] rounded-[10px] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]">
                     <p className="font-bold mb-2">解析訊息內容時發生錯誤</p>
                     <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}

@@ -15,7 +15,6 @@ import { lazy, Suspense } from 'react'
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Chat = lazy(() => import('./pages/Chat'))
-const Documents = lazy(() => import('./pages/Documents'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Share = lazy(() => import('./pages/Share'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -218,14 +217,6 @@ export default function App() {
                             element={
                                 <ProtectedRoute>
                                     <Chat />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/documents"
-                            element={
-                                <ProtectedRoute>
-                                    <Documents />
                                 </ProtectedRoute>
                             }
                         />

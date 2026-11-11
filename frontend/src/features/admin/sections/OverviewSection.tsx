@@ -102,64 +102,64 @@ export default function OverviewSection({
             label: t('admin.overview.users'),
             value: stats.totalUsers,
             icon: Users,
-            iconBg: 'bg-blue-500/15',
-            iconColor: 'text-blue-500 dark:text-blue-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-blue)]',
         },
         {
             label: t('admin.overview.conversations'),
             value: stats.totalConversations,
             icon: MessageSquare,
-            iconBg: 'bg-emerald-500/15',
-            iconColor: 'text-emerald-500 dark:text-emerald-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-green)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-green)]',
         },
         {
             label: t('admin.overview.documents'),
             value: stats.totalDocuments,
             icon: Layers3,
-            iconBg: 'bg-violet-500/15',
-            iconColor: 'text-violet-500 dark:text-violet-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-purple)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-purple)]',
         },
         {
             label: t('admin.overview.messages'),
             value: stats.totalMessages,
             icon: FileText,
-            iconBg: 'bg-amber-500/15',
-            iconColor: 'text-amber-500 dark:text-amber-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-orange)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-orange)]',
         },
         {
             label: t('admin.overview.activeUsers', '活躍使用者'),
             value: activeUsers,
             icon: Activity,
-            iconBg: 'bg-teal-500/15',
-            iconColor: 'text-teal-500 dark:text-teal-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-teal)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-teal)]',
         },
         {
             label: t('admin.overview.eventsToday', '今日事件'),
             value: todayEventCount,
             icon: ShieldCheck,
-            iconBg: 'bg-red-500/15',
-            iconColor: 'text-red-500 dark:text-red-400',
+            iconBg: 'bg-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]',
+            iconColor: 'text-[var(--sys-red)]',
         },
     ]
 
     return (
         // 手機板：用自然高度逐區堆疊，外層 AdminPage 會處理垂直滾動。
         // 桌機板（lg+）：回到「滿視窗 dashboard」3-row 設計，圖表自動填滿剩餘空間。
-        <div className="grid gap-2 lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-[12px] lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)]">
             {/* ─────────────────────────────────────────────────────────────
               Row 1 · KPI strip（6 張小卡，shrink-0）
               斷點降到 lg 是因為使用者實際 CSS 寬度大概在 1100px（高 DPR），
               用 xl (1280) 不會觸發 → 卡片全部 fallback 到 sm:3 column 太鬆
               ───────────────────────────────────────────────────────────── */}
-            <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6 stagger-fade-in">
+            <section className="grid grid-cols-2 gap-[12px] sm:grid-cols-3 lg:grid-cols-6 stagger-fade-in">
                 {metricCards.map((item) => {
                     const Icon = item.icon
                     return (
                         <Panel
                             key={item.label}
-                            className="px-[16.75px] py-2.5 !rounded-[29px]"
+                            className="pl-[20px] pr-[16px] py-[12px]"
                         >
-                            <div className="relative flex items-center gap-2">
+                            <div className="relative flex items-center gap-[12px]">
                                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[13px] ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
@@ -182,12 +182,12 @@ export default function OverviewSection({
               7/5 split @ lg+，下面 Row 3 也是 lg:grid-cols-12
               小於 lg 時會堆疊（手機 / 窄視窗），下方加 min-height fallback
               ───────────────────────────────────────────────────────────── */}
-            <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
+            <section className="grid min-h-0 grid-cols-1 gap-[12px] lg:grid-cols-12">
                 <Panel className="overflow-hidden flex flex-col min-h-[180px] lg:col-span-7 lg:min-h-0">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
                     />
-                    <div className="flex-1 min-h-0 px-2 pb-1 pt-0.5 sm:px-3">
+                    <div className="flex-1 min-h-0 px-[12px] pb-[12px]">
                         <ActivityBarChart data={dailySeries} height="100%" />
                     </div>
                 </Panel>
@@ -200,7 +200,7 @@ export default function OverviewSection({
                       grid-rows-[minmax(0,1fr)]：明確告訴 grid「這列的高度等於容器高度」，
                       不然 grid row 預設 auto 會跟 height:100% 的子元素互鎖變成 0。
                     */}
-                    <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,120px)] grid-rows-[minmax(0,1fr)] gap-2 p-2">
+                    <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,120px)] grid-rows-[minmax(0,1fr)] gap-[12px] px-[12px] pb-[12px]">
                         <div className="min-h-0 h-full">
                             <EventDonut data={actionSeries} height="100%" />
                         </div>
@@ -217,7 +217,7 @@ export default function OverviewSection({
               Row 3 · 資安事件 / LLM 健康度 / 系統資源
               5/4/3 split @ lg+
               ───────────────────────────────────────────────────────────── */}
-            <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
+            <section className="grid min-h-0 grid-cols-1 gap-[12px] lg:grid-cols-12">
                 <SecurityEventsPanel
                     className="lg:col-span-5"
                     securitySummary={dashboardSnapshot?.security ?? null}

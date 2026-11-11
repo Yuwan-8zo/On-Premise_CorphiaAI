@@ -573,7 +573,7 @@ export default function Admin() {
                   手機板：flex column，aside 自然高度（只剩 nav 列）+ 內容區吃剩。
                   桌機板（lg+）：回到 sidebar grid 180/rest 兩欄佈局。
                 */}
-                <main className="flex flex-col flex-1 min-h-0 gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
+                <main className="flex flex-col flex-1 min-h-0 gap-[12px] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
                     {/*
                       Sidebar 從 260px 砍到 180px —— 釋出 ~80px 給右側內容區。
                       內部 padding / 模型卡 / 導航 gap 全部緊縮，配合 Overview dashboard
@@ -584,9 +584,9 @@ export default function Admin() {
                       桌機板（lg+）：h-full，aside 撐滿 grid row，wrapper 的 mt-auto 把 widget 推到底。
                       之前一律 h-full 的版本在手機板把 aside 撐滿整個 main → content 區被擠到 0 高度看不到。
                     */}
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden paper paper-lg lg:p-2">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[33px] lg:p-[12px]">
                         {/* Model card 在手機板隱藏，騰出空間給內容 */}
-                        <div className="hidden lg:block mb-2 rounded-[18px] border border-transparent bg-[var(--chip)] p-2.5">
+                        <div className="hidden lg:block mb-[12px] rounded-[21px] border border-transparent bg-[var(--chip)] p-[12px]">
                             <div className="mb-2 flex items-center justify-between gap-2">
                                 <div className="min-w-0">
                                     <p className="text-[12px] text-text-secondary">{t('admin.currentModel')}</p>
@@ -614,7 +614,7 @@ export default function Admin() {
                         />
                         {/* 桌機側欄：直向分段切換（按下即放大鏡）；py-2／-mx-2 px-2 留空間給放大鏡 */}
                         <nav
-                            className="relative hidden lg:flex gap-1 py-2 -mx-2 px-2 overflow-x-auto lg:flex-col lg:overflow-y-auto shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:custom-scrollbar"
+                            className="relative z-10 hidden lg:flex lg:flex-col gap-1 py-2 shrink-0 overflow-visible" /* 桌機：不裁切，長按時放大鏡長大超出導覽範圍也完整顯示（放大鏡在最上層） */
                         >
                             <GlassNav
                                 size="sm"

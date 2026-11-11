@@ -30,30 +30,30 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
             >
-                <MaterialIcon name="security" size={18} className="text-amber-600 dark:text-amber-300" aria-hidden />
-                <span className="font-medium text-amber-700 dark:text-amber-300 flex-1">
+                <MaterialIcon name="security" size={18} className="text-[var(--sys-orange)] dark:text-[var(--sys-orange)]" aria-hidden />
+                <span className="font-medium text-[var(--sys-orange)] dark:text-[var(--sys-orange)] flex-1">
                     {message}
                 </span>
-                <ChevronDown className={`w-3 h-3 text-amber-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-[var(--sys-orange)] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
 
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-[var(--paper-line)] space-y-1">
                     {maskMap.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[11px]">
-                            <span className="px-1.5 py-0.5 rounded-[6px] bg-amber-500/15 text-amber-700 dark:text-amber-300 tabular-nums">
+                            <span className="px-1.5 py-0.5 rounded-[6px] bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
                                 {item.label}
                             </span>
                             <span className="text-text-secondary tabular-nums">
                                 {item.original_preview}
                             </span>
                             <span className="text-text-muted">→</span>
-                            <span className="text-amber-600 dark:text-amber-300 tabular-nums">
+                            <span className="text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
                                 {item.masked}
                             </span>
                         </div>
                     ))}
-                    <p className="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
+                    <p className="text-[11px] text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] dark:text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] mt-1">
                         送入 AI 模型的是遮罩後的內容，原始敏感資訊不會進入模型。
                     </p>
                 </div>
@@ -82,13 +82,13 @@ const RISK_COLORS: Record<string, { border: string; bg: string; text: string; ic
     medium: {
         border: '',
         bg: '',
-        text: 'text-orange-700 dark:text-orange-300',
+        text: 'text-[var(--sys-orange)] dark:text-[var(--sys-orange)]',
         icon: 'warning',
     },
     high: {
         border: '',
         bg: '',
-        text: 'text-red-700 dark:text-red-400',
+        text: 'text-[var(--sys-red)] dark:text-[var(--sys-red)]',
         icon: 'crisis_alert',
     },
 }

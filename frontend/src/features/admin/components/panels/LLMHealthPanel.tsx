@@ -58,7 +58,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
     const ragReady = aiBoot?.rag === 'ready'
 
     return (
-        <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 !rounded-[33px] ${className || ''}`}>
+        <Panel className={`flex flex-col min-h-[200px] lg:min-h-0 ${className || ''}`}>
             {/* 標題列：和其他卡片同一個共用標題（17／22 半粗、左右 26）；右邊放 LLM／RAG 狀態標籤 */}
             <SectionHeader
                 title={t('admin.overview.llmHealth', 'LLM 即時狀態')}
@@ -70,44 +70,46 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                 )}
             />
 
-            <div className="flex-1 min-h-0 flex flex-col gap-2 px-4 pb-4">
+            {/* 內部區塊離卡片左右下 12，圓角 21（＝卡片 33 − 12，同心） */}
+            <div className="flex-1 min-h-0 flex flex-col gap-[12px] px-[12px] pb-[12px]">
                 {/* 模型名稱 — 主要資訊 */}
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-[10px] bg-[var(--chip)] border border-transparent">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-accent/10 text-accent">
-                        <Cpu className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-[10px] p-[10px] rounded-[21px] bg-[var(--chip)]">
+                    <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[11px] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)] text-[var(--sys-blue)]">
+                        <Cpu className="h-[16px] w-[16px]" />
                     </span>
                     <div className="min-w-0">
-                        <p className="text-[12px] font-medium text-text-secondary">
+                        <p className="text-[12px] leading-[16px] font-medium text-text-secondary">
                             {t('admin.overview.modelLoaded', '當前模型')}
                         </p>
-                        <p className="text-[13px] font-medium text-text-primary truncate leading-tight">
+                        <p className="text-[15px] leading-[20px] font-semibold text-text-primary truncate">
                             {modelName}
                         </p>
                     </div>
                 </div>
 
                 {/* 兩個指標卡 */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1 px-3 py-2.5 rounded-[10px] bg-[var(--chip)] border border-transparent  transition-colors">
+                {/* 兩個指標撐滿剩下的高度，貼齊卡片底部（下方兩角也同心），跟左邊資安事件同樣填滿 */}
+                <div className="grid flex-1 min-h-0 grid-cols-2 gap-[12px]">
+                    <div className="flex min-h-0 flex-col justify-center gap-[2px] overflow-hidden px-[16px] py-[10px] rounded-[21px] bg-[var(--chip)]">
                         <div className="flex items-center gap-1.5">
-                            <Zap className="h-3 w-3 text-amber-400" />
+                            <Zap className="h-3 w-3 text-[var(--sys-orange)]" />
                             <p className="text-[12px] font-medium text-text-secondary">
                                 {t('admin.overview.tokensPerSec', 'Tokens/秒')}
                             </p>
                         </div>
-                        <p className="text-xl font-semibold tabular-nums text-text-primary">
+                        <p className="text-[28px] leading-[30px] font-semibold tabular-nums text-text-primary">
                             {tokensPerSec.toFixed(1)}
                         </p>
                     </div>
 
-                    <div className="flex flex-col gap-1 px-3 py-2.5 rounded-[10px] bg-[var(--chip)] border border-transparent  transition-colors">
+                    <div className="flex min-h-0 flex-col justify-center gap-[2px] overflow-hidden px-[16px] py-[10px] rounded-[21px] bg-[var(--chip)]">
                         <div className="flex items-center gap-1.5">
-                            <Cpu className="h-3 w-3 text-violet-400" />
+                            <Cpu className="h-3 w-3 text-[var(--sys-purple)]" />
                             <p className="text-[12px] font-medium text-text-secondary">
                                 {t('admin.overview.totalGenerations', '推論次數')}
                             </p>
                         </div>
-                        <p className="text-xl font-semibold tabular-nums text-text-primary">
+                        <p className="text-[28px] leading-[30px] font-semibold tabular-nums text-text-primary">
                             {totalGenerations.toLocaleString()}
                         </p>
                     </div>

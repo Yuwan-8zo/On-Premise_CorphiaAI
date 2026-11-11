@@ -79,8 +79,8 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.is_locked) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-600 dark:text-red-400">
-                <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-red)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--sys-red)] dark:text-[var(--sys-red)]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-red)]" />
                 {lockoutStatus.minutes_until_unlock ? `鎖定中 ${lockoutStatus.minutes_until_unlock}m` : '鎖定中'}
             </div>
         )
@@ -88,8 +88,8 @@ function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus |
 
     if (lockoutStatus.failures_last_7d >= 3) {
         return (
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--sys-orange)_30%,transparent)] bg-[color-mix(in_srgb,var(--sys-orange)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--sys-orange)] dark:text-[var(--sys-orange)]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--sys-orange)]" />
                 {lockoutStatus.failures_last_7d} 次失敗
             </div>
         )
@@ -172,7 +172,7 @@ export default function UsersSection({
     const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId
 
     return (
-        <Panel className="overflow-hidden !rounded-[41px]">
+        <Panel className="overflow-hidden">
             <SectionHeader
                 title={t('admin.users.title', '使用者') + ` (${users.length})`}
                 eyebrow={t('admin.users.activeOperators', { active: activeUsers })}
@@ -192,16 +192,16 @@ export default function UsersSection({
               這樣整列寬度從 ~960px 降到 ~720px，1080p 視窗也能完整顯示。
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
-            <div className="overflow-x-auto pb-4">
+            <div className="overflow-x-auto pb-[4px]">
                 <table className="w-full min-w-[720px]">
                     <thead className={tableHeadRowClass}>
                         <tr>
-                            <th className="px-4 py-3">{t('admin.users.table.user', '使用者')}</th>
+                            <th className="pl-[21px] pr-4 py-3">{t('admin.users.table.user', '使用者')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.role', '角色')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.status', '狀態')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.lockStatus', '鎖定狀態')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.lastLogin', '最後登入')}</th>
-                            <th className="px-4 py-3 text-right">{t('admin.users.table.action', '操作')}</th>
+                            <th className="pl-4 pr-[16px] py-3 text-right">{t('admin.users.table.action', '操作')}</th>
                         </tr>
                     </thead>
                     <tbody className={tableBodyClass}>
@@ -216,7 +216,7 @@ export default function UsersSection({
                         ) : (
                             users.map((item) => (
                                 <tr key={item.id} className="transition  ">
-                                    <td className="px-4 py-3">
+                                    <td className="pl-[21px] pr-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div
                                                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-fill text-xs font-bold  "
@@ -242,7 +242,7 @@ export default function UsersSection({
                                     <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
                                         {formatRelativeTime(item.lastLoginAt)}
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="pl-4 pr-[16px] py-3">
                                         {/*
                                           Kebab menu — 一行只一個三點按鈕，點下去才開選單。
                                           relative 為 dropdown 的定位錨點。
