@@ -23,7 +23,8 @@ export function useAdminAudit() {
     const [auditFilter, setAuditFilter] = useState<AuditLogQuery>({ page: 1, page_size: 15 })
     const [auditSearchInput, setAuditSearchInput] = useState('')
     const [auditDrawer, setAuditDrawer] = useState<AuditLogItem | null>(null)
-    const [auditSummary, setAuditSummary] = useState<AuditLogItem[]>([])
+    /** null＝還在載入（總覽顯示骨架，不顯示 0 或「沒有資料」） */
+    const [auditSummary, setAuditSummary] = useState<AuditLogItem[] | null>(null)
 
     const loadAuditLogs = useCallback(async (query: AuditLogQuery = auditFilter) => {
         setIsLoadingAudit(true)
@@ -40,20 +41,21 @@ export function useAdminAudit() {
         }
     }, [auditFilter])
 
-    /** 近 7 天全部紀錄（每頁上限 100 筆，逐頁抓，最多 2000 筆）給總覽的趨勢圖與分布圖 */
+    /** 近 7 天全部紀錄（每頁上限 100 筆，最多 2000 筆）給總覽的趨勢圖與分布圖：先抓第一頁知道總頁數，其餘同時抓 */
     const loadAuditSummary = useCallback(async () => {
         try {
             const since = new Date()
             since.setDate(since.getDate() - 7)
-            const all: AuditLogItem[] = []
-            for (let page = 1; page <= 20; page++) {
-                const data = await getAuditLogs({ page, page_size: 100, start_date: localDate(since) })
-                all.push(...data.data)
-                if (page >= (data.total_pages || 1)) break
-            }
-            setAuditSummary(all)
+            const query = { page_size: 100, start_date: localDate(since) }
+            const first = await getAuditLogs({ ...query, page: 1 })
+            const pages = Math.min(first.total_pages || 1, 20)
+            const rest = await Promise.all(
+                Array.from({ length: pages - 1 }, (_, i) => getAuditLogs({ ...query, page: i + 2 })),
+            )
+            setAuditSummary([first, ...rest].flatMap((d) => d.data))
         } catch (err) {
             console.error('Failed to load audit summary:', err)
+            setAuditSummary([])
         }
     }, [])
 

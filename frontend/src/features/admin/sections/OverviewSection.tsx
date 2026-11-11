@@ -31,6 +31,7 @@ import {
 } from '@/components/snow/icons'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Skel } from '@/components/ui/Skeleton'
 
 import { adminApi } from '@/api/admin'
 import type { AuditLogItem } from '@/api/auditLogs'
@@ -65,15 +66,18 @@ interface OverviewStats {
 export interface OverviewSectionProps {
     stats: OverviewStats
     activeUsers: number
-    auditLogs: AuditLogItem[]
+    /** null＝還在載入 */
+    auditLogs: AuditLogItem[] | null
 }
 
 export default function OverviewSection({
     stats,
     activeUsers,
-    auditLogs,
+    auditLogs: auditLogsOrNull,
 }: OverviewSectionProps) {
     const { t } = useTranslation()
+    const auditLoading = auditLogsOrNull === null
+    const auditLogs = useMemo(() => auditLogsOrNull ?? [], [auditLogsOrNull])
 
     const { data: dashboardSnapshot } = usePolling(
         () => adminApi.getDashboardSnapshot(),
@@ -136,6 +140,7 @@ export default function OverviewSection({
         {
             label: t('admin.overview.eventsToday', '今日事件'),
             value: todayEventCount,
+            loading: auditLoading,
             icon: ShieldCheck,
             iconBg: 'bg-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]',
             iconColor: 'text-[var(--sys-red)]',
@@ -168,7 +173,7 @@ export default function OverviewSection({
                                         {item.label}
                                     </p>
                                     <p className={`text-[18px] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
-                                        {item.value.toLocaleString()}
+                                        {item.loading ? <Skel className="inline-block h-[22px] w-[40px] align-middle" /> : item.value.toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -188,7 +193,7 @@ export default function OverviewSection({
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
                     />
                     <div className="flex-1 min-h-0 px-[12px] pb-[12px]">
-                        <ActivityBarChart data={dailySeries} height="100%" />
+                        {auditLoading ? <Skel className="h-full w-full rounded-[16px]" /> : <ActivityBarChart data={dailySeries} height="100%" />}
                     </div>
                 </Panel>
 
@@ -202,7 +207,7 @@ export default function OverviewSection({
                     */}
                     <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,120px)] grid-rows-[minmax(0,1fr)] gap-[12px] px-[12px] pb-[12px]">
                         <div className="min-h-0 h-full">
-                            <EventDonut data={actionSeries} height="100%" />
+                            {auditLoading ? <Skel className="h-full w-full rounded-full" /> : <EventDonut data={actionSeries} height="100%" />}
                         </div>
                         <div className="flex items-center min-h-0 overflow-y-auto custom-scrollbar">
                             <div className="w-full">

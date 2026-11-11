@@ -1,8 +1,9 @@
-import { Reader, Search } from '@/components/snow/icons'
+import { Book, Code, FileText, Languages, Layers3, Mail, Reader, Search, ShieldCheck, Sparkles } from '@/components/snow/icons'
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
+import GlassSegmented from '@/components/ui/GlassSegmented'
 
 interface PromptTemplate {
     title: string
@@ -13,6 +14,17 @@ interface PromptCategory {
     id: string
     name: string
     items: PromptTemplate[]
+}
+
+/** 各類別的圖示（沒對到的用文件圖示） */
+const CATEGORY_ICONS: Record<string, typeof Reader> = {
+    write: Sparkles,
+    summary: FileText,
+    language: Languages,
+    office: Mail,
+    code: Code,
+    security: ShieldCheck,
+    learn: Book,
 }
 
 interface PromptMenuProps {
@@ -117,6 +129,36 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         return () => window.removeEventListener('resize', place)
     }, [isVisible, inline])
 
+    const pick = (prompt: string) => {
+        onSelect(prompt)
+        setIsOpen(false)
+    }
+
+    // 鍵盤：搜尋框按 ↓ 進清單、Enter 直接套用第一個；清單裡 ↑↓ 移動，最上面再按 ↑ 回搜尋框
+    const items = () => Array.from(popRef.current?.querySelectorAll<HTMLButtonElement>('.prompt-item') ?? [])
+    const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            items()[0]?.focus()
+        } else if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+            const first = groups[0]?.items[0]
+            if (first) {
+                e.preventDefault()
+                pick(first.prompt)
+            }
+        }
+    }
+    const onListKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+        const list = items()
+        const i = list.indexOf(document.activeElement as HTMLButtonElement)
+        if (i < 0) return
+        e.preventDefault()
+        if (e.key === 'ArrowDown') list[Math.min(i + 1, list.length - 1)].focus()
+        else if (i === 0) searchRef.current?.focus()
+        else list[i - 1].focus()
+    }
+
     // 如果沒有設定模板或格式不對，不顯示按鈕
     if (!Array.isArray(library) || library.length === 0) {
         return null
@@ -145,17 +187,18 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
 
             {/* 模板面板：portal 到 body（毛玻璃才模糊得到後面）
                 外框圓角 26、內距 10 → 搜尋框、類別膠囊、列都是同心的 16（26 − 10）；懸停不變色
-                結構：標題 → 搜尋框 → 類別膠囊（可橫向捲動）→ 依類別分組的模板清單（標題＋一行預覽） */}
+                結構：標題 → 搜尋框 → 類別工具列（一排圖示）→ 依類別分組的模板清單（圖示＋標題＋一行預覽） */}
             {isVisible && pos && createPortal(
                 <div
                     ref={popRef}
                     role="dialog"
                     aria-label={t('chat.promptTemplatesTitle')}
-                    className="prompt-panel fixed w-[min(380px,calc(100vw-24px))] paper !rounded-[26px] p-[10px] transform-gpu z-[60] origin-bottom-left flex flex-col"
+                    className="prompt-panel fixed w-[min(400px,calc(100vw-24px))] paper paper-solid !rounded-[26px] p-[10px] transform-gpu z-[60] origin-bottom-left flex flex-col"
                     style={{
                         left: pos.left,
                         bottom: pos.bottom,
-                        maxHeight: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
+                        // 固定高度：切換分類時清單長短不同，面板也不會縮放，工具列不會在滑鼠底下跳動
+                        height: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
                         opacity: isAnimating ? 1 : 0,
                         transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
                         transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
@@ -174,51 +217,55 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                             ref={searchRef}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={onSearchKey}
                             placeholder={t('chat.promptSearch')}
                             className="min-w-0 flex-1 bg-transparent text-[15px] leading-[20px] text-text-primary outline-none placeholder:text-text-muted"
                         />
                     </label>
 
-                    {/* 類別膠囊：搜尋時隱藏 */}
+                    {/* 類別工具列：一排圖示（分段切換＋放大鏡），名稱顯示在下面清單的分組標題；搜尋時隱藏 */}
                     {!query.trim() && (
-                        <div className="prompt-cats shrink-0" role="tablist">
-                            {[{ id: 'all', name: t('chat.promptAll') }, ...library.map((c) => ({ id: c.id, name: c.name }))].map((c) => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={cat === c.id}
-                                    onClick={() => setCat(c.id)}
-                                    className={`prompt-cat ${cat === c.id ? 'is-current' : ''}`}
-                                >
-                                    {c.name}
-                                </button>
-                            ))}
-                        </div>
+                        <GlassSegmented
+                            className="prompt-cats w-full shrink-0"
+                            pad={4}
+                            growLong={11.5}
+                            growCross={4.5}
+                            tooltips
+                            toolbar
+                            value={cat}
+                            onChange={setCat}
+                            options={[{ id: 'all', name: t('chat.promptAll') }, ...library.map((c) => ({ id: c.id, name: c.name }))].map((c) => {
+                                const Icon = c.id === 'all' ? Layers3 : (CATEGORY_ICONS[c.id] ?? Reader)
+                                return { value: c.id, name: c.name, label: <Icon className="w-[21px] h-[21px]" aria-hidden /> }
+                            })}
+                        />
                     )}
 
                     {/* 模板清單 */}
-                    <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none">
+                    <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none" onKeyDown={onListKey}>
                         {groups.length === 0 && (
                             <p className="px-[10px] py-[24px] text-center text-[15px] leading-[20px] text-text-muted">{t('chat.promptEmpty')}</p>
                         )}
                         {groups.map((g) => (
                             <div key={g.id}>
-                                {(cat === 'all' || query.trim()) && <div className="prompt-group">{g.name}</div>}
-                                {g.items.map((item) => (
-                                    <button
-                                        key={g.id + item.title}
-                                        type="button"
-                                        onClick={() => {
-                                            onSelect(item.prompt)
-                                            setIsOpen(false)
-                                        }}
-                                        className="prompt-item"
-                                    >
-                                        <span className="block truncate text-[15px] leading-[20px] font-semibold text-text-primary">{item.title}</span>
-                                        <span className="block truncate text-[13px] leading-[18px] text-text-secondary">{item.prompt.trim()}</span>
-                                    </button>
-                                ))}
+                                <div className="prompt-group">{g.name}</div>
+                                {g.items.map((item) => {
+                                    const Icon = CATEGORY_ICONS[g.id] ?? Reader
+                                    return (
+                                        <button
+                                            key={g.id + item.title}
+                                            type="button"
+                                            onClick={() => pick(item.prompt)}
+                                            className="prompt-item"
+                                        >
+                                            <span className="prompt-icon"><Icon className="w-[17px] h-[17px]" /></span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block truncate text-[15px] leading-[20px] font-semibold text-text-primary">{item.title}</span>
+                                                <span className="block truncate text-[13px] leading-[18px] text-text-secondary">{item.prompt.trim()}</span>
+                                            </span>
+                                        </button>
+                                    )
+                                })}
                             </div>
                         ))}
                     </div>

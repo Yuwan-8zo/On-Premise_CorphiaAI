@@ -222,3 +222,23 @@ export function sideBandMask(w: number, h: number, band: number, end: number): R
     const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
     return { WebkitMaskImage: url, maskImage: url, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' } as React.CSSProperties
 }
+
+/**
+ * 橫的窄放大鏡（浮動工具列）的凹陷：鏡內整片是底色，上下各挖一條左右圓頭的「底面」
+ * 工具列每格窄、放大鏡接近圓形，用肩去遮會把底面整個蓋掉；改成照鏡片當下的寬高直接畫兩條底面（同 sideBandMask，方向轉 90 度）
+ * w、h＝鏡片寬高；band＝每條底面的高；end＝底面離鏡片左右兩端的距離
+ */
+export function topBandMask(w: number, h: number, band: number, end: number): React.CSSProperties {
+    const f = (n: number) => +n.toFixed(2)
+    const b = Math.max(0, band)
+    const r = Math.min(b, 6)
+    const left = f(end), len = f(Math.max(0, w - end * 2))
+    const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${f(w)}' height='${f(h)}' viewBox='0 0 ${f(w)} ${f(h)}'>` +
+        `<defs><mask id='m'><rect width='${f(w)}' height='${f(h)}' fill='#fff'/>` +
+        `<rect x='${left}' y='${f(-r)}' width='${len}' height='${f(b + r)}' rx='${f(r)}' fill='#000'/>` +
+        `<rect x='${left}' y='${f(h - b)}' width='${len}' height='${f(b + r)}' rx='${f(r)}' fill='#000'/>` +
+        `</mask></defs><rect width='${f(w)}' height='${f(h)}' fill='#fff' mask='url(#m)'/></svg>`
+    const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+    return { WebkitMaskImage: url, maskImage: url, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' } as React.CSSProperties
+}

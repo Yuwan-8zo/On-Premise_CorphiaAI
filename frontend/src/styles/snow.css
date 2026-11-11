@@ -1811,17 +1811,17 @@ html:not(.dark) .menu-item.is-danger {
   }
 }
 
-/* 右上選單的放大鏡（規範右下選單 .dock .lens）：鏡片自己做一整片模糊；直的鏡片玻璃；亮邊在左右；肩在上下 */
+/* 右上選單的放大鏡：和分段切換器（一般／專案）同一套——鏡片不另外補色、不另外模糊（不然比較霧），
+   鏡內只用選單本身的填色（＝ --glass-ctl），左右兩條底面直接透出後面 */
 .dock-lens.is-active {
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: none;
 }
 .dock-wrap {
   --lens-ink-c: #fff;
-  --lens-ink-a: 0.066; /* 鏡片已讓底面亮 9%，再疊 6.6% 的白＝選單的 15% */
+  --lens-ink-a: 0.15; /* ＝ --glass-ctl 深色的白 15% */
 }
 html:not(.dark) .dock-wrap {
-  --lens-ink-a: 0.54;
+  --lens-ink-a: 0.58; /* ＝ --glass-ctl 淺色的白 58% */
 }
 .lens-wall > i.t {
   clip-path: inset(0 0 50% 0);
@@ -2049,35 +2049,49 @@ html.dark {
   border-radius: 9999px;
   background: var(--chip);
 }
+/* 類別工具列（GlassSegmented toolbar） */
 .prompt-cats {
+  margin: 10px 0 2px;
+}
+
+/* 浮動玻璃工具列：整條高 52（每格 44）；長按時只有放大鏡裡那一格顯示名稱，
+   等放大鏡長大（0.12 秒）後才讓圖示上移、文字淡入；放開立刻淡掉。整條不長高，其他格不顯示文字 */
+.seg-tools {
+  height: 52px;
+}
+.seg-tools .seg-ico {
   display: flex;
-  gap: 6px;
-  margin: 10px 0 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  transition: transform 0.2s var(--ease-out);
 }
-.prompt-cats::-webkit-scrollbar {
-  display: none;
+.seg-tools.is-wide .lens .seg-ico {
+  /* 圖示和文字都要落在上下兩條底面之間 */
+  transform: translateY(-7px) scale(0.9);
+  transition-delay: 0.12s;
 }
-.prompt-cat {
-  flex: none;
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 9999px;
-  font-size: 13px;
-  line-height: 18px;
+.seg-lab {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  bottom: 5px;
+  font-size: 11px;
+  line-height: 13px;
   font-weight: 600;
-  color: rgb(var(--text-secondary));
-  background: var(--chip);
-  transition: transform var(--dur-press) var(--ease-out);
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.1s var(--ease-out);
 }
-.prompt-cat:active {
-  transform: scale(0.96);
+.seg-tools.is-wide .lens .seg-lab {
+  opacity: 1;
+  transition: opacity 0.18s var(--ease-out) 0.14s;
 }
-.prompt-cat.is-current {
-  color: #fff;
-  background: rgb(var(--accent));
+@media (prefers-reduced-motion: reduce) {
+  .seg-tools .seg-ico,
+  .seg-lab {
+    transition: none !important;
+  }
 }
+
 .prompt-group {
   padding: 12px 10px 4px;
   font-size: 13px;
@@ -2085,21 +2099,52 @@ html.dark {
   font-weight: 600;
   color: rgb(var(--text-secondary));
 }
+/* 模板列＝圖示方塊＋標題＋一行預覽；列圓角 16、內距 6 → 圖示圓角 10（同心） */
 .prompt-item {
-  display: block;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px;
   border-radius: 16px;
   text-align: left;
   transition: transform var(--dur-press) var(--ease-out);
+}
+/* 分隔線從文字起點畫（內距 6＋圖示 32＋間距 12） */
+.prompt-item + .prompt-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50px;
+  right: 6px;
+  height: 0.5px;
+  background: rgb(var(--border-subtle));
 }
 .prompt-item:active {
   transform: scale(0.98);
   background: var(--chip);
 }
+.prompt-item:focus {
+  outline: none;
+}
 .prompt-item:focus-visible {
-  outline: 2px solid rgb(var(--accent));
-  outline-offset: -2px;
+  background: var(--chip);
+}
+.prompt-item:focus-visible::before,
+.prompt-item:focus-visible + .prompt-item::before {
+  opacity: 0;
+}
+.prompt-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--chip);
+  color: rgb(var(--accent));
 }
 
 /* 使用說明的分組：分隔線從文字起點畫（左內距 16＋圖示 30＋間距 16） */

@@ -11,7 +11,8 @@
  * 拖曳每幀追 30%、兩端硬鎖在第一格～最後一格；鍵盤 ← →（直的用 ↑ ↓）Home End。時間表與共用工具在 lensKit.ts。
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, sideBandMask, useLensMotion } from './lensKit'
+import Tooltip from './Tooltip'
+import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, sideBandMask, topBandMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -34,10 +35,14 @@ interface Props<T extends string> {
     growCross?: number
     /** 格子之間的空隙（沿長邊，px）；右下選單規格：按鈕 46、列距 53 → 空隙 7 */
     gap?: number
+    /** 純圖示的工具列：滑過每格顯示 name 的提示泡泡 */
+    tooltips?: boolean
+    /** 浮動工具列：整條高 52、只有圖示；按住 0.32 秒或直接左右滑，等放大鏡長大後，鏡內那一格的圖示下方才淡入 name（其他格不顯示），放開立刻收回 */
+    toolbar?: boolean
     'data-tour'?: string
 }
 
-export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad = 4, vertical = false, growLong = 8, growCross = 8, gap = 0, ...rest }: Props<T>) {
+export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad = 4, vertical = false, growLong = 8, growCross = 8, gap = 0, tooltips = false, toolbar = false, ...rest }: Props<T>) {
     const trackRef = useRef<HTMLDivElement | null>(null)
     const [size, setSize] = useState({ w: 0, h: 0 })
     const n = options.length
@@ -46,6 +51,10 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
 
     const lens = useLensMotion(index, (a, b) => Math.abs(a - b) * sgRef.current)
     const drag = useRef<{ id: number; s: number; moved: boolean } | null>(null)
+    // 工具列長大（長按成立）：定點按住 0.32 秒，或手指直接沿著列滑動就立刻成立
+    const [wide, setWide] = useState(false)
+    const wideTimer = useRef(0)
+    useEffect(() => () => window.clearTimeout(wideTimer.current), [])
 
     // 外部改變選項（鍵盤、程式切換）→ 滑過去
     useEffect(() => {
@@ -80,18 +89,25 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         drag.current = { id: e.pointerId, s: coord(e), moved: false }
         try { trackRef.current?.setPointerCapture(e.pointerId) } catch { /* 部分瀏覽器不支援 */ }
         lens.press()
+        if (toolbar) {
+            window.clearTimeout(wideTimer.current)
+            wideTimer.current = window.setTimeout(() => setWide(true), 320)
+        }
     }
     const onPointerMove = (e: React.PointerEvent) => {
         const d = drag.current
         if (!d || d.id !== e.pointerId) return
         if (!d.moved && Math.abs(coord(e) - d.s) < 6) return
         d.moved = true
+        if (toolbar) { window.clearTimeout(wideTimer.current); setWide(true) }
         lens.follow(posFrom(coord(e)))
     }
     const finish = (e: React.PointerEvent, commit: boolean) => {
         const d = drag.current
         if (!d || d.id !== e.pointerId) return
         drag.current = null
+        window.clearTimeout(wideTimer.current)
+        setWide(false)
         lens.follow(null)
         const next = commit ? Math.round(d.moved ? lens.current.current.pos : posFrom(coord(e))) : index
         lens.glideTo(next)
@@ -135,13 +151,20 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         options.map((o, i) => {
             const on = i === index
             const common = {
-                className: `flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold text-center whitespace-nowrap ${
+                className: `${toolbar ? 'relative' : ''} flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold text-center whitespace-nowrap ${
                     ghost || (on && !active) ? 'text-accent' : 'text-text-primary'
                 }`,
                 style: { [vertical ? 'height' : 'width']: sg || undefined, flex: 'none', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties,
             }
-            if (ghost) return <span key={o.value} {...common}>{o.label}</span>
-            return (
+            const content = toolbar ? (
+                <>
+                    <span className="seg-ico">{o.label}</span>
+                    {/* 只有放大鏡正中那一格顯示名稱 */}
+                    {ghost && o.name && i === Math.round(f.pos) && <span className="seg-lab" aria-hidden="true">{o.name}</span>}
+                </>
+            ) : o.label
+            if (ghost) return <span key={o.value} {...common}>{content}</span>
+            const button = (
                 <button
                     key={o.value}
                     type="button"
@@ -160,9 +183,11 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
                     }}
                     {...common}
                 >
-                    {o.label}
+                    {content}
                 </button>
             )
+            // 長大顯示文字時不再出提示泡泡
+            return tooltips && o.name ? <Tooltip key={o.value} label={wide ? '' : o.name}>{button}</Tooltip> : button
         })
 
     const rowW = vertical ? rowCross : rowLong
@@ -174,7 +199,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
             role="tablist"
             aria-orientation={vertical ? 'vertical' : 'horizontal'}
             data-tour={rest['data-tour']}
-            className={`seg-track relative rounded-full select-none touch-none ${className}`}
+            className={`seg-track relative rounded-full select-none touch-none ${toolbar ? 'seg-tools' : ''} ${wide ? 'is-wide' : ''} ${className}`}
             style={{ padding: pad, ['--R' as string]: `${cross / 2}px` }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -199,6 +224,11 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
                                                         {vertical ? (
                                 // 直的：鏡內整片底色，左右挖兩條上下圓頭的底面（寬＝鏡片寬減去縮成 0.768 倍的軌道寬，除以 2）
                                 <span className="lens-ink" style={sideBandMask(lw, lh, (lw - cross * sCross) / 2, Math.min(lw / 2, lh / 4))}>
+                                    <span className="lens-bar" style={{ inset: 0 }} />
+                                </span>
+                            ) : toolbar ? (
+                                // 工具列：鏡內整片底色，上下挖兩條左右圓頭的底面（高＝鏡片高減去縮成 0.768 倍的整條列高，除以 2，同規範）
+                                <span className="lens-ink" style={topBandMask(lw, lh, (lh - cross * sCross) / 2, Math.min(lh / 2, lw / 4))}>
                                     <span className="lens-bar" style={{ inset: 0 }} />
                                 </span>
                             ) : (

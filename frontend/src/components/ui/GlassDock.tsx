@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { DOCK_WALL_MASK, LENS_MAG, LENS_SX, LENS_SY, capsuleHole, reduceMotion } from './lensKit'
+import { LENS_MAG, capsuleHole, reduceMotion, sideBandMask } from './lensKit'
 
 export interface DockItem {
     id: string
@@ -33,6 +33,7 @@ const SHELL_N = 40, BTN_N = 36, GAP_N = 6
 const SHELL_W = 79, ROW_W = 75, ROW_H = 62
 const PAD = 2
 const LENS_W = 93, LENS_H = 88
+const DOCK_BANDS = sideBandMask(LENS_W, LENS_H, (LENS_W - SHELL_W * 0.768) / 2, LENS_H / 4)
 const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（左右 7；上下也用 7，同心）
 const R_WIDE = 33
 const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右各外擴 13，右上角圓弧和圓鈕同一個圓心
@@ -148,10 +149,6 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     // 規範：選單的玻璃（模糊、底色、光邊）和鏡片底下的項目，在鏡片位置整個挖掉，改由鏡片自己做一整片模糊
     const lensOn = wide && lensY !== null
     const hole = lensOn ? capsuleHole(lensL, lensT, LENS_W, LENS_H) : undefined
-    // 肩：鏡內縮小的選單（縱向 0.93）在那一側延伸到鏡片外才有
-    const lensCY = lensT + LENS_H / 2
-    const shTop = lensCY * LENS_SX > LENS_H / 2 ? 1 : 0
-    const shBottom = (wideH - lensCY) * LENS_SX > LENS_H / 2 ? 1 : 0
 
     const rowContent = (i: number, ghost: boolean) => {
         const isBtn = i === 0
@@ -232,19 +229,10 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                     className="lens is-active is-v dock-lens"
                     style={{ left: shellX + lensL, top: shellY + lensT, width: LENS_W, height: LENS_H, borderRadius: 40 }}
                 >
-                    <span className="lens-ink">
-                        <span
-                            className="lens-bar"
-                            style={{
-                                left: -lensL, top: -lensT, width: shellW, height: wideH, borderRadius: R_WIDE,
-                                transformOrigin: `${lensL + LENS_W / 2}px ${lensT + LENS_H / 2}px`,
-                                transform: `scale(${LENS_SY}, ${LENS_SX})`,
-                            }}
-                        />
-                        <span className="lens-wall" style={{ ['--lens-wall-mask' as string]: DOCK_WALL_MASK }}>
-                            <i className="t" style={{ opacity: shTop }} />
-                            <i className="b" style={{ opacity: shBottom }} />
-                        </span>
+                    {/* 凹陷：跟一般／專案（側欄收合的直向分段）同一套——鏡內整片＝選單同色，
+                        左右挖兩條上下圓頭的底面（寬＝鏡片寬減去縮成 0.768 倍的選單寬，除以 2），直接透出後面 */}
+                    <span className="lens-ink" style={DOCK_BANDS}>
+                        <span className="lens-bar" style={{ inset: 0 }} />
                     </span>
                     <div
                         className="absolute left-0 top-0 flex flex-col"
