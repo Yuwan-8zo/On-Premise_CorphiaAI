@@ -2394,8 +2394,16 @@ html.dark {
   .fold-wide .chat-shell .chat-head {
     padding-right: calc(var(--duo-status) + var(--gutter));
   }
-  /* 後台：狀態列會往下蓋到第一排卡片，所以整頁右側讓出狀態列寬度（外層本來就有一圈間距） */
-  .fold-wide .admin-shell {
+  /* 後台：狀態列只蓋住最上面一段（標題列和總覽第一排），只讓這些往左讓出狀態列寬度；
+     下面的卡片照常延伸到右邊外圈間距。外層本來就有一圈間距，所以只補狀態列寬度 */
+  .fold-wide .admin-shell .admin-head {
+    padding-right: var(--duo-status);
+  }
+  .fold-wide .admin-shell .admin-overview > :first-child {
+    margin-right: calc(var(--duo-status) / var(--fit, 1)); /* 總覽有等比例縮放，要除回比例才是實際寬度 */
+  }
+  /* 其他分頁的內容從最上面就開始，整欄讓開 */
+  .fold-wide .admin-shell .admin-page-enter:not(:has(.admin-overview)) {
     padding-right: var(--duo-status);
   }
 }
