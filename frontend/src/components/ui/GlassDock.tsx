@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
 
 export interface DockItem {
     id: string
@@ -40,7 +40,7 @@ const LENS_R = R_WIDE + (LENS_W - SHELL_W) / 2 // 40：與外殼同心
 // 肩的遮罩（長邊＝鏡片高、短邊＝鏡片寬；鏡片比選單凸出 7；選單寬 79）
 const DOCK_WALL = shoulderMask(LENS_H, LENS_W, (LENS_W - SHELL_W) / 2, SHELL_W, true, LENS_R)
 const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右各外擴 13，右上角圓弧和圓鈕同一個圓心
-const LONG_PRESS_MS = 320
+const LONG_PRESS_MS = LENS_CFG.pressWait
 
 export default function GlassDock({ items, className = '', 'aria-label': ariaLabel = '選單' }: Props) {
     const [open, setOpen] = useState(false)
@@ -133,7 +133,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
             const idx = Math.round((y - PAD - ROW_H / 2) / ROW_H)
             // 放大鏡留在原地 0.3 秒淡出並縮到 0.95，選單立刻收合
             setLeaving({ y })
-            window.setTimeout(() => setLeaving(null), 300)
+            window.setTimeout(() => setLeaving(null), LENS_CFG.leave)
             close()
             if (commit && idx >= 1 && idx <= items.length) items[idx - 1].onSelect()
             return

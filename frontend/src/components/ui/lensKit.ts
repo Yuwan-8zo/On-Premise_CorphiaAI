@@ -1,30 +1,45 @@
 /**
- * lensKit — 「凹進去的放大鏡」共用工具（《Liquid Glass 元件規範》CSS 35、JS 00）
- * 用在 GlassSegmented（分段切換器）、GlassNav（直向分段＝側欄）、GlassSwitch（切換開關）。
+ * lensKit — 「凹進去的放大鏡」（折射）共用工具（《Liquid Glass 元件規範》CSS 35、JS 00、JS 00a）
+ * 用在 GlassSegmented（分段切換器／工具列）、GlassNav（直向分段）、GlassSwitch（切換開關）、GlassDock（右上選單）。
+ *
+ * 規範是活的：所有時間、比例、門檻只在 LENS_CFG 定義一次（名稱對照規範設定表的 --glide-*／--lens-*），元件不寫死數字。
  *
  * 構造（每個元件都一樣，只有尺寸和方向不同）：
- *   底（軌道／列）：顏色畫在裡面一層，放大鏡底下「真的挖洞」（capsuleHole）
- *   放大鏡：鏡片玻璃 --lens-glass（底面亮 9%、兩端漸暗，不另外補實色）
- *     鏡內：縮小的底（長邊 0.93、短邊 0.768，以鏡片中心為準）＋從鏡緣進來的肩（shoulderMask），同一個容器、同一個顏色
- *     亮邊（只在長邊兩緣）；外圈 --lens-ring
- *     最上層＝平常的樣子（凹陷底盤／白色旋鈕），跟著鏡片一起長大、按下淡掉、縮回時再蓋回
- * 時間表（按下、點一下切換、放開共用）：
- *   按下 0.12 秒長大、平常的樣子 0.1 秒淡掉；拖曳每幀追 30%
- *   滑過去 0.32 秒＋每 1px 0.7 毫秒（最長 0.54 秒），前 0.1 秒等速走六成；過一半開始 0.28 秒縮回（梯形）；
- *   平常的樣子 0.03 秒後開始、0.12 秒蓋滿；肩 0.2 秒淡掉
+ *   底（軌道／列）：顏色畫在裡面一層，放大鏡底下挖洞（capsuleHole／roundRectHole，自動內縮 1px）
+ *   鏡片：不補色（透明），鏡內＝縮小的底（長邊 0.93、短邊 0.768）＋肩（shoulderMask，單一形狀），和底同色
+ *   最上層＝平常的樣子（凹陷底盤／白色旋鈕），按下淡掉、縮回時再蓋回
+ * 時間表：見 glideProfile（依行程距離在開關與分頁列兩套之間過渡）與 SYS_CURVE（iOS 26 逐幀量的位置曲線）
  */
 import { useEffect, useRef, useState } from 'react'
 
-export const LENS_SX = 0.93
-export const LENS_SY = 0.768
-/** 鏡內內容（文字、圖示）放大倍率：規範右下選單「鏡內圖示放大 1.12 倍」，跟著放大鏡一起長大、縮回 */
-export const LENS_MAG = 1.12
-const GROW_MS = 120
-const VEIL_OUT_MS = 100
-const SHRINK_MS = 280
-const VEIL_WAIT_MS = 30
-const VEIL_IN_MS = 120
-const WALL_OUT_MS = 200
+/** 設定表（對照規範 :root 的 --lens-*／--glide-*；毫秒、像素、比例） */
+export const LENS_CFG = {
+    sx: 0.93, // --lens-sx 鏡內的底沿長邊的縮放
+    sy: 0.768, // --lens-sy 鏡內的底垂直長邊的縮放
+    zoom: 1.12, // --lens-zoom 鏡內文字與圖示放大倍率
+    grow: 120, // --lens-grow 按下時原地長大
+    veilOut: 100, // --lens-veil-out 平常的樣子淡掉
+    veilWait: 30, // --lens-veil-wait 縮回開始後多久，平常的樣子開始蓋回
+    veilIn: 120, // --lens-veil-in 平常的樣子蓋滿
+    wallOut: 200, // 肩淡掉（--wall-a 0.2 秒）
+    hold: 110, // --lens-hold 按下後放大鏡先原地長大，這麼久之後才開始跟手
+    follow: 0.3, // --lens-follow 跟手：每幀（60fps）追上差距的比例
+    dtMax: 64, // --lens-dt-max 換算跟手時，一幀最多算幾毫秒
+    eps: 0.05, // --lens-eps 差距小於這個（px）就直接到位
+    // 點一下滑行的判斷式（--glide-*）
+    near: 25, // 行程不超過這個：用開關的時間表
+    far: 50, // 行程達到這個：用分頁列的時間表；中間線性過渡
+    sBase: 320, sK: 0.7, sMax: 540, sAt: 0.5, sShrink: 280, // 開關（短行程）
+    lBase: 156, lK: 0.586, lMax: 330, lAt: 0.64, lShrink: 180, // 分頁列（長行程）
+    lead: 30, // --glide-lead 滑行的時間從按下之前多久算起
+    pressWait: 320, // --lens-press-wait 定點按住多久算長按
+    leave: 300, // 放開後放大鏡原地淡出
+} as const
+
+export const LENS_SX = LENS_CFG.sx
+export const LENS_SY = LENS_CFG.sy
+/** 鏡內內容（文字、圖示）放大倍率，跟著放大鏡一起長大、縮回 */
+export const LENS_MAG = LENS_CFG.zoom
 
 type Anim = { from: number; to: number; t0: number; dur: number; ease: (x: number) => number } | null
 type Key = 'pos' | 'grow' | 'veil' | 'wall'
@@ -33,18 +48,44 @@ export type LensFrame = Record<Key, number>
 const easeGrow = (x: number) => 1 - Math.pow(1 - x, 3) // ≈ cubic-bezier(.2,.7,.3,1)
 const easeTrap = (x: number) => x * x * (3 - 2 * x)
 const linear = (x: number) => x
-const glideEase = (T: number) => (u: number) => {
-    const a = Math.min(0.9, 100 / T)
-    if (u <= a) return (0.6 * u) / a
-    const w = (u - a) / (1 - a)
-    return 0.6 + 0.4 * (1 - Math.pow(1 - w, 2.2))
+
+/** 點一下滑行的位置曲線：iOS 26 逐幀量的（時間比例 → 位置比例），中間線性內插 */
+const SYS_CURVE: ReadonlyArray<readonly [number, number]> = [
+    [0, 0], [0.05, 0.045], [0.1, 0.15], [0.15, 0.27], [0.2, 0.4], [0.25, 0.5], [0.29, 0.6], [0.34, 0.68],
+    [0.39, 0.74], [0.44, 0.79], [0.49, 0.83], [0.54, 0.86], [0.59, 0.88], [0.69, 0.92], [0.78, 0.94], [0.88, 0.97], [1, 1],
+]
+export function glideEase(u: number) {
+    if (u <= 0) return 0
+    if (u >= 1) return 1
+    for (let i = 1; i < SYS_CURVE.length; i++) {
+        const [u1, p1] = SYS_CURVE[i]
+        if (u <= u1) {
+            const [u0, p0] = SYS_CURVE[i - 1]
+            return p0 + ((p1 - p0) * (u - u0)) / (u1 - u0)
+        }
+    }
+    return 1
 }
+
+/**
+ * 判斷式：行程短用開關的時間表，行程長用分頁列的時間表（距離越長越快），中間線性過渡。
+ * T＝移動時間；at＝縮小在移動時間的哪個比例開始；ms＝縮小用多久
+ */
+export function glideProfile(px: number) {
+    const C = LENS_CFG
+    const d = Math.abs(px)
+    const s = Math.max(0, Math.min(1, (d - C.near) / (C.far - C.near)))
+    const sT = Math.min(C.sMax, C.sBase + d * C.sK)
+    const lT = Math.min(C.lMax, C.lBase + d * C.lK)
+    return { T: sT + (lT - sT) * s, at: C.sAt + (C.lAt - C.sAt) * s, ms: C.sShrink + (C.lShrink - C.sShrink) * s }
+}
+
 export const reduceMotion = () =>
     typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 /**
  * 放大鏡的時間表。pos＝位置（元件自己定義單位），grow＝0 平常～1 放大鏡，veil＝平常的樣子不透明度，wall＝肩的不透明度
- * distPx(a, b)：兩個位置之間的像素距離（算滑動時間用）
+ * distPx(a, b)：兩個位置之間的像素距離（判斷行程長短、算滑動時間用）
  */
 export function useLensMotion(initial: number, distPx: (a: number, b: number) => number) {
     const [frame, setFrame] = useState<LensFrame>({ pos: initial, grow: 0, veil: 1, wall: 0 })
@@ -52,12 +93,17 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
     const anim = useRef<Record<Key, Anim>>({ pos: null, grow: null, veil: null, wall: null })
     const follow = useRef<number | null>(null)
     const held = useRef(false)
+    const downT = useRef(0)
+    const lastT = useRef(0)
     const raf = useRef(0)
     const timer = useRef(0 as unknown as ReturnType<typeof setTimeout>)
     const dist = useRef(distPx)
     dist.current = distPx
 
     const step = (now: number) => {
+        const C = LENS_CFG
+        const dt = Math.min(C.dtMax, now - (lastT.current || now)) || 1000 / 60
+        lastT.current = now
         let busy = false
         for (const k of ['pos', 'grow', 'veil', 'wall'] as const) {
             const an = anim.current[k]
@@ -69,11 +115,16 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
             else busy = true
         }
         if (follow.current !== null) {
-            v.current.pos += (follow.current - v.current.pos) * 0.3
+            // 按下後先原地長大 hold 毫秒才跟手；跟手比例依實際幀時間換算（60fps 時每幀 30%）
+            const holding = now - downT.current < C.hold
+            const k = holding ? 0 : 1 - Math.pow(1 - C.follow, (dt * 60) / 1000)
+            v.current.pos += (follow.current - v.current.pos) * k
+            if (dist.current(v.current.pos, follow.current) < C.eps) v.current.pos = follow.current
             busy = true
         }
         setFrame({ ...v.current })
         raf.current = busy ? requestAnimationFrame(step) : 0
+        if (!busy) lastT.current = 0
     }
     const run = () => { if (!raf.current) raf.current = requestAnimationFrame(step) }
     const animate = (k: Key, to: number, dur: number, ease: (x: number) => number, delay = 0) => {
@@ -93,39 +144,43 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
     return {
         frame,
         current: v,
-        /** 按下：放大鏡長大、平常的樣子淡掉、肩出現 */
+        /** 按下：放大鏡原地長大、平常的樣子淡掉、肩出現 */
         press() {
             held.current = true
+            downT.current = performance.now()
             clearTimeout(timer.current)
             if (reduceMotion()) return
             anim.current.pos = null
             anim.current.wall = null
             v.current.wall = 1
-            animate('grow', 1, GROW_MS, easeGrow)
-            animate('veil', 0, VEIL_OUT_MS, linear)
+            animate('grow', 1, LENS_CFG.grow, easeGrow)
+            animate('veil', 0, LENS_CFG.veilOut, linear)
         },
-        /** 拖曳：位置每幀追上目標 30%；null＝停止跟手 */
+        /** 拖曳：位置每幀追上目標（按下後 hold 毫秒才開始）；null＝停止跟手 */
         follow(target: number | null) {
             follow.current = reduceMotion() ? null : target
             if (target !== null && reduceMotion()) { v.current.pos = target; setFrame({ ...v.current }) }
             run()
         },
-        /** 點一下切換／放開吸附：邊長大邊滑，過一半開始縮回 */
+        /** 點一下切換／放開吸附：邊長大邊滑，到判斷式算出的比例才開始縮回 */
         glideTo(to: number) {
+            const C = LENS_CFG
             held.current = false
             follow.current = null
             clearTimeout(timer.current)
             if (reduceMotion()) { jump(to); return }
-            const T = Math.min(320 + 0.7 * dist.current(v.current.pos, to), 540)
-            animate('pos', to, T, glideEase(T))
-            if (v.current.grow < 1) { animate('grow', 1, GROW_MS, easeGrow); v.current.wall = 1; anim.current.wall = null }
-            if (v.current.veil > 0) animate('veil', 0, VEIL_OUT_MS, linear)
+            const P = glideProfile(dist.current(v.current.pos, to))
+            // 滑行時間從按下之前 lead 毫秒算起
+            anim.current.pos = { from: v.current.pos, to, t0: performance.now() - C.lead, dur: Math.max(1, P.T), ease: glideEase }
+            run()
+            if (v.current.grow < 1) { animate('grow', 1, C.grow, easeGrow); v.current.wall = 1; anim.current.wall = null }
+            if (v.current.veil > 0) animate('veil', 0, C.veilOut, linear)
             timer.current = setTimeout(() => {
                 if (held.current) return
-                animate('grow', 0, SHRINK_MS, easeTrap)
-                animate('veil', 1, VEIL_IN_MS, linear, VEIL_WAIT_MS)
-                animate('wall', 0, WALL_OUT_MS, linear)
-            }, T / 2)
+                animate('grow', 0, P.ms, easeTrap)
+                animate('veil', 1, C.veilIn, linear, C.veilWait)
+                animate('wall', 0, C.wallOut, linear)
+            }, Math.max(0, P.T * P.at - C.lead))
         },
         jump,
     }

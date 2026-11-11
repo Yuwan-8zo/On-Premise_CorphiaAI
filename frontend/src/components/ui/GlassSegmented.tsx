@@ -12,7 +12,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Tooltip from './Tooltip'
-import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
+import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -91,7 +91,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         lens.press()
         if (toolbar) {
             window.clearTimeout(wideTimer.current)
-            wideTimer.current = window.setTimeout(() => setWide(true), 320)
+            wideTimer.current = window.setTimeout(() => setWide(true), LENS_CFG.pressWait)
         }
     }
     const onPointerMove = (e: React.PointerEvent) => {

@@ -14,9 +14,10 @@
  * 直排或橫排會依選項位置自動判斷。
  */
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
+import { LENS_CFG } from './lensKit'
 
-const HOLD_MS = 320 // 範本：長按 320ms 才出現放大鏡（移動不會提前觸發）
-const MAG = 1.12
+const HOLD_MS = LENS_CFG.pressWait // 長按多久才出現放大鏡（移動不會提前觸發）
+const MAG = LENS_CFG.zoom
 
 type Props = {
     children: ReactNode
