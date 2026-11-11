@@ -162,18 +162,18 @@ export default function OverviewSection({
                     return (
                         <Panel
                             key={item.label}
-                            className="pl-[20px] pr-[16px] py-[var(--space)]"
+                            className="pl-[var(--sp-20)] pr-[var(--sp-16)] py-[var(--space)]"
                         >
                             <div className="relative flex items-center gap-[var(--space)]">
-                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[13px] ${item.iconBg} ${item.iconColor}`}>
+                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--r-13)] ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[12px] font-medium text-text-secondary">
+                                    <p className="truncate text-[length:var(--fs-12)] font-medium text-text-secondary">
                                         {item.label}
                                     </p>
-                                    <p className={`text-[18px] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
-                                        {item.loading ? <Skel className="inline-block h-[22px] w-[40px] align-middle" /> : item.value.toLocaleString()}
+                                    <p className={`text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
+                                        {item.loading ? <Skel className="inline-block h-[var(--sz-22)] w-[var(--sz-40)] align-middle" /> : item.value.toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -188,16 +188,16 @@ export default function OverviewSection({
               小於 lg 時會堆疊（手機 / 窄視窗），下方加 min-height fallback
               ───────────────────────────────────────────────────────────── */}
             <section className="grid min-h-0 grid-cols-1 gap-[var(--space)] lg:grid-cols-12">
-                <Panel className="overflow-hidden flex flex-col min-h-[180px] lg:col-span-7 lg:min-h-0">
+                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-7 lg:min-h-0">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
                     />
                     <div className="flex-1 min-h-0 px-[var(--space)] pb-[var(--space)]">
-                        {auditLoading ? <Skel className="h-full w-full rounded-[16px]" /> : <ActivityBarChart data={dailySeries} height="100%" />}
+                        {auditLoading ? <Skel className="h-full w-full rounded-[var(--r-16)]" /> : <ActivityBarChart data={dailySeries} height="100%" />}
                     </div>
                 </Panel>
 
-                <Panel className="overflow-hidden flex flex-col min-h-[180px] lg:col-span-5 lg:min-h-0">
+                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-5 lg:min-h-0">
                     <SectionHeader
                         title={t('admin.overview.distributionTitle', '事件分布')}
                     />

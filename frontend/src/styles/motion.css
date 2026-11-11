@@ -58,7 +58,7 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(var(--sp-24));
   }
 
   100% {
@@ -73,7 +73,7 @@
   0% {
     opacity: 0.4; /* 不從 0 開始：避免換頁那一下整片變暗 */
     transform: scale(0.985);
-    filter: blur(10px);
+    filter: blur(var(--blur-10));
   }
 
   100% {
@@ -118,7 +118,7 @@
 /* 不從全透明開始（全透明會露出底色＝看起來閃黑）；只做模糊對焦，骨架另外蓋在上面淡出 */
 @keyframes contentReveal {
   from {
-    filter: blur(6px);
+    filter: blur(var(--blur-6));
   }
   to {
     filter: none;

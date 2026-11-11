@@ -119,9 +119,9 @@ export default function AuditSection({
                 <Panel className="p-[var(--space)] shrink-0">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
                     <div className="flex flex-wrap items-center gap-[var(--space)]">
-                        <label className="admin-search flex-1 min-w-[220px]">
+                        <label className="admin-search flex-1 min-w-[var(--sz-220)]">
                             <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
-                                <Search className="h-[16px] w-[16px]" />
+                                <Search className="h-[var(--sz-16)] w-[var(--sz-16)]" />
                             </button>
                             <input
                                 type="search"
@@ -132,7 +132,7 @@ export default function AuditSection({
                                 placeholder={t('admin.audit.searchPlaceholder')}
                             />
                         </label>
-                        <div className="w-[180px]">
+                        <div className="w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.action || ''}
                                 onChange={(v) => onFilterChange('action', v)}
@@ -146,7 +146,7 @@ export default function AuditSection({
                                 ]}
                             />
                         </div>
-                        <div className="w-[180px]">
+                        <div className="w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.resource_type || ''}
                                 onChange={(v) => onFilterChange('resource_type', v)}
@@ -169,7 +169,7 @@ export default function AuditSection({
                                     const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
                                     onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
                                 }}
-                                className={`btn !h-[40px] !px-[18px] !text-[14px] whitespace-nowrap ${
+                                className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] whitespace-nowrap ${
                                     auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
                                         ? 'btn-danger-solid'
                                         : 'btn-secondary'
@@ -221,7 +221,7 @@ export default function AuditSection({
                         {/* Column header row — same grid template as the tbody rows
                             手機板僅顯示 時間 + 操作；resource / user / ip 在 sm+ 才出現
                             點任一列仍可開 drawer 看完整資料 */}
-                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_140px] border-b border-[var(--paper-line)] text-left text-[13px] font-semibold text-text-secondary">
+                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_140px] border-b border-[var(--paper-line)] text-left text-[length:var(--fs-13)] font-semibold text-text-secondary">
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.time')}</div>
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.action')}</div>
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.resource')}</div>
@@ -233,11 +233,11 @@ export default function AuditSection({
                     <div className="admin-fill-body">
                         <table className="w-full table-fixed">
                             <colgroup>
-                                <col className="w-[110px] sm:w-[180px]" />
+                                <col className="w-[var(--sz-110)] sm:w-[var(--sz-180)]" />
                                 <col />
                                 <col className="hidden sm:table-column" />
                                 <col className="hidden sm:table-column" />
-                                <col className="hidden sm:table-column sm:w-[140px]" />
+                                <col className="hidden sm:table-column sm:w-[var(--sz-140)]" />
                             </colgroup>
                             <thead className="hidden">
                                 <tr>
@@ -264,12 +264,12 @@ export default function AuditSection({
                                             className={`transition cursor-pointer ${getSeverityClass(log.action)}  `}
                                             onClick={() => setAuditDrawer(log)}
                                         >
-                                            <td className="px-3 sm:px-5 py-2 text-[11px] sm:text-sm text-text-secondary whitespace-nowrap">
+                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-sm text-text-secondary whitespace-nowrap">
                                                 {formatDate(log.created_at)}
                                             </td>
                                             <td className="px-3 sm:px-5 py-2">
                                                 <span
-                                                    className={`rounded-full border px-2 sm:px-3 py-0.5 text-[10px] sm:text-xs font-semibold ${getActionPillClass(log.action)}`}
+                                                    className={`rounded-full border px-2 sm:px-3 py-0.5 text-[length:var(--fs-10)] sm:text-xs font-semibold ${getActionPillClass(log.action)}`}
                                                 >
                                                     {t(`admin.audit.actionTypes.${log.action}`, {
                                                         defaultValue: ACTION_LABELS[log.action] || log.action,
@@ -281,7 +281,7 @@ export default function AuditSection({
                                                     defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type,
                                                 })}
                                             </td>
-                                            <td className="hidden sm:table-cell max-w-[180px] truncate px-5 py-2 text-sm text-text-secondary">
+                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
                                             </td>
                                             <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary/70">
@@ -314,13 +314,13 @@ export default function AuditSection({
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] paper !rounded-none sm:!rounded-l-[25px] z-50 overflow-y-auto custom-scrollbar"
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 overflow-y-auto custom-scrollbar"
                             role="dialog"
                             aria-label="audit detail"
                         >
-                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl px-[26px] py-4 flex items-center justify-between">
+                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl px-[var(--sp-26)] py-4 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[12px] font-bold text-accent">
+                                    <p className="text-[length:var(--fs-12)] font-bold text-accent">
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
                                     </p>
                                     <h3 className="mt-0.5 text-base font-semibold text-text-primary">
@@ -364,7 +364,7 @@ export default function AuditSection({
                                     <p className="text-xs font-bold text-text-secondary mb-2">
                                         {t('admin.audit.detailPayload', 'Payload')}
                                     </p>
-                                    <pre className="p-4 rounded-[14px] snow-well text-[12px] text-text-primary overflow-x-auto">
+                                    <pre className="p-4 rounded-[var(--r-14)] snow-well text-[length:var(--fs-12)] text-text-primary overflow-x-auto">
                                         {JSON.stringify(auditDrawer.details, null, 2)}
                                     </pre>
                                 </div>

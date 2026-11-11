@@ -19,12 +19,12 @@ export default function NotFound() {
                 {/* 中央 404 視覺核心 */}
                 <div className="flex items-center justify-center gap-3 md:gap-5 mb-8 select-none">
                     {/* 第一個 4 */}
-                    <div className="text-[120px] md:text-[160px] font-light text-accent leading-none tracking-tighter" style={{ fontFamily: 'Georgia, serif' }}>
+                    <div className="text-[length:var(--fs-120)] md:text-[length:var(--fs-160)] font-light text-accent leading-none tracking-tighter" style={{ fontFamily: 'Georgia, serif' }}>
                         4
                     </div>
 
                     {/* 中央拱門插畫 (0) */}
-                    <div className="w-[90px] h-[140px] md:w-[120px] md:h-[180px] rounded-t-[900px] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-[var(--paper-line)]">
+                    <div className="w-[var(--sz-90)] h-[var(--sz-140)] md:w-[var(--sz-120)] md:h-[var(--sz-180)] rounded-t-[var(--r-900)] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-[var(--paper-line)]">
                         
                         {/* 內部光暈/漸層填色 */}
                         <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
@@ -42,9 +42,9 @@ export default function NotFound() {
 
                         {/* 路標 */}
                         <div className="absolute right-[22%] bottom-[38%] flex flex-col items-center">
-                            <div className="w-[1.5px] h-5 bg-accent rounded-full" />
-                            <div className="absolute top-1 -right-[6px] w-4 h-[3px] bg-accent rounded-sm transform rotate-[-4deg]" />
-                            <div className="absolute top-[10px] -left-[4px] w-3 h-[3px] bg-accent rounded-sm transform rotate-[6deg]" />
+                            <div className="w-[var(--sz-1d5)] h-5 bg-accent rounded-full" />
+                            <div className="absolute top-1 -right-[var(--sp-6)] w-4 h-[var(--sz-3)] bg-accent rounded-sm transform rotate-[-4deg]" />
+                            <div className="absolute top-[var(--sp-10)] -left-[var(--sp-4)] w-3 h-[var(--sz-3)] bg-accent rounded-sm transform rotate-[6deg]" />
                         </div>
 
                         {/* 星芒 (Sparkle) */}
@@ -54,16 +54,16 @@ export default function NotFound() {
                     </div>
 
                     {/* 第二個 4 */}
-                    <div className="text-[120px] md:text-[160px] font-light text-accent leading-none tracking-tighter" style={{ fontFamily: 'Georgia, serif' }}>
+                    <div className="text-[length:var(--fs-120)] md:text-[length:var(--fs-160)] font-light text-accent leading-none tracking-tighter" style={{ fontFamily: 'Georgia, serif' }}>
                         4
                     </div>
                 </div>
 
                 {/* 標題與內文 */}
-                <h1 className="text-xl md:text-[22px] font-bold text-text-primary mb-4 tracking-wide">
+                <h1 className="text-xl md:text-[length:var(--fs-22)] font-bold text-text-primary mb-4 tracking-wide">
                     找不到你要的頁面
                 </h1>
-                <p className="text-[13px] md:text-[14px] text-text-muted text-center max-w-[420px] mb-10 leading-relaxed font-medium">
+                <p className="text-[length:var(--fs-13)] md:text-[length:var(--fs-14)] text-text-muted text-center max-w-[var(--sz-420)] mb-10 leading-relaxed font-medium">
                     抱歉，這個頁面可能已被移除、重新命名或暫時無法使用。<br className="hidden md:block"/>
                     你可以回到首頁，或使用搜尋功能繼續探索 Corphia AI。
                 </p>
@@ -75,7 +75,7 @@ export default function NotFound() {
                         to="/"
                         className="btn btn-primary w-full sm:w-auto"
                     >
-                        <Home className="w-[18px] h-[18px]" />
+                        <Home className="w-[var(--sz-18)] h-[var(--sz-18)]" />
                         <span>回到首頁</span>
                     </Link>
 
@@ -84,7 +84,7 @@ export default function NotFound() {
                         onClick={() => navigate(-1)}
                         className="btn btn-secondary w-full sm:w-auto"
                     >
-                        <ArrowLeft className="w-[18px] h-[18px]" />
+                        <ArrowLeft className="w-[var(--sz-18)] h-[var(--sz-18)]" />
                         <span>返回上一頁</span>
                     </button>
                 </div>

@@ -78,19 +78,19 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setOpen((v) => !v)}
-                className="w-full h-11 flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[15px] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-11 flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[length:var(--fs-15)] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
                 <span className={`truncate ${selected ? '' : 'text-text-muted'}`}>{selected?.label ?? placeholder ?? ''}</span>
-                <ChevronDown className={`w-[18px] h-[18px] shrink-0 text-text-secondary transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-[var(--sz-18)] h-[var(--sz-18)] shrink-0 text-text-secondary transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {open && pos && createPortal(
                 <div
                     ref={menuRef}
                     role="listbox"
-                    className="fixed z-[1100] paper paper-solid !rounded-[22px] p-[6px] overflow-y-auto"
+                    className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] p-[var(--sp-6)] overflow-y-auto"
                     style={{ left: pos.left, minWidth: pos.width, maxWidth: 360, top: pos.top, bottom: pos.bottom, maxHeight: MENU_MAX }}
                 >
                     <LensMenu className="flex flex-col gap-0.5">

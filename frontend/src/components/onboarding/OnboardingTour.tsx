@@ -303,7 +303,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             {targetRect ? (
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute rounded-[14px] transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute rounded-[var(--r-14)] transition-all duration-300 ease-out"
                     style={{
                         top: targetRect.top - PADDING,
                         left: targetRect.left - PADDING,
@@ -322,7 +322,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 ref={tooltipRef}
                 onClick={(e) => e.stopPropagation()}
                 style={tooltipStyle}
-                className="absolute paper !rounded-[25px] transition-all duration-300 ease-out"
+                className="absolute paper !rounded-[var(--r-25)] transition-all duration-300 ease-out"
             >
                 {/* 箭頭 —— offset 動態跟著目標走，被 clamp 過的 tooltip 也能正確指回去 */}
                 {arrowSide && arrowOffset !== null && (
@@ -330,12 +330,12 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                         aria-hidden
                         className={`absolute h-3 w-3 rotate-45 bg-[var(--glass-card)] backdrop-blur-xl ${
                             arrowSide === 'top'
-                                ? '-top-[7px] border-r-0 border-b-0'
+                                ? '-top-[var(--sp-7)] border-r-0 border-b-0'
                                 : arrowSide === 'bottom'
-                                    ? '-bottom-[7px] border-l-0 border-t-0'
+                                    ? '-bottom-[var(--sp-7)] border-l-0 border-t-0'
                                     : arrowSide === 'left'
-                                        ? '-left-[7px] border-t-0 border-r-0'
-                                        : '-right-[7px] border-b-0 border-l-0'
+                                        ? '-left-[var(--sp-7)] border-t-0 border-r-0'
+                                        : '-right-[var(--sp-7)] border-b-0 border-l-0'
                         }`}
                         style={
                             arrowSide === 'top' || arrowSide === 'bottom'
@@ -365,12 +365,12 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                         </span>
                         <h2
                             id="onboarding-title"
-                            className="text-[16px] font-semibold text-text-primary tracking-tight"
+                            className="text-[length:var(--fs-16)] font-semibold text-text-primary tracking-tight"
                         >
                             {t(current.titleKey, current.titleFallback)}
                         </h2>
                     </div>
-                    <p className="text-[13px] leading-relaxed text-text-secondary">
+                    <p className="text-[length:var(--fs-13)] leading-relaxed text-text-secondary">
                         {t(current.descKey, current.descFallback)}
                     </p>
                 </div>
@@ -398,7 +398,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                             <button
                                 type="button"
                                 onClick={handlePrev}
-                                className="flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[12px] text-text-secondary   transition"
+                                className="flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[length:var(--fs-12)] text-text-secondary   transition"
                             >
                                 <ChevronLeft className="h-3 w-3" />
                                 {t('common.prev', '上一步')}
@@ -408,7 +408,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                         <button
                             type="button"
                             onClick={handleNext}
-                            className="flex items-center gap-0.5 btn btn-primary !h-8 !px-3.5 !text-[12px]"
+                            className="flex items-center gap-0.5 btn btn-primary !h-8 !px-3.5 !text-[length:var(--fs-12)]"
                         >
                             {isLast
                                 ? t('onboarding.start', '開始使用')

@@ -126,12 +126,12 @@ function StateIcon({ state }: { state: StepState }) {
         : state === 'running' ? 'bg-accent/15 text-accent'
         : 'bg-[var(--chip)] text-text-muted'
     return (
-        <span className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full ${tone}`}>
-            {state === 'done' && <Check className="h-[14px] w-[14px]" />}
-            {state === 'error' && <X className="h-[14px] w-[14px]" />}
-            {state === 'running' && <span className="skel h-[10px] w-[10px] !rounded-full !bg-current" />}
-            {state === 'skipped' && <span className="h-[2px] w-[10px] rounded-full bg-current" />}
-            {state === 'pending' && <span className="h-[6px] w-[6px] rounded-full bg-current opacity-60" />}
+        <span className={`flex h-[var(--sz-28)] w-[var(--sz-28)] shrink-0 items-center justify-center rounded-full ${tone}`}>
+            {state === 'done' && <Check className="h-[var(--sz-14)] w-[var(--sz-14)]" />}
+            {state === 'error' && <X className="h-[var(--sz-14)] w-[var(--sz-14)]" />}
+            {state === 'running' && <span className="skel h-[var(--sz-10)] w-[var(--sz-10)] !rounded-full !bg-current" />}
+            {state === 'skipped' && <span className="h-[var(--sz-2)] w-[var(--sz-10)] rounded-full bg-current" />}
+            {state === 'pending' && <span className="h-[var(--sz-6)] w-[var(--sz-6)] rounded-full bg-current opacity-60" />}
         </span>
     )
 }
@@ -252,46 +252,46 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
             {/* 背景：系統的波浪圖（同登入、聊天頁） */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
 
-            <div className="relative z-10 my-auto w-full max-w-[560px] px-6 py-8 admin-page-enter">
+            <div className="relative z-10 my-auto w-full max-w-[var(--sz-560)] px-6 py-8 admin-page-enter">
                 {/* 標題：品牌圖示＋Title2 22／28 粗體＋Subheadline 15／20 次要字 */}
-                <div className="mb-[20px] flex items-center gap-4 px-[12px]">
-                    <CorphiaLogo className="h-[44px] w-[44px] shrink-0 select-none text-text-primary" />
+                <div className="mb-[var(--sp-20)] flex items-center gap-4 px-[var(--sp-12)]">
+                    <CorphiaLogo className="h-[var(--sz-44)] w-[var(--sz-44)] shrink-0 select-none text-text-primary" />
                     <div className="min-w-0 flex-1">
-                        <h1 className="text-[22px] leading-[28px] font-bold text-text-primary">Corphia AI 啟動中</h1>
-                        <p className="mt-0.5 text-[15px] leading-[20px] text-text-secondary tabular-nums">
+                        <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">Corphia AI 啟動中</h1>
+                        <p className="mt-0.5 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary tabular-nums">
                             {allReady ? '全部就緒，正在進入系統…' : `已完成 ${doneCount} / ${rows.length} 項・已經過 ${totalSec >= 60 ? `${Math.floor(totalSec / 60)} 分 ${totalSec % 60} 秒` : `${totalSec} 秒`}`}
                         </p>
                     </div>
                 </div>
 
                 {/* 清單：Liquid Glass 卡（圓角 26＝狀態圖示 14＋離邊 12，同心）；列 15／20＋13／18，每列 52 高 */}
-                <ul className="boot-list paper !rounded-[26px] overflow-hidden">
+                <ul className="boot-list paper !rounded-[var(--r-26)] overflow-hidden">
                     {rows.map((r) => (
-                        <li key={r.key} className="set-row !min-h-0 !gap-[12px] !px-[12px] !py-[8px]">
+                        <li key={r.key} className="set-row !min-h-0 !gap-[var(--sp-12)] !px-[var(--sp-12)] !py-[var(--sp-8)]">
                             <StateIcon state={r.state} />
                             <div className="min-w-0 flex-1">
-                                <p className={`text-[15px] leading-[20px] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
-                                {r.detail && <p className={`truncate text-[13px] leading-[18px] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
+                                <p className={`text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
+                                {r.detail && <p className={`truncate text-[length:var(--fs-13)] leading-[var(--lh-18)] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
                             </div>
                             <div className="shrink-0 text-right">
-                                <p className={`text-[13px] leading-[18px] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[#30d158]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
-                                <p className="text-[12px] leading-[16px] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
+                                <p className={`text-[length:var(--fs-13)] leading-[var(--lh-18)] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[#30d158]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
+                                <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
                             </div>
                         </li>
                     ))}
                 </ul>
 
                 {(launcherError || launcherStale || stopped) && (
-                    <div className="paper !rounded-[26px] mt-4 px-[20px] py-[14px]">
-                        <p className="text-[15px] leading-[20px] font-semibold text-[var(--danger-ink)]">
+                    <div className="paper !rounded-[var(--r-26)] mt-4 px-[var(--sp-20)] py-[var(--sp-14)]">
+                        <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-[var(--danger-ink)]">
                             {stopped ? '系統目前是關閉狀態' : launcherError ? '啟動過程發生錯誤' : '啟動程式沒有回應'}
                         </p>
-                        {launcherError && launcher?.message && <p className="mt-1 break-words text-[13px] leading-[18px] text-text-secondary">{launcher.message}</p>}
-                        <p className="mt-1 text-[13px] leading-[18px] text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
+                        {launcherError && launcher?.message && <p className="mt-1 break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{launcher.message}</p>}
+                        <p className="mt-1 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
                     </div>
                 )}
 
-                <p className="mt-[20px] text-center text-[12px] leading-[16px] text-text-muted">地端部署・所有回答都由本機 AI 產生・資料 100% 留在本機</p>
+                <p className="mt-[var(--sp-20)] text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">地端部署・所有回答都由本機 AI 產生・資料 100% 留在本機</p>
             </div>
         </div>
     )

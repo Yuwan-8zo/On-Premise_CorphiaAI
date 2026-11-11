@@ -172,7 +172,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     disabled={disabled}
-                    className={`btn-icon ${inline ? '!w-[38px] !h-[38px] [--R:19px]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
+                    className={`btn-icon ${inline ? '!w-[var(--sz-38)] !h-[var(--sz-38)] [--R:19px]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
                         transition-[transform,background-color,border-color,color] duration-200 ease-apple
                         active:scale-90
                         ${isOpen
@@ -193,7 +193,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     ref={popRef}
                     role="dialog"
                     aria-label={t('chat.promptTemplatesTitle')}
-                    className="prompt-panel fixed w-[min(400px,calc(100vw-24px))] paper paper-solid !rounded-[26px] p-[10px] transform-gpu z-[60] origin-bottom-left flex flex-col"
+                    className="prompt-panel fixed w-[min(400px,calc(100vw-24px))] paper paper-solid !rounded-[var(--r-26)] p-[var(--sp-10)] transform-gpu z-[60] origin-bottom-left flex flex-col"
                     style={{
                         left: pos.left,
                         bottom: pos.bottom,
@@ -206,20 +206,20 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     }}
                     onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
                 >
-                    <div className="shrink-0 px-[10px] pt-[6px] pb-[10px] text-[17px] leading-[22px] font-semibold text-text-primary">
+                    <div className="shrink-0 px-[var(--sp-10)] pt-[var(--sp-6)] pb-[var(--sp-10)] text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                         {t('chat.promptTemplatesTitle')}
                     </div>
 
                     {/* 搜尋框 */}
                     <label className="prompt-search shrink-0">
-                        <Search className="h-[16px] w-[16px] shrink-0 text-text-muted" />
+                        <Search className="h-[var(--sz-16)] w-[var(--sz-16)] shrink-0 text-text-muted" />
                         <input
                             ref={searchRef}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={onSearchKey}
                             placeholder={t('chat.promptSearch')}
-                            className="min-w-0 flex-1 bg-transparent text-[15px] leading-[20px] text-text-primary outline-none placeholder:text-text-muted"
+                            className="min-w-0 flex-1 bg-transparent text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary outline-none placeholder:text-text-muted"
                         />
                     </label>
 
@@ -236,7 +236,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                             onChange={setCat}
                             options={[{ id: 'all', name: t('chat.promptAll') }, ...library.map((c) => ({ id: c.id, name: c.name }))].map((c) => {
                                 const Icon = c.id === 'all' ? Layers3 : (CATEGORY_ICONS[c.id] ?? Reader)
-                                return { value: c.id, name: c.name, label: <Icon className="w-[21px] h-[21px]" aria-hidden /> }
+                                return { value: c.id, name: c.name, label: <Icon className="w-[var(--sz-21)] h-[var(--sz-21)]" aria-hidden /> }
                             })}
                         />
                     )}
@@ -244,7 +244,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     {/* 模板清單 */}
                     <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none" onKeyDown={onListKey}>
                         {groups.length === 0 && (
-                            <p className="px-[10px] py-[24px] text-center text-[15px] leading-[20px] text-text-muted">{t('chat.promptEmpty')}</p>
+                            <p className="px-[var(--sp-10)] py-[var(--sp-24)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-muted">{t('chat.promptEmpty')}</p>
                         )}
                         {groups.map((g) => (
                             <div key={g.id}>
@@ -258,10 +258,10 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                                             onClick={() => pick(item.prompt)}
                                             className="prompt-item"
                                         >
-                                            <span className="prompt-icon"><Icon className="w-[17px] h-[17px]" /></span>
+                                            <span className="prompt-icon"><Icon className="w-[var(--sz-17)] h-[var(--sz-17)]" /></span>
                                             <span className="min-w-0 flex-1">
-                                                <span className="block truncate text-[15px] leading-[20px] font-semibold text-text-primary">{item.title}</span>
-                                                <span className="block truncate text-[13px] leading-[18px] text-text-secondary">{item.prompt.trim()}</span>
+                                                <span className="block truncate text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-text-primary">{item.title}</span>
+                                                <span className="block truncate text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{item.prompt.trim()}</span>
                                             </span>
                                         </button>
                                     )

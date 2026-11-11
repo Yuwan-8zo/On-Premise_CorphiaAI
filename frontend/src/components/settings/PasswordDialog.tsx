@@ -119,7 +119,7 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
                     transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                     className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
                 >
-                    <div className="relative w-full max-w-[460px] dialog-sheet flex flex-col pointer-events-auto">
+                    <div className="relative w-full max-w-[var(--sz-460)] dialog-sheet flex flex-col pointer-events-auto">
                         <button onClick={resetAndClose} aria-label={t('common.close', '關閉')} className="btn-icon dialog-close absolute text-text-secondary">
                             <X className="w-5 h-5" />
                         </button>
@@ -157,7 +157,7 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
                         </div>
 
                         {(error || success) && (
-                            <div className={`mt-4 flex items-center gap-2 text-[13px] font-medium ${error ? DANGER : SUCCESS}`}>
+                            <div className={`mt-4 flex items-center gap-2 text-[length:var(--fs-13)] font-medium ${error ? DANGER : SUCCESS}`}>
                                 {error ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
                                 {error || success}
                             </div>
@@ -182,14 +182,14 @@ function PwdRow({ label, value, onChange }: { label: string; value: string; onCh
     const [visible, setVisible] = useState(false)
     return (
         <label className="set-row cursor-text">
-            <span className="w-[96px] flex-none">{label}</span>
+            <span className="w-[var(--sz-96)] flex-none">{label}</span>
             <input
                 type={visible ? 'text' : 'password'}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="必填"
                 aria-label={label}
-                className="flex-1 min-w-0 bg-transparent outline-none text-[15px] text-text-primary placeholder:text-text-muted"
+                className="flex-1 min-w-0 bg-transparent outline-none text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
             />
             {value.length > 0 && (
                 <button

@@ -18,16 +18,16 @@ export default function AboutSection() {
     return (
         <div className="set-page">
             <div className="set-section set-hero">
-                <div className="w-20 h-20 rounded-[18px] set-group flex items-center justify-center mb-2">
+                <div className="w-20 h-20 rounded-[var(--r-18)] set-group flex items-center justify-center mb-2">
                     <CorphiaLogoSymbol className="w-12 h-12" />
                 </div>
-                <h2 className="text-[22px] leading-[28px] font-bold text-text-primary">Corphia AI Platform</h2>
-                <p className="text-[15px] text-text-secondary">{t('about.version')} 2.3.0</p>
+                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">Corphia AI Platform</h2>
+                <p className="text-[length:var(--fs-15)] text-text-secondary">{t('about.version')} 2.3.0</p>
             </div>
 
             <section className="set-section">
                 {/* 「系統穩定」標籤（半徑 12）離右 20、離上 20，跟卡片角 32 同心 */}
-                <div className="set-group pt-[8px]">
+                <div className="set-group pt-[var(--sp-8)]">
                     <div className="set-row">
                         <span className="set-label">{t('about.statusLabel', '系統狀態')}</span>
                         <span className="tag tag-green">{t('about.systemStable')}</span>

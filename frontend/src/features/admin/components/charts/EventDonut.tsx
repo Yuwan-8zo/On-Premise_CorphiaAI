@@ -29,7 +29,7 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
     if (!item) return null
     const pct = total > 0 ? ((item.count / total) * 100).toFixed(1) : '0'
     return (
-        <div className="paper !rounded-[14px] px-3 py-2 text-xs">
+        <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-xs">
             <p className="font-medium text-text-primary">{item.name}</p>
             <p className="mt-0.5 text-text-secondary tabular-nums">
                 {item.count.toLocaleString()} 筆 · {pct}%

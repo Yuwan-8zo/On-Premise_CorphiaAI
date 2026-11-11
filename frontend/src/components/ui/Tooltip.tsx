@@ -162,7 +162,7 @@ export default function Tooltip({
                         ref={tooltipRef}
                         role="tooltip"
                         style={{ top: position.top, left: position.left }}
-                        className="snow-tip pointer-events-none fixed z-[9999] max-w-[min(80vw,400px)] !h-auto min-h-[28px] !whitespace-pre-wrap break-words py-[5px]"
+                        className="snow-tip pointer-events-none fixed z-[9999] max-w-[min(80vw,400px)] !h-auto min-h-[var(--sz-28)] !whitespace-pre-wrap break-words py-[var(--sp-5)]"
                     >
                         {label}
                     </span>,

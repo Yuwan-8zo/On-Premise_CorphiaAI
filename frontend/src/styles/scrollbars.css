@@ -6,8 +6,8 @@
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: var(--sz-12);
+  height: var(--sz-12);
 }
 
 ::-webkit-scrollbar-track {
@@ -21,7 +21,7 @@
      Tight but still grabbable. Premium feels narrow, not chunky. */
   border: 4px solid transparent;
   background-clip: padding-box;
-  border-radius: 999px;
+  border-radius: var(--r-999);
   transition: background-color var(--duration-medium) var(--ease-standard);
 }
 

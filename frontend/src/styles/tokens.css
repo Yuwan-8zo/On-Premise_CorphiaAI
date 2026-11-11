@@ -1,0 +1,210 @@
+/* ============================================================================
+ * 設計設定（tokens）——全站的尺寸、間距、圓角、字級只在這裡定義一次
+ * ----------------------------------------------------------------------------
+ * 規範是活的：元件不寫死像素，一律引用這裡的設定（Tailwind 寫 p-[var(--sp-14)]、
+ * text-[length:var(--fs-15)]、rounded-[var(--r-21)]…）。
+ *   --ui-unit   版面單位：間距、尺寸、圓角都由它乘出來（改它＝整個版面一起縮放）
+ *   --type-unit 文字單位：字級、行高都由它乘出來（改它＝全站文字一起放大縮小）
+ * 名稱裡的數字是「在單位＝1px 時的大小」；要改某一級，改那一行的倍數即可。
+ * 小數點用底線（--fs-15d5＝15.5）。由 scratchpad/tokenize_tsx.py 依實際用到的值產生。
+ * ========================================================================== */
+
+:root {
+  --ui-unit: 1px;
+  --type-unit: 1px;
+
+  /* 間距與位置（padding、margin、gap、top/left…） */
+  --sp-0d5: calc(0.5 * var(--ui-unit));
+  --sp-2: calc(2 * var(--ui-unit));
+  --sp-3: calc(3 * var(--ui-unit));
+  --sp-4: calc(4 * var(--ui-unit));
+  --sp-5: calc(5 * var(--ui-unit));
+  --sp-6: calc(6 * var(--ui-unit));
+  --sp-7: calc(7 * var(--ui-unit));
+  --sp-8: calc(8 * var(--ui-unit));
+  --sp-9d5: calc(9.5 * var(--ui-unit));
+  --sp-10: calc(10 * var(--ui-unit));
+  --sp-12: calc(12 * var(--ui-unit));
+  --sp-14: calc(14 * var(--ui-unit));
+  --sp-16: calc(16 * var(--ui-unit));
+  --sp-18: calc(18 * var(--ui-unit));
+  --sp-20: calc(20 * var(--ui-unit));
+  --sp-21: calc(21 * var(--ui-unit));
+  --sp-22: calc(22 * var(--ui-unit));
+  --sp-24: calc(24 * var(--ui-unit));
+  --sp-25: calc(25 * var(--ui-unit));
+  --sp-26: calc(26 * var(--ui-unit));
+  --sp-28: calc(28 * var(--ui-unit));
+  --sp-36: calc(36 * var(--ui-unit));
+  --sp-42: calc(42 * var(--ui-unit));
+  --sp-43: calc(43 * var(--ui-unit));
+  --sp-48: calc(48 * var(--ui-unit));
+  --sp-49: calc(49 * var(--ui-unit));
+  --sp-50: calc(50 * var(--ui-unit));
+  --sp-51: calc(51 * var(--ui-unit));
+  --sp-60: calc(60 * var(--ui-unit));
+  --sp-64: calc(64 * var(--ui-unit));
+  --sp-68: calc(68 * var(--ui-unit));
+  --sp-74: calc(74 * var(--ui-unit));
+  --sp-86: calc(86 * var(--ui-unit));
+  --sp-96: calc(96 * var(--ui-unit));
+  --sp-132: calc(132 * var(--ui-unit));
+  --sp-201: calc(201 * var(--ui-unit));
+  --sp-216: calc(216 * var(--ui-unit));
+
+  /* 尺寸（寬、高、最小／最大） */
+  --sz-1d5: calc(1.5 * var(--ui-unit));
+  --sz-2: calc(2 * var(--ui-unit));
+  --sz-3: calc(3 * var(--ui-unit));
+  --sz-6: calc(6 * var(--ui-unit));
+  --sz-10: calc(10 * var(--ui-unit));
+  --sz-11: calc(11 * var(--ui-unit));
+  --sz-12: calc(12 * var(--ui-unit));
+  --sz-14: calc(14 * var(--ui-unit));
+  --sz-15: calc(15 * var(--ui-unit));
+  --sz-16: calc(16 * var(--ui-unit));
+  --sz-17: calc(17 * var(--ui-unit));
+  --sz-18: calc(18 * var(--ui-unit));
+  --sz-20: calc(20 * var(--ui-unit));
+  --sz-21: calc(21 * var(--ui-unit));
+  --sz-22: calc(22 * var(--ui-unit));
+  --sz-24: calc(24 * var(--ui-unit));
+  --sz-27: calc(27 * var(--ui-unit));
+  --sz-28: calc(28 * var(--ui-unit));
+  --sz-30: calc(30 * var(--ui-unit));
+  --sz-32: calc(32 * var(--ui-unit));
+  --sz-34: calc(34 * var(--ui-unit));
+  --sz-36: calc(36 * var(--ui-unit));
+  --sz-38: calc(38 * var(--ui-unit));
+  --sz-40: calc(40 * var(--ui-unit));
+  --sz-42: calc(42 * var(--ui-unit));
+  --sz-44: calc(44 * var(--ui-unit));
+  --sz-47: calc(47 * var(--ui-unit));
+  --sz-50: calc(50 * var(--ui-unit));
+  --sz-52: calc(52 * var(--ui-unit));
+  --sz-60: calc(60 * var(--ui-unit));
+  --sz-63: calc(63 * var(--ui-unit));
+  --sz-64: calc(64 * var(--ui-unit));
+  --sz-72: calc(72 * var(--ui-unit));
+  --sz-80: calc(80 * var(--ui-unit));
+  --sz-86: calc(86 * var(--ui-unit));
+  --sz-90: calc(90 * var(--ui-unit));
+  --sz-96: calc(96 * var(--ui-unit));
+  --sz-100: calc(100 * var(--ui-unit));
+  --sz-110: calc(110 * var(--ui-unit));
+  --sz-118: calc(118 * var(--ui-unit));
+  --sz-120: calc(120 * var(--ui-unit));
+  --sz-136: calc(136 * var(--ui-unit));
+  --sz-140: calc(140 * var(--ui-unit));
+  --sz-160: calc(160 * var(--ui-unit));
+  --sz-168: calc(168 * var(--ui-unit));
+  --sz-180: calc(180 * var(--ui-unit));
+  --sz-190: calc(190 * var(--ui-unit));
+  --sz-200: calc(200 * var(--ui-unit));
+  --sz-220: calc(220 * var(--ui-unit));
+  --sz-232: calc(232 * var(--ui-unit));
+  --sz-237: calc(237 * var(--ui-unit));
+  --sz-245: calc(245 * var(--ui-unit));
+  --sz-250: calc(250 * var(--ui-unit));
+  --sz-260: calc(260 * var(--ui-unit));
+  --sz-280: calc(280 * var(--ui-unit));
+  --sz-300: calc(300 * var(--ui-unit));
+  --sz-320: calc(320 * var(--ui-unit));
+  --sz-340: calc(340 * var(--ui-unit));
+  --sz-360: calc(360 * var(--ui-unit));
+  --sz-420: calc(420 * var(--ui-unit));
+  --sz-460: calc(460 * var(--ui-unit));
+  --sz-480: calc(480 * var(--ui-unit));
+  --sz-560: calc(560 * var(--ui-unit));
+  --sz-600: calc(600 * var(--ui-unit));
+  --sz-720: calc(720 * var(--ui-unit));
+  --sz-750: calc(750 * var(--ui-unit));
+  --sz-800: calc(800 * var(--ui-unit));
+  --sz-1500: calc(1500 * var(--ui-unit));
+
+  /* 圓角 */
+  --r-4: calc(4 * var(--ui-unit));
+  --r-5: calc(5 * var(--ui-unit));
+  --r-6: calc(6 * var(--ui-unit));
+  --r-7: calc(7 * var(--ui-unit));
+  --r-8: calc(8 * var(--ui-unit));
+  --r-10: calc(10 * var(--ui-unit));
+  --r-11: calc(11 * var(--ui-unit));
+  --r-12: calc(12 * var(--ui-unit));
+  --r-13: calc(13 * var(--ui-unit));
+  --r-14: calc(14 * var(--ui-unit));
+  --r-16: calc(16 * var(--ui-unit));
+  --r-18: calc(18 * var(--ui-unit));
+  --r-20: calc(20 * var(--ui-unit));
+  --r-21: calc(21 * var(--ui-unit));
+  --r-22: calc(22 * var(--ui-unit));
+  --r-25: calc(25 * var(--ui-unit));
+  --r-26: calc(26 * var(--ui-unit));
+  --r-32: calc(32 * var(--ui-unit));
+  --r-33: calc(33 * var(--ui-unit));
+  --r-35: calc(35 * var(--ui-unit));
+  --r-36: calc(36 * var(--ui-unit));
+  --r-37: calc(37 * var(--ui-unit));
+  --r-43d5: calc(43.5 * var(--ui-unit));
+  --r-46: calc(46 * var(--ui-unit));
+  --r-68: calc(68 * var(--ui-unit));
+  --r-900: calc(900 * var(--ui-unit));
+
+  /* 字級 */
+  --fs-10: calc(10 * var(--type-unit));
+  --fs-11: calc(11 * var(--type-unit));
+  --fs-12: calc(12 * var(--type-unit));
+  --fs-12d5: calc(12.5 * var(--type-unit));
+  --fs-13: calc(13 * var(--type-unit));
+  --fs-14: calc(14 * var(--type-unit));
+  --fs-15: calc(15 * var(--type-unit));
+  --fs-15d5: calc(15.5 * var(--type-unit));
+  --fs-16: calc(16 * var(--type-unit));
+  --fs-17: calc(17 * var(--type-unit));
+  --fs-18: calc(18 * var(--type-unit));
+  --fs-22: calc(22 * var(--type-unit));
+  --fs-24: calc(24 * var(--type-unit));
+  --fs-28: calc(28 * var(--type-unit));
+  --fs-32: calc(32 * var(--type-unit));
+  --fs-34: calc(34 * var(--type-unit));
+  --fs-44: calc(44 * var(--type-unit));
+  --fs-52: calc(52 * var(--type-unit));
+  --fs-120: calc(120 * var(--type-unit));
+  --fs-160: calc(160 * var(--type-unit));
+
+  /* 行高 */
+  --lh-16: calc(16 * var(--type-unit));
+  --lh-18: calc(18 * var(--type-unit));
+  --lh-20: calc(20 * var(--type-unit));
+  --lh-22: calc(22 * var(--type-unit));
+  --lh-24: calc(24 * var(--type-unit));
+  --lh-28: calc(28 * var(--type-unit));
+  --lh-30: calc(30 * var(--type-unit));
+  --sp-1: calc(1 * var(--ui-unit));
+  --sp-13: calc(13 * var(--ui-unit));
+  --sp-52: calc(52 * var(--ui-unit));
+  --sp-62: calc(62 * var(--ui-unit));
+  --sp-66: calc(66 * var(--ui-unit));
+  --sp-70: calc(70 * var(--ui-unit));
+  --sz-0d5: calc(0.5 * var(--ui-unit));
+  --sz-1: calc(1 * var(--ui-unit));
+  --sz-7: calc(7 * var(--ui-unit));
+  --sz-8: calc(8 * var(--ui-unit));
+  --sz-46: calc(46 * var(--ui-unit));
+  --sz-520: calc(520 * var(--ui-unit));
+  --r-29: calc(29 * var(--ui-unit));
+  --r-999: calc(999 * var(--ui-unit));
+  --r-9999: calc(9999 * var(--ui-unit));
+  --fs-20: calc(20 * var(--type-unit));
+  --lh-13: calc(13 * var(--type-unit));
+  --lh-23: calc(23 * var(--type-unit));
+  --lh-26: calc(26 * var(--type-unit));
+
+  /* 模糊（玻璃、遮罩） */
+  --blur-6: calc(6 * var(--ui-unit));
+  --blur-8: calc(8 * var(--ui-unit));
+  --blur-10: calc(10 * var(--ui-unit));
+  --blur-12: calc(12 * var(--ui-unit));
+  --blur-20: calc(20 * var(--ui-unit));
+  --blur-24: calc(24 * var(--ui-unit));
+}

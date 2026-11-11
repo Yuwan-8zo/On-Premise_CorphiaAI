@@ -19,7 +19,7 @@ type Tone = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal'
 /** 一列：彩色圖示方塊＋標題＋說明 */
 function TipRow({ icon, tone, title, desc }: { icon: ReactNode; tone: Tone; title: string; desc: string }) {
     return (
-        <div className="set-row has-icon !pl-[16px]">
+        <div className="set-row has-icon !pl-[var(--sp-16)]">
             <span
                 className="set-icon !rounded-full text-white"
                 style={{ background: `var(--sys-${tone})` }}
@@ -28,8 +28,8 @@ function TipRow({ icon, tone, title, desc }: { icon: ReactNode; tone: Tone; titl
                 {icon}
             </span>
             <span className="set-label">
-                <span className="block text-[15px] leading-[20px] font-semibold text-text-primary">{title}</span>
-                <span className="mt-[2px] block text-[13px] leading-[18px] text-text-secondary">{desc}</span>
+                <span className="block text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-text-primary">{title}</span>
+                <span className="mt-[var(--sp-2)] block text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{desc}</span>
             </span>
         </div>
     )
@@ -47,19 +47,19 @@ export default function GuideSection() {
         setTimeout(() => triggerOnboardingReplay(), 200)
     }
 
-    const ic = 'w-[16px] h-[16px]'
+    const ic = 'w-[var(--sz-16)] h-[var(--sz-16)]'
     const steps = [t('guide.project.step1'), t('guide.project.step2'), t('guide.project.step3'), t('guide.project.step4')]
 
     return (
         <div className="set-page">
             <h2 className="set-title">{t('guide.title')}</h2>
-            <p className="-mt-[14px] mb-[26px] text-[15px] leading-[20px] text-text-secondary">{t('guide.subtitle')}</p>
+            <p className="-mt-[var(--sp-14)] mb-[var(--sp-26)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('guide.subtitle')}</p>
 
             {/* 重新觀看引導：單列膠囊 */}
             <section className="set-section">
                 <div className="set-group">
                     <button type="button" onClick={handleReplayOnboarding} className="set-row set-row-btn has-icon">
-                        <span className="set-icon text-accent"><Play className="w-[16px] h-[16px] -translate-x-[0.5px]" /></span>
+                        <span className="set-icon text-accent"><Play className="w-[var(--sz-16)] h-[var(--sz-16)] -translate-x-[var(--sp-0d5)]" /></span>
                         <span className="set-label text-accent font-semibold">{t('settings.replayTour', '重新觀看引導')}</span>
                     </button>
                 </div>
@@ -81,11 +81,11 @@ export default function GuideSection() {
                 <div className="set-header">{t('guide.project.title')}</div>
                 <div className="set-group guide-group">
                     {steps.map((step, i) => (
-                        <div key={i} className="set-row has-icon !pl-[16px] !py-[16px]">
-                            <span className="set-icon !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--sys-blue)] text-[13px] font-bold tabular-nums">
+                        <div key={i} className="set-row has-icon !pl-[var(--sp-16)] !py-[var(--sp-16)]">
+                            <span className="set-icon !rounded-full bg-[color-mix(in_srgb,var(--sys-blue)_18%,transparent)] text-[var(--sys-blue)] text-[length:var(--fs-13)] font-bold tabular-nums">
                                 {i + 1}
                             </span>
-                            <span className="set-label text-[15px] leading-[20px] text-text-primary">{step}</span>
+                            <span className="set-label text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary">{step}</span>
                         </div>
                     ))}
                 </div>

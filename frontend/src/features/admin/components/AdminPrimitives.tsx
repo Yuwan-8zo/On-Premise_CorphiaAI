@@ -5,7 +5,7 @@
  *
  * Design language (matches login + chat pages):
  *   - Flat: bg-bg-base + border-[var(--paper-line)], no glass/big-shadow/28px-radius
- *   - Single radius token: rounded-[18px]
+ *   - Single radius token: rounded-[var(--r-18)]
  *   - Whitespace via padding, not via outer glow
  */
 
@@ -28,7 +28,7 @@ export function Panel({
     return (
         <section
             // 後台所有卡片統一圓角 33；裡面的元件照同心公式（元件圓角＋離邊＝33）
-            className={`paper !rounded-[33px] ${className}`}
+            className={`paper !rounded-[var(--r-33)] ${className}`}
         >
             {children}
         </section>
@@ -50,13 +50,13 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 pl-[21px] pr-[16px] pt-[16px] pb-[var(--space)] md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
-                <h2 className="truncate text-[17px] leading-[22px] font-semibold text-text-primary">
+                <h2 className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                     {title}
                 </h2>
-                {eyebrow && <p className="mt-0.5 text-[13px] leading-[18px] text-text-secondary">{eyebrow}</p>}
+                {eyebrow && <p className="mt-0.5 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{eyebrow}</p>}
             </div>
             {action}
         </div>
@@ -89,7 +89,7 @@ export function ActionButton({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`btn !h-[40px] !px-[18px] !text-[14px] shrink-0 min-w-max ${variants[variant]}`}
+            className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0 min-w-max ${variants[variant]}`}
         >
             {children}
         </button>
@@ -173,7 +173,7 @@ export function ModalFrame({
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className={`relative w-full ${maxWidth} paper !rounded-[32px] p-6 text-text-primary pointer-events-auto`}
+                    className={`relative w-full ${maxWidth} paper !rounded-[var(--r-32)] p-6 text-text-primary pointer-events-auto`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {children}
@@ -212,7 +212,7 @@ export function Field({
 // ---------------------------------------------------------------------------
 
 export const inputClass =
-    'w-full rounded-[10px] snow-field px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
+    'w-full rounded-[var(--r-10)] snow-field px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
 
 
 // ---------------------------------------------------------------------------

@@ -27,7 +27,7 @@ export default function LanguageSection() {
                                 className="set-row set-row-btn"
                             >
                                 <span className="set-label">{lang.label}</span>
-                                {on && <Check className="w-[18px] h-[18px] text-accent" />}
+                                {on && <Check className="w-[var(--sz-18)] h-[var(--sz-18)] text-accent" />}
                             </button>
                         )
                     })}

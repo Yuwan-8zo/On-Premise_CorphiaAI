@@ -155,17 +155,17 @@ export default function ChatSidebar({
     return (
         <aside
             className={`${sidebarOpen 
-                ? 'w-[75vw] max-w-[260px] md:w-[280px] translate-x-0' 
-                : 'w-[75vw] max-w-[260px] md:w-[72px] -translate-x-full md:translate-x-0'
-                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[36px]' : 'rail-capsule md:rounded-[36px]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
+                ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
+                : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
+                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
             {/* 收合時固定排在最左邊 72 寬的範圍裡置中：寬度縮的過程中位置不動（往左收合，不會先置中再移動） */}
-            <div className={`flex items-center p-4 pb-1 h-[60px] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between md:pr-[16px]' : 'w-full md:w-[72px] justify-center md:px-0'}`}>
+            <div className={`flex items-center p-4 pb-1 h-[var(--sz-60)] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between md:pr-[var(--sp-16)]' : 'w-full md:w-[var(--sz-72)] justify-center md:px-0'}`}>
                 {/* 品牌圖示：展開時的位置和收合時一致（圖示中心離側欄左緣 36＝收合直條的正中間） */}
-                <div className={`flex items-center overflow-hidden ${wide ? 'w-10 mr-2 md:w-auto md:ml-[8px] md:px-0' : 'w-10 mr-2 md:hidden'}`}>
-                    <CorphiaLogo className="w-[28px] h-[28px] shrink-0 rounded-[7px] md:rounded-full overflow-hidden text-text-primary" />
+                <div className={`flex items-center overflow-hidden ${wide ? 'w-10 mr-2 md:w-auto md:ml-[var(--sp-8)] md:px-0' : 'w-10 mr-2 md:hidden'}`}>
+                    <CorphiaLogo className="w-[var(--sz-28)] h-[var(--sz-28)] shrink-0 rounded-[var(--r-7)] md:rounded-full overflow-hidden text-text-primary" />
                 </div>
                 <button
                         onClick={toggleSidebar}
@@ -175,15 +175,15 @@ export default function ChatSidebar({
                         className="btn-icon btn-icon-plain hidden md:inline-flex !w-11 !h-11 text-text-secondary"
                     >
                     {wide || isSidebarHovered ? (
-                        <SidebarIcon className="w-[20px] h-[20px]" />
+                        <SidebarIcon className="w-[var(--sz-20)] h-[var(--sz-20)]" />
                     ) : (
-                        <CorphiaLogo className="!w-[28px] !h-[28px] shrink-0 rounded-full overflow-hidden text-text-primary" />
+                        <CorphiaLogo className="!w-[var(--sz-28)] !h-[var(--sz-28)] shrink-0 rounded-full overflow-hidden text-text-primary" />
                     )}
                     </button>
             </div>
 
             {/* 頂端控制區（包含新對話按鈕與切換器） */}
-            <div className="w-full px-[14px] py-4 flex flex-col items-start gap-4">
+            <div className="w-full px-[var(--sp-14)] py-4 flex flex-col items-start gap-4">
                 
                 {/* 一般 / 專案 切換膠囊 (比照 Login.tsx)
                   容器底色：
@@ -210,8 +210,8 @@ export default function ChatSidebar({
                             { value: 'general', label: t('chat.general') },
                             { value: 'project', label: t('chat.project') },
                         ] : [
-                            { value: 'general', name: t('chat.general'), label: <MessageSquare className="w-[27px] h-[27px]" strokeWidth={1.6} /> },
-                            { value: 'project', name: t('chat.project'), label: <Folder className="w-[27px] h-[27px]" strokeWidth={1.6} /> },
+                            { value: 'general', name: t('chat.general'), label: <MessageSquare className="w-[var(--sz-27)] h-[var(--sz-27)]" strokeWidth={1.6} /> },
+                            { value: 'project', name: t('chat.project'), label: <Folder className="w-[var(--sz-27)] h-[var(--sz-27)]" strokeWidth={1.6} /> },
                         ]}
                     />
                 </div>
@@ -227,13 +227,13 @@ export default function ChatSidebar({
                         }
                     }}
                     aria-label={chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}
-                    className="side-morph relative flex items-center h-[44px] pl-[8px] gap-3 rounded-full overflow-hidden shrink-0 bg-accent-fill text-text-on-accent"
+                    className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-8)] gap-3 rounded-full overflow-hidden shrink-0 bg-accent-fill text-text-on-accent"
                     style={{ width: wide ? 232 : 44 }}
                 >
-                    <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
-                        <Plus className="w-[20px] h-[20px]" />
+                    <div className="w-[var(--sz-28)] h-[var(--sz-28)] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
+                        <Plus className="w-[var(--sz-20)] h-[var(--sz-20)]" />
                     </div>
-                    <span className="whitespace-nowrap font-medium text-[15px] leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>
+                    <span className="whitespace-nowrap font-medium text-[length:var(--fs-15)] leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>
                 </button>
             </div>
 
@@ -265,7 +265,7 @@ export default function ChatSidebar({
                             <div className="space-y-0.5">
                                 {(() => {
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
-                                    if (filtered.length === 0) return <p className="text-text-secondary text-[13px] py-3 px-[10px]">{t('chat.noChats')}</p>
+                                    if (filtered.length === 0) return <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{t('chat.noChats')}</p>
                                     return filtered.map(renderRow)
                                 })()}
                             </div>
@@ -288,7 +288,7 @@ export default function ChatSidebar({
 
                                 if (allFolders.length === 0) {
                                     return (
-                                        <p className="text-text-secondary text-[13px] py-3 px-[10px]">{t('chat.noProjects')}</p>
+                                        <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{t('chat.noProjects')}</p>
                                     )
                                 }
 
@@ -362,16 +362,16 @@ export default function ChatSidebar({
             </div>
 
             {/* 底部：使用者卡片 */}
-            <div className="w-full px-[14px] pb-[14px] mt-auto flex flex-col items-start">
+            <div className="w-full px-[var(--sp-14)] pb-[var(--sp-14)] mt-auto flex flex-col items-start">
                 
                     <button
                         data-tour="settings-button"
                         onClick={() => setSettingsOpen(true)}
                         aria-label={user?.name || user?.email || '設定'}
-                        className="side-morph relative flex items-center h-[44px] pl-[6px] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
+                        className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
                         style={{ width: wide ? 232 : 44 }}
                     >
-                    <div className="w-[32px] h-[32px] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[14px]">
+                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[length:var(--fs-14)]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {(
@@ -382,7 +382,7 @@ export default function ChatSidebar({
                               物件 race condition / refresh bug 導致暫時 null）。
                               優先順序：name → email → 「…」（載入中佔位）
                             */}
-                            <p className="font-semibold text-[14px] text-text-primary truncate text-left m-0 leading-snug">
+                            <p className="font-semibold text-[length:var(--fs-14)] text-text-primary truncate text-left m-0 leading-snug">
                                 {user?.name || user?.email || '…'}
                             </p>
                         </div>

@@ -81,7 +81,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                             <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
                             <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
                         </span>
-                        <span className="text-[12.5px] font-medium leading-none">正在輸入</span>
+                        <span className="text-[length:var(--fs-12d5)] font-medium leading-none">正在輸入</span>
                     </motion.button>
                 
             ) : showToBottom ? (
@@ -96,7 +96,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 btn-icon !w-11 !h-11 text-text-secondary"
                         aria-label="Scroll to bottom"
                     >
-                        <ArrowDown className="w-[20px] h-[20px]" />
+                        <ArrowDown className="w-[var(--sz-20)] h-[var(--sz-20)]" />
                     </motion.button>
                 </Tooltip>
             ) : null}

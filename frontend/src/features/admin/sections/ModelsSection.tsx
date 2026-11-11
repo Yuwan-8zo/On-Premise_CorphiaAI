@@ -81,7 +81,7 @@ export default function ModelsSection({
                 />
                 <div className="admin-fill-body grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                     {isLoadingModels ? (
-                        <SkelCards count={3} className="h-[86px]" />
+                        <SkelCards count={3} className="h-[var(--sz-86)]" />
                     ) : models.length === 0 ? (
                         <div className="py-10 text-center text-text-secondary">
                             {t('admin.models.noModels', '暫無模型')}
@@ -95,7 +95,7 @@ export default function ModelsSection({
                             return (
                                 <div
                                     key={model.name}
-                                    className={`flex flex-col gap-4 rounded-[21px] border p-5 md:flex-row md:items-center md:justify-between ${
+                                    className={`flex flex-col gap-4 rounded-[var(--r-21)] border p-5 md:flex-row md:items-center md:justify-between ${
                                         model.is_current
                                             ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
                                             : 'border-[var(--paper-line)] bg-[var(--chip)]'

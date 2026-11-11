@@ -61,7 +61,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
     }
 
     return (
-        <div className="mt-3 glass-chip rounded-[18px] overflow-hidden">
+        <div className="mt-3 glass-chip rounded-[var(--r-18)] overflow-hidden">
             {/* 標題列：顯示文件數，段落數另外標示 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -88,7 +88,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                 className="w-full flex items-center justify-between px-3 py-2"
                             >
                                 <div className="flex min-w-0 items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-accent rounded-[6px] text-xs font-medium">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-accent rounded-[var(--r-6)] text-xs font-medium">
                                         {index + 1}
                                     </span>
                                     <span className="text-text-secondary truncate">{group.name}</span>
@@ -102,7 +102,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                             {expandedItems.has(group.key) && (
                                 <div className="space-y-2 px-3 pb-3">
                                     {group.chunks.map((chunk, i) => (
-                                        <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[12px] text-sm text-text-secondary leading-relaxed">
+                                        <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[var(--r-12)] text-sm text-text-secondary leading-relaxed">
                                             <p className="mb-1 text-xs text-text-muted">
                                                 段落 {i + 1}・{Math.round((chunk.score || 0) * 100)}% 相關
                                             </p>

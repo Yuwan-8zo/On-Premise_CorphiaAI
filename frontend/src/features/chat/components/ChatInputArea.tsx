@@ -119,13 +119,13 @@ export default function ChatInputArea({
                             {(uploadedFiles.length > 0 || isUploading) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
-                                        <div key={i} className="flex items-center gap-1.5 snow-well px-3 py-1.5 rounded-full text-[13px] animate-fade-in-up">
+                                        <div key={i} className="flex items-center gap-1.5 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
                                             <FileText className="w-4 h-4 text-text-secondary" />
-                                            <span className="truncate max-w-[120px] text-text-primary">{f.name}</span>
+                                            <span className="truncate max-w-[var(--sz-120)] text-text-primary">{f.name}</span>
                                         </div>
                                     ))}
                                     {isUploading && (
-                                        <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[13px] text-accent">
+                                        <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] text-accent">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />
                                             <span>上傳中... {uploadProgress}%</span>
                                         </div>
@@ -136,7 +136,7 @@ export default function ChatInputArea({
                             {/* Input Row: smaller padding on mobile so buttons fit
                                 左右對稱 padding：原本只有 pl 沒有 pr，導致 Stop / Send 按鈕貼到 bubble 右邊緣，
                                 看起來像「凸出來」沒包住的 spacing。pr-3 sm:pr-4 讓右側留 12-16px 視覺呼吸。 */}
-                            <div className="flex items-end gap-1 sm:gap-1.5 p-[6px] min-w-0">
+                            <div className="flex items-end gap-1 sm:gap-1.5 p-[var(--sp-6)] min-w-0">
                                 {/* 提示詞模版：放在欄位內左側，38 圓鈕、四邊內距 6，與外框同心 */}
                                 <PromptMenu
                                     inline
@@ -151,9 +151,9 @@ export default function ChatInputArea({
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isConnecting || isUploading}
-                                        className="btn-icon btn-icon-plain !w-[38px] !h-[38px] text-text-secondary disabled:opacity-50"
+                                        className="btn-icon btn-icon-plain !w-[var(--sz-38)] !h-[var(--sz-38)] text-text-secondary disabled:opacity-50"
                                     >
-                                        <Paperclip className="w-[22px] h-[22px]" />
+                                        <Paperclip className="w-[var(--sz-22)] h-[var(--sz-22)]" />
                                     </button>
                                 )}
 
@@ -165,7 +165,7 @@ export default function ChatInputArea({
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
-                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[8px] min-h-[38px] disabled:opacity-50 text-[15px] sm:text-[16px] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[160px]'}`}
+                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[var(--sp-8)] min-h-[var(--sz-38)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
                                     style={{ lineHeight: '1.4' }}
                                 />
 
@@ -175,7 +175,7 @@ export default function ChatInputArea({
                                         type="button"
                                         onClick={() => setIsRecording(true)}
                                         disabled={isConnecting || isUploading}
-                                        className="btn-icon btn-icon-plain !w-[38px] !h-[38px] text-text-secondary disabled:opacity-50"
+                                        className="btn-icon btn-icon-plain !w-[var(--sz-38)] !h-[var(--sz-38)] text-text-secondary disabled:opacity-50"
                                         aria-label={t('chat.voice.startRecording')}
                                     >
                                         <MaterialIcon name="mic" size={22} />
@@ -187,14 +187,14 @@ export default function ChatInputArea({
                                     <button
                                         type="button"
                                         onClick={() => { setExpanded((v) => !v); setTimeout(() => inputRef.current?.focus(), 0) }}
-                                        className="btn-icon btn-icon-plain !w-[38px] !h-[38px] text-text-secondary"
+                                        className="btn-icon btn-icon-plain !w-[var(--sz-38)] !h-[var(--sz-38)] text-text-secondary"
                                         aria-label={expanded ? t('chat.collapseInput', '縮小輸入欄') : t('chat.expandInput', '放大輸入欄')}
                                         aria-pressed={expanded}
                                     >
                                         {expanded ? (
-                                            <svg viewBox="0 0 512 512" className="w-[20px] h-[20px]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M304 416V304h112M314.2 314.23L432 432M208 96v112H96M197.8 197.77L80 80" /></svg>
+                                            <svg viewBox="0 0 512 512" className="w-[var(--sz-20)] h-[var(--sz-20)]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M304 416V304h112M314.2 314.23L432 432M208 96v112H96M197.8 197.77L80 80" /></svg>
                                         ) : (
-                                            <svg viewBox="0 0 512 512" className="w-[20px] h-[20px]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M432 320v112H320M421.8 421.77L304 304M80 192V80h112M90.2 90.23L208 208" /></svg>
+                                            <svg viewBox="0 0 512 512" className="w-[var(--sz-20)] h-[var(--sz-20)]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M432 320v112H320M421.8 421.77L304 304M80 192V80h112M90.2 90.23L208 208" /></svg>
                                         )}
                                     </button>
                                 )}

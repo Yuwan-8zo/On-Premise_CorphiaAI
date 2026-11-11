@@ -90,7 +90,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
     return (
         <div
             className={[
-                'flex items-center gap-3 min-w-[220px] max-w-[320px] py-2 pl-2 pr-3 rounded-[18px]',
+                'flex items-center gap-3 min-w-[var(--sz-220)] max-w-[var(--sz-320)] py-2 pl-2 pr-3 rounded-[var(--r-18)]',
                 isUser
                     ? 'bg-white/10 backdrop-blur-sm'
                     : 'glass-chip',
@@ -123,7 +123,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
             <div className="flex-1 min-w-0">
                 <div
                     className={[
-                        'relative h-[6px] rounded-full',
+                        'relative h-[var(--sz-6)] rounded-full',
                         isUser ? 'bg-white/30' : 'bg-border-subtle',
                     ].join(' ')}
                 >
@@ -146,7 +146,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                     />
                 </div>
                 <div className={[
-                    'mt-1 flex items-center justify-between text-[11px] tabular-nums',
+                    'mt-1 flex items-center justify-between text-[length:var(--fs-11)] tabular-nums',
                     isUser ? 'text-white/80' : 'text-text-muted',
                 ].join(' ')}>
                     <span>{formatDuration(currentSec)}</span>

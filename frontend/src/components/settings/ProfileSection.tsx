@@ -63,11 +63,11 @@ export default function ProfileSection() {
     return (
         <>
             <div className="set-section set-hero">
-                <div className="w-20 h-20 rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center text-[32px] font-bold mb-2">
+                <div className="w-20 h-20 rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center text-[length:var(--fs-32)] font-bold mb-2">
                     {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                 </div>
-                <h2 className="text-[22px] leading-[28px] font-bold text-text-primary">{user?.name}</h2>
-                <p className="text-[15px] text-text-secondary">{user?.email}</p>
+                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">{user?.name}</h2>
+                <p className="text-[length:var(--fs-15)] text-text-secondary">{user?.email}</p>
             </div>
 
             <section className="set-section">
@@ -81,7 +81,7 @@ export default function ProfileSection() {
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
                                 aria-label={t('settings.nameLabel', '名稱')}
-                                className="flex-1 min-w-0 text-right bg-transparent outline-none text-[15px] text-text-primary"
+                                className="flex-1 min-w-0 text-right bg-transparent outline-none text-[length:var(--fs-15)] text-text-primary"
                                 autoFocus
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') saveName()
@@ -118,7 +118,7 @@ export default function ProfileSection() {
                 <div className="set-header">{t('settings.securitySection', '安全性')}</div>
                 <div className="set-group">
                     <button type="button" className="set-row set-row-btn has-icon" onClick={() => setShowPassword(true)}>
-                        <span className="set-icon"><Lock className="w-[18px] h-[18px]" /></span>
+                        <span className="set-icon"><Lock className="w-[var(--sz-18)] h-[var(--sz-18)]" /></span>
                         <span className="set-label">{t('auth.changePassword', '修改密碼')}</span>
                         <ChevronRight className="set-chevron" />
                     </button>

@@ -74,7 +74,7 @@ class MarkdownErrorBoundary extends React.Component<
     render() {
         if (this.state.hasError) {
             return (
-                <div className="text-[var(--sys-red)] p-4 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] rounded-[10px] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]">
+                <div className="text-[var(--sys-red)] p-4 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] rounded-[var(--r-10)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]">
                     <p className="font-bold mb-2">解析訊息內容時發生錯誤</p>
                     <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}
@@ -116,7 +116,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             return (
                                 <Suspense
                                     fallback={
-                                        <pre className="my-4 p-4 rounded-[14px] bg-[var(--chip)] text-sm overflow-x-auto">
+                                        <pre className="my-4 p-4 rounded-[var(--r-14)] bg-[var(--chip)] text-sm overflow-x-auto">
                                             {String(children).replace(/\n$/, '')}
                                         </pre>
                                     }
@@ -222,7 +222,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             <img
                                 src={src}
                                 alt={alt || ''}
-                                className="max-w-full h-auto rounded-[16px] my-4"
+                                className="max-w-full h-auto rounded-[var(--r-16)] my-4"
                             />
                         ),
                     }}

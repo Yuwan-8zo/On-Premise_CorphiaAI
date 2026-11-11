@@ -58,14 +58,14 @@ export default function Share() {
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
-                <div className="max-w-md w-full paper !rounded-[32px] p-8 text-center">
+                <div className="max-w-md w-full paper !rounded-[var(--r-32)] p-8 text-center">
                     <h2 className="text-xl font-bold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
                     <p className="text-text-secondary mb-8">
                         {t('share.loginDesc')}
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full h-[50px] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary font-semibold"
+                        className="w-full h-[var(--sz-50)] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary font-semibold"
                     >
                         {t('share.goToLogin')}
                     </button>
@@ -77,7 +77,7 @@ export default function Share() {
     if (isLoading) {
         return (
             <div className="min-h-[100dvh] bg-bg-base">
-                <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
+                <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
             </div>
         )
     }
@@ -100,7 +100,7 @@ export default function Share() {
     return (
         <div className={`flex flex-col h-[100dvh] bg-bg-base  ${theme === 'dark' ? 'dark' : ''}`}>
             {/* Header */}
-            <header className="shrink-0 h-[60px] flex items-center justify-between px-4 border-b border-[var(--paper-line)] bg-[var(--glass-card)] backdrop-blur-xl z-10">
+            <header className="shrink-0 h-[var(--sz-60)] flex items-center justify-between px-4 border-b border-[var(--paper-line)] bg-[var(--glass-card)] backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/')}
@@ -109,10 +109,10 @@ export default function Share() {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="font-semibold text-text-primary text-[15px]">
+                        <h1 className="font-semibold text-text-primary text-[length:var(--fs-15)]">
                             {conversation.title}
                         </h1>
-                        <p className="text-[12px] text-text-secondary">{t('share.readonly')}</p>
+                        <p className="text-[length:var(--fs-12)] text-text-secondary">{t('share.readonly')}</p>
                     </div>
                 </div>
             </header>
@@ -122,7 +122,7 @@ export default function Share() {
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto scroll-smooth"
             >
-                <div className="max-w-[800px] mx-auto px-4 sm:px-6 md:px-8 py-8 flex flex-col gap-6">
+                <div className="max-w-[var(--sz-800)] mx-auto px-4 sm:px-6 md:px-8 py-8 flex flex-col gap-6">
                     <AnimatePresence initial={false}>
                         {messages.map((msg) => (
                             <motion.div

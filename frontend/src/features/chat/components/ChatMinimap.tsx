@@ -125,7 +125,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                 {/*
                   Track 背景 — 容器水平中線。
                 */}
-                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[14px] bg-black/5 dark:bg-white/5 rounded-full" />
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[var(--sz-14)] bg-black/5 dark:bg-white/5 rounded-full" />
 
                 {markers.map(marker => {
                     // 顏色對應聊天角色：
@@ -137,7 +137,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                     return (
                         <div
                             key={marker.id}
-                            className={`absolute w-[14px] min-h-[14px] rounded-full transition-all duration-200   cursor-pointer ${colorClass}`}
+                            className={`absolute w-[var(--sz-14)] min-h-[var(--sz-14)] rounded-full transition-all duration-200   cursor-pointer ${colorClass}`}
                             style={{
                                 top: `${marker.top + marker.height / 2}%`,
                                 left: '50%',
@@ -169,7 +169,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                       - 用 right: calc(100% + 8px) 把右邊緣鎖到 marker 左側 8px
                     */
                     <div
-                        className="absolute z-50 pointer-events-none flex items-start gap-2 paper !rounded-[14px] px-3 py-2 break-words"
+                        className="absolute z-50 pointer-events-none flex items-start gap-2 paper !rounded-[var(--r-14)] px-3 py-2 break-words"
                         style={{
                             top: `${hoveredMarker.top + hoveredMarker.height / 2}%`,
                             right: 'calc(100% + 8px)',
@@ -187,7 +187,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                             }`}
                         />
                         <div className="min-w-0 flex-1">
-                            <p className="text-[12px] font-medium text-text-secondary leading-none mb-1">
+                            <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none mb-1">
                                 {hoveredMarker.role === 'user' ? '您' : 'Corphia AI'}
                             </p>
                             <p className="text-xs text-text-primary leading-snug">

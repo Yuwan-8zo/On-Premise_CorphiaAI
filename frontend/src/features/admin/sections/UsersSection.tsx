@@ -192,16 +192,16 @@ export default function UsersSection({
               這樣整列寬度從 ~960px 降到 ~720px，1080p 視窗也能完整顯示。
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
-            <div className="admin-fill-body overflow-x-auto pb-[4px]">
-                <table className="w-full min-w-[720px]">
+            <div className="admin-fill-body overflow-x-auto pb-[var(--sp-4)]">
+                <table className="w-full min-w-[var(--sz-720)]">
                     <thead className={tableHeadRowClass}>
                         <tr>
-                            <th className="pl-[21px] pr-4 py-3">{t('admin.users.table.user', '使用者')}</th>
+                            <th className="pl-[var(--sp-21)] pr-4 py-3">{t('admin.users.table.user', '使用者')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.role', '角色')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.status', '狀態')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.lockStatus', '鎖定狀態')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.lastLogin', '最後登入')}</th>
-                            <th className="pl-4 pr-[16px] py-3 text-right">{t('admin.users.table.action', '操作')}</th>
+                            <th className="pl-4 pr-[var(--sp-16)] py-3 text-right">{t('admin.users.table.action', '操作')}</th>
                         </tr>
                     </thead>
                     <tbody className={tableBodyClass}>
@@ -216,7 +216,7 @@ export default function UsersSection({
                         ) : (
                             users.map((item) => (
                                 <tr key={item.id} className="transition  ">
-                                    <td className="pl-[21px] pr-4 py-3">
+                                    <td className="pl-[var(--sp-21)] pr-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div
                                                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-fill text-xs font-bold  "
@@ -242,7 +242,7 @@ export default function UsersSection({
                                     <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
                                         {formatRelativeTime(item.lastLoginAt)}
                                     </td>
-                                    <td className="pl-4 pr-[16px] py-3">
+                                    <td className="pl-4 pr-[var(--sp-16)] py-3">
                                         {/*
                                           Kebab menu — 一行只一個三點按鈕，點下去才開選單。
                                           relative 為 dropdown 的定位錨點。
@@ -294,7 +294,7 @@ export default function UsersSection({
                 <div
                     ref={menuRef}
                     role="menu"
-                    className="fixed z-[1000] min-w-[168px] overflow-hidden paper !rounded-[20px] p-1.5"
+                    className="fixed z-[1000] min-w-[var(--sz-168)] overflow-hidden paper !rounded-[var(--r-20)] p-1.5"
                     style={{
                         top: menuPos.top,
                         right: menuPos.right,

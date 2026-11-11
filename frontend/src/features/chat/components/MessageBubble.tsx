@@ -41,7 +41,7 @@ interface MessageBubbleProps {
  * - isStreaming=false → 靜態 logo 可見，  動態 thinking icon 隱藏
  */
 const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
-    <div className="relative w-9 h-9 flex-shrink-0 -mt-[3px]">
+    <div className="relative w-9 h-9 flex-shrink-0 -mt-[var(--sp-3)]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]"
@@ -178,7 +178,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             {isUser ? (
                 // 使用者訊息：極簡深灰圓角氣泡，靠右，無頭像
                 // 編輯模式：把外層撐到 max-w 的 75%，textarea 才能跟原本訊息氣泡同寬
-                // （原本 min-w-[250px] 會讓編輯框比訊息本身還窄，文字被擠成多行）
+                // （原本 min-w-[var(--sz-250)] 會讓編輯框比訊息本身還窄，文字被擠成多行）
                 <div className={`flex flex-col items-end max-w-[75%] group ${isEditing ? 'w-[75%]' : ''}`}>
                     {/*
                      * 語音訊息渲染策略：
@@ -202,12 +202,12 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.error && (
-                                <div className="mt-1.5 max-w-full rounded-[14px] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--sys-red)]">
+                                <div className="mt-1.5 max-w-full rounded-[var(--r-14)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--sys-red)]">
                                     {t('chat.voice.transcribeFailed')}
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.transcript && message.content && (
-                                <div className="glass-chip text-text-primary rounded-[22px] px-5 py-3 mt-1.5 whitespace-pre-wrap text-[15.5px] leading-relaxed selectable-text">
+                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 mt-1.5 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed selectable-text">
                                     {message.content}
                                 </div>
                             )}
@@ -235,7 +235,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         aria-label="取消"
                                         className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--chip)] text-text-primary"
                                     >
-                                        <X className="w-[15px] h-[15px]" />
+                                        <X className="w-[var(--sz-15)] h-[var(--sz-15)]" />
                                     </button>
                                     <button
                                         onClick={handleSaveEdit}
@@ -243,12 +243,12 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         disabled={!editContent.trim()}
                                         className="btn-icon btn-icon-plain msg-edit-btn !bg-[var(--accent-fill)] !text-[var(--text-on-accent)] disabled:opacity-40"
                                     >
-                                        <Check className="w-[15px] h-[15px]" />
+                                        <Check className="w-[var(--sz-15)] h-[var(--sz-15)]" />
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <div className="glass-chip text-text-primary rounded-[22px] px-5 py-3 whitespace-pre-wrap text-[15.5px] leading-relaxed relative selectable-text">
+                            <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
                                 {message.content}
                             </div>
                         )
@@ -277,7 +277,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             )}
                             {message.tokens > 0 && (
                                 <span
-                                    className="ml-1 text-[11px] tabular-nums text-text-muted/80"
+                                    className="ml-1 text-[length:var(--fs-11)] tabular-nums text-text-muted/80"
                                 >
                                     {message.tokens.toLocaleString()} tok
                                 </span>
@@ -294,9 +294,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-text-primary text-[15.5px] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-text-primary text-[length:var(--fs-15d5)] leading-relaxed pb-4">
                         {message.content ? (
-                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[12px] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
+                            <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[var(--r-12)] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
                                 <MarkdownRenderer content={message.content} />
                             </div>
                         ) : isStreaming ? (
@@ -345,7 +345,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 {message.tokens > 0 && (
                                     <Tooltip placement="bottom" label={`本則回覆消耗 ${message.tokens.toLocaleString()} tokens`}>
                                         <span
-                                            className="ml-1 text-[11px] tabular-nums text-text-muted/80"
+                                            className="ml-1 text-[length:var(--fs-11)] tabular-nums text-text-muted/80"
                                         >
                                             {message.tokens.toLocaleString()} tok
                                         </span>

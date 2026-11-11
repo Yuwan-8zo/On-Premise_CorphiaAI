@@ -34,16 +34,16 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
 
     return (
         <div className="pt-[var(--space)]">
-            <div className="rounded-[21px] border border-transparent bg-[var(--chip)] p-[9.5px] shrink-0">
+            <div className="rounded-[var(--r-21)] border border-transparent bg-[var(--chip)] p-[var(--sp-9d5)] shrink-0">
                 <div className="flex items-start gap-1.5">
                     <SidebarIconBadge>
                         <ItshoverIcon icon={enabled ? GlobeIcon : LockIcon} size={12} />
                     </SidebarIconBadge>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-medium text-text-secondary leading-none">
+                        <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none">
                             LAN
                         </p>
-                        <p className="text-[10px] text-text-secondary leading-tight mt-0.5">
+                        <p className="text-[length:var(--fs-10)] text-text-secondary leading-tight mt-0.5">
                             {statusText}
                         </p>
                     </div>
@@ -62,7 +62,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                 </div>
 
                 <div className="mt-1.5 flex items-center justify-between border-t border-[var(--paper-line)] pt-1.5">
-                    <span className="text-[10px] font-medium text-text-secondary">
+                    <span className="text-[length:var(--fs-10)] font-medium text-text-secondary">
                         {t('admin.lan.toggleLabel', '區域網路')}
                     </span>
                     <GlassSwitch
@@ -77,11 +77,11 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                 {enabled && lanIps.length > 0 && (
                     <div className="mt-1.5 flex items-end gap-2 border-t border-[var(--paper-line)] pt-1.5">
                         <div className="min-w-0 flex-1">
-                            <p className="text-[10px] text-text-muted leading-tight">
+                            <p className="text-[length:var(--fs-10)] text-text-muted leading-tight">
                                 {t('admin.lan.ips', '本機 IP')}
                             </p>
                             {/* 只顯示手機連得到的那一個（後端已排除虛擬網卡） */}
-                            <div className="mt-1 text-[10px] text-text-secondary tabular-nums">{lanIps[0]}</div>
+                            <div className="mt-1 text-[length:var(--fs-10)] text-text-secondary tabular-nums">{lanIps[0]}</div>
                         </div>
                         {/* 右下角：QR code，點開全螢幕給手機掃描 */}
                         <Tooltip label={t('admin.lan.qrOpen', '顯示手機連線 QR code')}>
@@ -89,9 +89,9 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                                 type="button"
                                 onClick={() => setShowQr(true)}
                                 aria-label={t('admin.lan.qrOpen', '顯示手機連線 QR code')}
-                                className="btn-icon !w-[32px] !h-[32px] shrink-0 text-text-primary"
+                                className="btn-icon !w-[var(--sz-32)] !h-[var(--sz-32)] shrink-0 text-text-primary"
                             >
-                                <QrIcon className="w-[17px] h-[17px]" />
+                                <QrIcon className="w-[var(--sz-17)] h-[var(--sz-17)]" />
                             </button>
                         </Tooltip>
                     </div>

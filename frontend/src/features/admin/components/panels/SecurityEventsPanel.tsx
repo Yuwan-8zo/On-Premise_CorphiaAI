@@ -33,7 +33,7 @@ export default function SecurityEventsPanel({
     const data = securityFromParent !== undefined ? securityFromParent : polled
 
     return (
-        <Panel className={`overflow-hidden flex flex-col min-h-[160px] lg:min-h-0 ${className || ''}`}>
+        <Panel className={`overflow-hidden flex flex-col min-h-[var(--sz-160)] lg:min-h-0 ${className || ''}`}>
             <SectionHeader
                 title={t('admin.overview.securityEvents', '資安事件 (24h)')}
             />
@@ -44,13 +44,13 @@ export default function SecurityEventsPanel({
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex items-center gap-3 px-[14px] py-3 rounded-[21px] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
+                                className={`flex items-center gap-3 px-[var(--sp-14)] py-3 rounded-[var(--r-21)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
                             >
-                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] ${kpi.colorClass}`}>
+                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />
                                 </span>
 
-                                <p className="flex-1 min-w-0 text-[12px] font-medium text-text-secondary truncate">
+                                <p className="flex-1 min-w-0 text-[length:var(--fs-12)] font-medium text-text-secondary truncate">
                                     {t(kpi.labelKey, kpi.labelFallback)}
                                 </p>
 

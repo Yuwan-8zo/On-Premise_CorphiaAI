@@ -80,17 +80,17 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
 
             {/* 展開的除錯面板 */}
             {isExpanded && (
-                <div className="mt-2 space-y-2 snow-well rounded-[18px] p-3">
+                <div className="mt-2 space-y-2 snow-well rounded-[var(--r-18)] p-3">
                     {/* 統計概覽 */}
                     {debug && (
                         <div className="flex flex-wrap gap-3 text-xs tabular-nums mb-3 pb-2 border-b border-[var(--paper-line)]">
-                            <span className="px-2 py-1 rounded-[8px] bg-accent/15 text-accent">
+                            <span className="px-2 py-1 rounded-[var(--r-8)] bg-accent/15 text-accent">
                                 Route: {debug.route}
                             </span>
-                            <span className="px-2 py-1 rounded-[8px] bg-[var(--chip)] text-text-secondary">
+                            <span className="px-2 py-1 rounded-[var(--r-8)] bg-[var(--chip)] text-text-secondary">
                                 Context: {debug.context_length} chars
                             </span>
-                            <span className="px-2 py-1 rounded-[8px] bg-[var(--chip)] text-text-secondary">
+                            <span className="px-2 py-1 rounded-[var(--r-8)] bg-[var(--chip)] text-text-secondary">
                                 Prompt: {debug.prompt_length} chars
                             </span>
                         </div>
@@ -100,7 +100,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                     {sources.map((source, index) => (
                         <div
                             key={source.chunk_id}
-                            className={`rounded-[10px] border p-3 ${scoreBg(source.score)}`}
+                            className={`rounded-[var(--r-10)] border p-3 ${scoreBg(source.score)}`}
                         >
                             {/* Header: 分數 + 文件名 */}
                             <div className="flex items-center justify-between mb-1">
@@ -108,7 +108,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                     <span className="text-xs font-bold text-text-secondary">
                                         #{index + 1}
                                     </span>
-                                    <span className="text-xs text-text-secondary truncate max-w-[200px]">
+                                    <span className="text-xs text-text-secondary truncate max-w-[var(--sz-200)]">
                                         {source.document_name || '未知文件'}
                                     </span>
                                 </div>
@@ -117,7 +117,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                         {(source.score * 100).toFixed(1)}%
                                     </span>
                                     {source.distance !== undefined && (
-                                        <span className="text-[10px] tabular-nums text-text-muted">
+                                        <span className="text-[length:var(--fs-10)] tabular-nums text-text-muted">
                                             d={source.distance}
                                         </span>
                                     )}

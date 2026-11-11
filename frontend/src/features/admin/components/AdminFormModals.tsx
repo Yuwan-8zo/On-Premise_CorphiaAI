@@ -11,7 +11,7 @@ import type { useAdminTenants } from '../hooks/useAdminTenants'
 function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
     const { t } = useTranslation()
     return (
-        <label className="flex items-center justify-between rounded-[16px] snow-field px-4 py-3 text-sm text-text-primary">
+        <label className="flex items-center justify-between rounded-[var(--r-16)] snow-field px-4 py-3 text-sm text-text-primary">
             {t('admin.tenants.status.active')}
             <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
         </label>

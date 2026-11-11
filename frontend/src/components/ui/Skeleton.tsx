@@ -22,8 +22,8 @@ export function SkelRows({ count = 5, className = '' }: { count?: number; classN
                 <div key={i} className="flex items-center gap-4 px-6 py-4">
                     <Skel className="h-9 w-9 !rounded-full shrink-0" />
                     <div className="flex-1 min-w-0 flex flex-col gap-2">
-                        <Skel className="h-[14px]" style={{ width: `${62 - (i % 3) * 12}%` }} />
-                        <Skel className="h-[11px]" style={{ width: `${34 - (i % 2) * 8}%` }} />
+                        <Skel className="h-[var(--sz-14)]" style={{ width: `${62 - (i % 3) * 12}%` }} />
+                        <Skel className="h-[var(--sz-11)]" style={{ width: `${34 - (i % 2) * 8}%` }} />
                     </div>
                     <Skel className="h-6 w-14 shrink-0" />
                 </div>
@@ -36,10 +36,10 @@ export function SkelCards({ count = 3, className = '' }: { count?: number; class
     return (
         <>
             {Array.from({ length: count }, (_, i) => (
-                <div key={i} role="status" aria-label="載入中" className={`rounded-[16px] bg-[var(--chip)] p-4 flex flex-col gap-3 ${className}`}>
-                    <Skel className="h-[16px] w-1/2" />
-                    <Skel className="h-[12px] w-1/3" />
-                    <Skel className="h-[12px] w-2/3 mt-1" />
+                <div key={i} role="status" aria-label="載入中" className={`rounded-[var(--r-16)] bg-[var(--chip)] p-4 flex flex-col gap-3 ${className}`}>
+                    <Skel className="h-[var(--sz-16)] w-1/2" />
+                    <Skel className="h-[var(--sz-12)] w-1/3" />
+                    <Skel className="h-[var(--sz-12)] w-2/3 mt-1" />
                 </div>
             ))}
         </>
@@ -52,13 +52,13 @@ export function SkelMessages({ count = 3, className = '' }: { count?: number; cl
             {Array.from({ length: count }, (_, i) =>
                 i % 2 === 0 ? (
                     <div key={i} className="flex justify-end">
-                        <Skel className="h-[44px] !rounded-[22px]" style={{ width: `${38 - (i % 3) * 6}%` }} />
+                        <Skel className="h-[var(--sz-44)] !rounded-[var(--r-22)]" style={{ width: `${38 - (i % 3) * 6}%` }} />
                     </div>
                 ) : (
                     <div key={i} className="flex flex-col gap-2">
-                        <Skel className="h-[14px] w-[80%]" />
-                        <Skel className="h-[14px] w-[72%]" />
-                        <Skel className="h-[14px] w-[46%]" />
+                        <Skel className="h-[var(--sz-14)] w-[80%]" />
+                        <Skel className="h-[var(--sz-14)] w-[72%]" />
+                        <Skel className="h-[var(--sz-14)] w-[46%]" />
                     </div>
                 ),
             )}
@@ -73,7 +73,7 @@ export function SkelTableRows({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
                 <tr key={r} aria-hidden>
                     {Array.from({ length: cols }, (_, c) => (
                         <td key={c} className="px-4 py-3">
-                            <Skel className="h-[12px]" style={{ width: `${c === 0 ? 70 : 55 - ((r + c) % 3) * 12}%` }} />
+                            <Skel className="h-[var(--sz-12)]" style={{ width: `${c === 0 ? 70 : 55 - ((r + c) % 3) * 12}%` }} />
                         </td>
                     ))}
                 </tr>
@@ -95,39 +95,39 @@ function SkelText({ chars }: { chars: number }) {
 function SkelChat() {
     return (
         <div className="flex absolute inset-0 w-full h-full overflow-hidden">
-            <aside className="paper hidden md:block relative shrink-0 w-[260px] h-[calc(100vh-32px)] my-4 ml-4 !rounded-[35px]">
-                <Skel className="absolute left-[22px] top-[21px] h-[28px] w-[28px] !rounded-full" />
-                <Skel className="absolute left-[216px] top-[25px] h-[21px] w-[21px] !rounded-[6px]" />
-                <Skel className="absolute left-[14px] top-[74px] h-[44px] w-[232px]" />
-                <Skel className="absolute left-[14px] top-[132px] h-[44px] w-[232px]" />
-                <span className="absolute left-[14px] top-[201px] text-[13px] leading-[18px]"><SkelText chars={4} /></span>
-                <Skel className="absolute left-[20px] bottom-[16px] h-[32px] w-[32px] !rounded-full" />
-                <span className="absolute left-[64px] bottom-[22px] text-[15px] leading-[20px]"><SkelText chars={4} /></span>
+            <aside className="paper hidden md:block relative shrink-0 w-[var(--sz-260)] h-[calc(100vh-32px)] my-4 ml-4 !rounded-[var(--r-35)]">
+                <Skel className="absolute left-[var(--sp-22)] top-[var(--sp-21)] h-[var(--sz-28)] w-[var(--sz-28)] !rounded-full" />
+                <Skel className="absolute left-[var(--sp-216)] top-[var(--sp-25)] h-[var(--sz-21)] w-[var(--sz-21)] !rounded-[var(--r-6)]" />
+                <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-74)] h-[var(--sz-44)] w-[var(--sz-232)]" />
+                <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-132)] h-[var(--sz-44)] w-[var(--sz-232)]" />
+                <span className="absolute left-[var(--sp-14)] top-[var(--sp-201)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText chars={4} /></span>
+                <Skel className="absolute left-[var(--sp-20)] bottom-[var(--sp-16)] h-[var(--sz-32)] w-[var(--sz-32)] !rounded-full" />
+                <span className="absolute left-[var(--sp-64)] bottom-[var(--sp-22)] text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText chars={4} /></span>
             </aside>
             <div className="relative flex-1 min-w-0">
-                <Skel className="absolute left-[21px] top-[21px] h-[40px] w-[136px] !rounded-[12px]" />
-                <div className="glass-chip absolute right-[68px] top-[21px] flex h-[40px] w-[245px] items-center !rounded-[20px] px-[16px]">
-                    <span className="text-[15px]"><SkelText chars={12} /></span>
+                <Skel className="absolute left-[var(--sp-21)] top-[var(--sp-21)] h-[var(--sz-40)] w-[var(--sz-136)] !rounded-[var(--r-12)]" />
+                <div className="glass-chip absolute right-[var(--sp-68)] top-[var(--sp-21)] flex h-[var(--sz-40)] w-[var(--sz-245)] items-center !rounded-[var(--r-20)] px-[var(--sp-16)]">
+                    <span className="text-[length:var(--fs-15)]"><SkelText chars={12} /></span>
                 </div>
-                <div className="glass-chip absolute right-[21px] top-[21px] h-[40px] w-[40px] !rounded-full" />
+                <div className="glass-chip absolute right-[var(--sp-21)] top-[var(--sp-21)] h-[var(--sz-40)] w-[var(--sz-40)] !rounded-full" />
                 <div className="absolute left-1/2 top-[calc(97px+10vh)] w-full max-w-3xl -translate-x-1/2 px-4 md:px-0">
-                    <h2 className="text-center text-[18px] sm:text-[24px] md:text-[34px] font-bold leading-[1.25]"><SkelText chars={14} /></h2>
-                    <div className="mx-auto mt-[28px] grid w-full max-w-[600px] grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                    <h2 className="text-center text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold leading-[1.25]"><SkelText chars={14} /></h2>
+                    <div className="mx-auto mt-[var(--sp-28)] grid w-full max-w-[var(--sz-600)] grid-cols-1 sm:grid-cols-2 gap-[var(--sp-10)]">
                         {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className="paper relative h-[118px] !rounded-[25px]">
-                                <Skel className="absolute left-[14px] top-[14px] h-[36px] w-[36px] !rounded-[10px]" />
-                                <span className="absolute left-[14px] top-[60px] text-[15px] leading-[22px]"><SkelText chars={4} /></span>
-                                <span className="absolute left-[14px] top-[86px] text-[13px] leading-[18px]"><SkelText chars={i % 2 ? 15 : 14} /></span>
+                            <div key={i} className="paper relative h-[var(--sz-118)] !rounded-[var(--r-25)]">
+                                <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-14)] h-[var(--sz-36)] w-[var(--sz-36)] !rounded-[var(--r-10)]" />
+                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-60)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelText chars={4} /></span>
+                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-86)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText chars={i % 2 ? 15 : 14} /></span>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="absolute bottom-[28px] left-1/2 w-full max-w-3xl -translate-x-1/2 px-3 sm:px-4 md:px-0">
-                    <div className="glass-field relative h-[50px] !rounded-[25px]">
-                        <Skel className="absolute left-[6px] top-[6px] h-[38px] w-[38px] !rounded-full" />
-                        <span className="absolute left-[49px] top-[14px] text-[15px] leading-[22px]"><SkelText chars={5} /></span>
-                        <Skel className="absolute right-[50px] top-[6px] h-[38px] w-[38px] !rounded-full" />
-                        <Skel className="absolute right-[6px] top-[6px] h-[38px] w-[38px] !rounded-full" />
+                <div className="absolute bottom-[var(--sp-28)] left-1/2 w-full max-w-3xl -translate-x-1/2 px-3 sm:px-4 md:px-0">
+                    <div className="glass-field relative h-[var(--sz-50)] !rounded-[var(--r-25)]">
+                        <Skel className="absolute left-[var(--sp-6)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
+                        <span className="absolute left-[var(--sp-49)] top-[var(--sp-14)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelText chars={5} /></span>
+                        <Skel className="absolute right-[var(--sp-50)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
+                        <Skel className="absolute right-[var(--sp-6)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
                     </div>
                 </div>
             </div>
@@ -144,19 +144,19 @@ function SkelLogin() {
     return (
         <div className="min-h-[100dvh] flex relative overflow-hidden">
             <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
-                <div className="glass-chip h-[32px] w-[80px] !rounded-full" />
+                <div className="glass-chip h-[var(--sz-32)] w-[var(--sz-80)] !rounded-full" />
                 <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
-                    <div className="mx-auto max-w-[460px] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                        <h2 className="text-[44px] xl:text-[52px] font-bold leading-tight"><SkelText chars={4} /></h2>
-                        <div className="mt-5 -mb-6 flex h-[96px] items-center"><Skel className="h-[64px] w-[237px] !rounded-[16px]" /></div>
-                        <p className="mt-2 mb-10 text-[17px] leading-[22px]"><SkelText chars={12} /></p>
+                    <div className="mx-auto max-w-[var(--sz-460)] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
+                        <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold leading-tight"><SkelText chars={4} /></h2>
+                        <div className="mt-5 -mb-6 flex h-[var(--sz-96)] items-center"><Skel className="h-[var(--sz-64)] w-[var(--sz-237)] !rounded-[var(--r-16)]" /></div>
+                        <p className="mt-2 mb-10 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelText chars={12} /></p>
                         <div className="space-y-7">
                             {[0, 1, 2].map((i) => (
                                 <div key={i} className="flex items-center gap-4">
-                                    <div className="glass-chip h-[52px] w-[52px] shrink-0 !rounded-full" />
+                                    <div className="glass-chip h-[var(--sz-52)] w-[var(--sz-52)] shrink-0 !rounded-full" />
                                     <div className="flex flex-col">
-                                        <span className="text-[17px] leading-[22px] mb-0.5"><SkelText chars={6} /></span>
-                                        <span className="text-[15px] leading-[20px]"><SkelText chars={10} /></span>
+                                        <span className="text-[length:var(--fs-17)] leading-[var(--lh-22)] mb-0.5"><SkelText chars={6} /></span>
+                                        <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText chars={10} /></span>
                                     </div>
                                 </div>
                             ))}
@@ -170,12 +170,12 @@ function SkelLogin() {
                     <div className="glass-chip h-9 w-9 !rounded-full" />
                 </div>
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    <div className="w-full max-w-[360px] paper !rounded-[46px] p-5 flex flex-col aspect-square">
-                        <Skel className="h-[52px] w-full shrink-0" />
-                        <div className="glass-field mt-[43px] flex h-[47px] items-center !rounded-full px-[22px]"><span className="text-[15px]"><SkelText chars={2} /></span></div>
-                        <div className="glass-field mt-[42px] flex h-[47px] items-center !rounded-full px-[22px]"><span className="text-[15px]"><SkelText chars={2} /></span></div>
+                    <div className="w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-46)] p-5 flex flex-col aspect-square">
+                        <Skel className="h-[var(--sz-52)] w-full shrink-0" />
+                        <div className="glass-field mt-[var(--sp-43)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelText chars={2} /></span></div>
+                        <div className="glass-field mt-[var(--sp-42)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelText chars={2} /></span></div>
                         <div className="flex-1" />
-                        <Skel className="h-[52px] w-full shrink-0" />
+                        <Skel className="h-[var(--sz-52)] w-full shrink-0" />
                     </div>
                 </div>
             </div>
@@ -191,44 +191,44 @@ function SkelLogin() {
  */
 function SkelAdmin() {
     const panelTitle = (chars: number) => (
-        <div className="px-[26px] pt-5 pb-2 text-[17px] leading-[22px]"><SkelText chars={chars} /></div>
+        <div className="px-[var(--sp-26)] pt-5 pb-2 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelText chars={chars} /></div>
     )
     return (
-        <div className="relative mx-auto flex h-full max-w-[1500px] flex-col px-3 py-3 md:px-4 md:py-3">
+        <div className="relative mx-auto flex h-full max-w-[var(--sz-1500)] flex-col px-3 py-3 md:px-4 md:py-3">
             <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 pb-2 md:justify-between">
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                    <div className="glass-chip h-[34px] w-[34px] shrink-0 !rounded-full" />
-                    <h1 className="text-[16px] md:text-[22px] font-semibold"><SkelText chars={4} /></h1>
+                    <div className="glass-chip h-[var(--sz-34)] w-[var(--sz-34)] shrink-0 !rounded-full" />
+                    <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold"><SkelText chars={4} /></h1>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
                     <div className="hidden sm:flex glass-chip !rounded-full px-3 py-1.5 text-xs"><SkelText chars={6} /></div>
-                    <div className="glass-chip !rounded-full px-2.5 md:px-3 py-1 md:py-1.5 text-[11px] md:text-xs"><SkelText chars={4} /></div>
+                    <div className="glass-chip !rounded-full px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs"><SkelText chars={4} /></div>
                 </div>
             </header>
             <main className="flex flex-col flex-1 min-h-0 gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
                 {/* 窄畫面：側欄換成頂部分頁列（40 高膠囊） */}
-                <Skel className="lg:hidden h-[40px] w-full shrink-0" />
+                <Skel className="lg:hidden h-[var(--sz-40)] w-full shrink-0" />
                 <aside className="hidden lg:flex h-full flex-col overflow-hidden paper paper-lg lg:p-2">
-                    <div className="mb-2 rounded-[18px] bg-[var(--chip)] p-2.5">
-                        <p className="text-[12px] leading-[18px]"><SkelText chars={4} /></p>
-                        <p className="mt-0.5 mb-2 text-[12px] leading-[18px]"><SkelText chars={3} /></p>
+                    <div className="mb-2 rounded-[var(--r-18)] bg-[var(--chip)] p-2.5">
+                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={4} /></p>
+                        <p className="mt-0.5 mb-2 text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={3} /></p>
                         <Skel className="h-1.5 w-full" />
                     </div>
                     <div className="flex flex-col gap-1 py-2">
                         {[2, 3, 2, 2, 2].map((c, i) => (
-                            <div key={i} className="flex h-[34px] items-center gap-2 px-3 text-[13px]">
-                                <Skel className="h-3.5 w-3.5 !rounded-[4px] shrink-0" />
+                            <div key={i} className="flex h-[var(--sz-34)] items-center gap-2 px-3 text-[length:var(--fs-13)]">
+                                <Skel className="h-3.5 w-3.5 !rounded-[var(--r-4)] shrink-0" />
                                 <SkelText chars={c} />
                             </div>
                         ))}
                     </div>
                     <div className="mt-auto pt-3">
-                        <div className="rounded-[18px] bg-[var(--chip)] p-2">
+                        <div className="rounded-[var(--r-18)] bg-[var(--chip)] p-2">
                             <div className="flex items-center gap-1.5">
                                 <Skel className="h-6 w-6 !rounded-full shrink-0" />
-                                <div className="flex flex-col text-[12px] leading-[16px]"><SkelText chars={3} /><span className="mt-1"><SkelText chars={3} /></span></div>
+                                <div className="flex flex-col text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelText chars={3} /><span className="mt-1"><SkelText chars={3} /></span></div>
                             </div>
-                            <div className="mt-2 flex items-center justify-between text-[12px]"><SkelText chars={4} /><Skel className="h-[24px] w-[42px]" /></div>
+                            <div className="mt-2 flex items-center justify-between text-[length:var(--fs-12)]"><SkelText chars={4} /><Skel className="h-[var(--sz-24)] w-[var(--sz-42)]" /></div>
                         </div>
                     </div>
                 </aside>
@@ -238,23 +238,23 @@ function SkelAdmin() {
                             {[0, 1, 2, 3, 4, 5].map((i) => (
                                 <div key={i} className="paper p-2.5">
                                     <div className="flex items-center gap-2">
-                                        <Skel className="h-7 w-7 shrink-0 !rounded-[13px]" />
+                                        <Skel className="h-7 w-7 shrink-0 !rounded-[var(--r-13)]" />
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-[12px] leading-[18px]"><SkelText chars={5} /></p>
-                                            <p className="text-[18px] leading-tight"><SkelText chars={1.4} /></p>
+                                            <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={5} /></p>
+                                            <p className="text-[length:var(--fs-18)] leading-tight"><SkelText chars={1.4} /></p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </section>
                         <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
-                            <div className="paper min-h-[180px] lg:col-span-7 lg:min-h-0">{panelTitle(7)}</div>
-                            <div className="paper min-h-[180px] lg:col-span-5 lg:min-h-0">{panelTitle(4)}</div>
+                            <div className="paper min-h-[var(--sz-180)] lg:col-span-7 lg:min-h-0">{panelTitle(7)}</div>
+                            <div className="paper min-h-[var(--sz-180)] lg:col-span-5 lg:min-h-0">{panelTitle(4)}</div>
                         </section>
                         <section className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
-                            <div className="paper min-h-[160px] lg:col-span-5 lg:min-h-0">{panelTitle(8)}</div>
-                            <div className="paper min-h-[160px] lg:col-span-4 lg:min-h-0">{panelTitle(7)}</div>
-                            <div className="paper min-h-[160px] lg:col-span-3 lg:min-h-0">{panelTitle(4)}</div>
+                            <div className="paper min-h-[var(--sz-160)] lg:col-span-5 lg:min-h-0">{panelTitle(8)}</div>
+                            <div className="paper min-h-[var(--sz-160)] lg:col-span-4 lg:min-h-0">{panelTitle(7)}</div>
+                            <div className="paper min-h-[var(--sz-160)] lg:col-span-3 lg:min-h-0">{panelTitle(4)}</div>
                         </section>
                     </div>
                 </div>
@@ -268,7 +268,7 @@ export function SkelPage() {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/'
     const view = path.startsWith('/login') ? <SkelLogin />
         : path.startsWith('/admin') ? <SkelAdmin />
-        : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
+        : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
         : path === '/' || path.startsWith('/chat') ? <SkelChat />
         : null /* 其他網址（例如 404）：只留底色與波浪，不要冒出別頁的骨架 */
     return (

@@ -41,7 +41,7 @@ export default function FloatingInput({
                     setIsFocused(false)
                     onBlur?.(event)
                 }}
-                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[15px] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[length:var(--fs-15)] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />
@@ -94,7 +94,7 @@ export default function FloatingInput({
                         : { top: '50%', scale: 1 }
                 }
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute left-4 z-[3] pointer-events-none px-2.5 py-0.5 origin-left whitespace-nowrap text-[15px] font-medium tracking-tight"
+                className="absolute left-4 z-[3] pointer-events-none px-2.5 py-0.5 origin-left whitespace-nowrap text-[length:var(--fs-15)] font-medium tracking-tight"
                 style={{
                     y: '-50%',
                     color: isFloating
@@ -118,7 +118,7 @@ export default function FloatingInput({
             {error && (
                 /* 錯誤訊息放在輸入框正下方（Footnote 13／18），不擠進框裡蓋到內容 */
                 <div className="absolute left-5 right-5 top-full mt-1.5 pointer-events-none z-10">
-                    <span className="block text-[13px] leading-[18px] font-medium text-[var(--danger-ink)] truncate">{error}</span>
+                    <span className="block text-[length:var(--fs-13)] leading-[var(--lh-18)] font-medium text-[var(--danger-ink)] truncate">{error}</span>
                 </div>
             )}
 

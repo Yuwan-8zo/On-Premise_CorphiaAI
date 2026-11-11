@@ -72,7 +72,7 @@ export default function TenantsSection({
             {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
             <div className="admin-fill-body tenant-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {isLoadingTenants ? (
-                    <SkelCards count={4} className="h-[180px]" />
+                    <SkelCards count={4} className="h-[var(--sz-180)]" />
                 ) : tenants.length === 0 ? (
                     <div className="col-span-full py-10 text-center text-text-secondary">
                         {t('admin.tenants.noTenants', '暫無租戶')}
@@ -85,7 +85,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="snow-well rounded-[21px] p-5 flex flex-col"
+                                className="snow-well rounded-[var(--r-21)] p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">

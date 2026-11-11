@@ -234,7 +234,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
     const barElements = useMemo(() => bars.map((h, i) => (
         <span
             key={i}
-            className="inline-block w-[3px] bg-accent rounded-full transition-[height] duration-75"
+            className="inline-block w-[var(--sz-3)] bg-accent rounded-full transition-[height] duration-75"
             style={{ height: `${Math.round(h * 28)}px` }}
         />
     )), [bars])
@@ -263,15 +263,15 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--sys-red)] opacity-75 animate-ping" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--sys-red)]" />
                 </span>
-                <span className="text-[14px] tabular-nums text-text-primary min-w-[44px]">
+                <span className="text-[length:var(--fs-14)] tabular-nums text-text-primary min-w-[var(--sz-44)]">
                     {formatDuration(elapsedMs)}
                 </span>
             </div>
 
             {/* 波形 */}
-            <div className="flex-1 flex items-center justify-center gap-[3px] h-8 overflow-hidden px-1">
+            <div className="flex-1 flex items-center justify-center gap-[var(--sp-3)] h-8 overflow-hidden px-1">
                 {isReady ? barElements : (
-                    <span className="text-[13px] text-text-muted">{t('chat.voice.preparing')}</span>
+                    <span className="text-[length:var(--fs-13)] text-text-muted">{t('chat.voice.preparing')}</span>
                 )}
             </div>
 

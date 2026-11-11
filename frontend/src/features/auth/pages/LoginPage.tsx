@@ -80,10 +80,10 @@ export default function Login() {
                     <form
                         onSubmit={form.submit}
                         noValidate
-                        className="w-full max-w-[360px] paper !rounded-[43.5px] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                         <GlassSegmented
-                            className="shrink-0 h-[52px]"
+                            className="shrink-0 h-[var(--sz-52)]"
                             pad={5}
                             value={form.tab}
                             onChange={form.setTab}
@@ -176,7 +176,7 @@ export default function Login() {
                                             exit={{ opacity: 0, scale: 0.5, width: 0 }}
                                             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                                             aria-label={t('auth.forgotPassword')}
-                                            className="shrink-0 btn-icon !w-[42px] !h-[42px] [--R:21px] text-accent flex items-center justify-center overflow-hidden"
+                                            className="shrink-0 btn-icon !w-[var(--sz-42)] !h-[var(--sz-42)] [--R:21px] text-accent flex items-center justify-center overflow-hidden"
                                         >
                                             <HelpCircle className="w-5 h-5 shrink-0" />
                                         </motion.button>

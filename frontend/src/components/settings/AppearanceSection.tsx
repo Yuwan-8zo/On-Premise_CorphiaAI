@@ -45,7 +45,7 @@ export default function AppearanceSection() {
             <section className="set-section">
                 <div className="set-group !rounded-full">
                     {/* 右內距 12：膠囊高 56，最後一顆色點（32 的按鈕）圓心離右緣 28＝膠囊半圓的圓心，同心 */}
-                    <div className="set-row !pr-[12px]">
+                    <div className="set-row !pr-[var(--sp-12)]">
                         <span className="set-label">{t('settings.accentColor', '強調顏色')}</span>
                         <div className="flex items-center gap-1">
                             {ACCENT_OPTIONS.map(([key, color]) => (
@@ -76,10 +76,10 @@ function AppearancePreview({ mode }: { mode: Mode }) {
         return (
             <span className="absolute inset-0 block" style={{ background: page }}>
                 {/* 側欄 */}
-                <span className="absolute left-[8%] top-[12%] bottom-[12%] w-[24%] rounded-[5px]" style={{ background: card }} />
+                <span className="absolute left-[8%] top-[12%] bottom-[12%] w-[24%] rounded-[var(--r-5)]" style={{ background: card }} />
                 {/* 內容卡 */}
-                <span className="absolute left-[36%] right-[8%] top-[12%] h-[34%] rounded-[5px]" style={{ background: card }} />
-                <span className="absolute left-[36%] right-[8%] top-[52%] bottom-[12%] rounded-[5px]" style={{ background: card }} />
+                <span className="absolute left-[36%] right-[8%] top-[12%] h-[34%] rounded-[var(--r-5)]" style={{ background: card }} />
+                <span className="absolute left-[36%] right-[8%] top-[52%] bottom-[12%] rounded-[var(--r-5)]" style={{ background: card }} />
                 {/* 強調色按鈕 */}
                 <span className="absolute left-[42%] top-[22%] w-[22%] h-[12%] rounded-full" style={{ background: 'rgb(var(--accent))' }} />
             </span>

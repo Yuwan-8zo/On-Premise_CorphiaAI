@@ -47,8 +47,8 @@ export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
             onClick={close}
         >
             {/* 大小同後台左上角的返回鈕：34 圓鈕、圖示 18 */}
-            <button type="button" onClick={close} aria-label={t('common.close', '關閉')} className="btn-icon !w-[34px] !h-[34px] lan-qr-close">
-                <X className="w-[18px] h-[18px]" />
+            <button type="button" onClick={close} aria-label={t('common.close', '關閉')} className="btn-icon !w-[var(--sz-34)] !h-[var(--sz-34)] lan-qr-close">
+                <X className="w-[var(--sz-18)] h-[var(--sz-18)]" />
             </button>
             <div className="lan-qr-body" onClick={(e) => e.stopPropagation()}>
                 <p className="lan-qr-title">{t('admin.lan.qrTitle', '用手機掃描連線')}</p>

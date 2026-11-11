@@ -44,7 +44,7 @@ export const ConfirmModal: React.FC = () => {
                     <div
                         role="alertdialog"
                         aria-modal="true"
-                        className="dialog-sheet w-full max-w-[360px] pointer-events-auto"
+                        className="dialog-sheet w-full max-w-[var(--sz-360)] pointer-events-auto"
                         onClick={e => e.stopPropagation()}
                     >
                         <h3 className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>

@@ -75,16 +75,16 @@ export default function Chat() {
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 pb-6 md:px-10 max-w-4xl mx-auto w-full">
                         <div className="mb-8 pl-2 shrink-0">
-                            <h2 className="text-[22px] font-bold text-text-primary flex items-center gap-3">
+                            <h2 className="text-[length:var(--fs-22)] font-bold text-text-primary flex items-center gap-3">
                                 <Folder className="w-8 h-8 text-accent" />
                                 {mainProps.selectedFolder}
                             </h2>
-                            <p className="mt-2 text-[15px] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
+                            <p className="mt-2 text-[length:var(--fs-15)] text-text-secondary">管理來源文獻，Corphia 將會依據您勾選的檔案作為參考資料回答對話</p>
                         </div>
                         
                         {/* 整張卡片都可以把檔案拖進來；拖曳中顯示「放開即可加入」的提示 */}
                         <div
-                            className="paper !rounded-[37px] flex flex-col flex-1 min-h-0 overflow-hidden"
+                            className="paper !rounded-[var(--r-37)] flex flex-col flex-1 min-h-0 overflow-hidden"
                             onDragEnter={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); dragDepth.current++; setDragOver(true) } }}
                             onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
                             onDragLeave={() => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (dragDepth.current === 0) setDragOver(false) }}
@@ -99,11 +99,11 @@ export default function Chat() {
                                     <span>放開即可加入來源</span>
                                 </div>
                             )}
-                            <div className="px-[21px] py-[21px] border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
+                            <div className="px-[var(--sp-21)] py-[var(--sp-21)] border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
                                 <h3 className="font-semibold text-text-primary">來源文件 ({mainProps.folderDocuments.length})</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
-                                    className="btn btn-primary !h-9 !px-4 !text-[14px] gap-1.5"
+                                    className="btn btn-primary !h-9 !px-4 !text-[length:var(--fs-14)] gap-1.5"
                                 >
                                     <PlusIcon /> <span className="mr-1">新增來源</span>
                                 </button>
@@ -113,8 +113,8 @@ export default function Chat() {
                                 {mainProps.folderDocuments.length === 0 ? (
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <Copy className="w-16 h-16 mx-auto text-text-secondary mb-4 stroke-1" />
-                                    <p className="text-[17px] font-semibold text-text-secondary mb-1">尚無文獻來源</p>
-                                    <p className="text-[14px] text-text-muted">把檔案拖曳到這裡，或點右上角「新增來源」</p>
+                                    <p className="text-[length:var(--fs-17)] font-semibold text-text-secondary mb-1">尚無文獻來源</p>
+                                    <p className="text-[length:var(--fs-14)] text-text-muted">把檔案拖曳到這裡，或點右上角「新增來源」</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border-subtle dark:divide-border-subtle">
@@ -125,7 +125,7 @@ export default function Chat() {
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[8px] border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
@@ -135,8 +135,8 @@ export default function Chat() {
                                                 </label>
                                                 
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="font-medium text-[15px] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
-                                                    <span className="text-[13px] text-text-secondary mt-0.5">
+                                                    <span className="font-medium text-[length:var(--fs-15)] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
+                                                    <span className="text-[length:var(--fs-13)] text-text-secondary mt-0.5">
                                                         {parseServerDate(doc.created_at).toLocaleString()} • {(() => {
                                                             const bytes = doc.file_size || 0
                                                             if (bytes < 1024) return `${bytes} B`
@@ -180,10 +180,10 @@ export default function Chat() {
                         
                         {/* 專案上傳進度 */}
                         {mainProps.isUploading && mainProps.selectedFolder && (
-                            <div className="mt-6 p-4 glass-chip rounded-[18px] flex items-center justify-between animate-fade-in-up shrink-0">
+                            <div className="mt-6 p-4 glass-chip rounded-[var(--r-18)] flex items-center justify-between animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-                                    <span className="text-accent text-[15px] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <span className="text-accent text-[length:var(--fs-15)] font-medium">正在上傳並進行語意分析與 Chunking...</span>
                                 </div>
                                 <span className="text-accent font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
@@ -217,7 +217,7 @@ export default function Chat() {
                             <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[8vh] md:pt-[10vh]">
                                 {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
                                     避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
-                                <h2 className="text-[18px] sm:text-[24px] md:text-[34px] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
+                                <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
                                     {mainProps.t('chat.emptyGreeting', {
                                         name: (() => {
                                             const raw =
@@ -254,12 +254,12 @@ export default function Chat() {
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
                                                 /* 2×2 玻璃卡：圓角 25、內距 16 → 圖示方塊圓角 10（25−16=9，範本最小 10） */
-                                                className="paper !rounded-[25px] p-4 w-full text-left flex flex-col gap-3 cursor-pointer transition-transform duration-200 active:scale-[0.97]"
+                                                className="paper !rounded-[var(--r-25)] p-4 w-full text-left flex flex-col gap-3 cursor-pointer transition-transform duration-200 active:scale-[0.97]"
                                             >
-                                                <span className="snow-row-icon !rounded-[10px]">{icons[index % icons.length]}</span>
+                                                <span className="snow-row-icon !rounded-[var(--r-10)]">{icons[index % icons.length]}</span>
                                                 <span className="min-w-0">
-                                                    <span className="block font-semibold text-[15px] text-text-primary">{item.title}</span>
-                                                    <span className="block text-[13px] leading-snug text-text-secondary mt-1">{item.desc}</span>
+                                                    <span className="block font-semibold text-[length:var(--fs-15)] text-text-primary">{item.title}</span>
+                                                    <span className="block text-[length:var(--fs-13)] leading-snug text-text-secondary mt-1">{item.desc}</span>
                                                 </span>
                                             </button>
                                         ));

@@ -64,7 +64,7 @@ export default function LoginToolbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                            className="absolute right-0 mt-2 w-32 paper !rounded-[20px] overflow-hidden z-50 p-1.5"
+                            className="absolute right-0 mt-2 w-32 paper !rounded-[var(--r-20)] overflow-hidden z-50 p-1.5"
                         >
                             <LensMenu className="flex flex-col">
                                 {LANGUAGES.map((lang, i) => (
@@ -74,7 +74,7 @@ export default function LoginToolbar() {
                                             setLanguage(lang.code)
                                             setIsLangMenuOpen(false)
                                         }}
-                                        className={`menu-item !text-[14px] ${i > 0 ? 'mt-1' : ''} ${language === lang.code ? 'is-selected' : '!text-text-secondary'}`}
+                                        className={`menu-item !text-[length:var(--fs-14)] ${i > 0 ? 'mt-1' : ''} ${language === lang.code ? 'is-selected' : '!text-text-secondary'}`}
                                     >
                                         {lang.label}
                                     </button>

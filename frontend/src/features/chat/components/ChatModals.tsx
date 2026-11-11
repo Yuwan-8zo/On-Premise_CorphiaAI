@@ -44,7 +44,7 @@ export function ConversationContextMenu({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className="fixed z-[100] w-max min-w-[190px] paper !rounded-[20px] overflow-hidden p-1.5 text-text-primary"
+                    className="fixed z-[100] w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
                     style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
                 >
                     <LensMenu className="">
@@ -62,7 +62,7 @@ export function ConversationContextMenu({
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), 50) }}>
                         <Folder />
                         <span className="flex-1">{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
-                        <ChevronRight className="set-chevron !w-[14px] !h-[14px] -mr-1" />
+                        <ChevronRight className="set-chevron !w-[var(--sz-14)] !h-[var(--sz-14)] -mr-1" />
                     </button>
                     <div className="menu-sep" />
                     <button 
@@ -106,13 +106,13 @@ export function RenameModal({ renameModal, renameInput, renameInputRef, setRenam
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="dialog-sheet w-[360px] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-2">
                             <h3 className="dialog-title !px-0 mb-4">重新命名</h3>
                             <input ref={renameInputRef} type="text" value={renameInput}
                                 onChange={e => setRenameInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') onClose() }}
-                                className="snow-input w-full text-[15px] text-text-primary placeholder:text-text-muted"
+                                className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
                                 placeholder="對話名稱" autoComplete="off" />
                         </div>
                         <div className="dialog-actions">
@@ -157,12 +157,12 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="dialog-sheet w-[360px] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
                         {moveModal.isProject ? (
                             <>
                                 <div className="px-2">
                                     <h3 className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
-                                    <p className="text-[14px] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
+                                    <p className="text-[length:var(--fs-14)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
                                 </div>
                                 <div className="dialog-actions">
                             <button onClick={onClose} className="btn btn-lg btn-secondary">取消</button>
@@ -178,7 +178,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                                         if (allFolders.length > 0) {
                                             return (
                                                 <div className="mb-4">
-                                                    <p className="text-[13px] text-text-secondary mb-2">選擇現有專案：</p>
+                                                    <p className="text-[length:var(--fs-13)] text-text-secondary mb-2">選擇現有專案：</p>
                                                     <StyledSelect
                                                         value={allFolders.includes(moveInput) ? moveInput : ''}
                                                         onChange={setMoveInput}
@@ -190,10 +190,10 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                                         }
                                         return null
                                     })()}
-                                    <p className="text-[13px] text-text-secondary mb-3">或輸入新專案名稱：</p>
+                                    <p className="text-[length:var(--fs-13)] text-text-secondary mb-3">或輸入新專案名稱：</p>
                                     <input type="text" value={moveInput} onChange={e => setMoveInput(e.target.value)}
                                         onKeyDown={e => { if (e.key === 'Enter') submitMove(); if (e.key === 'Escape') onClose() }}
-                                        className="snow-input w-full text-[15px] text-text-primary placeholder:text-text-muted"
+                                        className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
                                         placeholder="新資料夾" autoFocus autoComplete="off" />
                                 </div>
                                 <div className="dialog-actions">
@@ -237,14 +237,14 @@ export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onCl
                     transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                     className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
                 >
-                    <div className="dialog-sheet w-[360px] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
+                    <div className="dialog-sheet w-[var(--sz-360)] max-w-[calc(100vw-32px)] pointer-events-auto" onClick={e => e.stopPropagation()}>
                         <div className="px-2">
                             <h3 className="dialog-title !px-0 mb-1">新建資料夾</h3>
-                            <p className="text-[13px] text-text-secondary mb-4">建立資料夾並自動加入一筆新對話</p>
+                            <p className="text-[length:var(--fs-13)] text-text-secondary mb-4">建立資料夾並自動加入一筆新對話</p>
                             <input ref={inputRef} type="text" value={input}
                                 onChange={e => setInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onClose() }}
-                                className="snow-input w-full text-[15px] text-text-primary placeholder:text-text-muted"
+                                className="snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted"
                                 placeholder="資料夾名稱" autoComplete="off" />
                         </div>
                         <div className="dialog-actions">

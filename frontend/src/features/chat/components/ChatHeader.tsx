@@ -52,7 +52,7 @@ export default function ChatHeader({
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
-        <header className="shrink-0 w-full p-3 md:pt-[21px] md:pb-4 md:px-[21px] flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
+        <header className="shrink-0 w-full p-3 md:pt-[var(--sp-21)] md:pb-4 md:px-[var(--sp-21)] flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
@@ -65,7 +65,7 @@ export default function ChatHeader({
                 {/* 品牌字：和登入頁同一個字標（含星星） */}
                 <h1 className={`hidden sm:flex items-center transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
                     {/* 字標圖片上下有留白：圖高 63、看得到的字（含 p 的下伸）＝40，跟右側按鈕同高同位；負邊距加在外層（星星那層跟著圖片對齊），讓排版仍佔 40 */}
-                    <span className="-mt-[2px] -mb-[21px] flex"><CorphiaWordmark className="h-[63px] w-auto object-contain object-left pointer-events-none select-none" /></span>
+                    <span className="-mt-[var(--sp-2)] -mb-[var(--sp-21)] flex"><CorphiaWordmark className="h-[var(--sz-63)] w-auto object-contain object-left pointer-events-none select-none" /></span>
                     <span className="sr-only">Corphia</span>
                 </h1>
             </div>
@@ -76,9 +76,9 @@ export default function ChatHeader({
                     <button
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                         disabled={isModelLoading}
-                        className="flex items-center gap-1.5 md:gap-2 h-[36px] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[180px] md:max-w-none"
+                        className="flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
                     >
-                        <span className="text-[12px] md:text-[14px] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
+                        <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-14)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-[var(--paper-line)] border-t-transparent rounded-full animate-spin shrink-0" />
@@ -88,7 +88,7 @@ export default function ChatHeader({
                             ) : selectedModel ? (
                                 <>
                                     {/* Mobile: short abbreviation to avoid overflow */}
-                                    <span className="md:hidden truncate max-w-[110px]">
+                                    <span className="md:hidden truncate max-w-[var(--sz-110)]">
                                         {(() => {
                                             const name = selectedModel.name.toLowerCase();
                                             if (name.includes('qwen') && name.includes('2.5') && name.includes('7b')) {
@@ -116,10 +116,10 @@ export default function ChatHeader({
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                                    className="absolute right-0 top-full mt-2 w-[340px] paper overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
-                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                    <div className="max-h-[var(--sz-300)] overflow-y-auto custom-scrollbar">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">無可用模型，請掃描目錄。</div>
                                         ) : (
@@ -183,7 +183,7 @@ export default function ChatHeader({
                                             className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors  text-text-secondary group"
                                         >
                                             <RefreshCw className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" />
-                                            <span className="font-semibold text-[14px]">掃描最新模型庫...</span>
+                                            <span className="font-semibold text-[length:var(--fs-14)]">掃描最新模型庫...</span>
                                         </button>
                                     </div>
                                     </LensMenu>

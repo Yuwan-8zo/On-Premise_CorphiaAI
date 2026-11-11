@@ -5,7 +5,7 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: var(--fs-14);
   background-color: rgb(var(--bg-canvas));
   color-scheme: only light;
 

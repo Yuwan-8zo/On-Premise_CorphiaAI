@@ -72,7 +72,7 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
     return (
         <div className="flex flex-col py-1 select-none">
             <span
-                className="text-[14px] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
+                className="text-[length:var(--fs-14)] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
                 style={{ opacity: fading ? 0 : 1 }}
             >
                 {phaseLabels[displayPhase]}
@@ -82,7 +82,7 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
                 )}
             </span>
             {elapsed >= 15 && (
-                <span className="mt-1 text-[12px] text-text-muted">
+                <span className="mt-1 text-[length:var(--fs-12)] text-text-muted">
                     {readingDocs
                         ? 'AI 在本機處理器上運算，資料不會離開這台電腦；正在閱讀找到的文件段落，需要一點時間，請稍候'
                         : 'AI 在本機處理器上運算，資料不會離開這台電腦，請稍候'}

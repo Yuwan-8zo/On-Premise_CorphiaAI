@@ -55,16 +55,16 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
     const coreCount = info?.cpu_cores ?? 0
 
     return (
-        <Panel className={`overflow-hidden flex flex-col min-h-[160px] lg:min-h-0 ${className || ''}`}>
+        <Panel className={`overflow-hidden flex flex-col min-h-[var(--sz-160)] lg:min-h-0 ${className || ''}`}>
             <SectionHeader
                 title={t('admin.overview.systemResources', '系統資源')}
             />
-            <div className="flex-1 min-h-0 px-[21px] pb-[16px]">
+            <div className="flex-1 min-h-0 px-[var(--sp-21)] pb-[var(--sp-16)]">
                 <div className="flex flex-col gap-[var(--space)]">
                     {/* CPU 進度條 */}
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">
-                            <p className="text-[12px] font-medium text-text-secondary">
+                            <p className="text-[length:var(--fs-12)] font-medium text-text-secondary">
                                 {t('admin.overview.cpuUsage', 'CPU')}
                             </p>
                             <p className="text-xs font-semibold tabular-nums text-text-primary">
@@ -77,7 +77,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                                 style={{ width: `${cpuPercent}%` }}
                             />
                         </div>
-                        <p className="text-[11px] text-text-muted">
+                        <p className="text-[length:var(--fs-11)] text-text-muted">
                             {coreCount} {coreCount === 1 ? 'core' : 'cores'}
                         </p>
                     </div>
@@ -85,7 +85,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                     {/* RAM 進度條 */}
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">
-                            <p className="text-[12px] font-medium text-text-secondary">
+                            <p className="text-[length:var(--fs-12)] font-medium text-text-secondary">
                                 {t('admin.overview.ramUsage', '記憶體')}
                             </p>
                             <p className="text-xs font-semibold tabular-nums text-text-primary">
@@ -98,7 +98,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                                 style={{ width: `${memoryPercent}%` }}
                             />
                         </div>
-                        <p className="text-[11px] text-text-muted">
+                        <p className="text-[length:var(--fs-11)] text-text-muted">
                             {totalMemoryGb.toFixed(1)} GB total
                         </p>
                     </div>

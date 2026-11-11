@@ -25,7 +25,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <div className="glass-chip rounded-[18px] p-3 mb-2 text-xs">
+        <div className="glass-chip rounded-[var(--r-18)] p-3 mb-2 text-xs">
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
@@ -40,8 +40,8 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-[var(--paper-line)] space-y-1">
                     {maskMap.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-[11px]">
-                            <span className="px-1.5 py-0.5 rounded-[6px] bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
+                        <div key={idx} className="flex items-center gap-2 text-[length:var(--fs-11)]">
+                            <span className="px-1.5 py-0.5 rounded-[var(--r-6)] bg-[color-mix(in_srgb,var(--sys-orange)_15%,transparent)] text-[var(--sys-orange)] dark:text-[var(--sys-orange)] tabular-nums">
                                 {item.label}
                             </span>
                             <span className="text-text-secondary tabular-nums">
@@ -53,7 +53,7 @@ export function PIIWarningBanner({ maskMap, message }: PIIWarningProps) {
                             </span>
                         </div>
                     ))}
-                    <p className="text-[11px] text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] dark:text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] mt-1">
+                    <p className="text-[length:var(--fs-11)] text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] dark:text-[color-mix(in_srgb,var(--sys-orange)_70%,transparent)] mt-1">
                         送入 AI 模型的是遮罩後的內容，原始敏感資訊不會進入模型。
                     </p>
                 </div>
@@ -98,7 +98,7 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
     const colors = RISK_COLORS[riskLevel] || RISK_COLORS.medium
 
     return (
-        <div className={`glass-chip rounded-[18px] p-3 mb-2 text-xs`}>
+        <div className={`glass-chip rounded-[var(--r-18)] p-3 mb-2 text-xs`}>
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2 w-full text-left"
@@ -107,25 +107,25 @@ export function InjectionWarningBanner({ riskLevel, matchedPatterns, message }: 
                 <span className={`font-medium ${colors.text} flex-1`}>
                     {message}
                 </span>
-                <span className={`px-1.5 py-0.5 rounded tabular-nums text-[12px] ${colors.text} ${colors.bg}`}>
+                <span className={`px-1.5 py-0.5 rounded tabular-nums text-[length:var(--fs-12)] ${colors.text} ${colors.bg}`}>
                     {riskLevel}
                 </span>
             </button>
 
             {isExpanded && (
                 <div className="mt-2 pt-2 border-t border-current/10 space-y-1">
-                    <p className="text-[11px] text-text-secondary mb-1">
+                    <p className="text-[length:var(--fs-11)] text-text-secondary mb-1">
                         偵測到的模式:
                     </p>
                     {matchedPatterns.map((pattern, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-[11px]">
+                        <div key={idx} className="flex items-center gap-2 text-[length:var(--fs-11)]">
                             <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 shrink-0" />
                             <span className={`tabular-nums ${colors.text}`}>
                                 {pattern}
                             </span>
                         </div>
                     ))}
-                    <p className="text-[10px] text-text-muted mt-2">
+                    <p className="text-[length:var(--fs-10)] text-text-muted mt-2">
                         系統已自動清除危險標記（如 ChatML 標籤），並記錄此事件於審計日誌。
                     </p>
                 </div>

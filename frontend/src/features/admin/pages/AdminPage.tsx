@@ -38,7 +38,7 @@ const TABS: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType
 ]
 
 /** 分頁程式還在下載時顯示的骨架 */
-const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} className="h-[120px]" /></div>
+const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} className="h-[var(--sz-120)]" /></div>
 
 export default function Admin() {
     const { t } = useTranslation()
@@ -84,25 +84,25 @@ export default function Admin() {
                 <WaveBackground />
             </div>
             {/* 間距統一 12px（外圍四邊＝標題列到內容＝卡片之間）；根字級比 16 小，一律用 px */}
-            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col p-[var(--space)]">
+            <div className="relative z-10 mx-auto flex h-full max-w-[var(--sz-1500)] flex-col p-[var(--space)]">
                 {/* 頂端：返回、標題、連線狀態、目前使用者 */}
                 <header className="mb-[var(--space)] flex shrink-0 items-center gap-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}
                             aria-label={t('common.backToChat', '返回聊天')}
-                            className="btn-icon !w-[34px] !h-[34px] shrink-0 text-text-secondary"
+                            className="btn-icon !w-[var(--sz-34)] !h-[var(--sz-34)] shrink-0 text-text-secondary"
                         >
-                            <ArrowLeft className="w-[18px] h-[18px]" />
+                            <ArrowLeft className="w-[var(--sz-18)] h-[var(--sz-18)]" />
                         </button>
-                        <h1 className="text-[16px] md:text-[22px] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
+                        <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <div className="hidden items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-xs font-semibold text-accent sm:flex">
                             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                             {t('admin.backendOnline')}
                         </div>
-                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[11px] md:text-xs font-medium text-text-secondary truncate max-w-[100px] md:max-w-none">
+                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs font-medium text-text-secondary truncate max-w-[var(--sz-100)] md:max-w-none">
                             {user?.name || t('admin.operator')}
                         </div>
                     </div>
@@ -110,12 +110,12 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[33px] lg:p-[var(--space)]">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--r-33)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
-                        <div className="hidden lg:block mb-[var(--space)] rounded-[21px] border border-transparent bg-[var(--chip)] p-[var(--space)]">
+                        <div className="hidden lg:block mb-[var(--space)] rounded-[var(--r-21)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
-                                <p className="text-[12px] text-text-secondary">{t('admin.currentModel')}</p>
-                                <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>
+                                <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
+                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
@@ -124,7 +124,7 @@ export default function Admin() {
 
                         {/* 手機：分段切換 */}
                         <GlassSegmented
-                            className="lg:hidden w-full h-[40px]"
+                            className="lg:hidden w-full h-[var(--sz-40)]"
                             pad={4}
                             value={activeSection}
                             onChange={(v) => setActiveSection(v)}
