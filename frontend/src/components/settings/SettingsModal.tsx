@@ -91,7 +91,7 @@ export default function SettingsModal() {
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
-                        className="relative w-full max-w-[var(--sz-800)] h-auto md:h-full max-h-[90vh] md:max-h-[var(--sz-750)] paper !rounded-[var(--r-68)] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
+                        className="relative w-full max-w-[var(--sz-800)] h-full max-h-[90dvh] md:max-h-[var(--sz-750)] paper !rounded-[var(--r-68)] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
@@ -102,7 +102,7 @@ export default function SettingsModal() {
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
-                        <div className={`md:w-64 flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <div className={`md:w-64 flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
                             <div className="pl-[var(--sp-51)] pr-4 pt-[var(--sp-48)] pb-2">
                                 <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary tracking-wide">
@@ -110,7 +110,7 @@ export default function SettingsModal() {
                                 </h2>
                             </div>
               {/* 導覽項跟下方「管理後台」膠囊左右對齊：左 36、右 14 */}
-              <nav className="flex-1 pl-[var(--sp-36)] pr-4 py-4 overflow-y-auto scrollbar-none">
+              <nav className="flex-1 px-[var(--sp-36)] md:pr-4 py-4 overflow-y-auto scrollbar-none">
                                 <GlassNav
                                     aria-label={t('settings.title')}
                                     value={activeSection}
@@ -124,7 +124,7 @@ export default function SettingsModal() {
 
                             {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
                             {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                <div className="pl-[var(--sp-36)] pr-4 pt-2 pb-[var(--sp-36)]">
+                                <div className="px-[var(--sp-36)] md:pr-4 pt-2 pb-[var(--sp-36)]">
                                     <div className="set-group !rounded-full">
                                         <button
                                             type="button"
