@@ -2347,6 +2347,8 @@ html.dark {
 /* 上下左右只用外圈間距，不另加安全區（橫條很細，落在這段空白裡） */
 .fold-wide .edge-shell {
   padding-bottom: 0;
+  /* 上方也不另加保留空間：Safari 工具列收起後頁面延伸到最頂端，網址只剩中間一顆小膠囊，不會碰到左右的元件 */
+  padding-top: 0 !important;
 }
 /* 左側收合欄：離上、下、左都是外圈間距，圓角與螢幕同心 */
 .fold-wide .chat-shell .chat-side {
