@@ -54,27 +54,51 @@ def _write_lan_enabled(enabled: bool) -> None:
     _lan_runtime_path().write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+# 虛擬網卡（WSL、Hyper-V、Docker、VPN、虛擬機）：只存在電腦內部，手機連不到，不顯示
+_VIRTUAL_NIC_KEYWORDS = ("vethernet", "wsl", "hyper-v", "docker", "virtualbox", "vmware", "vbox",
+                         "loopback", "tailscale", "zerotier", "hamachi", "vpn", "tap-", "tun")
+
+
+def _default_route_ip() -> str | None:
+    """電腦實際對外連線用的那張網卡的 IP（只向作業系統查路由，不會真的送出封包）"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        return ip if ip and not ip.startswith(("127.", "169.254.", "0.")) else None
+    except OSError:
+        return None
+    finally:
+        s.close()
+
+
 def _detect_lan_ips() -> list[str]:
-    ips: set[str] = set()
+    """
+    給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
+      1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）
+      2. 沒有預設路由（例如沒有路由器的封閉網路）時，從「有連線、不是虛擬網卡、不是 169.254 自動配置」的網卡挑，
+         家用／公司網段（192.168、10）優先
+    """
+    primary = _default_route_ip()
+    if primary:
+        return [primary]
+
+    candidates: list[str] = []
     try:
-        host = socket.gethostname()
-        _name, _aliases, addrs = socket.gethostbyname_ex(host)
-        for ip in addrs:
-            if ip and not ip.startswith("127."):
-                ips.add(ip)
+        import psutil
+
+        stats = psutil.net_if_stats()
+        for name, addrs in psutil.net_if_addrs().items():
+            st = stats.get(name)
+            if not st or not st.isup or any(k in name.lower() for k in _VIRTUAL_NIC_KEYWORDS):
+                continue
+            for a in addrs:
+                ip = a.address
+                if a.family == socket.AF_INET and ip and not ip.startswith(("127.", "169.254.")):
+                    candidates.append(ip)
     except Exception:
         pass
 
-    # 盡量補足：有些環境 gethostbyname_ex 只回一個或回到錯的網卡
-    try:
-        for info in socket.getaddrinfo(host, None):
-            ip = info[4][0]
-            if ip and "." in ip and not ip.startswith("127."):
-                ips.add(ip)
-    except Exception:
-        pass
-
-    # 排序：家用／公司網段（192.168、10）在前，虛擬網卡常用的 172.16–31（WSL、Hyper-V）放後面
     def _rank(ip: str) -> tuple[int, str]:
         if ip.startswith("192.168."):
             return (0, ip)
@@ -82,7 +106,7 @@ def _detect_lan_ips() -> list[str]:
             return (1, ip)
         return (2, ip)
 
-    return sorted(ips, key=_rank)
+    return sorted(set(candidates), key=_rank)
 
 
 class LanToggleRequest(BaseModel):

@@ -2224,24 +2224,6 @@ html.dark {
   font-variant-numeric: tabular-nums;
   word-break: break-all;
 }
-.lan-qr-ips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-.lan-qr-ip {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 16px;
-  font-size: 14px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
-  font-variant-numeric: tabular-nums;
-}
-.lan-qr-ip.is-current {
-  background: rgb(var(--accent));
-}
 @media (prefers-reduced-motion: reduce) {
   .lan-qr-overlay {
     animation: none;

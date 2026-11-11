@@ -1,10 +1,10 @@
 /**
  * LanQrOverlay — 區域網路連線 QR code（全螢幕，給手機掃描）
  *   - 網址＝本機在區網的 IP＋目前的前端連接埠，手機掃了直接開聊天室
- *   - 有多張網卡時可切換 IP（家用／公司網段排在前面，後端已排序）
+ *   - 只顯示一個網址：後端已挑出電腦實際連網用的那張網卡（排除 WSL／Hyper-V 等手機連不到的虛擬網卡）
  *   - 點背景、按 Esc 或右上角關閉
  */
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -12,16 +12,16 @@ import { X } from '@/components/snow/icons'
 import QrCode from '@/components/ui/QrCode'
 
 interface LanQrOverlayProps {
-    ips: string[]
+    /** 手機要連的本機 IP */
+    ip: string
     onClose: () => void
 }
 
 /** 區網裝置要開的網址（沿用目前頁面的協定與連接埠） */
 const lanUrl = (ip: string) => `${window.location.protocol}//${ip}${window.location.port ? `:${window.location.port}` : ''}/`
 
-export default function LanQrOverlay({ ips, onClose }: LanQrOverlayProps) {
+export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
     const { t } = useTranslation()
-    const [ip, setIp] = useState(ips[0])
     const url = lanUrl(ip)
 
     useEffect(() => {
@@ -48,15 +48,6 @@ export default function LanQrOverlay({ ips, onClose }: LanQrOverlayProps) {
                     <QrCode value={url} />
                 </div>
                 <p className="lan-qr-url selectable-text">{url}</p>
-                {ips.length > 1 && (
-                    <div className="lan-qr-ips" role="group" aria-label={t('admin.lan.ips', '本機 IP')}>
-                        {ips.map((x) => (
-                            <button key={x} type="button" onClick={() => setIp(x)} className={`tag lan-qr-ip ${x === ip ? 'is-current' : ''}`} aria-pressed={x === ip}>
-                                {x}
-                            </button>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>,
         document.body,

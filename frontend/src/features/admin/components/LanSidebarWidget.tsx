@@ -80,13 +80,8 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                             <p className="text-[10px] text-text-muted leading-tight">
                                 {t('admin.lan.ips', '本機 IP')}
                             </p>
-                            <div className="mt-1 space-y-0.5">
-                                {lanIps.slice(0, 3).map((ip) => (
-                                    <div key={ip} className="text-[10px] text-text-secondary tabular-nums">
-                                        {ip}
-                                    </div>
-                                ))}
-                            </div>
+                            {/* 只顯示手機連得到的那一個（後端已排除虛擬網卡） */}
+                            <div className="mt-1 text-[10px] text-text-secondary tabular-nums">{lanIps[0]}</div>
                         </div>
                         {/* 右下角：QR code，點開全螢幕給手機掃描 */}
                         <Tooltip label={t('admin.lan.qrOpen', '顯示手機連線 QR code')}>
@@ -101,7 +96,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                         </Tooltip>
                     </div>
                 )}
-                {showQr && enabled && lanIps.length > 0 && <LanQrOverlay ips={lanIps} onClose={() => setShowQr(false)} />}
+                {showQr && enabled && lanIps.length > 0 && <LanQrOverlay ip={lanIps[0]} onClose={() => setShowQr(false)} />}
             </div>
         </div>
     )
