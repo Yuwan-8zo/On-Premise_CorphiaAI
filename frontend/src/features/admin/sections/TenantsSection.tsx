@@ -58,7 +58,7 @@ export default function TenantsSection({
     }
 
     return (
-        <Panel className="overflow-hidden">
+        <Panel className="admin-fill">
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
                 eyebrow={t('admin.tenants.activeTenants', { count: activeTenants })}
@@ -69,9 +69,10 @@ export default function TenantsSection({
                     </ActionButton>
                 }
             />
-            <div className="grid gap-[12px] px-[12px] pb-[12px] md:grid-cols-2 xl:grid-cols-3">
+            {/* 租戶卡片：寬螢幕四等分、中等寬度兩欄、手機一欄 */}
+            <div className="admin-fill-body grid content-start gap-[12px] px-[12px] pb-[12px] md:grid-cols-2 xl:grid-cols-4">
                 {isLoadingTenants ? (
-                    <SkelCards count={3} className="h-[180px]" />
+                    <SkelCards count={4} className="h-[180px]" />
                 ) : tenants.length === 0 ? (
                     <div className="col-span-full py-10 text-center text-text-secondary">
                         {t('admin.tenants.noTenants', '暫無租戶')}

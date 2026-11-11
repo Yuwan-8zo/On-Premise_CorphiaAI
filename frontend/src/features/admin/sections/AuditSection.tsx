@@ -112,9 +112,11 @@ export default function AuditSection({
 
     return (
         <>
-            <div className="space-y-[12px]">
+            {/* 整頁填滿內容區、不捲動：篩選卡固定在上，稽核大卡片吃剩下的高度，表格在卡片「裡面」捲動
+                (外層內容區捲動時，卡片會被它直直切掉，底部和捲上去的上緣都失去圓角) */}
+            <div className="flex h-full min-h-0 flex-col gap-[12px]">
                 {/* Filter bar */}
-                <Panel className="p-[12px]">
+                <Panel className="p-[12px] shrink-0">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
                     <div className="flex flex-wrap items-center gap-[12px]">
                         <label className="admin-search flex-1 min-w-[220px]">
@@ -188,20 +190,9 @@ export default function AuditSection({
                     </div>
                 </Panel>
 
-                {/*
-                  Audit log table.
-                  Sticky header 修法：
-                    - 不能在 Panel 上加 overflow-hidden —— `overflow:hidden` 會把
-                      Panel 變成 sticky 的 scrolling-box，但 Panel 自己不滾，
-                      導致 sticky 的「scroll ancestor」是不會動的容器，
-                      sticky 跟著 Panel 一起被外層 scroll 拉上去 → 沒有黏住的效果。
-                    - 改成不設 overflow，sticky 就會找到真正會滾的祖先（AdminPage
-                      的 overflow-y-auto 內容區），可以正常黏在 viewport 頂端。
-                    - 圓角靠 SectionHeader 上方 + 表格底端的 rounded class 各自處理；
-                      因為內容（table）不會超出 Panel 邊界，不需要 overflow:hidden 截切。
-                */}
-                <Panel>
-                    <div className="sticky top-0 z-20 admin-sticky-bar rounded-t-[33px]">
+                {/* 稽核表：卡片本身裁切成圓角（overflow-hidden），標題與欄名固定在卡片上方，只有表格列在卡片內捲動 */}
+                <Panel className="admin-fill flex-1">
+                    <div className="shrink-0">
                         <SectionHeader
                             title={t('admin.audit.title')}
                             eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
@@ -238,9 +229,8 @@ export default function AuditSection({
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.ip')}</div>
                         </div>
                     </div>
-                    {/* table 包一層 overflow-hidden 處理底部圓角，
-                        但只蓋表格本身，不會吃到 sticky header 的 scrolling box */}
-                    <div className="overflow-hidden rounded-b-cv-lg">
+                    {/* 表格列：在卡片裡捲動（卡片的 overflow-hidden 負責四個圓角） */}
+                    <div className="admin-fill-body">
                         <table className="w-full table-fixed">
                             <colgroup>
                                 <col className="w-[110px] sm:w-[180px]" />

@@ -172,7 +172,7 @@ export default function UsersSection({
     const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId
 
     return (
-        <Panel className="overflow-hidden">
+        <Panel className="admin-fill">
             <SectionHeader
                 title={t('admin.users.title', '使用者') + ` (${users.length})`}
                 eyebrow={t('admin.users.activeOperators', { active: activeUsers })}
@@ -192,7 +192,7 @@ export default function UsersSection({
               這樣整列寬度從 ~960px 降到 ~720px，1080p 視窗也能完整顯示。
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
-            <div className="overflow-x-auto pb-[4px]">
+            <div className="admin-fill-body overflow-x-auto pb-[4px]">
                 <table className="w-full min-w-[720px]">
                     <thead className={tableHeadRowClass}>
                         <tr>

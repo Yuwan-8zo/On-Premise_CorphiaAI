@@ -67,8 +67,8 @@ export default function ModelsSection({
     }
 
     return (
-        <div className="space-y-5">
-            <Panel>
+        <div className="h-full">
+            <Panel className="admin-fill">
                 <SectionHeader
                     title={t('admin.models.title', '模型')}
                     eyebrow={`${t('admin.models.folder', '模型資料夾')}：${sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}`}
@@ -79,7 +79,7 @@ export default function ModelsSection({
                         </ActionButton>
                     }
                 />
-                <div className="grid gap-[12px] px-[12px] pb-[12px]">
+                <div className="admin-fill-body grid content-start gap-[12px] px-[12px] pb-[12px]">
                     {isLoadingModels ? (
                         <SkelCards count={3} className="h-[86px]" />
                     ) : models.length === 0 ? (

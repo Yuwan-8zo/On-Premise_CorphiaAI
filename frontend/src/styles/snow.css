@@ -2284,3 +2284,25 @@ html.dark {
     animation: none;
   }
 }
+
+/* 後台分頁的大卡片：填滿內容區（底部和左側欄一樣留間距），四角保持圓角；
+   內容多時在卡片「裡面」捲動（.admin-fill-body），不讓外層捲動把卡片直直切掉 */
+.admin-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.admin-fill > :not(.admin-fill-body) {
+  flex-shrink: 0;
+}
+.admin-fill-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.admin-fill-body::-webkit-scrollbar {
+  display: none;
+}
