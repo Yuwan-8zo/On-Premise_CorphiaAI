@@ -221,7 +221,7 @@ export default function AuditSection({
                         {/* Column header row — same grid template as the tbody rows
                             手機板僅顯示 時間 + 操作；resource / user / ip 在 sm+ 才出現
                             點任一列仍可開 drawer 看完整資料 */}
-                        <div className="grid grid-cols-[var(--sz-110)_minmax(0,1fr)] sm:grid-cols-[var(--sz-180)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_var(--sz-140)] border-b border-[var(--paper-line)] text-left text-[length:var(--fs-13)] font-semibold text-text-secondary">
+                        <div className="grid grid-cols-[var(--sz-110)_minmax(0,1fr)] sm:grid-cols-[var(--audit-time)_var(--audit-action)_var(--audit-res)_minmax(0,1fr)_var(--audit-ip)] border-b border-[var(--paper-line)] text-left text-[length:var(--fs-13)] font-semibold text-text-secondary">
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.time')}</div>
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.action')}</div>
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.resource')}</div>
@@ -233,11 +233,11 @@ export default function AuditSection({
                     <div className="admin-fill-body">
                         <table className="w-full table-fixed">
                             <colgroup>
-                                <col className="w-[var(--sz-110)] sm:w-[var(--sz-180)]" />
-                                <col />
+                                <col className="w-[var(--sz-110)] sm:w-[var(--audit-time)]" />
+                                <col className="sm:w-[var(--audit-action)]" />
+                                <col className="hidden sm:table-column sm:w-[var(--audit-res)]" />
                                 <col className="hidden sm:table-column" />
-                                <col className="hidden sm:table-column" />
-                                <col className="hidden sm:table-column sm:w-[var(--sz-140)]" />
+                                <col className="hidden sm:table-column sm:w-[var(--audit-ip)]" />
                             </colgroup>
                             <thead className="hidden">
                                 <tr>

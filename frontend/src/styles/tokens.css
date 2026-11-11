@@ -237,6 +237,15 @@
   --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
   --nav-gap-sm: calc(4 * var(--ui-unit));
 
+  /* 畫面外圈間距：聊天頁的左、右、下，以及側邊欄和主區之間，全部用同一個值 */
+  --gutter: var(--sp-14);
+
+  /* 稽核表欄寬：時間、操作、資源、IP 依內容給寬度，剩下全部給「使用者」（信箱最長） */
+  --audit-time: var(--sz-140);
+  --audit-action: var(--sz-120);
+  --audit-res: var(--sz-100);
+  --audit-ip: var(--sz-110);
+
   /* 依螢幕高度伸縮：螢幕高時＝原本大小，矮的時候（例如橫拿的折疊手機）自動收緊，內容不會被輸入框蓋住 */
   --fluid-pad: clamp(var(--sp-10), 2dvh, var(--sp-16));     /* 首頁建議卡片內距 */
   --fluid-gap: clamp(var(--sp-6), 1.5dvh, var(--sp-12));    /* 卡片內圖示與文字之間 */

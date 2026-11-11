@@ -2316,3 +2316,14 @@ html.dark {
     grid-auto-rows: calc((100% - var(--space)) / 2); /* 100%＝這一區扣掉內距後的高度；再扣列距 */
   }
 }
+
+/* 聊天頁底部：手機直放照舊留出 Home 橫條的安全區；平板／橫放時底部間距＝外圈間距（--gutter），
+   安全區比外圈間距大時才多留差額，所以底下和左右看起來一樣寬 */
+.chat-shell {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (min-width: 768px) {
+  .chat-shell {
+    padding-bottom: max(0px, calc(env(safe-area-inset-bottom) - var(--gutter)));
+  }
+}

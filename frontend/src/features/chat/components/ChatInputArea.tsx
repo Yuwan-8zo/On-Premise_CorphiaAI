@@ -92,7 +92,7 @@ export default function ChatInputArea({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.3, ease:"easeOut" }}
-                className="shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
+                className="shrink-0 pt-2 pb-4 md:pb-[var(--gutter)] md:px-[var(--gutter)] w-full z-20"
             >
                 {!llmReady && (
                     <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--sys-orange)] dark:text-[var(--sys-orange)] mb-2">

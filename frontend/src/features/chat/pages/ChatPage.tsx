@@ -43,11 +43,8 @@ export default function Chat() {
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
         // 與 LoginPage / Admin 同款：bg-bg-base + 三條弧線 SVG，sidebar / main 玻璃化
         <div
-            className="flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
-            style={{
-                paddingTop: 'env(safe-area-inset-top)',
-                paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
+            className="chat-shell flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
             {/* 背景弧線 SVG —— 跟登入/Admin 同款 */}
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">

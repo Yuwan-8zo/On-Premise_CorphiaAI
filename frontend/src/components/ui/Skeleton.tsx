@@ -95,7 +95,7 @@ function SkelText({ chars }: { chars: number }) {
 function SkelChat() {
     return (
         <div className="flex absolute inset-0 w-full h-full overflow-hidden">
-            <aside className="paper hidden md:block relative shrink-0 w-[var(--sz-260)] h-[calc(100vh-32px)] my-4 ml-4 !rounded-[var(--r-35)]">
+            <aside className="paper hidden md:block relative shrink-0 w-[var(--sz-260)] h-[calc(100%-2*var(--sp-16))] my-4 ml-4 !rounded-[var(--r-35)]">
                 <Skel className="absolute left-[var(--sp-22)] top-[var(--sp-21)] h-[var(--sz-28)] w-[var(--sz-28)] !rounded-full" />
                 <Skel className="absolute left-[var(--sp-216)] top-[var(--sp-25)] h-[var(--sz-21)] w-[var(--sz-21)] !rounded-[var(--r-6)]" />
                 <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-74)] h-[var(--sz-44)] w-[var(--sz-232)]" />

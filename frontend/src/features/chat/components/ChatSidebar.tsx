@@ -157,7 +157,7 @@ export default function ChatSidebar({
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
                 : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
-                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100vh-32px)] md:my-4 md:ml-4`}
+                } paper rounded-l-none ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full md:h-[calc(100%-2*var(--gutter))] md:my-[var(--gutter)] md:ml-[var(--gutter)]`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}

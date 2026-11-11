@@ -52,7 +52,7 @@ export default function ChatHeader({
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
-        <header className="shrink-0 w-full p-3 md:pt-[var(--sp-21)] md:pb-4 md:px-[var(--sp-21)] flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
+        <header className="shrink-0 w-full p-3 md:pt-[var(--sp-21)] md:pb-4 md:pl-[var(--sp-21)] md:pr-[var(--gutter)] flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
