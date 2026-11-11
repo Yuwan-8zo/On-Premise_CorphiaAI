@@ -208,16 +208,18 @@ export default function Chat() {
                     */}
                     <div ref={mainProps.scrollContainerRef} className="chat-scroll flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
-                        <div ref={mainProps.topObserverRef} className="w-full h-px opacity-0" />
+                        <div ref={mainProps.topObserverRef} className="w-full h-px -mb-px opacity-0" />
                         {mainProps.isLoadingMore && (
                             <SkelMessages count={2} className="w-full max-w-3xl mx-auto px-4 md:px-0 py-2" />
                         )}
                         {mainProps.messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
-                            <div className="w-full max-w-3xl mx-auto px-4 md:px-0 pb-8 pt-[8vh] md:pt-[10vh]">
+                            // 上下留白是「可縮」的：螢幕夠高＝原本的 8vh／10vh；螢幕矮（橫拿的折疊手機）時先縮留白，卡片不被輸入框蓋住
+                            <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
+                                <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                                 {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
                                     避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
-                                <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold mb-2 text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
+                                <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
                                     {mainProps.t('chat.emptyGreeting', {
                                         name: (() => {
                                             const raw =
@@ -265,6 +267,7 @@ export default function Chat() {
                                         ));
                                     })()}
                                 </div>
+                                <div aria-hidden className="min-h-0 basis-[var(--sp-32)]" />
                             </div>
                         ) : (
                             // 聊天紀錄
