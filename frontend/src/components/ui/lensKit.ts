@@ -198,19 +198,21 @@ export function roundRectHole(x: number, y: number, w: number, h: number, r: num
  * 兩端各留一塊（寬 zw）給肩，沿鏡緣另有一條往中間消失的細線
  */
 const maskCache = new Map<string, string>()
-export function shoulderMask(W: number, H: number, o: number, barH: number) {
-    const key = [W, H, o, barH].map((n) => n.toFixed(1)).join('x')
+/** vertical＝直的放大鏡：W、H 仍是「長邊、短邊」，畫好後整組轉 90 度，輸出寬 H、高 W 的遮罩；rad＝鏡片圓角（預設膠囊 H/2） */
+export function shoulderMask(W: number, H: number, o: number, barH: number, vertical = false, rad?: number) {
+    const key = [W, H, o, barH, rad ?? 0].map((n) => n.toFixed(1)).join('x') + (vertical ? 'v' : '')
     const hit = maskCache.get(key)
     if (hit) return hit
     const f = (n: number) => +n.toFixed(2)
-    const r = H / 2
+    const r = rad ?? H / 2
     const xr = r - Math.sqrt(Math.max(0, r * r - (r - o) * (r - o)))
     const bandY = f(H / 2 - (barH * LENS_SY) / 2 + 0.2)
     const cs = f(xr + 2)
     const rx = f(bandY - o + 1.3)
     const zw = f(cs + rx + 3)
+    const [vw, vh] = vertical ? [H, W] : [W, H]
     const svg =
-        `<svg xmlns='http://www.w3.org/2000/svg' width='${f(W * 10)}' height='${f(H * 10)}' viewBox='0 0 ${f(W)} ${f(H)}' preserveAspectRatio='none'>` +
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${f(vw * 10)}' height='${f(vh * 10)}' viewBox='0 0 ${f(vw)} ${f(vh)}' preserveAspectRatio='none'>` +
         `<defs><linearGradient id='k'><stop offset='0' stop-opacity='0'/><stop offset='.19' stop-opacity='0'/><stop offset='.42' stop-opacity='1'/><stop offset='.58' stop-opacity='1'/><stop offset='.81' stop-opacity='0'/><stop offset='1' stop-opacity='0'/></linearGradient>` +
         `<clipPath id='c'><rect x='1.5' y='1.5' width='${f(W - 3)}' height='${f(H - 3)}' rx='${f(r - 1.5)}'/></clipPath>` +
         `<mask id='m'><rect width='${f(W)}' height='${f(H)}' fill='#000'/>` +
@@ -218,7 +220,7 @@ export function shoulderMask(W: number, H: number, o: number, barH: number) {
         `<rect x='.75' y='.75' width='${f(W - 1.5)}' height='${f(H - 1.5)}' rx='${f(r - 0.75)}' fill='none' stroke='#fff' stroke-width='1.5'/>` +
         `<g clip-path='url(#c)'><rect x='${cs}' y='-8' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}'/><rect x='${cs}' y='${f(H - bandY)}' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}'/></g>` +
         `<rect x='0' y='0' width='${f(W)}' height='${bandY}' fill='url(#k)'/><rect x='0' y='${f(H - bandY)}' width='${f(W)}' height='${bandY}' fill='url(#k)'/>` +
-        `</mask></defs><rect width='${f(W)}' height='${f(H)}' fill='#fff' mask='url(#m)'/></svg>`
+        `</mask></defs><g${vertical ? ` transform='translate(${f(H)} 0) rotate(90)'` : ''}><rect width='${f(W)}' height='${f(H)}' fill='#fff' mask='url(#m)'/></g></svg>`
     const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
     maskCache.set(key, url)
     return url
@@ -227,46 +229,3 @@ export function shoulderMask(W: number, H: number, o: number, barH: number) {
 /** 切換開關的肩（規範 CSS 35 .sw-wall 原樣，68×44 的單位） */
 export const SWITCH_WALL_MASK =
     `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='680' height='440' viewBox='0 0 68 44' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='k'%3E%3Cstop offset='0' stop-opacity='0'/%3E%3Cstop offset='.19' stop-opacity='0'/%3E%3Cstop offset='.42' stop-opacity='1'/%3E%3Cstop offset='.58' stop-opacity='1'/%3E%3Cstop offset='.81' stop-opacity='0'/%3E%3Cstop offset='1' stop-opacity='0'/%3E%3C/linearGradient%3E%3CclipPath id='c'%3E%3Crect x='1.5' y='1.5' width='65' height='41' rx='20.5'/%3E%3C/clipPath%3E%3Cmask id='m'%3E%3Crect width='68' height='44' fill='%23000'/%3E%3Crect x='0' y='0' width='16' height='44' fill='%23fff'/%3E%3Crect x='52' y='0' width='16' height='44' fill='%23fff'/%3E%3Crect x='.75' y='.75' width='66.5' height='42.5' rx='21.25' fill='none' stroke='%23fff' stroke-width='1.5'/%3E%3Cg clip-path='url%28%23c%29'%3E%3Crect x='9.2' y='-6' width='49.6' height='15.75' rx='5'/%3E%3Crect x='9.2' y='34.25' width='49.6' height='15.75' rx='5'/%3E%3C/g%3E%3Crect x='0' y='0' width='68' height='9.5' fill='url%28%23k%29'/%3E%3Crect x='0' y='34.5' width='68' height='9.5' fill='url%28%23k%29'/%3E%3C/mask%3E%3C/defs%3E%3Crect width='68' height='44' fill='%23fff' mask='url%28%23m%29'/%3E%3C/svg%3E")`
-
-/** 直的選單放大鏡的肩（規範 CSS 35 .dock .lens .rc-wall 原樣，93×88 的單位；肩在上下） */
-export const DOCK_WALL_MASK =
-    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='930' height='880' viewBox='0 0 93 88' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='k' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-opacity='0'/%3E%3Cstop offset='.24' stop-opacity='0'/%3E%3Cstop offset='.44' stop-opacity='1'/%3E%3Cstop offset='.56' stop-opacity='1'/%3E%3Cstop offset='.76' stop-opacity='0'/%3E%3Cstop offset='1' stop-opacity='0'/%3E%3C/linearGradient%3E%3CclipPath id='c'%3E%3Crect x='1.5' y='1.5' width='90' height='85' rx='38.5'/%3E%3C/clipPath%3E%3Cmask id='m'%3E%3Crect width='93' height='88' fill='%23000'/%3E%3Crect x='0' y='0' width='93' height='33.5' fill='%23fff'/%3E%3Crect x='0' y='54.5' width='93' height='33.5' fill='%23fff'/%3E%3Crect x='.75' y='.75' width='91.5' height='86.5' rx='39.25' fill='none' stroke='%23fff' stroke-width='1.5'/%3E%3Cg clip-path='url%28%23c%29'%3E%3Crect x='-8' y='19.4' width='24.5' height='49.2' rx='10.8'/%3E%3Crect x='76.5' y='19.4' width='24.5' height='49.2' rx='10.8'/%3E%3C/g%3E%3Crect x='0' y='0' width='16.5' height='88' fill='url%28%23k%29'/%3E%3Crect x='76.5' y='0' width='16.5' height='88' fill='url%28%23k%29'/%3E%3C/mask%3E%3C/defs%3E%3Crect width='93' height='88' fill='%23fff' mask='url%28%23m%29'/%3E%3C/svg%3E")`
-
-/**
- * 直的放大鏡的凹陷：鏡內整片是底色，左右各挖一條上下圓頭的「底面」（照鏡片當下的寬高直接畫，不拉伸、不轉向，沒有接縫）
- * w、h＝鏡片寬高；band＝每條底面的寬；end＝底面離鏡片上下兩端的距離（兩端留給底色接回鏡緣，等同規範的「肩」）
- */
-export function sideBandMask(w: number, h: number, band: number, end: number): React.CSSProperties {
-    const f = (n: number) => +n.toFixed(2)
-    const b = Math.max(0, band)
-    const r = Math.min(b, 6)
-    const top = f(end), len = f(Math.max(0, h - end * 2))
-    const svg =
-        `<svg xmlns='http://www.w3.org/2000/svg' width='${f(w)}' height='${f(h)}' viewBox='0 0 ${f(w)} ${f(h)}'>` +
-        `<defs><mask id='m'><rect width='${f(w)}' height='${f(h)}' fill='#fff'/>` +
-        `<rect x='${f(-r)}' y='${top}' width='${f(b + r)}' height='${len}' rx='${f(r)}' fill='#000'/>` +
-        `<rect x='${f(w - b)}' y='${top}' width='${f(b + r)}' height='${len}' rx='${f(r)}' fill='#000'/>` +
-        `</mask></defs><rect width='${f(w)}' height='${f(h)}' fill='#fff' mask='url(#m)'/></svg>`
-    const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
-    return { WebkitMaskImage: url, maskImage: url, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' } as React.CSSProperties
-}
-
-/**
- * 橫的窄放大鏡（浮動工具列）的凹陷：鏡內整片是底色，上下各挖一條左右圓頭的「底面」
- * 工具列每格窄、放大鏡接近圓形，用肩去遮會把底面整個蓋掉；改成照鏡片當下的寬高直接畫兩條底面（同 sideBandMask，方向轉 90 度）
- * w、h＝鏡片寬高；band＝每條底面的高；end＝底面離鏡片左右兩端的距離
- */
-export function topBandMask(w: number, h: number, band: number, end: number): React.CSSProperties {
-    const f = (n: number) => +n.toFixed(2)
-    const b = Math.max(0, band)
-    const r = Math.min(b, 6)
-    const left = f(end), len = f(Math.max(0, w - end * 2))
-    const svg =
-        `<svg xmlns='http://www.w3.org/2000/svg' width='${f(w)}' height='${f(h)}' viewBox='0 0 ${f(w)} ${f(h)}'>` +
-        `<defs><mask id='m'><rect width='${f(w)}' height='${f(h)}' fill='#fff'/>` +
-        `<rect x='${left}' y='${f(-r)}' width='${len}' height='${f(b + r)}' rx='${f(r)}' fill='#000'/>` +
-        `<rect x='${left}' y='${f(h - b)}' width='${len}' height='${f(b + r)}' rx='${f(r)}' fill='#000'/>` +
-        `</mask></defs><rect width='${f(w)}' height='${f(h)}' fill='#fff' mask='url(#m)'/></svg>`
-    const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
-    return { WebkitMaskImage: url, maskImage: url, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' } as React.CSSProperties
-}

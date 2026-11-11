@@ -1818,7 +1818,8 @@ html:not(.dark) .menu-item.is-danger {
 /* 右上選單的放大鏡：和分段切換器（一般／專案）同一套——鏡片不另外補色（不然比較霧），
    鏡內只用選單本身的填色（＝ --glass-ctl）。
    但鏡片會凸出選單外、蓋到旁邊的模型按鈕，所以保留和選單外殼一樣的模糊（blur 12），底下的東西才會霧在鏡片下面 */
-.dock-lens.is-active {
+.dock-lens.lens.is-active {
+  /* 要比 .lens.is-v.is-active（直向鏡片玻璃：白 9%＋上下暗邊）更優先，不然會被蓋回去而變霧 */
   background: none;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);

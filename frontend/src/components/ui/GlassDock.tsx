@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, sideBandMask } from './lensKit'
+import { LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
 
 export interface DockItem {
     id: string
@@ -32,11 +32,13 @@ interface Props {
 const SHELL_N = 40, BTN_N = 36, GAP_N = 6
 const SHELL_W = 79, ROW_W = 75, ROW_H = 62
 const PAD = 2
-// 放大鏡＝圓角方形（寬高接近 1：1、圓角約寬度的 0.37，四邊留直線段），不是圓
-const LENS_W = 93, LENS_H = 95, LENS_R = 34
-const DOCK_BANDS = sideBandMask(LENS_W, LENS_H, (LENS_W - SHELL_W * 0.768) / 2, LENS_H / 4)
+// 放大鏡＝圓角方形（寬高接近 1：1，四邊留直線段），跟選單外殼同心：圓角＝外殼圓角 33＋凸出 7＝40
+const LENS_W = 93, LENS_H = 95
 const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（左右 7；上下也用 7，同心）
 const R_WIDE = 33
+const LENS_R = R_WIDE + (LENS_W - SHELL_W) / 2 // 40：與外殼同心
+// 肩的遮罩（長邊＝鏡片高、短邊＝鏡片寬；鏡片比選單凸出 7；選單寬 79）
+const DOCK_WALL = shoulderMask(LENS_H, LENS_W, (LENS_W - SHELL_W) / 2, SHELL_W, true, LENS_R)
 const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右各外擴 13，右上角圓弧和圓鈕同一個圓心
 const LONG_PRESS_MS = 320
 
@@ -245,8 +247,11 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                                 transform: `scale(${LENS_SY}, ${LENS_SX})`,
                             }}
                         />
-                        <span className="lens-bar lens-shoulder" style={{ inset: 0, ...DOCK_BANDS, clipPath: 'inset(0 0 50% 0)', opacity: shTop }} />
-                        <span className="lens-bar lens-shoulder" style={{ inset: 0, ...DOCK_BANDS, clipPath: 'inset(50% 0 0 0)', opacity: shBottom }} />
+                        {/* 肩：跟一般／專案同一個遮罩（底面末端用圓弧彎進肩裡，不是直角），轉 90 度 */}
+                        <span className="lens-wall" style={{ ['--lens-wall-mask' as string]: DOCK_WALL }}>
+                            <i className="t" style={{ opacity: shTop }} />
+                            <i className="b" style={{ opacity: shBottom }} />
+                        </span>
                     </span>
                     <div
                         className="absolute left-0 top-0 flex flex-col"

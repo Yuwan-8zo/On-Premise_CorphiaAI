@@ -12,7 +12,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Tooltip from './Tooltip'
-import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, sideBandMask, topBandMask, useLensMotion } from './lensKit'
+import { LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -150,18 +150,8 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`,
         transform: vertical ? `scale(${sCross}, ${sLong})` : `scale(${sLong}, ${sCross})`,
     }
-    // 直的、工具列：肩＝鏡內整片挖掉兩條底面，分成兩半，各自照 shl／shr 淡入淡出
-    const halfClip = (start: boolean) =>
-        vertical ? (start ? 'inset(0 0 50% 0)' : 'inset(50% 0 0 0)') : start ? 'inset(0 50% 0 0)' : 'inset(0 0 0 50%)'
-    const bandShoulders = (mask: React.CSSProperties) =>
-        ([true, false] as const).map((start) => (
-            <span
-                key={start ? 's' : 'e'}
-                className="lens-bar lens-shoulder"
-                style={{ inset: 0, ...mask, clipPath: halfClip(start), opacity: start ? shl : shr }}
-            />
-        ))
     const wallMask = shoulderMask(LLf, LCf, (LCf - cross) / 2, cross)
+    const wallMaskV = shoulderMask(LLf, LCf, (LCf - cross) / 2, cross, true)
 
     const row = (ghost: boolean) =>
         options.map((o, i) => {
@@ -238,16 +228,13 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
                     {active && (
                         <>
                                                         {vertical ? (
-                                // 直的：縮小的軌道＋肩（鏡內整片挖掉左右兩條上下圓頭的底面；寬＝鏡片寬減去縮成 0.768 倍的軌道寬，除以 2）
+                                // 直的：跟橫的同一套（縮小的軌道＋肩），肩的遮罩轉 90 度；底面末端用圓弧彎進肩裡
                                 <span className="lens-ink">
                                     <span className="lens-bar" style={shrunkBar} />
-                                    {bandShoulders(sideBandMask(lw, lh, (lw - cross * sCross) / 2, Math.min(lw / 2, lh / 4)))}
-                                </span>
-                            ) : toolbar ? (
-                                // 工具列：鏡內整片底色，上下挖兩條左右圓頭的底面（高＝鏡片高減去縮成 0.768 倍的整條列高，除以 2，同規範）
-                                <span className="lens-ink">
-                                    <span className="lens-bar" style={shrunkBar} />
-                                    {bandShoulders(topBandMask(lw, lh, (lh - cross * sCross) / 2, Math.min(lh / 2, lw / 4)))}
+                                    <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: wallMaskV }}>
+                                        <i className="t" style={{ opacity: shl }} />
+                                        <i className="b" style={{ opacity: shr }} />
+                                    </span>
                                 </span>
                             ) : (
                                 // 橫的：照規範，縮小的軌道（長邊 0.93、短邊 0.768）＋兩端的肩，上下露出底面
