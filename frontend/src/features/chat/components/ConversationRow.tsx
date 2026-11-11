@@ -11,6 +11,8 @@ interface ConversationRowProps {
     conv: Conversation
     isCurrent: boolean
     isMenuOpen: boolean
+    /** 這個對話正在生成回答（可能在背景） */
+    isBusy?: boolean
     rowRef: (el: HTMLDivElement | null) => void
     /** 長按開選單的事件 */
     pressProps: HTMLAttributes<HTMLDivElement>
@@ -18,7 +20,7 @@ interface ConversationRowProps {
     onMenuPointerDown: (e: PointerEvent<HTMLButtonElement>) => void
 }
 
-export default function ConversationRow({ conv, isCurrent, isMenuOpen, rowRef, pressProps, onSelect, onMenuPointerDown }: ConversationRowProps) {
+export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = false, rowRef, pressProps, onSelect, onMenuPointerDown }: ConversationRowProps) {
     return (
         <div
             ref={rowRef}
@@ -27,6 +29,7 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, rowRef, p
             className={`side-item group ${isCurrent ? 'is-current' : ''}`}
         >
             <span className="flex-1 min-w-0 truncate">{conv.title}</span>
+            {isBusy && <span className="conv-busy" role="status" aria-label="正在回答" />}
             <div className={`side-actions transition-opacity ${isMenuOpen ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                 <Tooltip label="選項">
                     <button onPointerDown={onMenuPointerDown} onClick={(e) => e.stopPropagation()}

@@ -82,10 +82,15 @@ export function useChatLogic() {
         // 唯一不重新載入的情況：同一個對話且還在生成中（避免中斷進行中的回覆）
         if (state.currentConversation?.id === conversation.id && state.isStreaming) return
 
-        // 切換對話＝全新畫面：先清空再載入，避免閃出舊對話的內容
+        // 切換對話：舊對話若還在生成，它的訊息與連線留在背景繼續跑（多工）
         setCurrentConversation(conversation)
-        setMessages([])
         scroll.followBottom()
+
+        // 切回背景中還在生成的對話：直接接上它目前的進度，不重新載入（後端還沒存完）
+        if (useChatStore.getState().streamingIds[conversation.id]) {
+            await socket.connect(conversation.id)
+            return
+        }
 
         try {
             const msgs = await conversationsApi.getMessages(conversation.id)
@@ -115,11 +120,27 @@ export function useChatLogic() {
         }
     }
 
+    /** 預設標題的對話（用「新對話」按鈕開的）送出第一句話時，改用這句話當標題，清單上才分得出來 */
+    const DEFAULT_TITLE = '新對話'
+    const autoTitle = async (conversationId: string | undefined, text: string) => {
+        const st = useChatStore.getState()
+        const conv = st.conversations.find((c) => c.id === conversationId)
+        if (!conversationId || !conv || conv.title !== DEFAULT_TITLE || st.messages.length > 0) return
+        const title = text.slice(0, 50)
+        st.updateConversation(conversationId, { title })
+        try {
+            await conversationsApi.update(conversationId, { title })
+        } catch (err) {
+            console.error('更新對話標題失敗:', err)
+        }
+    }
+
     /** 把問題交給 AI：有即時連線就串流，沒有就改用一般請求（拿到完整回覆一次換上） */
     const askAI = async (conversationId: string | undefined, text: string) => {
         const useRag = chatMode === 'project'
-        if (socket.wsRef.current?.isConnected) {
-            socket.wsRef.current.sendMessage(text, useRag, 0.7, language)
+        const ws = socket.get(conversationId)
+        if (ws) {
+            ws.sendMessage(text, useRag, 0.7, language)
             return
         }
         try {
@@ -164,7 +185,7 @@ export function useChatLogic() {
             }
         }
         try {
-            const conversation = await conversationsApi.create({ title: '新對話', settings: { isProject: false } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: false } })
             addConversation(conversation)
             upload.setUploadedFiles([])
             await selectConversation(conversation)
@@ -178,7 +199,7 @@ export function useChatLogic() {
     const createConvInFolder = async (folderName: string, e: React.MouseEvent) => {
         e.stopPropagation()
         try {
-            const conversation = await conversationsApi.create({ title: '新對話', settings: { isProject: true, folderName } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: true, folderName } })
             addConversation(conversation)
             upload.setUploadedFiles([])
             folders.setExpandedFolders((prev) => new Set(prev).add(folderName)) // 展開資料夾，新對話立刻出現在側欄
@@ -197,6 +218,7 @@ export function useChatLogic() {
     /** 刪除一則對話（本機的暫時對話不用呼叫後端） */
     const removeConversation = async (id: string) => {
         if (!id.startsWith('temp-')) await conversationsApi.delete(id)
+        socket.close(id)
         deleteConversation(id) // 刪的是目前這則時，store 會一併清空訊息、回到首頁
     }
 
@@ -245,6 +267,7 @@ export function useChatLogic() {
         if (!overrideValue) setInput('')
 
         const conversationId = await ensureConversation(text.slice(0, 50))
+        void autoTitle(conversationId, text)
 
         addMessage(tempMessage('user', text))
         scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
@@ -288,8 +311,9 @@ export function useChatLogic() {
         })
         setStreaming(true)
 
-        if (socket.wsRef.current?.isConnected) {
-            socket.wsRef.current.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language)
+        const ws = socket.get(useChatStore.getState().currentConversation?.id)
+        if (ws) {
+            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language)
         } else {
             console.error('WebSocket 未連接，無法使用重新生成功能')
             setStreaming(false)
@@ -316,8 +340,9 @@ export function useChatLogic() {
         }
     }
 
+    /** 停止畫面上這個對話的生成（背景中的其他對話不受影響） */
     const handleStop = () => {
-        socket.wsRef.current?.stop()
+        socket.get(useChatStore.getState().currentConversation?.id)?.stop()
         setStreaming(false)
     }
 

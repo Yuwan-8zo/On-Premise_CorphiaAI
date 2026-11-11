@@ -15,6 +15,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
@@ -133,6 +134,8 @@ export default function ChatSidebar({
     //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
     const wide = sidebarOpen
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
+    // 哪些對話正在生成（背景中的也算）→ 清單上顯示小圓點
+    const streamingIds = useChatStore((s) => s.streamingIds)
 
     const renderRow = (conv: Conversation) => (
         <ConversationRow
@@ -140,6 +143,7 @@ export default function ChatSidebar({
             conv={conv}
             isCurrent={!selectedFolder && currentConversationId === conv.id}
             isMenuOpen={activeMenuConvId === conv.id}
+            isBusy={Boolean(streamingIds[conv.id])}
             rowRef={(el) => { itemRefs.current[conv.id] = el }}
             pressProps={pressHandlers(conv.id)}
             onSelect={() => { if (consumeLongPress()) return; selectConversation(conv) }}

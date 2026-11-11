@@ -2247,3 +2247,24 @@ html.dark {
     animation: none;
   }
 }
+
+/* 側欄：正在回答的對話（可能在背景）右邊一顆強調色小圓點，慢慢呼吸 */
+.conv-busy {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 9999px;
+  background: rgb(var(--accent));
+  animation: convBusy 1.4s ease-in-out infinite;
+}
+@keyframes convBusy {
+  50% {
+    transform: scale(0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conv-busy {
+    animation: none;
+  }
+}

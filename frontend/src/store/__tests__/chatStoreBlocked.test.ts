@@ -50,6 +50,7 @@ describe('被攔截的訊息', () => {
 
     it('別的對話不受影響', () => {
         useChatStore.setState({
+            currentConversation: { id: 'c2' } as never, // 畫面上是 c2
             blockedByConv: { c1: [{ ...msg('u-b', 'user', 'x', '2026-11-01T10:05:00.000Z'), blocked: true, blockedAfter: 0 }] },
         })
         useChatStore.getState().setServerMessages('c2', [msg('u9', 'user', '其他對話', '2026-11-01T10:00:00')])
