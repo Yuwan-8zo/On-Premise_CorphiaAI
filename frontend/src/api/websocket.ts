@@ -4,6 +4,7 @@
 
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
+import type { MessageSource } from '@/types/chat'
 
 export interface WebSocketMessage {
     type: 'message' | 'ping' | 'stop' | 'resubmit'
@@ -21,15 +22,8 @@ export interface StreamResponse {
     type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
     content?: string
     messageId?: string
-    sources?: Array<{
-        chunkId: string
-        content: string
-        score: number
-        distance?: number
-        document_id?: string
-        document_name?: string
-        metadata: Record<string, unknown>
-    }>
+    /** 引用來源（欄位名稱跟後端一致：chunk_id、document_id…） */
+    sources?: MessageSource[]
     message?: string
     /** 錯誤代碼 (例如 GENERATION_TIMEOUT / INTERNAL_ERROR) */
     code?: string

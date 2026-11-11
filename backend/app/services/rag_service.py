@@ -140,7 +140,7 @@ class RAGService:
                 "paraphrase-multilingual-MiniLM-L12-v2"
             )
 
-            logger.info("✅ Embedding 模型載入完成")
+            logger.info("Embedding 模型載入完成")
             return True
 
         except ImportError as e:

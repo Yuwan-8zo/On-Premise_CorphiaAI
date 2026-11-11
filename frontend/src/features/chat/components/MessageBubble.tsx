@@ -17,6 +17,7 @@ import { useChatStore } from '@/store/chatStore'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
+import { copyText } from '@/lib/clipboard'
 
 interface MessageBubbleProps {
     message: Message
@@ -114,12 +115,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
     // 處理複製
     const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(message.content)
+        if (await copyText(message.content)) {
             setIsCopied(true)
             setTimeout(() => setIsCopied(false), 2000)
-        } catch (err) {
-            console.error('複製失敗:', err)
         }
     }
 
@@ -150,6 +148,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             useChatStore.getState().updateMessage(message.id, { content: message.content })
         }
     }
+
+    // 複製按鈕（使用者訊息、AI 回覆共用）
+    const copyButton = (
+        <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} aria-label="複製" className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+            {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
+            <span className="relative inline-flex">
+                <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
+                {isCopied && <Check className="absolute inset-0 m-auto w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />}
+            </span>
+        </button></Tooltip>
+    )
 
     /*
      * 訊息進場動畫：
@@ -246,13 +255,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     )}
                     {!isEditing && !hideActions && (
                         <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
-                            <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
-                                {isCopied ? (
-                                    <Check className="w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />
-                                ) : (
-                                    <ItshoverIcon icon={CopyIcon} size={14} interactive />
-                                )}
-                            </button></Tooltip>
+                            {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
                                 <Tooltip placement="bottom" label="編輯"><button aria-label="編輯" onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
@@ -329,13 +332,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
                         {message.content && !isStreaming && !hideActions && (
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
-                                <Tooltip placement="bottom" label="複製"><button onClick={handleCopy} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
-                                    {isCopied ? (
-                                    <Check className="w-3.5 h-3.5 text-[var(--sys-green)]" aria-hidden />
-                                ) : (
-                                    <ItshoverIcon icon={CopyIcon} size={14} interactive />
-                                )}
-                                </button></Tooltip>
+                                {copyButton}
                                 {onRegenerate && !message.blocked && (
                                     <button
                                         onClick={() => onRegenerate(message.id)}

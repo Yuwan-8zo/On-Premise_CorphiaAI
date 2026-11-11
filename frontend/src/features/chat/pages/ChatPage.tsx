@@ -118,7 +118,7 @@ export default function Chat() {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border-subtle dark:divide-border-subtle">
-                                    {mainProps.folderDocuments.map((doc: any) => (
+                                    {mainProps.folderDocuments.map((doc) => (
                                         <div key={doc.id} className="p-4 px-6 flex items-center justify-between  transition-colors group">
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <label className="relative flex cursor-pointer items-center rounded-full" htmlFor={`checkbox-${doc.id}`}>
@@ -138,7 +138,7 @@ export default function Chat() {
                                                     <span className="font-medium text-[15px] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
                                                     <span className="text-[13px] text-text-secondary mt-0.5">
                                                         {parseServerDate(doc.created_at).toLocaleString()} • {(() => {
-                                                            const bytes = doc.file_size || doc.size_bytes || 0
+                                                            const bytes = doc.file_size || 0
                                                             if (bytes < 1024) return `${bytes} B`
                                                             if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
                                                             return `${(bytes / 1024 / 1024).toFixed(2)} MB`
@@ -249,7 +249,7 @@ export default function Chat() {
                                             <Mail className="w-5 h-5" />,
                                             <Code className="w-5 h-5" />
                                         ];
-                                        return suggestions.map((item: any, index: number) => (
+                                        return suggestions.map((item, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
@@ -269,7 +269,7 @@ export default function Chat() {
                         ) : (
                             // 聊天紀錄
                             <div className="max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
-                                {mainProps.messages.map((message: any, index: number) => {
+                                {mainProps.messages.map((message, index) => {
                                     const isLastAssistant =
                                         message.role === 'assistant' &&
                                         index === mainProps.messages.length - 1

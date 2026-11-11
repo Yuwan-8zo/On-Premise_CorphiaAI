@@ -71,7 +71,7 @@ async def warm_ai_services() -> None:
             except Exception as warm_exc:
                 logger.warning("LLM 預熱推論略過: %s", warm_exc)
             _llm_state = ServiceState.READY
-            logger.info("✅ LLM 背景預熱完成")
+            logger.info("LLM 背景預熱完成")
         else:
             from app.core.config import settings as _settings
             if _settings.allow_simulated_llm:
@@ -92,7 +92,7 @@ async def warm_ai_services() -> None:
         ok = await rag.initialize()
         _rag_state = ServiceState.READY if ok else ServiceState.UNAVAILABLE
         if ok:
-            logger.info("✅ RAG Embedding 背景載入完成")
+            logger.info("RAG Embedding 背景載入完成")
         else:
             logger.warning("RAG Embedding 未就緒，檢索功能可能受限")
     except Exception as exc:

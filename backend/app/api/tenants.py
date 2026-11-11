@@ -7,10 +7,12 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.query_utils import like_contains, page_count
 from app.api.deps import RequireAdmin, get_db, Depends
 from app.models.tenant import Tenant
 from app.schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, TenantListResponse
-from app.services.audit_service import write_audit_log, AuditResource, get_client_ip, get_user_agent
+from app.services.audit_service import write_audit_log, AuditResource
+from app.core.request_utils import get_client_ip, get_user_agent
 from app.api.deps import CurrentUser
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
@@ -34,8 +36,7 @@ async def list_tenants(
         if len(search) > 128:
             from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        search_filter = f"%{escaped}%"
+        search_filter = like_contains(search)
         query = query.where(
             Tenant.name.ilike(search_filter, escape="\\")
             | Tenant.slug.ilike(search_filter, escape="\\")
@@ -57,7 +58,7 @@ async def list_tenants(
         total=total,
         page=page,
         page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size
+        total_pages=page_count(total, page_size)
     )
 
 @router.post("", response_model=TenantResponse)
@@ -87,7 +88,7 @@ async def create_tenant(
         resource_id=new_tenant.id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
+        tenant_id=current_user.effective_tenant_id,
         description=f"建立新租戶: {new_tenant.name}",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request)
@@ -131,7 +132,7 @@ async def update_tenant(
         resource_id=tenant.id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
+        tenant_id=current_user.effective_tenant_id,
         description=f"更新租戶: {tenant.name}",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request)
@@ -168,7 +169,7 @@ async def delete_tenant(
         resource_id=tenant.id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
+        tenant_id=current_user.effective_tenant_id,
         description=f"停用租戶: {tenant.name}",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request)

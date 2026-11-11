@@ -15,7 +15,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 
-const DEFAULT_FOLDER = '新資料夾'
+import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 
 /* ── Context Menu ── */
 

@@ -212,7 +212,7 @@ async def get_quota_overview(
 
     now = utc_now_naive()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    tenant_id = current_user.tenant_id or "default"
+    tenant_id = current_user.effective_tenant_id
 
     # 取本租戶的使用者
     users_result = await db.execute(
@@ -265,7 +265,7 @@ async def get_security_summary(
     回傳最近 24 小時各類資安事件的次數，供後台儀表板顯示。
     """
     since = datetime.utcnow() - timedelta(hours=24)
-    tenant_id = current_user.tenant_id or "default"
+    tenant_id = current_user.effective_tenant_id
 
     # 登入失敗、帳號鎖定發生在「還不知道是哪個租戶」之前，tenant_id 會是空的，也要算進來
     from sqlalchemy import or_, and_
@@ -494,7 +494,7 @@ async def get_dashboard_snapshot(
     from app.services.boot_service import build_health_payload
 
     since = datetime.utcnow() - timedelta(hours=24)
-    tenant_id = current_user.tenant_id or "default"
+    tenant_id = current_user.effective_tenant_id
 
     base_q = select(AuditLog.action, func.count(AuditLog.id)).where(
         AuditLog.created_at >= since,

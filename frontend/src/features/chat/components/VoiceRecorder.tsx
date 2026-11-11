@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import Tooltip from '@/components/ui/Tooltip'
+import { createAudioContext } from '@/lib/audioContext'
 
 interface VoiceRecorderProps {
     /** 取消錄音（不送出） */
@@ -139,7 +140,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                 }, 100)
 
                 // 音量視覺化
-                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+                const ctx = createAudioContext()
                 audioCtxRef.current = ctx
                 const source = ctx.createMediaStreamSource(stream)
                 const analyser = ctx.createAnalyser()
@@ -168,9 +169,9 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                 // 改成全部交給後端 Whisper（見 useChatLogic.handleSendVoice）。
 
                 setIsReady(true)
-            } catch (err: any) {
+            } catch (err) {
                 if (!mounted) return
-                const msg = err?.name === 'NotAllowedError'
+                const msg = (err as { name?: string })?.name === 'NotAllowedError'
                     ? t('chat.voice.permissionDenied')
                     : t('chat.voice.startFailed')
                 onErrorRef.current?.(msg)

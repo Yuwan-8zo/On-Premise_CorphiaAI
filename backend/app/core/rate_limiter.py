@@ -21,6 +21,7 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+from app.core.request_utils import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -253,24 +254,6 @@ def get_rate_limiter() -> RateLimiter:
     return _rate_limiter
 
 
-def _get_client_ip(request: Request) -> str:
-    """
-    取得客戶端真實 IP
-
-    優先取 X-Forwarded-For（反向代理場景），否則取直連 IP。
-    """
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        # 取第一個 IP（最原始的客戶端 IP）
-        return forwarded_for.split(",")[0].strip()
-
-    x_real_ip = request.headers.get("x-real-ip")
-    if x_real_ip:
-        return x_real_ip.strip()
-
-    return request.client.host if request.client else "unknown"
-
-
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     FastAPI 速率限制中間件
@@ -302,7 +285,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if path.startswith("/ws/"):
             return await call_next(request)
 
-        client_ip = _get_client_ip(request)
+        client_ip = get_client_ip(request)
 
         # 動態取得限制規則
         global_limit, endpoint_limits = _build_limits()
@@ -315,7 +298,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             if is_limited:
                 logger.warning(
-                    f"🚫 端點限制觸發: IP={client_ip}, "
+                    f"端點限制觸發: IP={client_ip}, "
                     f"路徑={path}, "
                     f"規則={rule.description}, "
                     f"重試={info['retry_after']}s"
@@ -330,7 +313,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         if is_limited:
             logger.warning(
-                f"🚫 全域限制觸發: IP={client_ip}, "
+                f"全域限制觸發: IP={client_ip}, "
                 f"重試={info['retry_after']}s"
             )
             return self._rate_limit_response(info, "全域請求限制")

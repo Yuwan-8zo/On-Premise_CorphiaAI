@@ -3,10 +3,12 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi import APIRouter, status, Query, Request
 
 from sqlalchemy import select, func, desc
 
+from app.api.lookups import get_own_conversation
+from app.core.query_utils import like_contains
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message
@@ -17,13 +19,8 @@ from app.schemas.conversation import (
     ConversationListResponse,
     MessageResponse,
 )
-from app.services.audit_service import (
-    write_audit_log,
-    AuditAction,
-    AuditResource,
-    get_client_ip,
-    get_user_agent,
-)
+from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.core.request_utils import get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/conversations", tags=["對話"])
 
@@ -67,8 +64,7 @@ async def list_conversations(
         if len(search) > 128:
             from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        query = query.where(Conversation.title.ilike(f"%{escaped}%", escape="\\"))
+        query = query.where(Conversation.title.ilike(like_contains(search), escape="\\"))
     if folder_id:
         query = query.where(Conversation.folder_id == folder_id)
     if is_pinned is not None:
@@ -115,7 +111,7 @@ async def _ensure_valid_tenant_id(db, current_user) -> str:
     from sqlalchemy import select
     from app.models.user import User
 
-    desired = current_user.tenant_id or "default"
+    desired = current_user.effective_tenant_id
 
     # 確認 desired tenant 是否存在
     exists = await db.execute(select(Tenant).where(Tenant.id == desired))
@@ -193,19 +189,7 @@ async def get_conversation(
     db: DbSession,
 ):
     """取得對話詳情"""
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
-        )
-    )
-    conversation = result.scalar_one_or_none()
-    
-    if conversation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    conversation = await get_own_conversation(db, conversation_id, current_user)
     
     return ConversationResponse.model_validate(conversation)
 
@@ -218,19 +202,7 @@ async def update_conversation(
     db: DbSession,
 ):
     """更新對話"""
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
-        )
-    )
-    conversation = result.scalar_one_or_none()
-    
-    if conversation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    conversation = await get_own_conversation(db, conversation_id, current_user)
     
     # 更新欄位
     update_data = request.model_dump(exclude_unset=True)
@@ -255,19 +227,7 @@ async def delete_conversation(
     request: Request = None,
 ):
     """刪除對話"""
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
-        )
-    )
-    conversation = result.scalar_one_or_none()
-    
-    if conversation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    conversation = await get_own_conversation(db, conversation_id, current_user)
     
     conversation_title = conversation.title
     
@@ -304,17 +264,7 @@ async def list_messages(
     - `before_id` 有值時：回傳比該訊息更早的 `limit` 筆（供無限捲動）
     """
     # 驗證對話所有權
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    await get_own_conversation(db, conversation_id, current_user)
     
     # 查詢訊息（支援 cursor 分頁）
     query = select(Message).where(Message.conversation_id == conversation_id)
@@ -345,17 +295,7 @@ async def verify_conversation_chain(
     """
     驗證對話歷史完整性 (Hash防篡改鏈)
     """
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    await get_own_conversation(db, conversation_id, current_user)
 
     from app.services.hash_chain_service import verify_chain
     return await verify_chain(db, conversation_id)

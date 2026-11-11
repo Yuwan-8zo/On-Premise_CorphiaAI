@@ -5,6 +5,7 @@
 import apiClient from './client'
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth'
 import type { User } from '../types/auth'
+import { toUser } from './userMapper'
 
 /**
  * 密碼強度回應
@@ -40,17 +41,7 @@ export const authApi = {
             name: data.name,
             tenant_slug: data.tenantSlug,
         })
-        return {
-            id: response.data.id,
-            email: response.data.email,
-            name: response.data.name,
-            role: response.data.role,
-            tenantId: response.data.tenant_id,
-            avatarUrl: response.data.avatar_url,
-            isActive: response.data.is_active,
-            lastLoginAt: response.data.last_login_at,
-            createdAt: response.data.created_at,
-        }
+        return toUser(response.data)
     },
 
     /**
@@ -58,17 +49,7 @@ export const authApi = {
      */
     me: async (): Promise<User> => {
         const response = await apiClient.get('/auth/me')
-        return {
-            id: response.data.id,
-            email: response.data.email,
-            name: response.data.name,
-            role: response.data.role,
-            tenantId: response.data.tenant_id,
-            avatarUrl: response.data.avatar_url,
-            isActive: response.data.is_active,
-            lastLoginAt: response.data.last_login_at,
-            createdAt: response.data.created_at,
-        }
+        return toUser(response.data)
     },
 
     /**

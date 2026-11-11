@@ -15,7 +15,8 @@ from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select, func, desc
 
-from app.api.deps import CurrentUser, DbSession
+from app.core.query_utils import like_contains
+from app.api.deps import DbSession, AdminUser
 from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.message import Message
@@ -28,15 +29,12 @@ router = APIRouter(prefix="/admin/replay", tags=["admin-replay"])
 @router.get("/users", summary="列出所有使用者（供重播選擇）")
 async def list_users_for_replay(
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     search: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     列出所有使用者供管理員選擇（僅限 Admin / Engineer）
     """
-    if current_user.role not in ("admin", "engineer"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="權限不足")
-
     query = select(
         User.id, User.email, User.name, User.role, User.tenant_id
     )
@@ -54,8 +52,7 @@ async def list_users_for_replay(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="搜尋字串過長",
             )
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        search_filter = f"%{escaped}%"
+        search_filter = like_contains(search)
         query = query.where(
             User.email.ilike(search_filter, escape="\\")
             | User.name.ilike(search_filter, escape="\\")
@@ -87,16 +84,13 @@ async def list_users_for_replay(
 async def list_user_conversations(
     target_user_id: str,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ) -> Dict[str, Any]:
     """
     查看指定使用者的所有對話（僅限 Admin / Engineer）
     """
-    if current_user.role not in ("admin", "engineer"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="權限不足")
-
     # 非 engineer 檢查租戶歸屬
     if current_user.role != "engineer":
         target_result = await db.execute(
@@ -154,7 +148,7 @@ async def list_user_conversations(
 async def replay_conversation_messages(
     conversation_id: str,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     include_hash: bool = Query(False, description="是否包含 hash chain 資訊"),
 ) -> Dict[str, Any]:
     """
@@ -163,9 +157,6 @@ async def replay_conversation_messages(
     設定 include_hash=true 可同時回傳每則訊息的 content_hash / prev_hash，
     用於前端或報告顯示 Hash Chain 驗證結果。
     """
-    if current_user.role not in ("admin", "engineer"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="權限不足")
-
     # 取得對話
     conv_result = await db.execute(
         select(Conversation).where(Conversation.id == conversation_id)

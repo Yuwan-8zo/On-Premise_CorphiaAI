@@ -220,7 +220,7 @@ async def network_status(
     網路連線狀態偵測 (A4 離線模式徽章)
 
     偵測本機對外網路狀態，前端可據此顯示
-    「✅ 資料主權保證：完全離線運行」徽章。
+    「資料主權保證：完全離線運行」徽章。
     """
     is_online = False
     latency_ms: float | None = None
@@ -253,7 +253,7 @@ async def network_status(
             "is_online": is_online,
             "latency_ms": latency_ms,
             "data_sovereignty": not is_online,
-            "message": "✅ 資料主權保證：完全離線運行" if not is_online else "⚠️ 偵測到外部網路連線",
+            "message": "資料主權保證：完全離線運行" if not is_online else "偵測到外部網路連線",
         }
     )
 

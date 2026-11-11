@@ -82,11 +82,6 @@ export function SkelTableRows({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
     )
 }
 
-/** 卡片外框（骨架用）：直接用系統的玻璃卡 .paper，圓角 25 */
-function SkelPanel({ className = '', children }: { className?: string; children?: React.ReactNode }) {
-    return <div className={`paper !rounded-[25px] ${className}`}>{children}</div>
-}
-
 /** 文字灰條：用 em 當單位，放在跟真實文字同字級的容器裡，長度＝字數、高度＝字身，會跟著字級縮放 */
 function SkelText({ chars }: { chars: number }) {
     return <span aria-hidden className="skel align-middle h-[0.78em]" style={{ display: 'inline-block', width: `${chars}em` }} />
@@ -271,7 +266,7 @@ function SkelAdmin() {
 /** 整頁骨架：依目前網址顯示那一頁的外形（在哪一頁重整就顯示哪一頁） */
 export function SkelPage() {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/'
-    const view = path.startsWith('/login') || path.startsWith('/register') ? <SkelLogin />
+    const view = path.startsWith('/login') ? <SkelLogin />
         : path.startsWith('/admin') ? <SkelAdmin />
         : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[96px]" />
         : path === '/' || path.startsWith('/chat') ? <SkelChat />

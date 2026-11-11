@@ -46,15 +46,15 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """應用程式生命週期管理"""
     # 啟動時執行
-    logger.info(f"🚀 啟動 {settings.app_name} v2.3.0")
+    logger.info(f"啟動 {settings.app_name} v2.3.0")
     await init_db()
-    logger.info("✅ 資料庫初始化完成")
+    logger.info("資料庫初始化完成")
     
     # NOTE: SECRET_KEY 的安全檢查已移到 app.core.config.Settings 的 model_validator，
     # 在這裡的好處是「載 Settings() 那一刻」就會拋錯，比 lifespan 啟動更早。
     # 這裡保留 informational log 讓部署時看到目前環境設定。
     logger.info(
-        "🔧 環境設定: app_env=%s, debug=%s, secret_key 長度=%d",
+        "環境設定: app_env=%s, debug=%s, secret_key 長度=%d",
         settings.app_env, settings.debug, len(settings.secret_key),
     )
     
@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
         async with async_session_maker() as session:
             count = await cleanup_expired_blacklist(session)
             if count > 0:
-                logger.info(f"🧹 已清理 {count} 筆過期的 Token 黑名單記錄")
+                logger.info(f"已清理 {count} 筆過期的 Token 黑名單記錄")
     except Exception as e:
         logger.warning(f"Token 黑名單清理失敗（可忽略）: {e}")
 
@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
         )
         stop_ngrok_processes()
         write_ngrok_runtime(NgrokState.inactive(source="backend_boot"))
-        logger.info("🧹 已清理孤兒 ngrok process（如有）")
+        logger.info("已清理孤兒 ngrok process（如有）")
     except Exception as e:
         logger.warning(f"ngrok 啟動清理失敗（可忽略）: {e}")
     
@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
 
     mark_api_ready()
     start_background_warmup()
-    logger.info("✅ API 已就緒；LLM/RAG 於背景預熱中")
+    logger.info("API 已就緒；LLM/RAG 於背景預熱中")
 
     llm_service = get_llm_service()
 
@@ -104,12 +104,12 @@ async def lifespan(app: FastAPI):
         close_client = getattr(llm_service.client, "aclose", None)
         if close_client is not None:
             await close_client()
-            logger.info("✅ LLM client 已正確關閉")
+            logger.info("LLM client 已正確關閉")
     except Exception as e:
         logger.warning(f"關閉 LLM client 時發生錯誤（可忽略）: {e}")
     
     await close_db()
-    logger.info("👋 應用程式已關閉")
+    logger.info("應用程式已關閉")
 
 
 # 建立 FastAPI 應用程式

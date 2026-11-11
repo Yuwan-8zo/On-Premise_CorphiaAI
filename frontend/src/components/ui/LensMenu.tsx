@@ -55,7 +55,7 @@ export default function LensMenu({ children, className = '', plate = false, ...r
         const ro = new ResizeObserver(() => placePlate())
         ro.observe(listRef.current)
         return () => ro.disconnect()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [plate])
 
     const st = useRef({

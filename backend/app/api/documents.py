@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, status, UploadFile, File, Backgrou
 
 from sqlalchemy import select, func
 
+from app.api.lookups import get_tenant_document
 from app.api.deps import CurrentUser, DbSession
 from app.models.document import Document
 from app.schemas.document import (
@@ -18,13 +19,8 @@ from app.schemas.document import (
     DocumentMetadataUpdate,
 )
 from app.services.document_service import DocumentService
-from app.services.audit_service import (
-    write_audit_log,
-    AuditAction,
-    AuditResource,
-    get_client_ip,
-    get_user_agent,
-)
+from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.core.request_utils import get_client_ip, get_user_agent
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +38,7 @@ async def list_documents(
     """取得文件列表"""
     # 建立查詢
     query = select(Document).where(
-        Document.tenant_id == (current_user.tenant_id or "default")
+        Document.tenant_id == current_user.effective_tenant_id
     )
     
     if doc_status:
@@ -106,7 +102,7 @@ async def upload_document(
         document = await doc_service.upload_document(
             file=file.file,
             filename=file.filename,
-            tenant_id=current_user.tenant_id or "default",
+            tenant_id=current_user.effective_tenant_id,
             user_id=current_user.id,
         )
         
@@ -137,7 +133,7 @@ async def upload_document(
             resource_id=document.id,
             user_id=current_user.id,
             user_email=current_user.email,
-            tenant_id=current_user.tenant_id or "default",
+            tenant_id=current_user.effective_tenant_id,
             description=f"上傳文件: {file.filename}",
             details={"filename": file.filename, "folder": folderName},
             ip_address=get_client_ip(request),
@@ -178,19 +174,7 @@ async def get_document(
     db: DbSession,
 ):
     """取得文件詳情"""
-    result = await db.execute(
-        select(Document).where(
-            Document.id == document_id,
-            Document.tenant_id == (current_user.tenant_id or "default"),
-        )
-    )
-    document = result.scalar_one_or_none()
-    
-    if document is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="文件不存在"
-        )
+    document = await get_tenant_document(db, document_id, current_user)
     
     return DocumentResponse.model_validate(document)
 
@@ -203,19 +187,7 @@ async def update_document_metadata(
     db: DbSession,
 ):
     """更新文件 metadata (如啟用/停用 RAG 參考)"""
-    result = await db.execute(
-        select(Document).where(
-            Document.id == document_id,
-            Document.tenant_id == (current_user.tenant_id or "default"),
-        )
-    )
-    document = result.scalar_one_or_none()
-    
-    if document is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="文件不存在"
-        )
+    document = await get_tenant_document(db, document_id, current_user)
         
     document.doc_metadata = request.doc_metadata
     await db.commit()
@@ -233,19 +205,7 @@ async def delete_document(
 ):
     """刪除文件"""
     # 檢查權限
-    result = await db.execute(
-        select(Document).where(
-            Document.id == document_id,
-            Document.tenant_id == (current_user.tenant_id or "default"),
-        )
-    )
-    document = result.scalar_one_or_none()
-    
-    if document is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="文件不存在"
-        )
+    document = await get_tenant_document(db, document_id, current_user)
     
     # 只有上傳者或管理員可以刪除
     if document.uploaded_by != current_user.id and not current_user.is_admin:
@@ -273,7 +233,7 @@ async def delete_document(
         resource_id=document_id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id or "default",
+        tenant_id=current_user.effective_tenant_id,
         description=f"刪除文件: {original_filename}",
         ip_address=get_client_ip(request) if request else None,
         user_agent=get_user_agent(request) if request else None,

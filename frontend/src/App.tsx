@@ -12,18 +12,17 @@ import { ACCENT_COLORS, THEME_COLORS } from './design-system'
 import { lazy, Suspense } from 'react'
 
 // Lazy loaded Pages
-const Login = lazy(() => import('./pages/Login'))
-const Register = lazy(() => import('./pages/Register'))
-const Chat = lazy(() => import('./pages/Chat'))
-const Admin = lazy(() => import('./pages/Admin'))
-const Share = lazy(() => import('./pages/Share'))
-const NotFound = lazy(() => import('./pages/NotFound'))
+const Login = lazy(() => import('@/features/auth/pages/LoginPage'))
+const Chat = lazy(() => import('@/features/chat/pages/ChatPage'))
+const Admin = lazy(() => import('@/features/admin/pages/AdminPage'))
+const Share = lazy(() => import('@/features/share/pages/SharePage'))
+const NotFound = lazy(() => import('@/features/navigation/pages/NotFoundPage'))
 
 // 僅在開發環境載入 Component Sandbox
-const ComponentsTest = lazy(() => import('./pages/ComponentsTest'))
+const ComponentsTest = lazy(() => import('@/features/devtools/pages/ComponentsTestPage'))
 
 import { ConfirmModal } from './components/ui/ConfirmModal'
-import SettingsModal from './components/ui/SettingsModal'
+import SettingsModal from './components/settings/SettingsModal'
 import { ToastContainer } from './components/ui/Toast'
 
 // Protected Route Component
@@ -42,7 +41,6 @@ export default function App() {
     const location = useLocation()
     const isPublicRoute =
         location.pathname === '/login' ||
-        location.pathname === '/register' ||
         location.pathname.startsWith('/share/')
     const canUseAuthenticatedRedirect = isBootstrapped && isAuthenticated
 
@@ -180,7 +178,8 @@ export default function App() {
                         />
                         <Route
                             path="/register"
-                            element={canUseAuthenticatedRedirect ? <Navigate to="/" replace /> : <Register />}
+                            // 註冊已併入登入頁的「註冊」分頁；舊網址直接帶到登入頁
+                            element={<Navigate to="/login" replace />}
                         />
                         <Route
                             path="/share/:conversationId"

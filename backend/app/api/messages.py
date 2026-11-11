@@ -3,11 +3,9 @@
 """
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
 
+from app.api.lookups import get_own_conversation, get_own_message
 from app.api.deps import CurrentUser, DbSession
-from app.models.conversation import Conversation
-from app.models.message import Message
 from app.schemas.conversation import MessageCreate, MessageResponse, MessageUpdate
 from app.services.chat_service import ChatService
 
@@ -27,19 +25,7 @@ async def send_message(
     注意：建議使用 WebSocket 進行串流對話
     """
     # 驗證對話存在
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id,
-        )
-    )
-    conversation = result.scalar_one_or_none()
-    
-    if conversation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="對話不存在"
-        )
+    await get_own_conversation(db, conversation_id, current_user)
     
     # 發送訊息
     chat_service = ChatService(db)
@@ -69,21 +55,7 @@ async def update_message(
       2) 在 message metadata 標記被修改過時間（如果有 metadata 欄位）
     這比「靜默重簽」安全：審計報告可以看到鏈在哪裡斷，知道是被人為修改的。
     """
-    result = await db.execute(
-        select(Message)
-        .join(Conversation, Message.conversation_id == Conversation.id)
-        .where(
-            Message.id == message_id,
-            Conversation.user_id == current_user.id,
-        )
-    )
-    message = result.scalar_one_or_none()
-
-    if message is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="訊息不存在"
-        )
+    message = await get_own_message(db, message_id, current_user)
 
     # 內容長度驗證（防 DoS）
     if request.content is None or len(request.content) > 32_000:
@@ -125,21 +97,7 @@ async def rate_message(
         )
     
     # 取得訊息
-    result = await db.execute(
-        select(Message)
-        .join(Conversation, Message.conversation_id == Conversation.id)
-        .where(
-            Message.id == message_id,
-            Conversation.user_id == current_user.id,
-        )
-    )
-    message = result.scalar_one_or_none()
-    
-    if message is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="訊息不存在"
-        )
+    message = await get_own_message(db, message_id, current_user)
     
     message.rating = rating
     await db.commit()

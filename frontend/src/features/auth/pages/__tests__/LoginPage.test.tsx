@@ -114,7 +114,7 @@ vi.mock('@/lib/gsap', () => ({
   useGSAP: vi.fn(),
 }))
 
-import Login from '@/pages/Login'
+import Login from '@/features/auth/pages/LoginPage'
 
 // ── 渲染輔助 ─────────────────────────────────────────────────
 

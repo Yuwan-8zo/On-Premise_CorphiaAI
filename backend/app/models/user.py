@@ -123,6 +123,11 @@ class User(Base):
     )
     
     @property
+    def effective_tenant_id(self) -> str:
+        """所屬租戶；帳號沒有指定租戶時視為 default"""
+        return self.tenant_id or "default"
+
+    @property
     def is_engineer(self) -> bool:
         """是否為系統管理員"""
         return self.role == UserRole.ENGINEER.value

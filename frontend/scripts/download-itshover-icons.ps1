@@ -3,14 +3,11 @@
 param(
     [string[]] $Icons = @(
         'globe-icon',
-        'wifi-off-icon',
         'copy-icon',
         'lock-icon',
         'shield-check',
         'triangle-alert-icon',
-        'qrcode-icon',
-        'file-description-icon',
-        'plug-connected-icon'
+        'file-description-icon'
     )
 )
 

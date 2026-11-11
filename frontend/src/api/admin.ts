@@ -55,11 +55,14 @@ export interface ModelIntegrityInfo {
     quantization: string | null
 }
 
+/** 推論速度統計（目前模型） */
+export type ModelThroughput = { last_tokens_per_sec?: number } & Record<string, unknown>
+
 interface ModelIntegrityResponse {
     status: 'success' | 'error'
     data: {
         models: ModelIntegrityInfo[]
-        throughput: Record<string, any>
+        throughput: ModelThroughput
     }
 }
 

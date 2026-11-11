@@ -178,36 +178,53 @@ def run():
     def record(gate, kind, cat, text, hit, detail):
         rows.append({'閘道': gate, '類別': kind, '子類': cat, '輸入': text, '是否攔截': '是' if hit else '否', '細節': detail})
 
+    def run_pii(kind, cat, t):
+        r = mask_pii(t)
+        record('PII遮罩', kind, cat, t, r['has_pii'], ' | '.join(m['type'] for m in r['mask_map']))
+
+    def run_dlp(kind, t):
+        r = check_dlp(t)
+        record('DLP', kind, '-', t, r['blocked'], ','.join(r['matched_terms']))
+
+    def run_pi(kind, t):
+        r = check_prompt_injection(t)
+        record('PromptInjection', kind, '-', t, r['is_suspicious'], ','.join(r['matched_patterns']))
+
     for cat, t in PII_POS:
-        r = mask_pii(t); record('PII遮罩', '應偵測', cat, t, r['has_pii'], ' | '.join(m['type'] for m in r['mask_map']))
+        run_pii('應偵測', cat, t)
     for t in PII_NEG:
-        r = mask_pii(t); record('PII遮罩', '正常', '-', t, r['has_pii'], ' | '.join(m['type'] for m in r['mask_map']))
+        run_pii('正常', '-', t)
     for t in DLP_POS:
-        r = check_dlp(t); record('DLP', '應偵測', '-', t, r['blocked'], ','.join(r['matched_terms']))
+        run_dlp('應偵測', t)
     for t in DLP_NEG:
-        r = check_dlp(t); record('DLP', '正常', '-', t, r['blocked'], ','.join(r['matched_terms']))
+        run_dlp('正常', t)
     for t in PI_POS:
-        r = check_prompt_injection(t); record('PromptInjection', '應偵測', '-', t, r['is_suspicious'], ','.join(r['matched_patterns']))
+        run_pi('應偵測', t)
     for t in PI_NEG:
-        r = check_prompt_injection(t); record('PromptInjection', '正常', '-', t, r['is_suspicious'], ','.join(r['matched_patterns']))
+        run_pi('正常', t)
 
     samples = [t for _, t in PII_POS] + PII_NEG + DLP_POS + DLP_NEG + PI_POS + PI_NEG
     n = 200
     t0 = time.perf_counter()
     for _ in range(n):
         for s in samples:
-            mask_pii(s); check_dlp(s); check_prompt_injection(s)
+            mask_pii(s)
+            check_dlp(s)
+            check_prompt_injection(s)
     per = (time.perf_counter() - t0) / (n * len(samples)) * 1000
 
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'docs', 'report', '資安閘道實測結果.csv')
     with open(out, 'w', encoding='utf-8-sig', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
 
     print(f'{"閘道":<16}{"偵測":>10}{"偵測率":>9}{"誤判":>10}{"誤判率":>9}')
     for gate in ('PII遮罩', 'DLP', 'PromptInjection'):
         pos = [r for r in rows if r['閘道'] == gate and r['類別'] == '應偵測']
         neg = [r for r in rows if r['閘道'] == gate and r['類別'] == '正常']
-        tp = sum(r['是否攔截'] == '是' for r in pos); fp = sum(r['是否攔截'] == '是' for r in neg)
+        tp = sum(r['是否攔截'] == '是' for r in pos)
+        fp = sum(r['是否攔截'] == '是' for r in neg)
         print(f'{gate:<16}{tp:>5}/{len(pos):<4}{tp / len(pos) * 100:>8.1f}%{fp:>5}/{len(neg):<4}{fp / len(neg) * 100:>8.1f}%')
     print(f'三道閘道串接平均處理時間：{per:.3f} ms／則（{len(samples)} 則 × {n} 次）')
     print('\n未偵測（漏判）：')

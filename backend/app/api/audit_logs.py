@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, desc
 
+from app.core.query_utils import like_contains, page_count
 from app.api.deps import CurrentUser, DbSession, RequireAdmin
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogResponse, AuditLogListResponse
@@ -65,7 +66,7 @@ async def list_audit_logs(
         # 帳號沒有指定租戶時視為 default（與後台資安統計一致）；
         # 登入失敗等事件發生在認得租戶之前，tenant_id 為空，也一併顯示
         from sqlalchemy import or_
-        tid = current_user.tenant_id or "default"
+        tid = current_user.effective_tenant_id
         tenant_filter = or_(AuditLog.tenant_id == tid, AuditLog.tenant_id.is_(None))
         query = query.where(tenant_filter)
         count_query_base = count_query_base.where(tenant_filter)
@@ -94,8 +95,7 @@ async def list_audit_logs(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="search 字串過長",
             )
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        search_filter = f"%{escaped}%"
+        search_filter = like_contains(search)
         query = query.where(
             AuditLog.description.ilike(search_filter, escape="\\")
             | AuditLog.user_email.ilike(search_filter, escape="\\")
@@ -153,7 +153,7 @@ async def list_audit_logs(
         total=total,
         page=page,
         page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size if total > 0 else 0,
+        total_pages=page_count(total, page_size),
     )
 
 

@@ -6,9 +6,9 @@ import apiClient from './client'
 
 // Newer backend responses wrap the payload as { schema_version, data }.
 // Accept both shapes so the admin panels keep working either way.
-function unwrapEnvelope<T = any>(body: any): T {
+function unwrapEnvelope<T = unknown>(body: unknown): T {
     if (body && typeof body === 'object' && 'schema_version' in body && 'data' in body) {
-        return body.data as T
+        return (body as { data: T }).data
     }
     return body as T
 }

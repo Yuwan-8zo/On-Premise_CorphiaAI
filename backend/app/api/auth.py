@@ -32,13 +32,8 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserResponse
 from app.api.deps import CurrentUser
-from app.services.audit_service import (
-    write_audit_log,
-    AuditAction,
-    AuditResource,
-    get_client_ip,
-    get_user_agent,
-)
+from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.core.request_utils import get_client_ip, get_user_agent
 from app.services.token_service import add_token_to_blacklist
 from app.services.password_service import (
     check_login_lockout,

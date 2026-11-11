@@ -158,4 +158,6 @@ RequireUser = Depends(require_role(UserRole.ENGINEER, UserRole.ADMIN, UserRole.U
 
 # 類型別名
 CurrentUser = Annotated[User, Depends(get_current_user)]
+# 管理員或工程師才能呼叫（不符合直接回 403「權限不足」）
+AdminUser = Annotated[User, Depends(require_role(UserRole.ENGINEER, UserRole.ADMIN))]
 DbSession = Annotated[AsyncSession, Depends(get_db)]

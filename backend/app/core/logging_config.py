@@ -50,4 +50,4 @@ def setup_logging():
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     
-    logging.info("✅ 日誌設定初始化完成")
+    logging.info("日誌設定初始化完成")

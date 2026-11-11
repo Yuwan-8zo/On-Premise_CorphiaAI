@@ -9,15 +9,15 @@
  *   4. 編成 16-bit signed PCM WAV
  */
 
+import { createAudioContext } from './audioContext'
+
 const TARGET_SAMPLE_RATE = 16000
 
 /** AudioContext 單例：每次 decode 都重建很浪費，且 Safari 會限制可同時開啟的數量 */
 let _ctx: AudioContext | null = null
 function getAudioContext(): AudioContext {
     if (!_ctx) {
-        const Ctor = (window as any).AudioContext || (window as any).webkitAudioContext
-        if (!Ctor) throw new Error('此瀏覽器不支援 Web Audio API')
-        _ctx = new Ctor()
+        _ctx = createAudioContext()
     }
     // 上一個 if 已保證非 null，但 TS narrowing 不認 closure 賦值，這裡明確斷言
     return _ctx as AudioContext
@@ -43,8 +43,9 @@ export async function blobToWav16kMono(blob: Blob): Promise<Blob> {
                 (e) => reject(e),
             )
             // 部分新版瀏覽器同時回傳 Promise；用 thenable 接也可
-            if (p && typeof (p as any).then === 'function') {
-                (p as any).then(resolve, reject)
+            const thenable = p as unknown as PromiseLike<AudioBuffer> | undefined
+            if (thenable && typeof thenable.then === 'function') {
+                thenable.then(resolve, reject)
             }
         } catch (e) {
             reject(e)

@@ -6,7 +6,6 @@
  */
 
 import { ArrowUp, PanelLeft, Plus } from '@/components/snow/icons'
-import React from 'react'
 
 /** + 號 Icon */
 export const PlusIcon = () => (
@@ -30,6 +29,6 @@ export const StopIcon = () => (
 )
 
 /** 側邊欄收合 Icon */
-export const SidebarIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const SidebarIcon = (_props: { className?: string }) => (
     <PanelLeft className="text-text-muted  transition-colors" />
 )

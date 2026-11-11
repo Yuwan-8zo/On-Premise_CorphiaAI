@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 對話側邊欄元件
  * 
  * 從 Chat.tsx 拆分出來，負責渲染：
@@ -9,7 +9,7 @@
  * - 底部使用者卡片
  */
 
-import { Folder, MessageSquare, MoreHorizontal, Plus, Trash2 } from '@/components/snow/icons'
+import { Folder, MessageSquare, Plus, Trash2 } from '@/components/snow/icons'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,18 +18,15 @@ import { useUIStore } from '@/store/uiStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
+import ConversationRow from './ConversationRow'
 import Tooltip from '@/components/ui/Tooltip'
 
-// 預設資料夾名稱常數
-const DEFAULT_FOLDER = '新資料夾'
+import type { Conversation } from '@/types/chat'
+import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 
 interface ChatSidebarProps {
     /** 對話列表 */
-    conversations: Array<{
-        id: string
-        title: string
-        settings?: Record<string, unknown>
-    }>
+    conversations: Conversation[]
     /** 目前選取的對話 */
     currentConversationId: string | null
     /** 聊天模式 */
@@ -41,13 +38,12 @@ interface ChatSidebarProps {
     expandedFolders: Set<string>
     setExpandedFolders: React.Dispatch<React.SetStateAction<Set<string>>>
     /** 動作 */
-    selectConversation: (conv: { id: string; title: string; settings?: Record<string, unknown> }) => void
+    selectConversation: (conv: Conversation) => void
     createNewConversation: () => void
     createConvInFolder: (folderName: string, e: React.MouseEvent) => void
     handleDeleteFolder: (folderName: string, e: React.MouseEvent) => void
     handleOpenMenu: (e: React.MouseEvent, convId: string) => void
     setSelectedFolder: (folder: string | null) => void
-    setCurrentConversation: (conv: null) => void
     openNewFolderModal: () => void
     /** 選單下拉是否開啟 */
     activeMenuConvId: string | null
@@ -68,7 +64,6 @@ export default function ChatSidebar({
     handleDeleteFolder,
     handleOpenMenu,
     setSelectedFolder,
-    setCurrentConversation,
     openNewFolderModal,
     activeMenuConvId,
 }: ChatSidebarProps) {
@@ -138,6 +133,19 @@ export default function ChatSidebar({
     //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
     const wide = sidebarOpen
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+    const renderRow = (conv: Conversation) => (
+        <ConversationRow
+            key={conv.id}
+            conv={conv}
+            isCurrent={!selectedFolder && currentConversationId === conv.id}
+            isMenuOpen={activeMenuConvId === conv.id}
+            rowRef={(el) => { itemRefs.current[conv.id] = el }}
+            pressProps={pressHandlers(conv.id)}
+            onSelect={() => { if (consumeLongPress()) return; selectConversation(conv) }}
+            onMenuPointerDown={(e) => dragOpenMenu(e, conv.id)}
+        />
+    )
     const scrollRef = useRef<HTMLDivElement>(null)
 
     return (
@@ -254,24 +262,7 @@ export default function ChatSidebar({
                                 {(() => {
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
                                     if (filtered.length === 0) return <p className="text-text-secondary text-[13px] py-3 px-[10px]">{t('chat.noChats')}</p>
-                                    return filtered.map((conv) => (
-                                        <div key={conv.id}
-                                            ref={(el) => { itemRefs.current[conv.id] = el }}
-                                            {...pressHandlers(conv.id)}
-                                            onClick={() => { if (consumeLongPress()) return; selectConversation(conv) }}
-                                            className={`side-item group ${!selectedFolder && currentConversationId === conv.id ? 'is-current' : ''}`}
-                                        >
-                                            <span className="flex-1 min-w-0 truncate">{conv.title}</span>
-                                            <div className={`side-actions transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                                <Tooltip label="選項">
-                                                    <button onPointerDown={(e) => dragOpenMenu(e, conv.id)} onClick={(e) => e.stopPropagation()}
-                                                        aria-label="選項" className={`p-1.5 rounded-full ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
-                                                        <MoreHorizontal className="w-4 h-4" />
-                                                    </button>
-                                                </Tooltip>
-                                            </div>
-                                        </div>
-                                    ))
+                                    return filtered.map(renderRow)
                                 })()}
                             </div>
                         </motion.div>
@@ -350,22 +341,7 @@ export default function ChatSidebar({
                                                         <div className="side-children space-y-0.5">
                                                             {(grouped[folderName] || []).map((conv) => (
                                                                 <div key={conv.id} className="relative">
-                                                                    <div
-                                                                        ref={(el) => { itemRefs.current[conv.id] = el }}
-                                                                        {...pressHandlers(conv.id)}
-                                            onClick={() => { if (consumeLongPress()) return; selectConversation(conv) }}
-                                                                        className={`side-item group ${!selectedFolder && currentConversationId === conv.id ? 'is-current' : ''}`}
-                                                                    >
-                                                                        <span className="flex-1 min-w-0 truncate">{conv.title}</span>
-                                                                        <div className={`side-actions transition-opacity ${activeMenuConvId === conv.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                                                            <Tooltip label="選項">
-                                                                                <button onPointerDown={(e) => dragOpenMenu(e, conv.id)} onClick={(e) => e.stopPropagation()}
-                                                                                    aria-label="選項" className={`p-1.5 rounded-full ${activeMenuConvId === conv.id ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
-                                                                                    <MoreHorizontal className="w-4 h-4" />
-                                                                                </button>
-                                                                            </Tooltip>
-                                                                        </div>
-                                                                    </div>
+                                                                    {renderRow(conv)}
                                                                 </div>
                                                             ))}
                                                         </div>

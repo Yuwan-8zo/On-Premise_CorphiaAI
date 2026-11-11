@@ -62,17 +62,17 @@ async def run_migration():
                     # text() 是 asyncpg 必備的
                     __import__("sqlalchemy").text(stmt.strip())
                 )
-                logger.info(f"  [{i}/{len(STATEMENTS)}] ✅ 完成")
+                logger.info(f"  [{i}/{len(STATEMENTS)}] 完成")
             except Exception as e:
                 # 如果欄位已存在（duplicate column），繼續跑
                 err_msg = str(e).lower()
                 if "already exists" in err_msg or "duplicate column" in err_msg:
-                    logger.info(f"  [{i}/{len(STATEMENTS)}] ⏭️ 欄位已存在，跳過")
+                    logger.info(f"  [{i}/{len(STATEMENTS)}] 欄位已存在，跳過")
                 else:
-                    logger.error(f"  [{i}/{len(STATEMENTS)}] ❌ 失敗: {e}")
+                    logger.error(f"  [{i}/{len(STATEMENTS)}] 失敗: {e}")
                     raise
 
-    logger.info("✅ Phase 4 Governance 遷移完成！")
+    logger.info("Phase 4 Governance 遷移完成！")
 
 
 if __name__ == "__main__":

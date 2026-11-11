@@ -13,12 +13,6 @@ function postProcessIconSource(content, filename) {
   if (filename === 'lock-icon.tsx') {
     content = content.replace('size = 48', 'size = 24')
   }
-  if (filename === 'wifi-off-icon.tsx') {
-    content = content.replace(
-      'animate(".slash-line", { rotate: 0 }, { duration: 0.2, ease: "easeOut" });',
-      'animate(".slash-line", { pathLength: 1 }, { duration: 0.2, ease: "easeOut" });',
-    )
-  }
   return content
 }
 const registryDir = path.join(__dirname, 'itshover-registry')

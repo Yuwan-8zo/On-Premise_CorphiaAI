@@ -217,7 +217,7 @@ class LLMService:
             try:
                 logger.info(f"預先載入模型: {info.name}")
                 await self._ensure_loaded(info.name, info.path)
-                logger.info(f"✅ 預先載入完成: {info.name}")
+                logger.info(f"預先載入完成: {info.name}")
             except Exception as exc:
                 logger.error(f"預先載入失敗 {info.name}: {exc}")
 
@@ -266,7 +266,7 @@ class LLMService:
                 self._llama_instance = await self._ensure_loaded(manager._current_model or model_path, model_path)
                 self.use_llama_cpp = True
                 self.model = model_path
-                logger.info(f"✅ 成功掛載 GGUF 模型: {model_path}")
+                logger.info(f"成功掛載 GGUF 模型: {model_path}")
             except Exception as llama_e:
                 logger.error(f"掛載 GGUF 模型失敗: {llama_e}")
                 logger.info("系統將以模擬模式運行")
@@ -406,7 +406,6 @@ class LLMService:
             這時 _run_llama 會檢查 stop_event；設了就 break 出迴圈
           - Worst case 是「再吐 1 個 token 才停」，不會跑完整個 max_tokens
         """
-        start = time.perf_counter()
         token_count = 0
         first_token_at: Optional[float] = None
         # 用 maxsize 限制 queue 大小：thread 比 consumer 快太多時會 backpressure，

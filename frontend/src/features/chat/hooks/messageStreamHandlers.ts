@@ -19,6 +19,7 @@ import { conversationsApi } from '@/api/conversations'
 import type { StreamResponse } from '@/api/websocket'
 import { useChatStore } from '@/store/chatStore'
 import { useToastStore } from '@/store/toastStore'
+import type { MessageSource } from '@/types/chat'
 
 // Security notices stay on screen long enough to be read during a live demo.
 const SECURITY_TOAST_MS = 6000
@@ -30,7 +31,7 @@ interface ToastApi {
 export interface StreamDispatchDeps {
     appendToLastMessage: (chunk: string) => void
     setStreaming: (streaming: boolean) => void
-    setSourcesToLastMessage: (sources: any) => void
+    setSourcesToLastMessage: (sources: MessageSource[]) => void
     toast: ToastApi
 }
 
@@ -40,7 +41,7 @@ export interface StreamDispatchDeps {
  * into `ws.onMessage(...)`.
  */
 export function buildStreamDispatcher(deps: StreamDispatchDeps) {
-    const { appendToLastMessage, setStreaming, setSourcesToLastMessage, toast } = deps
+    const { appendToLastMessage, setStreaming, setSourcesToLastMessage } = deps
 
     // 每個字都更新一次畫面時，電腦一慢（例如用電池）更新就會堆積，React 判定成無限迴圈而丟字、
     // 甚至整頁卡死。這裡把字先收集起來，每 50 毫秒才更新一次畫面。
@@ -95,7 +96,7 @@ export function buildStreamDispatcher(deps: StreamDispatchDeps) {
                 break
 
             case 'sources':
-                if (data.sources) setSourcesToLastMessage(data.sources as any)
+                if (data.sources) setSourcesToLastMessage(data.sources)
                 // C2: store RAG debug payload for the floating debug panel
                 if (data.debug) useChatStore.getState().setRAGDebug(data.debug)
                 break

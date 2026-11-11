@@ -5,6 +5,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { flushSync } from 'react-dom'
+import i18n from 'i18next' // 同一個 i18n 實例（在 i18n/index.ts 初始化）；不經過 react-i18next，store 才不會依賴 React
+import type { Language } from '@/i18n/languages'
 
 /**
  * 主題切換動畫 helper
@@ -43,7 +45,6 @@ type Theme = 'light' | 'dark'
  * `themePreference` 與系統設定計算後寫入。
  */
 type ThemePreference = 'system' | 'light' | 'dark'
-type Language = 'zh-TW' | 'en-US' | 'ja-JP'
 /** 只允許固定的品牌色（已移除自由配色） */
 export type AccentColorType = 'blue' | 'purple' | 'pink' | 'orange' | 'green'
 const ACCENT_KEYS: AccentColorType[] = ['blue', 'purple', 'pink', 'orange', 'green']
@@ -141,8 +142,11 @@ export const useUIStore = create<UIState>()(
                     })
                 }),
 
-            // 設定語言
-            setLanguage: (language) => set({ language }),
+            // 設定語言：介面文字立刻切換，並記在這裡（重新整理後 i18n 從這裡讀回；AI 回覆語言也看這個）
+            setLanguage: (language) => {
+                set({ language })
+                void i18n.changeLanguage(language)
+            },
 
             // 設定重點色
             setAccentColor: (color) => set({ accentColor: ACCENT_KEYS.includes(color) ? color : 'blue' }),

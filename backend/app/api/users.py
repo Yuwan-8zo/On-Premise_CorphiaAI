@@ -6,17 +6,14 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
 from sqlalchemy import select, func
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.lookups import get_tenant_user
+from app.core.query_utils import like_contains, page_count
+from app.api.deps import CurrentUser, DbSession, AdminUser
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate, UserListResponse, UserCreate
 from app.core.security import get_password_hash
-from app.services.audit_service import (
-    write_audit_log,
-    AuditAction,
-    AuditResource,
-    get_client_ip,
-    get_user_agent,
-)
+from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.core.request_utils import get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -24,19 +21,13 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     data: UserCreate,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
     """
     建立使用者（僅 admin/engineer 可用）
     """
-    if current_user.role not in ["admin", "engineer"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-    
     result = await db.execute(select(User).where(User.email == data.email))
     if result.scalar_one_or_none():
         raise HTTPException(
@@ -75,7 +66,7 @@ async def create_user(
 
 @router.get("", response_model=UserListResponse)
 async def list_users(
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -86,13 +77,6 @@ async def list_users(
     """
     列出使用者（僅 admin/engineer 可用）
     """
-    # 權限檢查
-    if current_user.role not in ["admin", "engineer"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-    
     # 建立查詢
     query = select(User).where(User.tenant_id == current_user.tenant_id)
     count_query = select(func.count(User.id)).where(User.tenant_id == current_user.tenant_id)
@@ -106,8 +90,7 @@ async def list_users(
         # UnboundLocalError（ruff F823 抓到的真實 bug）
         if len(search) > 128:
             raise HTTPException(status_code=400, detail="search 字串過長")
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        search_filter = f"%{escaped}%"
+        search_filter = like_contains(search)
         query = query.where(
             User.name.ilike(search_filter, escape="\\")
             | User.email.ilike(search_filter, escape="\\")
@@ -141,7 +124,7 @@ async def list_users(
         total=total,
         page=page,
         page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size
+        total_pages=page_count(total, page_size)
     )
 
 
@@ -163,19 +146,7 @@ async def get_user(
     取得指定使用者資訊
     """
     # 只能查看同租戶的使用者
-    result = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == current_user.tenant_id
-        )
-    )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
-        )
+    user = await get_tenant_user(db, user_id, current_user)
     
     return UserResponse.model_validate(user)
 
@@ -214,34 +185,15 @@ async def update_current_user(
 async def update_user(
     user_id: str,
     data: UserUpdate,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
     """
     更新指定使用者資訊（僅 admin 可用）
     """
-    # 權限檢查
-    if current_user.role not in ["admin", "engineer"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-    
     # 取得使用者
-    result = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == current_user.tenant_id
-        )
-    )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
-        )
+    user = await get_tenant_user(db, user_id, current_user)
     
     # 更新資料
     update_data = data.model_dump(exclude_unset=True)
@@ -272,20 +224,13 @@ async def update_user(
 @router.delete("/{user_id}")
 async def delete_user(
     user_id: str,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
     """
     刪除使用者（僅 admin 可用）
     """
-    # 權限檢查
-    if current_user.role not in ["admin", "engineer"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-    
     # 不能刪除自己
     if user_id == str(current_user.id):
         raise HTTPException(
@@ -294,19 +239,7 @@ async def delete_user(
         )
     
     # 取得使用者
-    result = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == current_user.tenant_id
-        )
-    )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
-        )
+    user = await get_tenant_user(db, user_id, current_user)
     
     # 實際刪除使用者 (硬刪除)，這會觸發 cascade 刪除該使用者的所有關聯資料 (對話、文件等)
     await db.delete(user)
@@ -332,32 +265,14 @@ async def delete_user(
 @router.post("/{user_id}/activate")
 async def activate_user(
     user_id: str,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
     """
     啟用使用者（僅 admin 可用）
     """
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-    
-    result = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == current_user.tenant_id
-        )
-    )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
-        )
+    user = await get_tenant_user(db, user_id, current_user)
     
     user.is_active = True
     await db.commit()
@@ -382,7 +297,7 @@ async def activate_user(
 @router.post("/{user_id}/force-logout")
 async def force_logout_user(
     user_id: str,
-    current_user: CurrentUser,
+    current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
@@ -391,13 +306,6 @@ async def force_logout_user(
 
     撤銷該使用者所有已發放的 Token，使其立即被強制登出。
     """
-    # 權限檢查
-    if current_user.role not in ["admin", "engineer"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="權限不足"
-        )
-
     # 不能踢出自己
     if user_id == str(current_user.id):
         raise HTTPException(
@@ -406,19 +314,7 @@ async def force_logout_user(
         )
 
     # 取得使用者
-    result = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == current_user.tenant_id
-        )
-    )
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="使用者不存在"
-        )
+    user = await get_tenant_user(db, user_id, current_user)
 
     # 撤銷所有 Token
     from app.services.token_service import revoke_all_user_tokens

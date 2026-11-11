@@ -7,6 +7,7 @@ import { PromptMenu } from './PromptMenu'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
+import { UPLOAD_ACCEPT } from '@/lib/uploadTypes'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -14,7 +15,7 @@ interface ChatInputAreaProps {
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
-    uploadedFiles: File[]
+    uploadedFiles: { name: string }[]
     isStreaming: boolean
 
     input: string
@@ -68,17 +69,20 @@ export default function ChatInputArea({
     // 當進入「專案資料夾管理視圖」時，隱藏聊天輸入框，
     // 但仍要保留隱藏的 <input type="file">，
     // 這樣資料夾右上角的「新增來源」按鈕透過 fileInputRef 才能觸發檔案選擇對話框。
+    // 隱藏的上傳欄位（聊天畫面與資料夾管理畫面共用）
+    const fileInput = (
+        <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            className="hidden"
+            accept={UPLOAD_ACCEPT}
+            multiple
+        />
+    )
+
     if (selectedFolder) {
-        return (
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md,.html,.htm"
-                multiple
-            />
-        )
+        return fileInput
     }
 
     return (
@@ -217,14 +221,7 @@ export default function ChatInputArea({
             </motion.div>
 
             {/* hidden upload specific for chat view */}
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".pdf,.docx,.xlsx,.pptx,.csv,.txt,.md,.html,.htm"
-                multiple
-            />
+            {fileInput}
         </>
     )
 }

@@ -4,19 +4,9 @@
 
 import apiClient from './client'
 import type { User } from '../types/auth'
+import { toUser, type BackendUserResponse } from './userMapper'
 
-/** 後端 UserResponse 的原始格式（snake_case） */
-export interface BackendUserResponse {
-    id: string
-    name: string
-    email: string
-    role: 'engineer' | 'admin' | 'user'
-    is_active: boolean
-    created_at: string
-    last_login_at?: string | null
-    tenant_id?: string | null
-    avatar_url?: string | null
-}
+export type { BackendUserResponse }
 
 export interface UserListResponse {
     data: BackendUserResponse[]
@@ -47,17 +37,7 @@ export const usersApi = {
      */
     updateMe: async (data: { name?: string; avatar_url?: string }): Promise<User> => {
         const response = await apiClient.put('/users/me', data)
-        return {
-            id: response.data.id,
-            email: response.data.email,
-            name: response.data.name,
-            role: response.data.role,
-            tenantId: response.data.tenant_id,
-            avatarUrl: response.data.avatar_url,
-            isActive: response.data.is_active,
-            lastLoginAt: response.data.last_login_at,
-            createdAt: response.data.created_at,
-        }
+        return toUser(response.data)
     },
 
     /**

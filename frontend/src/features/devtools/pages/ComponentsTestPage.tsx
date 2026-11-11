@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useToastStore } from '@/store/toastStore'
 import { useUIStore } from '@/store/uiStore'
@@ -8,7 +8,7 @@ import { AlertCircle, CheckCircle2, MessageSquare, PanelLeftClose, Settings } fr
 
 export default function ComponentsTest() {
     const { t } = useTranslation()
-    const { toasts, add, remove } = useToastStore()
+    const { toasts, add } = useToastStore()
     const { showConfirm } = useUIStore()
     const [events, setEvents] = useState<string[]>([])
     

@@ -16,7 +16,6 @@ from sqlalchemy import select, update, func, or_
 # QUALITY-01 修正：langgraph 改為懶惰 import（在使用點 import）
 # 地端原則：本平台不提供網路搜尋，所有回答僅來自本地模型與企業內部文件，查詢不會送出內網
 # 避免這些套件未安裝時阻斷整個模組載入，提升系統啟動可靠性
-import asyncio
 
 from app.models.conversation import Conversation
 from app.models.message import Message, MessageRole
@@ -49,7 +48,7 @@ def _clip_history(text: str, limit: int = 400) -> str:
 
 class ChatService:
     """對話服務"""
-    
+
     # 系統提示
     # 提示詞保持精簡：純 CPU 筆電讀入提示詞很慢（7B 每秒約 12 個 token），
     # 每多 100 個 token 就多等約 8 秒。簡體字由 zh_convert 在輸出時自動轉正體，不必在這裡列舉。
@@ -72,27 +71,27 @@ class ChatService:
         "en-US": "[IMPORTANT] You MUST reply entirely in English. Regardless of the language the user writes in, all your responses must be in English.",
         "ja-JP": "『重要』あなたは必ず日本語で回答してください。ユーザーがどの言語で質問しても、すべての返答は日本語でなければなりません。",
     }
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.llm_service = get_llm_service()
         self.rag_service = get_rag_service()
         self.agent_graph = self._build_agent_graph()
-        
+
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
         from langgraph.graph import StateGraph, START, END
         workflow = StateGraph(AgentState)
-        
+
         workflow.add_node("router", self._router_node)
         workflow.add_node("rag", self._rag_node)
         workflow.add_node("chat_prep", self._chat_prep_node)
-        
+
         workflow.add_edge(START, "router")
-        
+
         def route_condition(state: AgentState):
             return state.get("route", "chat_prep")
-            
+
         workflow.add_conditional_edges(
             "router",
             route_condition,
@@ -101,16 +100,16 @@ class ChatService:
                 "chat": "chat_prep"
             }
         )
-        
+
         workflow.add_edge("rag", END)
         workflow.add_edge("chat_prep", END)
-        
+
         return workflow.compile()
-        
+
     async def _router_node(self, state: AgentState) -> dict:
         use_rag = state.get("use_rag", True)
         folder_name = state.get("folder_name")
-        
+
         if use_rag and folder_name:
             # 專案綁定，強制內部 RAG 減少外部幻覺
             return {"route": "rag"}
@@ -129,15 +128,15 @@ class ChatService:
             },
             "required": ["route"]
         }
-        
+
         prompt_text = f"分析最後一則訊息以決定路徑：\n'rag': 從專案資料夾內部文獻中尋找答案\n'chat': 一般問答\n\n使用者最新訊息：「{state.get('query')}」"
         system_prompt = "你是一個分類系統。請務必唯一輸出符合 schema 的 JSON。"
-        
+
         prompt = self.llm_service.build_chat_prompt(
             messages=[{"role": "user", "content": prompt_text}],
             system_prompt=system_prompt
         )
-        
+
         try:
             # The answer is only {"route": "rag|chat"}; a small cap keeps this step fast on CPU.
             decision = await self.llm_service.generate_structured(prompt, schema, max_tokens=24)
@@ -147,7 +146,7 @@ class ChatService:
         except Exception as e:
             logger.error(f"Router Decision Error: {e}")
             route = "rag" if use_rag else "chat"
-            
+
         return {"route": route}
 
     async def _rag_node(self, state: AgentState) -> dict:
@@ -155,7 +154,7 @@ class ChatService:
         sources = []
         folder_name = state.get("folder_name")
         document_ids = None
-        
+
         if folder_name:
             # FIX: 原本拉整個 tenant 的所有 Document 進記憶體 + Python loop 過濾
             # （tenant 有 10k 文件就裝 10k 物件）。改用 PostgreSQL JSONB operator
@@ -175,7 +174,7 @@ class ChatService:
                 )
             )
             document_ids = [row[0] for row in docs_result.all()]
-                    
+
         # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
         # 提高中文專有名詞與代號（例如 SOP 編號、人名）的命中率。
         search_results = await self.rag_service.hybrid_search(
@@ -284,7 +283,7 @@ class ChatService:
     async def _chat_prep_node(self, state: AgentState) -> dict:
         return {"context": "", "sources": []}
 
-    
+
     async def create_conversation(
         self,
         user: User,
@@ -293,29 +292,29 @@ class ChatService:
     ) -> Conversation:
         """
         建立新對話
-        
+
         Args:
             user: 使用者
             title: 對話標題
             model: 使用的模型
-            
+
         Returns:
             Conversation: 對話記錄
         """
         conversation = Conversation(
-            tenant_id=user.tenant_id or "default",
+            tenant_id=user.effective_tenant_id,
             user_id=user.id,
             title=title,
             model=model,
         )
-        
+
         self.db.add(conversation)
         await self.db.commit()
         await self.db.refresh(conversation)
-        
+
         logger.info(f"建立對話: {conversation.id}")
         return conversation
-    
+
     async def get_conversation(
         self,
         conversation_id: str,
@@ -323,11 +322,11 @@ class ChatService:
     ) -> Optional[Conversation]:
         """
         取得對話
-        
+
         Args:
             conversation_id: 對話 ID
             user_id: 使用者 ID
-            
+
         Returns:
             Optional[Conversation]: 對話記錄
         """
@@ -338,7 +337,7 @@ class ChatService:
             )
         )
         return result.scalar_one_or_none()
-    
+
     async def get_messages(
         self,
         conversation_id: str,
@@ -365,7 +364,74 @@ class ChatService:
             .limit(limit)
         )
         return list(result.scalars().all())
-    
+
+    async def _prepare_prompt(
+        self,
+        conversation_id: str,
+        content: str,
+        use_rag: bool,
+        language: str,
+    ) -> tuple[str, str, list, str]:
+        """
+        送出訊息前的共用準備（串流與非串流共用）：
+        讀對話歷史 → LangGraph 路由／檢索文件 → 選系統提示＋語言指令 → 組成提示詞
+
+        Returns:
+            (prompt, context, sources, route)
+        """
+        messages = await self.get_messages(conversation_id)
+
+        # 取得 tenant 和 folder
+        result = await self.db.execute(
+            select(Conversation).where(Conversation.id == conversation_id)
+        )
+        conversation = result.scalar_one_or_none()
+        folder_name = conversation.settings.get("folderName") if conversation else None
+        tenant_id = conversation.tenant_id if conversation else "default"
+
+        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
+        chat_history = [
+            {"role": m.role, "content": _clip_history(m.content)}
+            for m in messages[-settings.chat_history_messages:]
+        ]
+
+        initial_state: AgentState = {
+            "conversation_id": conversation_id,
+            "tenant_id": tenant_id,
+            "folder_name": folder_name,
+            "use_rag": use_rag,
+            "query": content,
+            "chat_history": chat_history,
+            "route": "",
+            "context": "",
+            "sources": []
+        }
+        final_state = await self.agent_graph.ainvoke(initial_state)
+
+        context = final_state.get("context", "")
+        sources = final_state.get("sources", [])
+        route = final_state.get("route", "chat")
+
+        chat_history.append({"role": "user", "content": content})
+
+        # 專案資料夾內的對話只能根據文件回答
+        if final_state.get("folder_name"):
+            system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
+        else:
+            system_prompt = self.DEFAULT_SYSTEM_PROMPT
+
+        # 在系統提示末尾注入語言強制指令
+        # 強制語言比「使用使用者語言」更可靠，因大多數 LLM 容易忽略模糊指令
+        lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
+        system_prompt = f"{system_prompt}\n\n{lang_directive}"
+
+        prompt = self.llm_service.build_chat_prompt(
+            messages=chat_history,
+            system_prompt=system_prompt,
+            context=context if context else None,
+        )
+        return prompt, context, sources, route
+
     async def send_message(
         self,
         conversation_id: str,
@@ -388,60 +454,11 @@ class ChatService:
             content=content,
         )
         self.db.add(user_message)
-        
-        # 取得對話歷史
-        messages = await self.get_messages(conversation_id)
-        
-        # 取得 tenant 和 folder
-        result = await self.db.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
-        )
-        conversation = result.scalar_one_or_none()
-        folder_name = conversation.settings.get("folderName") if conversation else None
-        tenant_id = conversation.tenant_id if conversation else "default"
-        
-        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
-        chat_history = [
-            {"role": m.role, "content": _clip_history(m.content)}
-            for m in messages[-settings.chat_history_messages:]
-        ]
-        
-        # 執行 LangGraph 路由
-        initial_state: AgentState = {
-            "conversation_id": conversation_id,
-            "tenant_id": tenant_id,
-            "folder_name": folder_name,
-            "use_rag": use_rag,
-            "query": content,
-            "chat_history": chat_history,
-            "route": "",
-            "context": "",
-            "sources": []
-        }
-        
-        final_state = await self.agent_graph.ainvoke(initial_state)
-        
-        context = final_state.get("context", "")
-        sources = final_state.get("sources", [])
-        route = final_state.get("route", "chat")
-        
-        chat_history.append({"role": "user", "content": content})
-        
-        if final_state.get("folder_name"):
-            system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
-        else:
-            system_prompt = self.DEFAULT_SYSTEM_PROMPT
 
-        # 在系統提示末尾注入語言強制指令
-        lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
-        system_prompt = f"{system_prompt}\n\n{lang_directive}"
-            
-        prompt = self.llm_service.build_chat_prompt(
-            messages=chat_history,
-            system_prompt=system_prompt,
-            context=context if context else None,
+        prompt, context, sources, _route = await self._prepare_prompt(
+            conversation_id, content, use_rag, language
         )
-        
+
         # 生成回應
         response_text = await self.llm_service.generate(
             prompt=prompt,
@@ -450,7 +467,7 @@ class ChatService:
         )
         if language == "zh-TW":
             response_text = to_traditional(response_text)
-        
+
         # 儲存助手訊息
         assistant_message = Message(
             conversation_id=conversation_id,
@@ -459,7 +476,7 @@ class ChatService:
             sources=sources if sources else None,
         )
         self.db.add(assistant_message)
-        
+
         # 更新對話
         await self.db.execute(
             update(Conversation)
@@ -469,12 +486,12 @@ class ChatService:
                 updated_at=utc_now_naive(),
             )
         )
-        
+
         await self.db.commit()
         await self.db.refresh(assistant_message)
-        
+
         return assistant_message
-    
+
     async def send_message_stream(
         self,
         conversation_id: str,
@@ -539,67 +556,17 @@ class ChatService:
             # B2: 對使用者訊息蓋上 hash stamp
             await stamp_message(self.db, user_message, conversation_id)
             await self.db.commit()
-        
+
         # ── A1/A2 安全閘道由上層 websocket.py 的 _security_gate() 統一處理 ────────
         # BUG-07 修正：此處不再重複執行 PII masking / Prompt Injection 偵測，
         # 避免對已遮罩的文字再次遮罩，以及重複發送 warning 事件給前端。
         # 直接使用 content（外部已完成安全處理的版本）作為 safe_content。
         safe_content = content
 
-        # 取得對話歷史
-        messages = await self.get_messages(conversation_id)
-        
-        # 取得 tenant 和 folder
-        result = await self.db.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
+        prompt, context, sources, route = await self._prepare_prompt(
+            conversation_id, safe_content, use_rag, language
         )
-        conversation = result.scalar_one_or_none()
-        folder_name = conversation.settings.get("folderName") if conversation else None
-        tenant_id = conversation.tenant_id if conversation else "default"
-        
-        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
-        chat_history = [
-            {"role": m.role, "content": _clip_history(m.content)}
-            for m in messages[-settings.chat_history_messages:]
-        ]
-        
-        # 執行 LangGraph 路由（使用遮罩後的安全內容）
-        initial_state: AgentState = {
-            "conversation_id": conversation_id,
-            "tenant_id": tenant_id,
-            "folder_name": folder_name,
-            "use_rag": use_rag,
-            "query": safe_content,
-            "chat_history": chat_history,
-            "route": "",
-            "context": "",
-            "sources": []
-        }
-        
-        final_state = await self.agent_graph.ainvoke(initial_state)
-        
-        context = final_state.get("context", "")
-        sources = final_state.get("sources", [])
-        route = final_state.get("route", "chat")
-        
-        chat_history.append({"role": "user", "content": safe_content})
-        
-        if final_state.get("folder_name"):
-            system_prompt = self.STRICT_RAG_SYSTEM_PROMPT
-        else:
-            system_prompt = self.DEFAULT_SYSTEM_PROMPT
 
-        # 在系統提示末尾注入語言強制指令
-        # 強制語言比「使用使用者語言」更可靠，因大多數 LLM 容易忽略模糊指令
-        lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
-        system_prompt = f"{system_prompt}\n\n{lang_directive}"
-            
-        prompt = self.llm_service.build_chat_prompt(
-            messages=chat_history,
-            system_prompt=system_prompt,
-            context=context if context else None,
-        )
-        
         # ── C2: 先發送來源資訊 + RAG 除錯資料 ──────────────────────
         if sources:
             yield {
@@ -612,7 +579,7 @@ class ChatService:
                     "chunks_count": len(sources),
                 },
             }
-        
+
         # 串流生成回應
         full_response = ""
 
@@ -628,7 +595,7 @@ class ChatService:
                 "type": "stream",
                 "content": chunk,
             }
-        
+
         # 儲存助手訊息
         assistant_message = Message(
             conversation_id=conversation_id,
@@ -642,7 +609,7 @@ class ChatService:
         # B2: 對助手訊息蓋上 hash stamp
         await stamp_message(self.db, assistant_message, conversation_id)
         await self.db.commit()
-        
+
         # 依據實際 DB 訊息數量更新對話統計（resubmit 後新增數可能不是 +2）
         msg_count_result = await self.db.execute(
             select(func.count(Message.id)).where(Message.conversation_id == conversation_id)
@@ -661,35 +628,35 @@ class ChatService:
             "type": "done",
             "message_id": assistant_message.id,
         }
-    
+
     async def auto_title(self, conversation_id: str) -> str:
         """
         自動生成對話標題
-        
+
         Args:
             conversation_id: 對話 ID
-            
+
         Returns:
             str: 生成的標題
         """
         messages = await self.get_messages(conversation_id, limit=2)
-        
+
         if not messages:
             return "新對話"
-        
+
         # 使用第一則使用者訊息
         first_user_msg = next(
             (m for m in messages if m.role == MessageRole.USER.value),
             None
         )
-        
+
         if first_user_msg:
             # 簡單截取前 50 字元作為標題
             from app.services.pii_masking_service import mask_pii
             title = mask_pii(first_user_msg.content)["masked_text"][:50]
             if len(first_user_msg.content) > 50:
                 title += "..."
-            
+
             # 更新標題
             await self.db.execute(
                 update(Conversation)
@@ -697,7 +664,7 @@ class ChatService:
                 .values(title=title)
             )
             await self.db.commit()
-            
+
             return title
-        
+
         return "新對話"

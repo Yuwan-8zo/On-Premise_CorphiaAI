@@ -13,6 +13,7 @@ import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import MaterialIcon from '@/components/icons/MaterialIcon'
+import { copyText } from '@/lib/clipboard'
 
 SyntaxHighlighter.registerLanguage('tsx', tsx)
 SyntaxHighlighter.registerLanguage('typescript', typescript)
@@ -27,12 +28,9 @@ const CopyButton = ({ code }: { code: string }) => {
     const [copied, setCopied] = useState(false)
 
     const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(code)
+        if (await copyText(code)) {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
-        } catch (err) {
-            console.error('複製失敗:', err)
         }
     }
 
