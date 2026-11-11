@@ -2317,13 +2317,13 @@ html.dark {
   }
 }
 
-/* 聊天頁底部：手機直放照舊留出 Home 橫條的安全區；平板／橫放時底部間距＝外圈間距（--gutter），
-   安全區比外圈間距大時才多留差額，所以底下和左右看起來一樣寬 */
+/* 聊天頁底部：手機直放照舊留出 Home 橫條的安全區；平板／橫放時上下左右一律＝外圈間距（--gutter），
+   不再另外加安全區（橫條很細，落在這段空白裡，不會壓到輸入框） */
 .chat-shell {
   padding-bottom: env(safe-area-inset-bottom);
 }
 @media (min-width: 768px) {
   .chat-shell {
-    padding-bottom: max(0px, calc(env(safe-area-inset-bottom) - var(--gutter)));
+    padding-bottom: 0;
   }
 }
