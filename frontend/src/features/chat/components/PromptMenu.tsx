@@ -227,9 +227,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     {!query.trim() && (
                         <GlassSegmented
                             className="prompt-cats w-full shrink-0"
-                            pad={4}
-                            growLong={11.5}
-                            growCross={4.5}
+                            growLong="--lens-over-x"
+                            growCross="--lens-over-y"
                             tooltips
                             toolbar
                             value={cat}

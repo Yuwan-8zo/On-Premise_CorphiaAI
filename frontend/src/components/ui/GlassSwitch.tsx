@@ -1,8 +1,8 @@
 /**
  * GlassSwitch — 玻璃切換開關（《Liquid Glass 元件規範》：玻璃切換開關、CSS 32／35、JS 00）
  *
- * 尺寸（md＝規範原尺寸）：軌道 72×32、圓角 16；旋鈕 42×27、離邊 2.5；放大鏡 67×44（中心不動）
- *   sm＝0.75 倍（給窄的側欄小工具用）
+ * 尺寸讀 styles/tokens.css 的 --sw-*（預設：軌道 72×32、旋鈕 42×27、離邊 2.5、放大鏡 67×44，中心不動）
+ *   sm＝乘 --sw-sm 倍（預設 0.75，給窄的側欄小工具用）；圓角、凸出量、肩都由這些算
  * 狀態：開＝綠色軌道（#30D158）；關＝主要文字色 20%；變色 0.4 秒等速（鏡內鏡外、肩同一段）
  * 按住：白色旋鈕就是放大鏡最上面的一層，跟著長成 67×44 並淡掉，露出「凹進去」的放大鏡：
  *   軌道在鏡片底下挖洞；鏡內是縮小的整條軌道（寬 0.93、高 0.768）＋肩，同一個容器、同一個顏色；
@@ -11,10 +11,13 @@
  * 鍵盤：空白鍵／Enter（原生 button＋role="switch"）。時間表與共用工具在 lensKit.ts。
  */
 import { useEffect, useRef } from 'react'
+import { readNum, useCssPx } from '@/lib/cssVars'
 import { Loader2 } from '@/components/snow/icons'
 import { LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 
 type Size = 'sm' | 'md' | 'lg'
+
+const SW_VARS = ['--sw-w', '--sw-h', '--sw-knob-w', '--sw-knob-h', '--sw-pad', '--sw-lens-w', '--sw-lens-h'] as const
 
 export interface GlassSwitchProps {
     checked: boolean
@@ -27,9 +30,11 @@ export interface GlassSwitchProps {
 }
 
 export default function GlassSwitch({ checked, onChange, loading = false, disabled = false, size = 'md', className = '', 'aria-label': ariaLabel }: GlassSwitchProps) {
-    const s = size === 'sm' ? 0.75 : 1
-    const W = 72 * s, H = 32 * s
-    const kw = 42 * s, kh = 27 * s, inset = 2.5 * s
+    const px = useCssPx(SW_VARS)
+    const s = size === 'sm' ? readNum('--sw-sm') || 1 : 1
+    const W = px['--sw-w'] * s, H = px['--sw-h'] * s
+    const kw = px['--sw-knob-w'] * s, kh = px['--sw-knob-h'] * s, inset = px['--sw-pad'] * s
+    const lensW = px['--sw-lens-w'] * s, lensH = px['--sw-lens-h'] * s
     const xOff = inset + kw / 2, xOn = W - inset - kw / 2
     const isDisabled = disabled || loading
 
@@ -73,12 +78,12 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
     // ── 幾何 ──
     const f = lens.frame
     const cx = xOff + (xOn - xOff) * f.pos
-    const lw = kw + (67 - 42) * s * f.grow
-    const lh = kh + (44 - 27) * s * f.grow
+    const lw = kw + (lensW - kw) * f.grow
+    const lh = kh + (lensH - kh) * f.grow
     const L = cx - lw / 2
     const T = H / 2 - lh / 2
     const active = lensActive(f)
-    const half = 33.5 * s
+    const half = lensW / 2
     const shl = cx * LENS_SX > half ? 1 : 0
     const shr = (W - cx) * LENS_SX > half ? 1 : 0
     const sx = 1 - (1 - LENS_SX) * f.grow
@@ -115,7 +120,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
                                 className="lens-bar"
                                 style={{ left: -L, top: -T, width: W, height: H, borderRadius: H / 2, transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`, transform: `scale(${sx}, ${sy})` }}
                             />
-                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: shoulderMask(67 * s, 44 * s, 6 * s, H) /* 同一組公式：鏡片 67×44、比軌道凸出 6、軌道高 32 */ }}>
+                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: shoulderMask(lensW, lensH, (lensH - H) / 2, H) /* 同一組公式：鏡片、比軌道凸出（上下一樣）、軌道高 */ }}>
                                 <i className="l" style={{ opacity: shl }} />
                                 <i className="r" style={{ opacity: shr }} />
                             </span>

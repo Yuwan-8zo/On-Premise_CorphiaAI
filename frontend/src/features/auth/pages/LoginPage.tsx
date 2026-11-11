@@ -84,7 +84,7 @@ export default function Login() {
                     >
                         <GlassSegmented
                             className="shrink-0 h-[var(--sz-52)]"
-                            pad={5}
+                            pad="--seg-pad-lg"
                             value={form.tab}
                             onChange={form.setTab}
                             options={[

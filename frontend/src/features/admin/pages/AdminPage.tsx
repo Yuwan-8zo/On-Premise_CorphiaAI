@@ -125,7 +125,6 @@ export default function Admin() {
                         {/* 手機：分段切換 */}
                         <GlassSegmented
                             className="lg:hidden w-full h-[var(--sz-40)]"
-                            pad={4}
                             value={activeSection}
                             onChange={(v) => setActiveSection(v)}
                             options={TABS.map((tab) => ({ value: tab.id, label: t(tab.i18nKey) }))}
@@ -134,7 +133,7 @@ export default function Admin() {
                         <nav className="relative z-10 hidden lg:flex lg:flex-col gap-1 py-2 shrink-0 overflow-visible">
                             <GlassNav
                                 size="sm"
-                                gap={4}
+                                gap="--nav-gap-sm"
                                 aria-label={t('admin.title', '管理後台')}
                                 value={activeSection}
                                 onChange={(id) => setActiveSection(id)}

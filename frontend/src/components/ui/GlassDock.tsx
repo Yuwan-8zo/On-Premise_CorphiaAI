@@ -1,6 +1,7 @@
 /**
  * GlassDock — 玻璃選單鈕（《Liquid Glass 元件規範》：右下選單的邏輯；放在右上角，所以往下展開）
  *
+ * 尺寸全部讀 styles/tokens.css 的 --dock-*（以下數字是預設值）
  * 平常：只有一顆玻璃圓鈕（外殼 40、按鈕 36，配合頂部列高度）
  * 點一下：往下展開只有圖示的直列（列距 42），⋯ 變成 ×；再點一下、點外面或按 Esc 收合；滑鼠停留在左邊顯示名稱
  * 定點按住 0.32 秒、或按下後直接往下滑：列變寬成 79、圓角 33，每列 75×62 並顯示文字
@@ -9,7 +10,8 @@
  *   鏡內圖示與文字放大 1.12 倍並變強調色，鏡片底下原本的項目隱藏（不重影）
  * 放開：在項目上就執行該項目；在 × 上只關閉；選單立刻收合，放大鏡留在原地 0.3 秒淡出並縮到 0.95
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCssPx } from '@/lib/cssVars'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
@@ -28,18 +30,8 @@ interface Props {
     className?: string
 }
 
-// 尺寸（窄：配合頂部列；寬：照規範）
-const SHELL_N = 40, BTN_N = 36, GAP_N = 6
-const SHELL_W = 79, ROW_W = 75, ROW_H = 62
-const PAD = 2
-// 放大鏡＝圓角方形（寬高接近 1：1，四邊留直線段），跟選單外殼同心：圓角＝外殼圓角 33＋凸出 7＝40
-const LENS_W = 93, LENS_H = 95
-const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（左右 7；上下也用 7，同心）
-const R_WIDE = 33
-const LENS_R = R_WIDE + (LENS_W - SHELL_W) / 2 // 40：與外殼同心
-// 肩的遮罩（長邊＝鏡片高、短邊＝鏡片寬；鏡片比選單凸出 7；選單寬 79）
-const DOCK_WALL = shoulderMask(LENS_H, LENS_W, (LENS_W - SHELL_W) / 2, SHELL_W, true, LENS_R)
-const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右各外擴 13，右上角圓弧和圓鈕同一個圓心
+// 尺寸都在 styles/tokens.css 的 --dock-*（不寫死）；凸出量、同心圓角、外擴量由它們算
+const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h'] as const
 const LONG_PRESS_MS = LENS_CFG.pressWait
 
 export default function GlassDock({ items, className = '', 'aria-label': ariaLabel = '選單' }: Props) {
@@ -52,6 +44,18 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     const target = useRef(0)
     const cur = useRef(0)
     const raf = useRef(0)
+
+    // 尺寸（窄：配合頂部列；寬：照規範）
+    const px = useCssPx(DOCK_VARS)
+    const SHELL_N = px['--dock-n'], BTN_N = px['--dock-btn'], GAP_N = px['--dock-gap'], PAD = px['--dock-pad']
+    const SHELL_W = px['--dock-w'], R_WIDE = px['--dock-r'], ROW_W = px['--dock-row-w'], ROW_H = px['--dock-row-h']
+    // 放大鏡＝圓角方形（寬高接近 1：1，四邊留直線段）
+    const LENS_W = px['--dock-lens-w'], LENS_H = px['--dock-lens-h']
+    const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（四邊一樣，同心）
+    const LENS_R = R_WIDE + LENS_OUT // 同心：外殼圓角＋凸出量
+    const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右外擴，右上角圓弧和圓鈕同一個圓心
+    // 肩的遮罩（長邊＝鏡片高、短邊＝鏡片寬）
+    const DOCK_WALL = useMemo(() => shoulderMask(LENS_H, LENS_W, LENS_OUT, SHELL_W, true, LENS_R), [LENS_H, LENS_W, LENS_OUT, SHELL_W, LENS_R])
 
     // 列：第 0 列＝選單鈕（⋯／×），後面是項目
     const rows = items.length + 1
@@ -79,7 +83,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
 
     // 放大鏡跟手：每幀追上 30%
     const loop = () => {
-        cur.current += (target.current - cur.current) * (reduceMotion() ? 1 : 0.3)
+        cur.current += (target.current - cur.current) * (reduceMotion() ? 1 : LENS_CFG.follow)
         setLensY(cur.current)
         raf.current = Math.abs(target.current - cur.current) > 0.3 ? requestAnimationFrame(loop) : 0
         if (!raf.current) setLensY(target.current)
@@ -116,7 +120,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     const onPointerMove = (e: React.PointerEvent) => {
         const p = press.current
         if (!p || p.id !== e.pointerId) return
-        if (!p.wideNow && Math.abs(e.clientY - p.y0) > 6) {
+        if (!p.wideNow && Math.abs(e.clientY - p.y0) > LENS_CFG.slop) {
             // 直接滑動：立刻展開有文字的選單
             clearTimeout(p.timer); p.wideNow = true; enterWide(e.clientY)
             return
@@ -191,7 +195,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                     height: shellH,
                     borderRadius: wide ? R_WIDE : SHELL_N / 2,
                     transform: `translate(${shellX}px, ${shellY}px)`, // 同心放大：右上角圓弧和圓鈕同一個圓心
-                    ['--R' as string]: `${wide ? 33 : SHELL_N / 2}px`,
+                    ['--R' as string]: `${wide ? R_WIDE : SHELL_N / 2}px`,
                     ...hole,
                 }}
                 onPointerDown={onPointerDown}

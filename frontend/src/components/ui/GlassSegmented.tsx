@@ -12,6 +12,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Tooltip from './Tooltip'
+import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
@@ -26,15 +27,15 @@ interface Props<T extends string> {
     value: T
     onChange: (value: T) => void
     className?: string
-    /** 軌道內距（px），規範 4 */
-    pad?: number
+    /** 軌道內距：像素或設定名稱（預設 --seg-pad＝4） */
+    pad?: PxOrVar
     /** 直的軌道 */
     vertical?: boolean
     /** 放大鏡沿長邊、垂直長邊各加多少（px）；分段切換器 8／8，浮動工具列（只有圖示）11.5／4.5 */
-    growLong?: number
-    growCross?: number
+    growLong?: PxOrVar
+    growCross?: PxOrVar
     /** 格子之間的空隙（沿長邊，px）；右下選單規格：按鈕 46、列距 53 → 空隙 7 */
-    gap?: number
+    gap?: PxOrVar
     /** 純圖示的工具列：滑過每格顯示 name 的提示泡泡 */
     tooltips?: boolean
     /** 浮動工具列：整條高 52、只有圖示；按住 0.32 秒或直接左右滑，等放大鏡長大後，鏡內那一格的圖示下方才淡入 name（其他格不顯示），放開立刻收回 */
@@ -42,7 +43,11 @@ interface Props<T extends string> {
     'data-tour'?: string
 }
 
-export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad = 4, vertical = false, growLong = 8, growCross = 8, gap = 0, tooltips = false, toolbar = false, ...rest }: Props<T>) {
+export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad: padIn = '--seg-pad', vertical = false, growLong: growLongIn = '--lens-over', growCross: growCrossIn = '--lens-over', gap: gapIn = 0, tooltips = false, toolbar = false, ...rest }: Props<T>) {
+    // 尺寸參數可以給像素或設定名稱（預設讀 tokens.css 的 --seg-pad、--lens-over），不寫死
+    const sizeIn = [padIn, growLongIn, growCrossIn, gapIn]
+    const px = useCssPx(sizeIn.filter((v): v is `--${string}` => typeof v === 'string'))
+    const [pad, growLong, growCross, gap] = sizeIn.map((v) => (typeof v === 'string' ? px[v] : v))
     const trackRef = useRef<HTMLDivElement | null>(null)
     const [size, setSize] = useState({ w: 0, h: 0 })
     const n = options.length
@@ -97,7 +102,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
     const onPointerMove = (e: React.PointerEvent) => {
         const d = drag.current
         if (!d || d.id !== e.pointerId) return
-        if (!d.moved && Math.abs(coord(e) - d.s) < 6) return
+        if (!d.moved && Math.abs(coord(e) - d.s) < LENS_CFG.slop) return
         d.moved = true
         if (toolbar) { window.clearTimeout(wideTimer.current); setWide(true) }
         lens.follow(posFrom(coord(e)))

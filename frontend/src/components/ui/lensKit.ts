@@ -33,6 +33,7 @@ export const LENS_CFG = {
     lBase: 156, lK: 0.586, lMax: 330, lAt: 0.64, lShrink: 180, // 分頁列（長行程）
     lead: 30, // --glide-lead 滑行的時間從按下之前多久算起
     pressWait: 320, // --lens-press-wait 定點按住多久算長按
+    slop: 6, // 手指移動超過這個（px）才算滑動、不是定點按住
     leave: 300, // 放開後放大鏡原地淡出
 } as const
 

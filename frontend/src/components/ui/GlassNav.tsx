@@ -12,7 +12,8 @@
  * 項目樣式用 snow.css 的 .nav-item（小尺寸加 .nav-item-sm）。
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { LENS_MAG, capsuleHole, lensActive, useLensMotion } from './lensKit'
+import { LENS_CFG, LENS_MAG, capsuleHole, lensActive, useLensMotion } from './lensKit'
+import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 
 export interface GlassNavItem<T extends string> {
     id: T
@@ -25,18 +26,21 @@ interface Props<T extends string> {
     value: T
     /** 點一下就會呼叫（即使點的是目前項目，方便手機版切到內容頁） */
     onChange: (id: T) => void
-    /** 項目之間的間距（px） */
-    gap?: number
+    /** 項目之間的間距：像素或設定名稱（預設 --nav-gap） */
+    gap?: PxOrVar
     size?: 'md' | 'sm'
     className?: string
     'aria-label'?: string
 }
 
-const GROW_PX = 8
 
 type Box = { top: number; h: number }
 
-export default function GlassNav<T extends string>({ items, value, onChange, gap = 6, size = 'md', className = '', 'aria-label': ariaLabel }: Props<T>) {
+export default function GlassNav<T extends string>({ items, value, onChange, gap: gapIn = '--nav-gap', size = 'md', className = '', 'aria-label': ariaLabel }: Props<T>) {
+    // 尺寸讀設定：項目間距、放大鏡比列多出去的量（--lens-over）
+    const px = useCssPx(typeof gapIn === 'string' ? [gapIn, '--lens-over'] : ['--lens-over'])
+    const gap = typeof gapIn === 'string' ? px[gapIn] : gapIn
+    const GROW_PX = px['--lens-over']
     const listRef = useRef<HTMLDivElement | null>(null)
     const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
     const [geo, setGeo] = useState<{ w: number; boxes: Box[] }>({ w: 0, boxes: [] })
@@ -99,7 +103,7 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     const onPointerMove = (e: React.PointerEvent) => {
         const d = drag.current
         if (!d || d.id !== e.pointerId) return
-        if (!d.moved && Math.abs(e.clientY - d.sy) < 6) return
+        if (!d.moved && Math.abs(e.clientY - d.sy) < LENS_CFG.slop) return
         d.moved = true
         lens.follow(posFromY(e.clientY))
     }

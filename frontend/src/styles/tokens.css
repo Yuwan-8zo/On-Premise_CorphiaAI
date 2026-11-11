@@ -207,4 +207,32 @@
   --blur-12: calc(12 * var(--ui-unit));
   --blur-20: calc(20 * var(--ui-unit));
   --blur-24: calc(24 * var(--ui-unit));
+
+  /* 元件尺寸：放大鏡相關元件（程式用 useCssPx 讀出實際像素；同心、凸出量等由這些算出來，不另外寫） */
+  --dock-n: calc(40 * var(--ui-unit));        /* 右上選單：收合時的外殼 */
+  --dock-btn: calc(36 * var(--ui-unit));      /* 收合時每顆按鈕 */
+  --dock-gap: calc(6 * var(--ui-unit));       /* 收合時按鈕之間 */
+  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距 */
+  --dock-w: calc(79 * var(--ui-unit));        /* 長按展開時的外殼寬 */
+  --dock-r: calc(33 * var(--ui-unit));        /* 長按展開時的外殼圓角 */
+  --dock-row-w: calc(75 * var(--ui-unit));    /* 長按展開時每列 */
+  --dock-row-h: calc(62 * var(--ui-unit));
+  --dock-lens-w: calc(93 * var(--ui-unit));   /* 放大鏡；圓角＝外殼圓角＋凸出量（同心），由程式算 */
+  --dock-lens-h: calc(95 * var(--ui-unit));
+  --sw-w: calc(72 * var(--ui-unit));          /* 切換開關：軌道 */
+  --sw-h: calc(32 * var(--ui-unit));
+  --sw-knob-w: calc(42 * var(--ui-unit));     /* 旋鈕 */
+  --sw-knob-h: calc(27 * var(--ui-unit));
+  --sw-pad: calc(2.5 * var(--ui-unit));       /* 旋鈕離軌道邊 */
+  --sw-lens-w: calc(67 * var(--ui-unit));     /* 按住時的放大鏡 */
+  --sw-lens-h: calc(44 * var(--ui-unit));
+  --sw-sm: 0.75;                              /* 小尺寸開關＝以上全部乘這個倍數 */
+  --seg-pad: calc(4 * var(--ui-unit));        /* 分段切換器：軌道內距 */
+  --seg-pad-lg: calc(5 * var(--ui-unit));
+  --seg-pad-xs: calc(2 * var(--ui-unit));
+  --lens-over: calc(8 * var(--ui-unit));      /* 放大鏡比格子多出去（分段切換器，四邊一樣） */
+  --lens-over-x: calc(11.5 * var(--ui-unit)); /* 工具列：沿長邊 */
+  --lens-over-y: calc(4.5 * var(--ui-unit));  /* 工具列：垂直長邊 */
+  --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
+  --nav-gap-sm: calc(4 * var(--ui-unit));
 }
