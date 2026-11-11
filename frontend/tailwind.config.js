@@ -5,6 +5,18 @@ export default {
     content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
     darkMode: 'class',
     theme: {
+        /*
+         * 斷點：lg（寬螢幕＝左右兩欄）不只看寬度，也看版面形狀——
+         *   寬 1024 以上；或橫放、寬 768 以上、高 500 以上（iPhone Duo、iPad 橫放：寬約 1000 也該用寬版）。
+         *   一般手機橫放高度只有 400 左右，仍用直版。其餘斷點維持 Tailwind 預設。
+         */
+        screens: {
+            sm: '640px',
+            md: '768px',
+            lg: { raw: '(min-width: 1024px), (orientation: landscape) and (min-width: 768px) and (min-height: 500px)' },
+            xl: '1280px',
+            '2xl': '1536px',
+        },
         extend: {
             colors: tokens.palette,
             fontFamily: {
