@@ -43,7 +43,7 @@ export default function Chat() {
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
         // 與 LoginPage / Admin 同款：bg-bg-base + 三條弧線 SVG，sidebar / main 玻璃化
         <div
-            className="edge-shell chat-shell flex fixed inset-0 w-full h-[100dvh] bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent relative transition-colors"
+            className="edge-shell chat-shell flex fixed inset-0 bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent transition-colors"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
             {/* 背景弧線 SVG —— 跟登入/Admin 同款 */}

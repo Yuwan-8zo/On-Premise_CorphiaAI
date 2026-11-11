@@ -243,6 +243,8 @@
   /* 同心原則（規範「間距與圓角」）：貼著螢幕邊的元件圓角＝螢幕圓角 − 離螢幕邊的距離
      → 55 − 14 ＝ 41：左側收合欄、平板以上的輸入框（膠囊，高＝2 × 41） */
   --screen-n: 55;
+  /* iPhone Duo 加入主畫面（全螢幕）時，右上角的狀態列（時間、電量、Wi-Fi）從右邊算起佔的寬度（實機截圖量測） */
+  --duo-status: calc(73 * var(--ui-unit));
   --edge-n: calc(var(--screen-n) - var(--gutter-n));
   --edge-r: calc(var(--edge-n) * var(--ui-unit));
 

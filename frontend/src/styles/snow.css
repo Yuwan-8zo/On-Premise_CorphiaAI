@@ -2329,14 +2329,32 @@ html.dark {
   }
 }
 
-/* 整頁外框（聊天頁、管理後台共用）：手機直放照舊留出 Home 橫條的安全區；
-   平板／橫放時上下左右一律只用頁面自己的外圈間距，不再另外加安全區（橫條很細，落在這段空白裡） */
+/* 整頁外框（聊天頁、管理後台共用）：照舊留出 Home 橫條的安全區 */
 .edge-shell {
   padding-bottom: env(safe-area-inset-bottom);
 }
-@media (min-width: 768px) {
+
+/* ===== iPhone Duo 專用（只有它會符合）：觸控、橫拿、寬 ≥ 768、高 < 600 =====
+   一般手機橫拿寬度不到 768；iPad、電腦高度都超過 600，所以電腦版、平板維持原本設計。
+   同心原則：外圈間距 --gutter，貼邊元件圓角 --edge-r＝螢幕圓角 55 − 間距 */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-width: 768px) and (max-height: 599.98px) {
+  /* 上下左右只用外圈間距，不另加安全區（橫條很細，落在這段空白裡） */
   .edge-shell {
     padding-bottom: 0;
+  }
+  /* 左側收合欄：離上、下、左都是外圈間距，圓角與螢幕同心 */
+  .chat-shell .chat-side {
+    height: calc(100% - 2 * var(--gutter));
+    margin: var(--gutter) 0 var(--gutter) var(--gutter);
+    border-radius: var(--edge-r);
+  }
+  /* 輸入框外層：左右、下方＝外圈間距（側欄到輸入框也因此是同一個間距）；頂部列右邊同樣 */
+  .chat-shell .chat-input-wrap {
+    padding-inline: var(--gutter);
+    padding-bottom: var(--gutter);
+  }
+  .chat-shell .chat-head {
+    padding-right: var(--gutter);
   }
   /* 輸入框：膠囊圓角和左側收合欄一樣（高＝2 × --edge-n）；內距、按鈕、圖示照同一個比例放大，按鈕置中所以和外框同心 */
   .chat-shell {
@@ -2347,5 +2365,16 @@ html.dark {
     --msg-inset: calc(var(--gutter) + var(--field-pad));
     padding-inline: var(--msg-inset);
     max-width: calc(48rem + 2 * var(--gutter)); /* 和輸入框外層同寬（48rem＋左右外圈），所以文字左右剛好對齊輸入框裡的按鈕 */
+  }
+}
+
+/* iPhone Duo 加入主畫面（全螢幕、沒有瀏覽器網址列）：右上角直接蓋著狀態列，
+   右上的按鈕往左讓出狀態列的寬度（--duo-status），再留一個外圈間距 */
+@media (display-mode: standalone) and (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-width: 768px) and (max-height: 599.98px) {
+  .chat-shell .chat-head {
+    padding-right: calc(var(--duo-status) + var(--gutter));
+  }
+  .admin-head {
+    padding-right: var(--duo-status); /* 後台外層已有一圈間距，這裡只補狀態列寬度，讓按鈕到狀態列的距離＝外圈間距 */
   }
 }

@@ -92,7 +92,7 @@ export default function ChatInputArea({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.3, ease:"easeOut" }}
-                className="shrink-0 pt-2 pb-4 md:pb-[var(--gutter)] md:px-[var(--gutter)] w-full z-20"
+                className="chat-input-wrap shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
                 {!llmReady && (
                     <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--sys-orange)] dark:text-[var(--sys-orange)] mb-2">
@@ -165,7 +165,7 @@ export default function ChatInputArea({
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
-                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-1.4em)/2)] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
+                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
                                     style={{ lineHeight: '1.4' }}
                                 />
 
