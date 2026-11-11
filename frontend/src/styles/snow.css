@@ -2165,3 +2165,85 @@ html.dark {
 .glass-nav .lens.is-active {
   background: none;
 }
+
+/* 區域網路 QR code（全螢幕給手機掃描）：深色遮罩＋模糊；QR 永遠白底深點才掃得到；進場從 0.95 開始 */
+.lan-qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  animation: lanQrIn 0.26s var(--ease-out) both;
+}
+@keyframes lanQrIn {
+  from {
+    transform: scale(0.95);
+  }
+}
+.lan-qr-close {
+  position: absolute !important;
+  top: 24px;
+  right: 24px;
+  color: #fff;
+}
+.lan-qr-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  color: #fff;
+  text-align: center;
+}
+.lan-qr-title {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+.lan-qr-sub {
+  font-size: 15px;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.lan-qr-code {
+  width: min(78vw, 62vh, 520px);
+  aspect-ratio: 1;
+  margin-top: 8px;
+}
+.lan-qr-code svg {
+  display: block;
+}
+.lan-qr-url {
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+.lan-qr-ips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.lan-qr-ip {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  font-variant-numeric: tabular-nums;
+}
+.lan-qr-ip.is-current {
+  background: rgb(var(--accent));
+}
+@media (prefers-reduced-motion: reduce) {
+  .lan-qr-overlay {
+    animation: none;
+  }
+}

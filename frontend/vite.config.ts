@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import lanGate from './vite-plugins/lanGate'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-    plugins: [react()],
+    // lanGate：區域網路開關即時生效（讀專案根目錄的 .runtime/lan.json）
+    plugins: [react(), lanGate(path.resolve(__dirname, '../.runtime'))],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
@@ -48,6 +50,8 @@ export default defineConfig(({ mode }) => ({
     esbuild: mode === 'production' ? { drop: ['console', 'debugger'] } : {},
     server: {
         port: 5173,
+        // 一律聽所有網路介面；要不要讓區網裝置進來，由 lanGate 依開關即時決定
+        host: '0.0.0.0',
         allowedHosts: true,
         hmr: {
             overlay: false,

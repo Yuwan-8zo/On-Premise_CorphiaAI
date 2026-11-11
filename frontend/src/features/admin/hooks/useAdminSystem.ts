@@ -71,7 +71,7 @@ export function useAdminModels() {
     return { models, modelsDir, isLoadingModels, currentModel, loadModels, onRefreshModels, onSelectModel }
 }
 
-/** 區域網路開關（切換後要重新啟動系統才會生效） */
+/** 區域網路開關（切換立即生效） */
 export function useLanStatus() {
     const { t } = useTranslation()
     const [enabled, setEnabled] = useState(false)
@@ -95,7 +95,9 @@ export function useLanStatus() {
         setIsLoading(true)
         try {
             apply(await systemApi.toggleLan(next))
-            useToastStore.getState().info(t('admin.lan.restartHint', '已更新區域網路設定。請重啟 start.py（或重啟後端/前端）後才會生效。'))
+            useToastStore.getState().info(next
+                ? t('admin.lan.onHint', '已開啟區域網路，同一個網路的手機可以掃 QR code 連線')
+                : t('admin.lan.offHint', '已關閉區域網路，現在只有這台電腦可以使用'))
         } catch (err) {
             console.error('Failed to toggle LAN:', err)
             useToastStore.getState().error(getErrorMessage(err))

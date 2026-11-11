@@ -54,10 +54,6 @@ def _write_lan_enabled(enabled: bool) -> None:
     _lan_runtime_path().write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _bind_host(enabled: bool) -> str:
-    return "0.0.0.0" if enabled else "127.0.0.1"
-
-
 def _detect_lan_ips() -> list[str]:
     ips: set[str] = set()
     try:
@@ -78,7 +74,15 @@ def _detect_lan_ips() -> list[str]:
     except Exception:
         pass
 
-    return sorted(ips)
+    # 排序：家用／公司網段（192.168、10）在前，虛擬網卡常用的 172.16–31（WSL、Hyper-V）放後面
+    def _rank(ip: str) -> tuple[int, str]:
+        if ip.startswith("192.168."):
+            return (0, ip)
+        if ip.startswith("10."):
+            return (1, ip)
+        return (2, ip)
+
+    return sorted(ips, key=_rank)
 
 
 class LanToggleRequest(BaseModel):
@@ -262,19 +266,15 @@ async def network_status(
 async def get_lan_status(
     _ = RequireAdmin,
 ):
-    enabled = _read_lan_enabled()
-    host = _bind_host(enabled)
-    ips = _detect_lan_ips()
+    # 切換立即生效：前端伺服器（frontend/vite-plugins/lanGate.ts）每個請求都讀 lan.json 決定放不放行
     return {
-        "enabled": enabled,
-        "bind_host": host,
-        "lan_ips": ips,
-        # 注意：切換需要重啟 start.py / 服務才會生效
-        "requires_restart": True,
+        "enabled": _read_lan_enabled(),
+        "lan_ips": _detect_lan_ips(),
+        "requires_restart": False,
     }
 
 
-@router.post("/lan/toggle", summary="設定區域網路 (LAN) 開關（需重啟生效）")
+@router.post("/lan/toggle", summary="設定區域網路 (LAN) 開關（立即生效）")
 async def toggle_lan(
     body: LanToggleRequest,
     current_user: User = Depends(get_current_user),
@@ -286,9 +286,8 @@ async def toggle_lan(
     logger.info("[lan][admin=%s] set lan_enabled=%s", current_user.email, body.enabled)
     return {
         "enabled": bool(body.enabled),
-        "bind_host": _bind_host(bool(body.enabled)),
         "lan_ips": _detect_lan_ips(),
-        "requires_restart": True,
+        "requires_restart": False,
     }
 
 

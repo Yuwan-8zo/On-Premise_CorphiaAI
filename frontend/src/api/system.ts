@@ -15,7 +15,6 @@ function unwrapEnvelope<T = unknown>(body: unknown): T {
 
 export interface LanStatus {
     enabled: boolean
-    bind_host: string
     lan_ips: string[]
     requires_restart: boolean
 }
@@ -44,7 +43,7 @@ export const systemApi = {
     },
 
     /**
-     * 切換區域網路 (LAN) 開關（需重啟 start.py 才會生效）
+     * 切換區域網路 (LAN) 開關（立即生效）
      */
     toggleLan: async (enabled: boolean): Promise<LanStatus> => {
         const response = await apiClient.post<LanStatus>('/system/lan/toggle', { enabled })

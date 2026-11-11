@@ -89,12 +89,16 @@ export const useChatStore = create<ChatState>()((set) => ({
         })),
 
     // 刪除對話
+    // 刪除對話：刪的是目前這則時，連訊息一起清空 → 畫面回到首頁
     deleteConversation: (id) =>
-        set((state) => ({
-            conversations: state.conversations.filter((c) => c.id !== id),
-            currentConversation:
-                state.currentConversation?.id === id ? null : state.currentConversation,
-        })),
+        set((state) => {
+            const isCurrent = state.currentConversation?.id === id
+            return {
+                conversations: state.conversations.filter((c) => c.id !== id),
+                currentConversation: isCurrent ? null : state.currentConversation,
+                messages: isCurrent ? [] : state.messages,
+            }
+        }),
 
     // 設定當前對話
     setCurrentConversation: (conversation) =>

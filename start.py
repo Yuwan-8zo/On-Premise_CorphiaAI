@@ -49,12 +49,13 @@ LAN_RUNTIME_PATH = RUNTIME_DIR / "lan.json"
 
 def read_lan_enabled() -> bool:
     """
-    區域網路 (LAN) 開關：
-    - False: 只綁定 127.0.0.1（本機可用）
-    - True:  綁定 0.0.0.0（允許區網其他設備存取）
+    區域網路 (LAN) 開關（只用來顯示目前狀態）：
+    - False: 只允許本機
+    - True:  允許區網其他裝置
 
     寫入來源：管理後台的「區域網路開關」會更新 .runtime/lan.json。
-    生效時機：需要重啟 start.py（因為是 listener bind host）。
+    生效時機：立即。前端伺服器一律聽 0.0.0.0，由 frontend/vite-plugins/lanGate.ts 每個請求讀 lan.json 決定放不放行；
+    後端固定只聽 127.0.0.1，區網裝置經由前端伺服器轉送。
     """
     try:
         if not LAN_RUNTIME_PATH.exists():
@@ -66,8 +67,9 @@ def read_lan_enabled() -> bool:
         return False
 
 
-def bind_host() -> str:
-    return "0.0.0.0" if read_lan_enabled() else "127.0.0.1"
+# 後端只給本機（前端伺服器轉送 /api、/ws）；前端伺服器聽所有介面，區網放不放行由 lanGate 即時決定
+BACKEND_HOST = "127.0.0.1"
+FRONTEND_HOST = "0.0.0.0"
 
 
 def info(message: str = "") -> None:
@@ -618,7 +620,7 @@ def find_model_file(choice: str) -> Path | None:
 def start_backend(python_exe: Path) -> None:
     kill_port(BACKEND_PORT)
     log = open_log("backend.log")
-    host = bind_host()
+    host = BACKEND_HOST
     cmd = [
         str(python_exe),
         "-m",
@@ -665,8 +667,7 @@ def start_frontend() -> None:
         raise RuntimeError("npm was not found. Please install Node.js first.")
 
     log = open_log("frontend.log")
-    host = bind_host()
-    cmd = [npm, "run", "dev", "--", "--host", host, "--logLevel", "silent"]
+    cmd = [npm, "run", "dev", "--", "--host", FRONTEND_HOST, "--logLevel", "silent"]
     process = subprocess.Popen(cmd, cwd=str(FRONTEND_DIR), stdout=log, stderr=subprocess.STDOUT)
     PROCESSES.append(process)
     ok(f"Frontend started on http://localhost:{FRONTEND_PORT} (PID {process.pid})")
@@ -719,7 +720,7 @@ def print_summary(ngrok_url: str | None = None) -> None:
     info(f"API docs: http://localhost:{BACKEND_PORT}/docs")
     info(f"DB:       localhost:{database_port()} (Docker PostgreSQL + pgvector)")
     # LAN mode: allow access from other devices on same network when enabled.
-    info(f"LAN:      {'enabled (0.0.0.0)' if read_lan_enabled() else 'disabled (127.0.0.1)'}")
+    info(f"LAN:      {'enabled' if read_lan_enabled() else 'disabled (this computer only)'} — switch it any time in the admin page, no restart needed")
     info("")
     info("Logs:")
     info(f"Backend:  {RUNTIME_DIR / 'backend.log'}")

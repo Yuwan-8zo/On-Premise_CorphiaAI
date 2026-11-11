@@ -197,11 +197,7 @@ export function useChatLogic() {
     /** 刪除一則對話（本機的暫時對話不用呼叫後端） */
     const removeConversation = async (id: string) => {
         if (!id.startsWith('temp-')) await conversationsApi.delete(id)
-        deleteConversation(id)
-        if (useChatStore.getState().currentConversation?.id === id) {
-            setCurrentConversation(null)
-            setMessages([])
-        }
+        deleteConversation(id) // 刪的是目前這則時，store 會一併清空訊息、回到首頁
     }
 
     const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
