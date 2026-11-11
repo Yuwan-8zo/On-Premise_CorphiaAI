@@ -36,7 +36,6 @@ import { Skel } from '@/components/ui/Skeleton'
 import { adminApi } from '@/api/admin'
 import type { AuditLogItem } from '@/api/auditLogs'
 import { usePolling } from '@/features/admin/hooks/usePolling'
-import { useFitToHost } from '@/features/admin/hooks/useFitToHost'
 import {
     Panel,
     SectionHeader,
@@ -77,8 +76,6 @@ export default function OverviewSection({
     auditLogs: auditLogsOrNull,
 }: OverviewSectionProps) {
     const { t } = useTranslation()
-    // 折疊手機橫拿（fold-wide）時，總覽縮放到剛好一個畫面、不捲動
-    const fitRef = useFitToHost<HTMLDivElement>('fold-wide')
     const auditLoading = auditLogsOrNull === null
     const auditLogs = useMemo(() => auditLogsOrNull ?? [], [auditLogsOrNull])
 
@@ -153,7 +150,7 @@ export default function OverviewSection({
     return (
         // 手機板：用自然高度逐區堆疊，外層 AdminPage 會處理垂直滾動。
         // 桌機板（lg+）：回到「滿視窗 dashboard」3-row 設計，圖表自動填滿剩餘空間。
-        <div ref={fitRef} className="admin-overview grid gap-[var(--space)] lg:h-full lg:grid-rows-[auto_minmax(min-content,1fr)_minmax(min-content,1fr)]">
+        <div className="admin-overview grid gap-[var(--space)] lg:h-full lg:grid-rows-[auto_minmax(min-content,1fr)_minmax(min-content,1fr)]">
             {/* ─────────────────────────────────────────────────────────────
               Row 1 · KPI strip（6 張小卡，shrink-0）
               斷點降到 lg 是因為使用者實際 CSS 寬度大概在 1100px（高 DPR），

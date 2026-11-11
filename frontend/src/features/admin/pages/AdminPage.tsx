@@ -21,6 +21,7 @@ import { useAdminModels, useAdminStats, useLanStatus } from '../hooks/useAdminSy
 import { useAdminTenants } from '../hooks/useAdminTenants'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
+import { useFitToHost } from '../hooks/useFitToHost'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
@@ -42,6 +43,8 @@ const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} cla
 
 export default function Admin() {
     const { t } = useTranslation()
+    // 寬版時整頁縮放到剛好一個畫面，不捲動、不被裁
+    const fitRef = useFitToHost<HTMLDivElement>()
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
@@ -84,7 +87,8 @@ export default function Admin() {
                 <WaveBackground />
             </div>
             {/* 間距統一 12px（外圍四邊＝標題列到內容＝卡片之間）；根字級比 16 小，一律用 px */}
-            <div className="relative z-10 mx-auto flex h-full max-w-[var(--sz-1500)] flex-col p-[var(--space)]">
+            {/* 寬版（lg）時整頁縮放到剛好一個畫面（useFitToHost）；手機上下堆疊的版面照常捲動 */}
+            <div ref={fitRef} className="admin-fit relative z-10 mx-auto flex h-full max-w-[var(--sz-1500)] flex-col p-[var(--space)] lg:[--fit-on:1]">
                 {/* 頂端：返回、標題、連線狀態、目前使用者 */}
                 <header className="admin-head mb-[var(--space)] flex shrink-0 items-center gap-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -110,7 +114,7 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
+                    <aside data-fit-check className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
@@ -151,7 +155,7 @@ export default function Admin() {
                     </aside>
 
                     {/* 內容區：總覽是不捲動的滿版儀表板，其他分頁靠這層捲動 */}
-                    <div key={activeSection} className="admin-page-enter flex-1 min-h-0 min-w-0 overflow-y-auto scrollbar-none lg:h-full lg:flex-none">
+                    <div key={activeSection} data-fit-check className="admin-page-enter flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none lg:h-full lg:flex-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} />
