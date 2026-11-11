@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { LENS_MAG, reduceMotion, roundRectHole, sideBandMask } from './lensKit'
+import { LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, sideBandMask } from './lensKit'
 
 export interface DockItem {
     id: string
@@ -150,6 +150,10 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     // 規範：選單的玻璃（模糊、底色、光邊）和鏡片底下的項目，在鏡片位置整個挖掉，改由鏡片自己做一整片模糊
     const lensOn = wide && lensY !== null
     const hole = lensOn ? roundRectHole(lensL, lensT, LENS_W, LENS_H, LENS_R) : undefined
+    // 肩：鏡內縮小的選單（縱向 0.93）在那一側延伸到鏡片外才接上；移到最上／最下一格時那一側淡掉，底面順著選單的圓頭彎過去
+    const lensCY = lensT + LENS_H / 2
+    const shTop = lensCY * LENS_SX > LENS_H / 2 ? 1 : 0
+    const shBottom = (wideH - lensCY) * LENS_SX > LENS_H / 2 ? 1 : 0
 
     const rowContent = (i: number, ghost: boolean) => {
         const isBtn = i === 0
@@ -230,10 +234,19 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                     className="lens is-active is-v dock-lens"
                     style={{ left: shellX + lensL, top: shellY + lensT, width: LENS_W, height: LENS_H, borderRadius: LENS_R }}
                 >
-                    {/* 凹陷：跟一般／專案（側欄收合的直向分段）同一套——鏡內整片＝選單同色，
-                        左右挖兩條上下圓頭的底面（寬＝鏡片寬減去縮成 0.768 倍的選單寬，除以 2），直接透出後面 */}
-                    <span className="lens-ink" style={DOCK_BANDS}>
-                        <span className="lens-bar" style={{ inset: 0 }} />
+                    {/* 凹陷：跟一般／專案同一套——縮小的選單（橫向 0.768、縱向 0.93）＋肩（鏡內整片挖掉左右兩條底面），
+                        肩分上下兩半，最上／最下一格時那一半淡掉，露出選單的圓頭 */}
+                    <span className="lens-ink">
+                        <span
+                            className="lens-bar"
+                            style={{
+                                left: -lensL, top: -lensT, width: shellW, height: wideH, borderRadius: R_WIDE,
+                                transformOrigin: `${lensL + LENS_W / 2}px ${lensT + LENS_H / 2}px`,
+                                transform: `scale(${LENS_SY}, ${LENS_SX})`,
+                            }}
+                        />
+                        <span className="lens-bar lens-shoulder" style={{ inset: 0, ...DOCK_BANDS, clipPath: 'inset(0 0 50% 0)', opacity: shTop }} />
+                        <span className="lens-bar lens-shoulder" style={{ inset: 0, ...DOCK_BANDS, clipPath: 'inset(50% 0 0 0)', opacity: shBottom }} />
                     </span>
                     <div
                         className="absolute left-0 top-0 flex flex-col"

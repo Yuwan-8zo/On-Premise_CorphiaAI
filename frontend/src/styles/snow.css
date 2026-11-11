@@ -997,6 +997,10 @@ html.dark {
 .lens-wall > i.r {
   clip-path: inset(0 0 0 50%);
 }
+/* 肩的一半：移到最邊的格子時淡掉，露出縮小軌道的圓頭 */
+.lens-shoulder {
+  transition: opacity 0.1s linear;
+}
 .lens-dish {
   position: absolute;
   inset: 0;

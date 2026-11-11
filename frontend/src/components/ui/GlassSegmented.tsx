@@ -135,16 +135,32 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
     const ready = W > 0
     const active = ready && lensActive(f)
 
-    // 肩：照放大鏡長大後的大小畫。兩端一律接上（第一格、最後一格也一樣），
-    // 鏡內只露出上下兩條底面，不會在鏡片一端多出一圈較暗的弧形（對照規範截圖）
     const LLf = sg + growLong * 2, LCf = rowCross + growCross * 2
-    const shl = 1
-    const shr = 1
     const sLong = 1 - (1 - LENS_SX) * f.grow
     const sCross = 1 - (1 - LENS_SY) * f.grow
-    // 鏡內的底用「橫的」等效座標：鏡片沿長邊在 hL、沿短邊在 hT（直的時整組轉 90 度）
-    const hL = cl - ll / 2
-    const hT = cross / 2 - lc / 2
+    // 肩：鏡內縮小的軌道在那一側延伸到鏡片外才接上肩（底面是兩條直線）；
+    // 移到最邊的格子時，縮小軌道的尾端落在鏡片裡 → 那一側的肩淡掉，底面順著軌道的圓頭彎過去
+    const barStart = cl * (1 - sLong)
+    const barEnd = cl + (long - cl) * sLong
+    const shl = barStart < cl - ll / 2 - 0.5 ? 1 : 0
+    const shr = barEnd > cl + ll / 2 + 0.5 ? 1 : 0
+    // 縮小的整條軌道（以鏡片中心為準）：橫的長邊 0.93、短邊 0.768；直的方向互換
+    const shrunkBar: React.CSSProperties = {
+        left: -L, top: -T, width: W, height: H, borderRadius: cross / 2,
+        transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`,
+        transform: vertical ? `scale(${sCross}, ${sLong})` : `scale(${sLong}, ${sCross})`,
+    }
+    // 直的、工具列：肩＝鏡內整片挖掉兩條底面，分成兩半，各自照 shl／shr 淡入淡出
+    const halfClip = (start: boolean) =>
+        vertical ? (start ? 'inset(0 0 50% 0)' : 'inset(50% 0 0 0)') : start ? 'inset(0 50% 0 0)' : 'inset(0 0 0 50%)'
+    const bandShoulders = (mask: React.CSSProperties) =>
+        ([true, false] as const).map((start) => (
+            <span
+                key={start ? 's' : 'e'}
+                className="lens-bar lens-shoulder"
+                style={{ inset: 0, ...mask, clipPath: halfClip(start), opacity: start ? shl : shr }}
+            />
+        ))
     const wallMask = shoulderMask(LLf, LCf, (LCf - cross) / 2, cross)
 
     const row = (ghost: boolean) =>
@@ -222,22 +238,21 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
                     {active && (
                         <>
                                                         {vertical ? (
-                                // 直的：鏡內整片底色，左右挖兩條上下圓頭的底面（寬＝鏡片寬減去縮成 0.768 倍的軌道寬，除以 2）
-                                <span className="lens-ink" style={sideBandMask(lw, lh, (lw - cross * sCross) / 2, Math.min(lw / 2, lh / 4))}>
-                                    <span className="lens-bar" style={{ inset: 0 }} />
+                                // 直的：縮小的軌道＋肩（鏡內整片挖掉左右兩條上下圓頭的底面；寬＝鏡片寬減去縮成 0.768 倍的軌道寬，除以 2）
+                                <span className="lens-ink">
+                                    <span className="lens-bar" style={shrunkBar} />
+                                    {bandShoulders(sideBandMask(lw, lh, (lw - cross * sCross) / 2, Math.min(lw / 2, lh / 4)))}
                                 </span>
                             ) : toolbar ? (
                                 // 工具列：鏡內整片底色，上下挖兩條左右圓頭的底面（高＝鏡片高減去縮成 0.768 倍的整條列高，除以 2，同規範）
-                                <span className="lens-ink" style={topBandMask(lw, lh, (lh - cross * sCross) / 2, Math.min(lh / 2, lw / 4))}>
-                                    <span className="lens-bar" style={{ inset: 0 }} />
+                                <span className="lens-ink">
+                                    <span className="lens-bar" style={shrunkBar} />
+                                    {bandShoulders(topBandMask(lw, lh, (lh - cross * sCross) / 2, Math.min(lh / 2, lw / 4)))}
                                 </span>
                             ) : (
                                 // 橫的：照規範，縮小的軌道（長邊 0.93、短邊 0.768）＋兩端的肩，上下露出底面
                                 <span className="lens-ink">
-                                    <span
-                                        className="lens-bar"
-                                        style={{ left: -hL, top: -hT, width: long, height: cross, borderRadius: cross / 2, transformOrigin: `${hL + ll / 2}px ${hT + lc / 2}px`, transform: `scale(${sLong}, ${sCross})` }}
-                                    />
+                                    <span className="lens-bar" style={shrunkBar} />
                                     <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: wallMask }}>
                                         <i className="l" style={{ opacity: shl }} />
                                         <i className="r" style={{ opacity: shr }} />
