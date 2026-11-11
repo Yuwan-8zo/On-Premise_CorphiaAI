@@ -33,28 +33,28 @@ export default function SecurityEventsPanel({
     const data = securityFromParent !== undefined ? securityFromParent : polled
 
     return (
-        <Panel className={`overflow-hidden flex flex-col min-h-[var(--sz-160)] lg:min-h-0 ${className || ''}`}>
+        <Panel className={`flex flex-col min-h-[var(--sz-160)] ${className || ''}`}>
             <SectionHeader
                 title={t('admin.overview.securityEvents', '資安事件 (24h)')}
             />
-            <div className="flex-1 min-h-0 px-[var(--space)] pb-[var(--space)]">
+            <div className="flex-1 px-[var(--space)] pb-[var(--space)]">
                 <div className="grid grid-cols-2 gap-[var(--space)] h-full">
                     {SECURITY_KPI_DEFINITIONS.map((kpi) => {
                         const value = data?.[kpi.valueKey] ?? 0
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex items-center gap-3 px-[var(--sp-14)] py-3 rounded-[var(--r-21)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
+                                className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--r-21)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />
                                 </span>
 
-                                <p className="flex-1 min-w-0 text-[length:var(--fs-12)] font-medium text-text-secondary truncate">
+                                <p className="flex-1 basis-[max-content] whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                     {t(kpi.labelKey, kpi.labelFallback)}
                                 </p>
 
-                                <p className={`shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? kpi.valueColor : 'text-text-muted'}`}>
+                                <p className={`ml-auto shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? kpi.valueColor : 'text-text-muted'}`}>
                                     {value}
                                 </p>
                             </div>

@@ -229,7 +229,7 @@ export default function Chat() {
                                     })}
                                 </h2>
                                 {/* 已移除「已連線本地 …」副標題，主畫面更乾淨；模型名稱仍可在右上角下拉選單看到 */}
-                                <div className="mb-8" />
+                                <div className="mb-[var(--fluid-block)]" />
 
                                 {/* Suggested Prompts —— 齊寬卡片（同最寬內容）：
                                     父容器 w-max → 寬度 = 最寬子卡內容；
@@ -254,7 +254,7 @@ export default function Chat() {
                                                 key={index}
                                                 onClick={() => mainProps.setInput(item.desc)}
                                                 /* 2×2 玻璃卡：圓角 25、內距 16 → 圖示方塊圓角 10（25−16=9，範本最小 10） */
-                                                className="paper !rounded-[var(--r-25)] p-4 w-full text-left flex flex-col gap-3 cursor-pointer transition-transform duration-200 active:scale-[0.97]"
+                                                className="paper !rounded-[var(--r-25)] p-[var(--fluid-pad)] w-full text-left flex flex-col gap-[var(--fluid-gap)] cursor-pointer transition-transform duration-200 active:scale-[0.97]"
                                             >
                                                 <span className="snow-row-icon !rounded-[var(--r-10)]">{icons[index % icons.length]}</span>
                                                 <span className="min-w-0">

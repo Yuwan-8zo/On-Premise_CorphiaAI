@@ -221,7 +221,7 @@ export default function AuditSection({
                         {/* Column header row — same grid template as the tbody rows
                             手機板僅顯示 時間 + 操作；resource / user / ip 在 sm+ 才出現
                             點任一列仍可開 drawer 看完整資料 */}
-                        <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_140px] border-b border-[var(--paper-line)] text-left text-[length:var(--fs-13)] font-semibold text-text-secondary">
+                        <div className="grid grid-cols-[var(--sz-110)_minmax(0,1fr)] sm:grid-cols-[var(--sz-180)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_var(--sz-140)] border-b border-[var(--paper-line)] text-left text-[length:var(--fs-13)] font-semibold text-text-secondary">
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.time')}</div>
                             <div className="px-3 sm:px-5 py-2.5">{t('admin.audit.table.action')}</div>
                             <div className="hidden sm:block px-5 py-2.5">{t('admin.audit.table.resource')}</div>
@@ -269,7 +269,7 @@ export default function AuditSection({
                                             </td>
                                             <td className="px-3 sm:px-5 py-2">
                                                 <span
-                                                    className={`rounded-full border px-2 sm:px-3 py-0.5 text-[length:var(--fs-10)] sm:text-xs font-semibold ${getActionPillClass(log.action)}`}
+                                                    className={`inline-block whitespace-nowrap rounded-full border px-2 sm:px-3 py-0.5 text-[length:var(--fs-10)] sm:text-xs font-semibold ${getActionPillClass(log.action)}`}
                                                 >
                                                     {t(`admin.audit.actionTypes.${log.action}`, {
                                                         defaultValue: ACTION_LABELS[log.action] || log.action,

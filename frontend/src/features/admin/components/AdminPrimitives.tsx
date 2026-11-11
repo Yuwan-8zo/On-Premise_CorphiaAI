@@ -50,8 +50,8 @@ export function SectionHeader({
     action?: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] md:flex-row md:items-center md:justify-between">
-            <div className="min-w-0">
+        <div className="flex flex-col gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] md:flex-row md:flex-wrap md:items-center md:justify-between">
+            <div className="min-w-0 md:shrink-0 md:max-w-full">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
                 <h2 className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                     {title}

@@ -32,6 +32,7 @@
   --sp-21: calc(21 * var(--ui-unit));
   --sp-22: calc(22 * var(--ui-unit));
   --sp-24: calc(24 * var(--ui-unit));
+  --sp-32: calc(32 * var(--ui-unit));
   --sp-25: calc(25 * var(--ui-unit));
   --sp-26: calc(26 * var(--ui-unit));
   --sp-28: calc(28 * var(--ui-unit));
@@ -235,4 +236,9 @@
   --lens-over-y: calc(4.5 * var(--ui-unit));  /* 工具列：垂直長邊 */
   --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
   --nav-gap-sm: calc(4 * var(--ui-unit));
+
+  /* 依螢幕高度伸縮：螢幕高時＝原本大小，矮的時候（例如橫拿的折疊手機）自動收緊，內容不會被輸入框蓋住 */
+  --fluid-pad: clamp(var(--sp-10), 2dvh, var(--sp-16));     /* 首頁建議卡片內距 */
+  --fluid-gap: clamp(var(--sp-6), 1.5dvh, var(--sp-12));    /* 卡片內圖示與文字之間 */
+  --fluid-block: clamp(var(--sp-12), 3.6dvh, var(--sp-32)); /* 標題與卡片之間 */
 }

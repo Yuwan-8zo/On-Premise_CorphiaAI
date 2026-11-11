@@ -150,7 +150,7 @@ export default function OverviewSection({
     return (
         // 手機板：用自然高度逐區堆疊，外層 AdminPage 會處理垂直滾動。
         // 桌機板（lg+）：回到「滿視窗 dashboard」3-row 設計，圖表自動填滿剩餘空間。
-        <div className="grid gap-[var(--space)] lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-[var(--space)] lg:h-full lg:grid-rows-[auto_minmax(min-content,1fr)_minmax(min-content,1fr)]">
             {/* ─────────────────────────────────────────────────────────────
               Row 1 · KPI strip（6 張小卡，shrink-0）
               斷點降到 lg 是因為使用者實際 CSS 寬度大概在 1100px（高 DPR），
@@ -164,12 +164,12 @@ export default function OverviewSection({
                             key={item.label}
                             className="pl-[var(--sp-20)] pr-[var(--sp-16)] py-[var(--space)]"
                         >
-                            <div className="relative flex items-center gap-[var(--space)]">
+                            <div className="relative flex flex-wrap items-center gap-x-[var(--space)] gap-y-[var(--sp-6)]">
                                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--r-13)] ${item.iconBg} ${item.iconColor}`}>
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[length:var(--fs-12)] font-medium text-text-secondary">
+                                <div className="flex-1 basis-[max-content]">
+                                    <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                         {item.label}
                                     </p>
                                     <p className={`text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
@@ -188,7 +188,7 @@ export default function OverviewSection({
               小於 lg 時會堆疊（手機 / 窄視窗），下方加 min-height fallback
               ───────────────────────────────────────────────────────────── */}
             <section className="grid min-h-0 grid-cols-1 gap-[var(--space)] lg:grid-cols-12">
-                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-7 lg:min-h-0">
+                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-7">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
                     />
@@ -197,7 +197,7 @@ export default function OverviewSection({
                     </div>
                 </Panel>
 
-                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-5 lg:min-h-0">
+                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-5">
                     <SectionHeader
                         title={t('admin.overview.distributionTitle', '事件分布')}
                     />
