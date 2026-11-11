@@ -85,7 +85,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                         key={item.key}
                         className="flex flex-1 flex-col justify-center gap-[var(--sp-6)] px-[var(--sp-16)] py-[var(--sp-10)] rounded-[var(--admin-in)] bg-[var(--chip)]"
                     >
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-[var(--sp-2)]">
                             <div className="flex items-center gap-1.5">
                                 {item.icon}
                                 <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">{item.label}</p>
