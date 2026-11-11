@@ -265,11 +265,15 @@ def _update_frontend_env_local(root_dir: Path, state: NgrokState) -> None:
 
 
 def stop_ngrok_processes() -> None:
+    # 固定的指令清單、不經過 shell
     if sys.platform == "win32":
-        subprocess.run("taskkill /F /IM ngrok.exe", shell=True, capture_output=True)
+        subprocess.run(["taskkill", "/F", "/IM", "ngrok.exe"], capture_output=True, check=False)
     else:
         # macOS / Linux：用 pkill 試一下，沒裝 pkill 也不爆炸
-        subprocess.run("pkill -f ngrok", shell=True, capture_output=True)
+        try:
+            subprocess.run(["pkill", "-f", "ngrok"], capture_output=True, check=False)
+        except FileNotFoundError:
+            pass
 
 
 def stop_ngrok_and_clear_runtime(root_dir: Path | None = None) -> NgrokState:

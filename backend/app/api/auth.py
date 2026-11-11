@@ -346,12 +346,12 @@ async def refresh_token(
                 expires_at=expires_at,
                 reason="token_refresh",
             )
-        except IntegrityError:
+        except IntegrityError as e:
             # 同一個 refresh token 幾乎同時被用了兩次，另一個請求已經撤銷它：視為已使用過
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="此登入憑證已更新過，請重新登入",
-            )
+            ) from e
 
     # 建立新 Token
     token_data = {"sub": resolved_user_id}

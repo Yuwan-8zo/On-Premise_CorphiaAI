@@ -149,7 +149,7 @@ async def transcribe_voice(
         arr, sample_rate = _wav_bytes_to_float_array(raw)
     except Exception as e:
         logger.exception("[voice] WAV 解析失敗")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法解析 WAV: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法解析 WAV: {e}") from e
 
     duration_ms = int(len(arr) / max(sample_rate, 1) * 1000)
     if duration_ms > _MAX_AUDIO_SECONDS * 1000:
@@ -161,7 +161,7 @@ async def transcribe_voice(
         sample_rate = _TARGET_SAMPLE_RATE
     except Exception as e:
         logger.exception("[voice] 重採樣失敗")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法重採樣至 16kHz: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法重採樣至 16kHz: {e}") from e
 
     norm_lang = _normalize_lang(language)
     t0 = time.perf_counter()
@@ -170,7 +170,7 @@ async def transcribe_voice(
     except Exception as e:
         logger.exception("[voice] Whisper 推論失敗")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"語音轉文字失敗: {e}")
+                            detail="語音轉文字失敗") from e
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
     logger.info(
         f"[voice] user={current_user.email} audio={duration_ms}ms transcribe={elapsed_ms}ms lang={norm_lang} chars={len(text)}"
