@@ -95,7 +95,7 @@ export default function ModelsSection({
                             return (
                                 <div
                                     key={model.name}
-                                    className={`flex flex-col gap-4 rounded-[var(--r-21)] border p-5 md:flex-row md:items-center md:justify-between ${
+                                    className={`flex flex-col gap-4 rounded-[var(--admin-in)] border p-5 md:flex-row md:items-center md:justify-between ${
                                         model.is_current
                                             ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
                                             : 'border-[var(--paper-line)] bg-[var(--chip)]'

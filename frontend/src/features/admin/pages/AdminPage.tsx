@@ -77,7 +77,7 @@ export default function Admin() {
 
     return (
         <div
-            className="edge-shell fixed inset-0 overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
+            className="edge-shell admin-shell fixed inset-0 overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -110,9 +110,9 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--r-33)] lg:p-[var(--space)]">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
-                        <div className="hidden lg:block mb-[var(--space)] rounded-[var(--r-21)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
+                        <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
                                 <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
                                 <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>
@@ -130,7 +130,7 @@ export default function Admin() {
                             options={TABS.map((tab) => ({ value: tab.id, label: t(tab.i18nKey) }))}
                         />
                         {/* 桌機：直向導覽；不裁切，放大鏡長大超出範圍也完整顯示 */}
-                        <nav className="relative z-10 hidden lg:flex lg:flex-col gap-1 py-2 shrink-0 overflow-visible">
+                        <nav className="admin-nav relative z-10 hidden lg:flex lg:flex-col gap-1 py-2 shrink-0 overflow-visible">
                             <GlassNav
                                 size="sm"
                                 gap="--nav-gap-sm"

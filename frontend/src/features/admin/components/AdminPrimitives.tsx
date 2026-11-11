@@ -27,8 +27,8 @@ export function Panel({
 }) {
     return (
         <section
-            // 後台所有卡片統一圓角 33；裡面的元件照同心公式（元件圓角＋離邊＝33）
-            className={`paper !rounded-[var(--r-33)] ${className}`}
+            // 後台所有卡片統一圓角 --admin-r；裡面的元件用 --admin-in（＝卡片圓角 − 間距，同心），見 snow.css .admin-shell
+            className={`paper !rounded-[var(--admin-r)] ${className}`}
         >
             {children}
         </section>

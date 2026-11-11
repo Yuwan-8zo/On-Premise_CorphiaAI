@@ -85,7 +85,7 @@ export default function TenantsSection({
                         return (
                             <div
                                 key={item.id}
-                                className="snow-well rounded-[var(--r-21)] p-5 flex flex-col"
+                                className="snow-well rounded-[var(--admin-in)] p-5 flex flex-col"
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-3 mb-3">

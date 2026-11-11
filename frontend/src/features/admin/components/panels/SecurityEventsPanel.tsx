@@ -44,7 +44,7 @@ export default function SecurityEventsPanel({
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--r-21)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
+                                className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--admin-in)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] ${kpi.colorClass}`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />

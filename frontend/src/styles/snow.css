@@ -2334,6 +2334,13 @@ html.dark {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* 管理後台的圓角：卡片 --admin-r；卡片裡的小方塊 --admin-in＝卡片圓角 − 間距（同心）。
+   電腦版＝33／21（間距 12）；Duo 版在下面改成與螢幕同心 */
+.admin-shell {
+  --admin-r: var(--r-33);
+  --admin-in: calc(var(--admin-r) - var(--space));
+}
+
 /* ===== iPhone Duo 專用：<html> 有 .fold-wide 時才套用（由 lib/foldScreen.ts 判斷：觸控、橫拿、
    畫面寬比裝置回報的螢幕長邊還寬＝打開的折疊手機）。電腦、平板、一般手機維持原本設計。
    同心原則：外圈間距 --gutter，貼邊元件圓角 --edge-r＝螢幕圓角 55 − 間距 */
@@ -2368,6 +2375,16 @@ html.dark {
 
 /* iPhone Duo 加入主畫面（全螢幕、沒有瀏覽器網址列）：右上角直接蓋著狀態列，
    右上的按鈕往左讓出狀態列的寬度（--duo-status），再留一個外圈間距 */
+/* 後台：間距（外圈、卡片之間、卡片內距）統一成外圈間距，卡片圓角＝螢幕圓角 − 間距，小方塊跟著同心 */
+.fold-wide .admin-shell {
+  --space: var(--gutter);
+  --admin-r: var(--edge-r);
+}
+/* Duo 橫拿畫面矮：左側導覽上下不另外留白（區塊之間已有間距），側欄才放得下 */
+.fold-wide .admin-shell .admin-nav {
+  padding-block: 0;
+}
+
 @media (display-mode: standalone) {
   /* 只在折疊手機橫拿（.fold-wide）時 */
   .fold-wide .chat-shell .chat-head {
