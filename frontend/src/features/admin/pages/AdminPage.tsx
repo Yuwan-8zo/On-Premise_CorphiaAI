@@ -83,9 +83,10 @@ export default function Admin() {
             <div aria-hidden className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <WaveBackground />
             </div>
-            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col px-3 py-3 md:px-4 md:py-3">
+            {/* 間距統一 12px（外圍四邊＝標題列到內容＝卡片之間）；根字級比 16 小，一律用 px */}
+            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col p-[12px]">
                 {/* 頂端：返回、標題、連線狀態、目前使用者 */}
-                <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 pb-2 md:justify-between">
+                <header className="mb-[12px] flex shrink-0 items-center gap-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}
