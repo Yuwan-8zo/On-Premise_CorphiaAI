@@ -60,7 +60,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                 title={t('admin.overview.systemResources', '系統資源')}
             />
             <div className="flex-1 min-h-0 px-[21px] pb-[16px]">
-                <div className="flex flex-col gap-[12px]">
+                <div className="flex flex-col gap-[var(--space)]">
                     {/* CPU 進度條 */}
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">

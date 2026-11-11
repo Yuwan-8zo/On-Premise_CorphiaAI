@@ -70,7 +70,7 @@ export default function TenantsSection({
                 }
             />
             {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
-            <div className="admin-fill-body tenant-quads grid content-start gap-[12px] px-[12px] pb-[12px]">
+            <div className="admin-fill-body tenant-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {isLoadingTenants ? (
                     <SkelCards count={4} className="h-[180px]" />
                 ) : tenants.length === 0 ? (
@@ -114,8 +114,8 @@ export default function TenantsSection({
                                 {/* Separator */}
                                 <div className="border-t border-[var(--paper-line)] my-3" />
 
-                                {/* Usage stats — Glance 風格 */}
-                                <div className="mb-4 grid grid-cols-2 gap-3">
+                                {/* 用量：四個數字排成一列（卡片窄時自動換成兩列），省下高度，按鈕才收得進四分之一大小的卡片 */}
+                                <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(var(--stat-min),1fr))] gap-3">
                                     <div>
                                         <p className="text-xs text-text-secondary font-medium">
                                             {t('admin.tenants.users', '使用者')}

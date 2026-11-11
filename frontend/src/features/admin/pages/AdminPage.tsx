@@ -84,9 +84,9 @@ export default function Admin() {
                 <WaveBackground />
             </div>
             {/* 間距統一 12px（外圍四邊＝標題列到內容＝卡片之間）；根字級比 16 小，一律用 px */}
-            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col p-[12px]">
+            <div className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col p-[var(--space)]">
                 {/* 頂端：返回、標題、連線狀態、目前使用者 */}
-                <header className="mb-[12px] flex shrink-0 items-center gap-2 md:justify-between">
+                <header className="mb-[var(--space)] flex shrink-0 items-center gap-2 md:justify-between">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}
@@ -109,10 +109,10 @@ export default function Admin() {
                 </header>
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
-                <main className="flex flex-col flex-1 min-h-0 gap-[12px] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[33px] lg:p-[12px]">
+                <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
+                    <aside className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[33px] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
-                        <div className="hidden lg:block mb-[12px] rounded-[21px] border border-transparent bg-[var(--chip)] p-[12px]">
+                        <div className="hidden lg:block mb-[var(--space)] rounded-[21px] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
                                 <p className="text-[12px] text-text-secondary">{t('admin.currentModel')}</p>
                                 <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>

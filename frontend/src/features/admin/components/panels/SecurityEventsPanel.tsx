@@ -37,8 +37,8 @@ export default function SecurityEventsPanel({
             <SectionHeader
                 title={t('admin.overview.securityEvents', '資安事件 (24h)')}
             />
-            <div className="flex-1 min-h-0 px-[12px] pb-[12px]">
-                <div className="grid grid-cols-2 gap-[12px] h-full">
+            <div className="flex-1 min-h-0 px-[var(--space)] pb-[var(--space)]">
+                <div className="grid grid-cols-2 gap-[var(--space)] h-full">
                     {SECURITY_KPI_DEFINITIONS.map((kpi) => {
                         const value = data?.[kpi.valueKey] ?? 0
                         return (

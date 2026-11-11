@@ -114,11 +114,11 @@ export default function AuditSection({
         <>
             {/* 整頁填滿內容區、不捲動：篩選卡固定在上，稽核大卡片吃剩下的高度，表格在卡片「裡面」捲動
                 (外層內容區捲動時，卡片會被它直直切掉，底部和捲上去的上緣都失去圓角) */}
-            <div className="flex h-full min-h-0 flex-col gap-[12px]">
+            <div className="flex h-full min-h-0 flex-col gap-[var(--space)]">
                 {/* Filter bar */}
-                <Panel className="p-[12px] shrink-0">
+                <Panel className="p-[var(--space)] shrink-0">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
-                    <div className="flex flex-wrap items-center gap-[12px]">
+                    <div className="flex flex-wrap items-center gap-[var(--space)]">
                         <label className="admin-search flex-1 min-w-[220px]">
                             <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
                                 <Search className="h-[16px] w-[16px]" />

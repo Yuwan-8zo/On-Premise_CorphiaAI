@@ -71,7 +71,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
             />
 
             {/* 內部區塊離卡片左右下 12，圓角 21（＝卡片 33 − 12，同心） */}
-            <div className="flex-1 min-h-0 flex flex-col gap-[12px] px-[12px] pb-[12px]">
+            <div className="flex-1 min-h-0 flex flex-col gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {/* 模型名稱 — 主要資訊 */}
                 <div className="flex items-center gap-[10px] p-[10px] rounded-[21px] bg-[var(--chip)]">
                     <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[11px] bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)] text-[var(--sys-blue)]">
@@ -89,7 +89,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
 
                 {/* 兩個指標卡 */}
                 {/* 兩個指標撐滿剩下的高度，貼齊卡片底部（下方兩角也同心），跟左邊資安事件同樣填滿 */}
-                <div className="grid flex-1 min-h-0 grid-cols-2 gap-[12px]">
+                <div className="grid flex-1 min-h-0 grid-cols-2 gap-[var(--space)]">
                     <div className="flex min-h-0 flex-col justify-center gap-[2px] overflow-hidden px-[16px] py-[10px] rounded-[21px] bg-[var(--chip)]">
                         <div className="flex items-center gap-1.5">
                             <Zap className="h-3 w-3 text-[var(--sys-orange)]" />

@@ -79,7 +79,7 @@ export default function ModelsSection({
                         </ActionButton>
                     }
                 />
-                <div className="admin-fill-body grid content-start gap-[12px] px-[12px] pb-[12px]">
+                <div className="admin-fill-body grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                     {isLoadingModels ? (
                         <SkelCards count={3} className="h-[86px]" />
                     ) : models.length === 0 ? (
