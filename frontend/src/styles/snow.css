@@ -2306,3 +2306,11 @@ html.dark {
 .admin-fill-body::-webkit-scrollbar {
   display: none;
 }
+
+/* 租戶卡片：中等寬度以上分成「田」字四格（兩欄、每列高＝這一區的一半），卡片填滿格子 */
+@media (min-width: 768px) {
+  .tenant-quads {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: calc((100% - 12px) / 2); /* 100%＝這一區扣掉內距後的高度；再扣列距 12 */
+  }
+}

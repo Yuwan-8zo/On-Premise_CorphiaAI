@@ -69,8 +69,8 @@ export default function TenantsSection({
                     </ActionButton>
                 }
             />
-            {/* 租戶卡片：寬螢幕四等分、中等寬度兩欄、手機一欄 */}
-            <div className="admin-fill-body grid content-start gap-[12px] px-[12px] pb-[12px] md:grid-cols-2 xl:grid-cols-4">
+            {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
+            <div className="admin-fill-body tenant-quads grid content-start gap-[12px] px-[12px] pb-[12px]">
                 {isLoadingTenants ? (
                     <SkelCards count={4} className="h-[180px]" />
                 ) : tenants.length === 0 ? (
