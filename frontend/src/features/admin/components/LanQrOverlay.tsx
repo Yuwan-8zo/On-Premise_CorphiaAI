@@ -2,9 +2,9 @@
  * LanQrOverlay — 區域網路連線 QR code（全螢幕，給手機掃描）
  *   - 網址＝本機在區網的 IP＋目前的前端連接埠，手機掃了直接開聊天室
  *   - 只顯示一個網址：後端已挑出電腦實際連網用的那張網卡（排除 WSL／Hyper-V 等手機連不到的虛擬網卡）
- *   - 點背景、按 Esc 或右上角關閉
+ *   - 點背景、按 Esc 或右上角關閉；開關都有動畫：背景的顏色與模糊漸變（玻璃不做整體透明度，Safari 會閃），內容淡入淡出＋縮放
  */
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -23,23 +23,32 @@ const lanUrl = (ip: string) => `${window.location.protocol}//${ip}${window.locat
 export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
     const { t } = useTranslation()
     const url = lanUrl(ip)
+    const [leaving, setLeaving] = useState(false)
+
+    /** 關閉：先播淡出（.is-leaving，0.2 秒），播完才真的移除；減少動態效果時直接關 */
+    const close = useCallback(() => {
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { onClose(); return }
+        setLeaving(true)
+        window.setTimeout(onClose, 200)
+    }, [onClose])
 
     useEffect(() => {
-        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [onClose])
+    }, [close])
 
     return createPortal(
         <div
             role="dialog"
             aria-modal="true"
             aria-label={t('admin.lan.qrTitle', '用手機掃描連線')}
-            className="lan-qr-overlay"
-            onClick={onClose}
+            className={`lan-qr-overlay ${leaving ? 'is-leaving' : ''}`}
+            onClick={close}
         >
-            <button type="button" onClick={onClose} aria-label={t('common.close', '關閉')} className="btn-icon lan-qr-close">
-                <X className="w-[22px] h-[22px]" />
+            {/* 大小同後台左上角的返回鈕：34 圓鈕、圖示 18 */}
+            <button type="button" onClick={close} aria-label={t('common.close', '關閉')} className="btn-icon !w-[34px] !h-[34px] lan-qr-close">
+                <X className="w-[18px] h-[18px]" />
             </button>
             <div className="lan-qr-body" onClick={(e) => e.stopPropagation()}>
                 <p className="lan-qr-title">{t('admin.lan.qrTitle', '用手機掃描連線')}</p>

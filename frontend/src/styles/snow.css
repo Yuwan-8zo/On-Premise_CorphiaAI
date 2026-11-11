@@ -2166,7 +2166,9 @@ html.dark {
   background: none;
 }
 
-/* 區域網路 QR code（全螢幕給手機掃描）：深色遮罩＋模糊；QR 永遠白底深點才掃得到；進場從 0.95 開始 */
+/* 區域網路 QR code（全螢幕給手機掃描）：深色遮罩＋模糊；QR 永遠白底深點才掃得到
+   開關動畫：遮罩的顏色和模糊一起漸變（玻璃不做整體透明度，Safari 會讓模糊閃掉），內容淡入淡出＋從 0.95 縮放
+   打開 0.26 秒、關閉 0.2 秒，減速曲線 */
 .lan-qr-overlay {
   position: fixed;
   inset: 0;
@@ -2177,10 +2179,41 @@ html.dark {
   background: rgba(0, 0, 0, 0.72);
   -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
+  animation: lanQrBgIn 0.26s var(--ease-out) both;
+}
+.lan-qr-overlay > * {
   animation: lanQrIn 0.26s var(--ease-out) both;
+}
+.lan-qr-overlay.is-leaving {
+  animation: lanQrBgOut 0.2s var(--ease-out) both;
+  pointer-events: none;
+}
+.lan-qr-overlay.is-leaving > * {
+  animation: lanQrOut 0.2s var(--ease-out) both;
+}
+@keyframes lanQrBgIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(0px);
+  }
+}
+@keyframes lanQrBgOut {
+  to {
+    background: rgba(0, 0, 0, 0);
+    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(0px);
+  }
 }
 @keyframes lanQrIn {
   from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+@keyframes lanQrOut {
+  to {
+    opacity: 0;
     transform: scale(0.95);
   }
 }
@@ -2225,7 +2258,8 @@ html.dark {
   word-break: break-all;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lan-qr-overlay {
+  .lan-qr-overlay,
+  .lan-qr-overlay > * {
     animation: none;
   }
 }

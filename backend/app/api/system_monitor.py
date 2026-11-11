@@ -10,6 +10,7 @@ import platform
 import asyncio
 import time as time_module
 import json
+import ipaddress
 import socket
 from pathlib import Path
 from app.core.time_utils import utc_now_iso
@@ -77,7 +78,8 @@ def _detect_lan_ips() -> list[str]:
     給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
       1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）
       2. 沒有預設路由（例如沒有路由器的封閉網路）時，從「有連線、不是虛擬網卡、不是 169.254 自動配置」的網卡挑，
-         家用／公司網段（192.168、10）優先
+         內網網段（10、172.16–31、192.168）優先，三者不分先後
+    網段由所在網路的路由器決定：公司內網是 172 開頭，這裡就會回傳 172 開頭的位址
     """
     primary = _default_route_ip()
     if primary:
@@ -99,12 +101,14 @@ def _detect_lan_ips() -> list[str]:
     except Exception:
         pass
 
+    # 三種內網網段（10.x、172.16–31.x、192.168.x）一視同仁：中小企業常用 172 網段，不能排在後面；
+    # 其他（公網位址等）放最後
     def _rank(ip: str) -> tuple[int, str]:
-        if ip.startswith("192.168."):
-            return (0, ip)
-        if ip.startswith("10."):
-            return (1, ip)
-        return (2, ip)
+        try:
+            private = ipaddress.ip_address(ip).is_private
+        except ValueError:
+            private = False
+        return (0 if private else 1, ip)
 
     return sorted(set(candidates), key=_rank)
 
