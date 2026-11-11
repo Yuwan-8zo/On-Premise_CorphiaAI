@@ -2384,6 +2384,13 @@ html.dark {
 .fold-wide .admin-shell .admin-nav {
   padding-block: 0;
 }
+/* 上一頁按鈕：大小不變（--admin-back），只調位置——擺在左上角與螢幕圓角同心：
+   離螢幕邊＝螢幕圓角 − 按鈕半徑（55 − 17 ＝ 38）；外層已有一圈間距，所以再往內推「同心距離 − 間距」 */
+.fold-wide .admin-shell .admin-back {
+  --back-in: calc(var(--screen-n) * var(--ui-unit) - var(--admin-back) / 2 - var(--space));
+  margin-top: var(--back-in);
+  margin-left: var(--back-in);
+}
 /* 總覽：放不下時整個等比例縮小到剛好一個畫面（--fit 由 useFitToHost 算），不捲動 */
 .fold-wide .admin-overview {
   zoom: var(--fit, 1);

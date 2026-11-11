@@ -245,6 +245,7 @@
   --screen-n: 55;
   /* iPhone Duo 加入主畫面（全螢幕）時，右上角的狀態列（時間、電量、Wi-Fi）從右邊算起佔的寬度（實機截圖量測） */
   --duo-status: calc(73 * var(--ui-unit));
+  --admin-back: var(--sz-34); /* 後台上一頁按鈕 */
   --edge-n: calc(var(--screen-n) - var(--gutter-n));
   --edge-r: calc(var(--edge-n) * var(--ui-unit));
 

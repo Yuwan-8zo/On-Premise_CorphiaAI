@@ -91,7 +91,7 @@ export default function Admin() {
                         <button
                             onClick={() => navigate('/')}
                             aria-label={t('common.backToChat', '返回聊天')}
-                            className="btn-icon !w-[var(--sz-34)] !h-[var(--sz-34)] shrink-0 text-text-secondary"
+                            className="admin-back btn-icon !w-[var(--admin-back)] !h-[var(--admin-back)] shrink-0 text-text-secondary"
                         >
                             <ArrowLeft className="w-[var(--sz-18)] h-[var(--sz-18)]" />
                         </button>
