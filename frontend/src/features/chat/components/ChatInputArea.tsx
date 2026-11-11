@@ -8,6 +8,7 @@ import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
 import { UPLOAD_ACCEPT } from '@/lib/uploadTypes'
+import { riseIn } from '@/lib/motionPresets'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -88,10 +89,7 @@ export default function ChatInputArea({
     return (
         <>
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.3, ease:"easeOut" }}
+                {...riseIn}
                 className="chat-input-wrap shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
                 {!llmReady && (

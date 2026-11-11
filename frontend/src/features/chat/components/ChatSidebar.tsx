@@ -24,6 +24,7 @@ import Tooltip from '@/components/ui/Tooltip'
 
 import type { Conversation } from '@/types/chat'
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
+import { pageSlide } from '@/lib/motionPresets'
 
 interface ChatSidebarProps {
     /** 對話列表 */
@@ -255,10 +256,7 @@ export default function ChatSidebar({
                     {chatMode === 'general' ? (
                         <motion.div
                             key="general"
-                            initial={{ x: -14, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: 14, opacity: 0 }}
-                            transition={{ duration: 0.42 }}
+                            {...pageSlide(-1)}
                             className="absolute inset-0 px-4"
                         >
                             <span className="side-header">{t('chat.generalChat')}</span>
@@ -273,10 +271,7 @@ export default function ChatSidebar({
                     ) : (
                         <motion.div
                             key="project"
-                            initial={{ x: 14, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -14, opacity: 0 }}
-                            transition={{ duration: 0.42 }}
+                            {...pageSlide(1)}
                             className="absolute inset-0 px-4"
                         >
                             <span className="side-header">{t('chat.projectFolderLabel')}</span>

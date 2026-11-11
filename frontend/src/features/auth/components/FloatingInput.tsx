@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from '@/components/snow/icons'
 import { InputHTMLAttributes, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import { EASE_DECEL, iconSwap } from '@/lib/motionPresets'
 
 interface FloatingInputProps extends InputHTMLAttributes<HTMLInputElement> {
     label: string
@@ -93,7 +94,7 @@ export default function FloatingInput({
                         ? { top: 0, scale: 0.82 }
                         : { top: '50%', scale: 1 }
                 }
-                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.25, ease: EASE_DECEL }}
                 className="absolute left-4 z-[3] pointer-events-none px-2.5 py-0.5 origin-left whitespace-nowrap text-[length:var(--fs-15)] font-medium tracking-tight"
                 style={{
                     y: '-50%',
@@ -126,10 +127,10 @@ export default function FloatingInput({
                 <AnimatePresence>
                     {isFilled && (
                         <motion.button
-                            initial={{ opacity: 0, scale: 0.8, y: '-50%' }}
-                            animate={{ opacity: 1, scale: 1, y: '-50%' }}
-                            exit={{ opacity: 0, scale: 0.8, y: '-50%' }}
-                            transition={{ duration: 0.2 }}
+                            initial={{ ...iconSwap.initial, y: '-50%' }}
+                            animate={{ ...iconSwap.animate, y: '-50%' }}
+                            exit={{ ...iconSwap.exit, y: '-50%' }}
+                            transition={iconSwap.transition}
                             type="button"
                             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
                             className="absolute right-4 top-1/2 p-2 text-text-muted  transition-colors focus:outline-none"
@@ -138,10 +139,7 @@ export default function FloatingInput({
                             <AnimatePresence mode="wait" initial={false}>
                                 <motion.div
                                     key={isPasswordVisible ? 'visible' : 'hidden'}
-                                    initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                    exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
-                                    transition={{ duration: 0.15 }}
+                                    {...iconSwap}
                                 >
                                     {isPasswordVisible ? (
                                         <Eye className="w-5 h-5" />

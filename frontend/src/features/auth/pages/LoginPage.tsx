@@ -21,9 +21,11 @@ import FloatingInput from '../components/FloatingInput'
 import LoginHero from '../components/LoginHero'
 import LoginToolbar from '../components/LoginToolbar'
 import { useAuthForm } from '../hooks/useAuthForm'
+import { EASE_DECEL } from '@/lib/motionPresets'
 
 /** 確認密碼欄展開／收合，與上方間距同一條曲線同步 */
-const EXPAND = { duration: 0.32, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
+/** 註冊欄位展開／收合：0.32 秒減速（規範曲線） */
+const EXPAND = { duration: 0.32, ease: EASE_DECEL }
 
 export default function Login() {
     const { t } = useTranslation()
@@ -171,10 +173,10 @@ export default function Login() {
                                         <motion.button
                                             type="button"
                                             onClick={() => setShowContactAdmin(true)}
-                                            initial={{ opacity: 0, scale: 0.5, width: 0 }}
+                                            initial={{ opacity: 0, scale: 0.95, width: 0 }}
                                             animate={{ opacity: 1, scale: 1, width: 42 }}
-                                            exit={{ opacity: 0, scale: 0.5, width: 0 }}
-                                            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                                            exit={{ opacity: 0, scale: 0.95, width: 0 }}
+                                            transition={{ duration: 0.25, ease: EASE_DECEL }}
                                             aria-label={t('auth.forgotPassword')}
                                             className="shrink-0 btn-icon !w-[var(--sz-42)] !h-[var(--sz-42)] [--R:21px] text-accent flex items-center justify-center overflow-hidden"
                                         >

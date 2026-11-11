@@ -8,6 +8,7 @@ import LensMenu from '@/components/ui/LensMenu'
 import { LANGUAGES } from '@/i18n/languages'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useUIStore } from '@/store/uiStore'
+import { popIn } from '@/lib/motionPresets'
 
 /** 主題圖示：兩個疊在一起，依目前主題旋轉＋縮放交錯淡入淡出 */
 function ThemeGlyph({ show, rotate, children }: { show: boolean; rotate: number; children: React.ReactNode }) {
@@ -60,10 +61,7 @@ export default function LoginToolbar() {
                 <AnimatePresence>
                     {isLangMenuOpen && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            {...popIn}
                             className="absolute right-0 mt-2 w-32 paper !rounded-[var(--r-20)] overflow-hidden z-50 p-1.5"
                         >
                             <LensMenu className="flex flex-col">

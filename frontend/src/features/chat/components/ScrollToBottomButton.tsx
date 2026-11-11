@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import Tooltip from '@/components/ui/Tooltip'
 import { useTranslation } from 'react-i18next'
+import { popIn } from '@/lib/motionPresets'
 
 interface ScrollToBottomButtonProps {
     containerRef: React.RefObject<HTMLDivElement | null>
@@ -70,10 +71,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                 
                     <motion.button
                         key="typing-pill"
-                        initial={{ opacity: 0, y: 15, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
+                        {...popIn}
                         onClick={scrollToBottom}
                         className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 btn-secondary [--R:16px] rounded-full text-text-secondary"
                         aria-label={t('ui.scroll.typingAria')}
@@ -90,10 +88,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                 <Tooltip label={t('ui.scroll.toBottom')} placement="bottom">
                     <motion.button
                         key="to-bottom-arrow"
-                        initial={{ opacity: 0, y: 15, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
+                        {...popIn}
                         onClick={scrollToBottom}
                         className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 btn-icon !w-11 !h-11 text-text-secondary"
                         aria-label="Scroll to bottom"

@@ -18,6 +18,7 @@ import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
+import { riseIn } from '@/lib/motionPresets'
 
 interface MessageBubbleProps {
     message: Message
@@ -170,9 +171,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     return (
         <motion.div
             id={`msg-${message.id}`}
-            initial={{ opacity: 0, y: 12, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.45, ease: 'back.out(1.4)' }}
+            initial={riseIn.initial}
+            animate={riseIn.animate}
+            transition={riseIn.transition}
             className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}
         >
             {isUser ? (

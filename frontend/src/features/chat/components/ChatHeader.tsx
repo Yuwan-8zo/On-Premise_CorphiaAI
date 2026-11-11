@@ -9,6 +9,7 @@ import modelsApi from '@/api/models'
 import { useSystemStore } from '@/store/systemStore'
 import type { Conversation } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
+import { popIn } from '@/lib/motionPresets'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -115,10 +116,7 @@ export default function ChatHeader({
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
                                 <motion.div
-                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                                    {...popIn}
                                     className="absolute right-0 top-full mt-2 w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
