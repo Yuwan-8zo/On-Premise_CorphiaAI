@@ -128,6 +128,22 @@
  *   列與列之間 0.5px 分隔線；第一欄是項目名稱（主要字、半粗、不換行）；其他欄 15／22 主要字
  *   表格裡的粗體不加螢光底（螢光底只給內文） */
 /* 材質跟使用者訊息氣泡一樣（.glass-chip：玻璃底＋模糊 12＋光邊），圓角 22 */
+/* 回答裡的外部連結：字後面的小標籤，寫出實際會連到的網站（比內文小一級、次要文字色，不搶連結本身） */
+.md-link-host {
+  display: inline-block;
+  margin-left: var(--sp-4);
+  padding: 0 var(--sp-6);
+  border-radius: var(--r-8);
+  background: var(--chip);
+  color: rgb(var(--text-secondary));
+  font-size: var(--fs-12);
+  font-weight: 500;
+  line-height: var(--lh-16);
+  vertical-align: baseline;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
 .md-table {
   border-radius: var(--r-22);
   --R: calc(22 * var(--ui-unit));

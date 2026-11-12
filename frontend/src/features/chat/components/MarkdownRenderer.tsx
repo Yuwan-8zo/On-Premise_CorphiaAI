@@ -18,6 +18,29 @@ function isLocalImage(src?: string): boolean {
         return false
     }
 }
+
+/**
+ * 外部連結實際會連到哪個網站（主機名稱）；站內連結、不是 http(s) 的回 null。
+ * 連結顯示的字可以和實際網址完全不同（「點這裡看詳情」其實連到別的網站、把資料帶在網址裡），
+ * 所以外部連結一律在後面標出主機，讓使用者按之前看得到要去哪裡。
+ */
+function externalHost(href?: string): string | null {
+    if (!href) return null
+    try {
+        const url = new URL(href, window.location.href)
+        return /^https?:$/.test(url.protocol) && url.origin !== window.location.origin ? url.host : null
+    } catch {
+        return null
+    }
+}
+
+/** 節點裡的純文字（用來判斷連結的字是不是已經寫出網站了） */
+function nodeText(node: React.ReactNode): string {
+    if (typeof node === 'string' || typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(nodeText).join('')
+    if (React.isValidElement<{ children?: React.ReactNode }>(node)) return nodeText(node.props.children)
+    return ''
+}
 import i18n from '@/i18n'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
@@ -194,16 +217,22 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         ),
 
                         // 連結
-                        a: ({ href, children }) => (
-                            <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-accent "
-                            >
-                                {children}
-                            </a>
-                        ),
+                        // 外部連結：字的後面標出實際的網站（字裡已經寫了就不重複），滑鼠停著看得到完整網址
+                        a: ({ href, children }) => {
+                            const host = externalHost(href)
+                            return (
+                                <a
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={host ? href : undefined}
+                                    className="text-accent "
+                                >
+                                    {children}
+                                    {host && !nodeText(children).includes(host) && <span className="md-link-host">{host}</span>}
+                                </a>
+                            )
+                        },
 
                         // 表格
                         table: ({ children }) => (
