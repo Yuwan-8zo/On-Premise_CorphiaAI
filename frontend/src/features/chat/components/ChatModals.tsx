@@ -15,7 +15,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import DialogShell from '@/components/ui/DialogShell'
-import { dialogSheet } from '@/lib/motionPresets'
+import { menuPop } from '@/lib/motionPresets'
 import { useKeepInViewport } from '@/lib/useKeepInViewport'
 
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
@@ -47,8 +47,8 @@ export function ConversationContextMenu({
             {activeMenu && (
                 <motion.div 
                     ref={menuRef}
-                    {...dialogSheet}
-                    className="fixed z-[100] w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
+                    {...menuPop}
+                    className="fixed z-[100] origin-top-left w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
                     style={{ left: activeMenu.x, top: activeMenu.y }}
                 >
                     <LensMenu className="">

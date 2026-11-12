@@ -65,7 +65,7 @@ export default function LoginToolbar() {
                     {isLangMenuOpen && (
                         <motion.div
                             {...popIn}
-                            className="absolute right-0 mt-2 w-32 paper !rounded-[var(--r-20)] overflow-hidden z-50 p-1.5"
+                            className="absolute right-0 mt-2 origin-top-right w-32 paper !rounded-[var(--r-20)] overflow-hidden z-50 p-1.5"
                         >
                             <LensMenu className="flex flex-col">
                                 {LANGUAGES.map((lang, i) => (

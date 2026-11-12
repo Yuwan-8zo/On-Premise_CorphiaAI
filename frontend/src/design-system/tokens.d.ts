@@ -9,6 +9,7 @@ declare const tokens: {
     motion: {
         duration: Record<string, string>
         durationSeconds: Record<string, number>
+        menuScale: number
         easing: Record<string, string>
         gsapEase: Record<string, string>
         spring: Record<string, { type: string; stiffness: number; damping: number; mass: number }>

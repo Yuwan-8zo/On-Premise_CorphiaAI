@@ -41,6 +41,9 @@ class AgentState(TypedDict, total=False):
     route: str
     context: str
     sources: list[dict]
+    # 一般對話：這個人可以用的連接資料夾文件，以及路由時已經先搜好的結果（檢索那一步直接用，不重搜）
+    folder_doc_ids: list[str]
+    prefetched: list[dict]
 
 
 
@@ -141,7 +144,20 @@ class ChatService:
             return {"route": "rag"}
 
         if not use_rag:
-            # 一般對話（前端未要求查文件）：不搜尋任何文件，也省下一次分類用的 LLM 呼叫
+            # 一般對話：有可以用的連接資料夾（後台「資料夾」）就先在裡面找相關段落；
+            # 找到就帶著參考資料回答（附來源），沒找到就一般聊天。只用向量檢索（毫秒級），不多一次 LLM 判斷
+            folder_docs = await self._folder_doc_ids(state.get("user_id"))
+            if folder_docs:
+                hits = await self.rag_service.hybrid_search(
+                    db=self.db,
+                    query=state.get("query", ""),
+                    tenant_id=state.get("tenant_id"),
+                    n_results=settings.rag_top_k,
+                    document_ids=folder_docs,
+                    similarity_threshold=settings.rag_similarity_threshold,
+                )
+                if hits:
+                    return {"route": "rag", "folder_doc_ids": folder_docs, "prefetched": hits}
             return {"route": "chat"}
 
         schema = {
@@ -175,11 +191,22 @@ class ChatService:
 
         return {"route": route}
 
+    async def _folder_doc_ids(self, user_id: Optional[str]) -> list[str]:
+        """對話主人可以用的連接資料夾文件（權限規則在 folder_access）"""
+        if not user_id:
+            return []
+        from app.models.user import User
+        from app.services.folder_access import folder_document_ids
+
+        user = await self.db.get(User, user_id)
+        return await folder_document_ids(self.db, user) if user else []
+
     async def _rag_node(self, state: AgentState) -> dict:
         context = ""
         sources = []
         folder_name = state.get("folder_name")
-        document_ids = None
+        # 一般對話用連接資料夾：範圍是路由時算好的那些文件
+        document_ids = state.get("folder_doc_ids") or None
 
         if folder_name:
             # FIX: 原本拉整個 tenant 的所有 Document 進記憶體 + Python loop 過濾
@@ -205,7 +232,8 @@ class ChatService:
 
         # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
         # 提高中文專有名詞與代號（例如 SOP 編號、人名）的命中率。
-        search_results = await self.rag_service.hybrid_search(
+        # 路由時已經搜過（一般對話用連接資料夾）就直接用
+        search_results = state.get("prefetched") or await self.rag_service.hybrid_search(
             db=self.db,
             query=state.get("query", ""),
             tenant_id=state.get("tenant_id"),

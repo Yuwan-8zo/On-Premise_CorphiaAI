@@ -6,7 +6,8 @@
   GET    /connected-folders/browse       瀏覽伺服器上的資料夾（給「選擇資料夾」視窗用）
   POST   /connected-folders              新增
   PUT    /connected-folders/{id}         修改
-  DELETE /connected-folders/{id}         取消連接（不會刪除資料夾裡的任何檔案）
+  POST   /connected-folders/{id}/scan    立即更新（重新比對檔案、建立索引）
+  DELETE /connected-folders/{id}         取消連接（索引刪掉，資料夾裡的檔案不會動）
 
 路徑規則全部在 services/folder_source.py；每個新增、修改、取消都寫稽核紀錄。
 """
@@ -32,6 +33,7 @@ from app.schemas.connected_folder import (
     FolderCheckResponse,
 )
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
+from app.services.folder_indexer import delete_folder_documents, folder_progress, is_scanning, request_scan
 from app.services.folder_source import browse, inspect_folder, overlaps, validate_folder_path
 
 router = APIRouter(prefix="/connected-folders", tags=["connected-folders"])
@@ -70,12 +72,32 @@ async def _audit(db, request: Request, user, action: str, item: ConnectedFolder,
     )
 
 
+async def _respond(db: AsyncSession, item: ConnectedFolder, progress: dict | None = None) -> ConnectedFolderResponse:
+    """資料夾設定＋建立索引的進度"""
+    p = (progress if progress is not None else await folder_progress(db)).get(item.id, {})
+    return ConnectedFolderResponse.model_validate(item).model_copy(update={
+        "indexed_count": p.get("indexed", 0), "failed_count": p.get("failed", 0), "waiting_count": p.get("waiting", 0),
+        "scanning": is_scanning(item.id),
+    })
+
+
 @router.get("", response_model=list[ConnectedFolderResponse])
 async def list_folders(current_user: CurrentUser, db: AsyncSession = Depends(get_db), _=RequireAdmin):
     q = select(ConnectedFolder).order_by(ConnectedFolder.created_at)
     if not sees_all_tenants(current_user):
         q = q.where(ConnectedFolder.tenant_id == current_user.effective_tenant_id)
-    return [ConnectedFolderResponse.model_validate(f) for f in (await db.execute(q)).scalars()]
+    progress = await folder_progress(db)
+    return [await _respond(db, f, progress) for f in (await db.execute(q)).scalars()]
+
+
+@router.post("/{folder_id}/scan", response_model=ConnectedFolderResponse)
+async def scan_now(folder_id: str, current_user: CurrentUser, db: AsyncSession = Depends(get_db), _=RequireAdmin):
+    """立即更新：重新比對資料夾裡的檔案，新增、修改的建立索引，刪掉的移除"""
+    item = await _get_owned(db, folder_id, current_user)
+    if not item.is_enabled:
+        raise HTTPException(status_code=400, detail="這個資料夾已停用，請先啟用")
+    request_scan(item.id)
+    return await _respond(db, item)
 
 
 @router.post("/check", response_model=FolderCheckResponse)
@@ -111,7 +133,9 @@ async def create_folder(data: ConnectedFolderCreate, current_user: CurrentUser, 
     await db.commit()
     await db.refresh(item)
     await _audit(db, request, current_user, AuditAction.FOLDER_CONNECT, item, "連接資料夾")
-    return ConnectedFolderResponse.model_validate(item)
+    if item.is_enabled:
+        request_scan(item.id)
+    return await _respond(db, item)
 
 
 @router.put("/{folder_id}", response_model=ConnectedFolderResponse)
@@ -119,24 +143,35 @@ async def update_folder(folder_id: str, data: ConnectedFolderUpdate, current_use
     item = await _get_owned(db, folder_id, current_user)
     patch = data.model_dump(exclude_unset=True)
     _check_interval(patch.get("scan_interval_min"))
+    rescan = False
     if "path" in patch:
         new_path = await _validate_and_check_overlap(db, patch["path"], exclude_id=item.id)
         if new_path != item.path:
-            # 換了資料夾：之前的索引不算數，要重新建立
+            # 換了資料夾：之前的索引不算數，刪掉重新建立
+            await delete_folder_documents(db, item.id)
             item.status, item.last_scan_at, item.error_message = FolderStatus.PENDING, None, None
+            rescan = True
         patch["path"] = new_path
+    if patch.get("include_subfolders") is not None and patch["include_subfolders"] != item.include_subfolders:
+        rescan = True
+    if patch.get("is_enabled") and not item.is_enabled:
+        rescan = True
     for k, v in patch.items():
         setattr(item, k, v)
     await db.commit()
     await db.refresh(item)
     await _audit(db, request, current_user, AuditAction.FOLDER_UPDATE, item, "修改連接資料夾")
-    return ConnectedFolderResponse.model_validate(item)
+    if rescan and item.is_enabled:
+        request_scan(item.id)
+    return await _respond(db, item)
 
 
 @router.delete("/{folder_id}")
 async def delete_folder(folder_id: str, current_user: CurrentUser, request: Request, db: AsyncSession = Depends(get_db), _=RequireAdmin):
     item = await _get_owned(db, folder_id, current_user)
     await _audit(db, request, current_user, AuditAction.FOLDER_DISCONNECT, item, "取消連接資料夾（檔案不會刪除）")
+    # 索引（文件紀錄、段落）一起刪掉；原本的檔案不動
+    await delete_folder_documents(db, item.id)
     await db.delete(item)
     await db.commit()
     return {"ok": True}

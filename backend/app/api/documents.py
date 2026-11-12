@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status, UploadFile, File, BackgroundTasks, Form, Request
 
-from sqlalchemy import select, func
+from sqlalchemy import or_, select, func
 
 from app.api.lookups import ensure_can_modify_document, get_tenant_document
 from app.api.deps import CurrentUser, DbSession
@@ -42,7 +42,9 @@ async def list_documents(
     """
     # 建立查詢
     query = select(Document).where(
-        Document.tenant_id == current_user.effective_tenant_id
+        Document.tenant_id == current_user.effective_tenant_id,
+        # 連接資料夾的檔案不列在這裡（在後台「資料夾」管理）
+        or_(Document.doc_metadata["source"].astext.is_(None), Document.doc_metadata["source"].astext != "folder"),
     )
     if folder:
         query = query.where(

@@ -100,11 +100,18 @@ async def lifespan(app: FastAPI):
     start_background_warmup()
     logger.info("API 已就緒；LLM/RAG 於背景預熱中")
 
+    # 連接資料夾：背景排程掃描、建立索引（等文件檢索模型載入好才開始）
+    import asyncio
+
+    from app.services.folder_indexer import folder_scan_loop
+    folder_task = asyncio.create_task(folder_scan_loop())
+
     llm_service = get_llm_service()
 
     yield
 
     # 關閉時執行
+    folder_task.cancel()
     try:
         close_client = getattr(llm_service.client, "aclose", None)
         if close_client is not None:

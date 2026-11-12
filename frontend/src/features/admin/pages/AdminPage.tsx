@@ -218,6 +218,7 @@ export default function Admin() {
                                     onEdit={folders.openEdit}
                                     onToggle={folders.toggleEnabled}
                                     onDisconnect={folders.disconnect}
+                                    onScan={folders.scanNow}
                                 />
                             )}
                             {activeSection === 'audit' && <AuditSection {...audit.sectionProps} />}

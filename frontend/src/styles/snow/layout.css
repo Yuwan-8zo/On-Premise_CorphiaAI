@@ -43,9 +43,10 @@
   display: none;
 }
 
-/* 租戶卡片：中等寬度以上分成「田」字四格（兩欄、每列高＝這一區的一半），卡片填滿格子 */
+/* 後台卡片格（租戶、連接資料夾）：中等寬度以上分成「田」字四格（兩欄、每列高＝這一區的一半），卡片填滿格子；
+   四張以內一頁放得下、不用捲 */
 @media (min-width: 768px) {
-  .tenant-quads {
+  .admin-quads {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     /* 至少半高（100%＝這一區扣掉內距後的高度，再扣列距）；內容比較多（例如 Duo 橫向很矮）就跟著長高，按鈕才不會掉到卡片外 */
     grid-auto-rows: minmax(calc((100% - var(--space)) / 2), auto);

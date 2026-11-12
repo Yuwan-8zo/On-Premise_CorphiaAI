@@ -74,7 +74,7 @@ export default function TenantsSection({
                 ) : undefined}
             />
             {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
-            <div className="admin-fill-body tenant-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
+            <div className="admin-fill-body admin-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {isLoadingTenants ? (
                     // 和下面的租戶卡同一個外形：名稱＋狀態、分隔線、四個數字、右下按鈕
                     <div aria-hidden className="snow-well rounded-[var(--admin-in)] p-5 flex flex-col">

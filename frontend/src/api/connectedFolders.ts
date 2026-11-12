@@ -31,6 +31,12 @@ export interface ConnectedFolder extends ConnectedFolderInput {
     error_message: string | null
     created_at: string
     updated_at: string
+    /** 建立索引的進度 */
+    indexed_count: number
+    failed_count: number
+    waiting_count: number
+    /** 正在掃描或排隊等著掃 */
+    scanning: boolean
 }
 
 export interface FolderCheck {
@@ -60,6 +66,8 @@ export const connectedFoldersApi = {
     browse: async (path?: string | null): Promise<BrowseResult> => (await apiClient.get(`${BASE}/browse`, { params: path ? { path } : {} })).data,
     create: async (data: ConnectedFolderInput): Promise<ConnectedFolder> => (await apiClient.post(BASE, data)).data,
     update: async (id: string, data: Partial<ConnectedFolderInput>): Promise<ConnectedFolder> => (await apiClient.put(`${BASE}/${id}`, data)).data,
+    /** 立即更新：重新比對檔案、建立索引 */
+    scan: async (id: string): Promise<ConnectedFolder> => (await apiClient.post(`${BASE}/${id}/scan`)).data,
     remove: async (id: string): Promise<void> => {
         await apiClient.delete(`${BASE}/${id}`)
     },

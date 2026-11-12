@@ -9,6 +9,8 @@
 
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
+import { AnimatePresence, motion } from '@/lib/gsapMotion'
+import { menuPop } from '@/lib/motionPresets'
 import { parseServerDate } from '@/lib/utils'
 import { Plus, Trash2, UserRoundCog, LogOut, MoreHorizontal } from '@/components/snow/icons'
 import { createPortal } from 'react-dom'
@@ -303,11 +305,14 @@ export default function UsersSection({
                     </tbody>
                 </table>
             </div>
-            {openUser && menuPos && createPortal(
-                <div
+            {createPortal(
+                <AnimatePresence>
+                {openUser && menuPos && (
+                <motion.div
                     ref={menuRef}
+                    {...menuPop}
                     role="menu"
-                    className="fixed z-[1000] min-w-[var(--sz-168)] overflow-hidden paper !rounded-[var(--r-20)] p-1.5"
+                    className="fixed z-[1000] origin-top-right min-w-[var(--sz-168)] overflow-hidden paper !rounded-[var(--r-20)] p-1.5"
                     style={{
                         top: menuPos.top,
                         right: menuPos.right,
@@ -358,7 +363,9 @@ export default function UsersSection({
                         {t('common.delete', '刪除')}
                     </button>
                     </LensMenu>
-                </div>,
+                </motion.div>
+                )}
+                </AnimatePresence>,
                 document.body,
             )}
         </Panel>

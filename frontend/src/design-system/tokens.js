@@ -167,7 +167,11 @@ export const motion = {
         spring: 0.42,
         page: 0.42,
         slow: 0.6,
+        menuIn: 0.25, // 選單、下拉打開
+        menuOut: 0.15, // 選單、下拉收起（比打開快，點完立刻讓開）
     },
+    /** 選單打開時從這個大小放大到 1（＋淡入），收起時縮回這個大小 */
+    menuScale: 0.96,
     easing: {
         apple: 'cubic-bezier(0.23, 1, 0.32, 1)', // 減速
         appleSoft: 'cubic-bezier(0.32, 0.72, 0, 1)', // 彈性

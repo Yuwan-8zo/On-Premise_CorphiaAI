@@ -9,6 +9,7 @@ import { useDismiss } from '@/lib/useDismiss'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import { MQ_HOVER } from '@/lib/useMediaQuery'
+import { MOTION } from '@/design-system'
 
 interface PromptTemplate {
     title: string
@@ -99,7 +100,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
             return () => cancelAnimationFrame(id)
         } else if (isVisible) {
             setIsAnimating(false)
-            const t = setTimeout(() => setIsVisible(false), 220)
+            // 收起動畫（menuOut）跑完才卸下
+            const t = setTimeout(() => setIsVisible(false), MOTION.durationSeconds.menuOut * 1000)
             return () => clearTimeout(t)
         }
     }, [isOpen, isVisible])
@@ -152,6 +154,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         else list[i - 1].focus()
     }
 
+    const menuSec = isAnimating ? MOTION.durationSeconds.menuIn : MOTION.durationSeconds.menuOut
     // 按住模板鈕直接拖進清單、放大鏡選取（lib/menuDrag）
     const trigger = useMenuTrigger()
     const promptTrigger = trigger(isOpen, () => setIsOpen(true), () => setIsOpen(false))
@@ -199,9 +202,10 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                         bottom: pos.bottom,
                         // 固定高度：切換分類時清單長短不同，面板也不會縮放，工具列不會在滑鼠底下跳動
                         height: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
+                        // 同全站選單：打開 0.25 秒從 96% 放大＋淡入，收起 0.15 秒（design-system 的 menuIn／menuOut／menuScale）
                         opacity: isAnimating ? 1 : 0,
-                        transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
-                        transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
+                        transform: `scale(${isAnimating ? 1 : MOTION.menuScale})`,
+                        transition: `opacity ${menuSec}s var(--ease-out), transform ${menuSec}s var(--ease-out)`,
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
                     onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented) setIsOpen(false) }}
@@ -240,7 +244,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
 
                     {/* 模板清單 */}
                     <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none" onKeyDown={onListKey}>
-                        <LensMenu>
+                        <LensMenu fitCard={false}>
                         {groups.length === 0 && (
                             <p className="px-[var(--sp-10)] py-[var(--sp-24)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-muted">{t('chat.promptEmpty')}</p>
                         )}

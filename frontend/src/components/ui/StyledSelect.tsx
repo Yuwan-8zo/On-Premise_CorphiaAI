@@ -11,6 +11,8 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from '@/components/snow/icons'
 import LensMenu from '@/components/ui/LensMenu'
+import { AnimatePresence, motion } from '@/lib/gsapMotion'
+import { menuPop } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
 import { useScrollFade } from '@/lib/useScrollFade'
 import { useMenuTrigger } from '@/lib/menuDrag'
@@ -82,12 +84,15 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                 <ChevronDown className={`w-[var(--sz-18)] h-[var(--sz-18)] shrink-0 text-text-secondary transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
-            {open && pos && createPortal(
-                <div
+            {createPortal(
+                <AnimatePresence>
+                {open && pos && (
+                <motion.div
                     ref={menuRef}
+                    {...menuPop}
                     role="listbox"
                     className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
-                    style={{ left: pos.left, minWidth: pos.width, top: pos.top, bottom: pos.bottom }}
+                    style={{ left: pos.left, minWidth: pos.width, top: pos.top, bottom: pos.bottom, transformOrigin: pos.bottom !== undefined ? 'bottom left' : 'top left' }}
                 >
                     {/* 卡片不捲、裡面這層捲：光邊才不會跟著選項捲走 */}
                     <div ref={scrollRef} className="glass-scroll min-h-0 p-[var(--sp-6)]">
@@ -110,7 +115,9 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                         })}
                     </LensMenu>
                     </div>
-                </div>,
+                </motion.div>
+                )}
+                </AnimatePresence>,
                 document.body,
             )}
         </div>

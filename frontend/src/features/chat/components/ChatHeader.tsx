@@ -140,7 +140,7 @@ export default function ChatHeader({
                                 <motion.div
                                     key="model-menu"
                                     {...popIn}
-                                    className="absolute right-0 top-full mt-2 w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
                                     <div className="max-h-[var(--sz-300)] overflow-y-auto custom-scrollbar">

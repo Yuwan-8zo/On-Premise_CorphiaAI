@@ -13,6 +13,11 @@ import i18n from '@/i18n'
 
 /** 打字停多久才檢查路徑（毫秒） */
 const CHECK_DEBOUNCE_MS = 500
+/** 有資料夾在建立索引時，多久重新讀一次進度（毫秒） */
+const PROGRESS_POLL_MS = 2500
+
+/** 這個資料夾正在掃描或建立索引中 */
+export const isIndexing = (f: ConnectedFolder) => f.is_enabled && (f.scanning || f.status === 'scanning' || f.status === 'pending')
 
 const EMPTY_FORM: ConnectedFolderInput = {
     name: '',
@@ -53,6 +58,24 @@ export function useAdminFolders() {
             setLoaded(true)
         }
     }, [])
+
+    // 有資料夾在建立索引：定時讀進度，全部做完就停
+    const anyIndexing = folders.some(isIndexing)
+    useEffect(() => {
+        if (!anyIndexing) return
+        const id = window.setInterval(loadFolders, PROGRESS_POLL_MS)
+        return () => window.clearInterval(id)
+    }, [anyIndexing, loadFolders])
+
+    /** 立即更新：重新比對檔案，新增、修改的建立索引，刪掉的移除 */
+    const scanNow = async (item: ConnectedFolder) => {
+        try {
+            const updated = await connectedFoldersApi.scan(item.id)
+            setFolders((list) => list.map((f) => (f.id === item.id ? updated : f)))
+        } catch (err) {
+            toast.error(getErrorMessage(err))
+        }
+    }
 
     // 路徑或「包含子資料夾」改了就重新檢查（只在視窗開著時）
     useEffect(() => {
@@ -143,6 +166,6 @@ export function useAdminFolders() {
     return {
         folders, loaded, loadError, loadFolders,
         isModalOpen, setIsModalOpen, isSubmitting, editing, form, setForm, check, checking, canSubmit,
-        openAdd, openEdit, submit, toggleEnabled, disconnect,
+        openAdd, openEdit, submit, toggleEnabled, disconnect, scanNow,
     }
 }

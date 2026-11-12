@@ -52,8 +52,19 @@ export const dialogSheet = {
     transition: { duration: 0.3, ease: EASE_DECEL },
 }
 
-/** 彈出：選單、下拉、浮動小按鈕（同對話框本體：從 0.95、0.3 秒減速） */
-export const popIn = dialogSheet
+/**
+ * 選單、下拉、彈出的小面板：打開 0.25 秒從 96% 放大＋淡入；收起 0.15 秒（比打開快，點完立刻讓開）
+ * 時間和大小在 design-system tokens（motion.durationSeconds.menuIn／menuOut、motion.menuScale）
+ */
+export const menuPop = {
+    initial: { opacity: 0, scale: MOTION.menuScale },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: MOTION.menuScale, duration: MOTION.durationSeconds.menuOut },
+    transition: { duration: MOTION.durationSeconds.menuIn, ease: EASE_DECEL },
+}
+
+/** 彈出：選單、下拉、浮動小按鈕（同選單） */
+export const popIn = menuPop
 
 /** 小圖示互換（例如顯示／隱藏密碼）：從 0.95 淡入，0.2 秒 */
 export const iconSwap = {

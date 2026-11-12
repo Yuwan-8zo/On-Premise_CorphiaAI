@@ -47,6 +47,12 @@ class ConnectedFolderResponse(ConnectedFolderBase):
     error_message: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    # 建立索引的進度（從文件紀錄算出來，不存在資料夾表裡）
+    indexed_count: int = 0
+    failed_count: int = 0
+    waiting_count: int = 0
+    # 正在掃描或排隊等著掃
+    scanning: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -15,6 +15,7 @@ import os
 import string
 import time
 from pathlib import Path
+from typing import Iterator, NamedTuple
 
 from app.core.config import settings
 from app.services.document_service import DocumentService
@@ -112,13 +113,21 @@ def overlaps(a: str, b: str) -> bool:
     return _is_within(pa, pb) or _is_within(pb, pa)
 
 
-def inspect_folder(path: Path, include_subfolders: bool = True) -> dict:
-    """快速看資料夾裡有什麼：支援的檔案數、總大小、各類型數量、幾個範例檔名（超過上限就停，標記 truncated）"""
-    t0 = time.monotonic()
-    supported = unsupported = sensitive = total_bytes = seen = 0
-    by_type: dict[str, int] = {}
-    samples: list[str] = []
-    truncated = False
+class FolderFile(NamedTuple):
+    """資料夾裡一個可以讀的檔案"""
+    path: str        # 完整路徑
+    rel: str         # 相對於連接資料夾的路徑（顯示、比對用）
+    ext: str         # 副檔名（小寫、含點）
+    size: int
+    mtime: float
+
+
+def walk_folder(path: Path, include_subfolders: bool = True) -> Iterator[tuple[str, FolderFile | None]]:
+    """
+    走過資料夾，一個項目回傳一次：("file", 檔案)、("unsupported", None)、("sensitive", None)
+    跳過的資料夾（隱藏、系統、node_modules…）不進去；捷徑不跟過去（不會跑出連接的範圍）。
+    檢查畫面（inspect_folder）和掃描建立索引（folder_indexer）共用這一份規則。
+    """
     stack = [path]
     while stack:
         cur = stack.pop()
@@ -127,32 +136,48 @@ def inspect_folder(path: Path, include_subfolders: bool = True) -> dict:
         except OSError:
             continue
         for e in entries:
-            seen += 1
-            if seen > INSPECT_MAX_ENTRIES or time.monotonic() - t0 > INSPECT_MAX_SECONDS:
-                truncated = True
-                stack.clear()
-                break
             try:
                 if e.is_dir(follow_symlinks=False):
-                    if include_subfolders and e.name.lower() not in _SKIP_DIRS and not e.name.startswith("."):
+                    if include_subfolders and e.name.lower() not in _SKIP_DIRS and not e.name.startswith(".") and not e.name.startswith("$"):
                         stack.append(Path(e.path))
                     continue
                 if not e.is_file(follow_symlinks=False):
                     continue
-                if is_sensitive(e.name):
-                    sensitive += 1
+                if is_sensitive(e.name) or e.name.startswith("~$"):  # ~$ 開頭＝Office 開著時的暫存檔
+                    yield "sensitive", None
                     continue
                 ext = Path(e.name).suffix.lower()
                 if ext not in SUPPORTED_EXTS:
-                    unsupported += 1
+                    yield "unsupported", None
                     continue
-                supported += 1
-                total_bytes += e.stat(follow_symlinks=False).st_size
-                by_type[ext] = by_type.get(ext, 0) + 1
-                if len(samples) < INSPECT_SAMPLES:
-                    samples.append(os.path.relpath(e.path, path))
+                st = e.stat(follow_symlinks=False)
+                yield "file", FolderFile(e.path, os.path.relpath(e.path, path), ext, st.st_size, st.st_mtime)
             except OSError:
                 continue
+
+
+def inspect_folder(path: Path, include_subfolders: bool = True) -> dict:
+    """快速看資料夾裡有什麼：支援的檔案數、總大小、各類型數量、幾個範例檔名（超過上限就停，標記 truncated）"""
+    t0 = time.monotonic()
+    supported = unsupported = sensitive = total_bytes = seen = 0
+    by_type: dict[str, int] = {}
+    samples: list[str] = []
+    truncated = False
+    for kind, f in walk_folder(path, include_subfolders):
+        seen += 1
+        if seen > INSPECT_MAX_ENTRIES or time.monotonic() - t0 > INSPECT_MAX_SECONDS:
+            truncated = True
+            break
+        if kind == "sensitive":
+            sensitive += 1
+        elif kind == "unsupported":
+            unsupported += 1
+        elif f is not None:
+            supported += 1
+            total_bytes += f.size
+            by_type[f.ext] = by_type.get(f.ext, 0) + 1
+            if len(samples) < INSPECT_SAMPLES:
+                samples.append(f.rel)
     return {
         "path": str(path), "file_count": supported, "total_bytes": total_bytes, "by_type": by_type,
         "unsupported_count": unsupported, "skipped_sensitive": sensitive, "samples": samples, "truncated": truncated,

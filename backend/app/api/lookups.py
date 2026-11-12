@@ -61,11 +61,22 @@ async def get_tenant_document(db: AsyncSession, document_id: str, user: User) ->
     document = result.scalar_one_or_none()
     if document is None:
         raise _not_found("文件不存在")
+    # 連接資料夾來的文件：角色要在那個資料夾允許的範圍裡（沒權限就當作不存在）
+    from app.services.folder_access import can_read_folder_document
+    from app.services.folder_indexer import is_folder_document
+
+    if is_folder_document(document) and not await can_read_folder_document(db, user, document):
+        raise _not_found("文件不存在")
     return document
 
 
 def ensure_can_modify_document(user: User, document: Document) -> None:
     """修改設定、刪除文件：只有上傳者或管理員（admin／engineer）"""
+    from app.services.folder_indexer import is_folder_document
+
+    # 連接資料夾來的文件指向原本的檔案：從這裡刪除會把原檔刪掉，一律到後台「資料夾」管理
+    if is_folder_document(document):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="這是連接資料夾裡的檔案，請到後台「資料夾」管理")
     if document.uploaded_by != user.id and not (user.is_admin or user.is_engineer):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="無權修改此文件")
 

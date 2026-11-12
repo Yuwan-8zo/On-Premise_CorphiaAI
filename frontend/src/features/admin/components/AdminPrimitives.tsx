@@ -43,14 +43,17 @@ export function SectionHeader({
     title,
     eyebrow,
     action,
+    inlineAction = false,
 }: {
     title: string
     /** 標題下方的補充（可放 SkelText 佔位） */
     eyebrow?: React.ReactNode
     action?: React.ReactNode
+    /** 手機上動作鈕也和標題排同一列（不另起一列，省高度；動作鈕要夠窄） */
+    inlineAction?: boolean
 }) {
     return (
-        <div className="flex flex-col gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] md:flex-row md:flex-wrap md:items-center md:justify-between">
+        <div className={`flex gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] ${inlineAction ? 'flex-row items-center justify-between' : 'flex-col md:flex-row md:flex-wrap md:items-center md:justify-between'}`}>
             <div className="min-w-0 md:shrink-0 md:max-w-full">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
                 <h2 className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
