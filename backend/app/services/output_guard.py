@@ -9,7 +9,13 @@
   3. 控制字元：拿掉看不見的控制字元（保留換行、定位）。
 
 串流的難處：樣式可能被切在兩段之間（「A1234」「56789」）。做法是把結尾「還可能是樣式開頭」的那一小段先留著，
-等後面的字到了再判斷：中文內容不會被留住（照常一個字一個字出來），只有英數字尾巴和還沒寫完的圖片語法會稍等。
+等後面的字到了再判斷：中文內容不會被留住（照常一個字一個字出來），只有還沒寫完的英數字詞、圖片語法會稍等。
+串流和整段檢查一樣分兩關，順序也一樣：
+  第一關（圖片）：還沒寫完、但還可能變成圖片的語法先留著；完整的圖片拿掉後，才交給第二關
+  第二關（個資）：只在「不會把樣式切成兩半」的地方切（見 _pii_cut）
+    - 中文、標點後面可以切；英文在「詞與詞之間的空白」可以切（數字後面的空白不行：卡號、手機中間有空白）
+    - 「統編 12345678」「護照號碼：123456789」這種要看前後文的：關鍵字和號碼要留在同一段
+目標是「不管怎麼切段，結果都和整段一次檢查一樣」（tests/test_output_guard.py 用隨機切段驗證）。
 
 用法（每一則回答一個）：
     screen = OutputScreen()
@@ -25,10 +31,10 @@ import re
 from app.core.config import settings
 from app.services.pii_masking_service import mask_pii
 
-# 結尾最多留多少字等後續（個資樣式最長的是電子郵件、帶分隔的卡號）
-HOLD_TAIL_MAX = 48
-# 還沒寫完的圖片語法最多留多少字（超過就不等了，當一般文字處理）
-HOLD_IMAGE_MAX = 600
+# 一個沒有空白、還沒寫完的英數字詞最多留多少字等後續（金鑰類可以到一百多字；一般文字遇到空白、中文就會放行，不會等這麼久）
+HOLD_TAIL_MAX = 256
+# 還沒寫完的圖片語法最多留多少字（和下面圖片樣式能吃的長度一致；超過就不等了，當一般文字處理）
+HOLD_IMAGE_MAX = 2300
 
 # 可能屬於個資樣式的字元（英數字、@ . - _ + 和空白）；中文等其他字元一出現就代表前面的樣式結束了
 _TOKEN_CHARS = frozenset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@._-+ ")
@@ -36,7 +42,91 @@ _TOKEN_CHARS = frozenset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 _MD_IMAGE_RE = re.compile(r"!\[([^\]\n]{0,200})\]\(\s*<?(?:https?:)?//[^)\n]{0,2000}\)", re.I)
 _HTML_IMAGE_RE = re.compile(r"<img\b[^>]{0,2000}>", re.I)
 _CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+# 「還沒寫完、但還可能變成圖片」的開頭（要整段比對到結尾）：![說明  →  ![說明](  →  ![說明](網址…
+# 「![重點] 之後是一般文字」這種不會成立，不用留著等
+_MD_IMAGE_OPEN_RE = re.compile(r"!\[[^\]\n]{0,200}(?:\](?:\(\s*[^)\n]{0,2010})?)?")
+_HTML_IMAGE_OPEN_RE = re.compile(r"<img\b[^>]{0,2000}", re.I)
 IMAGE_NOTE = "（已移除外部圖片{alt}）"
+# 要看前後文才算個資的樣式（pii_masking_service 的統一編號、護照號碼）：關鍵字、關鍵字還沒寫完的開頭、號碼
+_KEYWORD_RE = re.compile(r"統一?編號|統編|VAT|護照(?:號碼|號)?|passport", re.I)
+_KEYWORD_PREFIXES = ("統一編", "統一", "統", "護")
+_CONTEXT_DIGITS_RE = re.compile(r"(?<!\d)\d{8,9}(?!\d)")
+# 關鍵字和號碼之間最多隔幾個字（和 pii_masking_service 的樣式一致）、最長的關鍵字幾個字
+_CONTEXT_GAP = 20
+_KEYWORD_MAX = 8
+# 「關鍵字＋號碼」整組（兩種順序）：已經到齊的整組不能被切成兩段
+_CONTEXT_UNIT_RE = re.compile(
+    rf"(?:{_KEYWORD_RE.pattern})[^\d]{{0,{_CONTEXT_GAP}}}\d{{8,9}}(?!\d)|(?<!\d)\d{{8,9}}[^\d]{{0,{_CONTEXT_GAP}}}(?:{_KEYWORD_RE.pattern})",
+    re.I,
+)
+
+
+def _is_boundary(p: str, i: int) -> bool:
+    """可不可以在 p[i] 前面切：前一個字不是樣式字元；或是空白（含換行）、而且空白前面不是數字（卡號、手機中間的空白不能切）"""
+    if i == 0:
+        return True
+    c = p[i - 1]
+    if c.isspace():
+        return i < 2 or not p[i - 2].isdigit()
+    return c not in _TOKEN_CHARS
+
+
+def _keyword_pending(p: str) -> int:
+    """有關鍵字後面的號碼還沒寫完（或還沒出現）→ 回最前面那個關鍵字開頭的位置；不用等回 -1"""
+    for m in _KEYWORD_RE.finditer(p):
+        rest = p[m.end():]
+        gap = 0
+        while gap < len(rest) and gap <= _CONTEXT_GAP and not rest[gap].isdigit():
+            gap += 1
+        if gap > _CONTEXT_GAP:
+            continue                   # 隔太遠，不會是它的號碼了
+        if gap == len(rest):
+            return m.start()           # 號碼還沒出現
+        end = gap
+        while end < len(rest) and rest[end].isdigit():
+            end += 1
+        if end == len(rest):
+            return m.start()           # 號碼寫到結尾＝可能還沒寫完
+    return -1
+
+
+def _units(p: str) -> list[tuple[int, int]]:
+    """不能被切成兩段的範圍：已經到齊的「關鍵字＋號碼」（互相重疊的也要，所以從每個關鍵字、每個號碼的開頭各比一次）"""
+    spans: list[tuple[int, int]] = []
+    starts = {m.start() for m in _KEYWORD_RE.finditer(p)} | {m.start() for m in _CONTEXT_DIGITS_RE.finditer(p)}
+    for i in starts:
+        m = _CONTEXT_UNIT_RE.match(p, i)
+        if m:
+            spans.append(m.span())
+    return spans
+
+
+def _image_pending(p: str) -> int:
+    """還沒寫完、但還可能變成圖片的語法從哪裡開始（最前面那個）；沒有回 -1"""
+    start = max(0, len(p) - HOLD_IMAGE_MAX)
+    found = -1
+    for marker, rx in (("![", _MD_IMAGE_OPEN_RE), ("<img", _HTML_IMAGE_OPEN_RE)):
+        text = p if marker == "![" else p.lower()
+        i = text.find(marker, start)
+        while i != -1:
+            if rx.fullmatch(p, i):
+                found = i if found == -1 else min(found, i)
+                break
+            i = text.find(marker, i + 1)
+    return found
+
+
+def _digits_pending(p: str) -> int:
+    """最後一個 8～9 位數字後面可能接「統編／護照」→ 回數字開頭的位置；不用等回 -1"""
+    last = None
+    for m in _CONTEXT_DIGITS_RE.finditer(p):
+        last = m
+    if last is None:
+        return -1
+    rest = p[last.end():]
+    if any(ch.isdigit() for ch in rest) or _KEYWORD_RE.search(rest):
+        return -1                      # 後面又有數字（樣式斷了）或關鍵字已經到齊（這一段就能判斷）
+    return last.start() if len(rest) < _CONTEXT_GAP + _KEYWORD_MAX else -1
 
 
 def _strip_images(text: str) -> tuple[str, int]:
@@ -71,55 +161,90 @@ def screen_output(text: str) -> tuple[str, dict]:
     return out, report
 
 
+def _image_cut(p: str) -> int:
+    """第一關：原文可以放心交給「拿掉圖片」處理到哪裡（還沒寫完的圖片語法留著）"""
+    cut = len(p)
+    image = _image_pending(p)
+    if image != -1:
+        cut = image
+    # 結尾是「!」或「<img」還沒寫完的開頭（<、<i、<im），可能是圖片語法的開頭
+    tail = p[:cut][-3:].lower()
+    for start in ("<im", "<i", "<", "!"):
+        if tail.endswith(start):
+            cut -= len(start)
+            break
+    return cut
+
+
+def _pii_cut(p: str) -> int:
+    """第二關：拿掉圖片後的文字可以放心送出去到哪裡（後面的要留著等）"""
+    low = max(0, len(p) - HOLD_TAIL_MAX)
+
+    def settle(cut: int) -> int:
+        # 往回退到最近一個「可以切」的地方；還沒寫完的英數字詞留著（最多 HOLD_TAIL_MAX 個字，超過就不等了）
+        while cut > low and not _is_boundary(p, cut):
+            cut -= 1
+        return cut
+
+    cut = settle(len(p))
+    # 要看前後文的個資：關鍵字（或它還沒寫完的開頭）和號碼要留在同一段
+    for hold in (_keyword_pending(p), _digits_pending(p)):
+        if hold != -1:
+            cut = min(cut, hold)
+    for prefix in _KEYWORD_PREFIXES:
+        if p.endswith(prefix):
+            cut = min(cut, len(p) - len(prefix))
+            break
+    # 已經到齊的「關鍵字＋號碼」整組不能被切開；切點移動後要再確認落在可切的位置（做到不再變動為止）
+    units = _units(p)
+    while True:
+        before = cut
+        for start, end in units:
+            if start < cut < end:
+                cut = start
+        cut = settle(cut)
+        if cut == before:
+            return cut
+
+
 class OutputScreen:
     """串流版：feed() 回傳可以先送出去的部分，結尾可能還沒完整的樣式先留著"""
 
     def __init__(self) -> None:
-        self._pending = ""
+        self._raw = ""       # 第一關：還沒處理圖片的原文
+        self._pending = ""   # 第二關：圖片處理完、還沒遮個資的文字
         self.report = {"pii": 0, "images": 0}
 
-    def _emit(self, text: str) -> str:
-        out, report = screen_output(text)
-        self.report["pii"] += report["pii"]
-        self.report["images"] += report["images"]
-        return out
-
-    def _safe_cut(self) -> int:
-        """pending 裡可以放心送出去到哪裡（後面的要留著等）"""
-        p = self._pending
-        cut = len(p)
-        # 結尾連續的「樣式字元」先留著（最多 HOLD_TAIL_MAX 個）
-        low = max(0, cut - HOLD_TAIL_MAX)
-        while cut > low and p[cut - 1] in _TOKEN_CHARS:
-            cut -= 1
-        # 還沒寫完的圖片：從 ![ 或 <img 開始留著（太長就不等了）
-        for marker in ("![", "<img", "<IMG"):
-            i = p.rfind(marker, max(0, len(p) - HOLD_IMAGE_MAX))
-            if i != -1 and i < cut:
-                rest = p[i:]
-                closed = (")" in rest) if marker == "![" else (">" in rest)
-                if not closed:
-                    cut = i
-        # 結尾單獨一個「!」或「<」可能是圖片語法的開頭
-        if cut and p[cut - 1] in "!<":
-            cut -= 1
-        return cut
+    def _advance(self, final: bool) -> str:
+        # 第一關：圖片
+        cut = len(self._raw) if final else _image_cut(self._raw)
+        if cut > 0:
+            ready, self._raw = self._raw[:cut], self._raw[cut:]
+            stripped, images = _strip_images(ready)
+            self.report["images"] += images
+            self._pending += stripped
+        # 第二關：個資
+        cut = len(self._pending) if final else _pii_cut(self._pending)
+        if cut <= 0:
+            return ""
+        ready, self._pending = self._pending[:cut], self._pending[cut:]
+        if settings.enable_pii_masking:
+            masked = mask_pii(ready)
+            if masked["has_pii"]:
+                self.report["pii"] += len(masked["mask_map"])
+                ready = masked["masked_text"]
+        return ready
 
     def feed(self, chunk: str) -> str:
         if not settings.enable_output_guard:
             return chunk
-        self._pending += chunk or ""
-        cut = self._safe_cut()
-        if cut <= 0:
-            return ""
-        ready, self._pending = self._pending[:cut], self._pending[cut:]
-        return self._emit(ready)
+        self._raw += _CONTROL_RE.sub("", chunk or "")
+        return self._advance(final=False)
 
     def flush(self) -> str:
         if not settings.enable_output_guard:
             return ""
-        ready, self._pending = self._pending, ""
-        return self._emit(ready) if ready else ""
+        return self._advance(final=True)
 
     @property
     def changed(self) -> bool:

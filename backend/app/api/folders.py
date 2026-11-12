@@ -35,12 +35,12 @@ class FolderResponse(BaseModel):
     # 專案的自訂指示（沒設定是 null）
     instructions: Optional[str] = None
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class FolderInstructions(BaseModel):
     """專案的自訂指示；空字串＝清除"""
     instructions: str = Field("", max_length=INSTRUCTIONS_MAX)
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("", response_model=list[FolderResponse])

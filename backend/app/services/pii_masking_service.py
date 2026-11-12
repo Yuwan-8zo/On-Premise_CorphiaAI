@@ -103,42 +103,55 @@ def mask_pii(text: str) -> MaskResult:
         MaskResult: 包含遮罩後文字、對照表、是否偵測到 PII
     """
     mask_map: list[dict] = []
-    masked_text = text
 
-    # 先收集所有匹配，從後往前替換避免 offset 位移
+    # 先在原文上收集所有樣式的匹配
     all_matches: list[tuple[str, str, re.Match[str]]] = []
 
     for pii_type, pattern, label in _PATTERNS:
         for match in pattern.finditer(text):
             all_matches.append((pii_type, label, match))
 
-    # 按起始位置降序排列，從後往前替換
-    all_matches.sort(key=lambda x: x[2].start(), reverse=True)
-
+    # 依位置排序，把互相重疊的匹配合併成一段（例如金鑰後面緊接 @網域、身分證出現在電子郵件裡）。
+    # 不合併的話，各自照原本的位置替換會互相踩到：吃掉旁邊的字，或留下半截沒遮的原文。
+    # 合併後整段遮掉，標示用其中最長那一筆的種類。
+    all_matches.sort(key=lambda x: (x[2].start(), -x[2].end()))
+    groups: list[dict] = []
     for pii_type, label, match in all_matches:
-        original = match.group()
+        length = match.end() - match.start()
+        if groups and match.start() < groups[-1]["end"]:
+            g = groups[-1]
+            g["end"] = max(g["end"], match.end())
+            if length > g["length"]:
+                g.update(type=pii_type, label=label, length=length)
+        else:
+            groups.append({"start": match.start(), "end": match.end(), "type": pii_type, "label": label, "length": length})
+
+    # 由前往後一次組出遮罩後的文字
+    pieces: list[str] = []
+    pos = 0
+    for g in groups:
+        original = text[g["start"]:g["end"]]
         # 遮罩策略：保留頭尾各 2 字元，中間用 * 替代
         if len(original) > 4:
             masked = original[:2] + '*' * (len(original) - 4) + original[-2:]
         else:
             masked = '*' * len(original)
 
-        mask_tag = f"[{label}已遮罩]"
+        mask_tag = f"[{g['label']}已遮罩]"
 
         mask_map.append({
             "original_preview": masked,  # 不回傳完整原文！只給遮罩版
             "masked": mask_tag,
-            "type": pii_type,
-            "label": label,
-            "start": match.start(),
-            "end": match.end(),
+            "type": g["type"],
+            "label": g["label"],
+            "start": g["start"],
+            "end": g["end"],
         })
-
-        # 替換文字
-        masked_text = masked_text[:match.start()] + mask_tag + masked_text[match.end():]
-
-    # mask_map 轉回正序（給前端用）
-    mask_map.reverse()
+        pieces.append(text[pos:g["start"]])
+        pieces.append(mask_tag)
+        pos = g["end"]
+    pieces.append(text[pos:])
+    masked_text = "".join(pieces)
 
     has_pii = len(mask_map) > 0
 

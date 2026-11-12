@@ -757,7 +757,15 @@ class ChatService:
         if language == "zh-TW":
             spec = _deep_map(spec, to_traditional)
         # 檔案裡的字也要過「回答的檢查」（個資遮罩、外部圖片語法拿掉），和畫面上的回答同一套
-        spec = _deep_map(spec, lambda text: screen_output(text)[0])
+        filtered = {"pii": 0, "images": 0}
+
+        def _screen(text: str) -> str:
+            out, report = screen_output(text)
+            filtered["pii"] += report["pii"]
+            filtered["images"] += report["images"]
+            return out
+
+        spec = _deep_map(spec, _screen)
 
         if not file_builder.spec_is_usable(kind, spec):
             # 內容被長度上限切斷或格式壞掉：照實說，不交一份空殼檔案
@@ -790,6 +798,18 @@ class ChatService:
             )
         except Exception as e:  # 稽核失敗不能擋住主流程
             logger.warning("產出檔案寫稽核失敗: %s", e)
+        if filtered["pii"] or filtered["images"]:
+            # 檔案內容被改過：和一般回答一樣寫稽核、告訴使用者
+            try:
+                await write_audit_log(
+                    db=self.db, action=AuditAction.OUTPUT_FILTERED, resource_type=AuditResource.FILE, resource_id=row.id,
+                    user_id=user_id, tenant_id=tenant_id,
+                    description=f"AI 產出的檔案內容已過濾：外部圖片 {filtered['images']} 張、個資遮罩 {filtered['pii']} 個",
+                    details={**filtered, "message_id": message.id},
+                )
+            except Exception as e:  # 稽核失敗不能擋住主流程
+                logger.warning("檔案內容檢查寫稽核失敗: %s", e)
+            yield {"type": "output_filtered", **filtered}
         yield {"type": "attachments", "message_id": message.id, "attachments": [generated_files.to_attachment(row)]}
         yield {"type": "done", "message_id": message.id}
 

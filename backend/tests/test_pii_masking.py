@@ -99,3 +99,30 @@ class TestPIIMasking:
         result = mask_pii("")
         assert result["has_pii"] is False
         assert result["masked_text"] == ""
+
+
+class TestOverlappingMatches:
+    """兩個樣式重疊時要合併成一段遮掉：不能吃掉旁邊的字，也不能留下半截原文"""
+
+    def test_id_inside_email(self):
+        result = mask_pii("寄到 A123456789@example.com 就可以了")
+        assert result["masked_text"] == "寄到 [電子郵件已遮罩] 就可以了"
+        assert len(result["mask_map"]) == 1
+
+    def test_key_followed_by_domain(self):
+        key = "ghp_abcdefghijklmnopqrstuvwx0123"
+        result = mask_pii(f"金鑰 {key}a@b.tw，後面的字要留著")
+        assert key not in result["masked_text"]
+        assert result["masked_text"].endswith("，後面的字要留著")
+        assert result["masked_text"].startswith("金鑰 [")
+
+    def test_passport_number_sharing_digits_with_id(self):
+        result = mask_pii("資料：A123456789（護照），其他內容不變")
+        assert "123456789" not in result["masked_text"]
+        assert result["masked_text"].endswith("，其他內容不變")
+
+    def test_separate_matches_are_still_separate(self):
+        result = mask_pii("手機 0912-345-678，信箱 ming@example.com")
+        assert result["masked_text"] == "手機 [手機號碼已遮罩]，信箱 [電子郵件已遮罩]"
+        assert [m["type"] for m in result["mask_map"]] == ["tw_phone", "email"]
+        assert all(result["masked_text"].count(m["masked"]) >= 1 for m in result["mask_map"])

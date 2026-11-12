@@ -8,7 +8,7 @@
   - 每個模型一個 llama-server 子行程（只聽 127.0.0.1，隨機空埠），用它的 OpenAI 相容 API；
     提示詞格式用模型自己帶的樣板（--jinja），所以換模型（Qwen、Breeze、gpt-oss）不用改提示詞程式
   - 同時留在記憶體的模型有上限（llm_engine_max_loaded）；超過就關掉最久沒用的（系統預設模型不關）
-  - 每個行程啟動時產生一把隨機金鑰（--api-key-file，放在使用者自己的暫存資料夾）：雖然只聽 127.0.0.1，
+  - 每個行程啟動時產生一把隨機金鑰（--api-key-file，放在使用者自己的暫存資料夾，引擎讀完就刪）：雖然只聽 127.0.0.1，
     同一台電腦上的其他帳號、其他程式沒有金鑰就不能直接問模型（繞過後端的資安檢查與稽核）
   - 一次只啟動一個（啟動時要讀好幾 GB，同時啟動會互搶）
   - 後端關閉時全部關掉；後端被強制結束時留下的孤兒，下次啟動會清掉（看 --alias 標記＋父行程已不在）
@@ -147,7 +147,8 @@ class LlamaEngine:
         log_path = log_dir / f"{Path(model_path).stem}.log"
         # 金鑰寫在檔案裡交給引擎（不放在命令列，才不會出現在行程清單和記錄裡）
         api_key = secrets.token_urlsafe(32)
-        key_path = log_dir / f"{Path(model_path).stem}.key"
+        # 檔名帶埠號：同一台電腦上兩個後端同時載入同一個模型時，不會互相蓋掉對方的金鑰檔
+        key_path = log_dir / f"{Path(model_path).stem}-{port}.key"
         key_path.write_text(api_key, encoding="ascii")
         cmd = [
             str(self.exe()), "-m", model_path,
@@ -165,19 +166,26 @@ class LlamaEngine:
         )
         log.close()  # 子行程自己握著檔案
         m = EngineModel(path=model_path, port=port, proc=proc, log_path=log_path, api_key=api_key, pinned=pinned)
-        deadline = time.time() + settings.llm_engine_load_timeout
-        while time.time() < deadline:
-            if not m.alive():
-                raise RuntimeError(f"推論引擎啟動失敗（結束代碼 {proc.returncode}）：{self._log_tail(log_path)}")
+        try:
+            deadline = time.time() + settings.llm_engine_load_timeout
+            while time.time() < deadline:
+                if not m.alive():
+                    raise RuntimeError(f"推論引擎啟動失敗（結束代碼 {proc.returncode}）：{self._log_tail(log_path)}")
+                try:
+                    if httpx.get(f"{m.base_url}/health", timeout=2.0).status_code == 200:
+                        logger.info("推論引擎就緒：%s", Path(model_path).name)
+                        return m
+                except httpx.HTTPError:
+                    pass  # 還在載入
+                time.sleep(HEALTH_POLL_SEC)
+            self._kill(proc)
+            raise RuntimeError(f"推論引擎載入逾時（{settings.llm_engine_load_timeout} 秒）：{Path(model_path).name}")
+        finally:
+            # 引擎只在啟動時讀一次金鑰檔：就緒、失敗、逾時都馬上刪掉，金鑰之後只留在後端的記憶體裡
             try:
-                if httpx.get(f"{m.base_url}/health", timeout=2.0).status_code == 200:
-                    logger.info("推論引擎就緒：%s", Path(model_path).name)
-                    return m
-            except httpx.HTTPError:
-                pass  # 還在載入
-            time.sleep(HEALTH_POLL_SEC)
-        self._kill(proc)
-        raise RuntimeError(f"推論引擎載入逾時（{settings.llm_engine_load_timeout} 秒）：{Path(model_path).name}")
+                key_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     @staticmethod
     def _log_tail(log_path: Path, chars: int = 300) -> str:
@@ -198,12 +206,8 @@ class LlamaEngine:
             proc.kill()
 
     def _retire(self, m: EngineModel) -> None:
-        """關掉行程，順手把它的金鑰檔刪掉"""
+        """關掉行程（金鑰檔在啟動完成時就刪了，金鑰只在記憶體裡，行程關掉就跟著消失）"""
         self._kill(m.proc)
-        try:
-            m.log_path.with_suffix(".key").unlink(missing_ok=True)
-        except OSError:
-            pass
 
     def stop(self, model_path: str) -> None:
         with self._guard:
