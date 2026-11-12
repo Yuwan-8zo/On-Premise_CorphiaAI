@@ -5,7 +5,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, or_
 
 from app.api.lookups import ensure_own_folder, get_own_conversation
 from app.core.query_utils import like_contains
@@ -51,7 +51,7 @@ async def list_conversations(
     取得對話列表
     
     - 支援分頁
-    - 支援搜尋標題
+    - 支援搜尋：標題或訊息內容（只找自己的對話）
     - 支援資料夾過濾
     - 支援置頂/封存過濾
     """
@@ -65,7 +65,14 @@ async def list_conversations(
         # 跳脫 LIKE 萬用字元，限制長度避免 DoS
         if len(search) > 128:
             raise HTTPException(status_code=400, detail="search 字串過長")
-        query = query.where(Conversation.title.ilike(like_contains(search), escape="\\"))
+        pattern = like_contains(search)
+        # 標題符合，或對話裡有任何一則訊息的內容符合（子查詢也限定是自己的對話）
+        in_messages = (
+            select(Message.conversation_id)
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(Conversation.user_id == current_user.id, Message.content.ilike(pattern, escape="\\"))
+        )
+        query = query.where(or_(Conversation.title.ilike(pattern, escape="\\"), Conversation.id.in_(in_messages)))
     if folder_id:
         query = query.where(Conversation.folder_id == folder_id)
     if is_pinned is not None:

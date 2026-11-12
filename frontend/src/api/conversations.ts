@@ -21,9 +21,10 @@ export const conversationsApi = {
     /**
      * 取得對話列表
      */
-    list: async (page = 1, pageSize = 20): Promise<{ data: Conversation[]; total: number }> => {
+    list: async (page = 1, pageSize = 20, search?: string): Promise<{ data: Conversation[]; total: number }> => {
         const response = await apiClient.get('/conversations', {
-            params: { page, page_size: pageSize },
+            // search：找標題或訊息內容裡有這段字的對話
+            params: { page, page_size: pageSize, ...(search ? { search } : {}) },
         })
         return {
             data: response.data.data.map(mapConversation),

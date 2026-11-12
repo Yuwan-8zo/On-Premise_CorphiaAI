@@ -11,9 +11,9 @@
 
 import { useScrollFade } from '@/lib/useScrollFade'
 import { beginMenuDrag, useMenuTrigger } from '@/lib/menuDrag'
-import { Folder, MessageSquare, Plus, Trash2 } from '@/components/snow/icons'
+import { Folder, MessageSquare, Plus, Search, Trash2 } from '@/components/snow/icons'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -28,6 +28,12 @@ import type { Conversation } from '@/types/chat'
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 import { pageSlide } from '@/lib/motionPresets'
 import ListLens from '@/components/ui/ListLens'
+import SearchField from '@/components/ui/SearchField'
+import { conversationsApi } from '@/api/conversations'
+
+/** 搜尋舊對話：打字後停多久才查（毫秒）、最多列幾筆 */
+const SEARCH_DEBOUNCE_MS = 250
+const SEARCH_PAGE_SIZE = 50
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 
 interface ChatSidebarProps {
@@ -148,6 +154,26 @@ export default function ChatSidebar({
     )
     const listScrollRef = useScrollFade()
 
+    // 搜尋舊對話：按清單標題右邊的放大鏡 → 標題那一列換成搜尋欄；打字後停一下才查（標題或訊息內容）
+    const [searching, setSearching] = useState(false)
+    const [query, setQuery] = useState('')
+    /** 查到的對話；null＝還沒有結果（剛開始打字、或沒在搜尋） */
+    const [found, setFound] = useState<Conversation[] | null>(null)
+    const searchRef = useRef<HTMLInputElement>(null)
+    useEffect(() => { if (searching) searchRef.current?.focus() }, [searching])
+    useEffect(() => {
+        const q = query.trim()
+        if (!searching || !q) { setFound(null); return }
+        let stale = false
+        const id = window.setTimeout(() => {
+            conversationsApi.list(1, SEARCH_PAGE_SIZE, q)
+                .then((r) => { if (!stale) setFound(r.data.filter((c) => !c.settings?.isProject)) })
+                .catch(() => { if (!stale) setFound([]) })
+        }, SEARCH_DEBOUNCE_MS)
+        return () => { stale = true; window.clearTimeout(id) }
+    }, [searching, query])
+    const closeSearch = () => { setSearching(false); setQuery('') }
+
     return (
         <aside
             // 手機上收起的側欄只是移到畫面外：設成 inert，鍵盤和讀螢幕軟體才不會走到看不見的按鈕
@@ -265,13 +291,39 @@ export default function ChatSidebar({
                             {...pageSlide(-1)}
                             className="absolute inset-0 px-4 flex flex-col"
                         >
-                            <span className="side-header shrink-0">{t('chat.generalChat')}</span>
+                            {searching ? (
+                                // 搜尋中：標題那一列換成搜尋欄。清空後失去焦點、或空的時候按 Esc＝結束搜尋
+                                <div className="shrink-0 mb-[var(--sp-8)]" onBlur={() => { if (!query.trim()) closeSearch() }}>
+                                    <SearchField
+                                        ref={searchRef}
+                                        value={query}
+                                        onChange={setQuery}
+                                        placeholder={t('chat.searchPlaceholder')}
+                                        label={t('chat.searchChats')}
+                                        onKeyDown={(e) => { if (e.key === 'Escape' && !query) { e.preventDefault(); closeSearch() } }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center shrink-0">
+                                    <span className="side-header flex-1 min-w-0">{t('chat.generalChat')}</span>
+                                    <Tooltip label={t('chat.searchChats')}>
+                                        <button type="button" onClick={() => setSearching(true)} aria-label={t('chat.searchChats')} className="icon-tap text-text-secondary mr-[var(--sp-2)]">
+                                            <Search className="h-4 w-4" />
+                                        </button>
+                                    </Tooltip>
+                                </div>
+                            )}
                             <div ref={listScrollRef} className="glass-scroll relative lens-list flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
                                 <ListLens watch={`${selectedFolder ?? ''}|${currentConversationId ?? ''}`} />
                                 {(() => {
+                                    const note = (text: string) => <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{text}</p>
+                                    // 搜尋中且已經打了字：顯示查到的對話（還在查就先留白，不閃「找不到」）
+                                    if (searching && query.trim()) {
+                                        if (found === null) return null
+                                        return found.length === 0 ? note(t('chat.searchEmpty')) : found.map(renderRow)
+                                    }
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
-                                    if (filtered.length === 0) return <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{t('chat.noChats')}</p>
-                                    return filtered.map(renderRow)
+                                    return filtered.length === 0 ? note(t('chat.noChats')) : filtered.map(renderRow)
                                 })()}
                             </div>
                         </motion.div>
