@@ -21,9 +21,11 @@ interface AIThinkingIndicatorProps {
     ragEnabled?: boolean
     /** 後端已找到文件段落、模型正在讀：等待說明才提「閱讀文件」 */
     readingDocs?: boolean
+    /** 正在製作檔案（docx／xlsx／pptx）：標題改成「正在製作 Word 文件」，不走思考／檢索那幾個階段 */
+    making?: string
 }
 
-const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDocs = false }: AIThinkingIndicatorProps) => {
+const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDocs = false, making }: AIThinkingIndicatorProps) => {
     const { t } = useTranslation()
 
     // RAG 模式下，已過 ~1.2 秒仍處於 thinking 階段，自動進到 retrieving，讓使用者感覺有進度
@@ -75,17 +77,20 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
                 className="text-[length:var(--fs-14)] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
                 style={{ opacity: fading ? 0 : 1 }}
             >
-                {phaseLabels[displayPhase]}
+                {making ? t(`ui.chat.fileMaking.${making}`, { defaultValue: t('ui.chat.fileMaking.file') }) : phaseLabels[displayPhase]}
                 <DotEllipsis />
                 {elapsed >= 3 && (
                     <span className="ml-1 text-text-muted font-normal tabular-nums">{t('ui.thinking.waited', { seconds: elapsed })}</span>
                 )}
             </span>
-            {elapsed >= 15 && (
+            {/* 製作檔案：一開始就說明要等多久（不用等 15 秒才出現） */}
+            {(making || elapsed >= 15) && (
                 <span className="mt-1 text-[length:var(--fs-12)] text-text-muted">
-                    {readingDocs
-                        ? t('ui.thinking.localRag')
-                        : t('ui.thinking.local')}
+                    {making
+                        ? t('ui.chat.fileMakingHint')
+                        : readingDocs
+                          ? t('ui.thinking.localRag')
+                          : t('ui.thinking.local')}
                 </span>
             )}
         </div>

@@ -32,6 +32,7 @@ from app.api import (
     folders_router,
     connected_folders_router,
     memories_router,
+    files_router,
     system_monitor_router,
     voice_router,
 )
@@ -55,6 +56,17 @@ async def lifespan(app: FastAPI):
     logger.info(f"啟動 {settings.app_name} v2.3.0")
     await init_db()
     logger.info("資料庫初始化完成")
+
+    # AI 產出的檔案：訊息、對話被刪掉後留在磁碟上的，啟動時清掉
+    try:
+        from app.core.database import async_session_maker
+        from app.services.generated_files import cleanup_orphans
+        async with async_session_maker() as _db:
+            removed = await cleanup_orphans(_db)
+        if removed:
+            logger.info(f"已清掉 {removed} 個沒有紀錄的 AI 產出檔案")
+    except Exception as e:
+        logger.warning(f"清理 AI 產出檔案失敗（可忽略）: {e}")
     
     # NOTE: SECRET_KEY 的安全檢查已移到 app.core.config.Settings 的 model_validator，
     # 在這裡的好處是「載 Settings() 那一刻」就會拋錯，比 lifespan 啟動更早。
@@ -261,6 +273,7 @@ app.include_router(models_router, prefix="/api/v1")
 app.include_router(folders_router, prefix="/api/v1")
 app.include_router(connected_folders_router, prefix="/api/v1")
 app.include_router(memories_router, prefix="/api/v1")
+app.include_router(files_router, prefix="/api/v1")
 app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(websocket_router)

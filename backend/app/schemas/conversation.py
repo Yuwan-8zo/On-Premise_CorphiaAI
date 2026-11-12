@@ -72,6 +72,14 @@ class MessageUpdate(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+class MessageAttachment(BaseModel):
+    """AI 產出的檔案（下載：GET /files/{id}/download）"""
+    id: str
+    filename: str
+    kind: str
+    size: int
+
+
 class MessageResponse(BaseModel):
     """訊息回應 Schema"""
     id: str
@@ -79,6 +87,8 @@ class MessageResponse(BaseModel):
     content: str
     tokens: int
     sources: Optional[List[MessageSource]] = None
+    # AI 產出的檔案；只有本人讀自己的對話時才帶（分享頁不帶，別人下載不了）
+    attachments: Optional[List[MessageAttachment]] = None
     rating: Optional[int] = None
     content_hash: Optional[str] = None
     prev_hash: Optional[str] = None

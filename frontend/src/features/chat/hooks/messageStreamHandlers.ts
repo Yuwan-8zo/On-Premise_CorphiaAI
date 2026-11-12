@@ -11,10 +11,12 @@
  *   - 'injection_warning'  ↦ 注入攻擊提示
  *   - 'memory_saved' / 'memory_rejected' ↦ 使用者說「記住……」：已存成記憶／沒通過安全檢查
  *   - 'context_filtered'   ↦ 參考文件送模型前有片段被剔除或遮罩
+ *   - 'file_progress' / 'attachments' ↦ 正在製作檔案（等待提示換成「正在製作…」）／做好了，掛到這則回答下面
  *   - 'injection_block' / 'dlp_block' ↦ 已攔阻；結束生成並在回覆泡泡裡說明
  */
 
 import { conversationsApi } from '@/api/conversations'
+import type { Message } from '@/types/chat'
 import type { StreamResponse } from '@/api/websocket'
 import { useChatStore } from '@/store/chatStore'
 import { useToastStore } from '@/store/toastStore'
@@ -22,6 +24,18 @@ import i18n from '@/i18n'
 
 // 資安提示要停久一點，現場展示時看得到
 const SECURITY_TOAST_MS = 6000
+
+/** 改最後一則 AI 回答的幾個欄位（沒有就原樣回傳） */
+function patchLastAssistant(messages: Message[], patch: Partial<Message>): Message[] {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'assistant') {
+            const out = [...messages]
+            out[i] = { ...out[i], ...patch }
+            return out
+        }
+    }
+    return messages
+}
 
 export function buildStreamDispatcher(conversationId: string) {
     const store = () => useChatStore.getState()
@@ -107,6 +121,14 @@ export function buildStreamDispatcher(conversationId: string) {
                     })
                 }
                 useToastStore.getState().add(i18n.t('ui.chat.piiToast'), 'info', SECURITY_TOAST_MS)
+                break
+
+            // 產出檔案：開始做 → 等待提示改成「正在製作 Word 文件…」；做好 → 檔案卡片掛到這則回答下面
+            case 'file_progress':
+                store().updateThread(conversationId, (messages) => patchLastAssistant(messages, { making: data.kind || 'file' }))
+                break
+            case 'attachments':
+                store().updateThread(conversationId, (messages) => patchLastAssistant(messages, { making: undefined, attachments: data.attachments || [] }))
                 break
 
             // 記憶：使用者說「記住……」

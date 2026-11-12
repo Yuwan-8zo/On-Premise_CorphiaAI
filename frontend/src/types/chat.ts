@@ -41,12 +41,24 @@ export interface MessageAudio {
     error?: string
 }
 
+/** AI 產出的檔案（Word、Excel、簡報）；下載見 api/files.ts */
+export interface MessageAttachment {
+    id: string
+    filename: string
+    kind: 'docx' | 'xlsx' | 'pptx' | string
+    size: number
+}
+
 export interface Message {
     id: string
     role: 'user' | 'assistant' | 'system'
     content: string
     tokens: number
     sources?: MessageSource[]
+    /** AI 產出的檔案 */
+    attachments?: MessageAttachment[]
+    /** 正在製作哪一種檔案（只在串流期間存在前端，顯示「正在製作 Word 文件…」） */
+    making?: string
     rating?: number
     content_hash?: string
     prev_hash?: string

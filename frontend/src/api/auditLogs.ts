@@ -120,7 +120,9 @@ export const AUDIT_ACTIONS = [
     'memory_clear',
     'memory_rejected',
     'context_filtered',
+    'file_create',
+    'file_download',
 ] as const
 
 /** 稽核的資源代碼（顯示文字在 i18n 的 admin.audit.resourceTypes） */
-export const AUDIT_RESOURCES = ['auth', 'user', 'conversation', 'document', 'model', 'memory', 'system'] as const
+export const AUDIT_RESOURCES = ['auth', 'user', 'conversation', 'document', 'model', 'memory', 'file', 'system'] as const

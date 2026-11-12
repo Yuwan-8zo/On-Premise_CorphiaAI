@@ -76,6 +76,10 @@ class AuditAction:
     MEMORY_CLEAR = "memory_clear"
     MEMORY_REJECTED = "memory_rejected"
 
+    # AI 產出檔案（Word、Excel、簡報）
+    FILE_CREATE = "file_create"
+    FILE_DOWNLOAD = "file_download"
+
     # 送模型前最後一關：文件片段被剔除或遮罩
     CONTEXT_FILTERED = "context_filtered"
 
@@ -93,6 +97,7 @@ class AuditResource:
     DOCUMENT = "document"
     MODEL = "model"
     MEMORY = "memory"
+    FILE = "file"
     SYSTEM = "system"
 
 

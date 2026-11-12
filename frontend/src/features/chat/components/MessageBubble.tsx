@@ -6,6 +6,7 @@ import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import AIThinkingIndicator from './AIThinkingIndicator'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
+import FileAttachments from './FileAttachments'
 import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
@@ -304,11 +305,15 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         ) : isStreaming ? (
                             // 串流前置期：依 message.sources 是否已回傳，動態顯示「思考中 / 檢索 / 生成中」
                             <AIThinkingIndicator
+                                making={message.making}
                                 phase={message.sources && message.sources.length > 0 ? 'generating' : 'thinking'}
                                 ragEnabled={Boolean(message.sources !== undefined)}
                                 readingDocs={Boolean(message.sources && message.sources.length > 0)}
                             />
                         ) : null}
+
+                        {/* AI 產出的檔案（Word、Excel、簡報）：檔案卡片＋下載 */}
+                        {message.attachments && message.attachments.length > 0 && <FileAttachments files={message.attachments} />}
 
                         {/* 來源引用：回答完成後才顯示，避免還沒回答就先出現「參考了哪些段落」 */}
                         {!isStreaming && message.sources && message.sources.length > 0 && (

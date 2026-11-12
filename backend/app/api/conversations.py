@@ -21,6 +21,7 @@ from app.schemas.conversation import (
     SharedConversationResponse,
 )
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.services.generated_files import attach_to_messages
 from app.core.request_utils import get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/conversations", tags=["對話"])
@@ -286,7 +287,9 @@ async def list_messages(
     query = query.order_by(Message.created_at.desc()).limit(limit)
     result = await db.execute(query)
     messages = list(reversed(result.scalars().all()))
-    
+
+    # AI 產出的檔案（Word／Excel／簡報）掛到各自的訊息上
+    await attach_to_messages(db, messages)
     return [MessageResponse.model_validate(m) for m in messages]
 
 

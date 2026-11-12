@@ -78,6 +78,11 @@ class Settings(BaseSettings):
     # 文件檢索模型：本機沒有時（新電腦第一次）可不可以從網路下載一次；完全不連外的環境設 false
     embedding_allow_download: bool = True
 
+    # AI 產出檔案（使用者說「幫我做一份 Word／Excel／簡報」）：開關、存放位置、內容最多寫多長（token）
+    enable_file_generation: bool = True
+    generated_files_dir: str = "./generated"
+    file_max_tokens: int = 3000
+
     # 連接資料夾：只允許接這些資料夾底下的路徑（逗號分隔；空的＝除了系統資料夾都可以）
     connected_folder_roots: str = ""
 

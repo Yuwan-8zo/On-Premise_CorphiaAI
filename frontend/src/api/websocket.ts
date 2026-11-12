@@ -4,7 +4,7 @@
 
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
-import type { MessageSource } from '@/types/chat'
+import type { MessageSource, MessageAttachment } from '@/types/chat'
 import i18n from '@/i18n'
 
 export interface WebSocketMessage {
@@ -21,7 +21,10 @@ export interface WebSocketMessage {
 
 export interface StreamResponse {
     type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
-        | 'memory_saved' | 'memory_rejected' | 'context_filtered'
+        | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments'
+    /** 產出檔案：file_progress 的 kind＝正在做哪一種（docx／xlsx／pptx）；attachments＝做好的檔案 */
+    kind?: string
+    attachments?: MessageAttachment[]
     /** 記憶：memory_saved 的 created＝false 表示這件事早就記過了；memory_rejected 的 reason＝dlp／injection／limit */
     created?: boolean
     reason?: string

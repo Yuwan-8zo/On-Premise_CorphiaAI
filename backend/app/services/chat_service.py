@@ -29,6 +29,7 @@ from app.services.hash_chain_service import stamp_message
 from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
+from app.services import file_builder, generated_files
 from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block
 from app.services.memory_service import is_enabled as memory_is_enabled
 
@@ -52,6 +53,17 @@ class AgentState(TypedDict, total=False):
     # 送模型前最後一關的報告（哪些文件片段被剔除、遮罩了幾個個資），見 services/context_guard
     screen: dict
 
+
+
+def _to_traditional_deep(value):
+    """把結構（dict／list）裡所有字串轉成正體中文"""
+    if isinstance(value, str):
+        return to_traditional(value)
+    if isinstance(value, list):
+        return [_to_traditional_deep(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _to_traditional_deep(v) for k, v in value.items()}
+    return value
 
 
 def _clip_history(text: str, limit: int = 400) -> str:
@@ -440,8 +452,11 @@ class ChatService:
         content: str,
         use_rag: bool,
         language: str,
+        extra_system: str = "",
     ) -> tuple[str, str, list, str]:
         """
+        extra_system：這一題額外加在系統提示後面的說明（例如「請輸出 Word 文件內容的 JSON」）。
+
         送出訊息前的共用準備（串流與非串流共用）：
         讀對話歷史 → LangGraph 路由／檢索文件 → 選系統提示＋語言指令 → 組成提示詞
 
@@ -495,6 +510,8 @@ class ChatService:
         # 強制語言比「使用使用者語言」更可靠，因大多數 LLM 容易忽略模糊指令
         lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
         system_prompt = f"{system_prompt}\n\n{lang_directive}"
+        if extra_system:
+            system_prompt = f"{system_prompt}\n\n{extra_system}"
 
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
@@ -622,13 +639,22 @@ class ChatService:
         async for event in self._remember(conversation_id, safe_content):
             yield event
 
+        # 使用者要的是一份檔案（Word／Excel／簡報）嗎：是的話這一題改走「產出檔案」
+        file_kind = file_builder.detect_file_request(safe_content) if settings.enable_file_generation else None
+
         prompt, context, sources, route = await self._prepare_prompt(
-            conversation_id, safe_content, use_rag, language
+            conversation_id, safe_content, use_rag, language,
+            extra_system=file_builder.INSTRUCTIONS[file_kind] if file_kind else "",
         )
 
         # 送模型前最後一關：有文件片段被剔除或遮罩 → 寫稽核、告訴使用者
         if not report_is_empty(self.screen_report):
             yield await self._report_screen(conversation_id)
+
+        if file_kind:
+            async for event in self._make_file(conversation_id, file_kind, prompt, sources, language):
+                yield event
+            return
 
         # ── C2: 先發送來源資訊 + RAG 除錯資料 ──────────────────────
         if sources:
@@ -676,6 +702,61 @@ class ChatService:
             "type": "done",
             "message_id": assistant_message.id,
         }
+
+    # 產出檔案後回給使用者的話（三種語言；{name} 檔名、{items} 大綱）
+    FILE_REPLY = {
+        "zh-TW": ("已經做好了：**{name}**", "內容大綱：", "可以在下方下載。內容由 AI 產生，數字、人名、日期請核對後再使用；需要調整再跟我說。", "這次沒有成功做出檔案：內容可能太長或太複雜。請把範圍說得小一點（例如指定幾個章節、幾張投影片）再試一次。"),
+        "en-US": ("Done: **{name}**", "Outline:", "You can download it below. The content is AI-generated, so please check numbers, names and dates before using it. Tell me if you want changes.", "I could not produce the file this time. The content may be too long or complex. Please narrow the scope (for example, the number of sections or slides) and try again."),
+        "ja-JP": ("できました：**{name}**", "内容の概要：", "下からダウンロードできます。内容は AI が生成したものです。数値・人名・日付は確認してからご利用ください。修正があれば教えてください。", "今回はファイルを作成できませんでした。内容が長すぎるか複雑すぎる可能性があります。範囲を絞って（章やスライドの数を指定するなど）もう一度お試しください。"),
+    }
+
+    async def _make_file(self, conversation_id: str, kind: str, prompt, sources: list, language: str) -> AsyncGenerator[dict, None]:
+        """
+        產出檔案：模型用限定格式寫內容（JSON）→ 程式排版成檔案 → 存檔、掛在這則回答下面。
+        事件：file_progress（開始做，前端顯示「正在製作…」）→ stream（回答文字）→ attachments（檔案卡片）→ done
+        """
+        done_text, outline_text, hint_text, failed_text = self.FILE_REPLY.get(language, self.FILE_REPLY["zh-TW"])
+        yield {"type": "file_progress", "kind": kind}
+
+        spec = await self.llm_service.generate_structured(
+            prompt, file_builder.SCHEMAS[kind], max_tokens=settings.file_max_tokens, temperature=0.4, model_name=self.model_name,
+        )
+        if language == "zh-TW":
+            spec = _to_traditional_deep(spec)
+
+        if not file_builder.spec_is_usable(kind, spec):
+            # 內容被長度上限切斷或格式壞掉：照實說，不交一份空殼檔案
+            yield {"type": "stream", "content": failed_text}
+            message = await self._save_assistant_message(conversation_id, failed_text, sources)
+            yield {"type": "done", "message_id": message.id}
+            return
+
+        data = await asyncio.to_thread(file_builder.build_file, kind, spec)
+        filename = file_builder.safe_filename(spec.get("title") or "", kind)
+        lines = [done_text.format(name=filename)]
+        items = file_builder.outline(kind, spec)
+        if items:
+            lines += ["", outline_text] + [f"- {x}" for x in items]
+        lines += ["", hint_text]
+        reply = "\n".join(lines)
+
+        yield {"type": "stream", "content": reply}
+        message = await self._save_assistant_message(conversation_id, reply, sources)
+        user_id, tenant_id = await self._conversation_owner(conversation_id)
+        row = await generated_files.save_file(
+            self.db, user_id=user_id, tenant_id=tenant_id, conversation_id=conversation_id,
+            message_id=message.id, kind=kind, title=spec.get("title") or "", data=data,
+        )
+        try:
+            await write_audit_log(
+                db=self.db, action=AuditAction.FILE_CREATE, resource_type=AuditResource.FILE, resource_id=row.id,
+                user_id=user_id, tenant_id=tenant_id, description=f"AI 產出檔案：{row.filename}",
+                details={"kind": kind, "size": row.size, "conversation_id": conversation_id},
+            )
+        except Exception as e:  # 稽核失敗不能擋住主流程
+            logger.warning("產出檔案寫稽核失敗: %s", e)
+        yield {"type": "attachments", "message_id": message.id, "attachments": [generated_files.to_attachment(row)]}
+        yield {"type": "done", "message_id": message.id}
 
     async def _conversation_owner(self, conversation_id: str) -> tuple[Optional[str], Optional[str]]:
         row = (await self.db.execute(

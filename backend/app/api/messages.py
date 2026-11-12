@@ -10,6 +10,7 @@ from app.core.request_utils import get_client_ip
 from app.schemas.conversation import MessageCreate, MessageResponse, MessageUpdate
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.chat_service import ChatGenerationError, ChatService
+from app.services.generated_files import attach_to_messages
 from app.services.message_guard import screen_user_message
 from app.services.model_preference import get_user_model
 from app.services.quota_service import check_user_quota
@@ -74,6 +75,8 @@ async def send_message(
         code = status.HTTP_503_SERVICE_UNAVAILABLE if e.code == "LLM_LOADING" else status.HTTP_400_BAD_REQUEST
         raise HTTPException(status_code=code, detail={"code": e.code or "GENERATION_FAILED", "message": e.message}) from e
 
+    # 這一題如果產出了檔案（Word／Excel／簡報），一起回給前端
+    await attach_to_messages(db, [message])
     return MessageResponse.model_validate(message)
 
 

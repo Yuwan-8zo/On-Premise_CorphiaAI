@@ -157,6 +157,7 @@ function mapMessage(data: Record<string, unknown>): Message {
         content: data.content as string,
         tokens: data.tokens as number,
         sources: data.sources as Message['sources'],
+        attachments: (data.attachments as Message['attachments']) ?? undefined,
         rating: data.rating as number | undefined,
         content_hash: data.content_hash as string | undefined,
         prev_hash: data.prev_hash as string | undefined,
