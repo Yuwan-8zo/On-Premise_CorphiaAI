@@ -45,7 +45,9 @@ const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} cla
 export default function Admin() {
     const { t } = useTranslation()
     // 寬版時整頁縮放到剛好一個畫面，不捲動、不被裁
-    const fitRef = useFitToHost<HTMLDivElement>()
+    // 兩層縮放：整頁（標題列＋左側欄）只看左側欄放不放得下，切分頁時不會變；內容區依各分頁自己的內容另外縮放
+    const fitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="page"]' })
+    const contentFitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="content"]', varName: '--fit-content' })
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
@@ -119,7 +121,7 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside data-fit-check className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
+                    <aside data-fit-check="page" className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
@@ -160,7 +162,8 @@ export default function Admin() {
                     </aside>
 
                     {/* 內容區：總覽是不捲動的滿版儀表板，其他分頁靠這層捲動 */}
-                    <div key={activeSection} data-fit-check data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none lg:h-full lg:flex-none">
+                    <div ref={contentFitRef} className="admin-content-fit flex flex-col flex-1 min-h-0 min-w-0 lg:h-full lg:flex-none">
+                    <div key={activeSection} data-fit-check="content" data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} />
@@ -201,6 +204,7 @@ export default function Admin() {
                                 />
                             )}
                         </Suspense>
+                    </div>
                     </div>
                 </main>
             </div>

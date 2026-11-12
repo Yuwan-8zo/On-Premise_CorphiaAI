@@ -16,13 +16,15 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import DialogShell from '@/components/ui/DialogShell'
 import { dialogSheet } from '@/lib/motionPresets'
+import { useKeepInViewport } from '@/lib/useKeepInViewport'
 
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
+import type { ConvMenuState } from '../hooks/useConversationDialogs'
 
 /* ── Context Menu ── */
 
 interface ContextMenuProps {
-    activeMenu: { convId: string; x: number; y: number } | null
+    activeMenu: ConvMenuState | null
     menuRef: React.RefObject<HTMLDivElement | null>
     conversations: Array<{ id: string; settings?: Record<string, unknown> }>
     onShare: (id: string) => void
@@ -37,6 +39,8 @@ export function ConversationContextMenu({
     activeMenu, menuRef, conversations, onShare, onUnshare, onRename, onMove, onDelete, onClose,
 }: ContextMenuProps) {
     const { t } = useTranslation()
+    // 按鈕靠近螢幕右邊（手機側欄）時，選單往內推，不被切掉
+    useKeepInViewport(menuRef, activeMenu, activeMenu?.anchor)
 
     return (
         <AnimatePresence>
@@ -45,7 +49,7 @@ export function ConversationContextMenu({
                     ref={menuRef}
                     {...dialogSheet}
                     className="fixed z-[100] w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
-                    style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
+                    style={{ left: activeMenu.x, top: activeMenu.y }}
                 >
                     <LensMenu className="">
                     <button className="menu-item"

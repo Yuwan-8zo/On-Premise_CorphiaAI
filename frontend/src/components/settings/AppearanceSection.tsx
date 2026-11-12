@@ -52,7 +52,7 @@ export default function AppearanceSection() {
                                 <button
                                     key={key}
                                     type="button"
-                                    aria-label={color.label}
+                                    aria-label={t(`settings.accentNames.${key}`, color.label)}
                                     aria-pressed={accentColor === key}
                                     onClick={() => setAccentColor(key)}
                                     className={`set-swatch ${accentColor === key ? 'is-current' : ''}`}

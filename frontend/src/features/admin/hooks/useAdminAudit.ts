@@ -66,6 +66,10 @@ export function useAdminAudit() {
         loadAuditLogs(next)
     }
     const onSearch = () => applyFilter({ ...auditFilter, search: auditSearchInput || undefined, page: 1 })
+    const onClearSearch = () => {
+        setAuditSearchInput('')
+        applyFilter({ ...auditFilter, search: undefined, page: 1 })
+    }
     const onFilterChange = (key: keyof AuditLogQuery, value: string) => applyFilter({ ...auditFilter, [key]: value || undefined, page: 1 })
     const onPageChange = (page: number) => applyFilter({ ...auditFilter, page })
 
@@ -88,7 +92,7 @@ export function useAdminAudit() {
             auditSearchInput, setAuditSearchInput,
             auditFilter, auditLogs, auditTotal, auditPage, auditTotalPages, isLoadingAudit,
             auditDrawer, setAuditDrawer,
-            onSearch, onFilterChange, onPageChange, onExportCSV, onExportJSON,
+            onSearch, onClearSearch, onFilterChange, onPageChange, onExportCSV, onExportJSON,
         },
     }
 }

@@ -145,7 +145,8 @@ export default function ModelsSection({
                                                                 void copyText(integrity.sha256!)
                                                                 setCopied(model.name)
                                                             }}
-                                                            className="text-text-muted "
+                                                            aria-label={t('ui.models.copyHash')}
+                                                            className="icon-tap text-text-muted"
                                                         >
                                                             <Copy className="h-3.5 w-3.5" />
                                                         </button>

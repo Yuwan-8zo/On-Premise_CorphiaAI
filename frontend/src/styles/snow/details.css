@@ -263,3 +263,14 @@ html.dark {
 .boot-list > .set-row + .set-row::before {
   left: var(--sp-52);
 }
+
+/* 列裡的小圖示按鈕（側欄的 ⋯、資料夾的＋／刪除、複製雜湊…）：大小統一由 --tap-sm 決定，不用各自的內距湊；圖示置中 */
+.icon-tap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--tap-sm);
+  height: var(--tap-sm);
+  border-radius: 9999px;
+}

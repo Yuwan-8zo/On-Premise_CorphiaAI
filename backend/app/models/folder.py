@@ -5,19 +5,18 @@
 """
 
 import uuid
-from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, Integer, func
+from sqlalchemy import String, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.conversation import Conversation
 
 
-class Folder(Base):
+class Folder(TimestampMixin, Base):
     """資料夾資料表"""
     
     __tablename__ = "folders"
@@ -49,18 +48,6 @@ class Folder(Base):
     # 排序
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     
-    # 時間戳
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
     
     # 關聯
     conversations: Mapped[List["Conversation"]] = relationship(

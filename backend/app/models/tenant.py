@@ -5,14 +5,13 @@
 """
 
 import uuid
-from datetime import datetime
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import String, Boolean, DateTime, Text, func
+from sqlalchemy import String, Boolean, Text
 from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from app.models.document import Document
 
 
-class Tenant(Base):
+class Tenant(TimestampMixin, Base):
     """租戶資料表"""
     
     __tablename__ = "tenants"
@@ -43,18 +42,6 @@ class Tenant(Base):
     # 狀態
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
-    # 時間戳
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
     
     # 關聯
     users: Mapped[List["User"]] = relationship(

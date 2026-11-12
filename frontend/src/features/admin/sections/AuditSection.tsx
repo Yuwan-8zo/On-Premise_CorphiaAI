@@ -15,18 +15,19 @@
  */
 
 import StyledSelect from '@/components/ui/StyledSelect'
+import SearchField from '@/components/ui/SearchField'
+import { useMediaQuery, MQ_DESKTOP } from '@/lib/useMediaQuery'
 import {
     ChevronLeft,
     ChevronRight,
     Download,
-    Search,
     Shield,
     X,
 } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { spring } from '@/lib/motionPresets'
-import { SkelTableRows } from '@/components/ui/Skeleton'
+import { SkelTableRows, SkelText } from '@/components/ui/Skeleton'
 
 import {
     AUDIT_ACTIONS,
@@ -85,6 +86,8 @@ export interface AuditSectionProps {
     auditDrawer: AuditLogItem | null
     setAuditDrawer: (log: AuditLogItem | null) => void
     onSearch: () => void
+    /** 清空搜尋字並重新查詢全部 */
+    onClearSearch: () => void
     onFilterChange: (key: 'action' | 'resource_type', value: string) => void
     onPageChange: (page: number) => void
     onExportCSV: () => void
@@ -103,12 +106,15 @@ export default function AuditSection({
     auditDrawer,
     setAuditDrawer,
     onSearch,
+    onClearSearch,
     onFilterChange,
     onPageChange,
     onExportCSV,
     onExportJSON,
 }: AuditSectionProps) {
     const { t } = useTranslation()
+    // 手機版：聚焦時右邊長出取消 ×（收鍵盤、清空）；桌機有滑鼠就不需要
+    const desktop = useMediaQuery(MQ_DESKTOP)
 
     return (
         <>
@@ -118,21 +124,18 @@ export default function AuditSection({
                 {/* Filter bar */}
                 <Panel className="p-[var(--space)] shrink-0">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
-                    <div className="flex flex-wrap items-center gap-[var(--space)]">
-                        <label className="admin-search flex-1 min-w-[var(--sz-220)]">
-                            <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
-                                <Search className="h-[var(--sz-16)] w-[var(--sz-16)]" />
-                            </button>
-                            <input
-                                type="search"
-                                aria-label={t('common.search')}
-                                value={auditSearchInput}
-                                onChange={(event) => setAuditSearchInput(event.target.value)}
-                                onKeyDown={(event) => event.key === 'Enter' && onSearch()}
-                                placeholder={t('admin.audit.searchPlaceholder')}
-                            />
-                        </label>
-                        <div className="w-[var(--sz-180)]">
+                    {/* 搜尋欄和右邊的膠囊鈕同高（--sz-40），整列對齊；下拉選單 140～180 之間伸縮，窄一點的螢幕也排得下一列、搜尋欄放得下提示字 */}
+                    <div className="flex flex-wrap items-center gap-[var(--space)] [--search-h:var(--sz-40)]">
+                        <SearchField
+                            className="flex-1 min-w-[var(--sz-200)]"
+                            value={auditSearchInput}
+                            onChange={setAuditSearchInput}
+                            onSubmit={onSearch}
+                            onClear={onClearSearch}
+                            cancelable={!desktop}
+                            placeholder={t('admin.audit.searchPlaceholder')}
+                        />
+                        <div className="w-full sm:w-auto sm:flex-[1_1_var(--sz-140)] sm:max-w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.action || ''}
                                 onChange={(v) => onFilterChange('action', v)}
@@ -142,7 +145,7 @@ export default function AuditSection({
                                 ]}
                             />
                         </div>
-                        <div className="w-[var(--sz-180)]">
+                        <div className="w-full sm:w-auto sm:flex-[1_1_var(--sz-140)] sm:max-w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.resource_type || ''}
                                 onChange={(v) => onFilterChange('resource_type', v)}
@@ -187,7 +190,7 @@ export default function AuditSection({
                     <div className="shrink-0">
                         <SectionHeader
                             title={t('admin.audit.title')}
-                            eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
+                            eyebrow={isLoadingAudit && !auditTotal ? <SkelText>{`0,000 ${t('admin.audit.events')}`}</SkelText> : `${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
                             action={
                                 <div className="flex items-center gap-2">
                                     <ActionButton

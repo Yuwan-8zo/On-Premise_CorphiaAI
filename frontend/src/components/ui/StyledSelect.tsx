@@ -66,7 +66,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setOpen((v) => !v)}
-                className="w-full h-11 flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[length:var(--fs-15)] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-[var(--sz-40)] flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[length:var(--fs-15)] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >

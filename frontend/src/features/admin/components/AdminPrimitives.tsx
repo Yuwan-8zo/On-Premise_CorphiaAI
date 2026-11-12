@@ -44,7 +44,8 @@ export function SectionHeader({
     action,
 }: {
     title: string
-    eyebrow?: string
+    /** 標題下方的補充（可放 SkelText 佔位） */
+    eyebrow?: React.ReactNode
     action?: React.ReactNode
 }) {
     return (

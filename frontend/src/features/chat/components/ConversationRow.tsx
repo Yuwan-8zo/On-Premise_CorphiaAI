@@ -36,7 +36,7 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = 
             <div className={`side-actions transition-opacity ${isMenuOpen ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                 <Tooltip label={t('ui.sidebar.options')}>
                     <button onPointerDown={onMenuPointerDown} onClick={(e) => e.stopPropagation()}
-                        data-conv-menu aria-label={t('ui.sidebar.options')} className={`p-1.5 rounded-full ${isMenuOpen ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
+                        data-conv-menu aria-label={t('ui.sidebar.options')} className={`icon-tap ${isMenuOpen ? 'bg-[var(--chip)] text-text-primary' : 'text-text-secondary'}`}>
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
                 </Tooltip>

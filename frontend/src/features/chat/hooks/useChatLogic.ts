@@ -34,6 +34,7 @@ import { useFolders } from './useFolders'
 import { useModels } from './useModels'
 import i18n from '@/i18n'
 import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
+import { isDesktop } from '@/lib/useMediaQuery'
 
 type ChatMode = 'general' | 'project'
 
@@ -79,7 +80,7 @@ export function useChatLogic() {
         const state = useChatStore.getState()
 
         setSelectedFolder(null)
-        if (window.innerWidth < 768) setSidebarOpen(false)
+        if (!isDesktop()) setSidebarOpen(false)
 
         // 唯一不重新載入的情況：同一個對話且還在生成中（避免中斷進行中的回覆）
         if (state.currentConversation?.id === conversation.id && state.isStreaming) return

@@ -1,0 +1,104 @@
+/* 玻璃搜尋欄（元件 components/ui/SearchField.tsx；規範「玻璃搜尋欄」）
+ *   .search-field  膠囊：圓角＝高 ÷ 2，實色淡底；放大鏡和清除鈕的中心離邊＝高 ÷ 2（落在圓頭的圓心）
+ *   .search-clear  有字時出現的清除圓鈕：按得到的範圍＝整個圓頭（高 × 高），圖示 17
+ *   .search-cancel 取消 ×：和搜尋欄同高的正圓（兩個圓頭同心），間隔＝高 × --search-x-gap；聚焦時從寬 0 長出來，搜尋欄同時讓位
+ *   尺寸都在 tokens.css 的 --search-* */
+.search-row {
+  /* 不設 min-width：呼叫端用 min-w-* 指定最窄（要放得下提示字），不然會被擠到提示字被切掉 */
+  display: flex;
+  align-items: center;
+  --search-pad: calc((var(--search-h) - var(--search-ic)) / 2);
+}
+.search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: var(--search-h);
+  padding: 0 var(--search-pad);
+  border-radius: calc(var(--search-h) / 2);
+  background: var(--chip);
+  color: rgb(var(--text-secondary));
+  cursor: text;
+}
+.search-ic {
+  width: var(--search-ic);
+  height: var(--search-ic);
+  flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0 0 var(--search-ic-gap);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: rgb(var(--text-primary));
+  font: inherit;
+  font-size: var(--search-fs);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-input::placeholder {
+  color: rgb(var(--text-secondary));
+}
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+.search-clear {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: var(--search-h);
+  height: var(--search-h);
+  margin-right: calc(var(--search-pad) * -1);
+  border-radius: 50%;
+  color: rgb(var(--text-secondary));
+  --ic-knock: var(--paper);
+  transition: opacity 0.15s var(--ease-out);
+}
+.search-clear .ic {
+  width: var(--search-clear);
+  height: var(--search-clear);
+}
+.search-clear:active {
+  opacity: 0.6;
+}
+.search-cancel {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 0;
+  height: var(--search-h);
+  margin-left: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--chip);
+  color: rgb(var(--text-primary));
+  opacity: 0;
+  scale: 0.6;
+  pointer-events: none;
+  transition:
+    width var(--search-move) var(--ease-out),
+    margin-left var(--search-move) var(--ease-out),
+    scale var(--search-move) var(--ease-out),
+    opacity var(--search-move) var(--ease-out);
+}
+.search-row.is-cancel .search-cancel {
+  width: var(--search-h);
+  margin-left: calc(var(--search-h) * var(--search-x-gap));
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+.search-row.is-cancel .search-cancel:active {
+  scale: 0.92;
+}
+.search-cancel .ic {
+  width: var(--search-ic);
+  height: var(--search-ic);
+  flex-shrink: 0;
+}

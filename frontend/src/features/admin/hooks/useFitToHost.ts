@@ -10,13 +10,16 @@ import { useLayoutEffect, useRef } from 'react'
  * 比例＝可用高度 ÷（可用高度＋多出來的高度）。縮放後寬度變寬、排版會變，所以縮完再量，
  * 還放不下就繼續縮（最多幾次）。同一個畫格裡完成，看不到閃動。
  * 視窗大小、轉向、網址列收合、切換分頁、資料載入都會重算。
+ *
+ * checks＝要量哪些區塊（預設所有 data-fit-check）；varName＝比例寫到哪個變數（預設 --fit）。
+ * 同一頁可以分成好幾層各自縮放：例如後台的標題列＋左側欄只看側欄（切分頁時不會變），內容區另外用自己的變數縮放。
  */
 /** 多出來幾 px 以內不重算縮放（要小於頁面底部的內距 --space） */
 const FIT_TOLERANCE = 3
 /** 新算出的縮放和目前差不到這個比例（1%）就沿用目前的，避免整頁微微跳動 */
 const FIT_KEEP = 0.01
 
-export function useFitToHost<T extends HTMLElement>() {
+export function useFitToHost<T extends HTMLElement>({ checks: checkSel = '[data-fit-check]', varName = '--fit' }: { checks?: string; varName?: string } = {}) {
     const ref = useRef<T>(null)
 
     useLayoutEffect(() => {
@@ -27,20 +30,20 @@ export function useFitToHost<T extends HTMLElement>() {
         const fit = () => {
             frame = 0
             if (getComputedStyle(el).getPropertyValue('--fit-on').trim() !== '1') {
-                el.style.removeProperty('--fit')
+                el.style.removeProperty(varName)
                 return
             }
-            const checks = () => Array.from(el.querySelectorAll<HTMLElement>('[data-fit-check]'))
+            const checks = () => Array.from(el.querySelectorAll<HTMLElement>(checkSel))
             // 被撐出去的部分：區塊底邊超過「整頁底邊扣掉內距」多少（以縮放後的單位換算）
             const pushedOut = () => {
-                const z = parseFloat(el.style.getPropertyValue('--fit')) || 1
+                const z = parseFloat(el.style.getPropertyValue(varName)) || 1
                 const limit = el.getBoundingClientRect().bottom - parseFloat(getComputedStyle(el).paddingBottom) * z
                 return Math.max(0, ...checks().map((c) => c.getBoundingClientRect().bottom - limit)) / z
             }
             const overflow = () => pushedOut() + Math.max(0, ...checks().map((c) => c.scrollHeight - c.clientHeight))
-            const prev = parseFloat(el.style.getPropertyValue('--fit')) || 1
+            const prev = parseFloat(el.style.getPropertyValue(varName)) || 1
             let scale = 1
-            el.style.setProperty('--fit', '1')
+            el.style.setProperty(varName, '1')
             for (let i = 0; i < 4; i++) {
                 const extra = overflow()
                 // 差 FIT_TOLERANCE 以內視為放得下：只吃進頁面底部的內距、看不出來；
@@ -48,12 +51,12 @@ export function useFitToHost<T extends HTMLElement>() {
                 if (extra <= FIT_TOLERANCE) break
                 const have = el.clientHeight
                 scale *= have / (have + extra)
-                el.style.setProperty('--fit', String(scale))
+                el.style.setProperty(varName, String(scale))
             }
             // 新比例和目前的只差一點點、而且目前的比例還放得下 → 維持不變，畫面不跳（資料載入、數字變長造成的微小差異）
             if (prev !== scale && Math.abs(scale - prev) / prev < FIT_KEEP) {
-                el.style.setProperty('--fit', String(prev))
-                if (overflow() > FIT_TOLERANCE) el.style.setProperty('--fit', String(scale))
+                el.style.setProperty(varName, String(prev))
+                if (overflow() > FIT_TOLERANCE) el.style.setProperty(varName, String(scale))
             }
         }
         const schedule = () => { if (!frame) frame = requestAnimationFrame(fit) }
@@ -70,7 +73,7 @@ export function useFitToHost<T extends HTMLElement>() {
             window.removeEventListener('resize', schedule)
             if (frame) cancelAnimationFrame(frame)
         }
-    }, [])
+    }, [checkSel, varName])
 
     return ref
 }

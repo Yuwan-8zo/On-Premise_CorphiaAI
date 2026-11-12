@@ -25,6 +25,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import type { Conversation } from '@/types/chat'
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 import { pageSlide } from '@/lib/motionPresets'
+import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 
 interface ChatSidebarProps {
     /** 對話列表 */
@@ -133,6 +134,7 @@ export default function ChatSidebar({
     }
     // 收合／展開＝變形（不是淡入淡出）：外框寬度、切換軌道（橫↔直）、新對話鈕（膠囊↔圓鈕）、頭像列同時過渡 0.3 秒
     //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
+    const desktop = useMediaQuery(MQ_DESKTOP)
     const wide = sidebarOpen
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
     // 哪些對話正在生成（背景中的也算）→ 清單上顯示小圓點
@@ -155,6 +157,8 @@ export default function ChatSidebar({
 
     return (
         <aside
+            // 手機上收起的側欄只是移到畫面外：設成 inert，鍵盤和讀螢幕軟體才不會走到看不見的按鈕
+            inert={!desktop && !sidebarOpen}
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
                 : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
@@ -173,7 +177,7 @@ export default function ChatSidebar({
                         aria-label={sidebarOpen ? t('ui.sidebar.collapse') : t('ui.sidebar.expand')}
                         onMouseEnter={() => setIsSidebarHovered(true)}
                         onMouseLeave={() => setIsSidebarHovered(false)}
-                        className="btn-icon btn-icon-plain hidden md:inline-flex !w-11 !h-11 text-text-secondary"
+                        className="btn-icon btn-icon-plain !hidden md:!inline-flex !w-11 !h-11 text-text-secondary"
                     >
                     {wide || isSidebarHovered ? (
                         <SidebarIcon className="w-[var(--sz-20)] h-[var(--sz-20)]" />
@@ -314,7 +318,7 @@ export default function ChatSidebar({
                                                             }
                                                             setSelectedFolder(folderName)
                                                             setExpandedFolders(prev => new Set(prev).add(folderName))
-                                                            if (window.innerWidth < 768) setSidebarOpen(false)
+                                                            if (!desktop) setSidebarOpen(false)
                                                         }}
                                                         aria-expanded={isExpanded}
                                                         className={`side-item group ${selectedFolder === folderName ? 'is-current' : ''}`}
@@ -323,12 +327,12 @@ export default function ChatSidebar({
                                                         <span className="flex-1 min-w-0 truncate">{folderName}</span>
                                                         <div className="side-actions gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                             <Tooltip label={t('ui.sidebar.newInFolder')}>
-                                                                <button onClick={(e) => createConvInFolder(folderName, e)} aria-label={t('ui.sidebar.newInFolder')} className="p-1.5 rounded-full text-text-secondary">
+                                                                <button onClick={(e) => createConvInFolder(folderName, e)} aria-label={t('ui.sidebar.newInFolder')} className="icon-tap text-text-secondary">
                                                                     <Plus className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
                                                             <Tooltip label={t('ui.sidebar.deleteFolder')}>
-                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label={t('ui.sidebar.deleteFolder')} className="p-1.5 rounded-full text-text-secondary">
+                                                                <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label={t('ui.sidebar.deleteFolder')} className="icon-tap text-text-secondary">
                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
@@ -361,7 +365,8 @@ export default function ChatSidebar({
                 
                     <button
                         data-tour="settings-button"
-                        onClick={() => setSettingsOpen(true)}
+                        // 手機：先收起側欄再開設定，關掉設定（或從後台回來）時看到的是對話，不是蓋住畫面的側欄
+                        onClick={() => { if (!desktop) setSidebarOpen(false); setSettingsOpen(true) }}
                         aria-label={user?.name || user?.email || t('settings.title')}
                         className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
                         style={{ width: wide ? 232 : 44 }}

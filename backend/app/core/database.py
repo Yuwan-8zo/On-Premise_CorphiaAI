@@ -5,7 +5,10 @@
 import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from datetime import datetime
+
+from sqlalchemy import DateTime, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.core.config import settings
 
@@ -36,7 +39,14 @@ async_session_maker = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """SQLAlchemy 基礎模型類別"""
-    pass
+
+
+class TimestampMixin:
+    """共用的建立／更新時間欄位（各資料表不要各自重寫一份）。
+    需要依建立時間查詢、要加索引的資料表（使用者、對話）自己定義 created_at。"""
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

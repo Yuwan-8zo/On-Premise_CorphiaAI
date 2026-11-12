@@ -47,6 +47,8 @@ export const HelpCircle = make('HelpCircle', <><path d="M256 80a176 176 0 1 0 17
 export const Check = make('Check', <><path d="M416 128 192 384l-96-96" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
 export const CheckCircle2 = make('CheckCircle2', <><path d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192Z" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M352 176 217.6 336 160 272" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
 export const X = make('X', <><path d="M368 368 144 144M368 144 144 368" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
+/** 實心圓＋挖空的 ×（Apple 搜尋欄的清除鈕）：圓填目前文字色，× 用 --ic-knock 的顏色（預設白） */
+export const XCircleFill = make('XCircleFill', <><circle cx="256" cy="256" r="224" fill="currentColor" stroke="none" /><path d="M320 320 192 192M320 192 192 320" fill="none" style={{ stroke: 'var(--ic-knock, #fff)', strokeWidth: 40 }} /></>)
 export const ArrowLeft = make('ArrowLeft', <><path d="M244 400 100 256l144-144M120 256h292" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
 export const ArrowRight = make('ArrowRight', <><path d="m268 112 144 144-144 144M392 256H100" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)
 export const ArrowUp = make('ArrowUp', <><path d="m112 244 144-144 144 144M256 120v292" fill="none" style={{ strokeWidth: 'calc(var(--ion-sw) * 1.5)' }} /></>)

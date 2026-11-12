@@ -248,17 +248,20 @@ async def websocket_chat(
 
                 msg_type = data.get("type")
 
-                if msg_type == "message":
+                if msg_type in ("message", "resubmit"):
+                    # 送出新訊息與重新送出（編輯後再送）走同一套檢查；差別只在重新送出要帶原本那則的 ID
+                    resubmit = msg_type == "resubmit"
                     content = str(data.get("content") or "").strip()
+                    message_id = data.get("message_id") if resubmit else None
                     # 生成參數限制在合理範圍（前端送什麼都不會讓模型卡死或程式出錯）
                     params = clamp_generation_params(data)
                     use_rag, temperature = params["use_rag"], params["temperature"]
                     max_tokens, language = params["max_tokens"], params["language"]
 
-                    if not content:
+                    if not content or (resubmit and not message_id):
                         await websocket.send_json({
                             "type": "error",
-                            "message": "訊息內容不能為空"
+                            "message": "訊息內容或ID不能為空" if resubmit else "訊息內容不能為空",
                         })
                         continue
 
@@ -270,7 +273,7 @@ async def websocket_chat(
                             "message": f"訊息內容超過 {WS_MAX_CONTENT_CHARS} 字上限",
                         })
                         continue
-                    
+
                     # 避免重複發送請求
                     if current_generation_task and not current_generation_task.done():
                         await websocket.send_json({
@@ -283,51 +286,13 @@ async def websocket_chat(
                     if not await _quota_ok():
                         continue
 
-                    # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）
+                    # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）；DLP 攔阻時回傳 None
                     sanitized = await _security_gate(content)
                     if sanitized is None:
-                        # DLP 已攔阻
                         continue
                     content = sanitized
 
                     # 啟動非同步生成任務
-                    current_generation_task = asyncio.create_task(
-                        _generate_and_send(conversation_id, content, use_rag, temperature, max_tokens, language)
-                    )
-                
-                elif msg_type == "resubmit":
-                    content = str(data.get("content") or "").strip()
-                    message_id = data.get("message_id")
-                    # 生成參數限制在合理範圍（前端送什麼都不會讓模型卡死或程式出錯）
-                    params = clamp_generation_params(data)
-                    use_rag, temperature = params["use_rag"], params["temperature"]
-                    max_tokens, language = params["max_tokens"], params["language"]
-
-                    if not content or not message_id:
-                        await websocket.send_json({
-                            "type": "error",
-                            "message": "訊息內容或ID不能為空"
-                        })
-                        continue
-
-                    if current_generation_task and not current_generation_task.done():
-                        await websocket.send_json({
-                            "type": "error",
-                            "message": "前一個請求正在處理中，請先停止"
-                        })
-                        continue
-
-                    # 每日訊息配額
-                    if not await _quota_ok():
-                        continue
-
-                    # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）
-                    sanitized = await _security_gate(content)
-                    if sanitized is None:
-                        continue
-                    content = sanitized
-
-                    # 共用統一的 _generate_and_send，差別只在 resubmit_message_id
                     current_generation_task = asyncio.create_task(
                         _generate_and_send(
                             conversation_id, content, use_rag,
@@ -335,7 +300,7 @@ async def websocket_chat(
                             resubmit_message_id=message_id,
                         )
                     )
-                
+
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})
                 

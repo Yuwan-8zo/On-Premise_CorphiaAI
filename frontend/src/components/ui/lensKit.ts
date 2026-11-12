@@ -212,6 +212,26 @@ export const lensActive = (f: LensFrame) => f.grow > 0.001 || f.veil < 0.999
 export const HOLE_INSET = 1
 
 /**
+ * 兩種挖洞共用的遮罩樣式：第一層是整片，後面的形狀全部加起來，再從整片減掉（＝在元素上挖出這個形狀）。
+ * count＝圖層數；合成方式的數量＝圖層數 − 1（第一個是「減掉」，其餘是「加起來」）
+ */
+function holeMask(img: string, size: string, pos: string, count: number): React.CSSProperties {
+    const rest = count - 2
+    return {
+        WebkitMaskImage: img,
+        WebkitMaskSize: size,
+        WebkitMaskPosition: pos,
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskComposite: ['source-out', ...Array(rest).fill('source-over')].join(', '),
+        maskImage: img,
+        maskSize: size,
+        maskPosition: pos,
+        maskRepeat: 'no-repeat',
+        maskComposite: ['subtract', ...Array(rest).fill('add')].join(', '),
+    } as React.CSSProperties
+}
+
+/**
  * 在元素上挖一個膠囊形的洞（x, y, w, h＝鏡片在元素座標裡的位置與大小；橫的或直的膠囊都可以），自動內縮 HOLE_INSET。
  * 照規範：整片減掉兩個圓＋中間長方形
  */
@@ -228,18 +248,7 @@ export function capsuleHole(x0: number, y0: number, w0: number, h0: number): Rea
         `linear-gradient(#000 0 0)`
     const size = `100% 100%, 100% 100%, 100% 100%, ${rw}px ${rh}px`
     const pos = `0 0, 0 0, 0 0, ${rx}px ${ry}px`
-    return {
-        WebkitMaskImage: img,
-        WebkitMaskSize: size,
-        WebkitMaskPosition: pos,
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskComposite: 'source-out, source-over, source-over',
-        maskImage: img,
-        maskSize: size,
-        maskPosition: pos,
-        maskRepeat: 'no-repeat',
-        maskComposite: 'subtract, add, add',
-    } as React.CSSProperties
+    return holeMask(img, size, pos, 4)
 }
 
 /**
@@ -257,19 +266,7 @@ export function roundRectHole(x0: number, y0: number, w0: number, h0: number, r0
     ]
     const size = ['100% 100%', '100% 100%', '100% 100%', '100% 100%', '100% 100%', `${Math.max(0, w - 2 * R)}px ${h}px`, `${w}px ${Math.max(0, h - 2 * R)}px`].join(', ')
     const pos = ['0 0', '0 0', '0 0', '0 0', '0 0', `${x + R}px ${y}px`, `${x}px ${y + R}px`].join(', ')
-    const img = layers.join(', ')
-    return {
-        WebkitMaskImage: img,
-        WebkitMaskSize: size,
-        WebkitMaskPosition: pos,
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskComposite: 'source-out, source-over, source-over, source-over, source-over, source-over',
-        maskImage: img,
-        maskSize: size,
-        maskPosition: pos,
-        maskRepeat: 'no-repeat',
-        maskComposite: 'subtract, add, add, add, add, add',
-    } as React.CSSProperties
+    return holeMask(layers.join(', '), size, pos, layers.length)
 }
 
 /**

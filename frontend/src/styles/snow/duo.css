@@ -45,7 +45,11 @@
 .fold-wide .admin-shell .admin-nav {
   padding-block: 0;
 }
-/* 管理後台：寬版時放不下就整頁（標題列、左側欄、內容）等比例縮小到剛好一個畫面（--fit 由 useFitToHost 算），不捲動 */
+/* 管理後台：寬版時放不下就等比例縮小到剛好一個畫面（useFitToHost 算），不捲動。分兩層：
+   整頁（標題列、左側欄）的 --fit 只看左側欄，切分頁時不變；內容區的 --fit-content 依各分頁內容另外算 */
+.admin-content-fit {
+  zoom: var(--fit-content, 1);
+}
 .admin-fit {
   zoom: var(--fit, 1);
   padding: calc(var(--space) / var(--fit, 1)); /* 外圈間距除回比例：縮放後在畫面上仍是原本的間距 */
@@ -64,10 +68,10 @@
     padding-right: calc(var(--duo-status) / var(--fit, 1));
   }
   .fold-wide .admin-shell .admin-overview > :first-child {
-    margin-right: calc(var(--duo-status) / var(--fit, 1));
+    margin-right: calc(var(--duo-status) / var(--fit, 1) / var(--fit-content, 1));
   }
   /* 其他分頁的內容從最上面就開始，整欄讓開 */
   .fold-wide .admin-shell .admin-page-enter:not(:has(.admin-overview)) {
-    padding-right: calc(var(--duo-status) / var(--fit, 1));
+    padding-right: calc(var(--duo-status) / var(--fit, 1) / var(--fit-content, 1));
   }
 }

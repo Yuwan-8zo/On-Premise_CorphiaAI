@@ -97,11 +97,15 @@ export default function SettingsModal() {
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={t('settings.title', '設定')}
                         className="relative w-full max-w-[var(--sz-800)] h-full max-h-[90dvh] md:max-h-[var(--sz-750)] paper !rounded-[var(--r-68)] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
+                            aria-label={t('common.close')}
                             className="btn-icon !w-[var(--sz-36)] !h-[var(--sz-36)] absolute top-[var(--sp-36)] right-[var(--sp-36)] text-text-secondary z-20"
                         >
                             <X className="w-5 h-5" />
@@ -152,7 +156,7 @@ export default function SettingsModal() {
                             <div className="p-6 md:pl-10 md:pr-[var(--sp-36)] md:pt-14 md:pb-[var(--sp-36)] min-h-full">
                                 {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
                                 <button
-                                    className="md:hidden mb-4 -ml-1 flex items-center text-accent text-[length:var(--fs-15)] font-medium"
+                                    className="md:hidden mb-4 -ml-1 flex items-center min-h-[var(--tap-sm)] pr-[var(--sp-12)] text-accent text-[length:var(--fs-15)] font-medium"
                                     onClick={() => setMobileView('menu')}
                                 >
                                     <ChevronLeft className="w-5 h-5" />

@@ -3,20 +3,19 @@
 """
 
 import uuid
-from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, DateTime, ForeignKey, func
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.user import User
 
 
-class UserSettings(Base):
+class UserSettings(TimestampMixin, Base):
     """使用者設定資料表"""
     
     __tablename__ = "user_settings"
@@ -48,18 +47,6 @@ class UserSettings(Base):
     # 其他設定 (JSON)
     preferences: Mapped[dict] = mapped_column(JSON, default=dict)
     
-    # 時間戳
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
     
     # 關聯
     user: Mapped["User"] = relationship(

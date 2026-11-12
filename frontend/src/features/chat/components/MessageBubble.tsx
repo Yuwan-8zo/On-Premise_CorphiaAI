@@ -152,7 +152,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
     const copyButton = (
-        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
                 <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
@@ -260,7 +260,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
-                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
                                     <Edit2 className="w-3.5 h-3.5" />
                                 </button></Tooltip>
                             )}
@@ -272,7 +272,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
                                 <button
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
-                                    className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
+                                    className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                 </button>
@@ -338,7 +338,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 {onRegenerate && !message.blocked && (
                                     <button
                                         onClick={() => onRegenerate(message.id)}
-                                        className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
+                                        className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                         >
                                         <RefreshCw className="w-3.5 h-3.5" />
                                     </button>

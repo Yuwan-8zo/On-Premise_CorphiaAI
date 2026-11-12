@@ -14,6 +14,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Tooltip from './Tooltip'
 import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 import { LENS_CFG, LENS_MAG, LENS_SX, capsuleHole, lensActive, lensCrossScale, shoulderMask, useLensMotion } from './lensKit'
+import { swallowNextClick } from '@/lib/swallowClick'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -117,7 +118,10 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         const next = commit ? Math.round(d.moved ? lens.current.current.pos : posFrom(coord(e))) : index
         lens.glideTo(next)
         const val = options[next]?.value
-        if (commit && val !== undefined && val !== value) onChange(val)
+        if (commit && val !== undefined && val !== value) {
+            onChange(val)
+            swallowNextClick() // 換分頁後同一下的 click 不落到新內容上
+        }
     }
 
     // ── 幾何：先用「長邊／短邊」算，再對應到 x、y ──

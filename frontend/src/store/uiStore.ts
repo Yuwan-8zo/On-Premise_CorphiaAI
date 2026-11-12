@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware'
 import { flushSync } from 'react-dom'
 import i18n from 'i18next' // 同一個 i18n 實例（在 i18n/index.ts 初始化）；不經過 react-i18next，store 才不會依賴 React
 import type { Language } from '@/i18n/languages'
+import { isDesktop } from '@/lib/useMediaQuery'
 
 /**
  * 主題切換動畫 helper
@@ -110,7 +111,7 @@ export const useUIStore = create<UIState>()(
             language: 'zh-TW',
             accentColor: 'blue',
             // 側邊欄預設打開（手機版是蓋在畫面上的抽屜，預設收起）
-            sidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
+            sidebarOpen: typeof window !== 'undefined' ? isDesktop() : true,
             sidebarWidth: 280,
 
             // 設定主題（系統 prefers-color-scheme 自動同步用，不需動畫；

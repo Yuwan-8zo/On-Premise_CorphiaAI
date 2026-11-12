@@ -18,7 +18,7 @@ import {
 } from '@/features/admin/components/AdminPrimitives'
 import { adminApi, type TenantUsageStats } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
-import { SkelCards } from '@/components/ui/Skeleton'
+import { SkelCards, SkelText } from '@/components/ui/Skeleton'
 import { useAuthStore } from '@/store/authStore'
 
 export interface TenantsSectionProps {
@@ -64,7 +64,8 @@ export default function TenantsSection({
         <Panel className="admin-fill">
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
-                eyebrow={t('admin.tenants.activeTenants', { count: activeTenants })}
+                // 第一次讀到之前用同格式的佔位，不先顯示「0 個租戶」
+                eyebrow={isLoadingTenants && !tenants.length ? <SkelText>{t('admin.tenants.activeTenants', { count: 0 })}</SkelText> : t('admin.tenants.activeTenants', { count: activeTenants })}
                 action={isEngineer ? (
                     <ActionButton onClick={onAddTenant}>
                         <Plus className="h-4 w-4" />

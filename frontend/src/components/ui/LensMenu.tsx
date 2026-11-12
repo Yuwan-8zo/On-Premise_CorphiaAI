@@ -15,6 +15,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import { LENS_CFG } from './lensKit'
+import { swallowNextClick } from '@/lib/swallowClick'
 
 const HOLD_MS = LENS_CFG.pressWait // 長按多久才出現放大鏡（移動不會提前觸發）
 const MAG = LENS_CFG.zoom
@@ -195,7 +196,10 @@ export default function LensMenu({ children, className = '', plate = false, ...r
         clearMask()
         setTimeout(() => { if (!st.current.active && lensRef.current) { lensRef.current.innerHTML = ''; st.current.ghost = null } }, 300)
         // 放開 → 選取放大鏡停住的那一項
-        if (commit && target) target.click()
+        if (commit && target) {
+            target.click()
+            swallowNextClick() // 放開時已經選好了，瀏覽器接著送出的 click 不再落到底下
+        }
     }
 
     useEffect(() => () => { cancelAnimationFrame(st.current.raf); clearTimeout(st.current.timer); st.current.off?.() }, [])

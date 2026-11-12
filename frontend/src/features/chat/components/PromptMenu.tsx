@@ -1,9 +1,10 @@
-import { Book, Code, FileText, Languages, Layers3, Mail, Reader, Search, ShieldCheck, Sparkles } from '@/components/snow/icons'
+import { Book, Code, FileText, Languages, Layers3, Mail, Reader, ShieldCheck, Sparkles } from '@/components/snow/icons'
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import GlassSegmented from '@/components/ui/GlassSegmented'
+import SearchField from '@/components/ui/SearchField'
 import { useDismiss } from '@/lib/useDismiss'
 
 interface PromptTemplate {
@@ -175,7 +176,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
             </Tooltip>
 
             {/* 模板面板：portal 到 body（毛玻璃才模糊得到後面）
-                外框圓角 26、內距 10 → 搜尋框、類別膠囊、列都是同心的 16（26 − 10）；懸停不變色
+                外框圓角 26、內距 10 → 類別膠囊、列都是同心的 16（26 − 10）；搜尋框是膠囊（圓角＝高 ÷ 2）；懸停不變色
                 結構：標題 → 搜尋框 → 類別工具列（一排圖示）→ 依類別分組的模板清單（圖示＋標題＋一行預覽） */}
             {isVisible && pos && createPortal(
                 <div
@@ -193,24 +194,22 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                         transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
-                    onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
+                    onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented) setIsOpen(false) }}
                 >
                     <div className="shrink-0 px-[var(--sp-10)] pt-[var(--sp-6)] pb-[var(--sp-10)] text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                         {t('chat.promptTemplatesTitle')}
                     </div>
 
-                    {/* 搜尋框 */}
-                    <label className="prompt-search shrink-0">
-                        <Search className="h-[var(--sz-16)] w-[var(--sz-16)] shrink-0 text-text-muted" />
-                        <input
-                            ref={searchRef}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            onKeyDown={onSearchKey}
-                            placeholder={t('chat.promptSearch')}
-                            className="min-w-0 flex-1 bg-transparent text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary outline-none placeholder:text-text-muted"
-                        />
-                    </label>
+                    {/* 搜尋框（共用 SearchField）：有字時 Esc 先清空，空的再按 Esc 才關面板 */}
+                    <SearchField
+                        ref={searchRef}
+                        className="shrink-0"
+                        value={query}
+                        onChange={setQuery}
+                        onKeyDown={onSearchKey}
+                        placeholder={t('chat.promptSearch')}
+                        label={t('chat.promptSearch')}
+                    />
 
                     {/* 類別工具列：一排圖示（分段切換＋放大鏡），名稱顯示在下面清單的分組標題；搜尋時隱藏 */}
                     {!query.trim() && (

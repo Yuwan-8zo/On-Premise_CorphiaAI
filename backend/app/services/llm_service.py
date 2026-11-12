@@ -290,6 +290,18 @@ class LLMService:
                     logger.error(f"載入使用者選的模型失敗，改用系統預設 {model_name}: {exc}")
         return self._llama_instance
 
+    async def _prepare_call(
+        self, prompt: str, max_tokens: int, temperature: float, top_p: float, default_temperature: float
+    ) -> tuple[float, float, int]:
+        """三種生成共用的開頭：確保模型服務已初始化，並把參數夾在安全範圍（避免超範圍的值打爆 llama.cpp 或記憶體）"""
+        if not self._initialized:
+            await self.initialize()
+        return (
+            _clamp(temperature, 0.0, 2.0, default_temperature),
+            _clamp(top_p, 0.01, 1.0, 0.9),
+            _safe_max_tokens(max_tokens, len(prompt or "")),
+        )
+
     async def generate(
         self,
         prompt: str,
@@ -300,13 +312,7 @@ class LLMService:
         model_name: Optional[str] = None,
     ) -> str:
         """生成回應（非串流）。model_name：用哪個模型（每個人自己選的；沒給用系統預設）"""
-        if not self._initialized:
-            await self.initialize()
-
-        # 安全 clamp 參數，避免外部傳超範圍值打爆 llama.cpp 或 OOM
-        temperature = _clamp(temperature, 0.0, 2.0, 0.7)
-        top_p = _clamp(top_p, 0.01, 1.0, 0.9)
-        max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
+        temperature, top_p, max_tokens = await self._prepare_call(prompt, max_tokens, temperature, top_p, default_temperature=0.7)
 
         inst = await self._instance_for(model_name)
         if inst is not None:
@@ -331,12 +337,7 @@ class LLMService:
         讓底層 llama.cpp 推論執行緒在下一個 token 結束後提前停止，
         避免「使用者按停止但 GPU 仍跑完 max_tokens」的 GPU 浪費。
         """
-        if not self._initialized:
-            await self.initialize()
-
-        temperature = _clamp(temperature, 0.0, 2.0, 0.7)
-        top_p = _clamp(top_p, 0.01, 1.0, 0.9)
-        max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
+        temperature, top_p, max_tokens = await self._prepare_call(prompt, max_tokens, temperature, top_p, default_temperature=0.7)
 
         inst = await self._instance_for(model_name)
         if inst is not None:
@@ -358,13 +359,7 @@ class LLMService:
         model_name: Optional[str] = None,
     ) -> dict:
         """生成結構化 JSON 回應。model_name：用哪個模型（沒給用系統預設）"""
-        if not self._initialized:
-            await self.initialize()
-
-        # 同樣 clamp 參數
-        temperature = _clamp(temperature, 0.0, 2.0, 0.1)
-        top_p = _clamp(top_p, 0.01, 1.0, 0.9)
-        max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
+        temperature, top_p, max_tokens = await self._prepare_call(prompt, max_tokens, temperature, top_p, default_temperature=0.1)
 
         inst = await self._instance_for(model_name)
         if inst is not None:

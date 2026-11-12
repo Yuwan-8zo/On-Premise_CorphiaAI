@@ -17,6 +17,9 @@ type ChatMode = 'general' | 'project'
 /** 等彈窗畫出來再把游標放進輸入框 */
 const focusSoon = (ref: React.RefObject<HTMLInputElement | null>) => setTimeout(() => ref.current?.focus(), 100)
 
+/** 對話「⋯」選單的位置：x、y＝選單左上角；anchor＝按鈕的上下緣（放不下時翻到上方用） */
+export type ConvMenuState = { convId: string; x: number; y: number; anchor?: { top: number; bottom: number } }
+
 export function useConversationDialogs({
     setChatMode,
     loadFolders,
@@ -28,7 +31,7 @@ export function useConversationDialogs({
     const { conversations, updateConversation, setCurrentConversation, setMessages } = useChatStore()
 
     // ── 「⋯」選單 ──
-    const [activeMenu, setActiveMenu] = useState<{ convId: string; x: number; y: number } | null>(null)
+    const [activeMenu, setActiveMenu] = useState<ConvMenuState | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
     // 點外面、按 Esc 關閉。按在「⋯」本身不算點外面：它是按下就打開、可以直接拖到項目上的觸發鈕
@@ -38,7 +41,7 @@ export function useConversationDialogs({
     const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
         e.stopPropagation()
         const rect = e.currentTarget.getBoundingClientRect()
-        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 }) // 放在按鈕正下方
+        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4, anchor: { top: rect.top, bottom: rect.bottom } }) // 放在按鈕正下方；放不下時翻到上方
     }
     const closeMenu = () => setActiveMenu(null)
 

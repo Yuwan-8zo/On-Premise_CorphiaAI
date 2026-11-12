@@ -15,6 +15,7 @@ import { useCssPx } from '@/lib/cssVars'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import { LENS_CFG, LENS_MAG, LENS_SX, lensCrossScale, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { swallowNextClick } from '@/lib/swallowClick'
 import { useTranslation } from 'react-i18next'
 import { useDismiss } from '@/lib/useDismiss'
 
@@ -136,7 +137,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
             setLeaving({ y })
             window.setTimeout(() => setLeaving(null), LENS_CFG.leave)
             close()
-            if (commit && idx >= 1 && idx <= items.length) items[idx - 1].onSelect()
+            if (commit && idx >= 1 && idx <= items.length) { items[idx - 1].onSelect(); swallowNextClick() }
             return
         }
         if (!commit) return
@@ -144,7 +145,8 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const r = wrapRef.current!.getBoundingClientRect()
         const idx = Math.round((e.clientY - r.top - PAD - BTN_N / 2) / (BTN_N + GAP_N))
         if (idx <= 0 || !p.startedOpen) { setOpen((o) => !o); return }
-        if (idx <= items.length) { close(); items[idx - 1].onSelect() }
+        // 執行後（例如打開重新命名的對話框）同一下的 click 不能落到新出現的東西上
+        if (idx <= items.length) { close(); items[idx - 1].onSelect(); swallowNextClick() }
     }
 
     // 放大鏡幾何（寬版）
@@ -162,9 +164,11 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const isBtn = i === 0
         const it = isBtn ? null : items[i - 1]
         const icon = isBtn ? (open ? <X /> : <MoreHorizontal />) : it!.icon
-        const tone = it?.tone === 'danger' ? 'text-[#ff4245]' : it?.tone === 'success' ? 'text-[#30d158]' : 'text-text-primary'
-        // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除＝紅）
-        const lensTone = it?.tone === 'danger' || it?.tone === 'success' ? tone : 'text-accent'
+        // 展開後最上面的選單鈕是「關閉」，和刪除一樣用紅色
+        const toneKey = isBtn ? (open ? 'danger' : undefined) : it!.tone
+        const tone = toneKey === 'danger' ? 'text-[var(--sys-red)]' : toneKey === 'success' ? 'text-[var(--sys-green)]' : 'text-text-primary'
+        // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除與關閉＝紅）
+        const lensTone = toneKey ? tone : 'text-accent'
         return (
             <span
                 key={i}

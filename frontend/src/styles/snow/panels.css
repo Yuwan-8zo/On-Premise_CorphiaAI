@@ -6,16 +6,6 @@
   mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
 }
 
-/* 提示詞模板面板：外框 26、內距 10 → 裡面的搜尋框、類別膠囊、列都是同心的 16 */
-.prompt-search {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  height: var(--sz-40);
-  padding: 0 var(--sp-14);
-  border-radius: var(--r-9999);
-  background: var(--chip);
-}
 /* 類別工具列（GlassSegmented toolbar） */
 .prompt-cats {
   margin: var(--sp-10) 0 var(--sp-2);
