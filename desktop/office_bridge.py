@@ -11,7 +11,9 @@
 
 安全：
   - 改一份「已經存過檔」的文件之前，先備份一份到 %LOCALAPPDATA%\\CorphiaAI\\backups（每份文件每次執行備份一次），回傳備份路徑
-  - 只動「目前使用中的那一份」；不關檔、不存檔、不刪東西（存不存由使用者決定，寫錯可以 Ctrl+Z）
+  - 只動「目前使用中的那一份」；不關檔、不存檔、不刪東西（存不存由使用者決定）
+  - Word 寫錯可以 Ctrl+Z；Excel 用程式寫入不能復原，所以要填的範圍裡只要有資料就不寫，請使用者改選空白的位置
+  - Office 正在忙（開著對話框、Excel 正在編輯儲存格）或沒回應時，回給使用者看得懂的原因，不會讓介面一直等
   - open_file 只收 docx／xlsx／pptx，檔名去掉路徑字元，只寫進自己的資料夾
   - 讀出來的內容有長度上限（READ_MAX_CHARS），之後會跟一般訊息一樣經過伺服器的資安檢查
 
@@ -24,8 +26,10 @@ import base64
 import os
 import re
 import shutil
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as CallTimeout
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -33,6 +37,15 @@ APPS = {"word": "Word.Application", "excel": "Excel.Application", "powerpoint": 
 APP_LABEL = {"word": "Word", "excel": "Excel", "powerpoint": "PowerPoint"}
 ALLOWED_EXT = {".docx", ".xlsx", ".pptx"}
 READ_MAX_CHARS = 4000
+# Excel 一次最多讀多少列、欄（很大的工作表整張讀會卡很久；反正讀出來的字數也有上限）
+READ_MAX_ROWS = 400
+READ_MAX_COLS = 50
+# 一個動作最多等 Office 多久（秒）
+CALL_TIMEOUT = 45
+# Office 正在忙、暫時不接受操控時回的錯誤代碼（RPC_E_CALL_REJECTED、RPC_E_SERVERCALL_RETRYLATER）
+BUSY_CODES = ("-2147418111", "-2147417846")
+BUSY_TEXT = "Office 正在忙（可能有對話框開著，或 Excel 正在編輯儲存格）。請先回到 Office 處理完，再試一次"
+TIMEOUT_TEXT = "Office 沒有回應（可能有對話框開著）。請回到 Office 處理完再試一次；剛才的動作有可能在 Office 恢復後接著完成"
 OUTPUT_FOLDER = "Corphia AI 產出"
 MAX_SLIDE_BULLETS = 8
 
@@ -58,15 +71,27 @@ _worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="office", initial
 
 
 def _com(fn: Callable[[], dict]) -> dict:
+    # 等太久放棄的動作：如果還在排隊沒開始，就不要再做了（不然使用者以為失敗、之後卻突然寫進去）
+    abandoned = threading.Event()
+
     def run() -> dict:
+        if abandoned.is_set():
+            return {"ok": False, "error": TIMEOUT_TEXT}
         try:
             return {"ok": True, **fn()}
         except BridgeError as e:
             return {"ok": False, "error": str(e)}
         except Exception as e:  # COM 的錯誤訊息很雜，留前面一段就好
-            return {"ok": False, "error": f"操作 Office 時發生錯誤：{str(e)[:160]}"}
+            text = str(e)
+            if any(code in text for code in BUSY_CODES):
+                return {"ok": False, "error": BUSY_TEXT}
+            return {"ok": False, "error": f"操作 Office 時發生錯誤：{text[:160]}"}
 
-    return _worker.submit(run).result()
+    try:
+        return _worker.submit(run).result(timeout=CALL_TIMEOUT)
+    except CallTimeout:
+        abandoned.set()
+        return {"ok": False, "error": TIMEOUT_TEXT}
 
 
 def _running(app: str):
@@ -231,6 +256,15 @@ def read(app: str) -> dict:
             scope = "selection"
             if rng is None or rng.Cells.Count <= 1:
                 rng, scope = inst.ActiveSheet.UsedRange, "sheet"
+            rows_total, cols_total = rng.Rows.Count, rng.Columns.Count
+            too_big = rows_total > READ_MAX_ROWS or cols_total > READ_MAX_COLS
+            if too_big:
+                # 太大的範圍只讀左上角這一塊（用列號、欄號算，理由同 write 的說明）
+                sheet = rng.Worksheet
+                rng = sheet.Range(
+                    sheet.Cells(rng.Row, rng.Column),
+                    sheet.Cells(rng.Row + min(rows_total, READ_MAX_ROWS) - 1, rng.Column + min(cols_total, READ_MAX_COLS) - 1),
+                )
             values = rng.Value
             rows = values if isinstance(values, tuple) else ((values,),)
             lines = ["\t".join("" if v is None else (str(int(v)) if isinstance(v, float) and v.is_integer() else str(v)) for v in row) for row in rows]
@@ -252,6 +286,7 @@ def read(app: str) -> dict:
         clipped, truncated = _clip(text)
         if not clipped:
             raise BridgeError(f"{APP_LABEL[app]} 目前的內容是空的")
+        truncated = truncated or (app == "excel" and too_big)
         return {"app": app, "name": name, "scope": scope, "text": clipped, "chars": len(clipped), "truncated": truncated}
 
     return _com(run)
@@ -304,6 +339,11 @@ def write(app: str, markdown: str) -> dict:
             sheet = inst.ActiveSheet
             # 右下角用列號、欄號算（不用 Offset：這個介面下 Offset(1,1) 會被當成「第 1 格」而不是「位移 1」）
             target = sheet.Range(start, sheet.Cells(start.Row + len(data) - 1, start.Column + width - 1))
+            # Excel 用程式寫入不能按復原：要填的範圍裡只要有資料就不寫，請使用者改選空白的位置
+            filled = int(inst.WorksheetFunction.CountA(target))
+            if filled:
+                where = target.Address.replace("$", "")
+                raise BridgeError(f"要填入的範圍（{where}）裡已經有 {filled} 格有資料，為了不蓋掉原本的內容沒有寫入。請先點一個空白的位置再試一次")
             target.Value = data
             target.Columns.AutoFit()
             return {"app": app, "name": wb.Name, "detail": f"已從 {start.Address.replace('$', '')} 填入 {len(data)} 列 {width} 欄", "backup": backup}

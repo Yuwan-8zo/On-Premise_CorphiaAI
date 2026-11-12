@@ -9,6 +9,8 @@
  *   await desktop.info() ／ desktop.update() // 版本、有沒有新版 ／ 更新（components/desktop/DesktopUpdateNotice 用）
  *
  * 失敗一律丟 Error（訊息是給使用者看的原因）。每個成功的動作都回報伺服器寫稽核（POST /desktop/events）。
+ * 每個動作都要帶「這一頁的通行碼」：桌面版在伺服器的頁面載入完成時放在 window.__corphiaDesktop（換頁就作廢），
+ * 別的網頁拿不到，所以叫不動小幫手。
  */
 import { useEffect, useState } from 'react'
 import apiClient from '@/api/client'
@@ -46,14 +48,17 @@ export interface DesktopInfo extends BridgeResult {
     update: { version: string; size: number } | null
 }
 interface DesktopApi {
-    info: () => Promise<DesktopInfo>
-    update: () => Promise<BridgeResult & { version: string }>
-    office_read: (app: OfficeApp) => Promise<OfficeRead>
-    office_write: (app: OfficeApp, markdown: string) => Promise<OfficeWrite>
-    open_file: (filename: string, dataB64: string) => Promise<OpenedFile>
+    info: (token: string) => Promise<DesktopInfo>
+    update: (token: string) => Promise<BridgeResult & { version: string }>
+    office_read: (token: string, app: OfficeApp) => Promise<OfficeRead>
+    office_write: (token: string, app: OfficeApp, markdown: string) => Promise<OfficeWrite>
+    open_file: (token: string, filename: string, dataB64: string) => Promise<OpenedFile>
 }
+type DesktopWindow = { pywebview?: { api?: DesktopApi }; __corphiaDesktop?: string }
 
-const bridge = (): DesktopApi | undefined => (window as unknown as { pywebview?: { api?: DesktopApi } }).pywebview?.api
+const bridge = (): DesktopApi | undefined => (window as unknown as DesktopWindow).pywebview?.api
+/** 這一頁的通行碼（桌面版發的；還沒發是空字串，動作會被小幫手拒絕） */
+const token = (): string => (window as unknown as DesktopWindow).__corphiaDesktop ?? ''
 
 /** 是不是在桌面版裡（橋是視窗載入後才注入的，所以要等 pywebviewready） */
 export function useDesktop(): boolean {
@@ -90,21 +95,21 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 export const desktop = {
     /** 桌面版的版本與有沒有新版 */
-    info: async (): Promise<DesktopInfo> => unwrap(await bridge()?.info()),
+    info: async (): Promise<DesktopInfo> => unwrap(await bridge()?.info(token())),
     /** 下載新版並重新開啟（成功後視窗會自己關掉再開） */
-    update: async () => unwrap(await bridge()?.update()),
+    update: async () => unwrap(await bridge()?.update(token())),
     read: async (app: OfficeApp): Promise<OfficeRead> => {
-        const r = unwrap(await bridge()?.office_read(app))
+        const r = unwrap(await bridge()?.office_read(token(), app))
         report('office_read', app, { name: r.name, scope: r.scope, chars: r.chars, truncated: r.truncated })
         return r
     },
     write: async (app: OfficeApp, markdown: string): Promise<OfficeWrite> => {
-        const r = unwrap(await bridge()?.office_write(app, markdown))
+        const r = unwrap(await bridge()?.office_write(token(), app, markdown))
         report('office_write', app, { name: r.name, detail: r.detail, backup: !!r.backup })
         return r
     },
     openFile: async (filename: string, blob: Blob): Promise<OpenedFile> => {
-        const r = unwrap(await bridge()?.open_file(filename, await blobToBase64(blob)))
+        const r = unwrap(await bridge()?.open_file(token(), filename, await blobToBase64(blob)))
         report('file_open', filename.split('.').pop() || '', { name: r.name })
         return r
     },

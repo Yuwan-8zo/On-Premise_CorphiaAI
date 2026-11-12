@@ -7,6 +7,8 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
   伺服器位址   存在 %APPDATA%\\CorphiaAI\\desktop.json；連不上時顯示連線設定頁，可以改位址
   橋           介面用 window.pywebview.api.xxx() 呼叫下面 Api 的方法（前端包在 lib/desktop.ts）
   安全         只有「目前顯示的是設定的那台伺服器」時才接受操控 Office 的呼叫（別的網頁叫不動）；
+               而且每個動作都要帶「這一頁的通行碼」：伺服器的頁面載入完成時才發給它，每次載入換一把、換頁就作廢。
+               只看網址不夠——換頁的瞬間，上一頁（可能是外部網頁）送出的呼叫有機會在網址已經變回伺服器之後才被處理；
                每個動作都是使用者按按鈕才發生，小幫手自己不會主動做事；
                視窗只顯示伺服器的頁面：點到外部連結會改用系統瀏覽器開，視窗回到伺服器
                （不然外部網頁可以嘗試呼叫橋）；改伺服器位址只有內建的連線設定頁可以做
@@ -28,6 +30,7 @@ import hashlib
 import json
 import logging
 import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -43,7 +46,7 @@ import webview
 
 import office_bridge
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 WINDOW_SIZE = (1280, 800)
@@ -89,9 +92,28 @@ def normalize_server(url: str) -> str:
     return url if parts.scheme in ("http", "https") and parts.netloc else ""
 
 
+DEFAULT_PORTS = {"http": 80, "https": 443}
+# 發通行碼給頁面：由頁面自己再確認一次來源（就算剛好在這一瞬間換頁，別的網頁也拿不到）
+TOKEN_SCRIPT = """(function () {
+  if (location.origin.toLowerCase() !== %s) return;
+  window.__corphiaDesktop = %s;
+  window.dispatchEvent(new Event('corphiadesktopready'));
+})()"""
+
+
 def origin(url: str) -> str:
+    """網址的來源（協定＋主機＋埠，小寫；預設埠省略，和瀏覽器的 location.origin 一樣）"""
     parts = urlsplit(url or "")
-    return f"{parts.scheme}://{parts.netloc}".lower() if parts.scheme and parts.netloc else ""
+    if not (parts.scheme and parts.hostname):
+        return ""
+    scheme, host = parts.scheme.lower(), parts.hostname.lower()
+    try:
+        port = parts.port
+    except ValueError:
+        return ""
+    if ":" in host:
+        host = f"[{host}]"  # IPv6
+    return f"{scheme}://{host}" if port in (None, DEFAULT_PORTS.get(scheme)) else f"{scheme}://{host}:{port}"
 
 
 def reachable(url: str) -> bool:
@@ -223,6 +245,8 @@ class Api:
         self._connect_page = False
         # 伺服器上比較新的桌面版（背景檢查到才有值）
         self._update: dict | None = None
+        # 這一頁的通行碼：伺服器的頁面載入完成時發給它；空的＝目前沒有任何頁面可以操控
+        self._token = ""
 
     # ── 內部 ──
     def _trusted(self) -> bool:
@@ -232,15 +256,20 @@ class Api:
         except Exception:
             return False
 
-    def _guard(self, fn):
-        return fn() if self._trusted() else {"ok": False, "error": "這個頁面不能使用桌面功能"}
+    def _allowed(self, token) -> bool:
+        """帶著這一頁的通行碼、而且目前顯示的是伺服器，才可以操控"""
+        return bool(self._token) and isinstance(token, str) and secrets.compare_digest(token.encode(), self._token.encode()) and self._trusted()
+
+    def _guard(self, token, fn):
+        return fn() if self._allowed(token) else {"ok": False, "error": "這個頁面不能使用桌面功能"}
 
     # ── 給介面用 ──
-    def info(self) -> dict:
-        """桌面版的版本、三個 Office 程式的狀態"""
-        return {"ok": True, "desktop": True, "version": VERSION, "trusted": self._trusted(), "update": self._update, **office_bridge.status()}
+    def info(self, token: str = "") -> dict:
+        """桌面版的版本、有沒有新版；帶通行碼才附上三個 Office 程式的狀態（裡面有開著的文件名稱，不給別的頁面看）"""
+        out = {"ok": True, "desktop": True, "version": VERSION, "trusted": self._trusted(), "update": self._update}
+        return {**out, **office_bridge.status()} if self._allowed(token) else out
 
-    def update(self) -> dict:
+    def update(self, token: str = "") -> dict:
         """下載新版並換掉自己（使用者在介面上按「更新」才會呼叫）；成功後視窗會關閉、自動重新開啟"""
         def run() -> dict:
             if not self._update:
@@ -255,16 +284,16 @@ class Api:
             threading.Timer(0.8, self._window.destroy).start()  # 先讓這次呼叫回到介面，再關視窗
             return {"ok": True, "version": self._update["version"]}
 
-        return self._guard(run)
+        return self._guard(token, run)
 
-    def office_read(self, app: str) -> dict:
-        return self._guard(lambda: office_bridge.read(str(app)))
+    def office_read(self, token: str, app: str = "") -> dict:
+        return self._guard(token, lambda: office_bridge.read(str(app)))
 
-    def office_write(self, app: str, markdown: str) -> dict:
-        return self._guard(lambda: office_bridge.write(str(app), str(markdown)))
+    def office_write(self, token: str, app: str = "", markdown: str = "") -> dict:
+        return self._guard(token, lambda: office_bridge.write(str(app), str(markdown)))
 
-    def open_file(self, filename: str, data_b64: str) -> dict:
-        return self._guard(lambda: office_bridge.open_file(str(filename), str(data_b64)))
+    def open_file(self, token: str, filename: str = "", data_b64: str = "") -> dict:
+        return self._guard(token, lambda: office_bridge.open_file(str(filename), str(data_b64)))
 
     def set_server(self, url: str) -> dict:
         """連線設定頁用：換伺服器位址（連得上才記住並切過去）"""
@@ -290,13 +319,23 @@ class Api:
             return ""
 
     def _on_loaded(self) -> None:
-        """每次頁面載入後檢查：不是伺服器的網頁 → 用系統瀏覽器開，視窗回到伺服器"""
+        """每次頁面載入後檢查：不是伺服器的網頁 → 用系統瀏覽器開，視窗回到伺服器；是伺服器 → 發這一頁的通行碼"""
+        self._token = ""  # 換頁了：上一頁的通行碼作廢
         url = self._current_url()
         where = origin(url)
         if where and where != origin(self._server):
             logger.info("外部連結改用系統瀏覽器開啟：%s", where)
             webbrowser.open(url)
             self._window.load_url(self._server)
+            return
+        if where:
+            token = secrets.token_urlsafe(24)
+            try:
+                self._window.evaluate_js(TOKEN_SCRIPT % (json.dumps(where), json.dumps(token)))
+            except Exception as e:
+                logger.warning("發通行碼失敗：%s", e)
+                return
+            self._token = token
 
 
 def run_selftest(window, api: Api, out: Path) -> None:
@@ -310,25 +349,35 @@ def run_selftest(window, api: Api, out: Path) -> None:
         result["title"] = window.evaluate_js("document.title")
         result["bridge"] = bool(window.evaluate_js("!!(window.pywebview && window.pywebview.api && window.pywebview.api.info)"))
         result["trusted"] = api._trusted()
-        # 不是設定的那台伺服器（例如連線設定頁）時，操控 Office 的呼叫要被擋下
-        result["office_guard"] = api.office_read("word") if not api._trusted() else "trusted"
+        # 通行碼：伺服器的頁面拿得到；沒帶或帶錯的呼叫要被擋下（連線設定頁沒有通行碼，一律被擋）
+        for _ in range(20):
+            if api._token or not api._trusted():
+                break
+            time.sleep(0.25)
+        page_token = window.evaluate_js("window.__corphiaDesktop || ''")
+        result["token_issued"] = bool(api._token) and page_token == api._token
+        result["office_guard"] = api.office_read("", "word")
+        result["wrong_token"] = api.office_read("x" * 32, "word")
+        result["info_without_token_has_documents"] = "apps" in api.info()
+        result["info_with_token_has_documents"] = "apps" in api.info(api._token) if api._token else "no-token"
         # 一般網頁不能改伺服器位址（連線設定頁以外一律拒絕）；位址給一個連不上的，確保真的被擋而不是剛好連線失敗
         result["update_check"] = check_update(api._server) or "none"
         if os.environ.get("CORPHIA_SELFTEST_UPDATE") == "1":
             # 更新流程的自我檢查：直接查版本並執行更新（會關閉視窗、換掉 exe、重新開啟）
             api._update = check_update(api._server)
-            result["update_result"] = api.update()
+            result["update_result"] = api.update(api._token)
         result["set_server_from_page"] = api.set_server("http://127.0.0.1:1") if api._trusted() else "connect-page"
         result["info"] = api.info()
         result["root_children"] = window.evaluate_js("document.getElementById('root') ? document.getElementById('root').children.length : -1")
         # 從介面那一側真的呼叫一次（和按鈕走同一條路）：結果先放在頁面上，再讀回來
-        window.evaluate_js("window.__selftest = null; window.pywebview.api.info().then(function (r) { window.__selftest = r })")
+        window.evaluate_js("window.__selftest = null; window.pywebview.api.info(window.__corphiaDesktop || '').then(function (r) { window.__selftest = r })")
         for _ in range(SELFTEST_TIMEOUT * 4):
             called = window.evaluate_js("window.__selftest")
             if called:
                 break
             time.sleep(0.25)
         result["js_call"] = bool(called and called.get("ok") and called.get("desktop"))
+        result["js_call_has_documents"] = bool(called and "apps" in called)
     except Exception as e:
         result["error"] = str(e)[:300]
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
