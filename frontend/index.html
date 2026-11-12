@@ -19,7 +19,14 @@
         若 CSP 沒明確列 media-src，會 fallback 到 default-src 'self' 把 blob: 全擋掉，
         音訊根本播不出來（log: violates Content Security Policy directive: "default-src 'self'"）
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' ws: wss: http: https:;" />
+    <!--
+      地端系統：頁面只能連「自己這台伺服器」，瀏覽器層級就擋掉任何對外連線（字型、圖片、資料傳送都一樣）。
+        style-src / font-src  字型已經打包在程式裡（@fontsource/noto-sans-tc），不從外部載入
+        img-src               只有本機圖片（同一台伺服器、data:、blob:）；回答裡的外部圖片本來就不顯示，這裡是最後一道
+        connect-src           只有同一台伺服器的 API 與即時連線（ws: / wss: 保留給舊版瀏覽器的同站即時連線）
+      之後若真的需要連某個外部服務，請在這裡「只加那一個網址」，不要整類開放。
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:;" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     
     <!-- Open Graph (Facebook/LinkedIn) -->
@@ -113,11 +120,7 @@
         } catch(e) {}
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Material Symbols Outlined - 全站圖示，取代 emoji -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=swap" rel="stylesheet">
+    <!-- 字型（思源黑體）打包在程式裡（src/main.tsx 的 @fontsource/noto-sans-tc），圖示用 components/snow/icons；不從外部網站載入任何東西 -->
   </head>
   <body>
     <div id="root"></div>
