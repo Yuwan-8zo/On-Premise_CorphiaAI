@@ -10,7 +10,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { memoriesApi, REPLY_STYLES, type MemoryItem, type ReplyStyle } from '@/api/memories'
-import { Check, Edit2, Trash2 } from '@/components/snow/icons'
+import { Edit2, Trash2 } from '@/components/snow/icons'
+import GlassSegmented from '@/components/ui/GlassSegmented'
 import GlassSwitch from '@/components/ui/GlassSwitch'
 import Tooltip from '@/components/ui/Tooltip'
 import { SkelText } from '@/components/ui/Skeleton'
@@ -91,6 +92,19 @@ export default function MemorySection() {
     return (
         <>
             <h2 className="set-title">{t('settings.memory.title')}</h2>
+
+            {/* 回答風格放最上面、用分段切換器（一列四格）：記憶清單會越來越長（最多 50 筆），放在它下面會被擠到很後面；
+                做成四列清單又會把記憶整個擠出第一個畫面。目前選的那一種在下面用一行字說明 */}
+            <section className="set-section">
+                <div className="set-header">{t('settings.memory.styleHeader')}</div>
+                <GlassSegmented
+                    className="w-full h-[var(--sz-40)]"
+                    value={style}
+                    onChange={pickStyle}
+                    options={REPLY_STYLES.map((s) => ({ value: s, label: t(`settings.memory.style.${s}`) }))}
+                />
+                <div className="set-footer">{t(`settings.memory.styleHint.${style}`)}</div>
+            </section>
 
             <section className="set-section">
                 <div className="set-group">
@@ -185,21 +199,6 @@ export default function MemorySection() {
                         </button>
                     </div>
                 )}
-            </section>
-
-            <section className="set-section">
-                <div className="set-header">{t('settings.memory.styleHeader')}</div>
-                <div className="set-group" role="radiogroup" aria-label={t('settings.memory.styleHeader')}>
-                    {REPLY_STYLES.map((s) => (
-                        <button key={s} type="button" role="radio" aria-checked={style === s} onClick={() => pickStyle(s)} className="set-row set-row-btn">
-                            <span className="set-label">
-                                {t(`settings.memory.style.${s}`)}
-                                <span className="set-sub">{t(`settings.memory.styleHint.${s}`)}</span>
-                            </span>
-                            {style === s && <Check className="w-[var(--sz-18)] h-[var(--sz-18)] text-accent" />}
-                        </button>
-                    ))}
-                </div>
             </section>
         </>
     )
