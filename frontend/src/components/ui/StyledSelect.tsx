@@ -12,6 +12,8 @@ import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from '@/components/snow/icons'
 import LensMenu from '@/components/ui/LensMenu'
 import { useDismiss } from '@/lib/useDismiss'
+import { useScrollFade } from '@/lib/useScrollFade'
+import { useMenuTrigger } from '@/lib/menuDrag'
 
 export interface StyledSelectOption {
     value: string
@@ -27,13 +29,18 @@ interface StyledSelectProps {
     className?: string
 }
 
-const MENU_MAX = 280 // 選單最高 280px，超過可捲動
+/** 選單最高（tokens.css 的 --menu-max-h），超過在裡面捲動 */
+const menuMax = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--menu-max-h')) || 280
 
 export default function StyledSelect({ value, options, onChange, placeholder, disabled, className = '' }: StyledSelectProps) {
     const [open, setOpen] = useState(false)
     const [pos, setPos] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null)
     const btnRef = useRef<HTMLButtonElement>(null)
     const menuRef = useRef<HTMLDivElement>(null)
+    const scrollRef = useScrollFade()
+    // 按住拖進選單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const tp = trigger(open, () => !disabled && setOpen(true), () => setOpen(false))
     const selected = options.find((o) => o.value === value)
 
     // 依觸發鈕位置定位；下方放不下就往上開
@@ -43,7 +50,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
             const r = btnRef.current?.getBoundingClientRect()
             if (!r) return
             const below = window.innerHeight - r.bottom
-            setPos(below < MENU_MAX + 16 && r.top > below
+            setPos(below < menuMax() + 16 && r.top > below
                 ? { left: r.left, width: r.width, bottom: window.innerHeight - r.top + 6 }
                 : { left: r.left, width: r.width, top: r.bottom + 6 })
         }
@@ -65,8 +72,9 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                 ref={btnRef}
                 type="button"
                 disabled={disabled}
-                onClick={() => !disabled && setOpen((v) => !v)}
-                className="w-full h-[var(--sz-40)] flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[length:var(--fs-15)] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onPointerDown={tp.onPointerDown}
+                onClick={tp.onClick}
+                className={`${tp.className} w-full h-[var(--sz-40)] flex items-center justify-between gap-2 rounded-full snow-field pl-4 pr-3 text-[length:var(--fs-15)] text-text-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
@@ -78,9 +86,11 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                 <div
                     ref={menuRef}
                     role="listbox"
-                    className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] p-[var(--sp-6)] overflow-y-auto"
-                    style={{ left: pos.left, minWidth: pos.width, maxWidth: 360, top: pos.top, bottom: pos.bottom, maxHeight: MENU_MAX }}
+                    className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
+                    style={{ left: pos.left, minWidth: pos.width, top: pos.top, bottom: pos.bottom }}
                 >
+                    {/* 卡片不捲、裡面這層捲：光邊才不會跟著選項捲走 */}
+                    <div ref={scrollRef} className="glass-scroll min-h-0 p-[var(--sp-6)]">
                     <LensMenu className="flex flex-col gap-0.5">
                         {options.map((opt) => {
                             const isSel = opt.value === value
@@ -99,6 +109,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                             )
                         })}
                     </LensMenu>
+                    </div>
                 </div>,
                 document.body,
             )}

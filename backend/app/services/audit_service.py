@@ -64,6 +64,11 @@ class AuditAction:
     TENANT_UPDATE = "tenant_update"
     TENANT_DELETE = "tenant_delete"
 
+    # 連接資料夾
+    FOLDER_CONNECT = "folder_connect"
+    FOLDER_UPDATE = "folder_update"
+    FOLDER_DISCONNECT = "folder_disconnect"
+
     # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
     NGROK_START = "ngrok_start"
     NGROK_STOP = "ngrok_stop"

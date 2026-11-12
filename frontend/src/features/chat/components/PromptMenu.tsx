@@ -6,6 +6,9 @@ import Tooltip from '@/components/ui/Tooltip'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import SearchField from '@/components/ui/SearchField'
 import { useDismiss } from '@/lib/useDismiss'
+import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
+import { MQ_HOVER } from '@/lib/useMediaQuery'
 
 interface PromptTemplate {
     title: string
@@ -76,10 +79,11 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
             .filter((c) => c.items.length > 0)
     }, [library, query, cat])
 
-    // 打開時清空搜尋、聚焦搜尋框
+    // 打開時清空搜尋、聚焦搜尋框（只有滑鼠裝置：手機一聚焦就跳出鍵盤，蓋住面板，按住拖曳選取時更礙事）
     useEffect(() => {
         if (isOpen) {
             setQuery('')
+            if (!window.matchMedia(MQ_HOVER).matches) return
             const id = window.setTimeout(() => searchRef.current?.focus(), 60)
             return () => window.clearTimeout(id)
         }
@@ -148,6 +152,10 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         else list[i - 1].focus()
     }
 
+    // 按住模板鈕直接拖進清單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const promptTrigger = trigger(isOpen, () => setIsOpen(true), () => setIsOpen(false))
+
     // 如果沒有設定模板或格式不對，不顯示按鈕
     if (!Array.isArray(library) || library.length === 0) {
         return null
@@ -159,9 +167,11 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                 <button
                     ref={btnRef}
                     type="button"
-                    onClick={() => setIsOpen(!isOpen)}
+                    onPointerDown={disabled ? undefined : promptTrigger.onPointerDown}
+                    onClick={promptTrigger.onClick}
                     disabled={disabled}
-                    className={`btn-icon ${inline ? '!w-[var(--field-btn)] !h-[var(--field-btn)] [--R:calc(var(--field-btn)/2)]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
+                    aria-haspopup="dialog"
+                    className={`touch-none btn-icon ${inline ? '!w-[var(--field-btn)] !h-[var(--field-btn)] [--R:calc(var(--field-btn)/2)]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
                         transition-[transform,background-color,border-color,color] duration-200 ease-apple
                         active:scale-90
                         ${isOpen
@@ -230,6 +240,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
 
                     {/* 模板清單 */}
                     <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none" onKeyDown={onListKey}>
+                        <LensMenu>
                         {groups.length === 0 && (
                             <p className="px-[var(--sp-10)] py-[var(--sp-24)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-muted">{t('chat.promptEmpty')}</p>
                         )}
@@ -255,6 +266,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                                 })}
                             </div>
                         ))}
+                        </LensMenu>
                     </div>
                 </div>,
                 document.body,

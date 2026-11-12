@@ -18,7 +18,7 @@ import {
 } from '@/features/admin/components/AdminPrimitives'
 import { adminApi, type TenantUsageStats } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
-import { SkelCards, SkelText } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 import { useAuthStore } from '@/store/authStore'
 
 export interface TenantsSectionProps {
@@ -76,7 +76,26 @@ export default function TenantsSection({
             {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
             <div className="admin-fill-body tenant-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                 {isLoadingTenants ? (
-                    <SkelCards count={4} className="h-[var(--sz-180)]" />
+                    // 和下面的租戶卡同一個外形：名稱＋狀態、分隔線、四個數字、右下按鈕
+                    <div aria-hidden className="snow-well rounded-[var(--admin-in)] p-5 flex flex-col">
+                        <div className="flex items-center gap-2 mb-3">
+                            <p className="truncate text-lg font-semibold"><SkelText>{t('admin.tenants.title')}0000</SkelText></p>
+                            <span className="tag"><SkelText>{t('admin.tenants.enable', '啟用')}</SkelText></span>
+                        </div>
+                        <p className="text-xs truncate mb-3"><SkelText>0000000000</SkelText></p>
+                        <div className="border-t border-[var(--paper-line)] my-3" />
+                        <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(var(--stat-min),1fr))] gap-3">
+                            {[0, 1, 2, 3].map((i) => (
+                                <div key={i}>
+                                    <p className="text-xs font-medium"><SkelText>0000</SkelText></p>
+                                    <p className="mt-1 text-xl font-bold tabular-nums"><SkelText>00</SkelText></p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-auto flex justify-end gap-2">
+                            <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)]"><SkelText>{t('admin.tenants.edit', '編輯')}</SkelText></span>
+                        </div>
+                    </div>
                 ) : tenants.length === 0 ? (
                     <div className="col-span-full py-10 text-center text-text-secondary">
                         {t('admin.tenants.noTenants', '暫無租戶')}

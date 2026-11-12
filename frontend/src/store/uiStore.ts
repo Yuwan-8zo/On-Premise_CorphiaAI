@@ -53,6 +53,8 @@ const ACCENT_KEYS: AccentColorType[] = ['blue', 'purple', 'pink', 'orange', 'gre
 interface ConfirmConfig {
     message: string
     onConfirm: () => void | Promise<void>
+    /** 標題下的補充說明：不給＝預設「此動作無法復原」；可以復原的動作傳自己的說明 */
+    hint?: string
 }
 
 interface UIState {
@@ -80,7 +82,7 @@ interface UIState {
     setSidebarOpen: (open: boolean) => void
     toggleSidebar: () => void
     setSidebarWidth: (width: number) => void
-    showConfirm: (message: string, onConfirm: () => void | Promise<void>) => void
+    showConfirm: (message: string, onConfirm: () => void | Promise<void>, hint?: string) => void
     closeConfirm: () => void
     isSettingsOpen: boolean
     setSettingsOpen: (open: boolean) => void
@@ -166,7 +168,7 @@ export const useUIStore = create<UIState>()(
 
             // 確認彈窗
             confirmConfig: null,
-            showConfirm: (message, onConfirm) => set({ confirmConfig: { message, onConfirm } }),
+            showConfirm: (message, onConfirm, hint) => set({ confirmConfig: { message, onConfirm, hint } }),
             closeConfirm: () => set({ confirmConfig: null }),
 
             // 設定彈窗

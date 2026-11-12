@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { Check, ChevronDown, Edit2, Folder, Lock, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
@@ -77,6 +78,9 @@ export default function ChatHeader({
         }
     }
     // 模型選單：點外面由透明層處理，這裡補上 Esc 關閉
+    // 按住模型鈕直接拖進選單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const modelTrigger = trigger(modelDropdownOpen, () => setModelDropdownOpen(true), () => setModelDropdownOpen(false))
     useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
@@ -103,9 +107,12 @@ export default function ChatHeader({
                 {/* 右側：GGUF 模型選擇下拉選單（自己一條膠囊：內距 2、按鈕高 46、外框圓角 25，同心） */}
                 <div className="btn-group btn-group-36 relative min-w-0">
                     <button
-                        onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                        onPointerDown={isModelLoading ? undefined : modelTrigger.onPointerDown}
+                        onClick={modelTrigger.onClick}
                         disabled={isModelLoading}
-                        className="flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
+                        aria-haspopup="listbox"
+                        aria-expanded={modelDropdownOpen}
+                        className="touch-none flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
                     >
                         <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-14)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
@@ -147,7 +154,9 @@ export default function ChatHeader({
                                                 <button
                                                     key={model.name}
                                                     onClick={() => {
-                                                        if (isModelLoading || selectedModel?.name === model.name) return
+                                                        if (isModelLoading) return
+                                                        // 選到目前的模型：和一般下拉一樣，直接收起來
+                                                        if (selectedModel?.name === model.name) { setModelDropdownOpen(false); return }
                                                         // 沒有預先載入的大模型（如 14B）切換要等很久，先用共用確認框確認，避免誤點
                                                         if (!preloaded) {
                                                             setModelDropdownOpen(false)

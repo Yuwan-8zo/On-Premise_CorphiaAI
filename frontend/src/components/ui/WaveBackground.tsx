@@ -13,7 +13,7 @@ const WAVES = [
 
 export default function WaveBackground() {
     return (
-        <svg className="wave-bg absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <svg data-skel-skip className="wave-bg absolute w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
             {WAVES.map((w) => (
                 <path
                     key={w.d}

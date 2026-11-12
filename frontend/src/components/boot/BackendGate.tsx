@@ -20,7 +20,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useSystemStore } from '@/store/systemStore'
 
 import BackendBootSplash from './BackendBootSplash'
-import { SkelPage } from '@/components/ui/Skeleton'
+import { SkelPage } from '@/components/ui/SkelPages'
 
 interface BackendGateProps {
     children: ReactNode

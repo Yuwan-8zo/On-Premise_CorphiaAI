@@ -204,7 +204,7 @@ export function useChatLogic() {
             const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: true, folderName } })
             addConversation(conversation)
             upload.setUploadedFiles([])
-            folders.setExpandedFolders((prev) => new Set(prev).add(folderName)) // 展開資料夾，新對話立刻出現在側欄
+            folders.setExpandedFolders(new Set([folderName])) // 只展開這個資料夾（其他收起），新對話立刻出現在側欄
             await selectConversation(conversation)
 
             if ((await listFolderDocs(folderName, true)).length === 0) {
@@ -415,6 +415,7 @@ export function useChatLogic() {
             selectConversation,
             handleRenameConversation: dialogs.handleRenameConversation,
             handleOpenMenu: dialogs.handleOpenMenu,
+            closeMenu: dialogs.closeMenu,
             createConvInFolder,
             handleDeleteConversation,
             handleDeleteFolder,

@@ -274,3 +274,51 @@ html.dark {
   height: var(--tap-sm);
   border-radius: 9999px;
 }
+
+/* 停在上面才出現的按鈕（對話列的「⋯」、訊息下的複製／編輯、文件列的刪除）：
+   只有滑鼠裝置才先藏起來；手機、平板沒有懸停，一律直接顯示，不然根本不知道有按鈕。
+   用法：外層加 group，要藏的那塊加 .hover-reveal；選單打開時加 .is-open 保持顯示。
+   這裡不能改成 Tailwind 的 group-hover：觸控裝置第一下點擊會被當成「懸停」，要點兩下才有反應 */
+@media (hover: hover) and (pointer: fine) {
+  .hover-reveal {
+    opacity: 0;
+    transition: opacity 0.2s var(--ease-out);
+  }
+  .group:hover .hover-reveal,
+  .group:focus-within .hover-reveal,
+  .hover-reveal.is-open {
+    opacity: 1;
+  }
+}
+
+/* 玻璃卡片裡的捲動區（搭配 lib/useScrollFade）：不顯示系統捲軸，上下還有內容時邊緣淡出。
+   捲動一定要放在卡片「裡面」這一層，卡片本身不捲（光邊才不會跟著內容捲走） */
+.glass-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.glass-scroll::-webkit-scrollbar {
+  display: none;
+}
+.glass-scroll[data-fade='top'] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
+}
+.glass-scroll[data-fade='bottom'] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--scroll-fade)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--scroll-fade)), transparent 100%);
+}
+.glass-scroll[data-fade='both'] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade), #000 calc(100% - var(--scroll-fade)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade), #000 calc(100% - var(--scroll-fade)), transparent 100%);
+}
+
+/* 訊息下方的按鈕列（複製、編輯、重新產生）：圖示固定 --msg-ic。
+   一般圓鈕的圖示是按鈕的 54%，手指操作時按鈕放大到 40，鉛筆、重新產生會跟著變 22，比複製（14）大很多 */
+.msg-act > svg,
+.msg-act .ic {
+  width: var(--msg-ic);
+  height: var(--msg-ic);
+}

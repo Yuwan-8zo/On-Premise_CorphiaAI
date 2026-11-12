@@ -30,7 +30,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Desktop sidecar boot gate — 在桌面 app 啟動時等待後端 ready 才放行
 import BackendGate from './components/boot/BackendGate'
-import { SkelPage } from '@/components/ui/Skeleton'
+import { SkelPage } from '@/components/ui/SkelPages'
 
 // Global UI Components
 const FallbackLoader = () => <SkelPage />

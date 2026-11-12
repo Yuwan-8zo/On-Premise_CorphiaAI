@@ -15,7 +15,7 @@
 import { Check, X } from '@/components/snow/icons'
 import { useEffect, useRef, useState } from 'react'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
-import { SkelPage } from '@/components/ui/Skeleton'
+import { SkelPage } from '@/components/ui/SkelPages'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'

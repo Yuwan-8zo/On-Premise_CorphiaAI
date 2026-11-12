@@ -9,6 +9,8 @@
  * - 底部使用者卡片
  */
 
+import { useScrollFade } from '@/lib/useScrollFade'
+import { beginMenuDrag, useMenuTrigger } from '@/lib/menuDrag'
 import { Folder, MessageSquare, Plus, Trash2 } from '@/components/snow/icons'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useRef, useState } from 'react'
@@ -46,6 +48,7 @@ interface ChatSidebarProps {
     createConvInFolder: (folderName: string, e: React.MouseEvent) => void
     handleDeleteFolder: (folderName: string, e: React.MouseEvent) => void
     handleOpenMenu: (e: React.MouseEvent, convId: string) => void
+    closeMenu: () => void
     setSelectedFolder: (folder: string | null) => void
     openNewFolderModal: () => void
     /** 選單下拉是否開啟 */
@@ -66,6 +69,7 @@ export default function ChatSidebar({
     createConvInFolder,
     handleDeleteFolder,
     handleOpenMenu,
+    closeMenu,
     setSelectedFolder,
     openNewFolderModal,
     activeMenuConvId,
@@ -78,17 +82,20 @@ export default function ChatSidebar({
 
     // 對話列的 DOM 參考（捲動到目前對話用）
     // 長按對話列 0.32 秒直接拉出選單（不用先找右邊的「⋯」）；移動超過 6px 視為捲動，取消長按
-    const longPress = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null)
+    const longPress = useRef<{ timer: number; x: number; y: number; pid: number; fired: boolean } | null>(null)
     const pressHandlers = (convId: string) => ({
         onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
             if (e.button > 0) return
             const row = e.currentTarget
             const x = e.clientX, y = e.clientY
+            const pid = e.pointerId
             longPress.current = {
-                x, y, fired: false,
+                x, y, pid, fired: false,
                 timer: window.setTimeout(() => {
                     if (!longPress.current) return
                     longPress.current.fired = true
+                    // 手指還按著：交給選單接手，不放開直接滑到項目上＝放大鏡選取
+                    beginMenuDrag({ pointerId: pid, clientX: x, clientY: y, button: 0 }, { trigger: row, close: closeMenu })
                     const anchorEl = row.querySelector<HTMLElement>('button[data-conv-menu]') || row
                     handleOpenMenu({ stopPropagation() {}, currentTarget: anchorEl } as unknown as React.MouseEvent, convId)
                 }, 320),
@@ -102,30 +109,15 @@ export default function ChatSidebar({
         onPointerCancel: () => { const lp = longPress.current; if (lp) clearTimeout(lp.timer); longPress.current = null },
         onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     })
-    // 「⋯」按下就打開選單；不放開直接拖到項目上放開＝執行那一項（規範右下選單：按住拖曳、放開選取）
-    const dragOpenMenu = (e: React.PointerEvent<HTMLButtonElement>, convId: string) => {
-        if (e.button > 0) return
-        e.stopPropagation()
-        handleOpenMenu(e as unknown as React.MouseEvent, convId)
-        const x0 = e.clientX, y0 = e.clientY
-        let dragged = false
-        let last: Element | null = null
-        const itemAt = (x: number, y: number) => document.elementFromPoint(x, y)?.closest('.menu-item') ?? null
-        const onMove = (ev: PointerEvent) => {
-            if (!dragged && Math.hypot(ev.clientX - x0, ev.clientY - y0) > 6) dragged = true
-            const it = itemAt(ev.clientX, ev.clientY)
-            if (it !== last) { last?.classList.remove('is-pressed'); it?.classList.add('is-pressed'); last = it }
+    // 「⋯」按下就打開選單；不放開直接拖進選單＝放大鏡跟著手指、放開選取（lib/menuDrag，全站選單同一套）
+    const menuTrigger = useMenuTrigger()
+    const menuButtonProps = (convId: string) => {
+        const tp = menuTrigger(activeMenuConvId === convId, (el) => handleOpenMenu({ stopPropagation() {}, currentTarget: el } as unknown as React.MouseEvent, convId), closeMenu)
+        return {
+            ...tp,
+            // 不要讓整列的長按計時也開始（按的是「⋯」）
+            onPointerDown: (e: React.PointerEvent<HTMLElement>) => { e.stopPropagation(); tp.onPointerDown(e) },
         }
-        const onUp = (ev: PointerEvent) => {
-            window.removeEventListener('pointermove', onMove)
-            window.removeEventListener('pointerup', onUp)
-            last?.classList.remove('is-pressed')
-            if (!dragged) return
-            const it = itemAt(ev.clientX, ev.clientY) as HTMLElement | null
-            it?.click()
-        }
-        window.addEventListener('pointermove', onMove)
-        window.addEventListener('pointerup', onUp)
     }
     // 長按已經拉出選單時，放開不要再當成「點一下選取對話」
     const consumeLongPress = () => {
@@ -150,10 +142,10 @@ export default function ChatSidebar({
             rowRef={(el) => { itemRefs.current[conv.id] = el }}
             pressProps={pressHandlers(conv.id)}
             onSelect={() => { if (consumeLongPress()) return; selectConversation(conv) }}
-            onMenuPointerDown={(e) => dragOpenMenu(e, conv.id)}
+            menuButtonProps={menuButtonProps(conv.id)}
         />
     )
-    const scrollRef = useRef<HTMLDivElement>(null)
+    const listScrollRef = useScrollFade()
 
     return (
         <aside
@@ -175,8 +167,9 @@ export default function ChatSidebar({
                 <button
                         onClick={toggleSidebar}
                         aria-label={sidebarOpen ? t('ui.sidebar.collapse') : t('ui.sidebar.expand')}
-                        onMouseEnter={() => setIsSidebarHovered(true)}
-                        onMouseLeave={() => setIsSidebarHovered(false)}
+                        // 只有滑鼠移入才換成「展開」圖示；手指點的時候不換，不然 iPhone 會把第一下當成懸停、要點兩下才打開
+                        onPointerEnter={(e) => { if (e.pointerType === 'mouse') setIsSidebarHovered(true) }}
+                        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setIsSidebarHovered(false) }}
                         className="btn-icon btn-icon-plain !hidden md:!inline-flex !w-11 !h-11 text-text-secondary"
                     >
                     {wide || isSidebarHovered ? (
@@ -243,7 +236,8 @@ export default function ChatSidebar({
             </div>
 
             {/* 對話列表 — overflow-x-hidden 避免長資料夾名稱撐出水平捲軸 */}
-            <div ref={scrollRef} className={`flex-1 overflow-y-auto overflow-x-hidden mt-2 custom-scrollbar w-full transition-opacity duration-300 relative ${wide ? 'opacity-100 px-4' : 'hidden'}`}>
+            {/* 標題（一般聊天／專案資料夾）固定不動，只有下面的清單捲動 */}
+            <div className={`flex-1 min-h-0 mt-2 w-full relative overflow-hidden transition-opacity duration-300 ${wide ? 'opacity-100' : 'hidden'}`}>
                 {/*
                   共享飄浮選取膠囊：absolute 定位在 scroll container 裡，跟著
                   currentConversationId 對應的 item（可能在 general 清單或 project
@@ -261,10 +255,10 @@ export default function ChatSidebar({
                         <motion.div
                             key="general"
                             {...pageSlide(-1)}
-                            className="absolute inset-0 px-4"
+                            className="absolute inset-0 px-4 flex flex-col"
                         >
-                            <span className="side-header">{t('chat.generalChat')}</span>
-                            <div className="space-y-0.5">
+                            <span className="side-header shrink-0">{t('chat.generalChat')}</span>
+                            <div ref={listScrollRef} className="glass-scroll flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
                                 {(() => {
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
                                     if (filtered.length === 0) return <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{t('chat.noChats')}</p>
@@ -276,9 +270,10 @@ export default function ChatSidebar({
                         <motion.div
                             key="project"
                             {...pageSlide(1)}
-                            className="absolute inset-0 px-4"
+                            className="absolute inset-0 px-4 flex flex-col"
                         >
-                            <span className="side-header">{t('chat.projectFolderLabel')}</span>
+                            <span className="side-header shrink-0">{t('chat.projectFolderLabel')}</span>
+                            <div ref={listScrollRef} className="glass-scroll flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)]">
                             {(() => {
                                 const convFolders = conversations
                                     .filter(c => Boolean(c.settings?.isProject))
@@ -313,11 +308,13 @@ export default function ChatSidebar({
                                                             // 注意：不清掉 currentConversation，這樣在背景串流中的對話可以繼續，
                                                             // 使用者切回該對話時不會中斷 AI 思考。
                                                             if (selectedFolder === folderName) {
-                                                                setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folderName)) next.delete(folderName); else next.add(folderName); return next })
+                                                                // 再點一次：收合；收合中就展開，並收起其他資料夾（一次只展開一個）
+                                                                setExpandedFolders(prev => (prev.has(folderName) ? new Set() : new Set([folderName])))
                                                                 return
                                                             }
                                                             setSelectedFolder(folderName)
-                                                            setExpandedFolders(prev => new Set(prev).add(folderName))
+                                                            // 點到別的資料夾：只展開這一個，其他的自動收起
+                                                            setExpandedFolders(new Set([folderName]))
                                                             if (!desktop) setSidebarOpen(false)
                                                         }}
                                                         aria-expanded={isExpanded}
@@ -325,7 +322,7 @@ export default function ChatSidebar({
                                                     >
                                                         <Folder className="side-icon" />
                                                         <span className="flex-1 min-w-0 truncate">{folderName}</span>
-                                                        <div className="side-actions gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                        <div className="side-actions hover-reveal gap-0.5">
                                                             <Tooltip label={t('ui.sidebar.newInFolder')}>
                                                                 <button onClick={(e) => createConvInFolder(folderName, e)} aria-label={t('ui.sidebar.newInFolder')} className="icon-tap text-text-secondary">
                                                                     <Plus className="w-3.5 h-3.5" />
@@ -355,6 +352,7 @@ export default function ChatSidebar({
                                     </div>
                                 )
                             })()}
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

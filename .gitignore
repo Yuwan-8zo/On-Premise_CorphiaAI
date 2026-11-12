@@ -112,3 +112,7 @@ backend/screenshots/
 frontend/public/boot-status.json
 frontend/public/boot-status.tmp
 docs/demo/專題資料/
+
+# 本機模型引擎（llama.cpp 執行檔，下載來的）
+engine/
+backend/scripts/model_eval/out/

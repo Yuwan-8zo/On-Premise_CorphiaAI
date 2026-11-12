@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Globe, Moon, Sun } from '@/components/snow/icons'
 import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
 import { LANGUAGES } from '@/i18n/languages'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useUIStore } from '@/store/uiStore'
@@ -37,6 +38,10 @@ export default function LoginToolbar() {
     // 點外面、按 Esc 關閉語言選單
     useDismiss(isLangMenuOpen, () => setIsLangMenuOpen(false), [langMenuRef])
 
+    // 按住語言鈕直接拖進選單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const langTrigger = trigger(isLangMenuOpen, () => setIsLangMenuOpen(true), () => setIsLangMenuOpen(false))
+
     return (
         <div className="flex items-center gap-2 ml-auto">
             {/* 深色時顯示太陽（點一下切到淺色），淺色時顯示月亮 */}
@@ -47,9 +52,11 @@ export default function LoginToolbar() {
 
             <div className="relative" ref={langMenuRef}>
                 <button
-                    onClick={() => setIsLangMenuOpen((v) => !v)}
+                    {...langTrigger}
                     aria-label={t('settings.language')}
-                    className={`btn-icon !w-9 !h-9 ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
+                    aria-haspopup="menu"
+                    aria-expanded={isLangMenuOpen}
+                    className={`${langTrigger.className} btn-icon !w-9 !h-9 ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
                 >
                     <Globe className="w-5 h-5" />
                 </button>

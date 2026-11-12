@@ -1,6 +1,7 @@
 /**
  * 對話的「⋯」選單與彈出視窗：重新命名、移至專案、新增資料夾，以及分享連結、完整性驗證
  */
+import type { ViewportAnchor } from '@/lib/useKeepInViewport'
 import { useRef, useState } from 'react'
 import { conversationsApi } from '@/api/conversations'
 import { foldersApi } from '@/api/folders'
@@ -17,8 +18,11 @@ type ChatMode = 'general' | 'project'
 /** 等彈窗畫出來再把游標放進輸入框 */
 const focusSoon = (ref: React.RefObject<HTMLInputElement | null>) => setTimeout(() => ref.current?.focus(), 100)
 
-/** 對話「⋯」選單的位置：x、y＝選單左上角；anchor＝按鈕的上下緣（放不下時翻到上方用） */
-export type ConvMenuState = { convId: string; x: number; y: number; anchor?: { top: number; bottom: number } }
+/** 對話「⋯」選單的位置：x、y＝選單左上角；anchor＝按鈕的位置（放不下時換邊用，見 useKeepInViewport） */
+export type ConvMenuState = { convId: string; x: number; y: number; anchor?: ViewportAnchor }
+
+/** 選單和「⋯」按鈕之間的間隔 */
+const MENU_GAP = 6
 
 export function useConversationDialogs({
     setChatMode,
@@ -41,7 +45,8 @@ export function useConversationDialogs({
     const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
         e.stopPropagation()
         const rect = e.currentTarget.getBoundingClientRect()
-        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4, anchor: { top: rect.top, bottom: rect.bottom } }) // 放在按鈕正下方；放不下時翻到上方
+        // 開在按鈕右邊、上緣對齊按鈕；右邊放不下（手機的側欄抽屜）就換到左邊或下方
+        setActiveMenu({ convId, x: rect.right + MENU_GAP, y: rect.top, anchor: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, side: true } })
     }
     const closeMenu = () => setActiveMenu(null)
 

@@ -16,6 +16,7 @@
 
 import StyledSelect from '@/components/ui/StyledSelect'
 import SearchField from '@/components/ui/SearchField'
+import { useScrollFade } from '@/lib/useScrollFade'
 import { useMediaQuery, MQ_DESKTOP } from '@/lib/useMediaQuery'
 import {
     ChevronLeft,
@@ -27,7 +28,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { spring } from '@/lib/motionPresets'
-import { SkelTableRows, SkelText } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 
 import {
     AUDIT_ACTIONS,
@@ -113,6 +114,7 @@ export default function AuditSection({
     onExportJSON,
 }: AuditSectionProps) {
     const { t } = useTranslation()
+    const drawerScrollRef = useScrollFade()
     // 手機版：聚焦時右邊長出取消 ×（收鍵盤、清空）；桌機有滑鼠就不需要
     const desktop = useMediaQuery(MQ_DESKTOP)
 
@@ -245,7 +247,16 @@ export default function AuditSection({
                             </thead>
                             <tbody className={tableBodyClass}>
                                 {isLoadingAudit ? (
-                                    <SkelTableRows rows={10} cols={5} />
+                                    // 和下面的資料列同一組儲存格與字級，列高一樣（操作欄是標籤膠囊）
+                                    Array.from({ length: 10 }, (_, i) => (
+                                        <tr key={i} aria-hidden>
+                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-sm whitespace-nowrap"><SkelText>{formatDate(new Date().toISOString())}</SkelText></td>
+                                            <td className="px-3 sm:px-5 py-2"><span className="tag"><SkelText>{i % 2 ? '0000' : '000000'}</SkelText></span></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 text-sm"><SkelText>00</SkelText></td>
+                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm"><SkelText>user@example.com</SkelText></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs"><SkelText>127.0.0.1</SkelText></td>
+                                        </tr>
+                                    ))
                                 ) : auditLogs.length === 0 ? (
                                     <tr>
                                         <td className={tableEmptyCellClass} colSpan={5}>
@@ -305,11 +316,11 @@ export default function AuditSection({
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 overflow-y-auto custom-scrollbar"
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 flex flex-col overflow-hidden"
                             role="dialog"
                             aria-label="audit detail"
                         >
-                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl px-[var(--sp-26)] py-4 flex items-center justify-between">
+                            <div className="shrink-0 px-[var(--sp-26)] py-4 flex items-center justify-between">
                                 <div>
                                     <p className="text-[length:var(--fs-12)] font-bold text-accent">
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
@@ -326,6 +337,8 @@ export default function AuditSection({
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
+                            {/* 抽屜本身不捲、這層捲（玻璃光邊才不會跟著內容捲走） */}
+                            <div ref={drawerScrollRef} className="glass-scroll flex-1 min-h-0">
                             <dl className="px-5 py-4 space-y-3 text-sm">
                                 {(
                                     [
@@ -358,6 +371,7 @@ export default function AuditSection({
                                     </pre>
                                 </div>
                             )}
+                            </div>
                         </motion.aside>
                     </>
                 )}

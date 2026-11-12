@@ -56,13 +56,9 @@ export function useFolders() {
         }
     }
 
+    /** 一次只展開一個資料夾：已展開就收合；展開時其他的自動收起 */
     const toggleFolderExpand = (folder: string) => {
-        setExpandedFolders((prev) => {
-            const next = new Set(prev)
-            if (next.has(folder)) next.delete(folder)
-            else next.add(folder)
-            return next
-        })
+        setExpandedFolders((prev) => (prev.has(folder) ? new Set() : new Set([folder])))
     }
 
     return {

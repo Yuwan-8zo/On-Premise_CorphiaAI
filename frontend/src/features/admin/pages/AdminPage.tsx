@@ -1,24 +1,26 @@
 /**
  * 管理後台
  *   左側：目前模型、分頁導覽（手機版變成上方的分段切換）、區域網路開關
- *   右側：總覽／使用者／模型／稽核／租戶
+ *   右側：總覽／使用者／模型／資料夾／稽核／租戶
  * 資料與動作都在 features/admin/hooks（每個分頁一個），這裡只負責版面與把資料接到各分頁
  */
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Building2, Cpu, FileText, Gauge, Users } from '@/components/snow/icons'
+import { ArrowLeft, Building2, Cpu, FileText, Folder, Gauge, Users } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { SkelCards, SkelText } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { TenantFormModal, UserFormModal } from '../components/AdminFormModals'
+import { FolderFormModal } from '../components/FolderFormModal'
 import LanSidebarWidget from '../components/LanSidebarWidget'
 import { useAdminAudit } from '../hooks/useAdminAudit'
 import { useAdminModels, useAdminStats, useLanStatus } from '../hooks/useAdminSystem'
 import { useAdminTenants } from '../hooks/useAdminTenants'
+import { useAdminFolders } from '../hooks/useAdminFolders'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
 import { useFitToHost } from '../hooks/useFitToHost'
@@ -28,19 +30,30 @@ const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
 const ModelsSection = lazy(() => import('../sections/ModelsSection'))
 const TenantsSection = lazy(() => import('../sections/TenantsSection'))
+const FoldersSection = lazy(() => import('../sections/FoldersSection'))
 
-type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'tenants'
+type AdminSection = 'overview' | 'users' | 'models' | 'folders' | 'audit' | 'tenants'
 
 const TABS: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'overview', i18nKey: 'admin.tabs.overview', icon: Gauge },
     { id: 'users', i18nKey: 'admin.tabs.users', icon: Users },
     { id: 'models', i18nKey: 'admin.tabs.models', icon: Cpu },
+    { id: 'folders', i18nKey: 'admin.tabs.folders', icon: Folder },
     { id: 'audit', i18nKey: 'admin.tabs.audit', icon: FileText },
     { id: 'tenants', i18nKey: 'admin.tabs.tenants', icon: Building2 },
 ]
 
 /** 分頁程式還在下載時顯示的骨架 */
-const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} className="h-[var(--sz-120)]" /></div>
+const SectionSkeleton = (
+    // 和分頁的大卡片（Panel＋SectionHeader）同一個外形：標題、補充、內容區
+    <section aria-hidden className="paper !rounded-[var(--admin-r)] h-full min-h-[var(--sz-320)] flex flex-col">
+        <div className="pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)]">
+            <h2 className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold"><SkelText>0000</SkelText></h2>
+            <p className="mt-0.5 text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText>000000</SkelText></p>
+        </div>
+        <div className="flex-1 mx-[var(--space)] mb-[var(--space)] rounded-[var(--admin-in)] bg-[var(--chip)]" />
+    </section>
+)
 
 export default function Admin() {
     const { t } = useTranslation()
@@ -60,6 +73,7 @@ export default function Admin() {
     const models = useAdminModels()
     const audit = useAdminAudit()
     const tenants = useAdminTenants()
+    const folders = useAdminFolders()
     const lan = useLanStatus()
 
     // 只有管理員與工程師可以進後台
@@ -71,13 +85,15 @@ export default function Admin() {
     const { loadModels } = models
     const { loadAuditLogs } = audit
     const { loadTenants } = tenants
+    const { loadFolders } = folders
     // 側欄的「目前模型」每一頁都看得到：進後台就讀一次，切到模型頁再重讀
     useEffect(() => { loadModels() }, [loadModels])
     useEffect(() => {
         if (activeSection === 'models') loadModels()
         if (activeSection === 'audit' || activeSection === 'overview') loadAuditLogs()
         if (activeSection === 'tenants') loadTenants()
-    }, [activeSection, loadAuditLogs, loadModels, loadTenants])
+        if (activeSection === 'folders') loadFolders()
+    }, [activeSection, loadAuditLogs, loadModels, loadTenants, loadFolders])
 
     /** 展示模式：路徑只顯示最後兩段，不露出使用者目錄 */
     const sanitizePath = (p: string) => {
@@ -192,6 +208,18 @@ export default function Admin() {
                                     onSelectModel={models.onSelectModel}
                                 />
                             )}
+                            {activeSection === 'folders' && (
+                                <FoldersSection
+                                    folders={folders.folders}
+                                    loaded={folders.loaded}
+                                    loadError={folders.loadError}
+                                    onRetry={folders.loadFolders}
+                                    onAdd={folders.openAdd}
+                                    onEdit={folders.openEdit}
+                                    onToggle={folders.toggleEnabled}
+                                    onDisconnect={folders.disconnect}
+                                />
+                            )}
                             {activeSection === 'audit' && <AuditSection {...audit.sectionProps} />}
                             {activeSection === 'tenants' && (
                                 <TenantsSection
@@ -211,6 +239,7 @@ export default function Admin() {
 
             <UserFormModal users={users} />
             <TenantFormModal tenants={tenants} />
+            <FolderFormModal folders={folders} />
         </div>
     )
 }

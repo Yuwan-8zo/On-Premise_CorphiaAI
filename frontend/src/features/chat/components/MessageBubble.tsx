@@ -152,7 +152,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
     const copyButton = (
-        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
+        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
                 <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
@@ -256,12 +256,12 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                         )
                     )}
                     {!isEditing && !hideActions && (
-                        <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
+                        <div className="hover-reveal flex items-center gap-1.5 mt-1 text-text-muted mr-2">
                             {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
-                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
-                                    <Edit2 className="w-3.5 h-3.5" />
+                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
+                                    <Edit2 />
                                 </button></Tooltip>
                             )}
                             {/*
@@ -272,9 +272,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
                                 <button
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
-                                    className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                    className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                 >
-                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    <RefreshCw />
                                 </button>
                             )}
                             {message.tokens > 0 && (
@@ -331,16 +331,16 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             />
                         )}
 
-                        {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
+                        {/* 工具列：滑鼠裝置移入才浮現，手機一直顯示（.hover-reveal） */}
                         {message.content && !isStreaming && !hideActions && (
-                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
+                            <div className="hover-reveal flex items-center gap-1.5 mt-2 text-text-muted">
                                 {copyButton}
                                 {onRegenerate && !message.blocked && (
                                     <button
                                         onClick={() => onRegenerate(message.id)}
-                                        className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                        className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                         >
-                                        <RefreshCw className="w-3.5 h-3.5" />
+                                        <RefreshCw />
                                     </button>
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}

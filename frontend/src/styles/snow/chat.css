@@ -2,7 +2,7 @@
 
 /* ---------- 聊天側欄清單（Apple 側欄：備忘錄／檔案）----------
  *   .side-header  組名（13／18 半粗、次要字）
- *   .side-item    一列（最小高 36、膠囊、14 字）；目前項目加 .is-current＝凹陷底盤＋強調色
+ *   .side-item    一列（高 --side-row-h：滑鼠 36、手指 44；膠囊、14 字）；目前項目加 .is-current＝凹陷底盤＋強調色
  *   .side-children    子項目縮排到和資料夾名稱對齊，不畫導引線 */
 .side-header {
   display: block;
@@ -21,8 +21,8 @@
   align-items: center;
   gap: var(--sp-8);
   width: 100%;
-  min-height: var(--sz-36);
-  padding: 0 var(--sp-6) 0 var(--sp-10);
+  min-height: var(--side-row-h);
+  padding: 0 var(--side-row-in) 0 var(--sp-10);
   border-radius: var(--r-9999);
   text-align: left;
   font-size: var(--fs-14);
@@ -59,6 +59,11 @@
   align-items: center;
   margin-left: auto;
   flex: none;
+}
+/* 列裡的圓鈕（⋯、＋、刪除）：和列的圓頭同心（上下右的內距一樣） */
+.side-actions .icon-tap {
+  width: calc(var(--side-row-h) - 2 * var(--side-row-in));
+  height: calc(var(--side-row-h) - 2 * var(--side-row-in));
 }
 
 /* 對話框右上角的關閉鈕：36 圓鈕，與對話框圓角同心（離上、右各＝對話框圓角 44 − 按鈕圓角 18 ＝ 26） */

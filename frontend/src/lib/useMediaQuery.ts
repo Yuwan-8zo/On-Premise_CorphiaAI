@@ -8,6 +8,9 @@ import { useSyncExternalStore } from 'react'
 /** 和 Tailwind 的 md 斷點同一個寬度（tailwind.config 的預設 md＝768px）：以上是桌機版面（側欄固定在左邊） */
 export const MQ_DESKTOP = '(min-width: 768px)'
 
+/** 有滑鼠（能懸停、指得準）的裝置。手機、平板、折疊手機都不算：那些裝置沒有「停在上面」這回事 */
+export const MQ_HOVER = '(hover: hover) and (pointer: fine)'
+
 /** 不在 React 元件裡（事件處理、store 初始值）時用：現在是不是桌機版面 */
 export const isDesktop = () => typeof window !== 'undefined' && window.matchMedia(MQ_DESKTOP).matches
 

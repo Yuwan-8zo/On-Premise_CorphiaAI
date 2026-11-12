@@ -37,6 +37,9 @@ export const LENS_CFG = {
     pressWait: 320, // --lens-press-wait 定點按住多久算長按
     slop: 6, // 手指移動超過這個（px）才算滑動、不是定點按住
     leave: 300, // 放開後放大鏡原地淡出
+    edge: 4, // --lens-edge 選單放大鏡：放大後的內容離放大鏡兩端至少留這麼多（寬的項目自動降低放大倍率）
+    minRadius: 8, // 選單放大鏡最小圓角（卡片圓角 − 距離太小時）
+    dragSlop: 8, // 從觸發鈕拖進選單：手指在選單外這麼近（px）也算進入、放開也算選取（邊緣的項目好選）
 } as const
 
 export const LENS_SX = LENS_CFG.sx

@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     # Models kept loaded at startup (size tags, comma separated). Others load only when selected.
     llm_preload_models: str = "3B,7B"
     
+    # 文件檢索模型：本機沒有時（新電腦第一次）可不可以從網路下載一次；完全不連外的環境設 false
+    embedding_allow_download: bool = True
+
+    # 連接資料夾：只允許接這些資料夾底下的路徑（逗號分隔；空的＝除了系統資料夾都可以）
+    connected_folder_roots: str = ""
+
     # 上傳
     upload_directory: str = "./uploads"
     max_upload_size_mb: int = 50

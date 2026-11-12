@@ -20,7 +20,7 @@ import {
 import Tooltip from '@/components/ui/Tooltip'
 import { adminApi, type ModelIntegrityInfo, type ModelThroughput } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
-import { SkelCards } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 import { copyText } from '@/lib/clipboard'
 
 export interface ModelsSectionProps {
@@ -81,7 +81,20 @@ export default function ModelsSection({
                 />
                 <div className="admin-fill-body grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                     {isLoadingModels ? (
-                        <SkelCards count={3} className="h-[var(--sz-86)]" />
+                        // 和下面的模型卡同一個外形：名稱＋量化標籤、大小、Hash，右邊「選擇」鈕
+                        [0, 1, 2].map((i) => (
+                            <div key={i} aria-hidden className="flex flex-col gap-4 rounded-[var(--admin-in)] border border-[var(--paper-line)] bg-[var(--chip)] p-5 md:flex-row md:items-center md:justify-between">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <p className="truncate text-lg font-semibold"><SkelText>Qwen2.5-7B-Instruct-Q5_K_M</SkelText></p>
+                                        <span className="tag"><SkelText>Q5_K_M</SkelText></span>
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-4 text-sm"><SkelText>0000 0.00 GB</SkelText></div>
+                                    <div className="mt-3 flex flex-wrap gap-4 text-xs"><SkelText>Hash: 000000000000</SkelText></div>
+                                </div>
+                                <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0"><SkelText>{t('admin.models.select', '選擇')}</SkelText></span>
+                            </div>
+                        ))
                     ) : models.length === 0 ? (
                         <div className="py-10 text-center text-text-secondary">
                             {t('admin.models.noModels', '暫無模型')}

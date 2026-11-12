@@ -8,6 +8,7 @@
  */
 
 import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
 import { parseServerDate } from '@/lib/utils'
 import { Plus, Trash2, UserRoundCog, LogOut, MoreHorizontal } from '@/components/snow/icons'
 import { createPortal } from 'react-dom'
@@ -27,7 +28,7 @@ import {
 import { formatDate } from '@/features/admin/utils/formatDate'
 import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
-import { SkelTableRows, SkelText } from '@/components/ui/Skeleton'
+import { Skel, SkelText } from '@/components/ui/Skeleton'
 import i18n from '@/i18n'
 import { useDismiss } from '@/lib/useDismiss'
 import { useKeepInViewport } from '@/lib/useKeepInViewport'
@@ -78,8 +79,10 @@ function formatRelativeTime(isoString?: string): string {
 /**
  * 渲染鎖定狀態 badge
  */
-function LockStatusBadge({ lockoutStatus }: { lockoutStatus: UserLockoutStatus | null }) {
-    if (!lockoutStatus) return <span className="text-text-secondary">--</span>
+function LockStatusBadge({ lockoutStatus, loaded }: { lockoutStatus: UserLockoutStatus | null; loaded: boolean }) {
+    // 鎖定資料還沒回來：放一樣字級的灰條（不先顯示「--」再跳成「正常」）
+    if (!loaded) return <span className="text-xs"><SkelText>{i18n.t('ui.users.normal')}</SkelText></span>
+    if (!lockoutStatus) return <span className="text-xs text-text-secondary">{i18n.t('ui.users.normal')}</span>
 
     if (lockoutStatus.is_locked) {
         return (
@@ -159,6 +162,14 @@ export default function UsersSection({
         }
     }, [openMenuId])
 
+    // 「⋯」：按下就打開，按住直接拖進選單、放大鏡選取（lib/menuDrag）
+    const menuTrigger = useMenuTrigger()
+    const openRowMenu = (id: string, button: HTMLElement) => {
+        const rect = button.getBoundingClientRect()
+        setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right, anchor: { top: rect.top, bottom: rect.bottom } })
+        setOpenMenuId(id)
+    }
+
     // 點選單和按鈕以外的地方、按 Esc 關閉
     useDismiss(!!openMenuId, closeMenu, [menuContainerRef, menuRef])
     useKeepInViewport(menuRef, menuPos, menuPos?.anchor)
@@ -204,7 +215,25 @@ export default function UsersSection({
                     </thead>
                     <tbody className={tableBodyClass}>
                         {isLoading ? (
-                            <SkelTableRows rows={4} cols={6} />
+                            // 和下面的資料列同一組儲存格：頭像＋名稱／信箱、角色、狀態、鎖定、最後登入、三點鈕
+                            Array.from({ length: 4 }, (_, i) => (
+                                <tr key={i} aria-hidden>
+                                    <td className="pl-[var(--sp-21)] pr-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <Skel className="h-9 w-9 shrink-0 !rounded-full" />
+                                            <div className="min-w-0">
+                                                <p className="font-semibold truncate"><SkelText>000000</SkelText></p>
+                                                <p className="text-xs truncate"><SkelText>user@example.com</SkelText></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3"><span className="tag"><SkelText>000</SkelText></span></td>
+                                    <td className="hidden sm:table-cell px-4 py-3"><span className="tag"><SkelText>00</SkelText></span></td>
+                                    <td className="hidden sm:table-cell px-4 py-3"><span className="text-xs"><SkelText>00</SkelText></span></td>
+                                    <td className="hidden sm:table-cell px-4 py-3 text-sm whitespace-nowrap"><SkelText>00 000</SkelText></td>
+                                    <td className="pl-4 pr-[var(--sp-16)] py-3"><div className="flex justify-end"><Skel className="h-8 w-8 !rounded-full" /></div></td>
+                                </tr>
+                            ))
                         ) : users.length === 0 ? (
                             <tr>
                                 <td className={tableEmptyCellClass} colSpan={6}>
@@ -235,7 +264,7 @@ export default function UsersSection({
                                         <StatusPill active={item.isActive} />
                                     </td>
                                     <td className="hidden sm:table-cell px-4 py-3">
-                                        <LockStatusBadge lockoutStatus={lockoutMap[item.email] || null} />
+                                        <LockStatusBadge lockoutStatus={lockoutMap[item.email] || null} loaded={!!lockoutData} />
                                     </td>
                                     <td className="hidden sm:table-cell px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
                                         {formatRelativeTime(item.lastLoginAt)}
@@ -253,24 +282,11 @@ export default function UsersSection({
                                         >
                                             <button
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    if (openMenuId === item.id) {
-                                                        closeMenu()
-                                                        return
-                                                    }
-                                                    const rect = e.currentTarget.getBoundingClientRect()
-                                                    setMenuPos({
-                                                        top: rect.bottom + 6,
-                                                        right: window.innerWidth - rect.right,
-                                                        anchor: { top: rect.top, bottom: rect.bottom },
-                                                    })
-                                                    setOpenMenuId(item.id)
-                                                }}
+                                                {...menuTrigger(openMenuId === item.id, (el) => openRowMenu(item.id, el), closeMenu)}
                                                 aria-haspopup="menu"
                                                 aria-expanded={openMenuId === item.id}
                                                 aria-label={t('admin.users.actions', '操作')}
-                                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                                className={`touch-none flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
                                                     openMenuId === item.id
                                                         ? 'border-accent/40 bg-accent/10 text-accent'
                                                         : 'border-[var(--paper-line)] text-text-secondary   '

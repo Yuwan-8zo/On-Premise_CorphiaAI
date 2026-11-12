@@ -80,7 +80,7 @@ export function useAdminTenants() {
                 console.error('Failed to toggle tenant status', err)
                 toast.error(getErrorMessage(err))
             }
-        })
+        }, i18n.t('ui.tenants.toggleHint'))
     }
 
     return {

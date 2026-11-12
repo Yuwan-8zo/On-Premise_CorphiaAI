@@ -10,12 +10,16 @@
  *   - 放開 → 選取放大鏡停住的那一項；一般點擊照常運作
  *   - 放大鏡外觀：淡白漸層＋上下細亮線（範本 .lens），不模糊
  *
+ * 從觸發鈕按住拖進來（lib/menuDrag）：選單一掛上就接手那根手指，滑進選單範圍放大鏡馬上出現（不用再等長按），
+ * 在選單裡放開＝選那一項，在選單外放開＝不選、選單留著。
+ *
  * 用法：把選單內容放在 <LensMenu> 裡；裡面所有 button、連結、role=menuitem 或 data-lens-item 都算選項。
  * 直排或橫排會依選項位置自動判斷。
  */
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import { LENS_CFG } from './lensKit'
 import { swallowNextClick } from '@/lib/swallowClick'
+import { returnMenuDrag, takeMenuDrag } from '@/lib/menuDrag'
 
 const HOLD_MS = LENS_CFG.pressWait // 長按多久才出現放大鏡（移動不會提前觸發）
 const MAG = LENS_CFG.zoom
@@ -111,19 +115,30 @@ export default function LensMenu({ children, className = '', plate = false, ...r
         const r = rs[idx]
         // 尺寸：直排時與選項同寬（不超出捲動範圍被裁切）、高度放大 1.25；橫排時沿排列方向放大 1.12
         const lw = vert ? r.width : r.width * MAG
-        const lh = r.height * 1.25
         const cx = vert ? r.left + r.width / 2 : s.cur
         const cy = vert ? s.cur : r.top + r.height / 2
+        // 選單卡片：放大鏡不能超出卡片，離卡片邊＝選項離卡片邊（直排看左右）；圓角和卡片同心（卡片圓角 − 這個距離）
+        const card = wrap.closest<HTMLElement>('.paper')
+        const C = card?.getBoundingClientRect()
+        const inset = C && vert ? Math.max(0, r.left - C.left) : 0
+        let lh = r.height * 1.25
+        if (C && vert) lh = Math.min(lh, C.height - 2 * inset)
+        let top = cy - lh / 2
+        if (C && vert) top = Math.max(C.top + inset, Math.min(C.bottom - inset - lh, top))
         const x = cx - lw / 2 - W.left
-        const y = cy - lh / 2 - W.top
-        // 膠囊（範本放大鏡圓角 ≈ 高度一半）
-        const rad = Math.min(lh, lw) / 2
+        const y = top - W.top
+        // 膠囊（範本放大鏡圓角 ≈ 高度一半）；在卡片裡時不超過「卡片圓角 − 距離」，兩層圓角同心
+        let rad = Math.min(lh, lw) / 2
+        if (card && vert) rad = Math.min(rad, Math.max(LENS_CFG.minRadius, parseFloat(getComputedStyle(card).borderTopLeftRadius) - inset))
+        // 放大倍率：寬的項目（例如模型清單）內容放大後不能被放大鏡兩端切掉 → 內容左右各留 --lens-edge
+        const padX = parseFloat(getComputedStyle(its[idx]).paddingLeft) || 0
+        const mag = vert ? Math.max(1, Math.min(MAG, (lw - 2 * LENS_CFG.edge) / Math.max(1, lw - 2 * padX))) : MAG
         Object.assign(lens.style, { left: `${x}px`, top: `${y}px`, width: `${lw}px`, height: `${lh}px`, borderRadius: `${rad}px` })
         // 放大鏡內的複本：以放大鏡中心放大 1.12，反向位移與真選單對齊
         if (s.ghost) {
             s.ghost.style.width = `${L.width}px`
             s.ghost.style.transform =
-                `translate(${lw / 2}px, ${lh / 2}px) scale(${MAG}) translate(${-lw / 2}px, ${-lh / 2}px) ` +
+                `translate(${lw / 2}px, ${lh / 2}px) scale(${mag}) translate(${-lw / 2}px, ${-lh / 2}px) ` +
                 `translate(${L.left - W.left - x}px, ${L.top - W.top - y}px)`
         }
         // 真選單挖洞
@@ -151,10 +166,11 @@ export default function LensMenu({ children, className = '', plate = false, ...r
         // 已經放開就不出現（避免在選單外放開後，計時仍觸發、放大鏡卡住跟著滑鼠）
         if (s.active || !s.down || !wrap || !list || !lens) return
         const its = items()
-        if (its.length < 2) return
-        // 依選項位置判斷直排／橫排
+        // 只有一個能按的項目（例如自己的帳號只能「編輯」）也要有放大鏡，從觸發鈕拖過來才選得到
+        if (!its.length) return
+        // 依選項位置判斷直排／橫排（只有一項就當直排）
         const a = its[0].getBoundingClientRect(), b = its[its.length - 1].getBoundingClientRect()
-        s.axis = Math.abs(b.top - a.top) >= Math.abs(b.left - a.left) ? 'y' : 'x'
+        s.axis = its.length < 2 || Math.abs(b.top - a.top) >= Math.abs(b.left - a.left) ? 'y' : 'x'
         s.active = true
         s.cur = null
         try { wrap.setPointerCapture(s.pid) } catch { /* 部分瀏覽器不支援 */ }
@@ -173,6 +189,20 @@ export default function LensMenu({ children, className = '', plate = false, ...r
         wrap.classList.add('lens-on')
         cancelAnimationFrame(s.raf)
         s.raf = requestAnimationFrame(loop)
+    }
+
+    /** 收起放大鏡（淡出、拿掉挖洞），不管手指還按不按著 */
+    const hideLens = () => {
+        const s = st.current
+        s.active = false
+        s.hov = null
+        cancelAnimationFrame(s.raf)
+        lensRef.current?.classList.remove('on')
+        const w = wrapRef.current
+        w?.classList.replace('lens-on', 'lens-out')
+        setTimeout(() => w?.classList.remove('lens-out'), 350)
+        clearMask()
+        setTimeout(() => { if (!st.current.active && lensRef.current) { lensRef.current.innerHTML = ''; st.current.ghost = null } }, 300)
     }
 
     const end = (commit: boolean) => {
@@ -203,6 +233,78 @@ export default function LensMenu({ children, className = '', plate = false, ...r
     }
 
     useEffect(() => () => { cancelAnimationFrame(st.current.raf); clearTimeout(st.current.timer); st.current.off?.() }, [])
+
+    // 從觸發鈕按住拖進來：接手還按著的手指
+    useEffect(() => {
+        const drag = takeMenuDrag()
+        if (!drag) return
+        const s = st.current
+        const pid = drag.pointerId
+        s.pid = pid
+        s.down = true
+        s.px = drag.x
+        s.py = drag.y
+        /** 手指在不在選單範圍裡（四周多算一點，邊緣的項目好選） */
+        const inside = (x: number, y: number) => {
+            const r = wrapRef.current?.getBoundingClientRect()
+            const m = LENS_CFG.dragSlop
+            return !!r && x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m
+        }
+        /** 手指在不在觸發鈕上（拖回按鈕＝反悔） */
+        const onTrigger = (x: number, y: number) => {
+            const r = drag.trigger?.isConnected ? drag.trigger.getBoundingClientRect() : null
+            return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+        }
+        /** 手指離開過觸發鈕沒有（離開後再回到按鈕放開＝反悔；一直沒離開＝只是點一下） */
+        let leftTrigger = false
+        const move = (ev: PointerEvent) => {
+            if (ev.pointerId !== pid) return
+            s.px = ev.clientX
+            s.py = ev.clientY
+            const over = onTrigger(ev.clientX, ev.clientY)
+            if (!over) leftTrigger = true
+            if (s.active && over) hideLens()
+            else if (!s.active && inside(ev.clientX, ev.clientY)) activate()
+        }
+        const up = (ev: PointerEvent) => {
+            if (ev.pointerId !== pid) return
+            // 拖回觸發鈕放開：什麼都不選，選單收回去
+            if (onTrigger(ev.clientX, ev.clientY)) {
+                end(false)
+                if (leftTrigger && drag.close) {
+                    drag.close()
+                    swallowNextClick() // 接著的 click 不要再落到觸發鈕上把選單打開
+                }
+                return
+            }
+            end(inside(ev.clientX, ev.clientY))
+        }
+        const cancel = (ev: PointerEvent) => { if (ev.pointerId === pid) end(false) }
+        // 手指拖曳期間不要讓頁面捲動（長按對話列再拖的時候，瀏覽器會把拖曳當成捲動、中斷手勢）
+        const noScroll = (ev: TouchEvent) => { if (s.down) ev.preventDefault() }
+        window.addEventListener('pointermove', move, true)
+        window.addEventListener('pointerup', up, true)
+        window.addEventListener('pointercancel', cancel, true)
+        window.addEventListener('touchmove', noScroll, { passive: false, capture: true })
+        const off = () => {
+            window.removeEventListener('pointermove', move, true)
+            window.removeEventListener('pointerup', up, true)
+            window.removeEventListener('pointercancel', cancel, true)
+            window.removeEventListener('touchmove', noScroll, true)
+        }
+        s.off = off
+        return () => {
+            // 選單在手指放開前就被卸下：把手指還回去（再掛上的選單會接手），自己的監聽拿掉
+            const stillDown = s.down && s.pid === pid
+            off()
+            if (s.off === off) s.off = null
+            if (stillDown) {
+                s.down = false
+                s.pid = -1
+                returnMenuDrag({ ...drag, x: s.px, y: s.py })
+            }
+        }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div

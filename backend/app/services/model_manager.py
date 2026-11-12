@@ -9,6 +9,36 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# 還在下載或複製中的模型檔先不列出（選到半個檔案會載入失敗）；剛寫完的也再等這幾秒
+WRITING_GRACE_S = 60
+
+
+def _open_for_writing_elsewhere(path: Path) -> bool:
+    """Windows：有別的程式開著這個檔案在寫（下載、複製中）。
+    以「只允許別人讀」的方式開檔：有人正在寫就會被拒（共用衝突）；只是在讀（例如模型已載入）不受影響。"""
+    import ctypes
+    from ctypes import wintypes
+
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.CreateFileW.restype = wintypes.HANDLE
+    k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    generic_read, share_read, open_existing, sharing_violation = 0x80000000, 0x1, 3, 32
+    h = k32.CreateFileW(str(path), generic_read, share_read, None, open_existing, 0, None)
+    if h in (None, wintypes.HANDLE(-1).value):
+        return ctypes.get_last_error() == sharing_violation
+    k32.CloseHandle(h)
+    return False
+
+
+def _still_writing(path: Path) -> bool:
+    try:
+        if sys.platform == "win32" and _open_for_writing_elsewhere(path):
+            return True
+        # Windows 寫入中的檔案修改時間不一定會更新，上面那個判斷才準；這個留給其他系統、或剛寫完的檔案
+        return (datetime.now().timestamp() - path.stat().st_mtime) < WRITING_GRACE_S
+    except OSError:
+        return True
+
 
 def _find_model_dir() -> Path:
     """
@@ -113,6 +143,9 @@ class ModelManager:
             for ext in self.SUPPORTED_EXTENSIONS:
                 for model_path in self.models_dir.glob(f"*{ext}"):
                     if model_path.is_file():
+                        if _still_writing(model_path):
+                            logger.info(f"略過還在下載／複製的模型：{model_path.name}")
+                            continue
                         try:
                             info = self._parse_model_info(model_path)
                             self._models[info.name] = info

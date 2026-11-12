@@ -23,9 +23,10 @@
 .fold-wide .chat-shell .chat-head {
   padding-right: var(--gutter);
 }
-/* 輸入框：膠囊圓角和左側收合欄一樣（高＝2 × --edge-n）；內距、按鈕、圖示照同一個比例放大，按鈕置中所以和外框同心 */
+/* 輸入框：高＝--field-n-duo（不再跟螢幕圓角一樣高，太厚重、和側欄的列不平衡）；
+   內距、按鈕、圖示照同一個比例縮放，按鈕置中，所以仍然和外框同心 */
 .fold-wide .chat-shell {
-  --field-scale: calc(2 * var(--edge-n) / var(--field-n));
+  --field-scale: calc(var(--field-n-duo) / var(--field-n));
 }
 /* 聊天訊息左右內縮＝外圈間距＋輸入框內距：訊息邊緣對齊輸入框裡的按鈕，輸入框變大時一起跟著動 */
 .fold-wide .chat-shell .msg-col {

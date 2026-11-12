@@ -1,3 +1,4 @@
+import { formatBytes } from '@/lib/formatBytes'
 import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
 import { parseServerDate } from '@/lib/utils'
 import { useEffect, useRef, useState } from 'react'
@@ -135,12 +136,7 @@ export default function Chat() {
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-medium text-[length:var(--fs-15)] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
                                                     <span className="text-[length:var(--fs-13)] text-text-secondary mt-0.5">
-                                                        {parseServerDate(doc.created_at).toLocaleString()} • {(() => {
-                                                            const bytes = doc.file_size || 0
-                                                            if (bytes < 1024) return `${bytes} B`
-                                                            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-                                                            return `${(bytes / 1024 / 1024).toFixed(2)} MB`
-                                                        })()}
+                                                        {parseServerDate(doc.created_at).toLocaleString()} • {formatBytes(doc.file_size || 0)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -163,7 +159,7 @@ export default function Chat() {
                                                                 }
                                                             })
                                                         }}
-                                                        className="p-2 text-text-muted  rounded-full  md:opacity-0 group-hover:opacity-100 transition-all"
+                                                        className="hover-reveal p-2 text-text-muted rounded-full"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>

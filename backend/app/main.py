@@ -13,6 +13,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+from app.core import win_accept_fix
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.api import (
@@ -29,6 +30,7 @@ from app.api import (
     tenants_router,
     models_router,
     folders_router,
+    connected_folders_router,
     system_monitor_router,
     voice_router,
 )
@@ -38,6 +40,9 @@ from app.core.middleware import MaxUploadSizeMiddleware
 
 
 from app.core.logging_config import setup_logging
+
+# Windows：連線在接受時被中斷，後端不要從此停止接受新連線（見 app/core/win_accept_fix.py）
+win_accept_fix.install()
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -241,6 +246,7 @@ app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
 app.include_router(folders_router, prefix="/api/v1")
+app.include_router(connected_folders_router, prefix="/api/v1")
 app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(websocket_router)

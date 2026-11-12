@@ -12,6 +12,7 @@ from app.models.folder import Folder
 from app.models.user_settings import UserSettings
 from app.models.audit_log import AuditLog
 from app.models.token_blacklist import TokenBlacklist
+from app.models.connected_folder import ConnectedFolder
 
 __all__ = [
     "Tenant",
@@ -27,5 +28,6 @@ __all__ = [
     "UserSettings",
     "AuditLog",
     "TokenBlacklist",
+    "ConnectedFolder",
 ]
 

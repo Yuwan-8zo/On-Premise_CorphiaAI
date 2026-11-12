@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Message } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
+import { MQ_HOVER, useMediaQuery } from '@/lib/useMediaQuery'
 
 interface ChatMinimapProps {
     messages: Message[]
@@ -29,6 +30,8 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
     const { t } = useTranslation()
     const [markers, setMarkers] = useState<Marker[]>([])
     const [hoveredId, setHoveredId] = useState<string | null>(null)
+    // 觸控裝置不顯示：平常是隱形的一條（滑鼠移入才浮現），手機上看不到又會攔截靠右的點擊
+    const canHover = useMediaQuery(MQ_HOVER)
 
     const updateMarkers = useCallback(() => {
         if (!containerRef.current || messages.length === 0) {
@@ -96,7 +99,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
         }
     }
 
-    if (markers.length === 0) return null
+    if (!canHover || markers.length === 0) return null
 
     // hover 中的 marker 找出來算 tooltip 位置 + 內容
     const hoveredMarker = hoveredId ? markers.find(m => m.id === hoveredId) : null
@@ -146,8 +149,8 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                                 height: `${Math.max(marker.height, 1)}%`,
                                 transform: 'translate(-50%, -50%)',
                             }}
-                            onMouseEnter={() => setHoveredId(marker.id)}
-                            onMouseLeave={() => setHoveredId(null)}
+                            onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHoveredId(marker.id) }}
+                            onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHoveredId(null) }}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 scrollToMsg(marker.id)

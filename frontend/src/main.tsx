@@ -9,8 +9,11 @@ import App from './App'
 import './index.css'
 import './i18n'
 import { watchFoldScreen } from './lib/foldScreen'
+import { installLayoutSnapshot } from './lib/layoutSnapshot'
 
 watchFoldScreen()
+// 離開頁面時記下版面，下次重新整理的骨架照真畫面畫
+installLayoutSnapshot()
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

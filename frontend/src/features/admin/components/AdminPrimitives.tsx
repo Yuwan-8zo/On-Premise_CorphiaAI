@@ -11,6 +11,7 @@
 
 import { useTranslation } from 'react-i18next'
 import DialogShell from '@/components/ui/DialogShell'
+import { useScrollFade } from '@/lib/useScrollFade'
 
 // ---------------------------------------------------------------------------
 // Panel — flat surface card with hairline border.
@@ -86,6 +87,8 @@ export function ActionButton({
     }
     return (
         <button
+            // 有 onClick＝一般按鈕；沒有＝送出表單。不寫的話放在表單裡的「取消」也會送出表單
+            type={onClick ? 'button' : 'submit'}
             onClick={onClick}
             disabled={disabled}
             className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0 min-w-max ${variants[variant]}`}
@@ -143,6 +146,11 @@ export function RoleBadge({ role }: { role: AdminUserRole }) {
 // via portal so it sits above the rest of the admin chrome.
 // ---------------------------------------------------------------------------
 
+function ModalScroll({ children }: { children: React.ReactNode }) {
+    const ref = useScrollFade()
+    return <div ref={ref} className="glass-scroll min-h-0 p-6">{children}</div>
+}
+
 export function ModalFrame({
     children,
     onClose,
@@ -153,9 +161,11 @@ export function ModalFrame({
     maxWidth?: string
 }) {
     // 外殼（遮罩、置中、動畫、Esc）共用 DialogShell；後台視窗用卡片外觀
+    // 比畫面高時在視窗「裡面」捲動（矮螢幕、手機橫拿），上下各留 16
     return (
-        <DialogShell open onClose={onClose} sheet={false} className={`w-full ${maxWidth} paper !rounded-[var(--r-32)] p-6 text-text-primary`}>
-            {children}
+        <DialogShell open onClose={onClose} sheet={false} className={`w-full ${maxWidth} max-h-[calc(100dvh-var(--sp-32))] flex flex-col overflow-hidden paper !rounded-[var(--r-32)] text-text-primary`}>
+            {/* 卡片不捲、裡面這層捲（光邊才不會跟著內容捲走） */}
+            <ModalScroll>{children}</ModalScroll>
         </DialogShell>
     )
 }
