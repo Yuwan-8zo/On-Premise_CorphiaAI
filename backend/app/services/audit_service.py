@@ -80,6 +80,11 @@ class AuditAction:
     FILE_CREATE = "file_create"
     FILE_DOWNLOAD = "file_download"
 
+    # 桌面版：操控使用者電腦上的 Office（介面在動作成功後回報）
+    OFFICE_READ = "office_read"
+    OFFICE_WRITE = "office_write"
+    FILE_OPEN = "file_open"
+
     # 送模型前最後一關：文件片段被剔除或遮罩
     CONTEXT_FILTERED = "context_filtered"
 
@@ -98,6 +103,7 @@ class AuditResource:
     MODEL = "model"
     MEMORY = "memory"
     FILE = "file"
+    DESKTOP = "desktop"
     SYSTEM = "system"
 
 

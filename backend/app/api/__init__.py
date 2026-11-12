@@ -18,6 +18,7 @@ from app.api.folders import router as folders_router
 from app.api.connected_folders import router as connected_folders_router
 from app.api.memories import router as memories_router
 from app.api.files import router as files_router
+from app.api.desktop import router as desktop_router
 from app.api.system_monitor import router as system_monitor_router
 from app.api.voice import router as voice_router
 
@@ -38,6 +39,7 @@ __all__ = [
     "connected_folders_router",
     "memories_router",
     "files_router",
+    "desktop_router",
     "system_monitor_router",
     "voice_router",
 ]

@@ -33,6 +33,7 @@ from app.api import (
     connected_folders_router,
     memories_router,
     files_router,
+    desktop_router,
     system_monitor_router,
     voice_router,
 )
@@ -274,6 +275,7 @@ app.include_router(folders_router, prefix="/api/v1")
 app.include_router(connected_folders_router, prefix="/api/v1")
 app.include_router(memories_router, prefix="/api/v1")
 app.include_router(files_router, prefix="/api/v1")
+app.include_router(desktop_router, prefix="/api/v1")
 app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(websocket_router)

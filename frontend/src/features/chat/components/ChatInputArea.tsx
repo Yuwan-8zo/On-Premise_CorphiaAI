@@ -1,4 +1,4 @@
-import { FileText, Paperclip } from '@/components/snow/icons'
+import { FileText, Layers3, Paperclip } from '@/components/snow/icons'
 import React, { useLayoutEffect, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,9 @@ import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
 import { UPLOAD_ACCEPT } from '@/lib/uploadTypes'
 import { riseIn } from '@/lib/motionPresets'
+import OfficeMenu from '@/components/ui/OfficeMenu'
+import { desktop, useDesktop, type OfficeApp } from '@/lib/desktop'
+import { getErrorMessage } from '@/lib/errors'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -47,6 +50,20 @@ export default function ChatInputArea({
     llmReady = true,
 }: ChatInputAreaProps) {
     const { t } = useTranslation()
+    const isDesktop = useDesktop()
+    /** 桌面版：把 Word／Excel／PowerPoint 目前的內容接到輸入框後面（標明來源），使用者接著打問題再送出 */
+    const readFromOffice = async (app: OfficeApp) => {
+        const toast = useToastStore.getState().add
+        try {
+            const r = await desktop.read(app)
+            const head = t(r.truncated ? 'ui.office.quoteHeadTruncated' : 'ui.office.quoteHead', { app: t(`ui.office.app.${app}`), name: r.name, n: r.chars })
+            setInput((prev) => `${prev ? prev.trimEnd() + '\n\n' : ''}${head}\n${r.text}\n\n`)
+            toast(t('ui.office.readDone', { n: r.chars }), 'success')
+            setTimeout(() => inputRef.current?.focus(), 0)
+        } catch (err) {
+            toast(getErrorMessage(err), 'error')
+        }
+    }
     const toast = useToastStore()
     const [isRecording, setIsRecording] = useState(false)
     // 輸入內容超過欄位最大高度（160）時，送出鈕左邊出現「放大」鈕；放大後欄位變高，方便編輯長文
@@ -144,6 +161,17 @@ export default function ChatInputArea({
                                         setTimeout(() => inputRef.current?.focus(), 0)
                                     }}
                                 />
+
+                                {/* 桌面版：讀取這台電腦上 Office 目前的內容（選取範圍；沒選就整份） */}
+                                {isDesktop && (
+                                    <OfficeMenu
+                                        label={t('ui.office.read')}
+                                        icon={<Layers3 className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />}
+                                        buttonClassName="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
+                                        disabled={isConnecting || isUploading || isStreaming}
+                                        onPick={readFromOffice}
+                                    />
+                                )}
 
                                 {chatMode === 'project' && (
                                     <button

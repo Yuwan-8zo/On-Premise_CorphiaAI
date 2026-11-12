@@ -7,11 +7,13 @@ import AIThinkingIndicator from './AIThinkingIndicator'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
+import OfficeMenu from '@/components/ui/OfficeMenu'
+import { desktop, useDesktop, type OfficeApp } from '@/lib/desktop'
 import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw } from '@/components/snow/icons'
+import { Edit2, Check, X, RefreshCw, Layers3 } from '@/components/snow/icons'
 import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
@@ -19,7 +21,12 @@ import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
+import { getErrorMessage } from '@/lib/errors'
+import { useToastStore } from '@/store/toastStore'
 import { riseIn } from '@/lib/motionPresets'
+
+/** 操控 Office 的結果提示停留多久（毫秒）：要讓使用者來得及讀「寫到哪、有沒有備份」 */
+const OFFICE_TOAST_MS = 6000
 
 interface MessageBubbleProps {
     message: Message
@@ -65,6 +72,17 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
 const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     const { t } = useTranslation()
+    const isDesktop = useDesktop()
+    /** 寫入 Office：成功說明寫到哪、有沒有備份；失敗顯示原因（例如「Word 沒有開啟的文件」） */
+    const writeToOffice = async (app: OfficeApp) => {
+        const toast = useToastStore.getState().add
+        try {
+            const r = await desktop.write(app, message.content)
+            toast(r.backup ? t('ui.office.writtenBackup', { detail: r.detail }) : r.detail, 'success', OFFICE_TOAST_MS)
+        } catch (err) {
+            toast(getErrorMessage(err), 'error', OFFICE_TOAST_MS)
+        }
+    }
     // C2: 從 store 取得 RAG 除錯資訊（僅反映最近一次回應，配合 showRAGDebug 使用）
     const ragDebug = useChatStore((s) => s.ragDebug)
     
@@ -347,6 +365,15 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         >
                                         <RefreshCw />
                                     </button>
+                                )}
+                                {/* 桌面版：把這則回答寫進這台電腦的 Word（游標處）／Excel（目前儲存格起）／PowerPoint（新增一張） */}
+                                {isDesktop && !message.blocked && (
+                                    <OfficeMenu
+                                        label={t('ui.office.write')}
+                                        icon={<Layers3 />}
+                                        buttonClassName="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                        onPick={writeToOffice}
+                                    />
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
                                 {message.tokens > 0 && (

@@ -5,6 +5,10 @@ import apiClient from './client'
 import type { MessageAttachment } from '@/types/chat'
 
 export const filesApi = {
+    /** 取回檔案內容（桌面版「開啟」用） */
+    fetch: async (file: MessageAttachment): Promise<Blob> =>
+        (await apiClient.get(`/files/${file.id}/download`, { responseType: 'blob' })).data as Blob,
+
     /** 取回檔案並交給瀏覽器存檔（要帶登入憑證，所以不能用普通連結） */
     download: async (file: MessageAttachment): Promise<void> => {
         const res = await apiClient.get(`/files/${file.id}/download`, { responseType: 'blob' })
