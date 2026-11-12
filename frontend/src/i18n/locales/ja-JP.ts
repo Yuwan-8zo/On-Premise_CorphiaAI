@@ -189,6 +189,7 @@ export default {
         searchChats: 'チャットを検索',
         searchPlaceholder: 'タイトルや内容を検索',
         searchEmpty: '一致するチャットがありません',
+        searchFailed: '検索に失敗しました。しばらくしてからもう一度お試しください。',
         noProjects: 'プロジェクトがありません',
         projectFolderLabel: 'プロジェクトフォルダ',
         askFromSource: 'このソースを元に質問する →',

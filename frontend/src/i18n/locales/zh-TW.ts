@@ -189,6 +189,7 @@ export default {
         searchChats: '搜尋對話',
         searchPlaceholder: '搜尋標題或內容',
         searchEmpty: '找不到符合的對話',
+        searchFailed: '搜尋失敗，請稍後再試一次',
         noProjects: '尚無專案',
         projectFolderLabel: '專案資料夾',
         askFromSource: '基於此來源開始提問 →',

@@ -189,6 +189,7 @@ export default {
         searchChats: 'Search chats',
         searchPlaceholder: 'Search titles or content',
         searchEmpty: 'No matching chats',
+        searchFailed: 'Search failed. Please try again in a moment.',
         noProjects: 'No projects yet',
         projectFolderLabel: 'Project Folders',
         askFromSource: 'Ask questions based on this source →',

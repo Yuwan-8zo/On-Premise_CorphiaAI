@@ -160,16 +160,18 @@ export default function ChatSidebar({
     const [query, setQuery] = useState('')
     /** 查到的對話；null＝還沒有結果（剛開始打字、或沒在搜尋） */
     const [found, setFound] = useState<Conversation[] | null>(null)
+    /** 這次查詢失敗了（連線問題）：要和「找不到」分開說，不然使用者會以為真的沒有 */
+    const [searchFailed, setSearchFailed] = useState(false)
     const searchRef = useRef<HTMLInputElement>(null)
     useEffect(() => { if (searching) searchRef.current?.focus() }, [searching])
     useEffect(() => {
         const q = query.trim()
-        if (!searching || !q) { setFound(null); return }
+        if (!searching || !q) { setFound(null); setSearchFailed(false); return }
         let stale = false
         const id = window.setTimeout(() => {
             conversationsApi.list(1, SEARCH_PAGE_SIZE, q)
-                .then((r) => { if (!stale) setFound(r.data.filter((c) => !c.settings?.isProject)) })
-                .catch(() => { if (!stale) setFound([]) })
+                .then((r) => { if (!stale) { setFound(r.data.filter((c) => !c.settings?.isProject)); setSearchFailed(false) } })
+                .catch(() => { if (!stale) { setFound([]); setSearchFailed(true) } })
         }, SEARCH_DEBOUNCE_MS)
         return () => { stale = true; window.clearTimeout(id) }
     }, [searching, query])
@@ -324,6 +326,7 @@ export default function ChatSidebar({
                                     // 搜尋中且已經打了字：顯示查到的對話（還在查就先留白，不閃「找不到」）
                                     if (searching && query.trim()) {
                                         if (found === null) return null
+                                        if (searchFailed) return note(t('chat.searchFailed'))
                                         return found.length === 0 ? note(t('chat.searchEmpty')) : found.map(renderRow)
                                     }
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
