@@ -118,4 +118,3 @@ export const Clock = make('Clock', <><path d="M256 64C150 64 64 150 64 256s86 19
 export const PanelLeft = make('PanelLeft', <><rect x="64" y="80" width="384" height="352" rx="64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M192 80v352" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
 export const PanelLeftClose = make('PanelLeftClose', <><rect x="64" y="80" width="384" height="352" rx="64" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /><path d="M192 80v352M336 200l-56 56 56 56" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
 export const Loader2 = make('Loader2', <><path d="M448 256a192 192 0 1 1-132.4-182.6" fill="none" style={{ strokeWidth: 'var(--ion-sw)' }} /></>)
-export const CircleAlert = AlertCircle

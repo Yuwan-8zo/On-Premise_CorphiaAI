@@ -30,6 +30,7 @@ import { usePolling } from '@/features/admin/hooks/usePolling'
 import { SkelTableRows } from '@/components/ui/Skeleton'
 import i18n from '@/i18n'
 import { useDismiss } from '@/lib/useDismiss'
+import { useAuthStore } from '@/store/authStore'
 
 export interface AdminUserRow {
     id: string
@@ -161,6 +162,9 @@ export default function UsersSection({
 
     const openUser = users.find((u) => u.id === openMenuId) || null
     const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId
+    // 權限比自己高的帳號（租戶管理員看 engineer）不能編輯、踢出、刪除（後端也會擋）
+    const myRole = useAuthStore((s) => s.user?.role)
+    const isHigher = (u: AdminUserRow | null) => !!u && u.role === 'engineer' && myRole !== 'engineer'
 
     return (
         <Panel className="admin-fill">
@@ -184,14 +188,14 @@ export default function UsersSection({
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
             <div className="admin-fill-body overflow-x-auto pb-[var(--sp-4)]">
-                <table className="w-full min-w-[var(--sz-720)]">
+                <table className="w-full sm:min-w-[var(--sz-720)]">
                     <thead className={tableHeadRowClass}>
                         <tr>
                             <th className="pl-[var(--sp-21)] pr-4 py-3">{t('admin.users.table.user', '使用者')}</th>
                             <th className="px-4 py-3">{t('admin.users.table.role', '角色')}</th>
-                            <th className="px-4 py-3">{t('admin.users.table.status', '狀態')}</th>
-                            <th className="px-4 py-3">{t('admin.users.table.lockStatus', '鎖定狀態')}</th>
-                            <th className="px-4 py-3">{t('admin.users.table.lastLogin', '最後登入')}</th>
+                            <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.status', '狀態')}</th>
+                            <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.lockStatus', '鎖定狀態')}</th>
+                            <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.lastLogin', '最後登入')}</th>
                             <th className="pl-4 pr-[var(--sp-16)] py-3 text-right">{t('admin.users.table.action', '操作')}</th>
                         </tr>
                     </thead>
@@ -224,13 +228,13 @@ export default function UsersSection({
                                     <td className="px-4 py-3">
                                         <RoleBadge role={item.role} />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="hidden sm:table-cell px-4 py-3">
                                         <StatusPill active={item.isActive} />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="hidden sm:table-cell px-4 py-3">
                                         <LockStatusBadge lockoutStatus={lockoutMap[item.email] || null} />
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
+                                    <td className="hidden sm:table-cell px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
                                         {formatRelativeTime(item.lastLoginAt)}
                                     </td>
                                     <td className="pl-4 pr-[var(--sp-16)] py-3">
@@ -296,6 +300,8 @@ export default function UsersSection({
                     <button
                         type="button"
                         role="menuitem"
+                        disabled={isHigher(openUser)}
+                        title={isHigher(openUser) ? t('ui.users.higherRole') : undefined}
                         onClick={() => {
                             closeMenu()
                             onEditUser(openUser)
@@ -308,8 +314,8 @@ export default function UsersSection({
                     <button
                         type="button"
                         role="menuitem"
-                        disabled={isSelf(openUser)}
-                        title={isSelf(openUser) ? t('ui.users.cantLogoutSelf') : undefined}
+                        disabled={isSelf(openUser) || isHigher(openUser)}
+                        title={isSelf(openUser) ? t('ui.users.cantLogoutSelf') : isHigher(openUser) ? t('ui.users.higherRole') : undefined}
                         onClick={() => {
                             closeMenu()
                             onForceLogout(openUser)
@@ -323,8 +329,8 @@ export default function UsersSection({
                     <button
                         type="button"
                         role="menuitem"
-                        disabled={isSelf(openUser)}
-                        title={isSelf(openUser) ? t('ui.users.cantDeleteSelf') : undefined}
+                        disabled={isSelf(openUser) || isHigher(openUser)}
+                        title={isSelf(openUser) ? t('ui.users.cantDeleteSelf') : isHigher(openUser) ? t('ui.users.higherRole') : undefined}
                         onClick={() => {
                             closeMenu()
                             onDeleteUser(openUser)

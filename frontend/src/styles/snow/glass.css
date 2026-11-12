@@ -169,10 +169,14 @@ html.dark .text-red-500 {
 /* 寫在元件 style 裡的品牌色／錯誤色文字，用變數取得深色提亮版本 */
 :root {
   --accent-ink: rgb(var(--accent));
-  --danger-ink: #ef4444;
+  /* 小字（12px 左右）放在淡色強調底上：淺色模式加深一點才讀得清楚（4.5:1） */
+  --accent-ink-small: color-mix(in srgb, rgb(var(--accent)) 80%, #000);
+  /* 錯誤文字：用 Apple 白底專用的加深紅（system-colors.css 的 --ink-red） */
+  --danger-ink: var(--ink-red);
 }
 html.dark {
   --accent-ink: color-mix(in srgb, rgb(var(--accent)) 60%, #fff);
+  --accent-ink-small: var(--accent-ink);
   --danger-ink: #fca5a5;
 }
 

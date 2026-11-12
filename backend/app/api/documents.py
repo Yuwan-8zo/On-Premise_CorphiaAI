@@ -5,11 +5,11 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks, Form, Request
+from fastapi import APIRouter, HTTPException, Query, status, UploadFile, File, BackgroundTasks, Form, Request
 
 from sqlalchemy import select, func
 
-from app.api.lookups import get_tenant_document
+from app.api.lookups import ensure_can_modify_document, get_tenant_document
 from app.api.deps import CurrentUser, DbSession
 from app.models.document import Document
 from app.schemas.document import (
@@ -31,16 +31,25 @@ router = APIRouter(prefix="/documents", tags=["文件"])
 async def list_documents(
     current_user: CurrentUser,
     db: DbSession,
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
     doc_status: Optional[str] = None,
+    folder: Optional[str] = Query(None, max_length=128),
 ):
-    """取得文件列表"""
+    """
+    取得文件列表（同租戶）
+    - folder：只列「自己」上傳到這個專案資料夾的文件（資料夾是個人的，和 AI 參考的範圍一致）
+    """
     # 建立查詢
     query = select(Document).where(
         Document.tenant_id == current_user.effective_tenant_id
     )
-    
+    if folder:
+        query = query.where(
+            Document.uploaded_by == current_user.id,
+            Document.doc_metadata["folderName"].as_string() == folder,
+        )
+
     if doc_status:
         query = query.where(Document.status == doc_status)
     
@@ -185,14 +194,30 @@ async def update_document_metadata(
     request: DocumentMetadataUpdate,
     current_user: CurrentUser,
     db: DbSession,
+    http_request: Request,
 ):
-    """更新文件 metadata (如啟用/停用 RAG 參考)"""
+    """更新文件 metadata (如啟用/停用 RAG 參考)：上傳者或管理員"""
     document = await get_tenant_document(db, document_id, current_user)
-        
+    ensure_can_modify_document(current_user, document)
+
     document.doc_metadata = request.doc_metadata
     await db.commit()
     await db.refresh(document)
-    
+
+    await write_audit_log(
+        db=db,
+        action=AuditAction.DOCUMENT_METADATA_UPDATE,
+        resource_type=AuditResource.DOCUMENT,
+        resource_id=document_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.effective_tenant_id,
+        description=f"更新文件設定: {document.original_filename}",
+        details={"keys": sorted((request.doc_metadata or {}).keys())},
+        ip_address=get_client_ip(http_request),
+        user_agent=get_user_agent(http_request),
+    )
+
     return DocumentResponse.model_validate(document)
 
 
@@ -207,12 +232,8 @@ async def delete_document(
     # 檢查權限
     document = await get_tenant_document(db, document_id, current_user)
     
-    # 只有上傳者或管理員可以刪除
-    if document.uploaded_by != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="無權刪除此文件"
-        )
+    # 只有上傳者或管理員（admin／engineer）可以刪除
+    ensure_can_modify_document(current_user, document)
     
     original_filename = document.original_filename
     

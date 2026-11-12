@@ -8,6 +8,10 @@ import { getModels, refreshModels, selectModel, type ModelItem } from '@/api/mod
 import { systemApi } from '@/api/system'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
+import { usePolling } from './usePolling'
+
+/** 區網狀態與本機 IP 的重讀間隔 */
+const LAN_REFRESH_MS = 5000
 
 export interface Stats {
     totalUsers: number
@@ -32,6 +36,8 @@ export function useAdminModels() {
     const [models, setModels] = useState<ModelItem[]>([])
     const [modelsDir, setModelsDir] = useState('')
     const [isLoadingModels, setIsLoadingModels] = useState(false)
+    // 第一次讀完之前顯示佔位，不先顯示「待機中」
+    const [modelsLoaded, setModelsLoaded] = useState(false)
 
     const loadModels = useCallback(async () => {
         setIsLoadingModels(true)
@@ -43,6 +49,7 @@ export function useAdminModels() {
             console.error('Failed to load models:', err)
         } finally {
             setIsLoadingModels(false)
+            setModelsLoaded(true)
         }
     }, [])
 
@@ -68,13 +75,14 @@ export function useAdminModels() {
 
     const currentModel = useMemo(() => models.find((m) => m.is_current), [models])
 
-    return { models, modelsDir, isLoadingModels, currentModel, loadModels, onRefreshModels, onSelectModel }
+    return { models, modelsDir, isLoadingModels, modelsLoaded, currentModel, loadModels, onRefreshModels, onSelectModel }
 }
 
 /** 區域網路開關（切換立即生效） */
 export function useLanStatus() {
     const { t } = useTranslation()
-    const [enabled, setEnabled] = useState(false)
+    // null＝還沒讀到狀態：畫面顯示佔位，不先畫成「關閉」再滑到「開啟」
+    const [enabled, setEnabled] = useState<boolean | null>(null)
     const [lanIps, setLanIps] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState(false)
 
@@ -83,13 +91,11 @@ export function useLanStatus() {
         setLanIps(Array.isArray(s.lan_ips) ? s.lan_ips : [])
     }
 
+    // 定時重讀：電腦換網路（例如改連手機熱點）後，本機 IP 和 QR code 幾秒內就跟著更新
+    const { data: lanStatus } = usePolling(systemApi.getLanStatus, LAN_REFRESH_MS)
     useEffect(() => {
-        setIsLoading(true)
-        systemApi.getLanStatus()
-            .then(apply)
-            .catch((err) => console.error('Failed to load LAN status:', err))
-            .finally(() => setIsLoading(false))
-    }, [])
+        if (lanStatus) apply(lanStatus)
+    }, [lanStatus])
 
     const onToggle = async (next: boolean) => {
         setIsLoading(true)

@@ -12,7 +12,7 @@
 
 import { parseServerDate } from '@/lib/utils'
 import type { AuditLogItem } from '@/api/auditLogs'
-import { ACTION_LABELS } from '@/api/auditLogs'
+import { auditActionLabel } from '@/features/admin/utils/auditLabels'
 import i18n from '@/i18n'
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -26,33 +26,6 @@ export interface CategoryCount {
     name: string
     /** Number of items with this key */
     count: number
-}
-
-/**
- * 把陣列依某個 key 分組計數，回傳 (key, name, count) 排序後 list（大到小）
- *
- * @param items     資料陣列
- * @param getKey    從一筆資料拿出 group key（也用來查 labelMap）
- * @param labelMap  key → 顯示名稱對應；找不到時 fallback 用 key 自己當名稱
- */
-export function groupByKey<T>(
-    items: T[],
-    getKey: (item: T) => string,
-    labelMap: Record<string, string> = {},
-): CategoryCount[] {
-    const counts = new Map<string, number>()
-    for (const it of items) {
-        const k = getKey(it)
-        if (!k) continue
-        counts.set(k, (counts.get(k) ?? 0) + 1)
-    }
-    return Array.from(counts.entries())
-        .map(([key, count]) => ({
-            key,
-            name: labelMap[key] ?? key,
-            count,
-        }))
-        .sort((a, b) => b.count - a.count)
 }
 
 export interface DailyCount {
@@ -138,7 +111,7 @@ export function aggregateByAction(
     const sorted: ActionCount[] = Array.from(counts.entries())
         .map(([rawAction, count]) => ({
             rawAction,
-            name: t(`admin.audit.actionTypes.${rawAction}`, { defaultValue: ACTION_LABELS[rawAction] ?? rawAction }),
+            name: auditActionLabel(t, rawAction),
             count,
         }))
         .sort((a, b) => b.count - a.count)

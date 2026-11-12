@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Building2, Cpu, FileText, Gauge, Users } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { SkelCards } from '@/components/ui/Skeleton'
+import { SkelCards, SkelText } from '@/components/ui/Skeleton'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -69,6 +69,8 @@ export default function Admin() {
     const { loadModels } = models
     const { loadAuditLogs } = audit
     const { loadTenants } = tenants
+    // 側欄的「目前模型」每一頁都看得到：進後台就讀一次，切到模型頁再重讀
+    useEffect(() => { loadModels() }, [loadModels])
     useEffect(() => {
         if (activeSection === 'models') loadModels()
         if (activeSection === 'audit' || activeSection === 'overview') loadAuditLogs()
@@ -122,7 +124,7 @@ export default function Admin() {
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
                                 <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
-                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>
+                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || (models.modelsLoaded ? t('admin.standby') : <SkelText>Qwen2.5-7B-Instruct</SkelText>)}</p>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />

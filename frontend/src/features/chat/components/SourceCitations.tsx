@@ -91,7 +91,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                 className="w-full flex items-center justify-between px-3 py-2"
                             >
                                 <div className="flex min-w-0 items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-accent rounded-[var(--r-6)] text-xs font-medium">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-[var(--accent-ink-small)] rounded-[var(--r-6)] text-xs font-medium">
                                         {index + 1}
                                     </span>
                                     <span className="text-text-secondary truncate">{group.name}</span>

@@ -57,14 +57,18 @@ export default defineConfig(({ mode }) => ({
             overlay: false,
         },
         proxy: {
+            // xfwd：把連進來的手機／電腦 IP 加在 X-Forwarded-For 最右邊轉給後端
+            // （不然所有區網裝置在後端都是 127.0.0.1：稽核紀錄分不出誰、請求次數限制大家共用一份）
             '/api': {
                 target: 'http://127.0.0.1:8168',
                 changeOrigin: true,
+                xfwd: true,
             },
             '/ws': {
                 target: 'ws://127.0.0.1:8168',
                 ws: true,
                 changeOrigin: true,
+                xfwd: true,
             },
         },
     },

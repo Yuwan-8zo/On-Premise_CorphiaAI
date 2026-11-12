@@ -16,7 +16,9 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select, func, desc
 
 from app.core.query_utils import like_contains
+from app.core.tenancy import same_tenant, scope_users
 from app.api.deps import DbSession, AdminUser
+from app.api.lookups import get_tenant_user
 from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.message import Message
@@ -35,13 +37,10 @@ async def list_users_for_replay(
     """
     列出所有使用者供管理員選擇（僅限 Admin / Engineer）
     """
-    query = select(
+    # 範圍：自己租戶（沒有租戶的帳號算 default）；engineer 看全部
+    query = scope_users(select(
         User.id, User.email, User.name, User.role, User.tenant_id
-    )
-
-    # 非 engineer 只能看自己租戶
-    if current_user.role != "engineer":
-        query = query.where(User.tenant_id == current_user.tenant_id)
+    ), current_user)
 
     if search:
         # FIX: % 與 _ 是 SQL LIKE 萬用字元；使用者輸入 "100%" 期望比對「百分號」
@@ -91,17 +90,8 @@ async def list_user_conversations(
     """
     查看指定使用者的所有對話（僅限 Admin / Engineer）
     """
-    # 非 engineer 檢查租戶歸屬
-    if current_user.role != "engineer":
-        target_result = await db.execute(
-            select(User.tenant_id).where(User.id == target_user_id)
-        )
-        target_tenant = target_result.scalar_one_or_none()
-        if target_tenant != current_user.tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="無法查看其他租戶的使用者",
-            )
+    # 只能看範圍內的使用者（不在範圍內和不存在一樣回 404）
+    await get_tenant_user(db, target_user_id, current_user)
 
     # 計數
     count_result = await db.execute(
@@ -167,13 +157,12 @@ async def replay_conversation_messages(
             status_code=status.HTTP_404_NOT_FOUND, detail="對話不存在"
         )
 
-    # 租戶檢查
-    if current_user.role != "engineer":
-        if conversation.tenant_id != current_user.tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="無法查看其他租戶的對話",
-            )
+    # 租戶檢查（對話沒有租戶算 default）
+    if not same_tenant(current_user, conversation.tenant_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="無法查看其他租戶的對話",
+        )
 
     # 取得訊息
     result = await db.execute(

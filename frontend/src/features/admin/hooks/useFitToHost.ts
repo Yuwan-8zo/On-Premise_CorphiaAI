@@ -11,6 +11,11 @@ import { useLayoutEffect, useRef } from 'react'
  * 還放不下就繼續縮（最多幾次）。同一個畫格裡完成，看不到閃動。
  * 視窗大小、轉向、網址列收合、切換分頁、資料載入都會重算。
  */
+/** 多出來幾 px 以內不重算縮放（要小於頁面底部的內距 --space） */
+const FIT_TOLERANCE = 3
+/** 新算出的縮放和目前差不到這個比例（1%）就沿用目前的，避免整頁微微跳動 */
+const FIT_KEEP = 0.01
+
 export function useFitToHost<T extends HTMLElement>() {
     const ref = useRef<T>(null)
 
@@ -33,14 +38,22 @@ export function useFitToHost<T extends HTMLElement>() {
                 return Math.max(0, ...checks().map((c) => c.getBoundingClientRect().bottom - limit)) / z
             }
             const overflow = () => pushedOut() + Math.max(0, ...checks().map((c) => c.scrollHeight - c.clientHeight))
+            const prev = parseFloat(el.style.getPropertyValue('--fit')) || 1
             let scale = 1
             el.style.setProperty('--fit', '1')
             for (let i = 0; i < 4; i++) {
                 const extra = overflow()
-                if (extra <= 1) break // 差 1px 以內視為放得下（小數點進位造成的誤差）
+                // 差 FIT_TOLERANCE 以內視為放得下：只吃進頁面底部的內距、看不出來；
+                // 不然內容差 1～2px（字型載入、數字變長）就會重算一次縮放，整頁微微跳一下
+                if (extra <= FIT_TOLERANCE) break
                 const have = el.clientHeight
                 scale *= have / (have + extra)
                 el.style.setProperty('--fit', String(scale))
+            }
+            // 新比例和目前的只差一點點、而且目前的比例還放得下 → 維持不變，畫面不跳（資料載入、數字變長造成的微小差異）
+            if (prev !== scale && Math.abs(scale - prev) / prev < FIT_KEEP) {
+                el.style.setProperty('--fit', String(prev))
+                if (overflow() > FIT_TOLERANCE) el.style.setProperty('--fit', String(scale))
             }
         }
         const schedule = () => { if (!frame) frame = requestAnimationFrame(fit) }

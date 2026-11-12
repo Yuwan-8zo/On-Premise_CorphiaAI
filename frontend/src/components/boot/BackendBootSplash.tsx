@@ -17,6 +17,9 @@ import { useEffect, useRef, useState } from 'react'
 import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
 import { SkelPage } from '@/components/ui/Skeleton'
 import WaveBackground from '@/components/ui/WaveBackground'
+import { useTranslation } from 'react-i18next'
+import i18n from '@/i18n'
+import { modelSize } from '@/lib/modelName'
 
 type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
@@ -27,6 +30,8 @@ interface LauncherStep {
     detail: string
     started_at: number | null
     finished_at: number | null
+    /** 說明的代碼（啟動程式提供；前端依它顯示目前語言，沒有就直接用 detail） */
+    code?: string | null
 }
 
 interface LauncherStatus {
@@ -79,8 +84,8 @@ async function getJson<T>(url: string): Promise<T | null> {
 }
 
 function modelLabel(m: ModelState): string {
-    const size = m.name.match(/(\d+(?:\.\d+)?B)/i)?.[1]?.toUpperCase() ?? m.name
-    return `AI 模型 ${size}（${m.size_gb.toFixed(1)} GB）`
+    const size = modelSize(m.name) ?? m.name
+    return i18n.t('ui.boot.modelLabel', { size, gb: m.size_gb.toFixed(1) })
 }
 
 function modelRow(m: ModelState): Row {
@@ -91,16 +96,17 @@ function modelRow(m: ModelState): Row {
         error: 'error',
         not_preloaded: 'skipped',
     }
+    // is_current ＝ 系統預設模型（每個人可以各自切換，見後端 model_preference）
     const detail =
         m.state === 'not_preloaded'
-            ? '不預先載入（需要時再切換）'
+            ? i18n.t('ui.boot.detail.notPreloaded')
             : m.state === 'error'
-              ? m.error || '載入失敗'
+              ? m.error || i18n.t('ui.boot.detail.loadFailed')
               : m.state === 'loading'
-                ? '從硬碟載入模型權重…'
+                ? i18n.t('ui.boot.detail.loadingWeights')
                 : m.state === 'ready'
-                  ? m.is_current ? '已載入・使用中' : '已載入・可立即切換'
-                  : m.is_current ? '等待載入（使用中的模型）' : '等待載入'
+                  ? i18n.t(m.is_current ? 'ui.boot.detail.readyDefault' : 'ui.boot.detail.readySwitchable')
+                  : i18n.t(m.is_current ? 'ui.boot.detail.waitingDefault' : 'ui.boot.detail.waiting')
     return {
         key: `model-${m.name}`,
         label: modelLabel(m),
@@ -115,14 +121,19 @@ function fmtSec(row: Row, now: number): string {
     if (!row.started) return ''
     const end = row.finished ?? now
     const s = Math.max(0, Math.round(end - row.started))
-    return s >= 60 ? `${Math.floor(s / 60)} 分 ${s % 60} 秒` : `${s} 秒`
+    return fmtDuration(s)
+}
+
+/** 幾分幾秒（目前語言） */
+function fmtDuration(s: number): string {
+    return s >= 60 ? i18n.t('ui.boot.minSec', { m: Math.floor(s / 60), s: s % 60 }) : i18n.t('ui.boot.sec', { s })
 }
 
 /** 狀態圖示：28 的圓形（Apple 清單列的圖示底），讀取中不轉圈、用強調色圓點呼吸 */
 function StateIcon({ state }: { state: StepState }) {
     const tone =
-        state === 'done' ? 'bg-[#30d158]/15 text-[#30d158]'
-        : state === 'error' ? 'bg-[#ff4245]/15 text-[#ff4245]'
+        state === 'done' ? 'bg-[color-mix(in_srgb,var(--sys-green)_15%,transparent)] text-[var(--ink-green)]'
+        : state === 'error' ? 'bg-[color-mix(in_srgb,var(--sys-red)_15%,transparent)] text-[var(--danger-ink)]'
         : state === 'running' ? 'bg-accent/15 text-accent'
         : 'bg-[var(--chip)] text-text-muted'
     return (
@@ -136,13 +147,8 @@ function StateIcon({ state }: { state: StepState }) {
     )
 }
 
-const STATE_TEXT: Record<StepState, string> = {
-    pending: '等待中',
-    running: '載入中',
-    done: '完成',
-    error: '失敗',
-    skipped: '略過',
-}
+/** 狀態文字（目前語言） */
+const stateText = (state: StepState) => i18n.t(`ui.boot.state.${state}`)
 
 interface BackendBootSplashProps {
     /** 全部就緒時觸發 */
@@ -150,6 +156,8 @@ interface BackendBootSplashProps {
 }
 
 export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
+    // 換語言時重繪（文字都用 i18n.t 取，這裡只是訂閱語言變化）
+    useTranslation()
     const [launcher, setLauncher] = useState<LauncherStatus | null>(null)
     const [health, setHealth] = useState<Health | null>(null)
     const [now, setNow] = useState(() => Date.now() / 1000)
@@ -214,10 +222,15 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
         for (const s of launcher.steps) {
             // 後端已經回應，就算狀態檔慢一步也直接視為完成
             const state: StepState = apiUp && s.state !== 'error' && s.state !== 'skipped' ? 'done' : s.state
-            rows.push({ key: s.key, label: s.label, state, detail: s.detail, started: s.started_at, finished: state === 'done' ? (s.finished_at ?? s.started_at) : s.finished_at })
+            // 名稱與說明依代碼顯示目前語言；啟動程式沒給代碼的（例如網址、錯誤原因）照原樣
+            const label = i18n.t(`ui.boot.step.${s.key}`, { defaultValue: s.label })
+            let detail = s.code ? i18n.t(`ui.boot.detail.${s.code}`, { defaultValue: s.detail }) : s.detail
+            // 後端已經回應、但狀態檔還寫著「啟動中」：說明也改成已連線，不要「完成」配「啟動中…」
+            if (s.key === 'backend' && state === 'done' && s.state !== 'done') detail = i18n.t('ui.boot.detail.connected')
+            rows.push({ key: s.key, label, state, detail, started: s.started_at, finished: state === 'done' ? (s.finished_at ?? s.started_at) : s.finished_at })
         }
     } else {
-        rows.push({ key: 'backend', label: '後端 API 伺服器', state: apiUp ? 'done' : 'running', detail: apiUp ? '已連線' : '等待後端回應…', started: firstSeen.current, finished: apiUp ? firstSeen.current : null })
+        rows.push({ key: 'backend', label: i18n.t('ui.boot.step.backend'), state: apiUp ? 'done' : 'running', detail: i18n.t(apiUp ? 'ui.boot.detail.connected' : 'ui.boot.detail.waitingBackend'), started: firstSeen.current, finished: apiUp ? firstSeen.current : null })
     }
 
     // 後端已啟動但正忙著載入模型時，health 偶爾會逾時；這時應顯示「載入中」而不是「等待後端」
@@ -229,14 +242,15 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
           : health?.rag === 'error' || health?.rag === 'unavailable'
             ? 'error'
             : 'running'
-    rows.push({ key: 'rag', label: '文件檢索模型（Embedding）', state: ragState, detail: ragState === 'done' ? '可依企業文件回答' : ragState === 'running' ? '載入中…' : ragState === 'error' ? '載入失敗' : '等待後端', started: null, finished: null })
+    const ragDetail = { done: 'ragReady', running: 'loading', error: 'loadFailed', pending: 'backendNotUp', skipped: 'skipped' }[ragState]
+    rows.push({ key: 'rag', label: i18n.t('ui.boot.step.rag'), state: ragState, detail: i18n.t(`ui.boot.detail.${ragDetail}`), started: null, finished: null })
 
     if (models.length) {
         // 使用中的模型放最前面，其餘依大小排序
         const sorted = [...models].sort((a, b) => Number(b.is_current) - Number(a.is_current) || a.size_gb - b.size_gb)
         rows.push(...sorted.map(modelRow))
     } else {
-        rows.push({ key: 'models', label: 'AI 模型（3B／7B）', state: backendStarted ? 'running' : 'pending', detail: backendStarted ? '載入模型中…' : '等待後端啟動後開始載入', started: null, finished: null })
+        rows.push({ key: 'models', label: i18n.t('ui.boot.step.models'), state: backendStarted ? 'running' : 'pending', detail: i18n.t(backendStarted ? 'ui.boot.detail.loadingModels' : 'ui.boot.detail.waitAfterBackend'), started: null, finished: null })
     }
 
     const totalStart = launcherFresh ? launcher.started_at : firstSeen.current
@@ -257,9 +271,9 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                 <div className="mb-[var(--sp-20)] flex items-center gap-4 px-[var(--sp-12)]">
                     <CorphiaLogo className="h-[var(--sz-44)] w-[var(--sz-44)] shrink-0 select-none text-text-primary" />
                     <div className="min-w-0 flex-1">
-                        <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">Corphia AI 啟動中</h1>
+                        <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary [text-wrap:balance]">{i18n.t('ui.boot.title')}</h1>
                         <p className="mt-0.5 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary tabular-nums">
-                            {allReady ? '全部就緒，正在進入系統…' : `已完成 ${doneCount} / ${rows.length} 項・已經過 ${totalSec >= 60 ? `${Math.floor(totalSec / 60)} 分 ${totalSec % 60} 秒` : `${totalSec} 秒`}`}
+                            {allReady ? i18n.t('ui.boot.allReady') : i18n.t('ui.boot.progress', { done: doneCount, total: rows.length, time: fmtDuration(totalSec) })}
                         </p>
                     </div>
                 </div>
@@ -271,10 +285,10 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                             <StateIcon state={r.state} />
                             <div className="min-w-0 flex-1">
                                 <p className={`text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
-                                {r.detail && <p className={`truncate text-[length:var(--fs-13)] leading-[var(--lh-18)] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
+                                {r.detail && <p className={`break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
                             </div>
                             <div className="shrink-0 text-right">
-                                <p className={`text-[length:var(--fs-13)] leading-[var(--lh-18)] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[#30d158]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{STATE_TEXT[r.state]}</p>
+                                <p className={`text-[length:var(--fs-13)] leading-[var(--lh-18)] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[var(--ink-green)]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{stateText(r.state)}</p>
                                 <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
                             </div>
                         </li>
@@ -284,14 +298,14 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                 {(launcherError || launcherStale || stopped) && (
                     <div className="paper !rounded-[var(--r-26)] mt-4 px-[var(--sp-20)] py-[var(--sp-14)]">
                         <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-[var(--danger-ink)]">
-                            {stopped ? '系統目前是關閉狀態' : launcherError ? '啟動過程發生錯誤' : '啟動程式沒有回應'}
+                            {i18n.t(stopped ? 'ui.boot.stopped' : launcherError ? 'ui.boot.launchError' : 'ui.boot.noResponse')}
                         </p>
                         {launcherError && launcher?.message && <p className="mt-1 break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{launcher.message}</p>}
-                        <p className="mt-1 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">請雙擊「一鍵關閉」，再雙擊「一鍵啟動」。</p>
+                        <p className="mt-1 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{i18n.t('ui.boot.restartHint')}</p>
                     </div>
                 )}
 
-                <p className="mt-[var(--sp-20)] text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">地端部署・所有回答都由本機 AI 產生・資料 100% 留在本機</p>
+                <p className="mt-[var(--sp-20)] text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">{i18n.t('ui.boot.footer')}</p>
             </div>
         </div>
     )

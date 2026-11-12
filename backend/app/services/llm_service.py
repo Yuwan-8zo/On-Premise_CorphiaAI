@@ -274,6 +274,22 @@ class LLMService:
         self._initialized = True
         return True
 
+    async def _instance_for(self, model_name: Optional[str]):
+        """
+        這次生成要用的模型：指定的模型（還沒載入就先載入，之後留在記憶體）；
+        沒指定、找不到或載入失敗就用系統預設。回 None ＝ 沒有可用的真實模型（走模擬模式）。
+        """
+        if not (self.use_llama_cpp and self._llama_instance):
+            return None
+        if model_name:
+            info = get_model_manager().get_model(model_name)
+            if info is not None and info.path != self.model:
+                try:
+                    return await self._ensure_loaded(info.name, info.path)
+                except Exception as exc:
+                    logger.error(f"載入使用者選的模型失敗，改用系統預設 {model_name}: {exc}")
+        return self._llama_instance
+
     async def generate(
         self,
         prompt: str,
@@ -281,8 +297,9 @@ class LLMService:
         temperature: float = 0.7,
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
+        model_name: Optional[str] = None,
     ) -> str:
-        """生成回應（非串流）。"""
+        """生成回應（非串流）。model_name：用哪個模型（每個人自己選的；沒給用系統預設）"""
         if not self._initialized:
             await self.initialize()
 
@@ -291,8 +308,9 @@ class LLMService:
         top_p = _clamp(top_p, 0.01, 1.0, 0.9)
         max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
 
-        if self.use_llama_cpp and self._llama_instance:
-            return await self._llama_generate(prompt, max_tokens, temperature, top_p, stop)
+        inst = await self._instance_for(model_name)
+        if inst is not None:
+            return await self._llama_generate(prompt, max_tokens, temperature, top_p, stop, inst=inst)
         self._require_real_model()
         return self._simulate_response(prompt)
 
@@ -303,9 +321,10 @@ class LLMService:
         temperature: float = 0.7,
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
+        model_name: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
         """
-        串流生成回應。
+        串流生成回應。model_name：用哪個模型（每個人自己選的；沒給用系統預設）
 
         重要：呼叫端應在 task cancel / 客戶端斷線時 break out of the async for，
         本 generator 偵測到 GeneratorExit / CancelledError 時會設 stop_event，
@@ -319,8 +338,9 @@ class LLMService:
         top_p = _clamp(top_p, 0.01, 1.0, 0.9)
         max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
 
-        if self.use_llama_cpp and self._llama_instance:
-            async for chunk in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop):
+        inst = await self._instance_for(model_name)
+        if inst is not None:
+            async for chunk in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop, inst=inst):
                 yield chunk
             return
 
@@ -335,8 +355,9 @@ class LLMService:
         max_tokens: int = 1024,
         temperature: float = 0.1,
         top_p: float = 0.9,
+        model_name: Optional[str] = None,
     ) -> dict:
-        """生成結構化 JSON 回應。"""
+        """生成結構化 JSON 回應。model_name：用哪個模型（沒給用系統預設）"""
         if not self._initialized:
             await self.initialize()
 
@@ -345,9 +366,10 @@ class LLMService:
         top_p = _clamp(top_p, 0.01, 1.0, 0.9)
         max_tokens = _safe_max_tokens(max_tokens, len(prompt or ""))
 
-        if self.use_llama_cpp and self._llama_instance:
+        inst = await self._instance_for(model_name)
+        if inst is not None:
             return await self._llama_generate_structured(
-                prompt, schema_dict, max_tokens, temperature, top_p
+                prompt, schema_dict, max_tokens, temperature, top_p, inst=inst
             )
 
         self._require_real_model()
@@ -365,10 +387,10 @@ class LLMService:
         except Exception:
             return {}
 
-    async def _llama_generate(self, prompt, max_tokens, temperature, top_p, stop):
+    async def _llama_generate(self, prompt, max_tokens, temperature, top_p, stop, inst=None):
         start = time.perf_counter()
 
-        inst = self._llama_instance
+        inst = inst or self._llama_instance
         lock = self._lock_for(inst)
 
         def _run():
@@ -390,7 +412,7 @@ class LLMService:
         self.record_generation(token_count, elapsed)
         return text
 
-    async def _llama_generate_stream(self, prompt, max_tokens, temperature, top_p, stop):
+    async def _llama_generate_stream(self, prompt, max_tokens, temperature, top_p, stop, inst=None):
         """
         Llama 串流生成 + 中斷支援。
 
@@ -413,7 +435,7 @@ class LLMService:
         q: queue.Queue = queue.Queue(maxsize=64)
         stop_event = threading.Event()
 
-        inst = self._llama_instance
+        inst = inst or self._llama_instance
         lock = self._lock_for(inst)
 
         def _run_llama():
@@ -500,7 +522,7 @@ class LLMService:
             if first_token_at is not None and token_count > 1:
                 self.record_generation(token_count - 1, time.perf_counter() - first_token_at)
 
-    async def _llama_generate_structured(self, prompt, schema_dict, max_tokens, temperature, top_p):
+    async def _llama_generate_structured(self, prompt, schema_dict, max_tokens, temperature, top_p, inst=None):
         start = time.perf_counter()
         schema_json = json.dumps(schema_dict, ensure_ascii=False)
         augmented_prompt = (
@@ -510,7 +532,7 @@ class LLMService:
             + "\n\n```json\n"
         )
 
-        inst = self._llama_instance
+        inst = inst or self._llama_instance
         lock = self._lock_for(inst)
 
         def _run():

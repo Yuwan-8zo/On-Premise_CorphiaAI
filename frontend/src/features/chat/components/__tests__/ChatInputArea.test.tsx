@@ -20,6 +20,8 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: { changeLanguage: vi.fn() },
   }),
+  // 共用工具會載入 i18n 設定檔，它需要這個外掛物件
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }))
 
 // GSAP animation facade is mocked to plain elements in jsdom.

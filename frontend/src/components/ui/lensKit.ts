@@ -6,7 +6,7 @@
  *
  * 構造（每個元件都一樣，只有尺寸和方向不同）：
  *   底（軌道／列）：顏色畫在裡面一層，放大鏡底下挖洞（capsuleHole／roundRectHole，自動內縮 1px）
- *   鏡片：不補色（透明），鏡內＝縮小的底（長邊 0.93、短邊 0.768）＋肩（shoulderMask，單一形狀），和底同色
+ *   鏡片：不補色（透明），鏡內＝底的副本（長邊 0.93；短邊依放大鏡大小算，上下露出的凹陷固定佔鏡片短邊的比例，見 lensCrossScale）＋肩（shoulderMask，單一形狀），和底同色
  *   最上層＝平常的樣子（凹陷底盤／白色旋鈕），按下淡掉、縮回時再蓋回
  * 時間表：見 glideProfile（依行程距離在開關與分頁列兩套之間過渡）與 SYS_CURVE（iOS 26 逐幀量的位置曲線）
  */
@@ -16,7 +16,8 @@ import { prefersReducedMotion } from '@/lib/reducedMotion'
 /** 設定表（對照規範 :root 的 --lens-*／--glide-*；毫秒、像素、比例） */
 export const LENS_CFG = {
     sx: 0.93, // --lens-sx 鏡內的底沿長邊的縮放
-    sy: 0.768, // --lens-sy 鏡內的底垂直長邊的縮放
+    sy: 0.768, // --lens-sy 鏡內的底垂直長邊的縮放（切換開關用；整條列類用 band 依大小算）
+    band: 0.17, // --lens-band 折射凹陷（肩）的寬度佔鏡片短邊的比例（整條列類，見 lensCrossScale）
     zoom: 1.12, // --lens-zoom 鏡內文字與圖示放大倍率
     grow: 120, // --lens-grow 按下時原地長大
     veilOut: 100, // --lens-veil-out 平常的樣子淡掉
@@ -188,6 +189,19 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
     }
 }
 
+/**
+ * 鏡內的底在「垂直長邊」方向的縮放（整條列類：分段切換器、工具列、直的選單）——依放大鏡大小自適應。
+ * 折射的樣子＝鏡內的底比鏡片窄，上下各露出一條凹陷的底面（肩）。這條凹陷的寬度固定佔鏡片短邊的 LENS_CFG.band，
+ * 所以放大鏡大（長按變大、直的選單）凹陷跟著寬，放大鏡小凹陷跟著窄，每個元件看起來是同一片玻璃。
+ * 側欄「一般／專案」用這個比例時≈原本的固定 0.768。
+ * 切換開關不用：它的軌道、旋鈕、放大鏡全部等比例縮放，固定的 LENS_SY 本來就和大小無關。
+ * lensCross＝放大鏡短邊、barCross＝底的粗細
+ */
+export function lensCrossScale(lensCross: number, barCross: number) {
+    if (!(barCross > 0) || !(lensCross > 0)) return LENS_SY
+    return Math.min(1, (lensCross * (1 - 2 * LENS_CFG.band)) / barCross)
+}
+
 /** 放大鏡是否在作用中（按住、滑動或縮回中）；平常只顯示凹陷底盤／白色旋鈕 */
 export const lensActive = (f: LensFrame) => f.grow > 0.001 || f.veil < 0.999
 
@@ -265,22 +279,29 @@ export function roundRectHole(x0: number, y0: number, w0: number, h0: number, r0
  * 規範 maskURI 原本那條「往中間消失的細線」會和縮小的底交界，在底面兩端留下隱約的線（違反「鏡內不疊線」）
  */
 const maskCache = new Map<string, string>()
-/** vertical＝直的放大鏡：W、H 仍是「長邊、短邊」，畫好後整組轉 90 度，輸出寬 H、高 W 的遮罩；rad＝鏡片圓角（預設膠囊 H/2） */
-export function shoulderMask(W: number, H: number, o: number, barH: number, vertical = false, rad?: number) {
-    const key = [W, H, o, barH, rad ?? 0].map((n) => n.toFixed(1)).join('x') + (vertical ? 'v' : '')
+/**
+ * vertical＝直的放大鏡：W、H 仍是「長邊、短邊」，畫好後整組轉 90 度，輸出寬 H、高 W 的遮罩；rad＝鏡片圓角（預設膠囊 H/2）
+ * sy＝鏡內副本的短邊縮放，要和副本實際用的一樣（預設依大小算；切換開關用固定的 LENS_SY）
+ */
+export function shoulderMask(W: number, H: number, o: number, barH: number, vertical = false, rad?: number, sy = lensCrossScale(H, barH)) {
+    const key = [W, H, o, barH, rad ?? 0, sy].map((n) => n.toFixed(3)).join('x') + (vertical ? 'v' : '')
     const hit = maskCache.get(key)
     if (hit) return hit
     const f = (n: number) => +n.toFixed(2)
     const r = rad ?? H / 2
     const xr = r - Math.sqrt(Math.max(0, r * r - (r - o) * (r - o)))
-    const bandY = f(H / 2 - (barH * LENS_SY) / 2 + 0.2)
+    // 底的副本縮放後的上緣（和鏡內副本用同一個縮放）
+    const bandY = f(H / 2 - (barH * sy) / 2 + 0.2)
     const cs = f(xr + 2)
-    const rx = f(bandY - o + 1.3)
+    const rx = f(Math.max(0, bandY - o + 1.3))
     const [vw, vh] = vertical ? [H, W] : [W, H]
+    const cut = bandY > 0.5
+        ? `<rect x='${cs}' y='-8' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/><rect x='${cs}' y='${f(H - bandY)}' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/>`
+        : ''
     const svg =
         `<svg xmlns='http://www.w3.org/2000/svg' width='${f(vw * 10)}' height='${f(vh * 10)}' viewBox='0 0 ${f(vw)} ${f(vh)}' preserveAspectRatio='none'>` +
         `<defs><mask id='m'><rect width='${f(W)}' height='${f(H)}' fill='#fff'/>` +
-        `<rect x='${cs}' y='-8' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/><rect x='${cs}' y='${f(H - bandY)}' width='${f(W - cs * 2)}' height='${f(bandY + 8)}' rx='${rx}' fill='#000'/>` +
+        cut +
         `</mask></defs><g${vertical ? ` transform='translate(${f(H)} 0) rotate(90)'` : ''}><rect width='${f(W)}' height='${f(H)}' fill='#fff' mask='url(#m)'/></g></svg>`
     const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
     maskCache.set(key, url)

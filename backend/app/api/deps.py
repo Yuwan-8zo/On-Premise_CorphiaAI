@@ -3,7 +3,6 @@ API 依賴注入模組
 """
 
 from typing import Annotated
-from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,21 +11,18 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import decode_token
-from app.core.time_utils import to_aware_utc
+from app.core.tenancy import tenant_is_active
 from app.models.user import User, UserRole
-from app.services.token_service import is_token_blacklisted
+from app.services.token_service import is_token_blacklisted, issued_before_revocation
 
 
 # HTTP Bearer 認證
 security = HTTPBearer()
 
 
-async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-    db: Annotated[AsyncSession, Depends(get_db)]
-) -> User:
+async def authenticate_access_token(db: AsyncSession, token: str) -> User:
     """
-    取得當前登入使用者
+    驗證 Access Token 並取得使用者（一般 API 與 WebSocket 共用，兩邊規則一定一樣）
 
     驗證流程:
     1. 解碼 Token 並驗證簽章
@@ -36,17 +32,15 @@ async def get_current_user(
     5. 檢查 Token 是否在使用者 token_revoked_at 之前發放
     
     Args:
-        credentials: Bearer Token
         db: 資料庫 Session
-        
+        token: Access Token（JWT 字串）
+
     Returns:
         User: 當前使用者
         
     Raises:
         HTTPException: Token 無效或使用者不存在
     """
-    token = credentials.credentials
-    
     payload = decode_token(token)
     if payload is None:
         raise HTTPException(
@@ -101,33 +95,30 @@ async def get_current_user(
             detail="使用者帳號已停用"
         )
     
-    # 檢查 Token 是否在使用者 token_revoked_at 之前發放
-    # （管理員強制撤銷所有 Token 時設定的時間戳）
-    #
-    # FIX: 原本用 .replace(tzinfo=timezone.utc) 在「DB 已是 aware datetime」的環境
-    # 會丟掉真實時區資訊（例如 PostgreSQL TIMESTAMP WITH TIME ZONE 拉回來是 +08:00
-    # 直接 replace 成 UTC 等於把時間「平移」8 小時，比對結果錯）。
-    # 改用 to_aware_utc() 統一處理：naive 視為 UTC 補 tzinfo，aware 直接 astimezone(UTC)。
-    if user.token_revoked_at:
-        token_iat = payload.get("iat")
-        if token_iat:
-            token_issued_at = datetime.fromtimestamp(token_iat, tz=timezone.utc)
-            revoked_at_utc = to_aware_utc(user.token_revoked_at)
-            if revoked_at_utc and token_issued_at < revoked_at_utc:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token 已被撤銷，請重新登入",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
+    # 所屬租戶被停用：整個租戶的人都不能用
+    if not await tenant_is_active(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="所屬組織已停用，請聯絡系統管理員",
+        )
+
+    # 在「撤銷所有 Token」（強制踢出、修改密碼）之前發的 Token 一律失效
+    if issued_before_revocation(user, payload):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token 已被撤銷，請重新登入",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     return user
 
 
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
-    """取得當前活躍使用者"""
-    return current_user
+    """取得當前登入使用者（Bearer Token）"""
+    return await authenticate_access_token(db, credentials.credentials)
 
 
 def require_role(*roles: UserRole):

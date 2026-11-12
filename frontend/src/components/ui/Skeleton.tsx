@@ -8,12 +8,20 @@
  *   <SkelPage>     整頁：左側欄＋主內容
  * 顏色用 --chip（深淺模式各自的淡墨色），呼吸動畫在 snow.css 的 .skel；「減少動態效果」時靜止。
  */
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import WaveBackground from '@/components/ui/WaveBackground'
 import i18n from '@/i18n'
 
 export function Skel({ className = '', style }: { className?: string; style?: CSSProperties }) {
     return <span aria-hidden className={`skel ${className}`} style={style} />
+}
+
+/**
+ * 文字骨架：children 放和真資料同格式的佔位文字（例如「0.0」「00.0%」「8 cores」），文字透明、只看到灰條。
+ * 高度一定等於真資料那一行，資料載入後版面不會長高或跳動；放在數字、短文字的位置用這個，不要用固定高度的 Skel。
+ */
+export function SkelText({ children }: { children: ReactNode }) {
+    return <span aria-hidden className="skel-text">{children}</span>
 }
 
 export function SkelRows({ count = 5, className = '' }: { count?: number; className?: string }) {
@@ -84,7 +92,7 @@ export function SkelTableRows({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
 }
 
 /** 文字灰條：用 em 當單位，放在跟真實文字同字級的容器裡，長度＝字數、高度＝字身，會跟著字級縮放 */
-function SkelText({ chars }: { chars: number }) {
+function SkelChars({ chars }: { chars: number }) {
     return <span aria-hidden className="skel align-middle h-[0.78em]" style={{ display: 'inline-block', width: `${chars}em` }} />
 }
 
@@ -101,24 +109,24 @@ function SkelChat() {
                 <Skel className="absolute left-[var(--sp-216)] top-[var(--sp-25)] h-[var(--sz-21)] w-[var(--sz-21)] !rounded-[var(--r-6)]" />
                 <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-74)] h-[var(--sz-44)] w-[var(--sz-232)]" />
                 <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-132)] h-[var(--sz-44)] w-[var(--sz-232)]" />
-                <span className="absolute left-[var(--sp-14)] top-[var(--sp-201)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText chars={4} /></span>
+                <span className="absolute left-[var(--sp-14)] top-[var(--sp-201)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelChars chars={4} /></span>
                 <Skel className="absolute left-[var(--sp-20)] bottom-[var(--sp-16)] h-[var(--sz-32)] w-[var(--sz-32)] !rounded-full" />
-                <span className="absolute left-[var(--sp-64)] bottom-[var(--sp-22)] text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText chars={4} /></span>
+                <span className="absolute left-[var(--sp-64)] bottom-[var(--sp-22)] text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelChars chars={4} /></span>
             </aside>
             <div className="relative flex-1 min-w-0">
                 <Skel className="absolute left-[var(--sp-21)] top-[var(--sp-21)] h-[var(--sz-40)] w-[var(--sz-136)] !rounded-[var(--r-12)]" />
                 <div className="glass-chip absolute right-[var(--sp-68)] top-[var(--sp-21)] flex h-[var(--sz-40)] w-[var(--sz-245)] items-center !rounded-[var(--r-20)] px-[var(--sp-16)]">
-                    <span className="text-[length:var(--fs-15)]"><SkelText chars={12} /></span>
+                    <span className="text-[length:var(--fs-15)]"><SkelChars chars={12} /></span>
                 </div>
                 <div className="glass-chip absolute right-[var(--sp-21)] top-[var(--sp-21)] h-[var(--sz-40)] w-[var(--sz-40)] !rounded-full" />
                 <div className="absolute left-1/2 top-[calc(97px+10vh)] w-full max-w-3xl -translate-x-1/2 px-4 md:px-0">
-                    <h2 className="text-center text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold leading-[1.25]"><SkelText chars={14} /></h2>
+                    <h2 className="text-center text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold leading-[1.25]"><SkelChars chars={14} /></h2>
                     <div className="mx-auto mt-[var(--sp-28)] grid w-full max-w-[var(--sz-600)] grid-cols-1 sm:grid-cols-2 gap-[var(--sp-10)]">
                         {[0, 1, 2, 3].map((i) => (
                             <div key={i} className="paper relative h-[var(--sz-118)] !rounded-[var(--r-25)]">
                                 <Skel className="absolute left-[var(--sp-14)] top-[var(--sp-14)] h-[var(--sz-36)] w-[var(--sz-36)] !rounded-[var(--r-10)]" />
-                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-60)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelText chars={4} /></span>
-                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-86)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText chars={i % 2 ? 15 : 14} /></span>
+                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-60)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelChars chars={4} /></span>
+                                <span className="absolute left-[var(--sp-14)] top-[var(--sp-86)] text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelChars chars={i % 2 ? 15 : 14} /></span>
                             </div>
                         ))}
                     </div>
@@ -126,7 +134,7 @@ function SkelChat() {
                 <div className="absolute bottom-[var(--sp-28)] left-1/2 w-full max-w-3xl -translate-x-1/2 px-3 sm:px-4 md:px-0">
                     <div className="glass-field relative h-[var(--sz-50)] !rounded-[var(--r-25)]">
                         <Skel className="absolute left-[var(--sp-6)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
-                        <span className="absolute left-[var(--sp-49)] top-[var(--sp-14)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelText chars={5} /></span>
+                        <span className="absolute left-[var(--sp-49)] top-[var(--sp-14)] text-[length:var(--fs-15)] leading-[var(--lh-22)]"><SkelChars chars={5} /></span>
                         <Skel className="absolute right-[var(--sp-50)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
                         <Skel className="absolute right-[var(--sp-6)] top-[var(--sp-6)] h-[var(--sz-38)] w-[var(--sz-38)] !rounded-full" />
                     </div>
@@ -148,16 +156,16 @@ function SkelLogin() {
                 <div className="glass-chip h-[var(--sz-32)] w-[var(--sz-80)] !rounded-full" />
                 <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
                     <div className="mx-auto max-w-[var(--sz-460)] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                        <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold leading-tight"><SkelText chars={4} /></h2>
+                        <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold leading-tight"><SkelChars chars={4} /></h2>
                         <div className="mt-5 -mb-6 flex h-[var(--sz-96)] items-center"><Skel className="h-[var(--sz-64)] w-[var(--sz-237)] !rounded-[var(--r-16)]" /></div>
-                        <p className="mt-2 mb-10 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelText chars={12} /></p>
+                        <p className="mt-2 mb-10 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelChars chars={12} /></p>
                         <div className="space-y-7">
                             {[0, 1, 2].map((i) => (
                                 <div key={i} className="flex items-center gap-4">
                                     <div className="glass-chip h-[var(--sz-52)] w-[var(--sz-52)] shrink-0 !rounded-full" />
                                     <div className="flex flex-col">
-                                        <span className="text-[length:var(--fs-17)] leading-[var(--lh-22)] mb-0.5"><SkelText chars={6} /></span>
-                                        <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText chars={10} /></span>
+                                        <span className="text-[length:var(--fs-17)] leading-[var(--lh-22)] mb-0.5"><SkelChars chars={6} /></span>
+                                        <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelChars chars={10} /></span>
                                     </div>
                                 </div>
                             ))}
@@ -173,8 +181,8 @@ function SkelLogin() {
                 <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
                     <div className="w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-46)] p-5 flex flex-col aspect-square">
                         <Skel className="h-[var(--sz-52)] w-full shrink-0" />
-                        <div className="glass-field mt-[var(--sp-43)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelText chars={2} /></span></div>
-                        <div className="glass-field mt-[var(--sp-42)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelText chars={2} /></span></div>
+                        <div className="glass-field mt-[var(--sp-43)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelChars chars={2} /></span></div>
+                        <div className="glass-field mt-[var(--sp-42)] flex h-[var(--sz-47)] items-center !rounded-full px-[var(--sp-22)]"><span className="text-[length:var(--fs-15)]"><SkelChars chars={2} /></span></div>
                         <div className="flex-1" />
                         <Skel className="h-[var(--sz-52)] w-full shrink-0" />
                     </div>
@@ -192,18 +200,18 @@ function SkelLogin() {
  */
 function SkelAdmin() {
     const panelTitle = (chars: number) => (
-        <div className="px-[var(--sp-26)] pt-5 pb-2 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelText chars={chars} /></div>
+        <div className="px-[var(--sp-26)] pt-5 pb-2 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelChars chars={chars} /></div>
     )
     return (
         <div className="relative mx-auto flex h-full max-w-[var(--sz-1500)] flex-col px-3 py-3 md:px-4 md:py-3">
             <header className="mb-2 md:mb-3 flex shrink-0 items-center gap-2 pb-2 md:justify-between">
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
                     <div className="glass-chip h-[var(--sz-34)] w-[var(--sz-34)] shrink-0 !rounded-full" />
-                    <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold"><SkelText chars={4} /></h1>
+                    <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold"><SkelChars chars={4} /></h1>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
-                    <div className="hidden sm:flex glass-chip !rounded-full px-3 py-1.5 text-xs"><SkelText chars={6} /></div>
-                    <div className="glass-chip !rounded-full px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs"><SkelText chars={4} /></div>
+                    <div className="hidden sm:flex glass-chip !rounded-full px-3 py-1.5 text-xs"><SkelChars chars={6} /></div>
+                    <div className="glass-chip !rounded-full px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs"><SkelChars chars={4} /></div>
                 </div>
             </header>
             <main className="flex flex-col flex-1 min-h-0 gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
@@ -211,15 +219,15 @@ function SkelAdmin() {
                 <Skel className="lg:hidden h-[var(--sz-40)] w-full shrink-0" />
                 <aside className="hidden lg:flex h-full flex-col overflow-hidden paper paper-lg lg:p-2">
                     <div className="mb-2 rounded-[var(--r-18)] bg-[var(--chip)] p-2.5">
-                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={4} /></p>
-                        <p className="mt-0.5 mb-2 text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={3} /></p>
+                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelChars chars={4} /></p>
+                        <p className="mt-0.5 mb-2 text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelChars chars={3} /></p>
                         <Skel className="h-1.5 w-full" />
                     </div>
                     <div className="flex flex-col gap-1 py-2">
                         {[2, 3, 2, 2, 2].map((c, i) => (
                             <div key={i} className="flex h-[var(--sz-34)] items-center gap-2 px-3 text-[length:var(--fs-13)]">
                                 <Skel className="h-3.5 w-3.5 !rounded-[var(--r-4)] shrink-0" />
-                                <SkelText chars={c} />
+                                <SkelChars chars={c} />
                             </div>
                         ))}
                     </div>
@@ -227,9 +235,9 @@ function SkelAdmin() {
                         <div className="rounded-[var(--r-18)] bg-[var(--chip)] p-2">
                             <div className="flex items-center gap-1.5">
                                 <Skel className="h-6 w-6 !rounded-full shrink-0" />
-                                <div className="flex flex-col text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelText chars={3} /><span className="mt-1"><SkelText chars={3} /></span></div>
+                                <div className="flex flex-col text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelChars chars={3} /><span className="mt-1"><SkelChars chars={3} /></span></div>
                             </div>
-                            <div className="mt-2 flex items-center justify-between text-[length:var(--fs-12)]"><SkelText chars={4} /><Skel className="h-[var(--sz-24)] w-[var(--sz-42)]" /></div>
+                            <div className="mt-2 flex items-center justify-between text-[length:var(--fs-12)]"><SkelChars chars={4} /><Skel className="h-[var(--sz-24)] w-[var(--sz-42)]" /></div>
                         </div>
                     </div>
                 </aside>
@@ -241,8 +249,8 @@ function SkelAdmin() {
                                     <div className="flex items-center gap-2">
                                         <Skel className="h-7 w-7 shrink-0 !rounded-[var(--r-13)]" />
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelText chars={5} /></p>
-                                            <p className="text-[length:var(--fs-18)] leading-tight"><SkelText chars={1.4} /></p>
+                                            <p className="text-[length:var(--fs-12)] leading-[var(--lh-18)]"><SkelChars chars={5} /></p>
+                                            <p className="text-[length:var(--fs-18)] leading-tight"><SkelChars chars={1.4} /></p>
                                         </div>
                                     </div>
                                 </div>

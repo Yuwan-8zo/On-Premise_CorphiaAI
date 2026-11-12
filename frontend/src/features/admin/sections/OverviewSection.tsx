@@ -31,7 +31,7 @@ import {
 } from '@/components/snow/icons'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Skel } from '@/components/ui/Skeleton'
+import { Skel, SkelText } from '@/components/ui/Skeleton'
 
 import { adminApi } from '@/api/admin'
 import type { AuditLogItem } from '@/api/auditLogs'
@@ -175,7 +175,7 @@ export default function OverviewSection({
                                         {item.label}
                                     </p>
                                     <p className={`text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
-                                        {item.loading ? <Skel className="inline-block h-[var(--sz-22)] w-[var(--sz-40)] align-middle" /> : item.value.toLocaleString()}
+                                        {item.loading ? <SkelText>00</SkelText> : item.value.toLocaleString()}
                                     </p>
                                 </div>
                             </div>

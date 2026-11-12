@@ -2,12 +2,19 @@
 訊息 API
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 
 from app.api.lookups import get_own_conversation, get_own_message
 from app.api.deps import CurrentUser, DbSession
+from app.core.request_utils import get_client_ip
 from app.schemas.conversation import MessageCreate, MessageResponse, MessageUpdate
-from app.services.chat_service import ChatService
+from app.services.audit_service import AuditAction, AuditResource, write_audit_log
+from app.services.chat_service import ChatGenerationError, ChatService
+from app.services.message_guard import screen_user_message
+from app.services.model_preference import get_user_model
+from app.services.quota_service import check_user_quota
+from app.services.pii_masking_service import mask_pii
+from app.core.config import settings
 
 router = APIRouter(prefix="/messages", tags=["訊息"])
 
@@ -18,23 +25,55 @@ async def send_message(
     request: MessageCreate,
     current_user: CurrentUser,
     db: DbSession,
+    http_request: Request,
 ):
     """
-    發送訊息（非串流）
-    
-    注意：建議使用 WebSocket 進行串流對話
+    發送訊息（非串流；WebSocket 斷線時前端的備用路線）
+
+    和即時串流同一套規則：每日配額 → 安全閘道（個資遮罩、違禁詞、提示詞注入）→ 生成。
+    被攔阻時回 400，detail 帶 code（DLP_BLOCKED／INJECTION_BLOCKED）與原因。
     """
-    # 驗證對話存在
-    await get_own_conversation(db, conversation_id, current_user)
-    
-    # 發送訊息
-    chat_service = ChatService(db)
-    message = await chat_service.send_message(
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+
+    quota = await check_user_quota(db, current_user.id)
+    if not quota.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"code": "QUOTA_EXCEEDED", "message": quota.message},
+        )
+
+    events: list[dict] = []
+
+    async def collect(event: dict) -> None:
+        events.append(event)
+
+    content = await screen_user_message(
+        db, request.content.strip(),
         conversation_id=conversation_id,
-        content=request.content,
-        use_rag=request.use_rag,
+        tenant_id=conversation.tenant_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        ip_address=get_client_ip(http_request),
+        emit=collect,
     )
-    
+    if content is None:
+        last = events[-1] if events else {}
+        code = "DLP_BLOCKED" if last.get("type") == "dlp_block" else "INJECTION_BLOCKED"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": code, "message": last.get("message", "訊息已被攔阻")},
+        )
+
+    try:
+        message = await ChatService(db, model_name=await get_user_model(db, current_user.id)).send_message(
+            conversation_id=conversation_id,
+            content=content,
+            use_rag=request.use_rag,
+        )
+    except ChatGenerationError as e:
+        code = status.HTTP_503_SERVICE_UNAVAILABLE if e.code == "LLM_LOADING" else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=code, detail={"code": e.code or "GENERATION_FAILED", "message": e.message}) from e
+
     return MessageResponse.model_validate(message)
 
 
@@ -44,6 +83,7 @@ async def update_message(
     request: MessageUpdate,
     current_user: CurrentUser,
     db: DbSession,
+    http_request: Request,
 ):
     """
     修改訊息的內容 (不觸發重新生成)
@@ -64,16 +104,29 @@ async def update_message(
             detail="content 必須非空且不可超過 32000 字"
         )
 
-    # 紀錄改動時間到 audit log（保留鏈斷裂作為「被修改過」的證據）
-    import logging as _logging
-    _logging.getLogger(__name__).warning(
-        "Message %s content modified by user %s (hash chain will break)",
-        message_id, current_user.id,
-    )
+    # 存進資料庫前一樣要遮罩個資（和送訊息同一套規則）
+    content = request.content
+    if settings.enable_pii_masking:
+        content = mask_pii(content)["masked_text"]
 
-    message.content = request.content
+    message.content = content
     await db.commit()
     await db.refresh(message)
+
+    # 寫稽核紀錄（保留鏈斷裂作為「被修改過」的證據，稽核頁看得到是誰、什麼時候改的）
+    conversation = await get_own_conversation(db, message.conversation_id, current_user)
+    await write_audit_log(
+        db=db,
+        action=AuditAction.CONVERSATION_UPDATE,
+        resource_type=AuditResource.CONVERSATION,
+        resource_id=message.conversation_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=conversation.tenant_id,
+        description="修改訊息內容（防篡改鏈會在這則訊息斷開）",
+        details={"message_id": message_id},
+        ip_address=get_client_ip(http_request),
+    )
 
     return MessageResponse.model_validate(message)
 

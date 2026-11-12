@@ -8,11 +8,8 @@ import {
     exportAuditLogsCSV, exportAuditLogsJSON, getAuditLogs, type AuditLogItem, type AuditLogQuery,
 } from '@/api/auditLogs'
 import { downloadBlob, todayStamp } from '@/lib/download'
+import { localDate } from '@/lib/dates'
 
-/** 本地日期 YYYY-MM-DD。後端資料庫存的是不帶時區的時間，送 toISOString()（帶 Z）會比較失敗回 500 */
-function localDate(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 export function useAdminAudit() {
     const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
@@ -72,9 +69,12 @@ export function useAdminAudit() {
     const onFilterChange = (key: keyof AuditLogQuery, value: string) => applyFilter({ ...auditFilter, [key]: value || undefined, page: 1 })
     const onPageChange = (page: number) => applyFilter({ ...auditFilter, page })
 
+    // 匯出和畫面上的清單同一組條件（含搜尋、操作者）
     const exportQuery = () => ({
         action: auditFilter.action,
         resource_type: auditFilter.resource_type,
+        user_id: auditFilter.user_id,
+        search: auditFilter.search,
         start_date: auditFilter.start_date,
         end_date: auditFilter.end_date,
     })

@@ -92,3 +92,27 @@ export const useAuthStore = create<AuthState>()(
         }
     )
 )
+
+/*
+ * 多個分頁共用同一份登入：別的分頁換了 refresh token（自動刷新每次都會換新的、舊的作廢）或登出時，
+ * 這個分頁跟著更新。不然這個分頁會拿已作廢的舊 refresh token 去換，失敗後把所有分頁一起登出。
+ * （storage 事件只會在「別的」分頁改了 localStorage 時觸發）
+ */
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+        if (e.key !== 'auth-storage') return
+        try {
+            const next = e.newValue ? JSON.parse(e.newValue)?.state : null
+            if (!next?.refreshToken) {
+                useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
+                return
+            }
+            const cur = useAuthStore.getState()
+            if (next.refreshToken !== cur.refreshToken || (next.user && next.user !== cur.user)) {
+                useAuthStore.setState({ refreshToken: next.refreshToken, user: next.user ?? cur.user, isAuthenticated: true })
+            }
+        } catch {
+            // 內容格式不對就忽略
+        }
+    })
+}

@@ -218,7 +218,21 @@ html.dark {
   to { opacity: 0.45; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .skel { animation: none; }
+  .skel, .skel-text { animation: none; }
+}
+
+/* 文字骨架（SkelText）：放一段和真資料同格式的佔位文字，文字透明、底色當灰條；
+   行高由文字本身決定，跟真資料一模一樣，資料進來時版面不會長高（後台整頁縮放也就不會跳） */
+.skel-text {
+  color: transparent !important;
+  border-radius: var(--r-6);
+  background: var(--chip);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  animation: skelBreath 0.9s var(--ease-out) infinite alternate;
+}
+.skel-text * {
+  color: transparent !important;
 }
 
 /* 膠囊分組（只有一列，高 54、圓角 27）裡的圖示方塊：改成圓形（半徑 15），離左 12＝離上下 12，同心 */

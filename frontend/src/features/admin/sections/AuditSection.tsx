@@ -29,8 +29,8 @@ import { spring } from '@/lib/motionPresets'
 import { SkelTableRows } from '@/components/ui/Skeleton'
 
 import {
-    ACTION_LABELS,
-    RESOURCE_LABELS,
+    AUDIT_ACTIONS,
+    AUDIT_RESOURCES,
     type AuditLogItem,
     type AuditLogQuery,
 } from '@/api/auditLogs'
@@ -42,18 +42,18 @@ import {
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
 import { formatDate } from '@/features/admin/utils/formatDate'
+import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
 
-// Pure helper — colors the action pill based on the verb.
-// Lifted to module scope so it doesn't need to live on the component.
+// 依操作代碼的動詞決定標籤顏色（收到的是代碼，不是翻譯後的文字）
 function getActionPillClass(action: string): string {
     const a = (action || '').toLowerCase()
-    if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
+    if (/(delete|disable|fail|revoke|deactivate)/.test(a)) {
         return 'tag-red'
     }
-    if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
+    if (/(login_success|token_refresh|activate|enable)/.test(a)) {
         return 'tag-green'
     }
-    if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
+    if (/(create|update|register)/.test(a)) {
         return 'tag-accent'
     }
     return ''
@@ -138,11 +138,7 @@ export default function AuditSection({
                                 onChange={(v) => onFilterChange('action', v)}
                                 options={[
                                     { value: '', label: t('admin.audit.allActions') },
-                                    { value: 'login_success', label: t('admin.audit.actionTypes.login_success') },
-                                    { value: 'login_failed', label: t('admin.audit.actionTypes.login_failed') },
-                                    { value: 'user_update', label: t('admin.audit.actionTypes.user_update') },
-                                    { value: 'document_upload', label: t('admin.audit.actionTypes.document_upload') },
-                                    { value: 'document_delete', label: t('admin.audit.actionTypes.document_delete') },
+                                    ...AUDIT_ACTIONS.map((a) => ({ value: a, label: auditActionLabel(t, a) })),
                                 ]}
                             />
                         </div>
@@ -152,11 +148,7 @@ export default function AuditSection({
                                 onChange={(v) => onFilterChange('resource_type', v)}
                                 options={[
                                     { value: '', label: t('admin.audit.allResources') },
-                                    { value: 'auth', label: t('admin.audit.resourceTypes.auth') },
-                                    { value: 'user', label: t('admin.audit.resourceTypes.user') },
-                                    { value: 'conversation', label: t('admin.audit.resourceTypes.conversation') },
-                                    { value: 'document', label: t('admin.audit.resourceTypes.document') },
-                                    { value: 'model', label: t('admin.audit.resourceTypes.model') },
+                                    ...AUDIT_RESOURCES.map((r) => ({ value: r, label: auditResourceLabel(t, r) })),
                                 ]}
                             />
                         </div>
@@ -271,15 +263,11 @@ export default function AuditSection({
                                                 <span
                                                     className={`tag ${getActionPillClass(log.action)}`}
                                                 >
-                                                    {t(`admin.audit.actionTypes.${log.action}`, {
-                                                        defaultValue: ACTION_LABELS[log.action] || log.action,
-                                                    })}
+                                                    {auditActionLabel(t, log.action)}
                                                 </span>
                                             </td>
                                             <td className="hidden sm:table-cell px-5 py-2 text-sm text-text-primary">
-                                                {t(`admin.audit.resourceTypes.${log.resource_type}`, {
-                                                    defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type,
-                                                })}
+                                                {auditResourceLabel(t, log.resource_type)}
                                             </td>
                                             <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
@@ -324,9 +312,7 @@ export default function AuditSection({
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
                                     </p>
                                     <h3 className="mt-0.5 text-base font-semibold text-text-primary">
-                                        {t(`admin.audit.actionTypes.${auditDrawer.action}`, {
-                                            defaultValue: ACTION_LABELS[auditDrawer.action] || auditDrawer.action,
-                                        })}
+                                        {auditActionLabel(t, auditDrawer.action)}
                                     </h3>
                                 </div>
                                 <button
@@ -341,10 +327,10 @@ export default function AuditSection({
                                 {(
                                     [
                                         [t('admin.audit.table.time'), formatDate(auditDrawer.created_at)],
-                                        [t('admin.audit.table.action'), auditDrawer.action],
+                                        [t('admin.audit.table.action'), auditActionLabel(t, auditDrawer.action)],
                                         [
                                             t('admin.audit.table.resource'),
-                                            auditDrawer.resource_type +
+                                            auditResourceLabel(t, auditDrawer.resource_type) +
                                                 (auditDrawer.resource_id ? ` · ${auditDrawer.resource_id}` : ''),
                                         ],
                                         [t('admin.audit.table.user'), auditDrawer.user_email || auditDrawer.user_id || '-'],

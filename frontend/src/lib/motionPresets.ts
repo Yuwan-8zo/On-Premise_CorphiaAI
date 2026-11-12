@@ -23,8 +23,6 @@ function springFromToken(value: { stiffness: number; damping: number; mass: numb
 }
 
 export const spring = springFromToken(MOTION.spring.default)
-export const springSnappy = springFromToken(MOTION.spring.snappy)
-export const springGentle = springFromToken(MOTION.spring.gentle)
 
 export const fade: TweenPreset = {
     type: 'tween',

@@ -375,8 +375,9 @@ def boot_init() -> None:
     _boot_write()
 
 
-def boot(key: str, state: str | None = None, detail: str | None = None) -> None:
-    """Update one step: state in pending/running/done/error/skipped."""
+def boot(key: str, state: str | None = None, detail: str | None = None, code: str | None = None) -> None:
+    """Update one step: state in pending/running/done/error/skipped.
+    code：說明的代碼，前端啟動畫面用它顯示目前語言的文字（沒有代碼就直接顯示 detail，例如網址）"""
     if not BOOT:
         return
     for step in BOOT["steps"]:
@@ -392,6 +393,7 @@ def boot(key: str, state: str | None = None, detail: str | None = None) -> None:
             step["state"] = state
         if detail is not None:
             step["detail"] = detail
+            step["code"] = code
     _boot_write()
 
 
@@ -403,6 +405,7 @@ def boot_fail_running(message: str) -> None:
             step["state"] = "error"
             step["finished_at"] = time.time()
             step["detail"] = message[:300]
+            step["code"] = None  # 顯示錯誤原因本身，不要用之前的說明代碼
     BOOT["overall"] = "error"
     BOOT["message"] = message[:300]
     _boot_write()
@@ -492,10 +495,10 @@ def wait_for_docker(seconds: int) -> bool:
 
 
 def start_docker_desktop() -> None:
-    boot("docker", "running", "檢查 Docker 是否已在執行…")
+    boot("docker", "running", "檢查 Docker 是否已在執行…", code="docker_check")
     if docker_info_ok():
         ok("Docker daemon is ready")
-        boot("docker", "done", "已在執行")
+        boot("docker", "done", "已在執行", code="docker_running")
         return
 
     info("[docker] Docker daemon is not ready. Starting Docker Desktop...")
@@ -503,35 +506,35 @@ def start_docker_desktop() -> None:
         # Docker was opened some other way (e.g. its own icon) and is not answering:
         # usually it crashed on leftover files and is showing an error dialog.
         # Give it a short grace period in case it is still booting, then repair.
-        boot("docker", detail="Docker 已開啟但沒有回應，確認中…")
+        boot("docker", detail="Docker 已開啟但沒有回應，確認中…", code="docker_unresponsive")
         if wait_for_docker(30):
             ok("Docker daemon is ready")
-            boot("docker", "done", "已在執行")
+            boot("docker", "done", "已在執行", code="docker_running")
             return
         warn("Docker Desktop is open but not responding. Restarting it cleanly...")
-        boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+        boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…", code="docker_reset")
         kill_docker_desktop()
-    boot("docker", detail="清理上次留下的殘留檔…")
+    boot("docker", detail="清理上次留下的殘留檔…", code="docker_cleanup")
     reset_docker_vm()
     clear_stale_docker_sockets()
     launch_docker_desktop()
 
     # A cold boot of Docker Desktop can take a couple of minutes.
-    boot("docker", detail="啟動 Docker Desktop（冷開機約 1～2 分鐘）…")
+    boot("docker", detail="啟動 Docker Desktop（冷開機約 1～2 分鐘）…", code="docker_starting")
     if wait_for_docker(150):
         ok("Docker daemon is ready")
-        boot("docker", "done", "啟動完成")
+        boot("docker", "done", "啟動完成", code="docker_started")
         return
 
     # Still not up: most likely Docker crashed on leftover files. Restart it cleanly once.
     warn("Docker Desktop did not start. Closing it, cleaning leftover files and trying once more...")
-    boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+    boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…", code="docker_reset")
     kill_docker_desktop()
     clear_stale_docker_sockets()
     launch_docker_desktop()
     if wait_for_docker(240):
         ok("Docker daemon is ready")
-        boot("docker", "done", "自動修復後啟動完成")
+        boot("docker", "done", "自動修復後啟動完成", code="docker_autofixed")
         return
 
     raise RuntimeError("Docker Desktop did not become ready in time.")
@@ -545,7 +548,7 @@ def start_database() -> None:
         raise RuntimeError("docker-compose.yml was not found.")
 
     info("[docker] Starting PostgreSQL + pgvector...")
-    boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…")
+    boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…", code="db_starting")
     commands = [
         ["docker", "compose", "up", "-d"],
         ["docker-compose", "up", "-d"],
@@ -585,7 +588,8 @@ def kill_port(port: int) -> None:
     if sys.platform != "win32":
         return
 
-    result = subprocess.run("netstat -ano -p tcp", shell=True, capture_output=True, text=True)
+    # 參數用清單、不經過系統 shell（和其他指令一致）
+    result = subprocess.run(["netstat", "-ano", "-p", "tcp"], capture_output=True, text=True)
     pattern = re.compile(rf"^\s*TCP\s+\S+:{port}\s+\S+\s+LISTENING\s+(\d+)\s*$", re.IGNORECASE)
     pids = set()
     for line in result.stdout.splitlines():
@@ -839,18 +843,18 @@ def main() -> int:
 
         start_database()
 
-        boot("engine", "running", "檢查 llama-cpp-python…")
+        boot("engine", "running", "檢查 llama-cpp-python…", code="engine_check")
         run_auto_engine(python_exe, force=args.force_engine)
-        boot("engine", "done", "已安裝")
+        boot("engine", "done", "已安裝", code="engine_ok")
 
         if not args.skip_init_db:
-            boot("schema", "running", "建立／檢查資料表…")
+            boot("schema", "running", "建立／檢查資料表…", code="schema_check")
             init_database(python_exe)
-            boot("schema", "done", "資料表已就緒")
+            boot("schema", "done", "資料表已就緒", code="schema_ready")
         else:
-            boot("schema", "skipped", "略過")
+            boot("schema", "skipped", "略過", code="skipped")
 
-        boot("backend", "running", "啟動 FastAPI 伺服器…")
+        boot("backend", "running", "啟動 FastAPI 伺服器…", code="backend_starting")
         start_backend(python_exe)
 
         info("[wait] Checking backend API health...")

@@ -58,22 +58,3 @@ export interface Message {
     /** 被攔截訊息之前有幾則一般訊息（重新載入時用來插回原位，不依賴時間，避免各元件時鐘不一致） */
     blockedAfter?: number
 }
-
-export interface ChatRequest {
-    message: string
-    useRag?: boolean
-    temperature?: number
-    maxTokens?: number
-}
-
-export interface ChatStreamResponse {
-    type: 'stream' | 'done' | 'error'
-    content?: string
-    messageId?: string
-    sources?: MessageSource[]
-    usage?: {
-        promptTokens: number
-        completionTokens: number
-    }
-    error?: string
-}

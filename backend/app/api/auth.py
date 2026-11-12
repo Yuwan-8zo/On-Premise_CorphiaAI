@@ -34,7 +34,14 @@ from app.schemas.user import UserResponse
 from app.api.deps import CurrentUser
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 from app.core.request_utils import get_client_ip, get_user_agent
-from app.services.token_service import add_token_to_blacklist
+from app.services.token_service import (
+    add_token_to_blacklist,
+    is_token_blacklisted,
+    issued_before_revocation,
+    revoke_before_new_tokens,
+)
+from app.core.time_utils import utc_now_naive
+from app.core.tenancy import tenant_is_active
 from app.services.password_service import (
     check_login_lockout,
     record_login_failure,
@@ -163,11 +170,17 @@ async def login(
             detail="帳號已停用"
         )
 
+    # 所屬租戶被停用：不能登入
+    if not await tenant_is_active(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="所屬組織已停用，請聯絡系統管理員",
+        )
+
     # 3. 登入成功：重置失敗計數
     await reset_login_attempts(db, user)
 
     # 更新最後登入時間
-    from app.core.time_utils import utc_now_naive
     user.last_login_at = utc_now_naive()
     await db.commit()
 
@@ -234,10 +247,10 @@ async def register(
             select(Tenant).where(Tenant.slug == request_body.tenant_slug)
         )
         tenant = result.scalar_one_or_none()
-        if tenant is None:
+        if tenant is None or not tenant.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="租戶不存在"
+                detail="租戶不存在或已停用"
             )
         tenant_id = tenant.id
     else:
@@ -305,7 +318,6 @@ async def refresh_token(
     # 檢查 Refresh Token 是否已被撤銷
     old_jti = payload.get("jti")
     if old_jti:
-        from app.services.token_service import is_token_blacklisted
         is_blacklisted = await is_token_blacklisted(db, old_jti)
         if is_blacklisted:
             raise HTTPException(
@@ -325,6 +337,19 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="使用者不存在或已停用"
+        )
+
+    if not await tenant_is_active(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="所屬組織已停用，請聯絡系統管理員",
+        )
+
+    # 強制踢出、修改密碼之後，之前發的 Refresh Token 不能再換新的（不然踢出等於沒踢：前端會自動刷新）
+    if issued_before_revocation(user, payload):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="登入已失效，請重新登入",
         )
 
     # 提前取出 user_id 字串，避免 audit commit 後 SQLAlchemy session expire
@@ -358,7 +383,7 @@ async def refresh_token(
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
 
-    # Token 刷新審計（使用已提前解析的字串，避免跨 session lazy-load）
+    # 更新登入憑證的稽核紀錄（使用已提前解析的字串，避免跨 session lazy-load）
     await write_audit_log(
         db=db,
         action=AuditAction.TOKEN_REFRESH,
@@ -366,7 +391,7 @@ async def refresh_token(
         user_id=resolved_user_id,
         user_email=resolved_user_email,
         tenant_id=resolved_tenant_id,
-        description=f"Token 刷新: {resolved_user_email}",
+        description=f"更新登入憑證: {resolved_user_email}",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
     )
@@ -397,6 +422,7 @@ async def change_password(
     修改密碼
 
     需要提供當前密碼進行驗證，新密碼需符合安全策略。
+    改完之後其他裝置的登入全部失效；這次回傳一組新的 Token，讓目前這個裝置繼續使用。
     """
     # 驗證當前密碼
     if not verify_password(request_body.current_password, current_user.password_hash):
@@ -423,9 +449,13 @@ async def change_password(
             detail="新密碼不能與當前密碼相同"
         )
 
-    # 更新密碼
+    # 更新密碼，並讓之前發的所有 Token 失效（其他裝置要用新密碼重新登入）
     current_user.password_hash = get_password_hash(request_body.new_password)
+    revoke_before_new_tokens(current_user)
     await db.commit()
+    token_data = {"sub": current_user.id}
+    access_token = create_access_token(token_data)
+    new_refresh_token = create_refresh_token(token_data)
 
     # 密碼修改審計
     await write_audit_log(
@@ -440,7 +470,13 @@ async def change_password(
         user_agent=get_user_agent(request),
     )
 
-    return {"message": "密碼修改成功"}
+    return {
+        "message": "密碼修改成功",
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.jwt_expire_minutes * 60,
+    }
 
 
 @router.post("/check-password-strength", response_model=PasswordStrengthResponse)

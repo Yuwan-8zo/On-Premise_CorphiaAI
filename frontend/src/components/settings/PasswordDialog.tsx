@@ -2,7 +2,7 @@
  * 修改密碼彈窗（Apple 表單：三個欄位一組清單，規則與強度放在組下說明，最下面一排按鈕）
  *   密碼規則逐條打勾；強度分四級（弱／中／強／很強）
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Check, Eye, EyeOff, X } from '@/components/snow/icons'
 import { authApi } from '@/api/auth'
@@ -57,6 +57,11 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
 
     const strength = next ? measure(next) : null
 
+    // 成功後 3 秒自動關閉；先手動關掉或元件卸載時取消，不然重新打開會被舊的計時器關掉
+    const closeTimer = useRef<number | undefined>(undefined)
+    useEffect(() => () => window.clearTimeout(closeTimer.current), [])
+    useEffect(() => { if (!open) window.clearTimeout(closeTimer.current) }, [open])
+
     const submit = async () => {
         setError('')
         setSuccess('')
@@ -73,7 +78,8 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
             setNext('')
             setConfirm('')
             // 3 秒後自動關閉
-            setTimeout(() => {
+            window.clearTimeout(closeTimer.current)
+            closeTimer.current = window.setTimeout(() => {
                 onClose()
                 setSuccess('')
             }, 3000)

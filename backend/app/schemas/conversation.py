@@ -87,6 +87,14 @@ class MessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SharedConversationResponse(BaseModel):
+    """分享頁：對話＋全部訊息（唯讀）"""
+    conversation: ConversationResponse
+    messages: List[MessageResponse]
+    owner_name: str
+    is_owner: bool
+
+
 class ChatRequest(BaseModel):
     """對話請求 (WebSocket)"""
     message: str = Field(..., min_length=1)

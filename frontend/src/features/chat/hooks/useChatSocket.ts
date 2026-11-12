@@ -31,7 +31,6 @@ export function useChatSocket() {
 
         const ws = createChatWebSocket(conversationId)
         ws.onMessage(buildStreamDispatcher(conversationId))
-        ws.onClose(() => console.log('WebSocket 已斷開:', conversationId))
         pool.current.set(conversationId, ws)
         prune(conversationId)
 

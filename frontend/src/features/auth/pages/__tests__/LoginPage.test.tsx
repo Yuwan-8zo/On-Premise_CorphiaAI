@@ -65,7 +65,7 @@ const mockStore = {
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: Object.assign(() => mockStore, {
-    setState: (newState: any) => Object.assign(mockStore, newState),
+    setState: (newState: Partial<typeof mockStore>) => Object.assign(mockStore, newState),
     getState: () => mockStore,
   }),
 }))

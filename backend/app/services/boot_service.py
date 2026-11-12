@@ -32,18 +32,6 @@ def mark_api_ready() -> None:
     _api_ready = True
 
 
-def is_api_ready() -> bool:
-    return _api_ready
-
-
-def get_llm_state() -> ServiceState:
-    return _llm_state
-
-
-def get_rag_state() -> ServiceState:
-    return _rag_state
-
-
 def is_llm_ready() -> bool:
     return _llm_state == ServiceState.READY
 

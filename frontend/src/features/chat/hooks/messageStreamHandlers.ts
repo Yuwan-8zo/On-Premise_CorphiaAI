@@ -16,6 +16,7 @@ import { conversationsApi } from '@/api/conversations'
 import type { StreamResponse } from '@/api/websocket'
 import { useChatStore } from '@/store/chatStore'
 import { useToastStore } from '@/store/toastStore'
+import i18n from '@/i18n'
 
 // 資安提示要停久一點，現場展示時看得到
 const SECURITY_TOAST_MS = 6000
@@ -64,7 +65,7 @@ export function buildStreamDispatcher(conversationId: string) {
                         .catch((err) => console.error('同步訊息失敗:', err))
                 } else {
                     const title = store().conversations.find((c) => c.id === conversationId)?.title
-                    useToastStore.getState().add(title ? `「${title}」已回答完成` : '背景對話已回答完成', 'success')
+                    useToastStore.getState().add(title ? i18n.t('ui.chat.backgroundDone', { title }) : i18n.t('ui.chat.backgroundDoneUntitled'), 'success')
                 }
                 break
             }
@@ -84,7 +85,7 @@ export function buildStreamDispatcher(conversationId: string) {
                 if (isCurrent()) {
                     store().addSecurityWarning({
                         type: 'pii',
-                        message: data.message || '偵測到敏感資訊已自動遮罩',
+                        message: i18n.t('ui.chat.piiMasked'),
                         data: { mask_map: data.mask_map || [] },
                         timestamp: Date.now(),
                     })
@@ -103,7 +104,7 @@ export function buildStreamDispatcher(conversationId: string) {
                         return out
                     })
                 }
-                useToastStore.getState().add('偵測到個人資料，已自動遮罩後才交給 AI', 'info', SECURITY_TOAST_MS)
+                useToastStore.getState().add(i18n.t('ui.chat.piiToast'), 'info', SECURITY_TOAST_MS)
                 break
 
             // 注入攻擊偵測警告
@@ -111,7 +112,7 @@ export function buildStreamDispatcher(conversationId: string) {
                 if (isCurrent()) {
                     store().addSecurityWarning({
                         type: 'injection',
-                        message: data.message || '偵測到可疑的 Prompt Injection 模式',
+                        message: i18n.t('ui.chat.injectionWarn'),
                         data: {
                             risk_level: data.risk_level || 'medium',
                             matched_patterns: data.matched_patterns || [],
@@ -119,20 +120,13 @@ export function buildStreamDispatcher(conversationId: string) {
                         timestamp: Date.now(),
                     })
                 }
-                useToastStore.getState().add('偵測到提示詞注入攻擊，已寫入稽核日誌', 'error', SECURITY_TOAST_MS)
+                useToastStore.getState().add(i18n.t('ui.chat.injectionToast'), 'error', SECURITY_TOAST_MS)
                 break
 
             // 高風險注入攻擊 → 後端已攔阻，不會有回答
             case 'injection_block':
                 finish()
-                store().appendToThread(
-                    conversationId,
-                    `**已攔阻高風險提示詞注入攻擊**
-
-${data.message || '請求未送入 AI 模型。'}
-
-系統指令無法被覆蓋，此事件已寫入稽核日誌。`,
-                )
+                store().appendToThread(conversationId, i18n.t('ui.chat.injectionBlocked'))
                 // 攔截訊息不會存進資料庫：先標記起來，之後重新載入對話時才補得回來
                 if (isCurrent()) store().markLastExchangeBlocked()
                 break
@@ -140,24 +134,17 @@ ${data.message || '請求未送入 AI 模型。'}
             // DLP 黑名單命中 → 後端已攔阻，不會有回答
             case 'dlp_block':
                 finish()
-                store().appendToThread(
-                    conversationId,
-                    `**此訊息已被 DLP 資料外洩防護政策攔阻**
-
-${data.message || '訊息包含列管字詞。'}
-
-此事件已寫入稽核日誌，內容沒有送進 AI 模型。`,
-                )
+                store().appendToThread(conversationId, i18n.t('ui.chat.dlpBlocked', { n: data.matched_terms_count || 1 }))
                 if (isCurrent()) {
                     store().markLastExchangeBlocked()
                     store().addSecurityWarning({
                         type: 'dlp',
-                        message: data.message || '訊息包含列管字詞，已依 DLP 策略攔阻送出。',
+                        message: i18n.t('ui.chat.dlpWarn'),
                         data: { matched_terms_count: data.matched_terms_count || 0 },
                         timestamp: Date.now(),
                     })
                 }
-                useToastStore.getState().add('訊息含列管機密字詞，已依 DLP 政策攔阻', 'error', SECURITY_TOAST_MS)
+                useToastStore.getState().add(i18n.t('ui.chat.dlpToast'), 'error', SECURITY_TOAST_MS)
                 break
         }
     }

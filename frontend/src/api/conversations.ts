@@ -4,6 +4,7 @@
 
 import apiClient from './client'
 import type { Conversation, Message } from '../types/chat'
+import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
 
 export interface CreateConversationRequest {
     title?: string
@@ -35,7 +36,7 @@ export const conversationsApi = {
      */
     create: async (data: CreateConversationRequest = {}): Promise<Conversation> => {
         const response = await apiClient.post('/conversations', {
-            title: data.title || '新對話',
+            title: data.title || DEFAULT_CONVERSATION_TITLE,
             model: data.model || 'default',
             settings: data.settings || {},
         })
@@ -99,6 +100,33 @@ export const conversationsApi = {
     /**
      * 驗證對話完整性
      */
+    /**
+     * 開啟分享（同租戶的人拿到連結可以唯讀觀看）
+     */
+    share: async (conversationId: string): Promise<void> => {
+        await apiClient.post(`/conversations/${conversationId}/share`)
+    },
+
+    /**
+     * 關閉分享
+     */
+    unshare: async (conversationId: string): Promise<void> => {
+        await apiClient.delete(`/conversations/${conversationId}/share`)
+    },
+
+    /**
+     * 分享頁：唯讀讀取對話與全部訊息（主人，或已分享且同租戶的人）
+     */
+    getShared: async (conversationId: string): Promise<{ conversation: Conversation; messages: Message[]; ownerName: string; isOwner: boolean }> => {
+        const response = await apiClient.get(`/conversations/${conversationId}/shared`)
+        return {
+            conversation: mapConversation(response.data.conversation),
+            messages: response.data.messages.map(mapMessage),
+            ownerName: response.data.owner_name,
+            isOwner: response.data.is_owner,
+        }
+    },
+
     verifyChain: async (conversationId: string): Promise<{ valid: boolean; total_messages: number; first_broken_index: number | null }> => {
         const response = await apiClient.get(`/conversations/${conversationId}/verify-chain`)
         return response.data

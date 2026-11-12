@@ -3,11 +3,11 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, status, Query, Request
+from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from sqlalchemy import select, func, desc
 
-from app.api.lookups import get_own_conversation
+from app.api.lookups import ensure_own_folder, get_own_conversation
 from app.core.query_utils import like_contains
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
@@ -18,6 +18,7 @@ from app.schemas.conversation import (
     ConversationResponse,
     ConversationListResponse,
     MessageResponse,
+    SharedConversationResponse,
 )
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 from app.core.request_utils import get_client_ip, get_user_agent
@@ -62,7 +63,6 @@ async def list_conversations(
     if search:
         # 跳脫 LIKE 萬用字元，限制長度避免 DoS
         if len(search) > 128:
-            from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
         query = query.where(Conversation.title.ilike(like_contains(search), escape="\\"))
     if folder_id:
@@ -149,6 +149,8 @@ async def create_conversation(
     request: Request = None,
 ):
     """建立新對話"""
+    await ensure_own_folder(db, request_body.folder_id, current_user)
+
     # 自我修復：若 user 的 tenant_id 指向不存在的 tenant，先 remap 到 default
     safe_tenant_id = await _ensure_valid_tenant_id(db, current_user)
 
@@ -206,6 +208,8 @@ async def update_conversation(
     
     # 更新欄位
     update_data = request.model_dump(exclude_unset=True)
+    if update_data.get("folder_id"):
+        await ensure_own_folder(db, update_data["folder_id"], current_user)
     # NOTE: 防止 title 被更新為空字串
     if 'title' in update_data:
         update_data['title'] = (update_data['title'] or '').strip() or conversation.title
@@ -242,7 +246,7 @@ async def delete_conversation(
         resource_id=conversation_id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id,
+        tenant_id=conversation.tenant_id,
         description=f"刪除對話: {conversation_title}",
         ip_address=get_client_ip(request) if request else None,
         user_agent=get_user_agent(request) if request else None,
@@ -272,7 +276,7 @@ async def list_messages(
     if before_id:
         # 查出 before_id 的 created_at，再取更早的訊息
         cursor_result = await db.execute(
-            select(Message.created_at).where(Message.id == before_id)
+            select(Message.created_at).where(Message.id == before_id, Message.conversation_id == conversation_id)
         )
         cursor_time = cursor_result.scalar_one_or_none()
         if cursor_time:
@@ -299,3 +303,90 @@ async def verify_conversation_chain(
 
     from app.services.hash_chain_service import verify_chain
     return await verify_chain(db, conversation_id)
+
+
+# ── 分享（同租戶唯讀）────────────────────────────────────────────
+# 對話主人按「分享」才會打開；打開後同租戶的人拿到連結可以唯讀觀看，主人自己永遠看得到。
+# 沒分享、不同租戶、不存在都回 404（不透露對話是否存在）。
+
+SHARED_KEY = "shared"
+SHARED_MESSAGE_LIMIT = 500
+
+
+@router.post("/{conversation_id}/share")
+async def share_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+):
+    """開啟分享：同租戶的人可以用連結唯讀觀看"""
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+    if not (conversation.settings or {}).get(SHARED_KEY):
+        # JSON 欄位要換一個新的 dict，SQLAlchemy 才知道內容變了
+        conversation.settings = {**(conversation.settings or {}), SHARED_KEY: True}
+        await db.commit()
+        await write_audit_log(
+            db=db,
+            action=AuditAction.CONVERSATION_UPDATE,
+            resource_type=AuditResource.CONVERSATION,
+            resource_id=conversation_id,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=conversation.tenant_id,
+            description=f"分享對話（同租戶唯讀）: {conversation.title}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    return {"shared": True}
+
+
+@router.delete("/{conversation_id}/share")
+async def unshare_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """關閉分享：之後只有自己看得到"""
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+    settings = dict(conversation.settings or {})
+    if settings.pop(SHARED_KEY, None):
+        conversation.settings = settings
+        await db.commit()
+    return {"shared": False}
+
+
+@router.get("/{conversation_id}/shared", response_model=SharedConversationResponse)
+async def view_shared_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """唯讀觀看分享的對話：主人自己，或主人已分享且同租戶的人"""
+    from app.core.tenancy import same_tenant
+    from app.models.user import User
+
+    conversation = await db.get(Conversation, conversation_id)
+    is_owner = conversation is not None and conversation.user_id == current_user.id
+    allowed = conversation is not None and (
+        is_owner
+        or ((conversation.settings or {}).get(SHARED_KEY) and same_tenant(current_user, conversation.tenant_id))
+    )
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="對話不存在或沒有分享")
+
+    # 重新讀一次：分享開關改過後「最後更新時間」是資料庫算的，要讀回來才能用
+    await db.refresh(conversation)
+    owner = await db.get(User, conversation.user_id)
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at)
+        .limit(SHARED_MESSAGE_LIMIT)
+    )
+    return SharedConversationResponse(
+        conversation=ConversationResponse.model_validate(conversation),
+        messages=[MessageResponse.model_validate(m) for m in result.scalars().all()],
+        owner_name=owner.name if owner else "",
+        is_owner=is_owner,
+    )

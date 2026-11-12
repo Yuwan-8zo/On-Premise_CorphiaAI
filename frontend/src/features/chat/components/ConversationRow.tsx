@@ -7,6 +7,7 @@ import { MoreHorizontal } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import type { Conversation } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
+import { displayTitle } from '@/lib/conversationTitle'
 
 interface ConversationRowProps {
     conv: Conversation
@@ -30,7 +31,7 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = 
             onClick={onSelect}
             className={`side-item group ${isCurrent ? 'is-current' : ''}`}
         >
-            <span className="flex-1 min-w-0 truncate">{conv.title}</span>
+            <span className="flex-1 min-w-0 truncate">{displayTitle(conv.title)}</span>
             {isBusy && <span className="conv-busy" role="status" aria-label={t('ui.sidebar.answering')} />}
             <div className={`side-actions transition-opacity ${isMenuOpen ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                 <Tooltip label={t('ui.sidebar.options')}>

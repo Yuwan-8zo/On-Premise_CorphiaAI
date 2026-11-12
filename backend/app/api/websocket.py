@@ -5,20 +5,18 @@ WebSocket 對話 API
 import json
 import logging
 import asyncio
+from contextlib import aclosing
 from typing import Optional
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
+from app.api.deps import authenticate_access_token
 from app.core.database import get_db
-from app.core.security import decode_token
-from app.services.chat_service import ChatService
-from app.services.pii_masking_service import mask_pii
-from app.services.prompt_guard_service import check_prompt_injection
-from app.services.dlp_service import check_dlp
+from app.services.chat_service import ChatService, stopped_note
+from app.services.message_guard import clamp_generation_params, screen_user_message
+from app.services.model_preference import get_user_model
 from app.services.quota_service import check_user_quota
-from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 
 logger = logging.getLogger(__name__)
 
@@ -74,26 +72,17 @@ async def websocket_chat(
     - 完成: {"type": "done", "message_id": "..."}
     - 錯誤: {"type": "error", "message": "..."}
     """
-    # 驗證 Token
+    # 驗證 Token：和一般 API 同一套規則（黑名單、帳號停用、強制踢出／改密碼後失效）
     if not token:
         await websocket.close(code=4001, reason="缺少認證 Token")
         return
-    
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "access":
-        await websocket.close(code=4001, reason="無效的認證 Token")
+    try:
+        user = await authenticate_access_token(db, token)
+    except HTTPException:
+        await websocket.close(code=4001, reason="認證失敗")
         return
-    
-    # 檢查 Token 是否已被撤銷（黑名單機制）
-    jti = payload.get("jti")
-    if jti:
-        from app.services.token_service import is_token_blacklisted
-        is_blacklisted = await is_token_blacklisted(db, jti)
-        if is_blacklisted:
-            await websocket.close(code=4001, reason="Token 已被撤銷")
-            return
-    
-    user_id = payload.get("sub")
+
+    user_id = user.id
     connection_id = f"{user_id}_{conversation_id}"
     
     # 接受連接
@@ -112,10 +101,8 @@ async def websocket_chat(
             await websocket.close(code=4004, reason="對話不存在")
             return
         
-        # 稽核紀錄要顯示「誰、從哪裡」：查一次信箱，並取連線的 IP
-        from app.models.user import User
-        _user = await db.get(User, user_id)
-        audit_email = _user.email if _user else None
+        # 稽核紀錄要顯示「誰、從哪裡」
+        audit_email = user.email
         audit_ip = websocket.client.host if websocket.client else None
 
         # 建立一個變數來追蹤當前的生成任務
@@ -126,120 +113,33 @@ async def websocket_chat(
         GENERATION_TIMEOUT_SEC = 600
 
         async def _security_gate(raw_text: str) -> Optional[str]:
-            """
-            安全閘道（三層，依序）：PII 遮罩 → DLP → Prompt Injection。
+            """安全閘道（個資遮罩 → 違禁詞 → 提示詞注入），規則在 services/message_guard；None＝已攔阻"""
+            return await screen_user_message(
+                db, raw_text,
+                conversation_id=conversation_id,
+                tenant_id=conversation.tenant_id,
+                user_id=user_id,
+                user_email=audit_email,
+                ip_address=audit_ip,
+                emit=websocket.send_json,
+            )
 
-            - PII 命中 → 送 pii_warning + 使用 masked_text（個資先遮罩，後續階段與稽核都不接觸原值）
-            - DLP 命中 → 送 dlp_block 事件 + 回傳 None（呼叫端應 continue 不送 LLM）
-            - Injection 命中 → 送 injection_warning，但不阻斷（僅提醒 + 使用 sanitized_text）
-
-            回傳：要送進 LLM 的（可能已淨化／遮罩過的）文字；若為 None 表示已攔阻。
-            """
-            processed = raw_text
-
-            # A1: PII Masking — 遮罩後再送模型
-            if settings.enable_pii_masking:
-                mask_result = mask_pii(processed)
-                if mask_result["has_pii"]:
-                    # 只回傳遮罩版的對照表，避免洩漏原值
-                    await websocket.send_json({
-                        "type": "pii_warning",
-                        "message": f"已自動遮罩 {len(mask_result['mask_map'])} 項敏感資訊。",
-                        # 遮罩後的整句（不含原值），前端用來立刻替換畫面上的使用者訊息
-                        "masked_text": mask_result["masked_text"],
-                        "mask_map": [
-                            {
-                                "original_preview": m["original_preview"],
-                                "masked": m["masked"],
-                                "type": m["type"],
-                                "label": m["label"],
-                            }
-                            for m in mask_result["mask_map"]
-                        ],
-                    })
-                    # PII 偵測時寫 audit log
-                    try:
-                        await write_audit_log(
-                            db=db,
-                            action=AuditAction.PII_DETECTED,
-                            resource_type=AuditResource.CONVERSATION,
-                            resource_id=conversation_id,
-                            user_id=user_id,
-                            user_email=audit_email,
-                            ip_address=audit_ip,
-                            tenant_id=conversation.tenant_id,
-                            description=f"訊息中偵測到 {len(mask_result.get('mask_map', []))} 個個資片段並已遮罩",
-                            details={"pii_types": [m.get("type") for m in mask_result.get("mask_map", [])]},
-                        )
-                    except Exception:
-                        pass  # audit 失敗不能阻斷主流程
-                    processed = mask_result["masked_text"]
-
-            # A3: DLP — 命中就攔阻，不送模型
-            dlp_result = check_dlp(processed)
-            if dlp_result["blocked"]:
-                await websocket.send_json({
-                    "type": "dlp_block",
-                    "message": dlp_result["reason"],
-                    "matched_terms_count": len(dlp_result["matched_terms"]),
-                })
-                # DLP 命中時寫 audit log
-                try:
-                    await write_audit_log(
-                        db=db,
-                        action=AuditAction.DLP_HIT,
-                        resource_type=AuditResource.CONVERSATION,
-                        resource_id=conversation_id,
-                        user_id=user_id,
-                        user_email=audit_email,
-                        ip_address=audit_ip,
-                        tenant_id=conversation.tenant_id,
-                        description=f"DLP 偵測到 {len(dlp_result.get('matched_terms', []))} 個違禁詞並已攔阻",
-                        details={"matched_terms_count": len(dlp_result.get('matched_terms', []))},
-                    )
-                except Exception:
-                    pass  # audit 失敗不能阻斷主流程
-                return None
-
-            # A2: Prompt Injection — 警告 + 淨化（仍允許繼續生成）
-            if settings.enable_prompt_injection_guard:
-                guard_result = check_prompt_injection(processed)
-                if guard_result["is_suspicious"]:
-                    await websocket.send_json({
-                        "type": "injection_warning",
-                        "message": "偵測到可疑的 Prompt Injection 模式，已自動淨化。",
-                        "risk_level": guard_result["risk_level"],
-                        "matched_patterns": guard_result["matched_patterns"],
-                    })
-                    # Prompt Injection 命中時寫 audit log
-                    try:
-                        await write_audit_log(
-                            db=db,
-                            action=AuditAction.PROMPT_INJECTION_BLOCKED,
-                            resource_type=AuditResource.CONVERSATION,
-                            resource_id=conversation_id,
-                            user_id=user_id,
-                            user_email=audit_email,
-                            ip_address=audit_ip,
-                            tenant_id=conversation.tenant_id,
-                            description=f"偵測到 Prompt Injection 攻擊模式：{guard_result.get('risk_level')}",
-                            details={"risk_level": guard_result.get("risk_level"), "matched_patterns": guard_result.get("matched_patterns", [])},
-                        )
-                    except Exception:
-                        pass  # audit 失敗不能阻斷主流程
-                    # 高風險（例如要求忽略指令、輸出系統提示）直接攔阻，不送模型；
-                    # 只靠淨化時，模型仍可能照做並洩漏系統提示。
-                    if guard_result["risk_level"] == "high":
-                        await websocket.send_json({
-                            "type": "injection_block",
-                            "message": "偵測到高風險提示詞注入攻擊，請求已攔阻，未送入 AI 模型。",
-                            "risk_level": guard_result["risk_level"],
-                        })
-                        return None
-                    processed = guard_result["sanitized_text"]
-
-
-            return processed
+        async def _quota_ok() -> bool:
+            """每日訊息配額；用完就告訴前端並回 False"""
+            quota = await check_user_quota(db, user_id)
+            if quota.allowed:
+                return True
+            await websocket.send_json({
+                "type": "error",
+                "code": "QUOTA_EXCEEDED",
+                "message": quota.message,
+                "quota": {
+                    "daily_limit": quota.daily_limit,
+                    "used_today": quota.used_today,
+                    "remaining": quota.remaining,
+                },
+            })
+            return False
 
         async def _generate_and_send(
             conv_id: str,
@@ -258,8 +158,12 @@ async def websocket_chat(
             - 其他例外不再對外洩漏細節（對應 global_exception_handler 的策略）
             """
 
+            # 每次回答前讀這個人最新選的模型（連線途中換模型也會生效；不影響其他人）
+            chat_service.model_name = await get_user_model(db, user_id)
+
             async def _stream() -> None:
-                async for chunk in chat_service.send_message_stream(
+                # aclosing：連線中斷等任何原因提早結束時，立刻關閉生成流程，讓它把已寫出的部分存起來
+                async with aclosing(chat_service.send_message_stream(
                     conversation_id=conv_id,
                     content=text,
                     use_rag=r_flag,
@@ -267,8 +171,9 @@ async def websocket_chat(
                     max_tokens=m_token,
                     language=lang,
                     resubmit_message_id=resubmit_message_id,
-                ):
-                    await websocket.send_json(chunk)
+                )) as stream:
+                    async for chunk in stream:
+                        await websocket.send_json(chunk)
 
             try:
                 await asyncio.wait_for(_stream(), timeout=GENERATION_TIMEOUT_SEC)
@@ -281,10 +186,11 @@ async def websocket_chat(
                     "code": "GENERATION_TIMEOUT",
                     "message": f"生成時間超過 {GENERATION_TIMEOUT_SEC} 秒，已自動停止。",
                 })
-                await websocket.send_json({"type": "done", "content": "\n[逾時已停止]"})
+                # 已寫出的部分已經存起來（chat_service），前端收到 done 會重新讀取
+                await websocket.send_json({"type": "done", "content": stopped_note(lang)})
             except asyncio.CancelledError:
                 logger.info(f"生成任務已中斷: {connection_id}")
-                await websocket.send_json({"type": "done", "content": "\n[已停止生成]"})
+                await websocket.send_json({"type": "done", "content": stopped_note(lang)})
                 raise  # 讓 task 正常結束
             except WebSocketDisconnect:
                 # 使用者關掉頁面，不用回任何東西
@@ -343,11 +249,11 @@ async def websocket_chat(
                 msg_type = data.get("type")
 
                 if msg_type == "message":
-                    content = data.get("content", "").strip()
-                    use_rag = data.get("use_rag", True)
-                    temperature = data.get("temperature", 0.7)
-                    max_tokens = data.get("max_tokens", 2048)
-                    language = data.get("language", "zh-TW")
+                    content = str(data.get("content") or "").strip()
+                    # 生成參數限制在合理範圍（前端送什麼都不會讓模型卡死或程式出錯）
+                    params = clamp_generation_params(data)
+                    use_rag, temperature = params["use_rag"], params["temperature"]
+                    max_tokens, language = params["max_tokens"], params["language"]
 
                     if not content:
                         await websocket.send_json({
@@ -373,22 +279,11 @@ async def websocket_chat(
                         })
                         continue
 
-                    # B1: 每日訊息配額前置檢查
-                    quota = await check_user_quota(db, user_id)
-                    if not quota.allowed:
-                        await websocket.send_json({
-                            "type": "error",
-                            "code": "QUOTA_EXCEEDED",
-                            "message": quota.message,
-                            "quota": {
-                                "daily_limit": quota.daily_limit,
-                                "used_today": quota.used_today,
-                                "remaining": quota.remaining,
-                            },
-                        })
+                    # 每日訊息配額
+                    if not await _quota_ok():
                         continue
 
-                    # Phase 2 安全閘道（DLP → Injection → PII）
+                    # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）
                     sanitized = await _security_gate(content)
                     if sanitized is None:
                         # DLP 已攔阻
@@ -401,12 +296,12 @@ async def websocket_chat(
                     )
                 
                 elif msg_type == "resubmit":
-                    content = data.get("content", "").strip()
+                    content = str(data.get("content") or "").strip()
                     message_id = data.get("message_id")
-                    use_rag = data.get("use_rag", True)
-                    temperature = data.get("temperature", 0.7)
-                    max_tokens = data.get("max_tokens", 2048)
-                    language = data.get("language", "zh-TW")
+                    # 生成參數限制在合理範圍（前端送什麼都不會讓模型卡死或程式出錯）
+                    params = clamp_generation_params(data)
+                    use_rag, temperature = params["use_rag"], params["temperature"]
+                    max_tokens, language = params["max_tokens"], params["language"]
 
                     if not content or not message_id:
                         await websocket.send_json({
@@ -422,22 +317,11 @@ async def websocket_chat(
                         })
                         continue
 
-                    # B1: 每日訊息配額前置檢查
-                    quota = await check_user_quota(db, user_id)
-                    if not quota.allowed:
-                        await websocket.send_json({
-                            "type": "error",
-                            "code": "QUOTA_EXCEEDED",
-                            "message": quota.message,
-                            "quota": {
-                                "daily_limit": quota.daily_limit,
-                                "used_today": quota.used_today,
-                                "remaining": quota.remaining,
-                            },
-                        })
+                    # 每日訊息配額
+                    if not await _quota_ok():
                         continue
 
-                    # Phase 2 安全閘道（DLP → Injection → PII）
+                    # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）
                     sanitized = await _security_gate(content)
                     if sanitized is None:
                         continue

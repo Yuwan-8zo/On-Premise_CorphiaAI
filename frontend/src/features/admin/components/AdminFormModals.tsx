@@ -6,6 +6,7 @@ import StyledSelect from '@/components/ui/StyledSelect'
 import { ActionButton, Field, ModalFrame, inputClass } from './AdminPrimitives'
 import type { useAdminUsers } from '../hooks/useAdminUsers'
 import type { useAdminTenants } from '../hooks/useAdminTenants'
+import { useAuthStore } from '@/store/authStore'
 
 /** 「啟用」勾選列 */
 function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -21,7 +22,15 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
 export function UserFormModal({ users }: { users: ReturnType<typeof useAdminUsers> }) {
     const { t } = useTranslation()
     const { editing, form, setForm, isSubmitting, submit, setIsModalOpen } = users
+    const me = useAuthStore((s) => s.user)
     if (!users.isModalOpen) return null
+    // 只有 engineer 能指定 engineer；自己的角色不能改（後端也會擋）
+    const editingSelf = !!editing && editing.id === me?.id
+    const roleOptions = [
+        { value: 'user', label: 'User' },
+        ...(me?.role === 'engineer' ? [{ value: 'engineer', label: 'Engineer' }] : []),
+        { value: 'admin', label: 'Admin' },
+    ]
     const set = (patch: Partial<typeof form>) => setForm((prev) => ({ ...prev, ...patch }))
     const close = () => setIsModalOpen(false)
 
@@ -36,11 +45,8 @@ export function UserFormModal({ users }: { users: ReturnType<typeof useAdminUser
                     <StyledSelect
                         value={form.role}
                         onChange={(value) => set({ role: value })}
-                        options={[
-                            { value: 'user', label: 'User' },
-                            { value: 'engineer', label: 'Engineer' },
-                            { value: 'admin', label: 'Admin' },
-                        ]}
+                        disabled={editingSelf}
+                        options={roleOptions}
                     />
                 </Field>
                 <ActiveToggle checked={form.is_active} onChange={(v) => set({ is_active: v })} />
@@ -56,6 +62,7 @@ export function UserFormModal({ users }: { users: ReturnType<typeof useAdminUser
 export function TenantFormModal({ tenants }: { tenants: ReturnType<typeof useAdminTenants> }) {
     const { t } = useTranslation()
     const { editing, form, setForm, isSubmitting, submit, setIsModalOpen } = tenants
+    const isEngineer = useAuthStore((s) => s.user?.role === 'engineer')
     if (!tenants.isModalOpen) return null
     const set = (patch: Partial<typeof form>) => setForm((prev) => ({ ...prev, ...patch }))
     const close = () => setIsModalOpen(false)
@@ -67,7 +74,8 @@ export function TenantFormModal({ tenants }: { tenants: ReturnType<typeof useAdm
                 <Field label={t('admin.tenants.modal.name')}><input className={inputClass} required value={form.name} onChange={(e) => set({ name: e.target.value })} /></Field>
                 <Field label="Slug"><input className={inputClass} required value={form.slug} onChange={(e) => set({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} /></Field>
                 <Field label={t('admin.tenants.modal.description')}><textarea className={inputClass} rows={3} value={form.description} onChange={(e) => set({ description: e.target.value })} /></Field>
-                <ActiveToggle checked={form.is_active} onChange={(v) => set({ is_active: v })} />
+                {/* 停用／啟用租戶只有 engineer 能改 */}
+                {isEngineer && <ActiveToggle checked={form.is_active} onChange={(v) => set({ is_active: v })} />}
                 <div className="flex gap-3 pt-4">
                     <ActionButton variant="secondary" onClick={close}>{t('admin.tenants.modal.cancel')}</ActionButton>
                     <ActionButton disabled={isSubmitting}>{isSubmitting ? t('common.loading') : t('admin.tenants.modal.submit')}</ActionButton>

@@ -6,13 +6,15 @@ import hashlib
 from typing import Any
 
 from pathlib import Path
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta
+from datetime import timedelta
 import asyncio
 
-from app.api.deps import get_db, RequireAdmin, get_current_user
+from app.api.deps import get_db, RequireAdmin, RequireEngineer, get_current_user
+from app.core.tenancy import same_tenant, scope_audit, scope_users, sees_all_tenants, tenant_of
+from app.core.time_utils import utc_now_naive
 from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.document import Document
@@ -26,26 +28,25 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.get("/stats", summary="取得系統統計數據")
 async def get_system_stats(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     _ = RequireAdmin
 ) -> dict[str, Any]:
     """
-    取得系統統計數據 (僅限管理員)
+    取得統計數據 (僅限管理員；租戶管理員只算自己租戶，engineer 算全部)
     """
-    # 查詢總使用者數
-    user_count_result = await db.execute(select(func.count(User.id)))
-    total_users = user_count_result.scalar() or 0
-    
-    # 查詢總對話數
-    conv_count_result = await db.execute(select(func.count(Conversation.id)))
-    total_conversations = conv_count_result.scalar() or 0
-    
-    # 查詢總文件數
-    doc_count_result = await db.execute(select(func.count(Document.id)))
-    total_documents = doc_count_result.scalar() or 0
-    
-    # 查詢總訊息數
-    msg_count_result = await db.execute(select(func.count(Message.id)))
-    total_messages = msg_count_result.scalar() or 0
+    everything = sees_all_tenants(current_user)
+    tid = current_user.effective_tenant_id
+
+    def in_tenant(q, column):
+        return q if everything else q.where(tenant_of(column) == tid)
+
+    total_users = (await db.execute(scope_users(select(func.count(User.id)), current_user))).scalar() or 0
+    total_conversations = (await db.execute(in_tenant(select(func.count(Conversation.id)), Conversation.tenant_id))).scalar() or 0
+    total_documents = (await db.execute(in_tenant(select(func.count(Document.id)), Document.tenant_id))).scalar() or 0
+    total_messages = (await db.execute(in_tenant(
+        select(func.count(Message.id)).join(Conversation, Message.conversation_id == Conversation.id),
+        Conversation.tenant_id,
+    ))).scalar() or 0
     
     return {
         "status": "success",
@@ -96,10 +97,11 @@ async def get_rate_limit_stats(
 async def reset_rate_limit(
     ip: str = None,
     path: str = None,
-    _ = RequireAdmin
+    _ = RequireEngineer
 ) -> dict[str, Any]:
     """
     清除指定 IP 或終點的速率限制記錄，無需重啟後端。
+    速率限制是全系統共用（包含登入暴力破解防護），只有 engineer 能清。
     
     - `ip`: 指定 IP（空白則清除全部）
     - `path`: 指定路徑（空白則清除全部）
@@ -111,30 +113,6 @@ async def reset_rate_limit(
         "status": "success",
         "message": f"已清除 {cleared} 筆速率限制記錄",
         "cleared": cleared,
-    }
-
-
-@router.post("/cache/clear", summary="清除系統快取")
-async def clear_system_cache(
-    _=RequireAdmin,
-) -> dict[str, Any]:
-    """清除系統快取 (僅限管理員)"""
-    import gc
-
-    gc.collect()
-    # If redis or memory cache exists, clear them here.
-    return {"status": "success", "message": "System cache cleared."}
-
-
-@router.post("/index/rebuild", summary="最佳化 PostgreSQL 向量索引")
-async def rebuild_vector_index(
-    _ = RequireAdmin
-) -> dict[str, Any]:
-    """最佳化 pgvector 向量索引 (僅限管理員)"""
-    # Trigger background indexing job
-    return {
-        "status": "success", 
-        "message": "Vector index optimization task triggered automatically in background."
     }
 
 
@@ -174,6 +152,7 @@ async def get_system_info(
 async def verify_conversation_hash_chain(
     conversation_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
 ) -> dict[str, Any]:
     """
@@ -186,6 +165,11 @@ async def verify_conversation_hash_chain(
     - first_broken_message_id: 斷裂訊息的 ID
     """
     from app.services.hash_chain_service import verify_chain
+
+    # 只能驗證自己租戶的對話（不存在和別的租戶都回 404，不透露資料是否存在）
+    conv = await db.get(Conversation, conversation_id)
+    if conv is None or not same_tenant(current_user, conv.tenant_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="對話不存在")
 
     result = await verify_chain(db, conversation_id)
     return {"status": "success", "data": result}
@@ -208,17 +192,13 @@ async def get_quota_overview(
 
     SECURITY FIX: 加 tenant_id 過濾，避免某個 tenant 的 admin 看到其他 tenant 的資料。
     """
-    from app.core.time_utils import utc_now_naive
-
     now = utc_now_naive()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    tenant_id = current_user.effective_tenant_id
 
-    # 取本租戶的使用者
-    users_result = await db.execute(
-        select(User.id, User.email, User.name, User.role, User.daily_message_limit)
-        .where(User.tenant_id == tenant_id)
-    )
+    # 取看得到的使用者（本租戶；engineer 全部）
+    users_result = await db.execute(scope_users(
+        select(User.id, User.email, User.name, User.role, User.daily_message_limit), current_user
+    ))
     users = users_result.all()
 
     if not users:
@@ -255,6 +235,25 @@ async def get_quota_overview(
     return {"status": "success", "data": overview}
 
 
+async def _security_counts(db: AsyncSession, viewer: User) -> dict[str, Any]:
+    """近 24 小時各類資安事件次數（資安摘要與總覽共用，兩邊數字一定一致）"""
+    since = utc_now_naive() - timedelta(hours=24)
+    q = scope_audit(
+        select(AuditLog.action, func.count(AuditLog.id)).where(AuditLog.created_at >= since),
+        viewer,
+    ).group_by(AuditLog.action)
+    counts = {action: cnt for action, cnt in (await db.execute(q)).all()}
+    return {
+        "window_hours": 24,
+        "pii_detected": counts.get(AuditAction.PII_DETECTED, 0),
+        "prompt_injection_blocked": counts.get(AuditAction.PROMPT_INJECTION_BLOCKED, 0),
+        "dlp_hit": counts.get(AuditAction.DLP_HIT, 0),
+        "login_failed": counts.get(AuditAction.LOGIN_FAILED, 0),
+        "account_locked": counts.get(AuditAction.ACCOUNT_LOCKED, 0),
+        "token_revoked": counts.get(AuditAction.TOKEN_REVOKE, 0),
+    }
+
+
 @router.get("/security-summary", summary="取得近 24h 資安事件聚合")
 async def get_security_summary(
     db: AsyncSession = Depends(get_db),
@@ -263,38 +262,9 @@ async def get_security_summary(
 ) -> dict[str, Any]:
     """
     回傳最近 24 小時各類資安事件的次數，供後台儀表板顯示。
+    （登入失敗等還不知道是哪個租戶的事件 tenant_id 為空，算 default 租戶）
     """
-    since = datetime.utcnow() - timedelta(hours=24)
-    tenant_id = current_user.effective_tenant_id
-
-    # 登入失敗、帳號鎖定發生在「還不知道是哪個租戶」之前，tenant_id 會是空的，也要算進來
-    from sqlalchemy import or_, and_
-    base_q = select(AuditLog.action, func.count(AuditLog.id)).where(
-        AuditLog.created_at >= since,
-        or_(
-            AuditLog.tenant_id == tenant_id,
-            and_(
-                AuditLog.tenant_id.is_(None),
-                AuditLog.action.in_([AuditAction.LOGIN_FAILED, AuditAction.ACCOUNT_LOCKED]),
-            ),
-        ),
-    ).group_by(AuditLog.action)
-
-    result = await db.execute(base_q)
-    counts = {action: cnt for action, cnt in result.all()}
-
-    return {
-        "status": "success",
-        "data": {
-            "window_hours": 24,
-            "pii_detected": counts.get(AuditAction.PII_DETECTED, 0),
-            "prompt_injection_blocked": counts.get(AuditAction.PROMPT_INJECTION_BLOCKED, 0),
-            "dlp_hit": counts.get(AuditAction.DLP_HIT, 0),
-            "login_failed": counts.get(AuditAction.LOGIN_FAILED, 0),
-            "account_locked": counts.get(AuditAction.ACCOUNT_LOCKED, 0),
-            "token_revoked": counts.get(AuditAction.TOKEN_REVOKE, 0),
-        }
-    }
+    return {"status": "success", "data": await _security_counts(db, current_user)}
 
 
 # ── Phase 1：新增 4 個 Endpoint ────────────────────────────────────────
@@ -313,27 +283,21 @@ async def get_user_lockout_summary(
     - minutes_until_unlock: 解鎖所需分鐘
     - failures_last_7d: 近 7 天登入失敗數
     """
-    from app.core.time_utils import utc_now_naive
-
     now = utc_now_naive()
     seven_days_ago = now - timedelta(days=7)
-    tenant_id = current_user.tenant_id
 
-    # 每使用者最近 7 天 LOGIN_FAILED 數
-    base_q = select(AuditLog.user_email, func.count(AuditLog.id)).where(
-        AuditLog.action == "login_failed",
+    # 每使用者最近 7 天 LOGIN_FAILED 數（範圍規則見 core/tenancy）
+    base_q = scope_audit(select(AuditLog.user_email, func.count(AuditLog.id)).where(
+        AuditLog.action == AuditAction.LOGIN_FAILED,
         AuditLog.created_at >= seven_days_ago,
-    )
-    if tenant_id:
-        base_q = base_q.where(AuditLog.tenant_id == tenant_id)
+    ), current_user)
     fail_result = await db.execute(base_q.group_by(AuditLog.user_email))
     fails_by_email = {email: cnt for email, cnt in fail_result.all() if email}
 
-    # 該租戶的所有使用者
-    users_q = select(User.id, User.email, User.failed_login_attempts, User.locked_until)
-    if tenant_id:
-        users_q = users_q.where(User.tenant_id == tenant_id)
-    users_result = await db.execute(users_q)
+    # 看得到的使用者
+    users_result = await db.execute(scope_users(
+        select(User.id, User.email, User.failed_login_attempts, User.locked_until), current_user
+    ))
 
     summary = []
     for uid, email, attempts, locked_until in users_result.all():
@@ -424,60 +388,60 @@ async def get_models_integrity(
 @router.get("/tenants/usage", summary="取得每個租戶的使用量總覽")
 async def get_tenants_usage(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     _ = RequireAdmin,
 ) -> dict[str, Any]:
     """
-    返回每個租戶的使用量摘要：
+    返回每個租戶的使用量摘要（租戶管理員只看到自己的租戶，engineer 看到全部）：
     - users_count: 使用者數
     - documents_count: 文件總數
     - messages_24h: 過去 24 小時訊息數
     - security_events_24h: 過去 24 小時資安事件數
     """
-    from app.core.time_utils import utc_now_naive
+    last_24h = utc_now_naive() - timedelta(hours=24)
 
-    now = utc_now_naive()
-    last_24h = now - timedelta(hours=24)
+    tenants_q = select(Tenant)
+    if not sees_all_tenants(current_user):
+        tenants_q = tenants_q.where(Tenant.id == current_user.effective_tenant_id)
+    tenants = (await db.execute(tenants_q)).scalars().all()
 
-    # 一次撈所有 tenant
-    tenants_result = await db.execute(select(Tenant))
-    tenants = tenants_result.scalars().all()
+    async def grouped(q) -> dict:
+        return dict((await db.execute(q)).all())
 
-    # 各種 group-by 一次撈
-    users_count = dict((tid, cnt) for tid, cnt in (await db.execute(
-        select(User.tenant_id, func.count(User.id)).group_by(User.tenant_id)
-    )).all())
-
-    docs_count = dict((tid, cnt) for tid, cnt in (await db.execute(
-        select(Document.tenant_id, func.count(Document.id)).group_by(Document.tenant_id)
-    )).all())
-
-    msgs_24h = dict((tid, cnt) for tid, cnt in (await db.execute(
-        select(Conversation.tenant_id, func.count(Message.id))
+    u_t = tenant_of(User.tenant_id)
+    d_t = tenant_of(Document.tenant_id)
+    c_t = tenant_of(Conversation.tenant_id)
+    a_t = tenant_of(AuditLog.tenant_id)
+    users_count = await grouped(select(u_t, func.count(User.id)).group_by(u_t))
+    docs_count = await grouped(select(d_t, func.count(Document.id)).group_by(d_t))
+    msgs_24h = await grouped(
+        select(c_t, func.count(Message.id))
         .join(Message, Message.conversation_id == Conversation.id)
         .where(Message.created_at >= last_24h)
-        .group_by(Conversation.tenant_id)
-    )).all())
+        .group_by(c_t)
+    )
 
     # 24h 資安事件（7 種類型）
-    SECURITY_ACTIONS = {"pii_detected", "prompt_injection_blocked", "dlp_hit", "login_failed", "account_locked", "token_revoke", "ngrok_start"}
-    sec_24h_q = select(AuditLog.tenant_id, func.count(AuditLog.id)).where(
-        AuditLog.action.in_(SECURITY_ACTIONS),
-        AuditLog.created_at >= last_24h,
-    ).group_by(AuditLog.tenant_id)
-    sec_24h = dict((tid, cnt) for tid, cnt in (await db.execute(sec_24h_q)).all())
+    SECURITY_ACTIONS = {
+        AuditAction.PII_DETECTED, AuditAction.PROMPT_INJECTION_BLOCKED, AuditAction.DLP_HIT,
+        AuditAction.LOGIN_FAILED, AuditAction.ACCOUNT_LOCKED, AuditAction.TOKEN_REVOKE, AuditAction.NGROK_START,
+    }
+    sec_24h = await grouped(
+        select(a_t, func.count(AuditLog.id))
+        .where(AuditLog.action.in_(SECURITY_ACTIONS), AuditLog.created_at >= last_24h)
+        .group_by(a_t)
+    )
 
-    data = []
-    for t in tenants:
-        data.append({
-            "id": t.id,
-            "name": t.name,
-            "slug": t.slug,
-            "is_active": t.is_active,
-            "users_count": users_count.get(t.id, 0),
-            "documents_count": docs_count.get(t.id, 0),
-            "messages_24h": msgs_24h.get(t.id, 0),
-            "security_events_24h": sec_24h.get(t.id, 0),
-        })
+    data = [{
+        "id": t.id,
+        "name": t.name,
+        "slug": t.slug,
+        "is_active": t.is_active,
+        "users_count": users_count.get(t.id, 0),
+        "documents_count": docs_count.get(t.id, 0),
+        "messages_24h": msgs_24h.get(t.id, 0),
+        "security_events_24h": sec_24h.get(t.id, 0),
+    } for t in tenants]
     return {"status": "success", "data": data}
 
 
@@ -493,30 +457,13 @@ async def get_dashboard_snapshot(
     """
     from app.services.boot_service import build_health_payload
 
-    since = datetime.utcnow() - timedelta(hours=24)
-    tenant_id = current_user.effective_tenant_id
-
-    base_q = select(AuditLog.action, func.count(AuditLog.id)).where(
-        AuditLog.created_at >= since,
-        AuditLog.tenant_id == tenant_id,
-    ).group_by(AuditLog.action)
-    result = await db.execute(base_q)
-    counts = {action: cnt for action, cnt in result.all()}
-
+    security = await _security_counts(db, current_user)
     health = build_health_payload()
 
     return {
         "status": "success",
         "data": {
-            "security": {
-                "window_hours": 24,
-                "pii_detected": counts.get(AuditAction.PII_DETECTED, 0),
-                "prompt_injection_blocked": counts.get(AuditAction.PROMPT_INJECTION_BLOCKED, 0),
-                "dlp_hit": counts.get(AuditAction.DLP_HIT, 0),
-                "login_failed": counts.get(AuditAction.LOGIN_FAILED, 0),
-                "account_locked": counts.get(AuditAction.ACCOUNT_LOCKED, 0),
-                "token_revoked": counts.get(AuditAction.TOKEN_REVOKE, 0),
-            },
+            "security": security,
             "ai": {
                 "llm": health.get("llm", "loading"),
                 "rag": health.get("rag", "loading"),

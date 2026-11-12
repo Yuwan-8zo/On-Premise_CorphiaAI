@@ -6,6 +6,7 @@ import { tenantsApi, type Tenant } from '@/api/tenants'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
 import { useUIStore } from '@/store/uiStore'
+import i18n from '@/i18n'
 
 export interface TenantForm {
     name: string
@@ -70,8 +71,8 @@ export function useAdminTenants() {
 
     /** 啟用／停用：只切換 is_active，不刪資料（使用者、對話、文件都還指向這個租戶） */
     const toggleStatus = (item: Tenant) => {
-        const action = item.is_active ? '停用' : '啟用'
-        showConfirm(`確定要${action}租戶 ${item.name}？`, async () => {
+        const message = i18n.t(item.is_active ? 'ui.tenants.confirmDisable' : 'ui.tenants.confirmEnable', { name: item.name })
+        showConfirm(message, async () => {
             try {
                 await tenantsApi.updateTenant(item.id, { is_active: !item.is_active })
                 loadTenants()

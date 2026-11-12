@@ -9,7 +9,7 @@ import { Cpu, HardDrive } from '@/components/snow/icons'
 
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
-import { Skel } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 
 export interface SystemResourcePanelProps {
     className?: string
@@ -40,14 +40,17 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
             icon: <Cpu className="h-3 w-3 text-[var(--ink-blue)]" />,
             label: t('admin.overview.cpuUsage', 'CPU'),
             percent: cpuPercent,
-            note: `${coreCount} ${coreCount === 1 ? 'core' : 'cores'}`,
+            note: t('ui.misc.cores', { n: coreCount }),
+            // 載入中的佔位：和真資料同格式、同長度，資料進來時這一行不會變寬或換行
+            placeholder: t('ui.misc.cores', { n: 8 }),
         },
         {
             key: 'ram',
             icon: <HardDrive className="h-3 w-3 text-[var(--ink-teal)]" />,
             label: t('admin.overview.ramUsage', '記憶體'),
             percent: memoryPercent,
-            note: `${totalMemoryGb.toFixed(1)} GB total`,
+            note: t('ui.misc.memTotal', { gb: totalMemoryGb.toFixed(1) }),
+            placeholder: t('ui.misc.memTotal', { gb: '00.0' }),
         },
     ]
 
@@ -62,15 +65,17 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                         key={item.key}
                         className="flex flex-1 flex-col justify-center gap-[var(--sp-6)] px-[var(--sp-16)] py-[var(--sp-10)] rounded-[var(--admin-in)] bg-[var(--chip)]"
                     >
-                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-[var(--sp-2)]">
-                            <div className="flex items-center gap-1.5">
+                        {/* 一行到底（不換行）：這一行的高度固定，資料長短不會讓卡片長高、整頁縮放跳動；太窄時備註截斷 */}
+                        <div className="flex items-center justify-between gap-x-2 min-w-0">
+                            <div className="flex shrink-0 items-center gap-1.5">
                                 {item.icon}
                                 <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">{item.label}</p>
                             </div>
-                            <p className="whitespace-nowrap text-[length:var(--fs-11)] text-text-muted">{info ? item.note : <Skel className="inline-block h-[var(--sz-12)] w-[var(--sz-64)] align-middle" />}</p>
+                            <p className="min-w-0 truncate text-[length:var(--fs-11)] text-text-muted">{info ? item.note : <SkelText>{item.placeholder}</SkelText>}</p>
                         </div>
                         <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
-                            {info ? <>{item.percent.toFixed(1)}<span className="ml-0.5 text-[length:var(--fs-15)] font-medium text-text-secondary">%</span></> : <Skel className="inline-block h-[var(--sz-24)] w-[var(--sz-64)] align-middle" />}
+                            {/* 載入中用同格式的佔位（數字＋小一號的 %），高度和真資料一樣 */}
+                            {info ? <>{item.percent.toFixed(1)}<span className="ml-0.5 text-[length:var(--fs-15)] font-medium text-text-secondary">%</span></> : <SkelText>00.0<span className="ml-0.5 text-[length:var(--fs-15)] font-medium">%</span></SkelText>}
                         </p>
                         <div className="h-1.5 rounded-full bg-[rgb(var(--text-primary)/0.12)] overflow-hidden">
                             <div

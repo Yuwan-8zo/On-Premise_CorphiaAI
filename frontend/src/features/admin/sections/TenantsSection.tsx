@@ -19,6 +19,7 @@ import {
 import { adminApi, type TenantUsageStats } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { SkelCards } from '@/components/ui/Skeleton'
+import { useAuthStore } from '@/store/authStore'
 
 export interface TenantsSectionProps {
     tenants: Tenant[]
@@ -38,6 +39,8 @@ export default function TenantsSection({
     onToggleTenantStatus,
 }: TenantsSectionProps) {
     const { t } = useTranslation()
+    // 新增、停用／啟用租戶是系統層級的操作，只有 engineer 看得到（後端也會擋）
+    const isEngineer = useAuthStore((s) => s.user?.role === 'engineer')
     const [usageMap, setUsageMap] = useState<Record<string, TenantUsageStats>>({})
 
     // 每 30s 輪詢一次使用量
@@ -62,12 +65,12 @@ export default function TenantsSection({
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
                 eyebrow={t('admin.tenants.activeTenants', { count: activeTenants })}
-                action={
+                action={isEngineer ? (
                     <ActionButton onClick={onAddTenant}>
                         <Plus className="h-4 w-4" />
                         {t('admin.tenants.addTenant', '新增')}
                     </ActionButton>
-                }
+                ) : undefined}
             />
             {/* 租戶卡片：把這一區分成「田」字四格，每張卡片佔 1/4（半寬、半高）；超過四個往下排、每列一樣半高；手機一欄 */}
             <div className="admin-fill-body tenant-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
@@ -98,7 +101,7 @@ export default function TenantsSection({
                                         </div>
                                     </div>
                                     {hasSecurityEvents && (
-                                        <div className="shrink-0 text-[var(--ink-red)]">
+                                        <div className="shrink-0 text-[var(--ink-red)]" title={t('admin.overview.securityEvents')} aria-label={t('admin.overview.securityEvents')} role="img">
                                             <AlertTriangle className="h-4 w-4" />
                                         </div>
                                     )}
@@ -152,14 +155,16 @@ export default function TenantsSection({
 
                                 {/* Actions */}
                                 <div className="mt-auto flex justify-end gap-2">
-                                    <ActionButton
-                                        variant="secondary"
-                                        onClick={() => onToggleTenantStatus(item)}
-                                    >
-                                        {item.is_active
-                                            ? t('admin.tenants.disable', '停用')
-                                            : t('admin.tenants.enable', '啟用')}
-                                    </ActionButton>
+                                    {isEngineer && item.id !== 'default' && (
+                                        <ActionButton
+                                            variant="secondary"
+                                            onClick={() => onToggleTenantStatus(item)}
+                                        >
+                                            {item.is_active
+                                                ? t('admin.tenants.disable', '停用')
+                                                : t('admin.tenants.enable', '啟用')}
+                                        </ActionButton>
+                                    )}
                                     <ActionButton onClick={() => onEditTenant(item)}>
                                         {t('admin.tenants.edit', '編輯')}
                                     </ActionButton>

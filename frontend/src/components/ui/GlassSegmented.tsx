@@ -13,7 +13,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Tooltip from './Tooltip'
 import { useCssPx, type PxOrVar } from '@/lib/cssVars'
-import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
+import { LENS_CFG, LENS_MAG, LENS_SX, capsuleHole, lensActive, lensCrossScale, shoulderMask, useLensMotion } from './lensKit'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -142,14 +142,15 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
 
     const LLf = sg + growLong * 2, LCf = rowCross + growCross * 2
     const sLong = 1 - (1 - LENS_SX) * f.grow
-    const sCross = 1 - (1 - LENS_SY) * f.grow
+    // 短邊依放大鏡大小算：上下露出的折射凹陷固定佔鏡片短邊的比例（lensKit 的 lensCrossScale）
+    const sCross = 1 - (1 - lensCrossScale(LCf, cross)) * f.grow
     // 肩：鏡內縮小的軌道在那一側延伸到鏡片外才接上肩（底面是兩條直線）；
     // 移到最邊的格子時，縮小軌道的尾端落在鏡片裡 → 那一側的肩淡掉，底面順著軌道的圓頭彎過去
     const barStart = cl * (1 - sLong)
     const barEnd = cl + (long - cl) * sLong
     const shl = barStart < cl - ll / 2 - 0.5 ? 1 : 0
     const shr = barEnd > cl + ll / 2 + 0.5 ? 1 : 0
-    // 縮小的整條軌道（以鏡片中心為準）：橫的長邊 0.93、短邊 0.768；直的方向互換
+    // 鏡內整條軌道的副本（以鏡片中心為準）：橫的長邊 0.93、短邊照大小算；直的方向互換
     const shrunkBar: React.CSSProperties = {
         left: -L, top: -T, width: W, height: H, borderRadius: cross / 2,
         transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`,

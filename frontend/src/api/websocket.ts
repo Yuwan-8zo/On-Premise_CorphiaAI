@@ -5,6 +5,7 @@
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
 import type { MessageSource } from '@/types/chat'
+import i18n from '@/i18n'
 
 export interface WebSocketMessage {
     type: 'message' | 'ping' | 'stop' | 'resubmit'
@@ -85,7 +86,7 @@ export class ChatWebSocket {
 
             const token = useAuthStore.getState().accessToken
             if (!token) {
-                reject(new Error('未登入'))
+                reject(new Error('NOT_AUTHENTICATED'))
                 return
             }
 
@@ -97,7 +98,6 @@ export class ChatWebSocket {
             this.ws = new WebSocket(url)
 
             this.ws.onopen = () => {
-                console.log('WebSocket 已連接')
                 this.reconnectAttempts = 0
                 this.openHandlers.forEach((handler) => handler())
                 resolve()
@@ -113,7 +113,6 @@ export class ChatWebSocket {
             }
 
             this.ws.onclose = () => {
-                console.log('WebSocket 已斷開')
 
                 // 回答到一半連線斷了（系統被關閉、電腦睡眠…）：在泡泡裡說明，不要留一個空白泡泡像卡住
                 const st = useChatStore.getState()
@@ -126,7 +125,7 @@ export class ChatWebSocket {
                     if (last?.role === 'assistant') {
                         st.appendToLastMessage(
                             (last.content ? '\n\n' : '') +
-                            '與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
+                            i18n.t('ui.chat.connectionLost'),
                         )
                     }
                 }

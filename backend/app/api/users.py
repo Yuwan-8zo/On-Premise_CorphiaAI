@@ -6,11 +6,13 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
 from sqlalchemy import select, func
 
-from app.api.lookups import get_tenant_user
+from app.api.lookups import ensure_can_manage, get_tenant_user
 from app.core.query_utils import like_contains, page_count
+from app.core.tenancy import scope_users
 from app.api.deps import CurrentUser, DbSession, AdminUser
-from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate, UserListResponse, UserCreate
+from app.models.user import User, UserRole
+from app.schemas.user import AdminUserUpdate, UserResponse, UserUpdate, UserListResponse, UserCreate
+from app.core.time_utils import utc_now_naive
 from app.core.security import get_password_hash
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 from app.core.request_utils import get_client_ip, get_user_agent
@@ -26,8 +28,11 @@ async def create_user(
     request: Request = None,
 ):
     """
-    建立使用者（僅 admin/engineer 可用）
+    建立使用者（僅 admin/engineer 可用；engineer 帳號只有 engineer 能建立）
     """
+    if data.role == UserRole.ENGINEER and not current_user.is_engineer:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="無法建立權限更高的帳號")
+
     result = await db.execute(select(User).where(User.email == data.email))
     if result.scalar_one_or_none():
         raise HTTPException(
@@ -39,9 +44,9 @@ async def create_user(
         email=data.email,
         name=data.name,
         password_hash=get_password_hash(data.password),
-        role=data.role,
-        tenant_id=current_user.tenant_id,
-        is_active=True
+        role=data.role.value,
+        tenant_id=current_user.effective_tenant_id,
+        is_active=data.is_active,
     )
     
     db.add(new_user)
@@ -77,9 +82,9 @@ async def list_users(
     """
     列出使用者（僅 admin/engineer 可用）
     """
-    # 建立查詢
-    query = select(User).where(User.tenant_id == current_user.tenant_id)
-    count_query = select(func.count(User.id)).where(User.tenant_id == current_user.tenant_id)
+    # 建立查詢（範圍：自己租戶，帳號沒有租戶算 default；engineer 看全部）
+    query = scope_users(select(User), current_user)
+    count_query = scope_users(select(func.count(User.id)), current_user)
     
     # 篩選條件
     if search:
@@ -143,9 +148,10 @@ async def get_user(
     db: DbSession,
 ):
     """
-    取得指定使用者資訊
+    取得指定使用者資訊：自己的，或管理員查看同租戶的
     """
-    # 只能查看同租戶的使用者
+    if user_id != str(current_user.id) and not (current_user.is_admin or current_user.is_engineer):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="權限不足")
     user = await get_tenant_user(db, user_id, current_user)
     
     return UserResponse.model_validate(user)
@@ -184,21 +190,46 @@ async def update_current_user(
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: str,
-    data: UserUpdate,
+    data: AdminUserUpdate,
     current_user: AdminUser,
     db: DbSession,
     request: Request = None,
 ):
     """
-    更新指定使用者資訊（僅 admin 可用）
+    更新指定使用者資訊（僅 admin 可用）：名稱、頭像、啟用、角色、重設密碼
+    - 不能改自己的角色、不能停用自己
+    - 只有 engineer 能把人設成 engineer、能管 engineer
+    - 重設密碼後，那個人所有裝置的登入失效
     """
     # 取得使用者
     user = await get_tenant_user(db, user_id, current_user)
-    
-    # 更新資料
-    update_data = data.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(user, key, value)
+    ensure_can_manage(current_user, user)
+
+    update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+    is_self = user.id == current_user.id
+    # 不能停用自己（會把自己鎖在外面）
+    if is_self and update_data.get("is_active") is False:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="無法停用自己的帳號")
+
+    new_role = update_data.pop("role", None)
+    if new_role is not None and new_role.value != user.role:
+        if is_self:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="無法變更自己的角色")
+        if new_role == UserRole.ENGINEER and not current_user.is_engineer:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="無法設定權限更高的角色")
+        user.role = new_role.value
+        update_data["role"] = new_role.value
+
+    new_password = update_data.pop("password", None)
+    if new_password:
+        user.password_hash = get_password_hash(new_password)
+        user.token_revoked_at = utc_now_naive()
+        update_data["password"] = "***"
+
+    # 其他欄位（名稱、頭像、啟用）
+    for key in ("name", "avatar_url", "is_active"):
+        if key in update_data:
+            setattr(user, key, update_data[key])
     
     await db.commit()
     await db.refresh(user)
@@ -240,6 +271,7 @@ async def delete_user(
     
     # 取得使用者
     user = await get_tenant_user(db, user_id, current_user)
+    ensure_can_manage(current_user, user)
     
     # 實際刪除使用者 (硬刪除)，這會觸發 cascade 刪除該使用者的所有關聯資料 (對話、文件等)
     await db.delete(user)
@@ -273,6 +305,7 @@ async def activate_user(
     啟用使用者（僅 admin 可用）
     """
     user = await get_tenant_user(db, user_id, current_user)
+    ensure_can_manage(current_user, user)
     
     user.is_active = True
     await db.commit()
@@ -315,6 +348,7 @@ async def force_logout_user(
 
     # 取得使用者
     user = await get_tenant_user(db, user_id, current_user)
+    ensure_can_manage(current_user, user)
 
     # 撤銷所有 Token
     from app.services.token_service import revoke_all_user_tokens
@@ -328,7 +362,7 @@ async def force_logout_user(
     # 審計日誌
     await write_audit_log(
         db=db,
-        action="user_force_logout",
+        action=AuditAction.USER_FORCE_LOGOUT,
         resource_type=AuditResource.USER,
         resource_id=user_id,
         user_id=current_user.id,

@@ -72,7 +72,7 @@ html.dark {
   --wave-d3: 3 3 4;
   --text-primary: 255 255 255;
   --text-secondary: 182 182 192;
-  --text-muted: 133 133 143;
+  --text-muted: 165 165 172; /* 第三層：在深色卡片（elevated）上達 4.5:1，仍比次要文字（182）淡一階 */
   --text-disabled: 99 99 102;
   --border-subtle: 56 56 58;
   --border-strong: 72 72 74;

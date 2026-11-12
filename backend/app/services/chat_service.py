@@ -4,6 +4,7 @@
 處理對話邏輯和訊息管理
 """
 
+import asyncio
 import logging
 from typing import TypedDict, Optional, AsyncGenerator
 
@@ -31,6 +32,8 @@ logger = logging.getLogger(__name__)
 class AgentState(TypedDict, total=False):
     conversation_id: str
     tenant_id: str
+    # 對話主人：專案資料夾是個人的，只能用他自己上傳到這個資料夾的文件
+    user_id: Optional[str]
     folder_name: Optional[str]
     use_rag: bool
     query: str
@@ -44,6 +47,27 @@ class AgentState(TypedDict, total=False):
 def _clip_history(text: str, limit: int = 400) -> str:
     text = text or ""
     return text if len(text) <= limit else text[:limit] + "…"
+
+
+# 中途停止的回答最後加一行標記，之後看就知道這段沒寫完（斜體＝小字註記）
+STOPPED_NOTES = {
+    "zh-TW": "（已停止）",
+    "en-US": "(stopped)",
+    "ja-JP": "（停止しました）",
+}
+
+
+def stopped_note(language: str) -> str:
+    return "\n\n*" + STOPPED_NOTES.get(language, STOPPED_NOTES["zh-TW"]) + "*"
+
+
+class ChatGenerationError(Exception):
+    """無法產生回應（模型載入中、訊息不存在…）；code 給前端判斷用"""
+
+    def __init__(self, message: str, code: Optional[str] = None):
+        super().__init__(message)
+        self.message = message
+        self.code = code
 
 
 class ChatService:
@@ -72,8 +96,10 @@ class ChatService:
         "ja-JP": "『重要』あなたは必ず日本語で回答してください。ユーザーがどの言語で質問しても、すべての返答は日本語でなければなりません。",
     }
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, model_name: Optional[str] = None):
         self.db = db
+        # 這個人自己選的模型（services/model_preference）；None＝系統預設
+        self.model_name = model_name
         self.llm_service = get_llm_service()
         self.rag_service = get_rag_service()
         self.agent_graph = self._build_agent_graph()
@@ -139,7 +165,7 @@ class ChatService:
 
         try:
             # The answer is only {"route": "rag|chat"}; a small cap keeps this step fast on CPU.
-            decision = await self.llm_service.generate_structured(prompt, schema, max_tokens=24)
+            decision = await self.llm_service.generate_structured(prompt, schema, max_tokens=24, model_name=self.model_name)
             route = decision.get("route", "chat")
             if route not in ["rag", "chat"]:
                 route = "chat"
@@ -164,6 +190,8 @@ class ChatService:
             docs_result = await self.db.execute(
                 select(Document.id)
                 .where(Document.tenant_id == state.get("tenant_id"))
+                # 資料夾是個人的：別人剛好取了同名資料夾，他的文件也不能混進來
+                .where(Document.uploaded_by == state.get("user_id"))
                 .where(Document.doc_metadata["folderName"].astext == folder_name)
                 # isActive 預設 True：欄位不存在或為 'true' 都算啟用
                 .where(
@@ -388,6 +416,7 @@ class ChatService:
         conversation = result.scalar_one_or_none()
         folder_name = conversation.settings.get("folderName") if conversation else None
         tenant_id = conversation.tenant_id if conversation else "default"
+        owner_id = conversation.user_id if conversation else None
 
         # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
         chat_history = [
@@ -398,6 +427,7 @@ class ChatService:
         initial_state: AgentState = {
             "conversation_id": conversation_id,
             "tenant_id": tenant_id,
+            "user_id": owner_id,
             "folder_name": folder_name,
             "use_rag": use_rag,
             "query": content,
@@ -442,55 +472,30 @@ class ChatService:
         language: str = "zh-TW",
     ) -> Message:
         """
-        發送訊息並取得回應（非串流）
+        發送訊息並取得回應（非串流）：直接跑串流那一條，收完再回傳助手訊息，
+        所以存訊息、防篡改 hash、模型載入中的檢查都和即時串流完全一樣。
+        content 要先經過 services/message_guard 的安全閘道。
 
-        Args:
-            language: 回覆語言代碼（zh-TW / en-US / ja-JP）
+        Raises:
+            ChatGenerationError: 模型還在載入、訊息不存在等無法產生回應的情況
         """
-        # 儲存使用者訊息
-        user_message = Message(
+        message_id: Optional[str] = None
+        async for event in self.send_message_stream(
             conversation_id=conversation_id,
-            role=MessageRole.USER.value,
             content=content,
-        )
-        self.db.add(user_message)
-
-        prompt, context, sources, _route = await self._prepare_prompt(
-            conversation_id, content, use_rag, language
-        )
-
-        # 生成回應
-        response_text = await self.llm_service.generate(
-            prompt=prompt,
+            use_rag=use_rag,
             temperature=temperature,
             max_tokens=max_tokens,
-        )
-        if language == "zh-TW":
-            response_text = to_traditional(response_text)
-
-        # 儲存助手訊息
-        assistant_message = Message(
-            conversation_id=conversation_id,
-            role=MessageRole.ASSISTANT.value,
-            content=response_text,
-            sources=sources if sources else None,
-        )
-        self.db.add(assistant_message)
-
-        # 更新對話
-        await self.db.execute(
-            update(Conversation)
-            .where(Conversation.id == conversation_id)
-            .values(
-                message_count=Conversation.message_count + 2,
-                updated_at=utc_now_naive(),
-            )
-        )
-
-        await self.db.commit()
-        await self.db.refresh(assistant_message)
-
-        return assistant_message
+            language=language,
+        ):
+            if event.get("type") == "error":
+                raise ChatGenerationError(event.get("message", "生成失敗"), code=event.get("code"))
+            if event.get("type") == "done":
+                message_id = event.get("message_id")
+        message = await self.db.get(Message, message_id) if message_id else None
+        if message is None:
+            raise ChatGenerationError("生成失敗")
+        return message
 
     async def send_message_stream(
         self,
@@ -582,25 +587,46 @@ class ChatService:
 
         # 串流生成回應
         full_response = ""
+        try:
+            async for chunk in self.llm_service.generate_stream(
+                model_name=self.model_name,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ):
+                if language == "zh-TW":
+                    chunk = to_traditional(chunk)
+                full_response += chunk
+                yield {
+                    "type": "stream",
+                    "content": chunk,
+                }
+        except (asyncio.CancelledError, GeneratorExit):
+            # 中途停止（使用者按停止、生成逾時、連線中斷）：已經寫出來的部分存起來，
+            # 重新整理或之後再打開對話都還看得到；一個字都還沒寫就不存
+            if full_response.strip():
+                # shield：存檔途中又收到取消也要存完
+                await asyncio.shield(
+                    self._save_assistant_message(
+                        conversation_id, full_response + stopped_note(language), sources
+                    )
+                )
+            raise
 
-        async for chunk in self.llm_service.generate_stream(
-            prompt=prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        ):
-            if language == "zh-TW":
-                chunk = to_traditional(chunk)
-            full_response += chunk
-            yield {
-                "type": "stream",
-                "content": chunk,
-            }
+        assistant_message = await self._save_assistant_message(conversation_id, full_response, sources)
+        yield {
+            "type": "done",
+            "message_id": assistant_message.id,
+        }
 
-        # 儲存助手訊息
+    async def _save_assistant_message(
+        self, conversation_id: str, content: str, sources: Optional[list]
+    ) -> Message:
+        """存助手訊息：蓋防竄改 hash、更新對話的訊息數與更新時間（完整回答和中途停止共用）"""
         assistant_message = Message(
             conversation_id=conversation_id,
             role=MessageRole.ASSISTANT.value,
-            content=full_response,
+            content=content,
             sources=sources if sources else None,
         )
         self.db.add(assistant_message)
@@ -624,47 +650,4 @@ class ChatService:
             )
         )
         await self.db.commit()
-        yield {
-            "type": "done",
-            "message_id": assistant_message.id,
-        }
-
-    async def auto_title(self, conversation_id: str) -> str:
-        """
-        自動生成對話標題
-
-        Args:
-            conversation_id: 對話 ID
-
-        Returns:
-            str: 生成的標題
-        """
-        messages = await self.get_messages(conversation_id, limit=2)
-
-        if not messages:
-            return "新對話"
-
-        # 使用第一則使用者訊息
-        first_user_msg = next(
-            (m for m in messages if m.role == MessageRole.USER.value),
-            None
-        )
-
-        if first_user_msg:
-            # 簡單截取前 50 字元作為標題
-            from app.services.pii_masking_service import mask_pii
-            title = mask_pii(first_user_msg.content)["masked_text"][:50]
-            if len(first_user_msg.content) > 50:
-                title += "..."
-
-            # 更新標題
-            await self.db.execute(
-                update(Conversation)
-                .where(Conversation.id == conversation_id)
-                .values(title=title)
-            )
-            await self.db.commit()
-
-            return title
-
-        return "新對話"
+        return assistant_message

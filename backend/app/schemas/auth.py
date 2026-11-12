@@ -2,24 +2,10 @@
 認證 Schemas
 """
 
-from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.password_service import validate_password_strength
-
-
-def _validate_email_like(value: str) -> str:
-    """Accept normal emails and local accounts such as admin@local."""
-    local_part, separator, domain_part = value.partition("@")
-    if (
-        not separator
-        or not local_part
-        or not domain_part
-        or any(ch.isspace() for ch in value)
-    ):
-        raise ValueError("invalid email format")
-    return value
+from app.schemas.common import require_strong_password, validate_email_like
 
 
 class LoginRequest(BaseModel):
@@ -37,7 +23,7 @@ class LoginRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_email_format(cls, v: str) -> str:
-        return _validate_email_like(v)
+        return validate_email_like(v)
 
 
 class LoginResponse(BaseModel):
@@ -51,13 +37,6 @@ class LoginResponse(BaseModel):
 class RefreshRequest(BaseModel):
     """刷新 Token 請求"""
     refresh_token: str
-
-
-class TokenPayload(BaseModel):
-    """Token 載荷"""
-    sub: str  # user_id
-    exp: datetime
-    type: str  # access / refresh
 
 
 class RegisterRequest(BaseModel):
@@ -77,16 +56,13 @@ class RegisterRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_email_format(cls, v: str) -> str:
-        return _validate_email_like(v)
+        return validate_email_like(v)
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
         """驗證密碼強度"""
-        errors = validate_password_strength(v)
-        if errors:
-            raise ValueError("; ".join(errors))
-        return v
+        return require_strong_password(v)
 
 
 class PasswordChangeRequest(BaseModel):
@@ -98,10 +74,7 @@ class PasswordChangeRequest(BaseModel):
     @classmethod
     def validate_new_password(cls, v: str) -> str:
         """驗證新密碼強度"""
-        errors = validate_password_strength(v)
-        if errors:
-            raise ValueError("; ".join(errors))
-        return v
+        return require_strong_password(v)
 
 
 class PasswordStrengthRequest(BaseModel):

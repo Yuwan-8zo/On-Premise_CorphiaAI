@@ -32,6 +32,8 @@ import { useConversationDialogs } from './useConversationDialogs'
 import { useFileUpload } from './useFileUpload'
 import { useFolders } from './useFolders'
 import { useModels } from './useModels'
+import i18n from '@/i18n'
+import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
 
 type ChatMode = 'general' | 'project'
 
@@ -121,11 +123,10 @@ export function useChatLogic() {
     }
 
     /** 預設標題的對話（用「新對話」按鈕開的）送出第一句話時，改用這句話當標題，清單上才分得出來 */
-    const DEFAULT_TITLE = '新對話'
     const autoTitle = async (conversationId: string | undefined, text: string) => {
         const st = useChatStore.getState()
         const conv = st.conversations.find((c) => c.id === conversationId)
-        if (!conversationId || !conv || conv.title !== DEFAULT_TITLE || st.messages.length > 0) return
+        if (!conversationId || !conv || conv.title !== DEFAULT_CONVERSATION_TITLE || st.messages.length > 0) return
         const title = text.slice(0, 50)
         st.updateConversation(conversationId, { title })
         try {
@@ -185,13 +186,13 @@ export function useChatLogic() {
             }
         }
         try {
-            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: false } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: false } })
             addConversation(conversation)
             upload.setUploadedFiles([])
             await selectConversation(conversation)
         } catch (error) {
             console.error('建立對話失敗:', error)
-            toast.error('建立對話失敗，請確認系統已啟動完成後再試一次')
+            toast.error(i18n.t('ui.chat.createFailed'))
         }
     }
 
@@ -199,7 +200,7 @@ export function useChatLogic() {
     const createConvInFolder = async (folderName: string, e: React.MouseEvent) => {
         e.stopPropagation()
         try {
-            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: true, folderName } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: true, folderName } })
             addConversation(conversation)
             upload.setUploadedFiles([])
             folders.setExpandedFolders((prev) => new Set(prev).add(folderName)) // 展開資料夾，新對話立刻出現在側欄
@@ -241,7 +242,8 @@ export function useChatLogic() {
                 for (const conv of conversations.filter((c) => Boolean(c.settings?.isProject) && folderOf(c.settings) === folderName)) {
                     await removeConversation(conv.id)
                 }
-                const docs = (await documentsApi.list()).data.filter((d) => folderOf(d.doc_metadata) === folderName)
+                // 後端已依資料夾過濾；這裡再篩一次當保險（刪除是不能復原的動作）
+                const docs = (await documentsApi.list({ folder: folderName })).data.filter((d) => folderOf(d.doc_metadata) === folderName)
                 for (const doc of docs) await documentsApi.delete(doc.id)
 
                 try {
@@ -249,7 +251,7 @@ export function useChatLogic() {
                     await folders.loadFolders()
                 } catch (err) {
                     console.error('刪除資料夾失敗:', err)
-                    toast.error('無法刪除資料夾')
+                    toast.error(i18n.t('ui.chat.folderDeleteFailed'))
                 }
                 if (selectedFolder === folderName) {
                     setSelectedFolder(null)
@@ -424,6 +426,7 @@ export function useChatLogic() {
             ...models,
             currentConversation,
             handleShareConversation: dialogs.handleShareConversation,
+            handleUnshareConversation: dialogs.handleUnshareConversation,
             handleRenameConversation: dialogs.handleRenameConversation,
             handleMoveToProject: dialogs.handleMoveToProject,
             handleVerifyChain: dialogs.handleVerifyChain,

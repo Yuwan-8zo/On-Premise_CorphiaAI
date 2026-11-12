@@ -59,6 +59,11 @@ class AuditAction:
     PROMPT_INJECTION_BLOCKED = "prompt_injection_blocked"
     DLP_HIT = "dlp_hit"
 
+    # 租戶管理
+    TENANT_CREATE = "tenant_create"
+    TENANT_UPDATE = "tenant_update"
+    TENANT_DELETE = "tenant_delete"
+
     # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
     NGROK_START = "ngrok_start"
     NGROK_STOP = "ngrok_stop"

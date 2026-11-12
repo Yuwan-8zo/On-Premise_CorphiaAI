@@ -181,7 +181,7 @@ export default function Chat() {
                             <div className="mt-6 p-4 glass-chip rounded-[var(--r-18)] flex items-center justify-between animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-                                    <span className="text-accent text-[length:var(--fs-15)] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <span className="text-accent text-[length:var(--fs-15)] font-medium">{mainProps.t('ui.chat.uploadAnalyzing')}</span>
                                 </div>
                                 <span className="text-accent font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
@@ -303,6 +303,7 @@ export default function Chat() {
                 onRename={modalProps.handleRenameConversation}
                 onMove={modalProps.handleMoveToProject}
                 onShare={modalProps.handleShareConversation}
+                onUnshare={modalProps.handleUnshareConversation}
                 onDelete={modalProps.handleDeleteConversation}
                 onClose={modalProps.closeMenu}
             />

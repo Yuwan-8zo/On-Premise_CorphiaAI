@@ -174,6 +174,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             initial={riseIn.initial}
             animate={riseIn.animate}
             transition={riseIn.transition}
+            data-role={message.role}
             className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}
         >
             {isUser ? (

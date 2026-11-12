@@ -5,8 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-import threading
-import time
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -157,40 +155,6 @@ def _pick_public_url(tunnels: list[dict[str, Any]], preferred_scheme: str) -> st
     return None
 
 
-def load_runtime_state(root_dir: Path | None = None) -> NgrokState:
-    path = _runtime_json_path(root_dir)
-    if not path.exists():
-        return NgrokState.inactive(source="runtime_file")
-
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return NgrokState(
-            active=False,
-            url=data.get("url"),
-            api_url=data.get("api_url"),
-            ws_url=data.get("ws_url"),
-            api_port=data.get("api_port"),
-            updated_at=data.get("updated_at"),
-            source="runtime_file",
-        )
-    except Exception:
-        return NgrokState.inactive(source="runtime_file")
-
-
-def get_ngrok_state(root_dir: Path | None = None, include_stale: bool = True) -> NgrokState:
-    state = query_ngrok_state()
-    if state.active:
-        write_ngrok_runtime(state, root_dir)
-        return state
-
-    if include_stale:
-        cached = load_runtime_state(root_dir)
-        if cached.url:
-            return cached
-
-    return state
-
-
 def write_ngrok_runtime(state: NgrokState, root_dir: Path | None = None) -> None:
     root = root_dir or project_root()
     runtime_dir = _runtime_dir(root)
@@ -275,92 +239,3 @@ def stop_ngrok_processes() -> None:
         except FileNotFoundError:
             pass
 
-
-def stop_ngrok_and_clear_runtime(root_dir: Path | None = None) -> NgrokState:
-    """
-    從 admin 後台呼叫的「關閉公開網域」入口：
-      1) 用 taskkill / pkill 殺掉所有 ngrok process
-      2) 把 .runtime/ngrok.json + .env.local 寫成 inactive 狀態，
-         讓 ChatPage / Admin Overview 下次查詢時看到 active=False
-
-    注意：start.py 把 ngrok process 放在 SHUTDOWN_PROCESSES（非 watchdog 監控），
-    所以這個操作不會把後端整包拉下來。
-    """
-    stop_ngrok_processes()
-    time.sleep(0.5)
-    inactive = NgrokState.inactive(source="admin_stop")
-    write_ngrok_runtime(inactive, root_dir)
-    return inactive
-
-
-def start_ngrok_tunnel(
-    frontend_port: int = FRONTEND_PORT,
-    base_dir: str | os.PathLike[str] | None = None,
-) -> tuple[subprocess.Popen | None, NgrokState]:
-    root = Path(base_dir) if base_dir else project_root()
-    ngrok_path = find_ngrok_binary(root)
-    if not ngrok_path:
-        return None, NgrokState.inactive(source="missing_binary")
-
-    stop_ngrok_processes()
-    time.sleep(1)
-
-    process = subprocess.Popen(
-        [ngrok_path, "http", str(frontend_port)],
-        cwd=str(root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
-    )
-
-    state = wait_for_ngrok_url(root)
-    return process, state
-
-
-def wait_for_ngrok_url(
-    root_dir: Path | None = None,
-    attempts: int = 40,
-    delay_seconds: float = 0.5,
-) -> NgrokState:
-    for _ in range(attempts):
-        time.sleep(delay_seconds)
-        state = query_ngrok_state()
-        if state.active:
-            write_ngrok_runtime(state, root_dir)
-            return state
-    return NgrokState.inactive()
-
-
-def start_ngrok_watcher(
-    root_dir: Path | None = None,
-    interval_seconds: int = 10,
-    stop_event: threading.Event | None = None,
-) -> threading.Thread:
-    """
-    背景監看 ngrok URL 是否變動（免費版重連會拿新子網域）。
-    URL 改變時把新值寫回 .runtime/ngrok.json + frontend/.env.local。
-
-    重要：last_url 用 query 取得當下 state 來「預先初始化」，避免 watcher 啟動的
-    第一輪 tick 把跟 start_ngrok_tunnel 剛寫的同一個 URL 又寫一次（會造成 Vite
-    第二次重啟，Windows 上 npm 連兩次重啟容易卡死）。
-    """
-    root = root_dir or project_root()
-    event = stop_event or threading.Event()
-
-    # 預先抓一次當前狀態 —— 跟 start_ngrok_tunnel 寫過的同步，
-    # 第一輪 tick 不會重複寫
-    initial_state = query_ngrok_state()
-    initial_url = initial_state.url if initial_state.active else None
-
-    def watch() -> None:
-        last_url: str | None = initial_url
-        while not event.is_set():
-            state = query_ngrok_state()
-            if state.active and state.url != last_url:
-                write_ngrok_runtime(state, root)
-                last_url = state.url
-            event.wait(interval_seconds)
-
-    thread = threading.Thread(target=watch, name="ngrok-runtime-watcher", daemon=True)
-    thread.start()
-    return thread

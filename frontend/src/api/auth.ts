@@ -6,6 +6,7 @@ import apiClient from './client'
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth'
 import type { User } from '../types/auth'
 import { toUser } from './userMapper'
+import { useAuthStore } from '../store/authStore'
 
 /**
  * 密碼強度回應
@@ -75,13 +76,17 @@ export const authApi = {
     },
 
     /**
-     * 修改密碼
+     * 修改密碼：成功後其他裝置的登入全部失效，後端回傳一組新的 Token 給目前這個裝置，這裡直接存起來
      */
     changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
-        await apiClient.post('/auth/change-password', {
+        const response = await apiClient.post('/auth/change-password', {
             current_password: currentPassword,
             new_password: newPassword,
         })
+        const { access_token, refresh_token } = response.data ?? {}
+        if (access_token && refresh_token) {
+            useAuthStore.setState({ accessToken: access_token, refreshToken: refresh_token, isAuthenticated: true })
+        }
     },
 
     /**

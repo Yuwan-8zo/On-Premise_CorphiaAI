@@ -14,11 +14,13 @@ import { useTranslation } from 'react-i18next'
 import { GlobeIcon, ItshoverIcon, LockIcon } from '@/components/icons/itshover'
 import SidebarIconBadge from './SidebarIconBadge'
 import GlassSwitch from '@/components/ui/GlassSwitch'
+import { Skel, SkelText } from '@/components/ui/Skeleton'
 import Tooltip from '@/components/ui/Tooltip'
 import LanQrOverlay from './LanQrOverlay'
 
 export interface LanSidebarWidgetProps {
-    enabled: boolean
+    /** null＝還沒讀到狀態（顯示佔位） */
+    enabled: boolean | null
     isLoading: boolean
     lanIps: string[]
     onToggle: (nextEnabled: boolean) => void
@@ -28,6 +30,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
     const { t } = useTranslation()
     const [showQr, setShowQr] = useState(false)
 
+    const known = enabled !== null
     const statusText = enabled
         ? t('admin.lan.enabled', '已開啟')
         : t('admin.lan.disabled', '已關閉')
@@ -44,7 +47,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                             LAN
                         </p>
                         <p className="text-[length:var(--fs-10)] text-text-secondary leading-tight mt-0.5">
-                            {statusText}
+                            {known ? statusText : <SkelText>{statusText}</SkelText>}
                         </p>
                     </div>
 
@@ -65,13 +68,18 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                     <span className="text-[length:var(--fs-10)] font-medium text-text-secondary">
                         {t('admin.lan.toggleLabel', '區域網路')}
                     </span>
-                    <GlassSwitch
-                        checked={enabled}
-                        loading={isLoading}
-                        onChange={() => onToggle(!enabled)}
-                        aria-label={t('admin.lan.toggleAria', '切換區域網路存取')}
-                        size="sm"
-                    />
+                    {known ? (
+                        <GlassSwitch
+                            checked={enabled}
+                            loading={isLoading}
+                            onChange={() => onToggle(!enabled)}
+                            aria-label={t('admin.lan.toggleAria', '切換區域網路存取')}
+                            size="sm"
+                        />
+                    ) : (
+                        // 和小尺寸開關一樣大的佔位
+                        <Skel className="rounded-full w-[calc(var(--sw-w)*var(--sw-sm))] h-[calc(var(--sw-h)*var(--sw-sm))]" />
+                    )}
                 </div>
 
                 {enabled && lanIps.length > 0 && (

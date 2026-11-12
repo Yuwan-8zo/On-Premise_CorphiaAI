@@ -8,6 +8,7 @@ import csv
 import io
 import json
 import logging
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -15,6 +16,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, desc
 
 from app.core.query_utils import like_contains, page_count
+from app.core.tenancy import audit_scope
+from app.core.time_utils import to_naive_utc
 from app.api.deps import CurrentUser, DbSession, RequireAdmin
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogResponse, AuditLogListResponse
@@ -31,6 +34,70 @@ def _action_filter(action: str):
     if len(actions) > 1:
         return AuditLog.action.in_(actions)
     return AuditLog.action == (actions[0] if actions else action)
+
+
+def _parse_time(value: Optional[str], end: bool = False) -> Optional[datetime]:
+    """
+    篩選時間轉成資料庫用的 naive UTC。
+    只有日期（YYYY-MM-DD）時：起日＝當天 00:00，迄日＝隔天 00:00（不含），整天都算進來。
+    格式錯誤回 None（不套用這個條件）。
+    """
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if end and len(value.strip()) == 10:
+        dt += timedelta(days=1)
+    return to_naive_utc(dt)
+
+
+def _filters(
+    current_user,
+    action: Optional[str],
+    resource_type: Optional[str],
+    user_id: Optional[str],
+    search: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> list:
+    """清單與匯出共用的篩選條件（範圍規則見 core/tenancy：沒有租戶的紀錄算 default）"""
+    conds = []
+    scope = audit_scope(current_user)
+    if scope is not None:
+        conds.append(scope)
+    if action:
+        # 前端「只看資安事件」會送多個操作類型，以逗號分隔
+        conds.append(_action_filter(action))
+    if resource_type:
+        conds.append(AuditLog.resource_type == resource_type)
+    if user_id:
+        conds.append(AuditLog.user_id == user_id)
+    if search:
+        if len(search) > 256:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="search 字串過長")
+        # 跳脫 % / _ / \，否則使用者輸入的萬用字元會被當 LIKE 通配
+        f = like_contains(search)
+        conds.append(AuditLog.description.ilike(f, escape="\\") | AuditLog.user_email.ilike(f, escape="\\"))
+    start = _parse_time(start_date)
+    if start is not None:
+        conds.append(AuditLog.created_at >= start)
+    end = _parse_time(end_date, end=True)
+    if end is not None:
+        # 只給日期時是「隔天 00:00 之前」，給完整時間時包含那一刻
+        conds.append(AuditLog.created_at < end if len(end_date.strip()) == 10 else AuditLog.created_at <= end)
+    return conds
+
+
+# 試算表會把 = + - @ 開頭的格子當公式執行（例如在登入頁信箱欄輸入 =HYPERLINK(...)）
+_FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_safe(value):
+    if isinstance(value, str) and value.startswith(_FORMULA_START):
+        return "'" + value
+    return value
 
 
 @router.get("", response_model=AuditLogListResponse)
@@ -57,85 +124,9 @@ async def list_audit_logs(
     - start_date: 起始日期 (ISO 格式)
     - end_date: 結束日期 (ISO 格式)
     """
-    # 建立基礎查詢
-    query = select(AuditLog)
-    count_query_base = select(func.count(AuditLog.id))
-
-    # 非 engineer 只能查看自己租戶的
-    if current_user.role != "engineer":
-        # 帳號沒有指定租戶時視為 default（與後台資安統計一致）；
-        # 登入失敗等事件發生在認得租戶之前，tenant_id 為空，也一併顯示
-        from sqlalchemy import or_
-        tid = current_user.effective_tenant_id
-        tenant_filter = or_(AuditLog.tenant_id == tid, AuditLog.tenant_id.is_(None))
-        query = query.where(tenant_filter)
-        count_query_base = count_query_base.where(tenant_filter)
-
-    # 篩選條件
-    if action:
-        # 前端「只看資安事件」會送多個操作類型，以逗號分隔
-        cond = _action_filter(action)
-        query = query.where(cond)
-        count_query_base = count_query_base.where(cond)
-
-    if resource_type:
-        query = query.where(AuditLog.resource_type == resource_type)
-        count_query_base = count_query_base.where(
-            AuditLog.resource_type == resource_type
-        )
-
-    if user_id:
-        query = query.where(AuditLog.user_id == user_id)
-        count_query_base = count_query_base.where(AuditLog.user_id == user_id)
-
-    if search:
-        # FIX: 跳脫 % / _ / \，否則使用者輸入的萬用字元會被當 LIKE 通配
-        if len(search) > 256:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="search 字串過長",
-            )
-        search_filter = like_contains(search)
-        query = query.where(
-            AuditLog.description.ilike(search_filter, escape="\\")
-            | AuditLog.user_email.ilike(search_filter, escape="\\")
-        )
-        count_query_base = count_query_base.where(
-            AuditLog.description.ilike(search_filter, escape="\\")
-            | AuditLog.user_email.ilike(search_filter, escape="\\")
-        )
-
-    if start_date:
-        # FIX: AuditLog.created_at 是 DateTime（不帶 timezone，naive UTC 儲存）。
-        # 上一版誤用 to_aware_utc 變成 aware datetime，asyncpg 拿來跟 naive column
-        # 比較直接 raise「can't subtract offset-naive and offset-aware datetimes」。
-        # 改用 to_naive_utc：naive 字串視為 UTC、aware 字串轉到 UTC 後去掉 tzinfo。
-        from datetime import datetime
-        from app.core.time_utils import to_naive_utc
-
-        try:
-            start_dt = to_naive_utc(datetime.fromisoformat(start_date))
-            if start_dt is not None:
-                query = query.where(AuditLog.created_at >= start_dt)
-                count_query_base = count_query_base.where(
-                    AuditLog.created_at >= start_dt
-                )
-        except ValueError:
-            pass
-
-    if end_date:
-        from datetime import datetime
-        from app.core.time_utils import to_naive_utc
-
-        try:
-            end_dt = to_naive_utc(datetime.fromisoformat(end_date))
-            if end_dt is not None:
-                query = query.where(AuditLog.created_at <= end_dt)
-                count_query_base = count_query_base.where(
-                    AuditLog.created_at <= end_dt
-                )
-        except ValueError:
-            pass
+    conditions = _filters(current_user, action, resource_type, user_id, search, start_date, end_date)
+    query = select(AuditLog).where(*conditions)
+    count_query_base = select(func.count(AuditLog.id)).where(*conditions)
 
     # 取得總數
     total_result = await db.execute(count_query_base)
@@ -163,6 +154,8 @@ async def export_audit_logs_csv(
     db: DbSession,
     action: Optional[str] = None,
     resource_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    search: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ):
@@ -170,7 +163,7 @@ async def export_audit_logs_csv(
     匯出審計日誌為 CSV 格式（僅限 Admin / Engineer）
     """
     logs = await _fetch_export_logs(
-        db, current_user, action, resource_type, start_date, end_date
+        db, current_user, action, resource_type, user_id, search, start_date, end_date
     )
 
     # 建立 CSV
@@ -184,7 +177,7 @@ async def export_audit_logs_csv(
     ])
 
     for log in logs:
-        writer.writerow([
+        writer.writerow([_csv_safe(v) for v in [
             log.id,
             log.created_at.isoformat() if log.created_at else "",
             log.action,
@@ -195,7 +188,7 @@ async def export_audit_logs_csv(
             log.description or "",
             log.ip_address or "",
             log.user_agent or "",
-        ])
+        ]])
 
     output.seek(0)
 
@@ -214,6 +207,8 @@ async def export_audit_logs_json(
     db: DbSession,
     action: Optional[str] = None,
     resource_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    search: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ):
@@ -221,7 +216,7 @@ async def export_audit_logs_json(
     匯出審計日誌為 JSON 格式（僅限 Admin / Engineer）
     """
     logs = await _fetch_export_logs(
-        db, current_user, action, resource_type, start_date, end_date
+        db, current_user, action, resource_type, user_id, search, start_date, end_date
     )
 
     data = []
@@ -257,42 +252,14 @@ async def _fetch_export_logs(
     current_user,
     action: Optional[str],
     resource_type: Optional[str],
+    user_id: Optional[str],
+    search: Optional[str],
     start_date: Optional[str],
     end_date: Optional[str],
     max_rows: int = 5000,
 ):
-    """內部共用：取得匯出用審計日誌資料"""
-    query = select(AuditLog)
-
-    if current_user.role != "engineer":
-        query = query.where(AuditLog.tenant_id == current_user.tenant_id)
-
-    if action:
-        query = query.where(_action_filter(action))
-    if resource_type:
-        query = query.where(AuditLog.resource_type == resource_type)
-
-    if start_date:
-        from datetime import datetime
-        from app.core.time_utils import to_naive_utc
-        try:
-            sd = to_naive_utc(datetime.fromisoformat(start_date))
-            if sd is not None:
-                query = query.where(AuditLog.created_at >= sd)
-        except ValueError:
-            pass
-
-    if end_date:
-        from datetime import datetime
-        from app.core.time_utils import to_naive_utc
-        try:
-            ed = to_naive_utc(datetime.fromisoformat(end_date))
-            if ed is not None:
-                query = query.where(AuditLog.created_at <= ed)
-        except ValueError:
-            pass
-
-    query = query.order_by(desc(AuditLog.created_at)).limit(max_rows)
-
+    """內部共用：取得匯出用審計日誌資料（條件和清單完全一樣）"""
+    conditions = _filters(current_user, action, resource_type, user_id, search, start_date, end_date)
+    query = select(AuditLog).where(*conditions).order_by(desc(AuditLog.created_at)).limit(max_rows)
     result = await db.execute(query)
     return result.scalars().all()

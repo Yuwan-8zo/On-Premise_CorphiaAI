@@ -251,6 +251,3 @@ def get_model_manager() -> ModelManager:
     if _model_manager is None:
         _model_manager = ModelManager()
     return _model_manager
-
-def refresh_models() -> List[ModelInfo]:
-    return get_model_manager().scan_models()

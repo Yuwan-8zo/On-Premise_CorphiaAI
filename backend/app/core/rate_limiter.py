@@ -82,7 +82,7 @@ def _build_limits() -> tuple:
         "/api/v1/auth/refresh": RateLimitRule(
             max_requests=20,
             window_seconds=60,
-            description="Token 刷新限制",
+            description="更新登入憑證的次數限制",
         ),
         # 文件上傳：每個 IP 每分鐘最多 10 次
         "/api/v1/documents/upload": RateLimitRule(

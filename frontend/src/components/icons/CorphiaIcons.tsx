@@ -18,14 +18,6 @@ export const CorphiaLogoSymbol: React.FC<{ className?: string, color?: string }>
     </svg>
 );
 
-// 專為文字排版 (Inline Text) 設計，裁切掉原本 24x24 的外部留白，使得 C 字型本身可以完美貼合旁邊的文字
-export const CorphiaTextLogo: React.FC<{ className?: string, color?: string }> = ({ className = 'w-auto h-auto', color ="currentColor" }) => (
-    // viewBox x=6 y=5 width=15 height=14 (緊湊包覆原本的 path 幾何)
-    <svg viewBox="5.5 5.5 15 13" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-        <CorphiaLogoPaths color={color} />
-    </svg>
-);
-
 /**
  * Corphia 完整品牌字標
  * 將 C 字型、四芒星與 orphia 文字整合為單一 SVG 元件

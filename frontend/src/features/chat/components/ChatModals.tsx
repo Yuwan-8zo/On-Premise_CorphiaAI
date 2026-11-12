@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 對話 Modal 集合
  * 
  * 從 Chat.tsx 拆分出來，包含：
@@ -10,7 +10,7 @@
 
 import StyledSelect from '@/components/ui/StyledSelect'
 import LensMenu from '@/components/ui/LensMenu'
-import { ChevronRight, Edit2, Folder, Share, Trash2 } from '@/components/snow/icons'
+import { ChevronRight, Edit2, Folder, Lock, Share, Trash2 } from '@/components/snow/icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -26,6 +26,7 @@ interface ContextMenuProps {
     menuRef: React.RefObject<HTMLDivElement | null>
     conversations: Array<{ id: string; settings?: Record<string, unknown> }>
     onShare: (id: string) => void
+    onUnshare: (id: string) => void
     onRename: (id: string) => void
     onMove: (id: string) => void
     onDelete: (id: string, e: React.MouseEvent) => void
@@ -33,7 +34,7 @@ interface ContextMenuProps {
 }
 
 export function ConversationContextMenu({
-    activeMenu, menuRef, conversations, onShare, onRename, onMove, onDelete, onClose,
+    activeMenu, menuRef, conversations, onShare, onUnshare, onRename, onMove, onDelete, onClose,
 }: ContextMenuProps) {
     const { t } = useTranslation()
 
@@ -52,6 +53,14 @@ export function ConversationContextMenu({
                         <Share />
                         {t('chat.shareChat', '分享')}
                     </button>
+                    {/* 分享過的對話才有「取消分享」 */}
+                    {Boolean(conversations.find((c) => c.id === activeMenu.convId)?.settings?.shared) && (
+                        <button className="menu-item"
+                            onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onUnshare(id), 50) }}>
+                            <Lock />
+                            {t('ui.chat.unshare')}
+                        </button>
+                    )}
                     <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
                         <Edit2 />

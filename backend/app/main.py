@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI):
     # → admin 進去看 ngrok widget 顯示「已啟動」（跟使用者的「預設關閉」期望不符）。
     #
     # 啟動時主動殺掉所有 ngrok process，並把 .runtime/ngrok.json 寫成 inactive。
-    # 使用者要開公開連結就走 admin 後台 toggle，明確 opt-in。
+    # 系統不提供公開連結（手機一律走區域網路），所以開機時一律關掉。
     try:
         from app.services.ngrok_service import (
             stop_ngrok_processes,

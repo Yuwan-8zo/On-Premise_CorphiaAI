@@ -47,7 +47,8 @@
 @media (min-width: 768px) {
   .tenant-quads {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: calc((100% - var(--space)) / 2); /* 100%＝這一區扣掉內距後的高度；再扣列距 */
+    /* 至少半高（100%＝這一區扣掉內距後的高度，再扣列距）；內容比較多（例如 Duo 橫向很矮）就跟著長高，按鈕才不會掉到卡片外 */
+    grid-auto-rows: minmax(calc((100% - var(--space)) / 2), auto);
   }
 }
 

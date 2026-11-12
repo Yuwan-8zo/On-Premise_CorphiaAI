@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
 import GlassDock from '@/components/ui/GlassDock'
 import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
-import { Check, ChevronDown, Edit2, Folder, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import { Check, ChevronDown, Edit2, Folder, Lock, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
 import { SidebarIcon } from './ChatIcons'
 import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
@@ -11,6 +11,10 @@ import type { Conversation } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
 import { popIn } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
+import { getErrorMessage } from '@/lib/errors'
+import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
+import { shortModelName } from '@/lib/modelName'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -33,6 +37,7 @@ interface ChatHeaderProps {
     
     // 動作
     handleShareConversation: (id: string) => void
+    handleUnshareConversation: (id: string) => void
     handleRenameConversation: (id: string) => void
     handleMoveToProject: (id: string) => void
     handleVerifyChain: (id: string) => void
@@ -48,12 +53,29 @@ export default function ChatHeader({
     selectedModel, setSelectedModel,
     availableModels, setAvailableModels,
     currentConversation,
-    handleShareConversation, handleRenameConversation,
+    handleShareConversation, handleUnshareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     const { t } = useTranslation()
     // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
+    const showConfirm = useUIStore((s) => s.showConfirm)
+    const toast = useToastStore()
+
+    /** 換成「自己」用的模型（只影響自己，其他人不變） */
+    const switchModel = async (model: ModelItem) => {
+        try {
+            setIsModelLoading(true)
+            await modelsApi.selectModel(model.name)
+            setSelectedModel(model)
+            setModelDropdownOpen(false)
+        } catch (err) {
+            console.error('選擇模型失敗', err)
+            toast.error(getErrorMessage(err))
+        } finally {
+            setIsModelLoading(false)
+        }
+    }
     // 模型選單：點外面由透明層處理，這裡補上 Esc 關閉
     useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
@@ -96,16 +118,7 @@ export default function ChatHeader({
                                 <>
                                     {/* Mobile: short abbreviation to avoid overflow */}
                                     <span className="md:hidden truncate max-w-[var(--sz-110)]">
-                                        {(() => {
-                                            const name = selectedModel.name.toLowerCase();
-                                            if (name.includes('qwen') && name.includes('2.5') && name.includes('7b')) {
-                                                if (name.includes('q5_k_m')) return 'Qwen2.5·Q5';
-                                                if (name.includes('q4_k_m')) return 'Qwen2.5·Q4';
-                                                return 'Qwen2.5·7B';
-                                            }
-                                            if (name.includes('llama') && name.includes('3')) return 'Llama3';
-                                            return selectedModel.name.split('.')[0].substring(0, 10);
-                                        })()}
+                                        {shortModelName(selectedModel.name)}
                                     </span>
                                     <span className="hidden md:inline truncate">{selectedModel.name}</span>
                                 </>
@@ -133,21 +146,15 @@ export default function ChatHeader({
                                                 return (
                                                 <button
                                                     key={model.name}
-                                                    onClick={async () => {
-                                                        if (isModelLoading) return;
-                                                        // 沒有預先載入的大模型（如 14B）切換要等很久，先確認避免展示時誤點
-                                                        if (!preloaded && selectedModel?.name !== model.name &&
-                                                            !window.confirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }))) return;
-                                                        try {
-                                                            setIsModelLoading(true);
-                                                            await modelsApi.selectModel(model.name);
-                                                            setSelectedModel(model);
-                                                            setModelDropdownOpen(false);
-                                                        } catch (err) {
-                                                            console.error('選擇模型失敗', err);
-                                                        } finally {
-                                                            setIsModelLoading(false);
+                                                    onClick={() => {
+                                                        if (isModelLoading || selectedModel?.name === model.name) return
+                                                        // 沒有預先載入的大模型（如 14B）切換要等很久，先用共用確認框確認，避免誤點
+                                                        if (!preloaded) {
+                                                            setModelDropdownOpen(false)
+                                                            showConfirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }), () => switchModel(model))
+                                                            return
                                                         }
+                                                        void switchModel(model)
                                                     }}
                                                     className={`model-row ${selectedModel?.name === model.name ? 'is-current' : ''}`}
                                                 >
@@ -201,6 +208,8 @@ export default function ChatHeader({
                     aria-label={t('ui.header.convOptions')}
                     items={[
                         { id: 'share', label: t('chat.shareChat'), icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
+                        // 分享過的對話才有「取消分享」
+                        ...(currentConversation?.settings?.shared ? [{ id: 'unshare', label: t('ui.chat.unshare'), icon: <Lock />, onSelect: () => handleUnshareConversation(currentConversation.id) }] : []),
                         { id: 'rename', label: t('chat.renameChat'), icon: <Edit2 />, onSelect: () => { if (currentConversation) handleRenameConversation(currentConversation.id) } },
                         { id: 'move', label: t('chat.moveToProject'), icon: <Folder />, onSelect: () => { if (currentConversation) handleMoveToProject(currentConversation.id) } },
                         { id: 'verify', label: t('ui.header.verifyChain'), tone: 'success', icon: <ShieldCheck />, onSelect: () => { if (currentConversation) handleVerifyChain(currentConversation.id) } },
