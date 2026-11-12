@@ -281,7 +281,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     type="button"
                     onClick={handleSend}
                     disabled={!isReady}
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent-fill text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent-fill text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,background-color,opacity] active:scale-95 active:duration-[var(--duration-press-in)]"
                     aria-label={t('chat.voice.send')}
                 >
                     <MaterialIcon name="send" size={18} filled />

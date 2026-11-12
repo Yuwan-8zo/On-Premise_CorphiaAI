@@ -75,7 +75,8 @@ html:not(.dark) .dock-wrap {
   width: 100%;
   margin-bottom: var(--sp-2);
   padding: var(--sp-10) var(--sp-14);
-  border-radius: var(--r-16);
+  /* 和選單卡片同心：卡片圓角－內距（LensMenu 掛上時算好 --card-inner-r；沒有就用 16） */
+  border-radius: var(--card-inner-r, var(--r-16));
   text-align: left;
   transition: transform 0.17s var(--ease-out);
 }
@@ -273,6 +274,15 @@ html.dark {
   width: var(--tap-sm);
   height: var(--tap-sm);
   border-radius: 9999px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--duration-press-out) var(--ease-out),
+    background-color var(--duration-press-out) var(--ease-out);
+}
+/* 按下：淡底＋縮一點（和 .btn-icon 同一個手感），不然按了像沒反應 */
+.icon-tap:active:not(:disabled) {
+  background: var(--chip);
+  transform: scale(0.9);
 }
 
 /* 停在上面才出現的按鈕（對話列的「⋯」、訊息下的複製／編輯、文件列的刪除）：

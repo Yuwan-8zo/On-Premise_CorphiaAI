@@ -133,7 +133,7 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
                             <span className="ml-auto font-semibold text-text-primary">{t(LEVEL_STYLE[strength.level].key)}</span>
                         </div>
                         <div className="h-1.5 bg-[var(--chip)] rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all duration-500 ${LEVEL_STYLE[strength.level].bar}`} style={{ width: `${strength.score}%` }} />
+                            <div className={`h-full rounded-full transition-[width,background-color] duration-500 ${LEVEL_STYLE[strength.level].bar}`} style={{ width: `${strength.score}%` }} />
                         </div>
                     </div>
                 )}

@@ -17,7 +17,7 @@ function ThemeGlyph({ show, rotate, children }: { show: boolean; rotate: number;
     return (
         <span
             aria-hidden="true"
-            className="absolute inset-0 flex items-center justify-center transition-all duration-500"
+            className="absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-500"
             style={{
                 transitionTimingFunction: 'var(--ease-out)',
                 opacity: show ? 1 : 0,

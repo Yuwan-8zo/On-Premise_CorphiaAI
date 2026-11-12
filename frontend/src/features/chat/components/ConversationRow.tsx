@@ -30,6 +30,7 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = 
             ref={rowRef}
             {...pressProps}
             onClick={onSelect}
+            data-lens-row
             className={`side-item group ${isCurrent ? 'is-current' : ''}`}
         >
             <span className="flex-1 min-w-0 truncate">{displayTitle(conv.title)}</span>

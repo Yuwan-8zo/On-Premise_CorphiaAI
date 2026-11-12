@@ -78,6 +78,8 @@ export default function LensMenu({ children, className = '', plate = false, fitC
         const over = Math.min(readPx('--lens-over'), inset)
         const lensR = r.height / 2 + over
         card.style.setProperty('border-radius', `${Math.round(lensR + inset - over)}px`, 'important')
+        // 卡片裡的列（例如模型清單目前那一項的底盤）用「卡片圓角－內距」，和卡片同心（樣式用 var(--card-inner-r)）
+        card.style.setProperty('--card-inner-r', `${Math.round(lensR - over)}px`)
     }, [fitCard])
     useEffect(() => {
         if (!plate || typeof ResizeObserver === 'undefined' || !listRef.current) return

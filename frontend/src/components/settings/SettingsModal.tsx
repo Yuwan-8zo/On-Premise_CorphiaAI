@@ -115,7 +115,7 @@ export default function SettingsModal() {
                         <div key={`menu-${mobileView}`} data-dir={mobileDir} className={`settings-menu page-in md:w-64 flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
                             {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
                             <div className="pl-[var(--sp-51)] pr-4 pt-[var(--sp-48)] pb-2">
-                                <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary tracking-wide">
+                                <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary">
                                     {t('settings.title')}
                                 </h2>
                             </div>

@@ -42,7 +42,7 @@ export default function FloatingInput({
                     setIsFocused(false)
                     onBlur?.(event)
                 }}
-                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[length:var(--fs-15)] outline-none transition-all placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
+                className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[length:var(--fs-15)] outline-none placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
                 {...props}
             />

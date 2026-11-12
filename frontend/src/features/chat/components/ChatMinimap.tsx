@@ -142,7 +142,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                     return (
                         <div
                             key={marker.id}
-                            className={`absolute w-[var(--sz-14)] min-h-[var(--sz-14)] rounded-full transition-all duration-200   cursor-pointer ${colorClass}`}
+                            className={`absolute w-[var(--sz-14)] min-h-[var(--sz-14)] rounded-full transition-[transform,background-color,opacity] duration-200 cursor-pointer ${colorClass}`}
                             style={{
                                 top: `${marker.top + marker.height / 2}%`,
                                 left: '50%',

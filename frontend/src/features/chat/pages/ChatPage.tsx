@@ -65,7 +65,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-transparent z-10">
+            <main className="flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10">
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -124,7 +124,7 @@ export default function Chat() {
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-colors before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />

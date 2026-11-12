@@ -79,7 +79,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                         </p>
                         <div className="h-1.5 rounded-full bg-[rgb(var(--text-primary)/0.12)] overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-300 ${getResourceColor(item.percent)}`}
+                                className={`h-full rounded-full transition-[width,background-color] duration-300 ${getResourceColor(item.percent)}`}
                                 style={{ width: `${item.percent}%` }}
                             />
                         </div>

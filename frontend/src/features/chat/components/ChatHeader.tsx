@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
-import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { Check, ChevronDown, Edit2, Folder, Lock, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
 import { SidebarIcon } from './ChatIcons'
 import type { ModelItem } from '@/api/models'
@@ -13,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { popIn } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
 import { getErrorMessage } from '@/lib/errors'
+import { useScrollFade } from '@/lib/useScrollFade'
 import { useUIStore } from '@/store/uiStore'
 import { useToastStore } from '@/store/toastStore'
 import { shortModelName } from '@/lib/modelName'
@@ -58,6 +58,8 @@ export default function ChatHeader({
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     const { t } = useTranslation()
+    // 模型清單捲動區：不顯示捲軸，上下還有內容時邊緣淡出（全站捲動區同一套）
+    const modelScrollRef = useScrollFade()
     // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
     const showConfirm = useUIStore((s) => s.showConfirm)
@@ -94,13 +96,8 @@ export default function ChatHeader({
                     <SidebarIcon className="w-5 h-5" />
                 </button>
 
-                {/* Left: Corphia title - hidden on mobile to give space to model selector */}
-                {/* 品牌字：和登入頁同一個字標（含星星） */}
-                <h1 className={`hidden sm:flex items-center transition-opacity ${sidebarOpen ? 'opacity-0 md:opacity-100' : 'opacity-100'}`}>
-                    {/* 字標圖片上下有留白：圖高 63、看得到的字（含 p 的下伸）＝40，跟右側按鈕同高同位；負邊距加在外層（星星那層跟著圖片對齊），讓排版仍佔 40 */}
-                    <span className="-mt-[var(--sp-2)] -mb-[var(--sp-21)] flex"><CorphiaWordmark className="h-[var(--sz-63)] w-auto object-contain object-left pointer-events-none select-none" /></span>
-                    <span className="sr-only">Corphia</span>
-                </h1>
+                {/* 品牌字標移到側欄（展開＝完整字標、收合＝C 星芒）；這裡只留給讀螢幕軟體的標題 */}
+                <h1 className="sr-only">Corphia</h1>
             </div>
 
             <div className="flex items-center gap-2 min-w-0 shrink">
@@ -143,7 +140,7 @@ export default function ChatHeader({
                                     className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
-                                    <div className="max-h-[var(--sz-300)] overflow-y-auto custom-scrollbar">
+                                    <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
                                         ) : (

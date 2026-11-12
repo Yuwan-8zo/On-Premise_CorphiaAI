@@ -19,7 +19,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { CorphiaLogo } from '@/components/icons/CorphiaIcons'
+import { CorphiaLogo, CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
 import ConversationRow from './ConversationRow'
 import Tooltip from '@/components/ui/Tooltip'
@@ -27,6 +27,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import type { Conversation } from '@/types/chat'
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 import { pageSlide } from '@/lib/motionPresets'
+import ListLens from '@/components/ui/ListLens'
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 
 interface ChatSidebarProps {
@@ -161,9 +162,16 @@ export default function ChatSidebar({
             {/* 收合時固定排在最左邊 72 寬的範圍裡置中：寬度縮的過程中位置不動（往左收合，不會先置中再移動） */}
             <div className={`flex items-center p-4 pb-1 h-[var(--sz-60)] shrink-0 transition-opacity duration-300 ${wide ? 'w-full justify-between md:pr-[var(--sp-16)]' : 'w-full md:w-[var(--sz-72)] justify-center md:px-0'}`}>
                 {/* 品牌圖示：展開時的位置和收合時一致（圖示中心離側欄左緣 36＝收合直條的正中間） */}
-                <div className={`flex items-center overflow-hidden ${wide ? 'w-10 mr-2 md:w-auto md:ml-[var(--sp-8)] md:px-0' : 'w-10 mr-2 md:hidden'}`}>
-                    <CorphiaLogo className="w-[var(--sz-28)] h-[var(--sz-28)] shrink-0 rounded-[var(--r-7)] md:rounded-full overflow-hidden text-text-primary" />
-                </div>
+                {/* 展開＝完整字標（C 星芒＋orphia，星星跟強調色）；收合＝只剩右邊按鈕上的 C 星芒（下方 CorphiaLogo） */}
+                {wide && (
+                    <div className="flex items-center min-w-0 mr-2 md:ml-[var(--sp-12)]">
+                        {/* 字標圖片下方留了 p 的下伸空間：負邊距讓看得到的字和右邊的收合鈕上下置中 */}
+                        <span className="-mt-[var(--sp-2)] -mb-[var(--sp-14)] flex">
+                            <CorphiaWordmark className="h-[var(--sz-44)] w-auto object-contain object-left pointer-events-none select-none" />
+                        </span>
+                        <span className="sr-only">Corphia</span>
+                    </div>
+                )}
                 <button
                         onClick={toggleSidebar}
                         aria-label={sidebarOpen ? t('ui.sidebar.collapse') : t('ui.sidebar.expand')}
@@ -258,7 +266,8 @@ export default function ChatSidebar({
                             className="absolute inset-0 px-4 flex flex-col"
                         >
                             <span className="side-header shrink-0">{t('chat.generalChat')}</span>
-                            <div ref={listScrollRef} className="glass-scroll flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
+                            <div ref={listScrollRef} className="glass-scroll relative lens-list flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
+                                <ListLens watch={`${selectedFolder ?? ''}|${currentConversationId ?? ''}`} />
                                 {(() => {
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
                                     if (filtered.length === 0) return <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{t('chat.noChats')}</p>
@@ -273,7 +282,8 @@ export default function ChatSidebar({
                             className="absolute inset-0 px-4 flex flex-col"
                         >
                             <span className="side-header shrink-0">{t('chat.projectFolderLabel')}</span>
-                            <div ref={listScrollRef} className="glass-scroll flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)]">
+                            <div ref={listScrollRef} className="glass-scroll relative lens-list flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)]">
+                                <ListLens watch={`${selectedFolder ?? ''}|${currentConversationId ?? ''}`} />
                             {(() => {
                                 const convFolders = conversations
                                     .filter(c => Boolean(c.settings?.isProject))

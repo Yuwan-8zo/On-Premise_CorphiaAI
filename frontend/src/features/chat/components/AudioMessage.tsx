@@ -109,7 +109,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                 type="button"
                 onClick={togglePlay}
                 className={[
-                    'shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95',
+                    'shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-[transform,background-color] active:scale-95 active:duration-[var(--duration-press-in)]',
                     isUser
                         ? 'bg-white text-accent '
                         : 'bg-accent-fill text-text-on-accent ',

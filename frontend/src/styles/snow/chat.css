@@ -40,6 +40,24 @@
   color: var(--accent-ink);
   font-weight: 600;
 }
+/* 有放大鏡的清單（components/ui/ListLens）：目前項目的底盤改由放大鏡畫（才能滑過去），列本身不畫；列在放大鏡上面 */
+.lens-list [data-lens-row] {
+  z-index: 1;
+}
+.lens-list [data-lens-row].is-current {
+  background: transparent;
+  box-shadow: none;
+}
+/* 滑行中的放大鏡：底下的列被蓋住（實色＝卡片同色，再疊鏡片玻璃），鏡內複本用強調色粗體 */
+.list-lens.is-active {
+  background: var(--lens-glass), oklch(from var(--glass-card) l c h / 1);
+}
+.list-lens .lens-ghost,
+.list-lens .lens-ghost * {
+  color: var(--accent-ink) !important;
+  font-weight: 600 !important;
+  transition: none !important;
+}
 .side-item .side-icon {
   flex: none;
   width: var(--sz-18);
