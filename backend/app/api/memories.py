@@ -6,6 +6,7 @@
 """
 
 from datetime import datetime
+from typing import Literal, Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -25,7 +26,9 @@ class MemoryBody(BaseModel):
 
 
 class MemorySettingsBody(BaseModel):
-    enabled: bool
+    """個人化設定：只改有給的那幾項"""
+    enabled: Optional[bool] = None
+    style: Optional[Literal["default", "concise", "detailed", "formal"]] = None
 
 
 class MemoryItem(BaseModel):
@@ -39,6 +42,8 @@ class MemoryItem(BaseModel):
 
 class MemoryList(BaseModel):
     enabled: bool
+    # 回答風格：default／concise／detailed／formal
+    style: str
     items: list[MemoryItem]
     max_items: int
     max_chars: int
@@ -65,6 +70,7 @@ async def _audit(db, user, request: Request, action: str, description: str, reso
 async def list_memories(current_user: CurrentUser, db: DbSession):
     return MemoryList(
         enabled=await ms.is_enabled(db, current_user.id),
+        style=await ms.get_style(db, current_user.id),
         items=await ms.list_memories(db, current_user.id),
         max_items=ms.MAX_ITEMS,
         max_chars=ms.MAX_CHARS,
@@ -86,9 +92,13 @@ async def create_memory(body: MemoryBody, current_user: CurrentUser, db: DbSessi
 
 @router.put("/settings")
 async def update_settings(body: MemorySettingsBody, current_user: CurrentUser, db: DbSession, request: Request):
-    await ms.set_enabled(db, current_user.id, body.enabled)
-    await _audit(db, current_user, request, AuditAction.MEMORY_UPDATE, "開啟記憶功能" if body.enabled else "關閉記憶功能", details={"enabled": body.enabled})
-    return {"enabled": body.enabled}
+    if body.enabled is not None:
+        await ms.set_enabled(db, current_user.id, body.enabled)
+        await _audit(db, current_user, request, AuditAction.MEMORY_UPDATE, "開啟記憶功能" if body.enabled else "關閉記憶功能", details={"enabled": body.enabled})
+    if body.style is not None:
+        await ms.set_style(db, current_user.id, body.style)
+        await _audit(db, current_user, request, AuditAction.MEMORY_UPDATE, f"變更回答風格：{body.style}", details={"style": body.style})
+    return {"enabled": await ms.is_enabled(db, current_user.id), "style": await ms.get_style(db, current_user.id)}
 
 
 @router.put("/{memory_id}", response_model=MemoryItem)

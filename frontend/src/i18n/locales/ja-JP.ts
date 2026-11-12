@@ -284,9 +284,12 @@ export default {
         about: '概要',
         guide: '使い方',
         memory: {
-            title: 'メモリ',
+            title: 'メモリとスタイル',
             enable: 'メモリを使う',
             enableHint: 'オンにすると、AI は回答の前に、覚えるよう頼まれたことを参照します。メモリは自分だけが見られ、社内サーバーの外には出ません。',
+            styleHeader: '回答スタイル',
+            style: { default: '標準', concise: '簡潔', detailed: '詳細', formal: 'フォーマル' },
+            styleHint: { default: '質問に合わせて自然に回答', concise: '結論から、3 文以内で', detailed: '理由と手順を段階的に、必要なら例も', formal: 'ビジネス文書の口調、くだけた表現なし' },
             addHeader: 'メモリを追加',
             placeholder: '例：営業部所属、レポートは箇条書きで',
             add: '追加',

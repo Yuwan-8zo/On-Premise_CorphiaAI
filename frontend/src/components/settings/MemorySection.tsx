@@ -1,6 +1,7 @@
 /**
- * 設定 › 記憶：AI 跨對話記住的事（只有自己看得到）
+ * 設定 › 記憶：AI 跨對話記住的事（只有自己看得到），以及回答風格
  *
+ *   回答風格（頁面最下面，和記憶的三組分開）：預設／精簡／詳細／正式，勾選清單，選了馬上生效
  *   開關：關掉後 AI 不再參考記憶，對話裡說「記住……」也不會存
  *   新增：輸入框＋「新增」
  *   清單：每一則可以修改、刪除；最下面「全部清除」
@@ -8,8 +9,8 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { memoriesApi, type MemoryItem } from '@/api/memories'
-import { Edit2, Trash2 } from '@/components/snow/icons'
+import { memoriesApi, REPLY_STYLES, type MemoryItem, type ReplyStyle } from '@/api/memories'
+import { Check, Edit2, Trash2 } from '@/components/snow/icons'
 import GlassSwitch from '@/components/ui/GlassSwitch'
 import Tooltip from '@/components/ui/Tooltip'
 import { SkelText } from '@/components/ui/Skeleton'
@@ -25,6 +26,7 @@ export default function MemorySection() {
     const showConfirm = useUIStore((s) => s.showConfirm)
     const [loaded, setLoaded] = useState(false)
     const [enabled, setEnabled] = useState(true)
+    const [style, setStyle] = useState<ReplyStyle>('default')
     const [items, setItems] = useState<MemoryItem[]>([])
     const [limits, setLimits] = useState({ items: 50, chars: 300 })
     const [draft, setDraft] = useState('')
@@ -35,6 +37,7 @@ export default function MemorySection() {
         try {
             const data = await memoriesApi.list()
             setEnabled(data.enabled)
+            setStyle(data.style)
             setItems(data.items)
             setLimits({ items: data.max_items, chars: data.max_chars })
         } catch (err) {
@@ -77,6 +80,11 @@ export default function MemorySection() {
         const next = !enabled
         setEnabled(next) // 開關先動，失敗再由 load 還原
         void run(() => memoriesApi.setEnabled(next))
+    }
+    const pickStyle = (next: ReplyStyle) => {
+        if (next === style) return
+        setStyle(next) // 勾選先動，失敗再由 load 還原
+        void run(() => memoriesApi.setStyle(next))
     }
     const full = items.length >= limits.items
 
@@ -177,6 +185,21 @@ export default function MemorySection() {
                         </button>
                     </div>
                 )}
+            </section>
+
+            <section className="set-section">
+                <div className="set-header">{t('settings.memory.styleHeader')}</div>
+                <div className="set-group" role="radiogroup" aria-label={t('settings.memory.styleHeader')}>
+                    {REPLY_STYLES.map((s) => (
+                        <button key={s} type="button" role="radio" aria-checked={style === s} onClick={() => pickStyle(s)} className="set-row set-row-btn">
+                            <span className="set-label">
+                                {t(`settings.memory.style.${s}`)}
+                                <span className="set-sub">{t(`settings.memory.styleHint.${s}`)}</span>
+                            </span>
+                            {style === s && <Check className="w-[var(--sz-18)] h-[var(--sz-18)] text-accent" />}
+                        </button>
+                    ))}
+                </div>
             </section>
         </>
     )

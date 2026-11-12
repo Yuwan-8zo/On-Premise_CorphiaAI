@@ -31,7 +31,7 @@ from app.services.audit_service import AuditAction, AuditResource, write_audit_l
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 from app.services import file_builder, generated_files
 from app.services.output_guard import OutputScreen
-from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block
+from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block, style_directive
 from app.services.memory_service import is_enabled as memory_is_enabled
 
 logger = logging.getLogger(__name__)
@@ -513,6 +513,11 @@ class ChatService:
         system_prompt = f"{system_prompt}\n\n{lang_directive}"
         if extra_system:
             system_prompt = f"{system_prompt}\n\n{extra_system}"
+
+        # 回答風格：這個人自己選的（精簡／詳細／正式；預設不加）
+        style = await style_directive(self.db, owner_id)
+        if style:
+            system_prompt = f"{system_prompt}\n\n{style}"
 
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)

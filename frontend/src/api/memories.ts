@@ -12,8 +12,13 @@ export interface MemoryItem {
     created_at: string
 }
 
+/** 回答風格：預設／精簡／詳細／正式 */
+export const REPLY_STYLES = ['default', 'concise', 'detailed', 'formal'] as const
+export type ReplyStyle = (typeof REPLY_STYLES)[number]
+
 export interface MemoryList {
     enabled: boolean
+    style: ReplyStyle
     items: MemoryItem[]
     max_items: number
     max_chars: number
@@ -26,4 +31,5 @@ export const memoriesApi = {
     remove: async (id: string): Promise<void> => { await apiClient.delete(`/memories/${id}`) },
     clear: async (): Promise<void> => { await apiClient.delete('/memories') },
     setEnabled: async (enabled: boolean): Promise<void> => { await apiClient.put('/memories/settings', { enabled }) },
+    setStyle: async (style: ReplyStyle): Promise<void> => { await apiClient.put('/memories/settings', { style }) },
 }

@@ -284,9 +284,12 @@ export default {
         about: 'About',
         guide: 'Guide',
         memory: {
-            title: 'Memory',
+            title: 'Memory & style',
             enable: 'Use memory',
             enableHint: 'When on, the AI checks what you asked it to remember before answering. Only you can see your memories, and they never leave the company server.',
+            styleHeader: 'Reply style',
+            style: { default: 'Default', concise: 'Concise', detailed: 'Detailed', formal: 'Formal' },
+            styleHint: { default: 'Answers naturally for the question', concise: 'Conclusion first, within three sentences', detailed: 'Step-by-step reasons and methods, with an example when useful', formal: 'Business-letter tone, no casual wording' },
             addHeader: 'Add a memory',
             placeholder: 'e.g. I work in sales and want reports as bullet points',
             add: 'Add',

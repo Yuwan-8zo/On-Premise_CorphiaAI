@@ -284,9 +284,12 @@ export default {
         about: '關於',
         guide: '使用說明',
         memory: {
-            title: '記憶',
+            title: '記憶與風格',
             enable: '使用記憶',
             enableHint: '開啟後，AI 回答前會先參考你請它記住的事。記憶只有你自己看得到，內容不會離開公司的伺服器。',
+            styleHeader: '回答風格',
+            style: { default: '預設', concise: '精簡', detailed: '詳細', formal: '正式' },
+            styleHint: { default: '依問題自然回答', concise: '先講結論，三句話內說完', detailed: '分步驟說明原因與做法，必要時舉例', formal: '商務書信的語氣，不用口語' },
             addHeader: '新增記憶',
             placeholder: '例如：我是業務部的，報告都用條列式',
             add: '新增',

@@ -10,6 +10,9 @@
   - 內容是使用者寫的，放進系統提示前一樣要拿掉模型的控制字元（不能靠記憶改寫系統指令）
 
 開關存在 user_settings.preferences["memory_enabled"]（預設開）。
+
+同一頁的「回答風格」也在這裡（個人化設定都放一起）：每個人選一種，回答前加一句風格說明到系統提示。
+存在 user_settings.preferences["reply_style"]；沒選＝預設（不加任何說明）。
 """
 
 from __future__ import annotations
@@ -27,6 +30,15 @@ MAX_ITEMS = 50
 MAX_CHARS = 300
 PROMPT_CHARS = 800
 PREF_KEY = "memory_enabled"
+STYLE_KEY = "reply_style"
+STYLE_DEFAULT = "default"
+# 風格 → 加在系統提示後面的說明（預設不加）
+STYLE_DIRECTIVES: dict[str, str] = {
+    "concise": "回答風格：精簡。先講結論，能用三句話說完就不要多寫，不要客套話和重複使用者的問題。",
+    "detailed": "回答風格：詳細。把原因和做法分步驟說清楚，必要時舉一個例子。",
+    "formal": "回答風格：正式。用商務書信的語氣，不用口語、表情符號和驚嘆號。",
+}
+STYLES = (STYLE_DEFAULT, *STYLE_DIRECTIVES)
 
 # 「記住……」的說法（句首；前面可以有「請／幫我／麻煩你」）
 _REMEMBER_RES = [
@@ -63,13 +75,38 @@ async def is_enabled(db: AsyncSession, user_id: str) -> bool:
 
 
 async def set_enabled(db: AsyncSession, user_id: str, enabled: bool) -> None:
+    await _set_pref(db, user_id, PREF_KEY, enabled)
+
+
+async def _prefs(db: AsyncSession, user_id: Optional[str]) -> dict:
+    if not user_id:
+        return {}
+    return (await db.execute(select(UserSettings.preferences).where(UserSettings.user_id == user_id))).scalar_one_or_none() or {}
+
+
+async def _set_pref(db: AsyncSession, user_id: str, key: str, value) -> None:
     row = (await db.execute(select(UserSettings).where(UserSettings.user_id == user_id))).scalar_one_or_none()
     if row is None:
-        db.add(UserSettings(user_id=user_id, preferences={PREF_KEY: enabled}))
+        db.add(UserSettings(user_id=user_id, preferences={key: value}))
     else:
         # jsonb 要換一個新的 dict，SQLAlchemy 才知道內容變了
-        row.preferences = {**(row.preferences or {}), PREF_KEY: enabled}
+        row.preferences = {**(row.preferences or {}), key: value}
     await db.commit()
+
+
+async def get_style(db: AsyncSession, user_id: Optional[str]) -> str:
+    style = (await _prefs(db, user_id)).get(STYLE_KEY)
+    return style if style in STYLES else STYLE_DEFAULT
+
+
+async def set_style(db: AsyncSession, user_id: str, style: str) -> None:
+    """呼叫前要先確認 style 在 STYLES 裡"""
+    await _set_pref(db, user_id, STYLE_KEY, style)
+
+
+async def style_directive(db: AsyncSession, user_id: Optional[str]) -> str:
+    """加在系統提示後面的風格說明；預設風格回空字串"""
+    return STYLE_DIRECTIVES.get(await get_style(db, user_id), "")
 
 
 async def list_memories(db: AsyncSession, user_id: str) -> list[UserMemory]:
