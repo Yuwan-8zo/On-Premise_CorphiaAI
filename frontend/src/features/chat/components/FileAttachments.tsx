@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { filesApi } from '@/api/files'
 import { Download, FileText, Loader2 } from '@/components/snow/icons'
+import Tooltip from '@/components/ui/Tooltip'
 import { desktop, useDesktop } from '@/lib/desktop'
 import { formatBytes } from '@/lib/formatBytes'
 import { getErrorMessage } from '@/lib/errors'
@@ -57,10 +58,13 @@ export default function FileAttachments({ files }: { files: MessageAttachment[] 
                             {t('ui.office.open')}
                         </button>
                     )}
-                    <button type="button" onClick={() => download(file)} disabled={busy !== null} className={`btn btn-sm flex-shrink-0 ${isDesktop ? 'btn-secondary' : 'btn-primary'}`} aria-label={t('ui.chat.fileDownloadAria', { name: file.filename })}>
-                        {busy === `dl:${file.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        {!isDesktop && t('ui.chat.fileDownload')}
-                    </button>
+                    {/* 桌面版的下載只有圖示 → 要有提示泡泡（規範：純圖示按鈕才加）；瀏覽器、手機的下載有文字，不加 */}
+                    <Tooltip label={isDesktop ? t('ui.chat.fileDownload') : ''} placement="top" className="flex-shrink-0">
+                        <button type="button" onClick={() => download(file)} disabled={busy !== null} className={`btn btn-sm ${isDesktop ? 'btn-secondary' : 'btn-primary'}`} aria-label={t('ui.chat.fileDownloadAria', { name: file.filename })}>
+                            {busy === `dl:${file.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                            {!isDesktop && t('ui.chat.fileDownload')}
+                        </button>
+                    </Tooltip>
                 </div>
             ))}
         </div>
