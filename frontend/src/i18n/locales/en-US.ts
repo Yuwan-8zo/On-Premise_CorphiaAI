@@ -387,6 +387,14 @@ export default {
         dataCore: 'Data Core',
         copyright: '© {{year}} Corphia AI. MIT License.',
         statusLabel: 'System status',
+        desktopHeader: 'Desktop app',
+        desktopLabel: 'Install on this computer',
+        desktopSub: 'Windows · version {{version}} · {{size}}',
+        desktopNone: 'No installer on the server yet. Please ask your administrator.',
+        desktopDownload: 'Download',
+        desktopDownloadAria: 'Download the desktop app installer',
+        desktopInstalled: 'Installed version',
+        desktopHint: 'The desktop app can write replies into Word, Excel and PowerPoint on this computer and read the open document for questions. A notice appears at the bottom right when a new version is available. On phones and tablets, just use the browser.',
     },
 
     // Security Features (A1/A2)
@@ -458,7 +466,7 @@ export default {
             projectTitle: 'Project instructions',
             projectDesc: 'Use the settings button on a project folder row to write standing requirements (for example, always use bullet points). Every question in that project follows them.',
             desktopTitle: 'Desktop app',
-            desktopDesc: 'With the desktop app you can write replies into Word, Excel and PowerPoint on this computer, and read the open document to ask about it.',
+            desktopDesc: 'With the desktop app you can write replies into Word, Excel and PowerPoint on this computer, and read the open document to ask about it. Download it in Settings › About.',
         },
         project: {
             title: 'Answer from your documents',

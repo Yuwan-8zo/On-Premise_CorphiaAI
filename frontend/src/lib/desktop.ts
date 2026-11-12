@@ -93,6 +93,18 @@ function blobToBase64(blob: Blob): Promise<string> {
     })
 }
 
+/** 伺服器上的桌面版安裝檔（設定 › 關於 的下載入口用；不用登入就能查） */
+export interface DesktopRelease {
+    available: boolean
+    version: string
+    size?: number
+}
+export const desktopRelease = {
+    latest: async (): Promise<DesktopRelease> => (await apiClient.get<DesktopRelease>('/desktop/latest')).data,
+    /** 下載安裝檔的網址（同一台伺服器） */
+    downloadUrl: (): string => `${apiClient.defaults.baseURL ?? ''}/desktop/download`,
+}
+
 export const desktop = {
     /** 桌面版的版本與有沒有新版 */
     info: async (): Promise<DesktopInfo> => unwrap(await bridge()?.info(token())),

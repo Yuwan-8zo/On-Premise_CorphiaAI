@@ -387,6 +387,14 @@ export default {
         dataCore: '核心資料庫',
         copyright: '© {{year}} Corphia AI. MIT License.',
         statusLabel: '系統狀態',
+        desktopHeader: '桌面版',
+        desktopLabel: '安裝到這台電腦',
+        desktopSub: 'Windows · 版本 {{version}} · {{size}}',
+        desktopNone: '伺服器上還沒有安裝檔，請洽系統管理員',
+        desktopDownload: '下載',
+        desktopDownloadAria: '下載桌面版安裝檔',
+        desktopInstalled: '已安裝的版本',
+        desktopHint: '桌面版可以把回答寫進這台電腦的 Word、Excel、PowerPoint，也能讀取開著的文件來提問。有新版時會在畫面右下角提醒。手機和平板請直接用瀏覽器。',
     },
 
     // 資安功能 (A1/A2 差異化)
@@ -458,7 +466,7 @@ export default {
             projectTitle: '專案指示',
             projectDesc: '在專案資料夾那一列按設定鈕，寫下這個專案固定的要求（例如一律用條列式），專案裡每一題都會遵守。',
             desktopTitle: '桌面版',
-            desktopDesc: '裝了桌面版，可以把回答寫進這台電腦的 Word、Excel、PowerPoint，也能讀取目前開著的文件內容來提問。',
+            desktopDesc: '裝了桌面版，可以把回答寫進這台電腦的 Word、Excel、PowerPoint，也能讀取目前開著的文件內容來提問。到「設定 › 關於」下載。',
         },
         project: {
             title: '用你的文件回答問題',

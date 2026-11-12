@@ -387,6 +387,14 @@ export default {
         dataCore: 'データコア',
         copyright: '© {{year}} Corphia AI. MIT License.',
         statusLabel: 'システム状態',
+        desktopHeader: 'デスクトップ版',
+        desktopLabel: 'この PC にインストール',
+        desktopSub: 'Windows · バージョン {{version}} · {{size}}',
+        desktopNone: 'サーバーにインストーラーがまだありません。管理者にお問い合わせください。',
+        desktopDownload: 'ダウンロード',
+        desktopDownloadAria: 'デスクトップ版のインストーラーをダウンロード',
+        desktopInstalled: 'インストール済みのバージョン',
+        desktopHint: 'デスクトップ版では、回答をこの PC の Word・Excel・PowerPoint に書き込んだり、開いている文書を読み込んで質問できます。新しいバージョンがあると画面右下に通知が出ます。スマートフォンやタブレットではブラウザをご利用ください。',
     },
 
     // セキュリティ機能 (A1/A2)
@@ -458,7 +466,7 @@ export default {
             projectTitle: 'プロジェクトの指示',
             projectDesc: 'プロジェクトフォルダの行の設定ボタンから、そのプロジェクト固有の要件（例：常に箇条書き）を書くと、すべての質問で守られます。',
             desktopTitle: 'デスクトップ版',
-            desktopDesc: 'デスクトップ版では、回答をこの PC の Word・Excel・PowerPoint に書き込んだり、開いている文書の内容を読み込んで質問できます。',
+            desktopDesc: 'デスクトップ版では、回答をこの PC の Word・Excel・PowerPoint に書き込んだり、開いている文書の内容を読み込んで質問できます。「設定 › 概要」からダウンロードできます。',
         },
         project: {
             title: '自分の文書で回答する',
