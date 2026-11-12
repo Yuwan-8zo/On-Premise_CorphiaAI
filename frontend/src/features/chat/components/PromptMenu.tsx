@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import GlassSegmented from '@/components/ui/GlassSegmented'
+import { useDismiss } from '@/lib/useDismiss'
 
 interface PromptTemplate {
     title: string
@@ -98,22 +99,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         }
     }, [isOpen, isVisible])
 
-    // 點擊其他地方關閉選單
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Node
-            if (menuRef.current && !menuRef.current.contains(target) && !popRef.current?.contains(target)) {
-                setIsOpen(false)
-            }
-        }
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside)
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [isOpen])
+    // 點擊其他地方、按 Esc 關閉選單
+    useDismiss(isOpen, () => setIsOpen(false), [menuRef, popRef])
 
     // 開啟時算出按鈕位置（視窗縮放時重算）
     useLayoutEffect(() => {
@@ -179,6 +166,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                         ${isOpen
                             ? 'is-current text-accent'
                             : 'text-text-secondary'}`}
+                    aria-label={t('chat.promptTemplatesTitle')}
                     aria-expanded={isOpen}
                 >
                     {/* 提示詞模板圖示（文件＋文字行） */}

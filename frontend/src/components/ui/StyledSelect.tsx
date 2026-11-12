@@ -7,10 +7,11 @@
  *     下方空間不足時往上開，不會被對話框的捲動範圍裁切
  *   - 選項：.menu-item 膠囊，目前選取＝.is-current（強調色字＋勾號），包在 <LensMenu>（長按放大鏡）
  */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from '@/components/snow/icons'
 import LensMenu from '@/components/ui/LensMenu'
+import { useDismiss } from '@/lib/useDismiss'
 
 export interface StyledSelectOption {
     value: string
@@ -56,20 +57,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
     }, [open])
 
     // 點外面、按 Esc 關閉
-    useEffect(() => {
-        if (!open) return
-        const down = (e: MouseEvent) => {
-            const t = e.target as Node
-            if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) setOpen(false)
-        }
-        const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-        document.addEventListener('mousedown', down)
-        document.addEventListener('keydown', key)
-        return () => {
-            document.removeEventListener('mousedown', down)
-            document.removeEventListener('keydown', key)
-        }
-    }, [open])
+    useDismiss(open, () => setOpen(false), [btnRef, menuRef])
 
     return (
         <div className={`relative ${className}`}>

@@ -31,4 +31,9 @@ i18n
         },
     })
 
+// 網頁宣告的語言跟著介面語言（螢幕閱讀器用對的發音、瀏覽器斷字正確）
+const syncHtmlLang = (lng: string) => { document.documentElement.lang = lng }
+syncHtmlLang(i18n.language)
+i18n.on('languageChanged', syncHtmlLang)
+
 export default i18n

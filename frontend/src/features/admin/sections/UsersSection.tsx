@@ -29,6 +29,7 @@ import { adminApi, type UserLockoutStatus } from '@/api/admin'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { SkelTableRows } from '@/components/ui/Skeleton'
 import i18n from '@/i18n'
+import { useDismiss } from '@/lib/useDismiss'
 
 export interface AdminUserRow {
     id: string
@@ -143,31 +144,20 @@ export default function UsersSection({
     useEffect(() => {
         if (!openMenuId) return
 
-        // 點選單和按鈕以外的地方關閉
-        function handleClickOutside(event: MouseEvent) {
-            const target = event.target as Node
-            if (menuContainerRef.current?.contains(target) || menuRef.current?.contains(target)) return
-            closeMenu()
-        }
-        // Esc 關閉
-        function handleEsc(event: KeyboardEvent) {
-            if (event.key === 'Escape') closeMenu()
-        }
         // 捲動或縮放視窗時選單位置會跑掉，直接關閉
         function handleMove() {
             closeMenu()
         }
-        document.addEventListener('mousedown', handleClickOutside)
-        document.addEventListener('keydown', handleEsc)
         window.addEventListener('resize', handleMove)
         window.addEventListener('scroll', handleMove, true)
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-            document.removeEventListener('keydown', handleEsc)
             window.removeEventListener('resize', handleMove)
             window.removeEventListener('scroll', handleMove, true)
         }
     }, [openMenuId])
+
+    // 點選單和按鈕以外的地方、按 Esc 關閉
+    useDismiss(!!openMenuId, closeMenu, [menuContainerRef, menuRef])
 
     const openUser = users.find((u) => u.id === openMenuId) || null
     const isSelf = (u: AdminUserRow | null) => !!u && !!currentUserId && u.id === currentUserId

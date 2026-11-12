@@ -11,6 +11,7 @@
  * 時間表：見 glideProfile（依行程距離在開關與分頁列兩套之間過渡）與 SYS_CURVE（iOS 26 逐幀量的位置曲線）
  */
 import { useEffect, useRef, useState } from 'react'
+import { prefersReducedMotion } from '@/lib/reducedMotion'
 
 /** 設定表（對照規範 :root 的 --lens-*／--glide-*；毫秒、像素、比例） */
 export const LENS_CFG = {
@@ -81,8 +82,8 @@ export function glideProfile(px: number) {
     return { T: sT + (lT - sT) * s, at: C.sAt + (C.lAt - C.sAt) * s, ms: C.sShrink + (C.lShrink - C.sShrink) * s }
 }
 
-export const reduceMotion = () =>
-    typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+/** 系統減少動態效果（共用判斷在 lib/reducedMotion） */
+export const reduceMotion = prefersReducedMotion
 
 /**
  * 放大鏡的時間表。pos＝位置（元件自己定義單位），grow＝0 平常～1 放大鏡，veil＝平常的樣子不透明度，wall＝肩的不透明度

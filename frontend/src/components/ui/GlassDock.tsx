@@ -16,6 +16,7 @@ import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
 import { useTranslation } from 'react-i18next'
+import { useDismiss } from '@/lib/useDismiss'
 
 export interface DockItem {
     id: string
@@ -73,14 +74,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     }
 
     // 點外面、Esc 收合
-    useEffect(() => {
-        if (!open) return
-        const onDown = (e: PointerEvent) => { if (!wrapRef.current?.contains(e.target as Node)) close() }
-        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
-        window.addEventListener('pointerdown', onDown)
-        window.addEventListener('keydown', onKey)
-        return () => { window.removeEventListener('pointerdown', onDown); window.removeEventListener('keydown', onKey) }
-    }, [open])
+    useDismiss(open, close, [wrapRef], { event: 'pointerdown' })
 
     useEffect(() => () => cancelAnimationFrame(raf.current), [])
 

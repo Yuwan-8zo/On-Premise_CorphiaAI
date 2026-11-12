@@ -1,13 +1,14 @@
 /**
  * 對話的「⋯」選單與彈出視窗：重新命名、移至專案、新增資料夾，以及分享連結、完整性驗證
  */
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { conversationsApi } from '@/api/conversations'
 import { foldersApi } from '@/api/folders'
 import { copyText } from '@/lib/clipboard'
 import { useChatStore } from '@/store/chatStore'
 import { useToastStore } from '@/store/toastStore'
 import { DEFAULT_FOLDER, folderOf } from './chatHelpers'
+import { useDismiss } from '@/lib/useDismiss'
 
 type ChatMode = 'general' | 'project'
 
@@ -28,16 +29,9 @@ export function useConversationDialogs({
     const [activeMenu, setActiveMenu] = useState<{ convId: string; x: number; y: number } | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            // 按在「⋯」本身不算點外面：它是按下就打開、可以直接拖到項目上的觸發鈕
-            if ((e.target as Element | null)?.closest?.('button[aria-label="選項"]')) return
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setActiveMenu(null)
-        }
-        // capture 階段：比其他 onClick 先觸發
-        document.addEventListener('mousedown', handleClickOutside, true)
-        return () => document.removeEventListener('mousedown', handleClickOutside, true)
-    }, [])
+    // 點外面、按 Esc 關閉。按在「⋯」本身不算點外面：它是按下就打開、可以直接拖到項目上的觸發鈕
+    // （用 data-conv-menu 認，不用會隨語言改變的 aria-label）；capture 階段：比其他 onClick 先觸發
+    useDismiss(!!activeMenu, () => setActiveMenu(null), [menuRef], { ignore: '[data-conv-menu]', capture: true })
 
     const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
         e.stopPropagation()

@@ -13,6 +13,8 @@
 | `styles/motion.css` | 動畫：換頁 `.page-in`（搭配 `lib/usePageDirection`，方向照順序）等 |
 | `lib/motionPresets.ts` | 動畫參數：規範的兩條曲線 `EASE_DECEL`／`EASE_SPRING`、對話框進出 `dialogBackdrop`／`dialogSheet` |
 | `components/ui/DialogShell.tsx` | 所有對話框共用的外殼：遮罩、置中、進出動畫、Esc、放到最上層。新對話框一律用它，不要自己寫 |
+| `lib/useDismiss.ts` | 選單、下拉、彈出面板的「點外面或按 Esc 關閉」。各元件不要自己掛 mousedown／keydown |
+| `lib/reducedMotion.ts` | 系統「減少動態效果」的判斷 `prefersReducedMotion()` 與 `stripForReducedMotion()`，不要自己寫 matchMedia |
 | `components/snow/icons.tsx` | 全站唯一的圖示庫：Apple SF Symbols「Regular」風格（自行繪製）。24 格、線寬 1.8（圖示鈕內 1.6）、圓頭圓角、矩形大圓角、點用實心小圓。新增圖示用檔內的 `rr()`（圓角矩形）、`circ()`（圓）輔助函式 |
 | `components/ui/*` | 共用元件（第 4 節） |
 

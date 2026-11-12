@@ -1,7 +1,7 @@
 /**
  * 登入頁右上角：主題切換、語言選單（兩顆玻璃圓鈕，大小同後台「回上一頁」36）
  */
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Globe, Moon, Sun } from '@/components/snow/icons'
 import LensMenu from '@/components/ui/LensMenu'
@@ -9,6 +9,7 @@ import { LANGUAGES } from '@/i18n/languages'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useUIStore } from '@/store/uiStore'
 import { popIn } from '@/lib/motionPresets'
+import { useDismiss } from '@/lib/useDismiss'
 
 /** 主題圖示：兩個疊在一起，依目前主題旋轉＋縮放交錯淡入淡出 */
 function ThemeGlyph({ show, rotate, children }: { show: boolean; rotate: number; children: React.ReactNode }) {
@@ -33,13 +34,8 @@ export default function LoginToolbar() {
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
     const langMenuRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) setIsLangMenuOpen(false)
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
+    // 點外面、按 Esc 關閉語言選單
+    useDismiss(isLangMenuOpen, () => setIsLangMenuOpen(false), [langMenuRef])
 
     return (
         <div className="flex items-center gap-2 ml-auto">

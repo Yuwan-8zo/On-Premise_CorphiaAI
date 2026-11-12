@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import { X } from '@/components/snow/icons'
 import QrCode from '@/components/ui/QrCode'
+import { prefersReducedMotion } from '@/lib/reducedMotion'
 
 interface LanQrOverlayProps {
     /** 手機要連的本機 IP */
@@ -27,7 +28,7 @@ export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
 
     /** 關閉：先播淡出（.is-leaving，0.2 秒），播完才真的移除；減少動態效果時直接關 */
     const close = useCallback(() => {
-        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { onClose(); return }
+        if (prefersReducedMotion()) { onClose(); return }
         setLeaving(true)
         window.setTimeout(onClose, 200)
     }, [onClose])

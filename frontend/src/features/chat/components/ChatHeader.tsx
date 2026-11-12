@@ -10,6 +10,7 @@ import { useSystemStore } from '@/store/systemStore'
 import type { Conversation } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
 import { popIn } from '@/lib/motionPresets'
+import { useDismiss } from '@/lib/useDismiss'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -53,6 +54,8 @@ export default function ChatHeader({
     const { t } = useTranslation()
     // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
+    // 模型選單：點外面由透明層處理，這裡補上 Esc 關閉
+    useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
         <header className="shrink-0 w-full p-3 md:pt-[var(--sp-21)] md:pb-4 md:px-[var(--sp-21)] chat-head flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
@@ -111,11 +114,11 @@ export default function ChatHeader({
                         <ChevronDown className={`w-4 h-4 text-text-muted opacity-80 transition-transform shrink-0 ${modelDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
+                    {modelDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />}
                     <AnimatePresence>
                         {modelDropdownOpen && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
                                 <motion.div
+                                    key="model-menu"
                                     {...popIn}
                                     className="absolute right-0 top-full mt-2 w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
@@ -189,7 +192,6 @@ export default function ChatHeader({
                                     </div>
                                     </LensMenu>
                                 </motion.div>
-                            </>
                         )}
                     </AnimatePresence>
                 </div>
