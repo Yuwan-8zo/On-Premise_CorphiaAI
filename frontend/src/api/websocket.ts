@@ -21,7 +21,9 @@ export interface WebSocketMessage {
 
 export interface StreamResponse {
     type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
-        | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments'
+        | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments' | 'output_filtered'
+    /** 回答的檢查（output_filtered）：拿掉幾張外部圖片（pii 沿用下面的欄位） */
+    images?: number
     /** 產出檔案：file_progress 的 kind＝正在做哪一種（docx／xlsx／pptx）；attachments＝做好的檔案 */
     kind?: string
     attachments?: MessageAttachment[]

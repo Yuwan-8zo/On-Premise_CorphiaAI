@@ -11,6 +11,7 @@
  *   - 'injection_warning'  ↦ 注入攻擊提示
  *   - 'memory_saved' / 'memory_rejected' ↦ 使用者說「記住……」：已存成記憶／沒通過安全檢查
  *   - 'context_filtered'   ↦ 參考文件送模型前有片段被剔除或遮罩
+ *   - 'output_filtered'    ↦ AI 的回答送出前被改過（外部圖片拿掉、個資遮罩）
  *   - 'file_progress' / 'attachments' ↦ 正在製作檔案（等待提示換成「正在製作…」）／做好了，掛到這則回答下面
  *   - 'injection_block' / 'dlp_block' ↦ 已攔阻；結束生成並在回覆泡泡裡說明
  */
@@ -122,6 +123,22 @@ export function buildStreamDispatcher(conversationId: string) {
                 }
                 useToastStore.getState().add(i18n.t('ui.chat.piiToast'), 'info', SECURITY_TOAST_MS)
                 break
+
+            // 回答的檢查：畫面上的字已經是改過的，這裡只是告訴使用者發生了什麼
+            case 'output_filtered': {
+                const parts = [
+                    data.images ? i18n.t('ui.chat.outputImages', { n: data.images }) : '',
+                    data.pii ? i18n.t('ui.chat.contextPii', { n: data.pii }) : '',
+                ].filter(Boolean)
+                if (parts.length) {
+                    const message = i18n.t('ui.chat.outputFiltered', { detail: parts.join(i18n.t('ui.chat.contextSep')) })
+                    if (isCurrent()) {
+                        store().addSecurityWarning({ type: data.images ? 'injection' : 'pii', message, data: { images: data.images || 0, pii: data.pii || 0 }, timestamp: Date.now() })
+                    }
+                    useToastStore.getState().add(message, data.images ? 'error' : 'info', SECURITY_TOAST_MS)
+                }
+                break
+            }
 
             // 產出檔案：開始做 → 等待提示改成「正在製作 Word 文件…」；做好 → 檔案卡片掛到這則回答下面
             case 'file_progress':

@@ -30,6 +30,7 @@ from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 from app.services import file_builder, generated_files
+from app.services.output_guard import OutputScreen
 from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block
 from app.services.memory_service import is_enabled as memory_is_enabled
 
@@ -669,8 +670,9 @@ class ChatService:
                 },
             }
 
-        # 串流生成回應
+        # 串流生成回應；每一段先過「回答的檢查」（外部圖片換成文字、個資遮罩，見 services/output_guard）才送出去
         full_response = ""
+        screen = OutputScreen()
         try:
             async for chunk in self.llm_service.generate_stream(
                 model_name=self.model_name,
@@ -680,14 +682,22 @@ class ChatService:
             ):
                 if language == "zh-TW":
                     chunk = to_traditional(chunk)
+                chunk = screen.feed(chunk)
+                if not chunk:
+                    continue  # 結尾可能是樣式的一部分，先留著等後面的字
                 full_response += chunk
                 yield {
                     "type": "stream",
                     "content": chunk,
                 }
+            tail = screen.flush()
+            if tail:
+                full_response += tail
+                yield {"type": "stream", "content": tail}
         except (asyncio.CancelledError, GeneratorExit):
             # 中途停止（使用者按停止、生成逾時、連線中斷）：已經寫出來的部分存起來，
             # 重新整理或之後再打開對話都還看得到；一個字都還沒寫就不存
+            full_response += screen.flush()  # 還留著沒送的那一小段也要過檢查後一起存
             if full_response.strip():
                 # shield：存檔途中又收到取消也要存完
                 await asyncio.shield(
@@ -698,6 +708,19 @@ class ChatService:
             raise
 
         assistant_message = await self._save_assistant_message(conversation_id, full_response, sources)
+        if screen.changed:
+            # 回答被改過：寫稽核、告訴使用者（畫面上的字已經是改過的）
+            try:
+                user_id, tenant_id = await self._conversation_owner(conversation_id)
+                await write_audit_log(
+                    db=self.db, action=AuditAction.OUTPUT_FILTERED, resource_type=AuditResource.CONVERSATION,
+                    resource_id=conversation_id, user_id=user_id, tenant_id=tenant_id,
+                    description=f"AI 回答送出前已過濾：外部圖片 {screen.report['images']} 張、個資遮罩 {screen.report['pii']} 個",
+                    details={**screen.report, "message_id": assistant_message.id},
+                )
+            except Exception as e:  # 稽核失敗不能擋住主流程
+                logger.warning("回答檢查寫稽核失敗: %s", e)
+            yield {"type": "output_filtered", **screen.report}
         yield {
             "type": "done",
             "message_id": assistant_message.id,

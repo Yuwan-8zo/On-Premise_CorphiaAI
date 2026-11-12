@@ -24,6 +24,7 @@ const ComponentsTest = lazy(() => import('@/features/devtools/pages/ComponentsTe
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/settings/SettingsModal'
 import { ToastContainer } from './components/ui/Toast'
+import DesktopUpdateNotice from './components/desktop/DesktopUpdateNotice'
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -238,6 +239,7 @@ export default function App() {
             <ConfirmModal />
             <SettingsModal />
             <ToastContainer />
+            <DesktopUpdateNotice />
         </BackendGate>
     )
 }

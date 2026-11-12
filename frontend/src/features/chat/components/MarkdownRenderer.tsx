@@ -7,6 +7,17 @@
 import React, { lazy, memo, Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+/** 圖片網址是不是本機的（同一台伺服器的相對或絕對路徑、data:image、blob:）；外部網址回 false */
+function isLocalImage(src?: string): boolean {
+    if (!src) return false
+    if (/^(data:image\/|blob:)/i.test(src)) return true
+    try {
+        return new URL(src, window.location.href).origin === window.location.origin
+    } catch {
+        return false
+    }
+}
 import i18n from '@/i18n'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
@@ -219,13 +230,18 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         ),
 
                         // 圖片
-                        img: ({ src, alt }) => (
-                            <img
-                                src={src}
-                                alt={alt || ''}
-                                className="max-w-full h-auto rounded-[var(--r-16)] my-4"
-                            />
-                        ),
+                        // 只顯示本機的圖片（同一台伺服器、data:、blob:）。外部網址一律不載入：
+                        // 瀏覽器一載入就等於連到外面，被惡意內容誘導的回答可以把資料帶在網址裡送出去
+                        img: ({ src, alt }) =>
+                            isLocalImage(src) ? (
+                                <img
+                                    src={src}
+                                    alt={alt || ''}
+                                    className="max-w-full h-auto rounded-[var(--r-16)] my-4"
+                                />
+                            ) : (
+                                <span className="tag">{i18n.t('ui.chat.imageBlocked', { alt: alt || '' }).trim()}</span>
+                            ),
                     }}
                 >
                     {safeContent}

@@ -83,6 +83,9 @@ class Settings(BaseSettings):
     generated_files_dir: str = "./generated"
     file_max_tokens: int = 3000
 
+    # 桌面版程式（desktop/）：伺服器提供最新版讓桌面版自己更新；這裡是放 exe 和原始碼的資料夾（相對於專案根目錄）
+    desktop_dir: str = "desktop"
+
     # 連接資料夾：只允許接這些資料夾底下的路徑（逗號分隔；空的＝除了系統資料夾都可以）
     connected_folder_roots: str = ""
 
@@ -104,6 +107,8 @@ class Settings(BaseSettings):
     enable_prompt_injection_guard: bool = True  # A2: 偵測 Prompt Injection 攻擊
     # 送模型前最後一關：文件片段、記憶等「不是使用者打的字」也先篩過（藏指令／違禁詞的片段不送、個資遮罩）
     enable_context_guard: bool = True
+    # 模型「回答」的檢查：外部圖片換成純文字（避免瀏覽器自動連出去把資料帶走）、個資遮罩
+    enable_output_guard: bool = True
     enable_dlp: bool = True                    # A3: 關鍵字黑名單阻擋
     # DLP 黑名單，逗號分隔；可從環境變數覆寫
     dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"

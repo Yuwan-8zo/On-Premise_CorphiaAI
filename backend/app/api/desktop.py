@@ -3,9 +3,22 @@
 
 操控本身發生在使用者的電腦上（desktop/office_bridge.py），伺服器看不到，所以由介面在動作成功後回報。
 這裡只收「做了什麼」的摘要（哪個程式、文件名稱、幾個字），不收文件內容。
+
+另外提供桌面版自己更新用的兩個端點（不用登入：桌面版在登入前就要能檢查；內容只有版本資訊和公司自己的程式）：
+  GET /desktop/latest    目前伺服器上的桌面版版本、檔案大小、SHA-256
+  GET /desktop/download  下載 exe
+版本以 desktop/corphia_desktop.py 裡的 VERSION 為準；exe 是 desktop/dist/Corphia AI.exe（build.bat 產生）。
 """
 
+import hashlib
+import re
+from pathlib import Path
 from typing import Literal
+
+from fastapi import HTTPException, status
+from fastapi.responses import FileResponse
+
+from app.core.config import settings
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
@@ -30,6 +43,59 @@ class DesktopEvent(BaseModel):
     action: Literal["office_read", "office_write", "file_open"]
     app: str = Field("", max_length=20)
     detail: dict = Field(default_factory=dict)
+
+
+EXE_NAME = "Corphia AI.exe"
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+# 算過的 SHA-256 記起來（檔案沒變就不重算）：(修改時間, 大小) → 雜湊
+_hash_cache: dict[tuple[float, int], str] = {}
+
+
+def _desktop_dir() -> Path:
+    p = Path(settings.desktop_dir)
+    return p if p.is_absolute() else _REPO_ROOT / p
+
+
+def _exe_path() -> Path:
+    return _desktop_dir() / "dist" / EXE_NAME
+
+
+def _source_version() -> str:
+    try:
+        m = re.search(r'^VERSION\s*=\s*"([0-9][0-9.]*)"', (_desktop_dir() / "corphia_desktop.py").read_text(encoding="utf-8"), re.M)
+        return m.group(1) if m else ""
+    except OSError:
+        return ""
+
+
+def _sha256(path: Path) -> str:
+    st = path.stat()
+    key = (st.st_mtime, st.st_size)
+    if key not in _hash_cache:
+        h = hashlib.sha256()
+        with path.open("rb") as f:
+            for block in iter(lambda: f.read(1 << 20), b""):
+                h.update(block)
+        _hash_cache.clear()
+        _hash_cache[key] = h.hexdigest()
+    return _hash_cache[key]
+
+
+@router.get("/latest")
+async def latest_desktop():
+    """桌面版的最新版本；available＝false 表示伺服器上沒有可下載的 exe（還沒打包）"""
+    exe, version = _exe_path(), _source_version()
+    if not version or not exe.is_file():
+        return {"available": False, "version": version}
+    return {"available": True, "version": version, "size": exe.stat().st_size, "sha256": _sha256(exe), "filename": EXE_NAME}
+
+
+@router.get("/download")
+async def download_desktop():
+    exe = _exe_path()
+    if not exe.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="伺服器上沒有桌面版安裝檔")
+    return FileResponse(exe, media_type="application/octet-stream", filename=EXE_NAME)
 
 
 @router.post("/events")

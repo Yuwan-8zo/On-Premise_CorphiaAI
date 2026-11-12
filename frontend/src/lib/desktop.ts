@@ -6,6 +6,7 @@
  *   await desktop.read('word')              // 讀目前的內容（選取範圍或整份）
  *   await desktop.write('excel', markdown)  // 把回答寫進去
  *   await desktop.openFile(name, blob)      // 把 AI 產出的檔案存到「文件\Corphia AI 產出」並打開
+ *   await desktop.info() ／ desktop.update() // 版本、有沒有新版 ／ 更新（components/desktop/DesktopUpdateNotice 用）
  *
  * 失敗一律丟 Error（訊息是給使用者看的原因）。每個成功的動作都回報伺服器寫稽核（POST /desktop/events）。
  */
@@ -38,8 +39,15 @@ interface OpenedFile extends BridgeResult {
     path: string
     name: string
 }
+export interface DesktopInfo extends BridgeResult {
+    version: string
+    trusted: boolean
+    /** 伺服器上比較新的桌面版；沒有新版是 null */
+    update: { version: string; size: number } | null
+}
 interface DesktopApi {
-    info: () => Promise<BridgeResult & { version: string; trusted: boolean }>
+    info: () => Promise<DesktopInfo>
+    update: () => Promise<BridgeResult & { version: string }>
     office_read: (app: OfficeApp) => Promise<OfficeRead>
     office_write: (app: OfficeApp, markdown: string) => Promise<OfficeWrite>
     open_file: (filename: string, dataB64: string) => Promise<OpenedFile>
@@ -81,6 +89,10 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 export const desktop = {
+    /** 桌面版的版本與有沒有新版 */
+    info: async (): Promise<DesktopInfo> => unwrap(await bridge()?.info()),
+    /** 下載新版並重新開啟（成功後視窗會自己關掉再開） */
+    update: async () => unwrap(await bridge()?.update()),
     read: async (app: OfficeApp): Promise<OfficeRead> => {
         const r = unwrap(await bridge()?.office_read(app))
         report('office_read', app, { name: r.name, scope: r.scope, chars: r.chars, truncated: r.truncated })

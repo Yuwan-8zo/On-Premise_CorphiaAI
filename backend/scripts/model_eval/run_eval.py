@@ -223,7 +223,13 @@ def test_tools(work_root: Path) -> list[dict]:
         msgs: list[dict] = [{"role": "system", "content": SYSTEM_TOOLS}, {"role": "user", "content": task["q"]}]
         calls, bad, final, t0 = [], 0, "", time.time()
         for _ in range(MAX_TOOL_STEPS):
-            res, _dt = chat(msgs, tools=TOOLS)
+            try:
+                res, _dt = chat(msgs, tools=TOOLS)
+            except httpx.HTTPError as e:
+                # 模型寫出格式不對的工具呼叫時，引擎會回 500：這一題算失敗（記下原因），不要讓整個評估中斷
+                bad += 1
+                final = f"[引擎拒絕模型的輸出：{str(e)[:120]}]"
+                break
             msg = res["choices"][0]["message"]
             tcs = msg.get("tool_calls") or []
             if not tcs:

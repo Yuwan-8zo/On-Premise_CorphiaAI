@@ -87,6 +87,8 @@ class AuditAction:
 
     # 送模型前最後一關：文件片段被剔除或遮罩
     CONTEXT_FILTERED = "context_filtered"
+    # 模型的回答被改過：外部圖片拿掉、個資遮罩
+    OUTPUT_FILTERED = "output_filtered"
 
     # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
     NGROK_START = "ngrok_start"

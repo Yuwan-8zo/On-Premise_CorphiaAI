@@ -11,6 +11,9 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
                視窗只顯示伺服器的頁面：點到外部連結會改用系統瀏覽器開，視窗回到伺服器
                （不然外部網頁可以嘗試呼叫橋）；改伺服器位址只有內建的連線設定頁可以做
   登入狀態     存在 %LOCALAPPDATA%\\CorphiaAI\\webview，關掉再開不用重新登入
+  更新         啟動時向伺服器問最新版本（GET /api/v1/desktop/latest，只連公司自己的伺服器，不連外網）；
+               有新版時介面會提示，使用者按「更新」才下載（核對大小與 SHA-256）→ 啟動下載下來的新版請它換檔 → 自己關閉
+               → 新版把自己複製到原本的位置（等舊版完全關閉）→ 從原本的位置重新開啟
 
 用法：
   corphia_desktop.py                         一般啟動
@@ -21,9 +24,12 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -37,13 +43,18 @@ import webview
 
 import office_bridge
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 WINDOW_SIZE = (1280, 800)
 WINDOW_MIN = (420, 640)
 CONNECT_TIMEOUT = 3
 SELFTEST_TIMEOUT = 40
+UPDATE_CHECK_TIMEOUT = 5
+DOWNLOAD_TIMEOUT = 120
+DOWNLOAD_BLOCK = 1 << 20
+SWAP_TIMEOUT = 60  # 換檔最多等舊版關閉多久（秒）
+SWAP_RETRY = 0.5
 
 logger = logging.getLogger("corphia.desktop")
 
@@ -93,6 +104,88 @@ def reachable(url: str) -> bool:
         return False
 
 
+def parse_version(text: str) -> tuple:
+    """'0.10.2' → (0, 10, 2)；格式不對回空的（空的永遠不算比較新）"""
+    try:
+        return tuple(int(x) for x in str(text).strip().split("."))
+    except ValueError:
+        return ()
+
+
+def update_dir() -> Path:
+    return Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "CorphiaAI" / "update"
+
+
+def check_update(server: str) -> dict | None:
+    """伺服器上有沒有比現在新的桌面版；有就回它的資訊（version、size、sha256），沒有或問不到回 None"""
+    try:
+        with urllib.request.urlopen(f"{server}/api/v1/desktop/latest", timeout=UPDATE_CHECK_TIMEOUT) as r:
+            latest = json.loads(r.read().decode("utf-8"))
+    except Exception:
+        return None
+    if latest.get("available") and parse_version(latest.get("version", "")) > parse_version(VERSION):
+        return {k: latest.get(k) for k in ("version", "size", "sha256")}
+    return None
+
+
+def download_update(server: str, latest: dict) -> Path:
+    """下載新版到自己的更新資料夾，核對大小與 SHA-256；不對就丟錯（不會留下壞檔）"""
+    dest = update_dir() / "Corphia AI.exe"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    digest, size = hashlib.sha256(), 0
+    try:
+        with urllib.request.urlopen(f"{server}/api/v1/desktop/download", timeout=DOWNLOAD_TIMEOUT) as r, dest.open("wb") as f:
+            for block in iter(lambda: r.read(DOWNLOAD_BLOCK), b""):
+                f.write(block)
+                digest.update(block)
+                size += len(block)
+        if size != int(latest.get("size") or -1) or digest.hexdigest() != latest.get("sha256"):
+            raise ValueError("下載的檔案和伺服器公布的不一致")
+    except Exception:
+        dest.unlink(missing_ok=True)
+        raise
+    return dest
+
+
+def _spawn(args: list[str]) -> None:
+    """另開一個獨立的程序（這個程式關掉後它還會繼續跑）"""
+    env = dict(os.environ)
+    # 打包成單一 exe 的程式開另一個同類程式時，要請它重新建立自己的執行環境，不要沿用這一個的
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     creationflags=flags, close_fds=True)
+
+
+def apply_update(target: Path) -> int:
+    """
+    由「下載下來的新版」執行：把自己複製到原本的位置（舊版還沒完全關閉時檔案被佔用，就等一下再試），
+    然後從原本的位置重新開啟。為什麼由新版自己做：不靠批次檔，中文路徑、沒有主控台視窗都不會出問題。
+    """
+    source = Path(sys.executable)
+    deadline = time.time() + SWAP_TIMEOUT
+    while True:
+        try:
+            shutil.copy2(source, target)
+            break
+        except OSError:
+            if time.time() > deadline:
+                return 1
+            time.sleep(SWAP_RETRY)
+    _spawn([str(target)])
+    return 0
+
+
+def cleanup_update() -> None:
+    """上次更新留下的安裝檔（它執行時刪不掉自己）：下次正常啟動時清掉"""
+    leftover = update_dir() / "Corphia AI.exe"
+    try:
+        if leftover.is_file() and leftover.resolve() != Path(sys.executable).resolve():
+            leftover.unlink()
+    except OSError:
+        pass
+
+
 CONNECT_PAGE = """<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>Corphia AI</title>
 <style>
   :root { color-scheme: dark; }
@@ -128,6 +221,8 @@ class Api:
         self._window = None
         # 現在顯示的是不是我們自己的連線設定頁（只有它可以改伺服器位址）
         self._connect_page = False
+        # 伺服器上比較新的桌面版（背景檢查到才有值）
+        self._update: dict | None = None
 
     # ── 內部 ──
     def _trusted(self) -> bool:
@@ -143,7 +238,24 @@ class Api:
     # ── 給介面用 ──
     def info(self) -> dict:
         """桌面版的版本、三個 Office 程式的狀態"""
-        return {"ok": True, "desktop": True, "version": VERSION, "trusted": self._trusted(), **office_bridge.status()}
+        return {"ok": True, "desktop": True, "version": VERSION, "trusted": self._trusted(), "update": self._update, **office_bridge.status()}
+
+    def update(self) -> dict:
+        """下載新版並換掉自己（使用者在介面上按「更新」才會呼叫）；成功後視窗會關閉、自動重新開啟"""
+        def run() -> dict:
+            if not self._update:
+                return {"ok": False, "error": "目前已經是最新版"}
+            if not getattr(sys, "frozen", False):
+                return {"ok": False, "error": "開發模式不能自動更新，請重新打包"}
+            try:
+                new_exe = download_update(self._server, self._update)
+            except Exception as e:
+                return {"ok": False, "error": f"下載新版失敗：{str(e)[:120]}"}
+            _spawn([str(new_exe), "--apply-update", str(Path(sys.executable))])
+            threading.Timer(0.8, self._window.destroy).start()  # 先讓這次呼叫回到介面，再關視窗
+            return {"ok": True, "version": self._update["version"]}
+
+        return self._guard(run)
 
     def office_read(self, app: str) -> dict:
         return self._guard(lambda: office_bridge.read(str(app)))
@@ -201,6 +313,11 @@ def run_selftest(window, api: Api, out: Path) -> None:
         # 不是設定的那台伺服器（例如連線設定頁）時，操控 Office 的呼叫要被擋下
         result["office_guard"] = api.office_read("word") if not api._trusted() else "trusted"
         # 一般網頁不能改伺服器位址（連線設定頁以外一律拒絕）；位址給一個連不上的，確保真的被擋而不是剛好連線失敗
+        result["update_check"] = check_update(api._server) or "none"
+        if os.environ.get("CORPHIA_SELFTEST_UPDATE") == "1":
+            # 更新流程的自我檢查：直接查版本並執行更新（會關閉視窗、換掉 exe、重新開啟）
+            api._update = check_update(api._server)
+            result["update_result"] = api.update()
         result["set_server_from_page"] = api.set_server("http://127.0.0.1:1") if api._trusted() else "connect-page"
         result["info"] = api.info()
         result["root_children"] = window.evaluate_js("document.getElementById('root') ? document.getElementById('root').children.length : -1")
@@ -222,7 +339,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Corphia AI 桌面版")
     parser.add_argument("--server", help="伺服器位址（會記住）")
     parser.add_argument("--selftest", metavar="結果檔", help="自我檢查後自動關閉")
+    parser.add_argument("--apply-update", metavar="原本的位置", help=argparse.SUPPRESS)  # 更新時由新版自己呼叫
     args = parser.parse_args()
+    if args.apply_update:
+        return apply_update(Path(args.apply_update))
+    if not args.selftest:
+        cleanup_update()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
     server = normalize_server(args.server) if args.server else load_server()
@@ -244,6 +366,10 @@ def main() -> int:
     api._connect_page = not online
     window.events.loaded += api._on_loaded
     webview.settings["ALLOW_DOWNLOADS"] = True  # 讓介面的「下載」可以存檔
+
+    if online and not args.selftest:
+        # 背景問伺服器有沒有新版（問不到就算了，不影響使用）
+        threading.Thread(target=lambda: setattr(api, "_update", check_update(server)), daemon=True).start()
 
     storage = storage_dir()
     storage.mkdir(parents=True, exist_ok=True)

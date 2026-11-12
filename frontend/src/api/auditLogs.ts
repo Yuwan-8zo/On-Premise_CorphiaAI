@@ -120,6 +120,7 @@ export const AUDIT_ACTIONS = [
     'memory_clear',
     'memory_rejected',
     'context_filtered',
+    'output_filtered',
     'file_create',
     'file_download',
     'office_read',
