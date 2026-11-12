@@ -1,0 +1,183 @@
+/**
+ * 設定 › 記憶：AI 跨對話記住的事（只有自己看得到）
+ *
+ *   開關：關掉後 AI 不再參考記憶，對話裡說「記住……」也不會存
+ *   新增：輸入框＋「新增」
+ *   清單：每一則可以修改、刪除；最下面「全部清除」
+ * 內容送出前後端都會先過安全檢查（個資遮罩、違禁詞、可疑指令），不通過會顯示後端回的原因。
+ */
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { memoriesApi, type MemoryItem } from '@/api/memories'
+import { Edit2, Trash2 } from '@/components/snow/icons'
+import GlassSwitch from '@/components/ui/GlassSwitch'
+import Tooltip from '@/components/ui/Tooltip'
+import { SkelText } from '@/components/ui/Skeleton'
+import { getErrorMessage } from '@/lib/errors'
+import { useToastStore } from '@/store/toastStore'
+import { useUIStore } from '@/store/uiStore'
+
+const inputClass = 'flex-1 min-w-0 bg-transparent outline-none text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary placeholder:text-text-muted'
+
+export default function MemorySection() {
+    const { t } = useTranslation()
+    const toast = useToastStore((s) => s.add)
+    const showConfirm = useUIStore((s) => s.showConfirm)
+    const [loaded, setLoaded] = useState(false)
+    const [enabled, setEnabled] = useState(true)
+    const [items, setItems] = useState<MemoryItem[]>([])
+    const [limits, setLimits] = useState({ items: 50, chars: 300 })
+    const [draft, setDraft] = useState('')
+    const [busy, setBusy] = useState(false)
+    const [editing, setEditing] = useState<{ id: string; text: string } | null>(null)
+
+    const load = useCallback(async () => {
+        try {
+            const data = await memoriesApi.list()
+            setEnabled(data.enabled)
+            setItems(data.items)
+            setLimits({ items: data.max_items, chars: data.max_chars })
+        } catch (err) {
+            toast(getErrorMessage(err), 'error')
+        } finally {
+            setLoaded(true)
+        }
+    }, [toast])
+    useEffect(() => { void load() }, [load])
+
+    /** 共用：做一件事，失敗顯示原因，成功後重新讀清單 */
+    const run = async (work: () => Promise<unknown>, done?: string) => {
+        if (busy) return false
+        setBusy(true)
+        try {
+            await work()
+            await load()
+            if (done) toast(done, 'success')
+            return true
+        } catch (err) {
+            toast(getErrorMessage(err), 'error')
+            return false
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    const add = async () => {
+        const text = draft.trim()
+        if (!text) return
+        if (await run(() => memoriesApi.create(text), t('settings.memory.added'))) setDraft('')
+    }
+    const saveEdit = async () => {
+        if (!editing) return
+        const text = editing.text.trim()
+        if (!text) return
+        if (await run(() => memoriesApi.update(editing.id, text))) setEditing(null)
+    }
+    const toggle = () => {
+        const next = !enabled
+        setEnabled(next) // 開關先動，失敗再由 load 還原
+        void run(() => memoriesApi.setEnabled(next))
+    }
+    const full = items.length >= limits.items
+
+    return (
+        <>
+            <h2 className="set-title">{t('settings.memory.title')}</h2>
+
+            <section className="set-section">
+                <div className="set-group">
+                    <div className="set-row">
+                        <span className="set-label">{t('settings.memory.enable')}</span>
+                        <GlassSwitch checked={enabled} onChange={toggle} aria-label={t('settings.memory.enable')} />
+                    </div>
+                </div>
+                <div className="set-footer">{t('settings.memory.enableHint')}</div>
+            </section>
+
+            <section className="set-section">
+                <div className="set-header">{t('settings.memory.addHeader')}</div>
+                <div className="set-group">
+                    <div className="set-row">
+                        <input
+                            type="text"
+                            value={draft}
+                            maxLength={limits.chars}
+                            disabled={full}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') void add() }}
+                            placeholder={full ? t('settings.memory.full', { n: limits.items }) : t('settings.memory.placeholder')}
+                            aria-label={t('settings.memory.addHeader')}
+                            className={inputClass}
+                        />
+                        <button type="button" onClick={add} disabled={busy || full || !draft.trim()} className="btn btn-sm btn-primary flex-shrink-0">
+                            {t('settings.memory.add')}
+                        </button>
+                    </div>
+                </div>
+                <div className="set-footer">{t('settings.memory.addHint')}</div>
+            </section>
+
+            <section className="set-section">
+                <div className="set-header">
+                    {loaded ? t('settings.memory.listHeader', { n: items.length, max: limits.items }) : <SkelText>{t('settings.memory.listHeader', { n: 0, max: limits.items })}</SkelText>}
+                </div>
+                <div className="set-group">
+                    {!loaded ? (
+                        <div className="set-row" aria-hidden><span className="set-label"><SkelText>000000000000000000</SkelText></span></div>
+                    ) : items.length === 0 ? (
+                        <div className="set-row"><span className="set-value !text-left">{t('settings.memory.empty')}</span></div>
+                    ) : items.map((m) => editing?.id === m.id ? (
+                        <div key={m.id} className="set-row">
+                            <input
+                                type="text"
+                                autoFocus
+                                value={editing.text}
+                                maxLength={limits.chars}
+                                onChange={(e) => setEditing({ id: m.id, text: e.target.value })}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') void saveEdit()
+                                    if (e.key === 'Escape') setEditing(null)
+                                }}
+                                aria-label={t('common.edit')}
+                                className={inputClass}
+                            />
+                            <button type="button" onClick={() => setEditing(null)} disabled={busy} className="btn btn-sm btn-secondary flex-shrink-0">{t('common.cancel')}</button>
+                            <button type="button" onClick={saveEdit} disabled={busy || !editing.text.trim()} className="btn btn-sm btn-primary flex-shrink-0">{t('common.save')}</button>
+                        </div>
+                    ) : (
+                        <div key={m.id} className="set-row">
+                            {/* 記憶可能是一整句：讓它折行，不截斷（要看得到自己被記了什麼） */}
+                            <span className="set-label whitespace-normal break-words">{m.content}</span>
+                            {m.source === 'chat' && <span className="tag hidden flex-shrink-0 sm:inline-flex">{t('settings.memory.fromChat')}</span>}
+                            {/* 修改、刪除靠在一起（列的間距 16 是給文字和控制項之間用的，兩顆小按鈕之間太鬆） */}
+                            <span className="flex flex-shrink-0 items-center gap-1">
+                                <Tooltip label={t('common.edit')}>
+                                    <button type="button" onClick={() => setEditing({ id: m.id, text: m.content })} aria-label={t('common.edit')} className="icon-tap text-text-secondary">
+                                        <Edit2 className="h-4 w-4" />
+                                    </button>
+                                </Tooltip>
+                                <Tooltip label={t('common.delete')}>
+                                    <button type="button" onClick={() => run(() => memoriesApi.remove(m.id))} disabled={busy} aria-label={t('common.delete')} className="icon-tap text-[var(--danger-ink)]">
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </Tooltip>
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                {items.length > 0 && (
+                    <div className="mt-[var(--sp-12)] flex justify-end">
+                        <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => showConfirm(t('settings.memory.clearConfirm', { n: items.length }), async () => { await run(() => memoriesApi.clear(), t('settings.memory.cleared')) }, t('settings.memory.clearHint'))}
+                            className="btn btn-sm btn-danger"
+                        >
+                            {t('settings.memory.clearAll')}
+                        </button>
+                    </div>
+                )}
+            </section>
+        </>
+    )
+}

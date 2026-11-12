@@ -21,6 +21,14 @@ export interface WebSocketMessage {
 
 export interface StreamResponse {
     type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
+        | 'memory_saved' | 'memory_rejected' | 'context_filtered'
+    /** 記憶：memory_saved 的 created＝false 表示這件事早就記過了；memory_rejected 的 reason＝dlp／injection／limit */
+    created?: boolean
+    reason?: string
+    /** 送模型前最後一關（context_filtered）：被剔除的片段數（藏指令、列管字詞）、被遮罩的個資數 */
+    injection?: number
+    dlp?: number
+    pii?: number
     content?: string
     messageId?: string
     /** 引用來源（欄位名稱跟後端一致：chunk_id、document_id…） */

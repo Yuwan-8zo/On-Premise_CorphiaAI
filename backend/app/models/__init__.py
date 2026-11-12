@@ -13,6 +13,7 @@ from app.models.user_settings import UserSettings
 from app.models.audit_log import AuditLog
 from app.models.token_blacklist import TokenBlacklist
 from app.models.connected_folder import ConnectedFolder
+from app.models.user_memory import UserMemory
 
 __all__ = [
     "Tenant",
@@ -29,5 +30,6 @@ __all__ = [
     "AuditLog",
     "TokenBlacklist",
     "ConnectedFolder",
+    "UserMemory",
 ]
 

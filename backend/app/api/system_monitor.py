@@ -189,7 +189,7 @@ async def _get_llm_stats() -> dict:
 
     stats: dict = {
         "model_loaded": model_loaded,
-        "provider": "llama.cpp" if llm.use_llama_cpp else "simulation",
+        "provider": llm.provider_label if llm.use_llama_cpp else "simulation",
         "model_path": manager.current_model_path or "Simulation Mode",
         "context_size": getattr(settings, "llama_context_size", 4096),
         "n_gpu_layers": getattr(settings, "llama_n_gpu_layers", 0),

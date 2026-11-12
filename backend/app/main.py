@@ -31,6 +31,7 @@ from app.api import (
     models_router,
     folders_router,
     connected_folders_router,
+    memories_router,
     system_monitor_router,
     voice_router,
 )
@@ -119,6 +120,11 @@ async def lifespan(app: FastAPI):
             logger.info("LLM client 已正確關閉")
     except Exception as e:
         logger.warning(f"關閉 LLM client 時發生錯誤（可忽略）: {e}")
+    # 推論引擎（llama-server 子行程）：跟著後端一起關，不然會一直佔著記憶體
+    try:
+        await llm_service.shutdown()
+    except Exception as e:
+        logger.warning(f"關閉推論引擎時發生錯誤: {e}")
     
     await close_db()
     logger.info("應用程式已關閉")
@@ -254,6 +260,7 @@ app.include_router(tenants_router, prefix="/api/v1")
 app.include_router(models_router, prefix="/api/v1")
 app.include_router(folders_router, prefix="/api/v1")
 app.include_router(connected_folders_router, prefix="/api/v1")
+app.include_router(memories_router, prefix="/api/v1")
 app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(websocket_router)

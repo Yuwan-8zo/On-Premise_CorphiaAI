@@ -848,7 +848,7 @@ def main() -> int:
         boot("engine", "done", "已安裝", code="engine_ok")
 
         if not args.skip_init_db:
-            boot("schema", "running", "建立／檢查資料表…", code="schema_check")
+            boot("schema", "running", "建立 / 檢查資料表…", code="schema_check")
             init_database(python_exe)
             boot("schema", "done", "資料表已就緒", code="schema_ready")
         else:

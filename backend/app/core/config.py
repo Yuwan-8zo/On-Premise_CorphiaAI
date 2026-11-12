@@ -61,6 +61,19 @@ class Settings(BaseSettings):
     allow_simulated_llm: bool = False
     # Models kept loaded at startup (size tags, comma separated). Others load only when selected.
     llm_preload_models: str = "3B,7B"
+    # 推論引擎：auto＝有 llama-server 執行檔就用它（Vulkan，用內建顯示晶片，讀入快約 70 倍），沒有就用 llama-cpp-python；
+    # server／python＝指定其中一種
+    llm_engine: str = "auto"
+    # llama-server 執行檔（相對於專案根目錄）
+    llm_engine_path: str = "engine/llama-vulkan/llama-server.exe"
+    # llama-server 的上下文長度（token）；提示詞預算、回答長度上限都跟著它算
+    llm_engine_context: int = 8192
+    # 放到顯示晶片的層數（99＝全部）
+    llm_engine_gpu_layers: int = 99
+    # 同時留在記憶體的模型數上限；超過就關掉最久沒用的（系統預設模型不關）
+    llm_engine_max_loaded: int = 3
+    # 一個模型最多等多久載入（秒）
+    llm_engine_load_timeout: int = 900
     
     # 文件檢索模型：本機沒有時（新電腦第一次）可不可以從網路下載一次；完全不連外的環境設 false
     embedding_allow_download: bool = True
@@ -84,6 +97,8 @@ class Settings(BaseSettings):
     # 差異化資安功能旗標（Phase 2）
     enable_pii_masking: bool = True            # A1: 自動遮罩身分證/信用卡/手機/email
     enable_prompt_injection_guard: bool = True  # A2: 偵測 Prompt Injection 攻擊
+    # 送模型前最後一關：文件片段、記憶等「不是使用者打的字」也先篩過（藏指令／違禁詞的片段不送、個資遮罩）
+    enable_context_guard: bool = True
     enable_dlp: bool = True                    # A3: 關鍵字黑名單阻擋
     # DLP 黑名單，逗號分隔；可從環境變數覆寫
     dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"

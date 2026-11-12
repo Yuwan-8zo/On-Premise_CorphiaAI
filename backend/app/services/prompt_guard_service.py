@@ -110,7 +110,8 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 分隔符欺騙（試圖模仿 ChatML 結構）
     (
         "ChatML標籤注入",
-        re.compile(r'<\|im_(?:start|end)\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]'),
+        # <|名稱|> 是各家模型共用的控制字元形狀（ChatML 的 im_start、Llama 3 的 eot_id、gpt-oss 的 start／channel…）
+        re.compile(r'<\|[A-Za-z0-9_]{1,40}\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]'),
         "high",
     ),
     # DAN / jailbreak 關鍵模式
@@ -151,7 +152,7 @@ def check_prompt_injection(text: str) -> InjectionCheckResult:
     sanitized_text = text
     if is_suspicious:
         sanitized_text = re.sub(
-            r'<\|im_(?:start|end)\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]',
+            r'<\|[A-Za-z0-9_]{1,40}\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]',
             '[BLOCKED]',
             sanitized_text
         )

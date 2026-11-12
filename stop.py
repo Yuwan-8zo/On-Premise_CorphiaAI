@@ -50,6 +50,12 @@ def stop_launcher() -> None:
         "Where-Object { $_.CommandLine -match '(^|[\\\\/ \"])start\\.py' } | "
         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
     )
+    # 後端開的推論引擎（llama-server，命令列帶 --alias corphia-engine）：後端被強制結束時它不會自己關
+    powershell(
+        "Get-CimInstance Win32_Process -Filter \"Name='llama-server.exe'\" | "
+        "Where-Object { $_.CommandLine -match 'corphia-engine' } | "
+        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+    )
     # Close the launcher's console window too (title set in 一鍵啟動.bat).
     run(["taskkill", "/F", "/T", "/FI", "WINDOWTITLE eq Corphia AI Launcher*"], timeout=30)
 

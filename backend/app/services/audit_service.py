@@ -69,6 +69,16 @@ class AuditAction:
     FOLDER_UPDATE = "folder_update"
     FOLDER_DISCONNECT = "folder_disconnect"
 
+    # 記憶（跨對話記住的事）
+    MEMORY_CREATE = "memory_create"
+    MEMORY_UPDATE = "memory_update"
+    MEMORY_DELETE = "memory_delete"
+    MEMORY_CLEAR = "memory_clear"
+    MEMORY_REJECTED = "memory_rejected"
+
+    # 送模型前最後一關：文件片段被剔除或遮罩
+    CONTEXT_FILTERED = "context_filtered"
+
     # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
     NGROK_START = "ngrok_start"
     NGROK_STOP = "ngrok_stop"
@@ -82,6 +92,7 @@ class AuditResource:
     CONVERSATION = "conversation"
     DOCUMENT = "document"
     MODEL = "model"
+    MEMORY = "memory"
     SYSTEM = "system"
 
 

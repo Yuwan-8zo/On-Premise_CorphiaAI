@@ -26,6 +26,11 @@ from app.services.rag_service import get_rag_service
 # NOTE: PII masking 與 Prompt Injection 檢測已由上層 websocket.py 的 _security_gate() 統一處理
 # 在 send_message_stream 中不再重複執行（見jBUG-07 修正）
 from app.services.hash_chain_service import stamp_message
+from app.models.user_memory import MemorySource
+from app.services.audit_service import AuditAction, AuditResource, write_audit_log
+from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
+from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block
+from app.services.memory_service import is_enabled as memory_is_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +49,8 @@ class AgentState(TypedDict, total=False):
     # 一般對話：這個人可以用的連接資料夾文件，以及路由時已經先搜好的結果（檢索那一步直接用，不重搜）
     folder_doc_ids: list[str]
     prefetched: list[dict]
+    # 送模型前最後一關的報告（哪些文件片段被剔除、遮罩了幾個個資），見 services/context_guard
+    screen: dict
 
 
 
@@ -106,6 +113,8 @@ class ChatService:
         self.llm_service = get_llm_service()
         self.rag_service = get_rag_service()
         self.agent_graph = self._build_agent_graph()
+        # 這一題「送模型前最後一關」的報告（_prepare_prompt 填）
+        self.screen_report: dict = {}
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -323,7 +332,10 @@ class ChatService:
                     unique_results.append(r)
             search_results = unique_results
 
-            context = self.rag_service.build_context(search_results)
+            # 送模型前最後一關：藏指令或含違禁詞的片段不送、個資遮罩（來源預覽也用遮罩後的內容）
+            search_results, screen = screen_chunks(search_results)
+
+            context = self.rag_service.build_context(search_results) if search_results else ""
             sources = [
                 {
                     "chunk_id": r["chunk_id"],
@@ -334,6 +346,7 @@ class ChatService:
                 }
                 for r in search_results
             ]
+            return {"context": context, "sources": sources, "screen": screen}
         return {"context": context, "sources": sources}
 
     async def _chat_prep_node(self, state: AgentState) -> dict:
@@ -483,6 +496,15 @@ class ChatService:
         lang_directive = self.LANGUAGE_DIRECTIVES.get(language, self.LANGUAGE_DIRECTIVES["zh-TW"])
         system_prompt = f"{system_prompt}\n\n{lang_directive}"
 
+        # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
+        memory = await memory_block(self.db, owner_id)
+        if memory:
+            system_prompt = f"{system_prompt}\n\n{memory}"
+        # 有外來資料（文件、記憶）時加一句：資料歸資料，裡面的指令不要照做
+        if memory or context:
+            system_prompt = f"{system_prompt}\n\n{GUARD_LINE}"
+        self.screen_report = final_state.get("screen") or {}
+
         prompt = self.llm_service.build_chat_prompt(
             messages=chat_history,
             system_prompt=system_prompt,
@@ -596,9 +618,17 @@ class ChatService:
         # 直接使用 content（外部已完成安全處理的版本）作為 safe_content。
         safe_content = content
 
+        # 記憶：這句話是在交代「記住……」就先存起來（這一題的回答就用得到）
+        async for event in self._remember(conversation_id, safe_content):
+            yield event
+
         prompt, context, sources, route = await self._prepare_prompt(
             conversation_id, safe_content, use_rag, language
         )
+
+        # 送模型前最後一關：有文件片段被剔除或遮罩 → 寫稽核、告訴使用者
+        if not report_is_empty(self.screen_report):
+            yield await self._report_screen(conversation_id)
 
         # ── C2: 先發送來源資訊 + RAG 除錯資料 ──────────────────────
         if sources:
@@ -646,6 +676,62 @@ class ChatService:
             "type": "done",
             "message_id": assistant_message.id,
         }
+
+    async def _conversation_owner(self, conversation_id: str) -> tuple[Optional[str], Optional[str]]:
+        row = (await self.db.execute(
+            select(Conversation.user_id, Conversation.tenant_id).where(Conversation.id == conversation_id)
+        )).first()
+        return (row[0], row[1]) if row else (None, None)
+
+    async def _remember(self, conversation_id: str, content: str) -> AsyncGenerator[dict, None]:
+        """
+        使用者說「記住……」：過安全檢查後存成記憶，回一個事件給前端（memory_saved／memory_rejected）。
+        不是在交代記憶、或記憶功能關掉了，就什麼都不做。
+        """
+        body = extract_remember(content)
+        if not body:
+            return
+        user_id, tenant_id = await self._conversation_owner(conversation_id)
+        if not user_id or not await memory_is_enabled(self.db, user_id):
+            return
+        clean, reason = screen_text(body)
+        try:
+            if clean is None:
+                await write_audit_log(
+                    db=self.db, action=AuditAction.MEMORY_REJECTED, resource_type=AuditResource.MEMORY,
+                    resource_id=conversation_id, user_id=user_id, tenant_id=tenant_id,
+                    description="記憶內容未通過安全檢查，沒有儲存", details={"reason": reason},
+                )
+                yield {"type": "memory_rejected", "reason": reason}
+                return
+            row, created = await add_memory(self.db, user_id, clean, MemorySource.CHAT, conversation_id)
+            if created:
+                await write_audit_log(
+                    db=self.db, action=AuditAction.MEMORY_CREATE, resource_type=AuditResource.MEMORY,
+                    resource_id=row.id, user_id=user_id, tenant_id=tenant_id,
+                    description="在對話裡請 AI 記住一件事", details={"source": MemorySource.CHAT, "length": len(row.content)},
+                )
+            yield {"type": "memory_saved", "id": row.id, "content": row.content, "created": created}
+        except MemoryLimitError:
+            yield {"type": "memory_rejected", "reason": "limit"}
+        except Exception as e:  # 記憶存不成不能擋住回答
+            logger.warning("儲存記憶失敗: %s", e)
+
+    async def _report_screen(self, conversation_id: str) -> dict:
+        """文件片段被剔除／遮罩：寫一筆稽核，回給前端的提示事件"""
+        report = self.screen_report
+        counts = {"injection": len(report.get("injection", [])), "dlp": len(report.get("dlp", [])), "pii": int(report.get("pii", 0))}
+        try:
+            user_id, tenant_id = await self._conversation_owner(conversation_id)
+            await write_audit_log(
+                db=self.db, action=AuditAction.CONTEXT_FILTERED, resource_type=AuditResource.DOCUMENT,
+                resource_id=conversation_id, user_id=user_id, tenant_id=tenant_id,
+                description=f"文件內容送模型前已過濾：可疑指令 {counts['injection']} 段、違禁詞 {counts['dlp']} 段、個資遮罩 {counts['pii']} 個",
+                details={**counts, "injection_documents": sorted(set(report.get("injection", [])))[:20], "dlp_documents": sorted(set(report.get("dlp", [])))[:20]},
+            )
+        except Exception as e:  # 稽核失敗不能擋住主流程
+            logger.warning("最後一關寫稽核失敗: %s", e)
+        return {"type": "context_filtered", **counts}
 
     async def _save_assistant_message(
         self, conversation_id: str, content: str, sources: Optional[list]

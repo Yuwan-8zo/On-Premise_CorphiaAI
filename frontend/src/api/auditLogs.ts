@@ -114,7 +114,13 @@ export const AUDIT_ACTIONS = [
     'tenant_create',
     'tenant_update',
     'tenant_delete',
+    'memory_create',
+    'memory_update',
+    'memory_delete',
+    'memory_clear',
+    'memory_rejected',
+    'context_filtered',
 ] as const
 
 /** 稽核的資源代碼（顯示文字在 i18n 的 admin.audit.resourceTypes） */
-export const AUDIT_RESOURCES = ['auth', 'user', 'conversation', 'document', 'model', 'system'] as const
+export const AUDIT_RESOURCES = ['auth', 'user', 'conversation', 'document', 'model', 'memory', 'system'] as const

@@ -9,6 +9,8 @@
  *   - 'sources'            ↦ 附上引用來源（＋除錯資訊，只在畫面上的對話）
  *   - 'pii_warning'        ↦ 個資遮罩提示，並把該對話剛送出的訊息換成遮罩版
  *   - 'injection_warning'  ↦ 注入攻擊提示
+ *   - 'memory_saved' / 'memory_rejected' ↦ 使用者說「記住……」：已存成記憶／沒通過安全檢查
+ *   - 'context_filtered'   ↦ 參考文件送模型前有片段被剔除或遮罩
  *   - 'injection_block' / 'dlp_block' ↦ 已攔阻；結束生成並在回覆泡泡裡說明
  */
 
@@ -106,6 +108,42 @@ export function buildStreamDispatcher(conversationId: string) {
                 }
                 useToastStore.getState().add(i18n.t('ui.chat.piiToast'), 'info', SECURITY_TOAST_MS)
                 break
+
+            // 記憶：使用者說「記住……」
+            case 'memory_saved':
+                useToastStore.getState().add(
+                    data.created === false ? i18n.t('ui.chat.memoryKnown') : i18n.t('ui.chat.memorySaved', { text: data.content || '' }),
+                    'success',
+                    SECURITY_TOAST_MS,
+                )
+                break
+            case 'memory_rejected': {
+                const key = data.reason === 'dlp' ? 'memoryRejectedDlp' : data.reason === 'limit' ? 'memoryRejectedLimit' : 'memoryRejectedInjection'
+                useToastStore.getState().add(i18n.t(`ui.chat.${key}`), 'error', SECURITY_TOAST_MS)
+                break
+            }
+
+            // 送模型前最後一關：參考文件有片段被剔除（藏指令、列管字詞）或個資被遮罩
+            case 'context_filtered': {
+                const parts = [
+                    data.injection ? i18n.t('ui.chat.contextInjection', { n: data.injection }) : '',
+                    data.dlp ? i18n.t('ui.chat.contextDlp', { n: data.dlp }) : '',
+                    data.pii ? i18n.t('ui.chat.contextPii', { n: data.pii }) : '',
+                ].filter(Boolean)
+                if (parts.length) {
+                    const message = i18n.t('ui.chat.contextFiltered', { detail: parts.join(i18n.t('ui.chat.contextSep')) })
+                    if (isCurrent()) {
+                        store().addSecurityWarning({
+                            type: data.injection ? 'injection' : data.dlp ? 'dlp' : 'pii',
+                            message,
+                            data: { injection: data.injection || 0, dlp: data.dlp || 0, pii: data.pii || 0 },
+                            timestamp: Date.now(),
+                        })
+                    }
+                    useToastStore.getState().add(message, data.injection || data.dlp ? 'error' : 'info', SECURITY_TOAST_MS)
+                }
+                break
+            }
 
             // 注入攻擊偵測警告
             case 'injection_warning':
