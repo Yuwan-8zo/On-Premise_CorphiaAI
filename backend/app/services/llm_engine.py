@@ -8,6 +8,8 @@
   - 每個模型一個 llama-server 子行程（只聽 127.0.0.1，隨機空埠），用它的 OpenAI 相容 API；
     提示詞格式用模型自己帶的樣板（--jinja），所以換模型（Qwen、Breeze、gpt-oss）不用改提示詞程式
   - 同時留在記憶體的模型有上限（llm_engine_max_loaded）；超過就關掉最久沒用的（系統預設模型不關）
+  - 每個行程啟動時產生一把隨機金鑰（--api-key-file，放在使用者自己的暫存資料夾）：雖然只聽 127.0.0.1，
+    同一台電腦上的其他帳號、其他程式沒有金鑰就不能直接問模型（繞過後端的資安檢查與稽核）
   - 一次只啟動一個（啟動時要讀好幾 GB，同時啟動會互搶）
   - 後端關閉時全部關掉；後端被強制結束時留下的孤兒，下次啟動會清掉（看 --alias 標記＋父行程已不在）
   - 找不到引擎執行檔時 available() 回 False，llm_service 會退回原本的 llama-cpp-python
@@ -19,6 +21,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+import secrets
 import socket
 import subprocess
 import tempfile
@@ -49,12 +52,18 @@ class EngineModel:
     port: int
     proc: subprocess.Popen
     log_path: Path
+    api_key: str = ""
     pinned: bool = False
     last_used: float = field(default_factory=time.time)
 
     @property
     def base_url(self) -> str:
         return f"http://127.0.0.1:{self.port}"
+
+    @property
+    def headers(self) -> dict:
+        """問模型時要帶的金鑰"""
+        return {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
     def alive(self) -> bool:
         return self.proc.poll() is None
@@ -136,13 +145,17 @@ class LlamaEngine:
         log_dir = Path(tempfile.gettempdir()) / "corphia-engine"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / f"{Path(model_path).stem}.log"
+        # 金鑰寫在檔案裡交給引擎（不放在命令列，才不會出現在行程清單和記錄裡）
+        api_key = secrets.token_urlsafe(32)
+        key_path = log_dir / f"{Path(model_path).stem}.key"
+        key_path.write_text(api_key, encoding="ascii")
         cmd = [
             str(self.exe()), "-m", model_path,
             "-ngl", str(settings.llm_engine_gpu_layers),
             "-c", str(settings.llm_engine_context),
             "--jinja", "-fa", "auto", "--reasoning-format", "auto",
             "--host", "127.0.0.1", "--port", str(port),
-            "--alias", ENGINE_ALIAS, "--no-webui",
+            "--alias", ENGINE_ALIAS, "--no-webui", "--api-key-file", str(key_path),
         ]
         logger.info("啟動推論引擎：%s（埠 %s）", Path(model_path).name, port)
         log = log_path.open("w", encoding="utf-8", errors="replace")
@@ -151,7 +164,7 @@ class LlamaEngine:
             cwd=str(self.exe().parent), creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         log.close()  # 子行程自己握著檔案
-        m = EngineModel(path=model_path, port=port, proc=proc, log_path=log_path, pinned=pinned)
+        m = EngineModel(path=model_path, port=port, proc=proc, log_path=log_path, api_key=api_key, pinned=pinned)
         deadline = time.time() + settings.llm_engine_load_timeout
         while time.time() < deadline:
             if not m.alive():
@@ -184,18 +197,26 @@ class LlamaEngine:
         except subprocess.TimeoutExpired:
             proc.kill()
 
+    def _retire(self, m: EngineModel) -> None:
+        """關掉行程，順手把它的金鑰檔刪掉"""
+        self._kill(m.proc)
+        try:
+            m.log_path.with_suffix(".key").unlink(missing_ok=True)
+        except OSError:
+            pass
+
     def stop(self, model_path: str) -> None:
         with self._guard:
             m = self._models.pop(model_path, None)
         if m:
             logger.info("關閉推論引擎：%s", Path(model_path).name)
-            self._kill(m.proc)
+            self._retire(m)
 
     def stop_all(self) -> None:
         with self._guard:
             models, self._models = list(self._models.values()), {}
         for m in models:
-            self._kill(m.proc)
+            self._retire(m)
 
     def _sweep_orphans(self) -> None:
         """上次後端被強制結束時留下的引擎（父行程已經不在）：關掉，不然一直佔著好幾 GB 記憶體"""

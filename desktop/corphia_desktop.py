@@ -7,7 +7,9 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
   伺服器位址   存在 %APPDATA%\\CorphiaAI\\desktop.json；連不上時顯示連線設定頁，可以改位址
   橋           介面用 window.pywebview.api.xxx() 呼叫下面 Api 的方法（前端包在 lib/desktop.ts）
   安全         只有「目前顯示的是設定的那台伺服器」時才接受操控 Office 的呼叫（別的網頁叫不動）；
-               每個動作都是使用者按按鈕才發生，小幫手自己不會主動做事
+               每個動作都是使用者按按鈕才發生，小幫手自己不會主動做事；
+               視窗只顯示伺服器的頁面：點到外部連結會改用系統瀏覽器開，視窗回到伺服器
+               （不然外部網頁可以嘗試呼叫橋）；改伺服器位址只有內建的連線設定頁可以做
   登入狀態     存在 %LOCALAPPDATA%\\CorphiaAI\\webview，關掉再開不用重新登入
 
 用法：
@@ -27,6 +29,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import webbrowser
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -123,6 +126,8 @@ class Api:
     def __init__(self, server: str):
         self._server = server
         self._window = None
+        # 現在顯示的是不是我們自己的連線設定頁（只有它可以改伺服器位址）
+        self._connect_page = False
 
     # ── 內部 ──
     def _trusted(self) -> bool:
@@ -151,8 +156,10 @@ class Api:
 
     def set_server(self, url: str) -> dict:
         """連線設定頁用：換伺服器位址（連得上才記住並切過去）"""
-        if self._trusted():
-            return {"ok": False, "error": "已經連上伺服器"}
+        # 只有內建的連線設定頁可以改；任何網頁（包含被帶去的外部網頁）都不行，
+        # 不然惡意網頁可以把「伺服器」改成自己，變成被信任的來源去操控 Office
+        if not self._connect_page or origin(self._current_url()):
+            return {"ok": False, "error": "這個頁面不能變更伺服器位址"}
         target = normalize_server(url)
         if not target:
             return {"ok": False, "error": "位址格式不對，例如 http://192.168.1.10:5173"}
@@ -160,8 +167,24 @@ class Api:
             return {"ok": False, "error": "連不上這個位址，請確認伺服器已經啟動"}
         self._server = target
         save_server(target)
+        self._connect_page = False
         self._window.load_url(target)
         return {"ok": True}
+
+    def _current_url(self) -> str:
+        try:
+            return self._window.get_current_url() or ""
+        except Exception:
+            return ""
+
+    def _on_loaded(self) -> None:
+        """每次頁面載入後檢查：不是伺服器的網頁 → 用系統瀏覽器開，視窗回到伺服器"""
+        url = self._current_url()
+        where = origin(url)
+        if where and where != origin(self._server):
+            logger.info("外部連結改用系統瀏覽器開啟：%s", where)
+            webbrowser.open(url)
+            self._window.load_url(self._server)
 
 
 def run_selftest(window, api: Api, out: Path) -> None:
@@ -177,6 +200,8 @@ def run_selftest(window, api: Api, out: Path) -> None:
         result["trusted"] = api._trusted()
         # 不是設定的那台伺服器（例如連線設定頁）時，操控 Office 的呼叫要被擋下
         result["office_guard"] = api.office_read("word") if not api._trusted() else "trusted"
+        # 一般網頁不能改伺服器位址（連線設定頁以外一律拒絕）；位址給一個連不上的，確保真的被擋而不是剛好連線失敗
+        result["set_server_from_page"] = api.set_server("http://127.0.0.1:1") if api._trusted() else "connect-page"
         result["info"] = api.info()
         result["root_children"] = window.evaluate_js("document.getElementById('root') ? document.getElementById('root').children.length : -1")
         # 從介面那一側真的呼叫一次（和按鈕走同一條路）：結果先放在頁面上，再讀回來
@@ -216,6 +241,8 @@ def main() -> int:
         text_select=True, background_color="#18181a",
     )
     api._window = window
+    api._connect_page = not online
+    window.events.loaded += api._on_loaded
     webview.settings["ALLOW_DOWNLOADS"] = True  # 讓介面的「下載」可以存檔
 
     storage = storage_dir()

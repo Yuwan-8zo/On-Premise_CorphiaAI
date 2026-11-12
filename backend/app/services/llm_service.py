@@ -491,7 +491,7 @@ class LLMService:
         start = time.perf_counter()
         body = self._server_body(prompt, max_tokens, temperature, top_p, stop, stream=False)
         body.update(extra or {})
-        r = await self._client().post(f"{inst.base_url}/v1/chat/completions", json=body)
+        r = await self._client().post(f"{inst.base_url}/v1/chat/completions", json=body, headers=inst.headers)
         if r.status_code != 200:
             raise self._server_error(r.status_code, r.text)
         data = r.json()
@@ -508,7 +508,7 @@ class LLMService:
         first_token_at: Optional[float] = None
         timings: Optional[dict] = None
         try:
-            async with self._client().stream("POST", f"{inst.base_url}/v1/chat/completions", json=body) as r:
+            async with self._client().stream("POST", f"{inst.base_url}/v1/chat/completions", json=body, headers=inst.headers) as r:
                 if r.status_code != 200:
                     raise self._server_error(r.status_code, (await r.aread()).decode("utf-8", "replace"))
                 async for line in r.aiter_lines():
