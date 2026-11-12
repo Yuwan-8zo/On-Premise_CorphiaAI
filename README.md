@@ -5,7 +5,7 @@
 - Docker：只負責 PostgreSQL + pgvector
 - Backend：本機 FastAPI + SQLAlchemy + asyncpg
 - Frontend：本機 React + Vite
-- LLM：本機 GGUF + `llama-cpp-python`
+- LLM：本機 GGUF；推論引擎是 llama.cpp 的 `llama-server`（放在 `engine/llama-vulkan/`，每個模型一個行程、只聽本機）；找不到引擎時退回 `llama-cpp-python`
 - 不使用 Ollama
 
 ## 一鍵啟動全部
