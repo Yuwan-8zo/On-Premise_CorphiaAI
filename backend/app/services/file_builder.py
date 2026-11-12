@@ -40,29 +40,51 @@ COL_WIDTH_MIN, COL_WIDTH_MAX = 10, 48
 ACCENT_HEX = "0A84FF"
 
 # ── 判斷使用者是不是要檔案 ────────────────────────────────────────────────
-_KIND_RES = [
-    (KIND_PPTX, re.compile(r"簡報|投影片|ppt|powerpoint|slides?\b|スライド|プレゼン", re.I)),
-    (KIND_XLSX, re.compile(r"excel|xlsx|試算表|工作表|spreadsheet|エクセル|表計算", re.I)),
-    (KIND_DOCX, re.compile(r"\bword\b|docx|word\s*檔|word\s*文件|文件檔|ワード", re.I)),
-]
-_MAKE_RE = re.compile(
-    r"做|製作|產生|產出|建立|生成|撰寫|寫|整理成|整理一份|匯出|輸出|轉成|存成|擬|"
-    r"\b(?:create|make|generate|export|draft|build|write|prepare)\b|作って|作成|書いて",
-    re.I,
-)
-# 「Word 怎麼設定頁碼」「如何做簡報」是在問用法，不是要檔案
+# 規則：光是句子裡「有動詞」又「有 Excel 這個詞」不算——「幫我寫一封信，說明 Excel 報表延遲的原因」是要信，不是要試算表。
+# 檔案種類必須是「做」的受詞，三種句型其中之一：
+#   1. 動詞後面緊接（可以有「一份／個／成／出」）種類：        做一份簡報、整理成 Word 檔、create a PowerPoint
+#   2. 動詞…（同一個子句、中間沒有標點）…種類，種類在子句結尾：   做一份關於第三季業績的簡報
+#   3. 用／以 種類 來做；日文的「種類 で／を … 作って」：        用 Excel 做一份預算表、エクセルで経費一覧を作って
+# 寧可漏判（使用者換個說法就好），也不要把一般問題搶去做檔案。
+_KIND_WORDS = {
+    KIND_PPTX: r"簡報|投影片|pptx?|powerpoint|slides?(?:\s*deck)?|スライド|プレゼン(?:資料)?",
+    KIND_XLSX: r"excel|xlsx|試算表|工作表|spreadsheet|エクセル|表計算",
+    KIND_DOCX: r"word|docx|文件檔|ワード",
+}
+_VERB = r"(?:做|製作|產生|產出|建立|生成|撰寫|寫|整理|匯出|輸出|轉|存|擬|弄|create|make|generate|export|draft|build|write|prepare|produce)"
+_PUNCT = r"，。,.;；：:！!？?\n"
+_AFTER_VERB = r"(?:成|出|個|一下|\s+me)?\s*(?:a|an|the)?\s*(?:一|1|２|2|兩|幾)?\s*(?:份|個|張|篇|頁|組)?\s*(?:新的?|new)?\s*"
+_KIND_TAIL = r"(?:\s*(?:檔案?|文件|表|file|document|deck))?"
+# 「怎麼做簡報」「Word 是什麼」是在問用法，不是要檔案
 _HOWTO_RE = re.compile(r"怎麼|怎樣|如何|為什麼|是什麼|\bhow\s+(?:do|to|can)\b|\bwhat\s+is\b|どうやって|方法", re.I)
+
+
+def _kind_patterns(words: str) -> list[re.Pattern[str]]:
+    kind = rf"(?:{words})"
+    return [
+        re.compile(rf"{_VERB}{_AFTER_VERB}{kind}", re.I),
+        re.compile(rf"{_VERB}[^{_PUNCT}]{{0,40}}?{kind}{_KIND_TAIL}\s*(?:給我|出來|吧|好嗎|嗎|，|。|$|[{_PUNCT}])", re.I),
+        re.compile(rf"(?:用|以)\s*{kind}[^{_PUNCT}]{{0,8}}?{_VERB}", re.I),
+        re.compile(rf"{kind}\s*(?:で|を)[^{_PUNCT}]{{0,30}}?(?:作って|作成|書いて)", re.I),
+    ]
+
+
+_KIND_RES = [(k, _kind_patterns(w)) for k, w in _KIND_WORDS.items()]
 
 
 def detect_file_request(text: str) -> Optional[str]:
     """使用者這句話是不是要求做一份檔案；是就回種類（docx／xlsx／pptx），不是回 None"""
     t = text or ""
-    if not _MAKE_RE.search(t) or _HOWTO_RE.search(t):
+    if _HOWTO_RE.search(t):
         return None
-    for kind, rx in _KIND_RES:
-        if rx.search(t):
-            return kind
-    return None
+    # 同一句裡提到兩種（「把這份 Word 做成簡報」）：以「在句子裡比較後面被做出來的」為準
+    best: tuple[int, str] | None = None
+    for kind, patterns in _KIND_RES:
+        for rx in patterns:
+            m = rx.search(t)
+            if m and (best is None or m.end() > best[0]):
+                best = (m.end(), kind)
+    return best[1] if best else None
 
 
 # ── 內容規格（引擎照這個限制模型的輸出）────────────────────────────────────

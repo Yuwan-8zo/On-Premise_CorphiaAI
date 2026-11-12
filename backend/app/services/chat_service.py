@@ -30,7 +30,7 @@ from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 from app.services import file_builder, generated_files
-from app.services.output_guard import OutputScreen
+from app.services.output_guard import OutputScreen, screen_output
 from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block, style_directive
 from app.services.memory_service import is_enabled as memory_is_enabled
 
@@ -56,14 +56,14 @@ class AgentState(TypedDict, total=False):
 
 
 
-def _to_traditional_deep(value):
-    """把結構（dict／list）裡所有字串轉成正體中文"""
+def _deep_map(value, fn):
+    """把結構（dict／list）裡所有字串都過一次 fn（轉正體、過安全檢查…）；數字等其他型別原樣保留"""
     if isinstance(value, str):
-        return to_traditional(value)
+        return fn(value)
     if isinstance(value, list):
-        return [_to_traditional_deep(v) for v in value]
+        return [_deep_map(v, fn) for v in value]
     if isinstance(value, dict):
-        return {k: _to_traditional_deep(v) for k, v in value.items()}
+        return {k: _deep_map(v, fn) for k, v in value.items()}
     return value
 
 
@@ -755,7 +755,9 @@ class ChatService:
             prompt, file_builder.SCHEMAS[kind], max_tokens=settings.file_max_tokens, temperature=0.4, model_name=self.model_name,
         )
         if language == "zh-TW":
-            spec = _to_traditional_deep(spec)
+            spec = _deep_map(spec, to_traditional)
+        # 檔案裡的字也要過「回答的檢查」（個資遮罩、外部圖片語法拿掉），和畫面上的回答同一套
+        spec = _deep_map(spec, lambda text: screen_output(text)[0])
 
         if not file_builder.spec_is_usable(kind, spec):
             # 內容被長度上限切斷或格式壞掉：照實說，不交一份空殼檔案

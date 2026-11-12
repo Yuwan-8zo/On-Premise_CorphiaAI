@@ -1,7 +1,7 @@
 ﻿/**
  * 使用說明（Apple「使用技巧」風格的分組清單）
  *   頁面標題＋一句說明 → 「重新觀看引導」膠囊 → 依使用者要做的事分組：
- *   開始對話／用你的文件回答問題（編號步驟）／管理對話／資料安全／帳號與權限
+ *   開始對話／讓 AI 幫你做更多（記憶、風格、做檔案、搜尋、桌面版）／用你的文件回答問題（編號步驟）／管理對話／資料安全／帳號與權限
  *   每列＝彩色圓形圖示（Apple 系統色，半徑 15、離左 16、垂直置中，跟卡片角 32 同心）＋標題（15／20 半粗）＋白話說明（13／18 次要字）
  *   樣式用 snow.css 的 .set-*（設定頁共用）
  */
@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Lock, MessageSquare, Mic, MoreHorizontal, Play, Reader, Share, Shield, ShieldCheck, User, UserRoundCog, Users, Cpu, Server,
+    Sparkles, FileText, Search, SlidersHorizontal, Layers3, Palette,
 } from '@/components/snow/icons'
 
 import { resetOnboarding } from '@/components/onboarding/onboardingFlag'
@@ -76,6 +77,19 @@ export default function GuideSection() {
                 </div>
             </section>
 
+            {/* 讓 AI 幫你做更多：記憶、風格、做檔案、搜尋、專案指示、桌面版 */}
+            <section className="set-section">
+                <div className="set-header">{t('guide.more.title')}</div>
+                <div className="set-group guide-group">
+                    <TipRow tone="purple" icon={<Sparkles className={ic} />} title={t('guide.more.memoryTitle')} desc={t('guide.more.memoryDesc')} />
+                    <TipRow tone="teal" icon={<Palette className={ic} />} title={t('guide.more.styleTitle')} desc={t('guide.more.styleDesc')} />
+                    <TipRow tone="blue" icon={<FileText className={ic} />} title={t('guide.more.fileTitle')} desc={t('guide.more.fileDesc')} />
+                    <TipRow tone="orange" icon={<Search className={ic} />} title={t('guide.more.searchTitle')} desc={t('guide.more.searchDesc')} />
+                    <TipRow tone="green" icon={<SlidersHorizontal className={ic} />} title={t('guide.more.projectTitle')} desc={t('guide.more.projectDesc')} />
+                    <TipRow tone="red" icon={<Layers3 className={ic} />} title={t('guide.more.desktopTitle')} desc={t('guide.more.desktopDesc')} />
+                </div>
+            </section>
+
             {/* 用你的文件回答問題：編號步驟 */}
             <section className="set-section">
                 <div className="set-header">{t('guide.project.title')}</div>
@@ -109,6 +123,7 @@ export default function GuideSection() {
                     <TipRow tone="green" icon={<Server className={ic} />} title={t('guide.security.localTitle')} desc={t('guide.security.localDesc')} />
                     <TipRow tone="orange" icon={<Lock className={ic} />} title={t('guide.security.piiTitle')} desc={t('guide.security.piiDesc')} />
                     <TipRow tone="red" icon={<Shield className={ic} />} title={t('guide.security.blockTitle')} desc={t('guide.security.blockDesc')} />
+                    <TipRow tone="blue" icon={<ShieldCheck className={ic} />} title={t('guide.security.checkTitle')} desc={t('guide.security.checkDesc')} />
                 </div>
             </section>
 
