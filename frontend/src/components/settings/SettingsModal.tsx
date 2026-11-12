@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Book, ChevronLeft, ChevronRight, Globe, Info, Palette, ShieldCheck, Sparkles, User, X } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
+import { useDismiss } from '@/lib/useDismiss'
 import { usePageDirection } from '@/lib/usePageDirection'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -65,6 +66,8 @@ export default function SettingsModal() {
      */
     const [isVisible, setIsVisible] = useState(false)
     const [isClosing, setIsClosing] = useState(false)
+    // Esc 關閉（點外面由遮罩處理）；裡面再開的確認框、下拉選單會先收到 Esc
+    useDismiss(isSettingsOpen, () => setSettingsOpen(false), [], { outside: false })
     useEffect(() => {
         if (isSettingsOpen) {
             setIsVisible(true)

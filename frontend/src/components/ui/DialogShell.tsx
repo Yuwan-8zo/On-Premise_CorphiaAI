@@ -6,11 +6,12 @@
  *       ...內容...
  *   </DialogShell>
  */
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { AnimatePresence, motion } from '@/lib/gsapMotion'
 import { dialogBackdrop, dialogSheet } from '@/lib/motionPresets'
+import { useDismiss } from '@/lib/useDismiss'
 
 export interface DialogShellProps {
     open: boolean
@@ -39,13 +40,8 @@ export default function DialogShell({
     labelledBy,
     dismissible = true,
 }: DialogShellProps) {
-    // Esc 關閉
-    useEffect(() => {
-        if (!open || !onClose || !dismissible) return
-        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-        window.addEventListener('keydown', onKey)
-        return () => window.removeEventListener('keydown', onKey)
-    }, [open, onClose, dismissible])
+    // Esc 關閉（共用做法：疊著好幾層時只關最上面那一層、關閉後焦點回到打開它的按鈕；點外面由遮罩處理）
+    useDismiss(open && dismissible && !!onClose, () => onClose?.(), [], { outside: false })
 
     return createPortal(
         <AnimatePresence>
