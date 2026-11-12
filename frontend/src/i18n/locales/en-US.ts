@@ -185,6 +185,7 @@ export default {
         instructionsHint: 'Sent to the AI with every question in this project ({{n}} / {{max}})',
         instructionsSaved: 'Project instructions saved',
         instructionsCleared: 'Project instructions cleared',
+        instructionsLoadFailed: 'Could not load the current instructions. Close and try again (saving now would overwrite them, so editing is locked).',
         searchChats: 'Search chats',
         searchPlaceholder: 'Search titles or content',
         searchEmpty: 'No matching chats',

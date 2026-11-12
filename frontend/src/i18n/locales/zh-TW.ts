@@ -185,6 +185,7 @@ export default {
         instructionsHint: '這個專案裡每一題都會附給 AI（{{n}} / {{max}} 字）',
         instructionsSaved: '已儲存專案指示',
         instructionsCleared: '已清除專案指示',
+        instructionsLoadFailed: '讀不到目前的指示，請關閉後再試一次（現在儲存會蓋掉原本的內容，所以先鎖住）',
         searchChats: '搜尋對話',
         searchPlaceholder: '搜尋標題或內容',
         searchEmpty: '找不到符合的對話',

@@ -185,6 +185,7 @@ export default {
         instructionsHint: 'このプロジェクトのすべての質問に付けて AI に渡します（{{n}} / {{max}} 文字）',
         instructionsSaved: 'プロジェクトの指示を保存しました',
         instructionsCleared: 'プロジェクトの指示を消去しました',
+        instructionsLoadFailed: '現在の指示を読み込めませんでした。閉じてからもう一度お試しください（今保存すると元の内容が上書きされるため、編集をロックしています）。',
         searchChats: 'チャットを検索',
         searchPlaceholder: 'タイトルや内容を検索',
         searchEmpty: '一致するチャットがありません',
