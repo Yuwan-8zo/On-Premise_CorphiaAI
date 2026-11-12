@@ -6,7 +6,7 @@
  * - 小幫手回 ok: false 時丟出給使用者看的原因
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 
 // vi.mock 會被提到檔案最前面執行，所以它用到的假函式要用 vi.hoisted 先建立
 const { post, get } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ vi.mock('@/api/client', () => ({ default: { post, get, defaults: { baseURL: '/ap
 
 import { desktop, desktopRelease } from '../desktop'
 
-type Win = { pywebview?: { api: Record<string, ReturnType<typeof vi.fn>> }; __corphiaDesktop?: string }
+type Win = { pywebview?: { api: Record<string, Mock> }; __corphiaDesktop?: string }
 const win = window as unknown as Win
 
 const READ = { ok: true, app: 'excel', name: '預算.xlsx / 工作表1', scope: 'selection', text: '部門\t預算\n業務部\t1200000', chars: 21, truncated: false }
