@@ -121,6 +121,7 @@
   --sz-720: calc(720 * var(--ui-unit));
   --sz-750: calc(750 * var(--ui-unit));
   --sz-800: calc(800 * var(--ui-unit));
+  --sz-880: calc(880 * var(--ui-unit));
   --sz-1500: calc(1500 * var(--ui-unit));
 
   /* 圓角 */

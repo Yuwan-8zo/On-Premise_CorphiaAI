@@ -5,7 +5,10 @@
  *   滑鼠按下一列：放大鏡在目前那一列原地長大（四邊多 --lens-over，鏡內放大 LENS_MAG、字用強調色）
  *   按住拖曳：按下 LENS_CFG.hold 後放大鏡跟著游標上下滑（每幀追 30%）；放開＝吸到最近的一列並選取它
  *   點一下：放大鏡從目前那一列滑到點的那一列（glideTo 的時間表），中途縮回成底盤
- *   手指（觸控）：拖曳要留給捲動，所以按下不長大；點一下才滑過去。長按＝打開對話選單（放大鏡縮回）
+ *   手指（觸控）：按下、放開都不動放大鏡，等對話真的換了（watch 變）才滑過去。
+ *     原因：手機瀏覽器在手指放開後、送出 click 之前，如果畫面上有東西突然出現（放大鏡、鏡內複本），
+ *     會把這一下當成「懸停」而不送 click——使用者要點好幾次才切得過去。拖曳也要留給捲動清單。
+ *   滑鼠長按＝打開對話選單（放大鏡縮回）
  *
  * 用法：放在捲動區（要 position: relative）的第一個子元素；可選的列加 data-lens-row，目前那一列加 .is-current。
  *   <div className="glass-scroll relative lens-list"><ListLens watch={currentId} />…列…</div>
@@ -104,7 +107,7 @@ export default function ListLens({ watch }: { watch: unknown }) {
     useEffect(() => {
         const h = host()
         if (!h) return
-        let drag: { id: number; sy: number; touch: boolean; moved: boolean; timer: ReturnType<typeof setTimeout> } | null = null
+        let drag: { id: number; sy: number; moved: boolean; timer: ReturnType<typeof setTimeout> } | null = null
         /** 游標 y → 內容座標，限制在第一列～最後一列的中心之間 */
         const yToPos = (clientY: number) => {
             const cs = rows().map((r) => rowBox(h, r)?.cy ?? 0)
@@ -127,11 +130,11 @@ export default function ListLens({ watch }: { watch: unknown }) {
             drag = null
         }
         const down = (e: PointerEvent) => {
-            if (e.button > 0) return
+            // 觸控完全不處理（見檔頭）：這裡任何畫面變化都可能讓手機瀏覽器吃掉這一下點擊
+            if (e.button > 0 || e.pointerType === 'touch') return
             const t = e.target as HTMLElement
             const row = t.closest<HTMLElement>('[data-lens-row]')
             if (!row || !h.contains(row) || t.closest('[data-conv-menu]')) return
-            const touch = e.pointerType === 'touch'
             // 還沒有目前項目（例如新對話）：放大鏡從按下的那一列開始
             if (!boxRef.current) {
                 const b = rowBox(h, row)
@@ -141,16 +144,13 @@ export default function ListLens({ watch }: { watch: unknown }) {
                 lensRef.current.jump(b.cy)
             }
             // 長按＝打開對話選單：時間到還沒拖動，放大鏡縮回去
-            drag = { id: e.pointerId, sy: e.clientY, touch, moved: false, timer: setTimeout(() => { if (drag && !drag.moved) cancel() }, LENS_CFG.pressWait) }
-            if (touch) return
+            drag = { id: e.pointerId, sy: e.clientY, moved: false, timer: setTimeout(() => { if (drag && !drag.moved) cancel() }, LENS_CFG.pressWait) }
             snapshot()
             lensRef.current.press()
         }
         const move = (e: PointerEvent) => {
             if (!drag || drag.id !== e.pointerId) return
             if (!drag.moved && Math.abs(e.clientY - drag.sy) < LENS_CFG.slop) return
-            // 手指拖動＝捲動清單：放大鏡不跟
-            if (drag.touch) { clearTimeout(drag.timer); drag = null; return }
             if (!drag.moved) {
                 drag.moved = true
                 clearTimeout(drag.timer)
@@ -180,7 +180,6 @@ export default function ListLens({ watch }: { watch: unknown }) {
             const row = (e.target as HTMLElement).closest<HTMLElement>('[data-lens-row]')
             const b = row && h.contains(row) && rowBox(h, row)
             if (!b) return
-            if (d.touch) snapshot()
             glide(b.cy)
         }
         const lost = (e: PointerEvent) => { if (drag && drag.id === e.pointerId && drag.moved) cancel() }
@@ -216,23 +215,23 @@ export default function ListLens({ watch }: { watch: unknown }) {
     }, [active])
 
     return (
+        // 平常在列的下面（只當底盤）；長大、滑行時蓋到列的上面，鏡內是放大的複本
         <div ref={selfRef} data-list-lens aria-hidden="true" className={`absolute left-0 top-0 w-0 h-0 pointer-events-none ${active ? 'z-[2]' : 'z-0'}`}>
-            {/* 平常在列的下面（只當底盤）；長大、滑行時蓋到列的上面，鏡內是放大的複本 */}
-            {box && (
-                <div className={`lens list-lens absolute ${active ? 'is-active' : ''}`} style={{ left: L, top: T, width: lw, height: lh, borderRadius: lh / 2 }}>
-                    <div
-                        ref={ghostRef}
-                        className="absolute left-0 top-0"
-                        style={{
-                            visibility: active ? 'visible' : 'hidden',
-                            transformOrigin: '0 0',
-                            transform: `translate(${lw / 2}px, ${lh / 2}px) scale(${mag}) translate(${-lw / 2}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)`,
-                        }}
-                    />
-                    {active && <span className="lens-dish" />}
-                    <span className="lens-veil seg-veil" style={{ opacity: f.veil }} />
-                </div>
-            )}
+            {/* 容器一開始就在（還沒有目前項目時先藏起來）：第一次按下時要馬上把清單複本放進鏡子裡，
+                等量到位置才畫容器的話，複本會沒地方放，鏡子裡就是空的一片 */}
+            <div className={`lens list-lens absolute ${active ? 'is-active' : ''}`} style={{ display: box ? undefined : 'none', left: L, top: T, width: lw, height: lh, borderRadius: lh / 2 }}>
+                <div
+                    ref={ghostRef}
+                    className="absolute left-0 top-0"
+                    style={{
+                        visibility: active ? 'visible' : 'hidden',
+                        transformOrigin: '0 0',
+                        transform: `translate(${lw / 2}px, ${lh / 2}px) scale(${mag}) translate(${-lw / 2}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)`,
+                    }}
+                />
+                {active && <span className="lens-dish" />}
+                <span className="lens-veil seg-veil" style={{ opacity: f.veil }} />
+            </div>
         </div>
     )
 }

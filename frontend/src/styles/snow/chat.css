@@ -4,6 +4,14 @@
  *   .side-header  組名（13／18 半粗、次要字）
  *   .side-item    一列（高 --side-row-h：滑鼠 36、手指 44；膠囊、14 字）；目前項目加 .is-current＝凹陷底盤＋強調色
  *   .side-children    子項目縮排到和資料夾名稱對齊，不畫導引線 */
+/* 手機直版的側欄（從左邊滑出的面板，貼著螢幕左緣）：左上、左下是直角，右上、右下維持卡片圓角。
+ * 要用 !important：.paper 自己會設四個角的圓角，寫在元件上的 rounded-* 蓋不過它 */
+@media (max-width: 767px) {
+  .chat-side {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+  }
+}
 .side-header {
   display: block;
   white-space: nowrap; /* 側欄寬度變化（收合／展開）途中不折成直排 */

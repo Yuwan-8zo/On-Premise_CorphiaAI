@@ -10,6 +10,12 @@
  *
  * 全部就緒（使用中的模型、預先載入的模型、文件檢索都完成）才進入系統，
  * 進去之後問問題就不必再等模型載入。
+ *
+ * 排版：一頁放得下、不捲動。
+ *   標題＋整體進度條
+ *   寬畫面兩欄：左「系統服務」（啟動程式的每一步＋文件檢索）、右「AI 模型」（這次要載入的模型）
+ *   不預先載入的模型不各佔一列（模型多了會把畫面撐到要捲），收成右欄最後一列「另外 N 個模型：需要時再載入」
+ *   窄畫面（手機）兩組上下排
  */
 
 import { Check, X } from '@/components/snow/icons'
@@ -70,6 +76,8 @@ interface Row {
 }
 
 const POLL_MS = 1000
+/** 「不預先載入的模型」收起來的那一列 */
+const IDLE_KEY = 'models-idle'
 /** 啟動程式超過這麼久沒更新狀態檔，且後端也沒回應 → 視為啟動程式已停止 */
 const STALE_SEC = 45
 
@@ -245,12 +253,24 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const ragDetail = { done: 'ragReady', running: 'loading', error: 'loadFailed', pending: 'backendNotUp', skipped: 'skipped' }[ragState]
     rows.push({ key: 'rag', label: i18n.t('ui.boot.step.rag'), state: ragState, detail: i18n.t(`ui.boot.detail.${ragDetail}`), started: null, finished: null })
 
+    // AI 模型：這次要載入的各佔一列（使用中的放最前面，其餘依大小）；不預先載入的收成一列
+    const modelRows: Row[] = []
     if (models.length) {
-        // 使用中的模型放最前面，其餘依大小排序
         const sorted = [...models].sort((a, b) => Number(b.is_current) - Number(a.is_current) || a.size_gb - b.size_gb)
-        rows.push(...sorted.map(modelRow))
+        modelRows.push(...sorted.filter((m) => m.state !== 'not_preloaded').map(modelRow))
+        const idle = sorted.filter((m) => m.state === 'not_preloaded')
+        if (idle.length) {
+            modelRows.push({
+                key: IDLE_KEY,
+                label: i18n.t('ui.boot.moreModels', { n: idle.length }),
+                state: 'skipped',
+                detail: idle.map((m) => modelSize(m.name) ?? m.name).join(i18n.t('ui.boot.listSep')),
+                started: null,
+                finished: null,
+            })
+        }
     } else {
-        rows.push({ key: 'models', label: i18n.t('ui.boot.step.models'), state: backendStarted ? 'running' : 'pending', detail: i18n.t(backendStarted ? 'ui.boot.detail.loadingModels' : 'ui.boot.detail.waitAfterBackend'), started: null, finished: null })
+        modelRows.push({ key: 'models', label: i18n.t('ui.boot.step.models'), state: backendStarted ? 'running' : 'pending', detail: i18n.t(backendStarted ? 'ui.boot.detail.loadingModels' : 'ui.boot.detail.waitAfterBackend'), started: null, finished: null })
     }
 
     const totalStart = launcherFresh ? launcher.started_at : firstSeen.current
@@ -259,41 +279,64 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const launcherStale =
         launcherFresh && launcher.overall === 'starting' && !apiUp && now - launcher.updated_at > STALE_SEC
     const stopped = launcher?.overall === 'stopped' && !apiUp
-    const doneCount = rows.filter((r) => r.state === 'done' || r.state === 'skipped').length
+    // 進度只算「要等的」：收起來的那一列（不預先載入的模型）不算
+    const counted = [...rows, ...modelRows].filter((r) => r.key !== IDLE_KEY)
+    const doneCount = counted.filter((r) => r.state === 'done' || r.state === 'skipped').length
+    const progress = allReady ? 1 : counted.length ? doneCount / counted.length : 0
+
+    /** 一組清單：組名＋Liquid Glass 卡（圓角 26＝狀態圖示 14＋離邊 12，同心）；列 15／20＋13／18 */
+    const group = (title: string, list: Row[]) => (
+        <section className="min-w-0">
+            <h2 className="set-header !px-[var(--sp-12)]">{title}</h2>
+            <ul className="boot-list paper !rounded-[var(--r-26)] overflow-hidden">
+                {list.map((r) => (
+                    <li key={r.key} className="set-row !min-h-0 !gap-[var(--sp-12)] !px-[var(--sp-12)] !py-[var(--sp-5)] md:!py-[var(--sp-8)]">
+                        <StateIcon state={r.state} />
+                        <div className="min-w-0 flex-1">
+                            <p className={`truncate text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
+                            {r.detail && <p className={`break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
+                        </div>
+                        {/* 收起來的那一列不顯示「略過」——它不是這次要等的東西 */}
+                        {r.key !== IDLE_KEY && (
+                            <div className="shrink-0 text-right">
+                                <p className={`text-[length:var(--fs-13)] leading-[var(--lh-18)] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[var(--ink-green)]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{stateText(r.state)}</p>
+                                <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
+                            </div>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    )
 
     return (
         <div className="fixed inset-0 z-[10000] flex justify-center overflow-y-auto bg-bg-base">
             {/* 背景：系統的波浪圖（同登入、聊天頁） */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
 
-            <div className="relative z-10 my-auto w-full max-w-[var(--sz-560)] px-6 py-8 page-in">
+            <div className="relative z-10 my-auto w-full max-w-[var(--sz-560)] md:max-w-[var(--sz-880)] px-6 py-[var(--sp-12)] md:py-[var(--sp-24)] page-in">
                 {/* 標題：品牌圖示＋Title2 22／28 粗體＋Subheadline 15／20 次要字 */}
-                <div className="mb-[var(--sp-20)] flex items-center gap-4 px-[var(--sp-12)]">
+                <div className="mb-[var(--sp-12)] flex items-center gap-4 px-[var(--sp-12)]">
                     <CorphiaLogo className="h-[var(--sz-44)] w-[var(--sz-44)] shrink-0 select-none text-text-primary" />
                     <div className="min-w-0 flex-1">
                         <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary [text-wrap:balance]">{i18n.t('ui.boot.title')}</h1>
                         <p className="mt-0.5 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary tabular-nums">
-                            {allReady ? i18n.t('ui.boot.allReady') : i18n.t('ui.boot.progress', { done: doneCount, total: rows.length, time: fmtDuration(totalSec) })}
+                            {allReady ? i18n.t('ui.boot.allReady') : i18n.t('ui.boot.progress', { done: doneCount, total: counted.length, time: fmtDuration(totalSec) })}
                         </p>
                     </div>
                 </div>
+                {/* 整體進度條：不用讀清單也看得出走到哪 */}
+                <div
+                    className="mx-[var(--sp-12)] mb-[var(--sp-10)] md:mb-[var(--sp-16)] h-1.5 overflow-hidden rounded-full bg-[var(--chip)]"
+                    role="progressbar" aria-valuemin={0} aria-valuemax={counted.length} aria-valuenow={doneCount} aria-label={i18n.t('ui.boot.title')}
+                >
+                    <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+                </div>
 
-                {/* 清單：Liquid Glass 卡（圓角 26＝狀態圖示 14＋離邊 12，同心）；列 15／20＋13／18，每列 52 高 */}
-                <ul className="boot-list paper !rounded-[var(--r-26)] overflow-hidden">
-                    {rows.map((r) => (
-                        <li key={r.key} className="set-row !min-h-0 !gap-[var(--sp-12)] !px-[var(--sp-12)] !py-[var(--sp-8)]">
-                            <StateIcon state={r.state} />
-                            <div className="min-w-0 flex-1">
-                                <p className={`text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold ${r.state === 'skipped' || r.state === 'pending' ? 'text-text-muted' : 'text-text-primary'}`}>{r.label}</p>
-                                {r.detail && <p className={`break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] ${r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`}>{r.detail}</p>}
-                            </div>
-                            <div className="shrink-0 text-right">
-                                <p className={`text-[length:var(--fs-13)] leading-[var(--lh-18)] font-semibold ${r.state === 'running' ? 'text-accent' : r.state === 'done' ? 'text-[var(--ink-green)]' : r.state === 'error' ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>{stateText(r.state)}</p>
-                                <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums text-text-muted">{fmtSec(r, now)}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <div className="grid items-start gap-[var(--sp-10)] md:gap-[var(--sp-16)] md:grid-cols-2">
+                    {group(i18n.t('ui.boot.groupServices'), rows)}
+                    {group(i18n.t('ui.boot.groupModels'), modelRows)}
+                </div>
 
                 {(launcherError || launcherStale || stopped) && (
                     <div className="paper !rounded-[var(--r-26)] mt-4 px-[var(--sp-20)] py-[var(--sp-14)]">
@@ -305,7 +348,7 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                     </div>
                 )}
 
-                <p className="mt-[var(--sp-20)] text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">{i18n.t('ui.boot.footer')}</p>
+                <p className="mt-[var(--sp-10)] md:mt-[var(--sp-16)] text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">{i18n.t('ui.boot.footer')}</p>
             </div>
         </div>
     )
