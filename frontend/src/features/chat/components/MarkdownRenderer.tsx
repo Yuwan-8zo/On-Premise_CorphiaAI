@@ -5,7 +5,7 @@
  */
 
 import React, { lazy, memo, Suspense } from 'react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 /** 圖片網址是不是本機的（同一台伺服器的相對或絕對路徑、data:image、blob:）；外部網址回 false */
@@ -40,6 +40,15 @@ function nodeText(node: React.ReactNode): string {
     if (Array.isArray(node)) return node.map(nodeText).join('')
     if (React.isValidElement<{ children?: React.ReactNode }>(node)) return nodeText(node.props.children)
     return ''
+}
+
+/**
+ * 網址過濾：沿用套件的預設（擋掉 javascript: 之類），只多放行「圖片的內嵌資料」（data:image/…、blob:）。
+ * 內嵌圖片的資料就在文字裡，不會連到任何地方；預設會把它整個清掉，結果被當成外部圖片顯示「已封鎖」。
+ */
+function urlTransform(url: string, key: string): string {
+    if (key === 'src' && /^(data:image\/|blob:)/i.test(url)) return url
+    return defaultUrlTransform(url)
 }
 import i18n from '@/i18n'
 
@@ -131,6 +140,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
             <div className={`markdown-body ${className}`}>
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
+                    urlTransform={urlTransform}
                     components={{
                         // 程式碼區塊
                         code({ className, children, ...props }) {
