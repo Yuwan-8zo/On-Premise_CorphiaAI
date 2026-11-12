@@ -92,10 +92,10 @@ export function ConversationContextMenu({
 
 /* ── 對話框共用：寬度、輸入框、按鈕列（外殼用 DialogShell） ── */
 
-const SHEET_W = 'w-[var(--sz-360)] max-w-[calc(100vw-32px)]'
-const INPUT_CLASS = 'snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted'
+export const SHEET_W = 'w-[var(--sz-360)] max-w-[calc(100vw-32px)]'
+export const INPUT_CLASS = 'snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted'
 
-function DialogActions({ onCancel, onOk, okLabel }: { onCancel: () => void; onOk: () => void; okLabel?: string }) {
+export function DialogActions({ onCancel, onOk, okLabel }: { onCancel: () => void; onOk: () => void; okLabel?: string }) {
     const { t } = useTranslation()
     return (
         <div className="dialog-actions">

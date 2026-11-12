@@ -88,6 +88,9 @@ async def init_db() -> None:
             # 建立所有表格（checkfirst=True 確保已存在的表格不會重建）
             await conn.run_sync(Base.metadata.create_all, checkfirst=True)
         logger.info("Database tables initialized (create_all completed)")
+        # 舊資料表補上新版需要的欄位（create_all 不會改已經存在的表，見 core/migrations）
+        from app.core.migrations import run_migrations
+        await run_migrations(engine)
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise

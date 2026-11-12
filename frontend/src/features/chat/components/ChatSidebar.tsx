@@ -11,7 +11,8 @@
 
 import { useScrollFade } from '@/lib/useScrollFade'
 import { beginMenuDrag, useMenuTrigger } from '@/lib/menuDrag'
-import { Folder, MessageSquare, Plus, Search, Trash2 } from '@/components/snow/icons'
+import { Folder, MessageSquare, Plus, Search, SlidersHorizontal, Trash2 } from '@/components/snow/icons'
+import ProjectInstructionsModal from './ProjectInstructionsModal'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -173,6 +174,9 @@ export default function ChatSidebar({
         return () => { stale = true; window.clearTimeout(id) }
     }, [searching, query])
     const closeSearch = () => { setSearching(false); setQuery('') }
+
+    // 專案指示：正在設定哪一個專案資料夾（null＝沒開）
+    const [instructionsFolder, setInstructionsFolder] = useState<string | null>(null)
 
     return (
         <aside
@@ -390,6 +394,11 @@ export default function ChatSidebar({
                                                                     <Plus className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </Tooltip>
+                                                            <Tooltip label={t('chat.instructionsTitle')}>
+                                                                <button onClick={(e) => { e.stopPropagation(); setInstructionsFolder(folderName) }} aria-label={t('chat.instructionsTitle')} className="icon-tap text-text-secondary">
+                                                                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </Tooltip>
                                                             <Tooltip label={t('ui.sidebar.deleteFolder')}>
                                                                 <button onClick={(e) => handleDeleteFolder(folderName, e)} aria-label={t('ui.sidebar.deleteFolder')} className="icon-tap text-text-secondary">
                                                                     <Trash2 className="w-3.5 h-3.5" />
@@ -451,6 +460,7 @@ export default function ChatSidebar({
                 
             </div>
             </div>
+            <ProjectInstructionsModal folder={instructionsFolder} onClose={() => setInstructionsFolder(null)} />
         </aside>
     )
 }

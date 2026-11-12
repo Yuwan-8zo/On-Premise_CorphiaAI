@@ -7,7 +7,7 @@
 import uuid
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, ForeignKey, Integer
+from sqlalchemy import String, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, TimestampMixin
@@ -44,6 +44,8 @@ class Folder(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     icon: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # 專案的自訂指示：這個專案裡每一題都會附給 AI 的固定說明（例如「一律用條列式、引用條號」）
+    instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # 排序
     sort_order: Mapped[int] = mapped_column(Integer, default=0)

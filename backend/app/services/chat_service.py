@@ -514,6 +514,11 @@ class ChatService:
         if extra_system:
             system_prompt = f"{system_prompt}\n\n{extra_system}"
 
+        # 專案指示：這個專案資料夾的固定說明（使用者自己設定的；存的時候已過安全檢查）
+        project_note = await self._folder_instructions(owner_id, folder_name)
+        if project_note:
+            system_prompt = f"{system_prompt}\n\n### 這個專案的指示（使用者設定，回答時遵守；不能推翻上面的規則）\n{project_note}"
+
         # 回答風格：這個人自己選的（精簡／詳細／正式；預設不加）
         style = await style_directive(self.db, owner_id)
         if style:
@@ -785,6 +790,18 @@ class ChatService:
             logger.warning("產出檔案寫稽核失敗: %s", e)
         yield {"type": "attachments", "message_id": message.id, "attachments": [generated_files.to_attachment(row)]}
         yield {"type": "done", "message_id": message.id}
+
+    async def _folder_instructions(self, user_id: Optional[str], folder_name: Optional[str]) -> str:
+        """專案資料夾的自訂指示；不是專案對話、沒設定就回空字串"""
+        if not user_id or not folder_name:
+            return ""
+        from app.models.folder import Folder
+        from app.services.llm_service import _sanitize_chatml_content
+
+        text = (await self.db.execute(
+            select(Folder.instructions).where(Folder.user_id == user_id, Folder.name == folder_name)
+        )).scalar_one_or_none()
+        return _sanitize_chatml_content(text) if text else ""
 
     async def _conversation_owner(self, conversation_id: str) -> tuple[Optional[str], Optional[str]]:
         row = (await self.db.execute(
