@@ -95,7 +95,12 @@ def extract_postgres(version: str) -> Path:
         info("解壓縮中…")
         import zipfile
         with zipfile.ZipFile(zip_path) as zf:
-            zf.extractall(PG_INSTALL_DIR)
+            # 官方安裝包裡捆了整套 pgAdmin 4（GUI 管理工具，這個腳本完全不需要），
+            # 裡面又帶一份完整的 Python + Azure SDK，巢狀路徑常常超過 Windows 260
+            # 字元路徑長度上限（多數機器預設沒開長路徑支援），解到一半就會整個失敗。
+            # 跳過這個子資料夾：不影響伺服器端功能，也順便省下大量空間與時間。
+            members = [m for m in zf.infolist() if "pgAdmin 4" not in m.filename]
+            zf.extractall(PG_INSTALL_DIR, members=members)
 
     bin_dir = pg_bin_dir()
     if not bin_dir:
@@ -139,9 +144,17 @@ def run_initdb(bin_dir: Path) -> None:
 
 def start_and_wait(bin_dir: Path, timeout_sec: int = 60) -> bool:
     log_path = DB_DIR / "postgres.log"
-    result = _run([str(bin_dir / "pg_ctl.exe"), "-D", str(PGDATA_DIR), "-l", str(log_path), "-w", "start"])
+    # 不能用 _run()（capture_output=True）：Windows 上 pg_ctl start 這個背景服務的子程序
+    # 會繼承到 pg_ctl 的 stdout/stderr 管線控制碼，就算 pg_ctl 自己已經結束，Python 這端的
+    # subprocess.run() 仍會一直等管線的另一端關閉而永久卡死（伺服器其實已經正常啟動了，
+    # 只是 Python 看起來像凍住）。pg_ctl 自己的輸出本來就不重要——真正的伺服器 log 已經靠
+    # -l 寫到 log_path 了——所以這裡直接丟掉 stdout/stderr，不開管線。
+    result = subprocess.run(
+        [str(bin_dir / "pg_ctl.exe"), "-D", str(PGDATA_DIR), "-l", str(log_path), "-w", "start"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
     if result.returncode != 0:
-        fail(f"啟動失敗：\n{result.stdout}\n{result.stderr}\n（log：{log_path}）")
+        fail(f"啟動失敗，詳見 log：{log_path}")
         return False
     import socket
     deadline = time.time() + timeout_sec

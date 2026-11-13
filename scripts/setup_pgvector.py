@@ -80,14 +80,22 @@ def clone_pgvector(tag: str, dest: Path) -> None:
 
 def build_and_install(src_dir: Path, vcvarsall: Path, pgroot: Path) -> bool:
     """在「開好 VS 編譯環境」的 cmd 裡跑 nmake，一次把編譯和安裝都做完"""
+    # vcvarsall.bat 的路徑幾乎一定帶空白（Program Files、版本資料夾），一定要加雙引號；
+    # 但把整段指令字串塞進 subprocess.run(["cmd", "/c", script]) 的一個 argv 元素時，Python
+    # 在 Windows 上會用 list2cmdline 規則再轉義一次整個字串，把字串裡本來就有的雙引號
+    # 弄壞（印出來像 '\"...\"'），cmd 收到的其實是壞掉的路徑。改成寫成一個暫存 .bat 檔
+    # 直接執行，完全不會經過那層二次轉義。
     script = (
-        f'call "{vcvarsall}" x64 && '
-        f'set "PGROOT={pgroot}" && '
-        f'cd /d "{src_dir}" && '
-        f'nmake /F Makefile.win && '
-        f'nmake /F Makefile.win install'
+        f'call "{vcvarsall}" x64\r\n'
+        f'set "PGROOT={pgroot}"\r\n'
+        f'cd /d "{src_dir}"\r\n'
+        f'nmake /F Makefile.win\r\n'
+        f'if errorlevel 1 exit /b 1\r\n'
+        f'nmake /F Makefile.win install\r\n'
     )
-    result = subprocess.run(["cmd", "/c", script], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    bat_path = src_dir.parent / "corphia_build_pgvector.bat"
+    bat_path.write_text(script, encoding="mbcs" if sys.platform == "win32" else "utf-8")
+    result = subprocess.run([str(bat_path)], capture_output=True, text=True, encoding="utf-8", errors="replace")
     info(result.stdout)
     if result.returncode != 0:
         fail(f"編譯或安裝失敗：\n{result.stderr}")
