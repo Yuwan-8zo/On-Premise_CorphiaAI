@@ -831,6 +831,10 @@ def start_backend(python_exe: Path) -> None:
     # 會被卡住一兩分鐘，導致 start.py 的 health 檢查超時、誤判後端啟動失敗並 kill backend。
     # 注：cache 必須已存在於 ~/.cache/huggingface/，第一次安裝完 requirements 後就會有。
     backend_env = os.environ.copy()
+    # 安裝包自帶文件檢索、語音辨識的模型（models-cache/）：有就用它，不去找使用者家目錄裡的快取
+    bundled_models = BASE_DIR / "models-cache"
+    if bundled_models.is_dir():
+        backend_env["HF_HOME"] = str(bundled_models)
     backend_env.setdefault("HF_HUB_OFFLINE", "1")
     backend_env.setdefault("TRANSFORMERS_OFFLINE", "1")
     if SERVE_BUILT:

@@ -22,6 +22,7 @@ from sqlalchemy import select  # noqa: E402
 from app.core.database import async_session_maker, init_db  # noqa: E402
 from app.core.security import get_password_hash  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
+from app.models.tenant import Tenant  # noqa: E402
 
 
 async def main() -> int:
@@ -33,7 +34,8 @@ async def main() -> int:
     parser.add_argument("--name", default=None)
     args = parser.parse_args()
 
-    password = args.password
+    # 密碼的來源：參數（不建議）→ 環境變數 CORPHIA_NEW_PASSWORD（給設定精靈用：不會出現在指令紀錄裡）→ 請使用者輸入
+    password = args.password or os.environ.get("CORPHIA_NEW_PASSWORD")
     if not password:
         password = getpass.getpass("請輸入新密碼：")
         if password != getpass.getpass("再輸入一次：") or not password:
@@ -69,7 +71,9 @@ async def main() -> int:
         user.is_active = True
         # 沒有租戶的帳號歸到 default（與註冊、對話、文件一致），否則看不到同租戶的稽核與使用者
         if hasattr(user, "tenant_id") and not user.tenant_id:
-            user.tenant_id = "default"
+            # 預設組織的編號每台不一樣（初始化時產生），用代稱 default 找；找不到才用舊的固定編號
+            default_tenant = (await session.execute(select(Tenant.id).where(Tenant.slug == "default"))).scalars().first()
+            user.tenant_id = default_tenant or "default"
         await session.commit()
         print(f"{action}：{args.email}（角色：{user.role}）")
     return 0

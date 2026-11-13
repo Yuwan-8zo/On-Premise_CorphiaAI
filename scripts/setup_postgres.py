@@ -44,6 +44,7 @@ PGDATA_DIR = DB_DIR / "pgdata"
 
 # 跟 docker-compose.yml／backend/.env.example 的預設值一致，這樣 DATABASE_URL 完全不用改
 PG_USER = "corphia"
+# 開發用的預設密碼（和 docker-compose.yml 一樣）。安裝包不用這個：「第一次設定」會產生一組隨機密碼
 PG_PASSWORD = "corphia123"
 PG_DB = "corphia_ai"
 PG_PORT = 5433
@@ -109,7 +110,7 @@ def extract_postgres(version: str) -> Path:
     return bin_dir
 
 
-def run_initdb(bin_dir: Path) -> None:
+def run_initdb(bin_dir: Path, password: str = PG_PASSWORD) -> None:
     if (PGDATA_DIR / "PG_VERSION").is_file():
         ok(f"{PGDATA_DIR} 已經初始化過，跳過 initdb。")
         return
@@ -117,7 +118,7 @@ def run_initdb(bin_dir: Path) -> None:
     DB_DIR.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="corphia-pg-init-") as tmp:
         pwfile = Path(tmp) / "pwfile"
-        pwfile.write_text(PG_PASSWORD, encoding="utf-8")
+        pwfile.write_text(password, encoding="utf-8")
         info("初始化資料目錄（initdb）…")
         result = _run([
             str(bin_dir / "initdb.exe"),
@@ -168,8 +169,8 @@ def start_and_wait(bin_dir: Path, timeout_sec: int = 60) -> bool:
     return False
 
 
-def create_database(bin_dir: Path) -> None:
-    env = {"PGPASSWORD": PG_PASSWORD}
+def create_database(bin_dir: Path, password: str = PG_PASSWORD) -> None:
+    env = {"PGPASSWORD": password}
     import os
     full_env = {**os.environ, **env}
     check = subprocess.run(
@@ -185,6 +186,11 @@ def create_database(bin_dir: Path) -> None:
         capture_output=True, text=True, encoding="utf-8", errors="replace", env=full_env,
     )
     if result.returncode != 0:
+        # 上面那個「有沒有這個資料庫」的檢查偶爾問不出來（psql 在某些環境不輸出）：
+        # 資料庫自己說「已經存在」就是已經建好了，不算失敗（重跑設定時會遇到）
+        if "already exists" in (result.stderr or ""):
+            ok(f"資料庫 {PG_DB} 已經存在，跳過建立。")
+            return
         fail(f"建立資料庫失敗：\n{result.stdout}\n{result.stderr}")
         raise SystemExit(1)
     ok(f"已建立資料庫 {PG_DB}")

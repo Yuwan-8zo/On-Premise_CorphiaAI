@@ -131,3 +131,4 @@ desktop/*.spec
 backups/
 graphify-out/
 desktop/dist_new/
+/dist/
