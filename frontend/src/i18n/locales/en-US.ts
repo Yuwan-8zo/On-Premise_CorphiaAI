@@ -890,6 +890,13 @@ export default {
                 offHint: 'This organization never connects to the web, and users have no web search button.',
             },
         },
+        shutdown: {
+            button: 'Stop host services',
+            stoppingShort: 'Stopping…',
+            confirm: 'Stop the services on this host?',
+            hint: 'Everyone using it (other PCs and phones) will be disconnected, and the AI model and database will shut down. Someone at this host has to open the desktop app to start them again.',
+            stopping: 'The services are stopping; it takes about a minute. You can close this window now.',
+        },
         lan: {
             setupHint: 'To stop the warning, open {{url}} on the phone and follow the steps to install the host certificate',
             installHint: 'After opening it, choose "Add to Home Screen" in the phone browser menu to launch it like an app',

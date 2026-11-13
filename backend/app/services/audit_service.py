@@ -93,6 +93,8 @@ class AuditAction:
     WEB_SEARCH = "web_search"
     # AI 回答前自己用了工具（查文件、連外網、計算…）
     TOOL_CALL = "tool_call"
+    # 管理員從管理後台關閉主機服務
+    SYSTEM_SHUTDOWN = "system_shutdown"
 
     # 送模型前最後一關：文件片段被剔除或遮罩
     CONTEXT_FILTERED = "context_filtered"

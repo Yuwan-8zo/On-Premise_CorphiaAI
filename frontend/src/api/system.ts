@@ -75,6 +75,13 @@ export const systemApi = {
     },
 
     /**
+     * 關閉主機服務（後端、AI 模型、資料庫）。只有在主機本機登入的管理員可以用；其他裝置會被拒絕
+     */
+    shutdownHost: async (): Promise<void> => {
+        await apiClient.post('/system/shutdown')
+    },
+
+    /**
      * 取得詳細系統健康（CPU / GPU / VRAM / LLM 統計）
      */
     getHealthDetailed: async (): Promise<HealthDetailed> => {
