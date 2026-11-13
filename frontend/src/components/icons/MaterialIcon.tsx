@@ -53,6 +53,8 @@ const MAP: Record<string, React.ComponentType<I.IconProps>> = {
     edit: I.Edit2,
     refresh: I.RefreshCw,
     download: I.Download,
+    visibility: I.Eye,
+    code: I.Code,
     upload: I.Upload,
     schedule: I.Clock,
     language: I.Globe,

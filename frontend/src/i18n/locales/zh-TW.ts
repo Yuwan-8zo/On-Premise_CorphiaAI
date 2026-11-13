@@ -890,6 +890,8 @@ export default {
             },
         },
         lan: {
+            encryptedHint: '連線已加密。憑證是這台主機自己簽的，手機第一次連線會跳出提醒，確認是這個網址後選「繼續」即可',
+            fingerprint: '主機憑證指紋：{{value}}…',
             enabled: '已開啟',
             disabled: '已關閉',
             tipOn: '允許區網裝置透過本機 IP 存取（立即生效）',
@@ -970,6 +972,10 @@ export default {
         },
         message: {
             copy: '複製',
+            readAloud: '朗讀',
+            stopReading: '停止朗讀',
+            noVoice: '這台電腦沒有可離線使用的語音，無法朗讀（線上語音會把內容送出去，所以不使用）',
+            nothingToRead: '這一則沒有可以朗讀的文字',
             copied: '已複製',
             edit: '編輯',
             editMessage: '編輯訊息',
@@ -1099,7 +1105,7 @@ export default {
             dlpToast: '訊息含列管機密字詞，已依資料外洩防護政策攔阻',
             thinking: '思考中',
             thoughtProcess: '已完成思考',
-            codeFile: { save: '存檔', download: '下載', saved: '已存到 {{path}}', savedBackup: '已存到 {{path}}（原本的檔案已備份）', saveReply: '存成檔案' },
+            codeFile: { preview: '預覽', showCode: '看程式碼', previewTitle: '預覽（關在沙盒裡，不能連網）', save: '存檔', download: '下載', saved: '已存到 {{path}}', savedBackup: '已存到 {{path}}（原本的檔案已備份）', saveReply: '存成檔案' },
             unshare: '取消分享',
             unshared: '已取消分享，現在只有你看得到這個對話',
         },

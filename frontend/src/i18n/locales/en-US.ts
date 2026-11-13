@@ -890,6 +890,8 @@ export default {
             },
         },
         lan: {
+            encryptedHint: 'The connection is encrypted. The certificate is signed by this host, so a phone shows a warning the first time. Check that the address matches, then choose to continue',
+            fingerprint: 'Host certificate fingerprint: {{value}}…',
             enabled: 'On',
             disabled: 'Off',
             tipOn: 'Devices on the local network can connect via this computer\'s IP (takes effect immediately)',
@@ -970,6 +972,10 @@ export default {
         },
         message: {
             copy: 'Copy',
+            readAloud: 'Read aloud',
+            stopReading: 'Stop reading',
+            noVoice: 'This computer has no offline voice for this language, so the answer cannot be read aloud (online voices would send the text out and are not used)',
+            nothingToRead: 'There is no text to read in this answer',
             copied: 'Copied',
             edit: 'Edit',
             editMessage: 'Edit message',
@@ -1099,7 +1105,7 @@ export default {
             dlpToast: 'The message contained restricted terms and was blocked',
             thinking: 'Thinking',
             thoughtProcess: 'Thought process',
-            codeFile: { save: 'Save', download: 'Download', saved: 'Saved to {{path}}', savedBackup: 'Saved to {{path}} (the previous file was backed up)', saveReply: 'Save as file' },
+            codeFile: { preview: 'Preview', showCode: 'Show code', previewTitle: 'Preview (sandboxed, no network access)', save: 'Save', download: 'Download', saved: 'Saved to {{path}}', savedBackup: 'Saved to {{path}} (the previous file was backed up)', saveReply: 'Save as file' },
             unshare: 'Stop sharing',
             unshared: 'Sharing stopped. Only you can see this chat now',
         },

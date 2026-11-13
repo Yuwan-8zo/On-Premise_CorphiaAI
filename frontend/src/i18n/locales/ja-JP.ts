@@ -890,6 +890,8 @@ export default {
             },
         },
         lan: {
+            encryptedHint: '通信は暗号化されています。証明書はこのホストが自分で署名したものなので、スマートフォンでは初回に警告が表示されます。アドレスを確認して「続行」を選んでください',
+            fingerprint: 'ホスト証明書のフィンガープリント：{{value}}…',
             enabled: 'オン',
             disabled: 'オフ',
             tipOn: 'ローカルネットワークの端末がこの PC の IP で接続できます（すぐ反映）',
@@ -970,6 +972,10 @@ export default {
         },
         message: {
             copy: 'コピー',
+            readAloud: '読み上げ',
+            stopReading: '読み上げを停止',
+            noVoice: 'このパソコンにはオフラインで使える音声がないため、読み上げできません（オンライン音声は内容を外部に送信するため使用しません）',
+            nothingToRead: 'この回答には読み上げできる文章がありません',
             copied: 'コピーしました',
             edit: '編集',
             editMessage: 'メッセージを編集',
@@ -1099,7 +1105,7 @@ export default {
             dlpToast: '管理対象の機密語句を含むためブロックしました',
             thinking: '考え中',
             thoughtProcess: '思考過程',
-            codeFile: { save: '保存', download: 'ダウンロード', saved: '{{path}} に保存しました', savedBackup: '{{path}} に保存しました（元のファイルはバックアップ済み）', saveReply: 'ファイルとして保存' },
+            codeFile: { preview: 'プレビュー', showCode: 'コードを表示', previewTitle: 'プレビュー（サンドボックス内・ネットワーク接続なし）', save: '保存', download: 'ダウンロード', saved: '{{path}} に保存しました', savedBackup: '{{path}} に保存しました（元のファイルはバックアップ済み）', saveReply: 'ファイルとして保存' },
             unshare: '共有を停止',
             unshared: '共有を停止しました。この会話を見られるのはあなただけです',
         },

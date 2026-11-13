@@ -16,6 +16,7 @@ import MaterialIcon from '@/components/icons/MaterialIcon'
 import { copyText } from '@/lib/clipboard'
 import { useDesktop } from '@/lib/desktop'
 import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
+import { PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
 import { useTranslation } from 'react-i18next'
 
 SyntaxHighlighter.registerLanguage('tsx', tsx)
@@ -75,7 +76,12 @@ const MarkdownCodeBlock = memo(({
 }: {
     language: string
     children: string
-}) => (
+}) => {
+    const { t } = useTranslation()
+    // HTML／SVG 可以直接看成品（關在沙盒裡、不能連網，見 lib/previewDoc）
+    const canPreview = isPreviewable(language, children)
+    const [preview, setPreview] = useState(false)
+    return (
     <div className="relative group my-4">
         {language && (
             <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded-tl rounded-br">
@@ -83,9 +89,26 @@ const MarkdownCodeBlock = memo(({
             </div>
         )}
         <div className="absolute top-2 right-2 flex items-center gap-1.5">
+            {canPreview && (
+                <button type="button" aria-pressed={preview} onClick={() => setPreview((v) => !v)} className={CODE_BUTTON}>
+                    <MaterialIcon name={preview ? 'code' : 'visibility'} size={14} aria-hidden />
+                    {t(preview ? 'ui.chat.codeFile.showCode' : 'ui.chat.codeFile.preview')}
+                </button>
+            )}
             <SaveButton code={children} language={language} />
             <CopyButton code={children} />
         </div>
+        {preview ? (
+            <div className="rounded-[var(--r-12)] overflow-hidden border border-[var(--paper-line)] bg-[var(--chip)] pt-[var(--sz-40)]">
+                <iframe
+                    title={t('ui.chat.codeFile.previewTitle')}
+                    sandbox={PREVIEW_SANDBOX}
+                    referrerPolicy="no-referrer"
+                    srcDoc={buildPreviewDoc(children)}
+                    className="block w-full h-[var(--sz-320)] border-0 bg-white"
+                />
+            </div>
+        ) : (
         <SyntaxHighlighter
             language={language || 'text'}
             style={oneDark}
@@ -99,8 +122,10 @@ const MarkdownCodeBlock = memo(({
         >
             {children}
         </SyntaxHighlighter>
+        )}
     </div>
-))
+    )
+})
 
 MarkdownCodeBlock.displayName = 'MarkdownCodeBlock'
 
