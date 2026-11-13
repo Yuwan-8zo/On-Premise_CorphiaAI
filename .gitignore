@@ -125,6 +125,7 @@ backend/generated/
 
 # 桌面版打包產生的檔案
 desktop/*.spec
+!desktop/corphia.spec
 
 # 備份（公司的全部資料，不進版本庫）
 backups/
