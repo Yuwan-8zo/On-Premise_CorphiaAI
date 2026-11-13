@@ -85,7 +85,8 @@ class TestVerifyChecksum:
 # 套用更新包：只覆蓋包裡真的有的路徑，資料和沒列進去的東西完全不動
 # ═════════════════════════════════════════════════════════════════════════
 class TestApplyPackage:
-    def test_overwrites_file_and_replaces_directory(self, tmp_path, monkeypatch):
+    def test_overwrites_file_and_replaces_nested_directory(self, tmp_path, monkeypatch):
+        """只動清單列出的巢狀路徑（backend/app），不是整個 backend/ 資料夾"""
         project = tmp_path / "project"
         project.mkdir()
         (project / "VERSION").write_text("1.0.0")
@@ -93,6 +94,7 @@ class TestApplyPackage:
         app_dir.mkdir(parents=True)
         (app_dir / "old_module.py").write_text("old")
         monkeypatch.setattr(update, "BASE_DIR", project)
+        monkeypatch.setattr(update, "RELEASE_PATHS", ["VERSION", "backend/app"])
 
         staging = tmp_path / "staging"
         (staging / "backend" / "app").mkdir(parents=True)
@@ -101,11 +103,38 @@ class TestApplyPackage:
 
         applied = update.apply_package(staging)
 
-        assert sorted(applied) == ["VERSION", "backend"]
+        assert sorted(applied) == ["VERSION", "backend/app"]
         assert (project / "VERSION").read_text() == "2.0.0"
-        # 整個資料夾換掉：舊檔案不見了，只剩更新包帶來的新檔案
+        # backend/app 這個路徑整個換掉：舊檔案不見了，只剩更新包帶來的新檔案
         assert not (project / "backend" / "app" / "old_module.py").exists()
         assert (project / "backend" / "app" / "new_module.py").read_text() == "new"
+
+    def test_sibling_path_not_in_manifest_survives_even_though_parent_dir_is_touched(self, tmp_path, monkeypatch):
+        """修正的 bug：以前是看解壓後最上層的資料夾名稱（backend/）整個 rmtree 再 copytree，
+        backend/app 以外、不在清單上的東西（.env、uploads、.venv…）會被一起砍光。
+        現在只能動清單列出的巢狀路徑本身，backend/ 底下的手足路徑完全不受影響。"""
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "backend" / "app").mkdir(parents=True)
+        (project / "backend" / "app" / "old_module.py").write_text("old")
+        # 清單上沒列的使用者資料，跟 backend/app 同一層
+        (project / "backend" / ".env").write_text("SECRET_KEY=keep-me")
+        (project / "backend" / "uploads").mkdir()
+        (project / "backend" / "uploads" / "user_file.txt").write_text("precious")
+        monkeypatch.setattr(update, "BASE_DIR", project)
+        monkeypatch.setattr(update, "RELEASE_PATHS", ["backend/app"])
+
+        staging = tmp_path / "staging"
+        (staging / "backend" / "app").mkdir(parents=True)
+        (staging / "backend" / "app" / "new_module.py").write_text("new")
+
+        update.apply_package(staging)
+
+        assert not (project / "backend" / "app" / "old_module.py").exists()
+        assert (project / "backend" / "app" / "new_module.py").read_text() == "new"
+        # 手足路徑完全沒被動到
+        assert (project / "backend" / ".env").read_text() == "SECRET_KEY=keep-me"
+        assert (project / "backend" / "uploads" / "user_file.txt").read_text() == "precious"
 
     def test_untouched_paths_survive(self, tmp_path, monkeypatch):
         """更新包沒帶到的東西（.env、uploads…）完全不在 staging 裡，自然不會被動到"""
@@ -113,6 +142,7 @@ class TestApplyPackage:
         project.mkdir()
         (project / ".env").write_text("SECRET_KEY=keep-me")
         monkeypatch.setattr(update, "BASE_DIR", project)
+        monkeypatch.setattr(update, "RELEASE_PATHS", ["VERSION"])
 
         staging = tmp_path / "staging"
         staging.mkdir()
@@ -201,3 +231,27 @@ def test_app_version_matches_version_file():
     from app.core.version import APP_VERSION
 
     assert APP_VERSION == (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# 健康檢查：回歸測試——之前漏了 import json，一收到真的健康回應就會 NameError
+# ═════════════════════════════════════════════════════════════════════════
+class TestStartAndWaitHealthy:
+    def test_parses_real_json_response_without_crashing(self, monkeypatch):
+        monkeypatch.setattr(update.subprocess, "Popen", lambda *a, **k: None)
+
+        class _FakeResp:
+            status = 200
+
+            def read(self):
+                return b'{"status": "ok"}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        monkeypatch.setattr(update.urllib.request, "urlopen", lambda *a, **k: _FakeResp())
+
+        assert update.start_and_wait_healthy(timeout_sec=5) is True

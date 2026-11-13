@@ -24,6 +24,7 @@ Corphia AI 一鍵更新（伺服器端）
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -93,18 +94,28 @@ def restore_backup(backup_zip: Path) -> None:
 
 
 def apply_package(staging_dir: Path) -> list[str]:
-    """把更新包解壓後的內容，依它「實際有的」最上層路徑，覆蓋到對應的專案路徑。
+    """把更新包解壓後的內容，依 RELEASE_PATHS 逐一覆蓋到對應的專案路徑——跟 backup_current() 用同一份清單，
+    只動清單上列的「巢狀路徑」本身（例如 backend/app、backend/requirements.txt），不會整個砍掉重建
+    backend/、frontend/ 這種外層資料夾。
+    （修正：原本是看解壓後最上層有哪些資料夾名稱就整個 rmtree 再 copytree——backend/app 解壓後在
+    staging 裡只會是 backend/ 底下的一個子資料夾，原本的寫法會把真正的 backend/ 整個砍掉重建，
+    連不在清單上的 .env、.venv、uploads、generated、tests 都會被刪光，而且刪掉後也救不回來，
+    因為備份裡本來就沒存這些使用者資料。改成照清單逐條比對，只動清單列出的那個巢狀路徑。）
     回傳有被覆蓋的相對路徑清單（備份、記錄時都看得到動了什麼）。"""
     applied: list[str] = []
-    for entry in sorted(staging_dir.iterdir()):
-        dest = BASE_DIR / entry.name
-        if entry.is_dir():
+    for rel in RELEASE_PATHS:
+        src = staging_dir / rel
+        if not src.exists():
+            continue  # 這個版本的更新包沒帶這個路徑，保留現狀不動
+        dest = BASE_DIR / rel
+        if src.is_dir():
             if dest.exists():
                 shutil.rmtree(dest)
-            shutil.copytree(entry, dest)
+            shutil.copytree(src, dest)
         else:
-            shutil.copy2(entry, dest)
-        applied.append(entry.name)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+        applied.append(rel)
     return applied
 
 
@@ -117,8 +128,10 @@ def reinstall_deps_if_changed(old_requirements_hash: str | None, old_package_jso
     if file_hash_or_none(requirements) != old_requirements_hash:
         info("requirements.txt 有變更，重新安裝後端套件…")
         pip = BACKEND_DIR / ".venv" / "Scripts" / "pip.exe"
-        exe = str(pip) if pip.exists() else f"{sys.executable} -m pip"
-        result = subprocess.run([*exe.split(), "install", "-r", str(requirements)], cwd=str(BACKEND_DIR))
+        # 不能用 f"{sys.executable} -m pip".split() 組指令：安裝路徑常常帶空白（例如 Program Files），
+        # 這樣切割會把路徑切成好幾段，執行檔就找不到了
+        cmd = [str(pip), "install", "-r", str(requirements)] if pip.exists() else [sys.executable, "-m", "pip", "install", "-r", str(requirements)]
+        result = subprocess.run(cmd, cwd=str(BACKEND_DIR))
         (ok if result.returncode == 0 else warn)("後端套件安裝" + ("完成" if result.returncode == 0 else "失敗，請自行檢查"))
 
     package_json = FRONTEND_DIR / "package.json"

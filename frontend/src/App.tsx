@@ -158,14 +158,19 @@ export default function App() {
     }, [theme, accentColor, location.pathname])
 
     // ── 修正 iOS Safari 的 100dvh 偶發卡住（App 切到背景再切回來最常發生）──
-    // html 的高度用 100dvh（base.css），理論上會跟著目前看得到的視窗高度即時變動，
-    // 但部分 iOS 版本切到背景再切回來（或分割畫面、Duo 這類會變動安全區的裝置）時，
-    // dvh 會卡在切走前的舊值，底部因此多出一塊沒填滿的空白，要等整頁重新載入才會修正。
-    // 用 JS 讀當下真正的 window.innerHeight 蓋成 inline style（優先權比 CSS 的 dvh 高），
+    // html／body／#root 三個都用 100dvh（base.css 註解：「全部以 100dvh 為準」，三個本來就要一起動），
+    // 理論上會跟著目前看得到的視窗高度即時變動，但部分 iOS 版本切到背景再切回來（或分割畫面、Duo 這類
+    // 會變動安全區的裝置）時，dvh 會卡在切走前的舊值，底部因此多出一塊沒填滿的空白，要等整頁重新載入才會修正。
+    // 用 JS 讀當下真正的 window.innerHeight 蓋成 inline style（優先權比 CSS 的 dvh 高）；
+    // 三個都要蓋，只蓋 html 的話 body／#root 還是卡在舊的 dvh，三者會對不齊、空白還是補不滿。
     // 在「切回來」這個時機點（visibilitychange／pageshow／resize）重新量一次就能修正，不用整頁重載。
     useEffect(() => {
         const fixViewportHeight = () => {
-            document.documentElement.style.height = `${window.innerHeight}px`
+            const h = `${window.innerHeight}px`
+            document.documentElement.style.height = h
+            document.body.style.height = h
+            const root = document.getElementById('root')
+            if (root) root.style.height = h
         }
         fixViewportHeight()
         const onVisible = () => { if (document.visibilityState === 'visible') fixViewportHeight() }

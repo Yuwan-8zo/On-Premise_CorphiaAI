@@ -90,17 +90,18 @@ async def search(query: str) -> WebSearchReport:
         for r in raw_results
         if r.get("title") or r.get("content")
     ]
+    # screen_chunks 可能把中間某一筆丟掉（不是只會從尾端截斷），所以不能用 zip() 跟原始清單按位置配對
+    # ——丟掉的那一筆之後，位置就全部對不齊，標題/網址會接到別筆結果的內容上。
+    # metadata.filename（網址）在篩檢前後是同一個 dict，直接從篩檢後的結果讀，不用另外配對。
     kept, report = context_guard.screen_chunks(chunks)
 
     results: list[WebSearchResult] = []
-    for original, cleaned in zip(
-        [r for r in raw_results if r.get("title") or r.get("content")], kept
-    ):
+    for cleaned in kept:
         text = cleaned["content"]
         title, _, body = text.partition("\n")
         results.append({
-            "title": title or original.get("title", ""),
-            "url": original.get("url", ""),
+            "title": title,
+            "url": (cleaned.get("metadata") or {}).get("filename", ""),
             "content": body or text,
         })
 
