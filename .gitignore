@@ -115,6 +115,9 @@ docs/demo/專題資料/
 
 # 本機模型引擎（llama.cpp 執行檔，下載來的）
 engine/
+
+# 原生 PostgreSQL（不靠 Docker 的安裝；scripts/setup_postgres.py 下載來的，含資料目錄）
+db/
 backend/scripts/model_eval/out/
 
 # AI 產出的檔案（使用者資料，不進版本庫）

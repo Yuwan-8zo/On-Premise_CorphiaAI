@@ -187,8 +187,8 @@ class TestMainNoReleaseYet:
         monkeypatch.setattr(update, "BASE_DIR", project)
         monkeypatch.setattr(update, "VERSION_FILE", project / "VERSION")
 
-        def raise_404():
-            raise urllib.error.HTTPError(update.GITHUB_API, 404, "Not Found", {}, None)
+        def raise_404(repo):
+            raise urllib.error.HTTPError("https://api.github.com/repos/x/x/releases/latest", 404, "Not Found", {}, None)
 
         monkeypatch.setattr(update, "fetch_latest_release", raise_404)
         monkeypatch.setattr(sys, "argv", ["update.py"])

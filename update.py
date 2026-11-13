@@ -24,8 +24,6 @@ Corphia AI 一鍵更新（伺服器端）
 from __future__ import annotations
 
 import argparse
-import hashlib
-import json
 import shutil
 import subprocess
 import sys
@@ -34,13 +32,19 @@ import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
-from urllib.request import Request, urlopen
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE_DIR / "scripts"))
+from net_utils import (  # noqa: E402
+    download, fail, fetch_latest_release, find_asset, info, ok,
+    parse_version, sha256_of, verify_checksum, warn,
+)
+from release_manifest import RELEASE_PATHS  # noqa: E402
+
 BACKUPS_DIR = BASE_DIR / "backups"
 BACKEND_DIR = BASE_DIR / "backend"
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -48,28 +52,11 @@ VERSION_FILE = BASE_DIR / "VERSION"
 BACKEND_HEALTH_URL = "http://127.0.0.1:8168/api/v1/health"
 
 # 公司發布更新的地方：這個專案自己的 GitHub repo（公開，不用帳密）。
-# 之後如果改成公司自己的網域發布，只要改這個常數＋ fetch_latest_release()，其他都不用動。
+# 之後如果改成公司自己的網域發布，只要改這個常數＋呼叫 fetch_latest_release() 的地方，其他都不用動。
 UPDATE_REPO = "Yuwan-8zo/On-Premise_CorphiaAI"
-GITHUB_API = f"https://api.github.com/repos/{UPDATE_REPO}/releases/latest"
 
 # 新版本啟動後，等健康檢查通過的最長時間（秒）；逾時就當成啟動失敗，自動復原
 HEALTH_TIMEOUT_SEC = 180
-
-
-def info(message: str = "") -> None:
-    print(message, flush=True)
-
-
-def ok(message: str) -> None:
-    info(f"[OK] {message}")
-
-
-def warn(message: str) -> None:
-    info(f"[警告] {message}")
-
-
-def fail(message: str) -> None:
-    info(f"[錯誤] {message}")
 
 
 def current_version() -> str:
@@ -79,85 +66,12 @@ def current_version() -> str:
         return "0.0.0"
 
 
-def parse_version(v: str) -> tuple[int, ...]:
-    """"v2.4.0" / "2.4.0" → (2, 4, 0)；格式不對就當成 (0,)，不會讓程式整個爆掉"""
-    v = v.strip().lstrip("vV")
-    try:
-        return tuple(int(part) for part in v.split("."))
-    except ValueError:
-        return (0,)
-
-
-def fetch_latest_release() -> dict:
-    """問 GitHub 這個 repo 最新的 release 是什麼；回傳 GitHub API 的原始 JSON（tag_name／body／assets…）"""
-    req = Request(GITHUB_API, headers={"Accept": "application/vnd.github+json", "User-Agent": "CorphiaAI-Updater"})
-    with urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read().decode("utf-8"))
-
-
-def find_asset(assets: list[dict], suffix: str) -> dict | None:
-    for asset in assets:
-        if asset.get("name", "").endswith(suffix):
-            return asset
-    return None
-
-
-def sha256_of(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for block in iter(lambda: f.read(1 << 20), b""):
-            h.update(block)
-    return h.hexdigest()
-
-
-def download(url: str, dest: Path) -> None:
-    info(f"下載中：{url}")
-    req = Request(url, headers={"User-Agent": "CorphiaAI-Updater"})
-    with urlopen(req, timeout=60) as resp, dest.open("wb") as out:
-        total = int(resp.headers.get("Content-Length") or 0)
-        written = 0
-        last_pct = -1
-        while True:
-            chunk = resp.read(1 << 20)
-            if not chunk:
-                break
-            out.write(chunk)
-            written += len(chunk)
-            if total:
-                pct = written * 100 // total
-                if pct != last_pct:
-                    info(f"  {pct}% ({written // 1024} / {total // 1024} KB)")
-                    last_pct = pct
-
-
-def verify_checksum(zip_path: Path, checksum_path: Path) -> bool:
-    """checksum 檔格式："<64位hex>  <檔名>"（標準 sha256sum 輸出）；只比對前面那串雜湊值"""
-    expected = checksum_path.read_text(encoding="utf-8").strip().split()[0].lower()
-    actual = sha256_of(zip_path).lower()
-    if expected != actual:
-        fail(f"SHA-256 核對失敗：期望 {expected}，實際 {actual}（下載可能不完整或被竄改，已經不會套用）")
-        return False
-    ok("SHA-256 核對通過")
-    return True
-
-
 def backup_current(old_version: str) -> Path:
     """把「更新包可能會覆蓋到」的東西先備份成一個 zip，更新失敗時用 restore_backup() 復原"""
     BACKUPS_DIR.mkdir(exist_ok=True)
     dest = BACKUPS_DIR / f"update-{time.strftime('%Y%m%d-%H%M%S')}-from-v{old_version}.zip"
-    # 和 scripts/build_release.py 的 INCLUDE_PATHS 對應：備份「有可能被更新包覆蓋」的路徑就夠，
-    # 使用者資料（.env、uploads、ai_model、generated、.venv、node_modules）本來就不在這個清單裡，不用備份
-    candidates = [
-        "VERSION", "docker-compose.yml", "start.py", "stop.py", "update.py",
-        "一鍵啟動.bat", "一鍵關閉.bat", "一鍵更新.bat",
-        "backend/app", "backend/requirements.txt",
-        "frontend/src", "frontend/package.json", "frontend/package-lock.json",
-        "frontend/index.html", "frontend/vite.config.ts", "frontend/vite-plugins",
-        "frontend/tsconfig.json", "frontend/tsconfig.node.json",
-        "searxng/settings.yml", "searxng/limiter.toml", "searxng/Dockerfile",
-    ]
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as zf:
-        for rel in candidates:
+        for rel in RELEASE_PATHS:
             path = BASE_DIR / rel
             if not path.exists():
                 continue
@@ -251,7 +165,7 @@ def main() -> int:
     info(f"目前版本：{old_version}")
 
     try:
-        release = fetch_latest_release()
+        release = fetch_latest_release(UPDATE_REPO)
     except urllib.error.HTTPError as e:
         if e.code == 404:
             ok("還沒有發布任何版本，目前已經是最新。")

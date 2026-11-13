@@ -1,0 +1,209 @@
+"""
+裝一份「不靠 Docker」的原生 PostgreSQL（給伺服器安裝包用，只要做一次）。
+
+做了什麼：
+  1. 下載官方 PostgreSQL Windows x64 binaries（來源：postgresql.org 官方指向的 EnterpriseDB 發布點，
+     不是任何第三方編譯版）解壓到 db/postgresql/
+  2. initdb 建一份全新的資料目錄 db/pgdata/，使用者／密碼跟 .env.example、docker-compose.yml
+     的預設一致（corphia / corphia123），這樣既有的 DATABASE_URL 設定完全不用改
+  3. 把連接埠改成 5433（跟 Docker 版本一樣），只聽 127.0.0.1（不對外開放）
+  4. 啟動，建立 corphia_ai 資料庫
+
+做完之後：
+  - start.py／stop.py 偵測到 db/postgresql 存在，之後都會用 pg_ctl 管理這份原生資料庫，
+    不會再去找 Docker（但如果這份原生安裝不存在，仍然會照舊用 Docker，不影響目前的使用方式）
+  - pgvector 這個擴充套件官方沒有 Windows 預編譯檔，**不是**這個腳本裝的；裝好這個之後
+    還要跑一次 scripts/setup_pgvector.py（用 Visual Studio 把它編譯出來），兩個都做完
+    資料庫才完整可用（沒裝 pgvector 之前，後端會在「CREATE EXTENSION vector」那一步失敗）
+
+用法：
+    python scripts/setup_postgres.py                    # 用預設版本（見 DEFAULT_PG_VERSION）
+    python scripts/setup_postgres.py --pg-version 16.9-1 # 官方頁面上找到的其他版本號
+"""
+
+from __future__ import annotations
+
+import argparse
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from net_utils import download, fail, info, ok, warn  # noqa: E402
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+DB_DIR = BASE_DIR / "db"
+PG_INSTALL_DIR = DB_DIR / "postgresql"
+PGDATA_DIR = DB_DIR / "pgdata"
+
+# 跟 docker-compose.yml／backend/.env.example 的預設值一致，這樣 DATABASE_URL 完全不用改
+PG_USER = "corphia"
+PG_PASSWORD = "corphia123"
+PG_DB = "corphia_ai"
+PG_PORT = 5433
+
+# 在 https://www.postgresql.org/download/windows/ 的「zip archive」連結裡能找到目前的版本號；
+# 這一版是寫這個腳本時確認可下載的版本，之後 EDB 可能下架舊版，執行失敗時請到上面那頁查新的版本號，
+# 用 --pg-version 帶進來即可，不用改這個檔案。
+DEFAULT_PG_VERSION = "16.6-1"
+EDB_URL_TEMPLATE = "https://get.enterprisedb.com/postgresql/postgresql-{version}-windows-x64-binaries.zip"
+
+
+def pg_bin_dir() -> Path | None:
+    """原生安裝的 bin/ 目錄；EDB 的 zip 解開後多一層 pgsql/，這裡自動處理掉那層，找不到就回 None"""
+    for candidate in (PG_INSTALL_DIR / "bin", PG_INSTALL_DIR / "pgsql" / "bin"):
+        if (candidate / "pg_ctl.exe").is_file():
+            return candidate
+    return None
+
+
+def native_postgres_ready() -> bool:
+    """原生安裝已經裝好「且」已經 initdb 過，start.py／stop.py 用這個判斷走原生還是 Docker"""
+    return pg_bin_dir() is not None and (PGDATA_DIR / "PG_VERSION").is_file()
+
+
+def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kwargs)
+
+
+def extract_postgres(version: str) -> Path:
+    if pg_bin_dir():
+        ok(f"已經有原生 PostgreSQL 安裝在 {PG_INSTALL_DIR}，跳過下載。")
+        return pg_bin_dir()
+
+    DB_DIR.mkdir(exist_ok=True)
+    url = EDB_URL_TEMPLATE.format(version=version)
+    with tempfile.TemporaryDirectory(prefix="corphia-pg-") as tmp:
+        zip_path = Path(tmp) / "postgresql-binaries.zip"
+        try:
+            download(url, zip_path)
+        except Exception as e:
+            fail(
+                f"下載失敗：{e}\n"
+                f"請到 https://www.postgresql.org/download/windows/ 確認目前的版本號，"
+                f"用 --pg-version 帶正確的版本重新執行（這版用的是 {version}）。"
+            )
+            raise SystemExit(1)
+
+        info("解壓縮中…")
+        import zipfile
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(PG_INSTALL_DIR)
+
+    bin_dir = pg_bin_dir()
+    if not bin_dir:
+        fail(f"解壓完成，但在 {PG_INSTALL_DIR} 找不到 bin/pg_ctl.exe，下載的檔案可能不是預期的格式。")
+        raise SystemExit(1)
+    ok(f"PostgreSQL {version} 已安裝到 {PG_INSTALL_DIR}")
+    return bin_dir
+
+
+def run_initdb(bin_dir: Path) -> None:
+    if (PGDATA_DIR / "PG_VERSION").is_file():
+        ok(f"{PGDATA_DIR} 已經初始化過，跳過 initdb。")
+        return
+
+    DB_DIR.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="corphia-pg-init-") as tmp:
+        pwfile = Path(tmp) / "pwfile"
+        pwfile.write_text(PG_PASSWORD, encoding="utf-8")
+        info("初始化資料目錄（initdb）…")
+        result = _run([
+            str(bin_dir / "initdb.exe"),
+            "-D", str(PGDATA_DIR),
+            "-U", PG_USER,
+            "--pwfile", str(pwfile),
+            "--auth=scram-sha-256",
+            "--encoding=UTF8",
+            "--locale=C",
+        ])
+    if result.returncode != 0:
+        fail(f"initdb 失敗：\n{result.stdout}\n{result.stderr}")
+        raise SystemExit(1)
+    ok(f"資料目錄初始化完成：{PGDATA_DIR}")
+
+    # 只聽本機、固定連接埠（跟 Docker 版本一樣是 5433），不對外開放
+    conf = PGDATA_DIR / "postgresql.conf"
+    text = conf.read_text(encoding="utf-8")
+    text += f"\nlisten_addresses = '127.0.0.1'\nport = {PG_PORT}\n"
+    conf.write_text(text, encoding="utf-8")
+    ok(f"已設定只聽 127.0.0.1:{PG_PORT}")
+
+
+def start_and_wait(bin_dir: Path, timeout_sec: int = 60) -> bool:
+    log_path = DB_DIR / "postgres.log"
+    result = _run([str(bin_dir / "pg_ctl.exe"), "-D", str(PGDATA_DIR), "-l", str(log_path), "-w", "start"])
+    if result.returncode != 0:
+        fail(f"啟動失敗：\n{result.stdout}\n{result.stderr}\n（log：{log_path}）")
+        return False
+    import socket
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", PG_PORT), timeout=2):
+                return True
+        except OSError:
+            time.sleep(1)
+    return False
+
+
+def create_database(bin_dir: Path) -> None:
+    env = {"PGPASSWORD": PG_PASSWORD}
+    import os
+    full_env = {**os.environ, **env}
+    check = subprocess.run(
+        [str(bin_dir / "psql.exe"), "-U", PG_USER, "-h", "127.0.0.1", "-p", str(PG_PORT),
+         "-tAc", f"SELECT 1 FROM pg_database WHERE datname='{PG_DB}'"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", env=full_env,
+    )
+    if check.stdout.strip() == "1":
+        ok(f"資料庫 {PG_DB} 已經存在，跳過建立。")
+        return
+    result = subprocess.run(
+        [str(bin_dir / "createdb.exe"), "-U", PG_USER, "-h", "127.0.0.1", "-p", str(PG_PORT), PG_DB],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", env=full_env,
+    )
+    if result.returncode != 0:
+        fail(f"建立資料庫失敗：\n{result.stdout}\n{result.stderr}")
+        raise SystemExit(1)
+    ok(f"已建立資料庫 {PG_DB}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pg-version", default=DEFAULT_PG_VERSION)
+    args = parser.parse_args()
+
+    info("=" * 56)
+    info(" Corphia AI 原生 PostgreSQL 安裝（不靠 Docker）")
+    info("=" * 56)
+
+    bin_dir = extract_postgres(args.pg_version)
+    run_initdb(bin_dir)
+
+    info("啟動資料庫…")
+    if not start_and_wait(bin_dir):
+        fail("資料庫啟動後逾時仍連不上，請檢查 db/postgres.log")
+        return 1
+    ok(f"資料庫已啟動（127.0.0.1:{PG_PORT}）")
+
+    create_database(bin_dir)
+
+    info("")
+    ok("原生 PostgreSQL 安裝完成！之後 start.py／stop.py 會自動改用這份資料庫，不再需要 Docker。")
+    warn(
+        "pgvector 這個擴充套件還沒裝：官方沒有 Windows 預編譯檔，"
+        "請接著跑 python scripts/setup_pgvector.py（需要先裝好 Visual Studio Build Tools 和 Git）。"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

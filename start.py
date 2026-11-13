@@ -2,13 +2,14 @@
 Corphia AI one-click local launcher.
 
 This starts the full local development stack:
-  1. Docker PostgreSQL + pgvector
+  1. PostgreSQL + pgvector — native (scripts/setup_postgres.py) if set up, otherwise Docker
   2. Backend environment checks, llama-cpp-python, and DB initialization
   3. FastAPI backend
   4. Vite frontend
   5. Browser at http://localhost:5173
 
-The app itself runs locally. Docker is used only for PostgreSQL + pgvector.
+Docker (if used at all) only runs PostgreSQL as a fallback, plus the optional self-hosted
+SearXNG for external web search (ENABLE_WEB_SEARCH=true). See README "不靠 Docker".
 """
 
 from __future__ import annotations
@@ -38,6 +39,11 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 RUNTIME_DIR = BASE_DIR / ".runtime"
 BACKEND_PORT = 8168
 FRONTEND_PORT = 5173
+
+sys.path.insert(0, str(BASE_DIR / "scripts"))
+from setup_postgres import PGDATA_DIR as NATIVE_PGDATA_DIR  # noqa: E402
+from setup_postgres import PG_PORT as NATIVE_PG_PORT  # noqa: E402
+from setup_postgres import native_postgres_ready, pg_bin_dir  # noqa: E402
 DEFAULT_DB_PORT = 5433
 
 PROCESSES: list[subprocess.Popen] = []
@@ -547,23 +553,41 @@ def web_search_enabled() -> bool:
     return value.strip().lower() in ("1", "true", "yes", "on")
 
 
+def start_native_database() -> bool:
+    """跑過 scripts/setup_postgres.py 的機器：用 pg_ctl 管原生 PostgreSQL，完全不需要 Docker。
+    回傳 True 代表這條路走成功了（呼叫端不用再試 Docker）。"""
+    if not native_postgres_ready():
+        return False
+    bin_dir = pg_bin_dir()
+    info("[db] Starting native PostgreSQL (no Docker)...")
+    boot("database", "running", "啟動原生 PostgreSQL（不靠 Docker）…", code="db_starting")
+    log_path = NATIVE_PGDATA_DIR.parent / "postgres.log"
+    result = run([str(bin_dir / "pg_ctl.exe"), "-D", str(NATIVE_PGDATA_DIR), "-l", str(log_path), "-w", "start"],
+                 quiet=True, timeout=60)
+    if result.returncode != 0 and "already" not in (result.stdout + result.stderr).lower():
+        raise RuntimeError(f"Native PostgreSQL failed to start.\n{result.stdout}\n{result.stderr}")
+    if not wait_for_tcp("127.0.0.1", NATIVE_PG_PORT, timeout=60):
+        raise RuntimeError(f"Native PostgreSQL started, but localhost:{NATIVE_PG_PORT} did not become reachable.")
+    ok(f"Native PostgreSQL is ready on localhost:{NATIVE_PG_PORT}")
+    boot("database", "done", f"localhost:{NATIVE_PG_PORT}（原生，無 Docker）")
+    return True
+
+
 def start_database() -> None:
+    if start_native_database():
+        return
+
     start_docker_desktop()
 
     compose_file = BASE_DIR / "docker-compose.yml"
     if not compose_file.exists():
         raise RuntimeError("docker-compose.yml was not found.")
 
-    # 對外搜尋開啟時，連同自架 SearXNG 一起啟動（docker-compose.yml 裡用 profile 隔開，預設不會啟動）
-    profile_args = ["--profile", "search"] if web_search_enabled() else []
-    if profile_args:
-        info("[docker] 對外搜尋已開啟，一併啟動自架 SearXNG…")
-
     info("[docker] Starting PostgreSQL + pgvector...")
     boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…", code="db_starting")
     commands = [
-        ["docker", "compose", *profile_args, "up", "-d"],
-        ["docker-compose", *profile_args, "up", "-d"],
+        ["docker", "compose", "up", "-d", "postgres"],
+        ["docker-compose", "up", "-d", "postgres"],
     ]
     last_output = ""
     for cmd in commands:
@@ -581,6 +605,24 @@ def start_database() -> None:
             raise RuntimeError(f"Database container started, but localhost:{port} did not become reachable.")
 
     raise RuntimeError(f"Could not start Docker database.\n{last_output}".strip())
+
+
+def start_searxng_if_enabled() -> None:
+    """自架 SearXNG（對外搜尋用）一律走 Docker，跟資料庫是原生還是 Docker 無關；
+    沒開對外搜尋功能就什麼都不做（不會為了這個單獨把 Docker Desktop 叫起來）"""
+    if not web_search_enabled():
+        return
+    start_docker_desktop()
+    info("[docker] 對外搜尋已開啟，啟動自架 SearXNG…")
+    for cmd in (["docker", "compose"], ["docker-compose"]):
+        exe = shutil.which(cmd[0])
+        if not exe:
+            continue
+        result = run([exe, *cmd[1:], "--profile", "search", "up", "-d", "searxng"], cwd=BASE_DIR, quiet=True, timeout=180)
+        if result.returncode == 0:
+            ok("自架 SearXNG 已啟動")
+            return
+    warn("自架 SearXNG 啟動失敗，對外搜尋這一題會回報「服務目前無法使用」，其他功能不受影響")
 
 
 def init_database(python_exe: Path) -> None:
@@ -854,6 +896,7 @@ def main() -> int:
             ok("Skipped frontend startup (use existing dev server or production build)")
 
         start_database()
+        start_searxng_if_enabled()
 
         boot("engine", "running", "檢查 llama-cpp-python…", code="engine_check")
         run_auto_engine(python_exe, force=args.force_engine)

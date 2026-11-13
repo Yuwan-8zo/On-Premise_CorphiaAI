@@ -77,6 +77,24 @@ DATABASE_URL=postgresql+asyncpg://corphia:corphia123@localhost:5433/corphia_ai
 
 因為本機可能已經有 PostgreSQL 佔用 `5432`，所以 Docker PostgreSQL 對外使用 `5433`，container 內仍是 `5432`。
 
+## 不靠 Docker（原生 PostgreSQL）
+
+伺服器安裝包不想依賴 Docker Desktop 時，可以改用原生安裝的 PostgreSQL + pgvector——`start.py`／`stop.py`
+會自動偵測 `db/postgresql` 存不存在，有的話一律走原生（`pg_ctl` 啟動/關閉），完全不用 Docker；沒裝的話照舊用
+Docker，兩種模式並存、互不影響。
+
+```powershell
+python scripts/setup_postgres.py   # 下載官方 PostgreSQL（EnterpriseDB 發布）、initdb、建資料庫（一次性）
+python scripts/setup_pgvector.py   # 用本機的 Visual Studio 編譯 pgvector（官方沒有 Windows 預編譯檔）
+```
+
+`setup_pgvector.py` 需要先裝好 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+（勾選「使用 C++ 的桌面開發」）和 [Git for Windows](https://git-scm.com/download/win)；兩者都是編譯過程用的，
+裝好之後整個流程不用再碰它們。資料庫帳密、連接埠跟 Docker 版本完全一致（`corphia` / `corphia123` /
+`localhost:5433`），`DATABASE_URL` 不用改。
+
+對外搜尋用的自架 SearXNG 仍然走 Docker（跟資料庫是不是原生無關），開啟 `ENABLE_WEB_SEARCH` 時才會用到。
+
 ## llama-cpp-python
 
 `llama-cpp-python` 是必要套件，已列在：
