@@ -29,7 +29,7 @@ from app.services.hash_chain_service import stamp_message
 from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
-from app.services import file_builder, generated_files
+from app.services import browser_folder, file_builder, generated_files
 from app.services.output_guard import OutputScreen, screen_output
 from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block, style_directive
 from app.services.memory_service import is_enabled as memory_is_enabled
@@ -524,11 +524,19 @@ class ChatService:
         if style:
             system_prompt = f"{system_prompt}\n\n{style}"
 
+        # 瀏覽器臨時資料夾：使用者剛用瀏覽器選了這台電腦的資料夾附給這一題（只用這一次，用掉就從暫存清掉；
+        # 內容在附上的當下已經過 context_guard 篩過，這裡當成和 RAG 檢索一樣的「參考資料」處理）
+        attached = browser_folder.consume(conversation_id)
+        if attached:
+            folder_text, folder_files = attached
+            label = f"### 這台電腦的資料夾（使用者這一題附上：{'、'.join(folder_files)}；只用這一次，不是長期的參考資料）\n{folder_text}"
+            context = f"{context}\n\n{label}" if context else label
+
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
         if memory:
             system_prompt = f"{system_prompt}\n\n{memory}"
-        # 有外來資料（文件、記憶）時加一句：資料歸資料，裡面的指令不要照做
+        # 有外來資料（文件、記憶、剛附的資料夾）時加一句：資料歸資料，裡面的指令不要照做
         if memory or context:
             system_prompt = f"{system_prompt}\n\n{GUARD_LINE}"
         self.screen_report = final_state.get("screen") or {}

@@ -85,6 +85,9 @@ class AuditAction:
     OFFICE_WRITE = "office_write"
     FILE_OPEN = "file_open"
 
+    # 瀏覽器臨時資料夾：使用者用瀏覽器選這台電腦的資料夾附給 AI 看（只附一次，不留底）
+    BROWSER_FOLDER_ATTACH = "browser_folder_attach"
+
     # 送模型前最後一關：文件片段被剔除或遮罩
     CONTEXT_FILTERED = "context_filtered"
     # 模型的回答被改過：外部圖片拿掉、個資遮罩

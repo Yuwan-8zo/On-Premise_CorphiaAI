@@ -1,5 +1,5 @@
-import { FileText, Layers3, Paperclip } from '@/components/snow/icons'
-import React, { useLayoutEffect, useState } from 'react'
+import { FileText, Folder, Layers3, Paperclip, X } from '@/components/snow/icons'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
@@ -12,10 +12,14 @@ import { riseIn } from '@/lib/motionPresets'
 import OfficeMenu from '@/components/ui/OfficeMenu'
 import { desktop, useDesktop, type OfficeApp } from '@/lib/desktop'
 import { getErrorMessage } from '@/lib/errors'
+import { pickFolder, supportsFolderPicker } from '@/lib/browserFolder'
+import { browserFolderApi } from '@/api/browserFolder'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
     chatMode: 'general' | 'project'
+    /** 目前對話的 id；全新對話（還沒送出第一則訊息）是 undefined，這時候不顯示「附加資料夾」按鈕 */
+    conversationId?: string
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -43,7 +47,7 @@ interface ChatInputAreaProps {
 }
 
 export default function ChatInputArea({
-    selectedFolder, chatMode,
+    selectedFolder, chatMode, conversationId,
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
@@ -66,6 +70,61 @@ export default function ChatInputArea({
     }
     const toast = useToastStore()
     const [isRecording, setIsRecording] = useState(false)
+
+    /** 瀏覽器臨時資料夾：已附加、等著送給下一則訊息的（只到使用者送出訊息或按移除為止）
+     *  name 是 null 時表示重新整理頁面後恢復的狀態（伺服器只記得檔名清單，不記得資料夾本身叫什麼） */
+    const [attachedFolder, setAttachedFolder] = useState<{ name: string | null; count: number } | null>(null)
+    const [folderBusy, setFolderBusy] = useState(false)
+    const showFolderButton = Boolean(conversationId) && supportsFolderPicker()
+
+    // 換了對話（或重新整理頁面）：查一下這個對話是不是已經有剛附上、還沒送出的資料夾（恢復畫面上的小標籤）
+    useEffect(() => {
+        setAttachedFolder(null)
+        if (!conversationId) return
+        let stale = false
+        browserFolderApi.pending(conversationId).then((p) => {
+            if (!stale && p.files.length > 0) setAttachedFolder({ name: null, count: p.files.length })
+        }).catch(() => undefined)
+        return () => { stale = true }
+    }, [conversationId])
+
+    const pickAndAttachFolder = async () => {
+        if (!conversationId || folderBusy) return
+        setFolderBusy(true)
+        try {
+            const picked = await pickFolder()
+            if (picked.files.length === 0) { toast.error(t('chat.browserFolder.empty')); return }
+            const result = await browserFolderApi.attach(conversationId, picked.files)
+            if (result.accepted.length === 0) { toast.error(t('chat.browserFolder.empty')); return }
+            setAttachedFolder({ name: picked.name, count: result.accepted.length })
+            const suffix = picked.tooManyFiles ? t('chat.browserFolder.tooMany') : ''
+            if (result.skipped.length > 0) {
+                toast.info(t('chat.browserFolder.attachedSkipped', { name: picked.name, n: result.accepted.length, skipped: result.skipped.length }) + suffix)
+            } else {
+                toast.success(t('chat.browserFolder.attached', { name: picked.name, n: result.accepted.length }) + suffix)
+            }
+        } catch (err) {
+            if ((err as { name?: string })?.name !== 'AbortError') toast.error(getErrorMessage(err)) // 使用者自己按取消：不用顯示成錯誤
+        } finally {
+            setFolderBusy(false)
+        }
+    }
+    const removeAttachedFolder = async () => {
+        if (!conversationId) return
+        setAttachedFolder(null)
+        try {
+            await browserFolderApi.cancel(conversationId)
+            toast.success(t('chat.browserFolder.removed'))
+        } catch {
+            // 取消失敗不影響使用者：暫存內容最多留到過期時間，不會一直卡著
+        }
+    }
+    // 送出訊息時後端會自動把附加的資料夾內容用掉（只用一次），畫面上的小標籤跟著清掉
+    const sendAndClearFolder = () => { setAttachedFolder(null); handleSend() }
+    const onKeyDownClearFolder = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (attachedFolder && e.key === 'Enter' && !e.shiftKey) setAttachedFolder(null)
+        handleKeyDown(e)
+    }
     // 輸入內容超過欄位最大高度（160）時，送出鈕左邊出現「放大」鈕；放大後欄位變高，方便編輯長文
     const [overflowing, setOverflowing] = useState(false)
     const [expanded, setExpanded] = useState(false)
@@ -131,7 +190,7 @@ export default function ChatInputArea({
                         <div className="relative flex-1 min-w-0 flex flex-col glass-field">
 
                             {/* Tags / Files Row */}
-                            {(uploadedFiles.length > 0 || isUploading) && (
+                            {(uploadedFiles.length > 0 || isUploading || attachedFolder) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
                                         <div key={i} className="flex items-center gap-1.5 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
@@ -143,6 +202,18 @@ export default function ChatInputArea({
                                         <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] text-accent">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />
                                             <span>{t('ui.misc.uploading', { percent: uploadProgress })}</span>
+                                        </div>
+                                    )}
+                                    {/* 瀏覽器臨時資料夾：只附這一次，所以多一顆移除鈕（上面的上傳檔案是長期存到專案的，不能這樣取消） */}
+                                    {attachedFolder && (
+                                        <div className="flex items-center gap-1.5 snow-well pl-3 pr-1.5 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
+                                            <Folder className="w-4 h-4 text-accent" />
+                                            <span className="truncate max-w-[var(--sz-120)] text-text-primary">
+                                                {t('chat.browserFolder.chip', { name: attachedFolder.name ?? t('chat.browserFolder.restoredName'), n: attachedFolder.count })}
+                                            </span>
+                                            <button type="button" onClick={removeAttachedFolder} aria-label={t('chat.browserFolder.remove')} className="icon-tap !w-5 !h-5 text-text-secondary">
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -183,11 +254,24 @@ export default function ChatInputArea({
                                     </button>
                                 )}
 
+                                {/* 附加這台電腦的資料夾（File System Access API，只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底） */}
+                                {showFolderButton && (
+                                    <button
+                                        type="button"
+                                        onClick={pickAndAttachFolder}
+                                        disabled={isConnecting || isUploading || folderBusy}
+                                        aria-label={t('chat.browserFolder.button')}
+                                        className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
+                                    >
+                                        <Folder className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
+                                    </button>
+                                )}
+
                                 <textarea
                                     ref={inputRef}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    onKeyDown={handleKeyDown}
+                                    onKeyDown={onKeyDownClearFolder}
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
@@ -232,7 +316,7 @@ export default function ChatInputArea({
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => handleSend()}
+                                            onClick={sendAndClearFolder}
                                             disabled={!input.trim() || isConnecting || !llmReady}
                                             aria-label={t('chat.sendMessage')}
                                             className="flex transition-transform active:scale-95"

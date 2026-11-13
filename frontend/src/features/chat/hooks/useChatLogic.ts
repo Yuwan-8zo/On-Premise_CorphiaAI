@@ -437,6 +437,8 @@ export function useChatLogic() {
         inputProps: {
             selectedFolder,
             chatMode,
+            // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
+            conversationId: currentConversation?.id,
             isConnecting: socket.isConnecting,
             isUploading: upload.isUploading,
             uploadProgress: upload.uploadProgress,

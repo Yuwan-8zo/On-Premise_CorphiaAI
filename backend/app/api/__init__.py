@@ -21,6 +21,7 @@ from app.api.files import router as files_router
 from app.api.desktop import router as desktop_router
 from app.api.system_monitor import router as system_monitor_router
 from app.api.voice import router as voice_router
+from app.api.browser_folder import router as browser_folder_router
 
 __all__ = [
     "auth_router",
@@ -42,5 +43,6 @@ __all__ = [
     "desktop_router",
     "system_monitor_router",
     "voice_router",
+    "browser_folder_router",
 ]
 

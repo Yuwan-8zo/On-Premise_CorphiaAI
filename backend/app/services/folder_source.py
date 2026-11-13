@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Iterator, NamedTuple
 
 from app.core.config import settings
-from app.services.document_service import DocumentService
+from app.services.text_extract import SUPPORTED_EXTS
 
 # 舊版 .doc .xls .ppt 目前解析不了（上傳時也會擋），先不算可讀；之後加 LibreOffice 自動轉檔再打開
-SUPPORTED_EXTS = set(DocumentService.SUPPORTED_TYPES) - {".doc", ".xls", ".ppt"}
+# （SUPPORTED_EXTS 唯一來源在 text_extract.py，已經排除這三種）
 # AI 建立的新檔放在每個連接資料夾裡的這個子資料夾
 AI_OUTPUT_DIR = "AI 產出"
 
