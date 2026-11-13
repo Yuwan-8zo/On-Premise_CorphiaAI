@@ -1146,6 +1146,7 @@ export default {
                     other: 'Working…',
                 },
             },
+            sidePanel: { open: 'Open at the side', label: 'Side panel', pageTitle: 'Result', runTitle: 'Run result', close: 'Close panel' },
             codeFile: { preview: 'Preview', showCode: 'Show code', previewTitle: 'Preview (sandboxed, no network access)', save: 'Save', download: 'Download', saved: 'Saved to {{path}}', savedBackup: 'Saved to {{path}} (the previous file was backed up)', saveReply: 'Save as file' },
             unshare: 'Stop sharing',
             unshared: 'Sharing stopped. Only you can see this chat now',

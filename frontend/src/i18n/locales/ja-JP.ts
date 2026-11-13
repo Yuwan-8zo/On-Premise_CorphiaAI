@@ -1146,6 +1146,7 @@ export default {
                     other: '処理中…',
                 },
             },
+            sidePanel: { open: '横に開く', label: 'サイドパネル', pageTitle: '成果物', runTitle: '実行結果', close: 'パネルを閉じる' },
             codeFile: { preview: 'プレビュー', showCode: 'コードを表示', previewTitle: 'プレビュー（サンドボックス内・ネットワーク接続なし）', save: '保存', download: 'ダウンロード', saved: '{{path}} に保存しました', savedBackup: '{{path}} に保存しました（元のファイルはバックアップ済み）', saveReply: 'ファイルとして保存' },
             unshare: '共有を停止',
             unshared: '共有を停止しました。この会話を見られるのはあなただけです',

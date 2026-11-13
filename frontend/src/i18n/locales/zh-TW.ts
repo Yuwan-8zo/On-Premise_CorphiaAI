@@ -1146,6 +1146,7 @@ export default {
                     other: '正在處理…',
                 },
             },
+            sidePanel: { open: '在旁邊開啟', label: '旁邊的顯示面板', pageTitle: '成品', runTitle: '執行結果', close: '關閉面板' },
             codeFile: { preview: '預覽', showCode: '看程式碼', previewTitle: '預覽（關在沙盒裡，不能連網）', save: '存檔', download: '下載', saved: '已存到 {{path}}', savedBackup: '已存到 {{path}}（原本的檔案已備份）', saveReply: '存成檔案' },
             unshare: '取消分享',
             unshared: '已取消分享，現在只有你看得到這個對話',

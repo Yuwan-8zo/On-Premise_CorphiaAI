@@ -1,7 +1,7 @@
 /**
  * 程式碼高亮 — 僅註冊常用語言，縮小 markdown chunk。
  */
-import { memo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx'
@@ -13,11 +13,10 @@ import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import MaterialIcon from '@/components/icons/MaterialIcon'
-import { copyText } from '@/lib/clipboard'
-import { useDesktop } from '@/lib/desktop'
-import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
 import { PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
 import { isRunnable } from '@/lib/pyRunner'
+import { useSidePanelItem } from '@/features/chat/hooks/useSidePanelItem'
+import { CODE_BUTTON, CopyButton, OpenInPanelButton, SaveButton } from './CodeButtons'
 import CodeRunPanel from './CodeRunPanel'
 import { useTranslation } from 'react-i18next'
 
@@ -30,48 +29,6 @@ SyntaxHighlighter.registerLanguage('json', json)
 SyntaxHighlighter.registerLanguage('sql', sql)
 SyntaxHighlighter.registerLanguage('markdown', markdown)
 
-/** 程式碼區塊右上角的小按鈕（複製、存檔共用同一個樣式） */
-const CODE_BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded transition-colors'
-
-const CopyButton = ({ code }: { code: string }) => {
-    const { t } = useTranslation()
-    const [copied, setCopied] = useState(false)
-
-    const handleCopy = async () => {
-        if (await copyText(code)) {
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-        }
-    }
-
-    return (
-        <button
-            type="button"
-            onClick={handleCopy}
-            className={CODE_BUTTON}
-        >
-            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
-            {copied ? t('ui.message.copied') : t('ui.message.copy')}
-        </button>
-    )
-}
-
-/** 存成檔案：桌面版跳出另存新檔、寫到這台電腦；瀏覽器是一般下載 */
-const SaveButton = ({ code, language }: { code: string; language: string }) => {
-    const { t } = useTranslation()
-    const isDesktop = useDesktop()
-    return (
-        <button
-            type="button"
-            onClick={() => void saveTextFile(suggestFilename(language), code, isDesktop)}
-            className={CODE_BUTTON}
-        >
-            <MaterialIcon name="download" size={14} aria-hidden />
-            {t(isDesktop ? 'ui.chat.codeFile.save' : 'ui.chat.codeFile.download')}
-        </button>
-    )
-}
-
 const MarkdownCodeBlock = memo(({
     language,
     children,
@@ -83,8 +40,11 @@ const MarkdownCodeBlock = memo(({
     // HTML／SVG 可以直接看成品（關在沙盒裡、不能連網，見 lib/previewDoc）
     const canPreview = isPreviewable(language, children)
     const [preview, setPreview] = useState(false)
+    // 可以預覽的成品也能放到旁邊的顯示面板看（比較大、可以切換版本）
+    const panelContent = useMemo(() => (canPreview ? { kind: 'page' as const, code: children, language } : null), [canPreview, children, language])
+    const { ref, openInPanel, shownInPanel } = useSidePanelItem(panelContent)
     return (
-    <div className="relative group my-4">
+    <div ref={ref} className="relative group my-4">
         {language && (
             <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded-tl rounded-br">
                 {language}
@@ -97,6 +57,7 @@ const MarkdownCodeBlock = memo(({
                     {t(preview ? 'ui.chat.codeFile.showCode' : 'ui.chat.codeFile.preview')}
                 </button>
             )}
+            {canPreview && <OpenInPanelButton onOpen={openInPanel} shown={shownInPanel} />}
             <SaveButton code={children} language={language} />
             <CopyButton code={children} />
         </div>

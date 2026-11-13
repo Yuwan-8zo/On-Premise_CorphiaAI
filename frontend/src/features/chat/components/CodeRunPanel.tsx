@@ -6,11 +6,14 @@
  *   - 結果：印出來的文字、最後一行的值、畫的圖、錯誤訊息
  *   - 「交給 AI」：把結果放進輸入框（不自動送出），讓 AI 接著解讀或修正程式
  */
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from '@/components/snow/icons'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import { appendToChatInput } from '@/lib/chatInputBus'
+import { useSidePanelItem } from '@/features/chat/hooks/useSidePanelItem'
+import { CODE_BUTTON as BUTTON, OpenInPanelButton } from './CodeButtons'
+import RunResultView from './RunResultView'
 import { PY_RUN_TIMEOUT_MS, runPython, safeFileName, type PyRunFile, type PyRunResult } from '@/lib/pyRunner'
 
 /** 資料檔的上限：太大的檔案在瀏覽器裡會把記憶體用光 */
@@ -19,8 +22,6 @@ const MAX_DATA_FILE_MB = 20
 /** 交給 AI 的結果最多帶多少字（太長會把對話塞滿） */
 const RESULT_FOR_AI_CHARS = 3000
 
-const BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded transition-colors disabled:opacity-50'
-const OUTPUT = 'mt-2 max-h-[var(--sz-320)] overflow-auto rounded-[var(--r-12)] bg-[var(--chip)] p-3 text-[length:var(--fs-13)] leading-relaxed whitespace-pre-wrap break-words selectable-text'
 
 type Phase = 'idle' | 'running' | 'done'
 
@@ -74,8 +75,11 @@ export default function CodeRunPanel({ code }: { code: string }) {
     }
 
     const running = phase === 'running'
+    // 結果也能放到旁邊的顯示面板看（圖表比較大）
+    const panelContent = useMemo(() => (result ? { kind: 'run' as const, result } : null), [result])
+    const { ref, openInPanel, shownInPanel } = useSidePanelItem(panelContent)
     return (
-        <div className="mt-2" data-testid="code-run-panel">
+        <div ref={ref} className="mt-2" data-testid="code-run-panel">
             <div className="flex flex-wrap items-center gap-1.5">
                 <button type="button" onClick={() => void run()} disabled={running} className={`${BUTTON} !text-accent font-semibold`}>
                     <MaterialIcon name="play_arrow" size={14} aria-hidden />
@@ -106,27 +110,14 @@ export default function CodeRunPanel({ code }: { code: string }) {
                         {t('ui.chat.run.sendToAI')}
                     </button>
                 )}
+                {result && !running && <OpenInPanelButton onOpen={openInPanel} shown={shownInPanel} />}
             </div>
 
             <p className="mt-1.5 text-[length:var(--fs-12)] text-text-muted">{t('ui.chat.run.note')}</p>
             {running && <p role="status" className="mt-2 text-[length:var(--fs-13)] text-text-muted animate-pulse">{t('ui.chat.run.preparing')}</p>}
             {failure && !running && <p role="alert" className="mt-2 text-[length:var(--fs-13)] text-[var(--danger-ink)]">{failure}</p>}
 
-            {result && !running && (
-                <div aria-live="polite">
-                    {result.timedOut && <p role="alert" className="mt-2 text-[length:var(--fs-13)] text-[var(--danger-ink)]">{t('ui.chat.run.timedOut', { s: PY_RUN_TIMEOUT_MS / 1000 })}</p>}
-                    {result.stdout.trim() && <pre className={OUTPUT}>{result.stdout}</pre>}
-                    {result.value.trim() && <pre className={OUTPUT}>{result.value}</pre>}
-                    {result.images.map((src, i) => (
-                        <img key={i} src={src} alt={t('ui.chat.run.imageAlt', { n: i + 1 })} className="mt-2 max-w-full rounded-[var(--r-12)] bg-white" />
-                    ))}
-                    {result.error && <pre role="alert" className={`${OUTPUT} !text-[var(--danger-ink)]`}>{result.error}</pre>}
-                    {!result.timedOut && !result.error && !result.stdout.trim() && !result.value.trim() && result.images.length === 0 && (
-                        <p className="mt-2 text-[length:var(--fs-13)] text-text-muted">{t('ui.chat.run.noOutput')}</p>
-                    )}
-                    <p className="mt-1.5 text-[length:var(--fs-12)] tabular-nums text-text-muted">{t('ui.chat.run.took', { s: result.seconds })}</p>
-                </div>
-            )}
+            {result && !running && <RunResultView result={result} />}
         </div>
     )
 }
