@@ -890,6 +890,7 @@ export default {
             },
         },
         lan: {
+            installHint: 'After opening it, choose "Add to Home Screen" in the phone browser menu to launch it like an app',
             encryptedHint: 'The connection is encrypted. The certificate is signed by this host, so a phone shows a warning the first time. Check that the address matches, then choose to continue',
             fingerprint: 'Host certificate fingerprint: {{value}}…',
             enabled: 'On',

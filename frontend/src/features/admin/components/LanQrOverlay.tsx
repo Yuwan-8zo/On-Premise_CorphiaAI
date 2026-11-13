@@ -67,6 +67,8 @@ export default function LanQrOverlay({ ip, url: givenUrl, encrypted = false, fin
                     <QrCode value={url} />
                 </div>
                 <p className="lan-qr-url selectable-text">{url}</p>
+                {/* 手機開啟後可以裝成 App（主畫面圖示、全螢幕） */}
+                <p className="lan-qr-sub">{t('admin.lan.installHint')}</p>
                 {/* 加密連線：憑證是主機自己簽的，手機第一次會跳提醒；給指紋的前幾組讓人核對 */}
                 {encrypted && (
                     <p className="lan-qr-sub">
