@@ -38,10 +38,20 @@ interface PromptMenuProps {
     disabled?: boolean
     /** 放在輸入欄裡：38 圓鈕、內距 6，與欄位外框同心（25 − 6 = 19） */
     inline?: boolean
+    /** 由外面控制開關（輸入框的「＋」選單用）；不給就由自己的按鈕控制 */
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    /** 不顯示自己的按鈕（入口改放在「＋」選單裡），面板一樣貼著輸入框開 */
+    hideButton?: boolean
 }
 
-export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuProps) {
-    const [isOpen, setIsOpen] = useState(false)
+export function PromptMenu({ onSelect, disabled, inline = false, open, onOpenChange, hideButton = false }: PromptMenuProps) {
+    const [innerOpen, setInnerOpen] = useState(false)
+    const isOpen = open ?? innerOpen
+    const setIsOpen = (next: boolean) => {
+        setInnerOpen(next)
+        onOpenChange?.(next)
+    }
     // 「進場 / 退場動畫」雙 state pattern：
     //   - isVisible：是否真的 mount 在 DOM（控制 unmount 延遲）
     //   - isAnimating：當前是否在「展開」狀態（控制 transform / opacity）
@@ -114,7 +124,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         if (!isVisible) return
         const place = () => {
             // 在輸入框裡時，以整個輸入框為準（左緣對齊、上方留 8）；輸入框尺寸會隨裝置變，所以用量的，不寫死內距
-            const anchor = (inline ? btnRef.current?.closest('.glass-field') : null) ?? btnRef.current
+            const origin = btnRef.current ?? menuRef.current  // 沒有自己的按鈕時，用外層容器找輸入框
+            const anchor = (inline ? origin?.closest('.glass-field') : null) ?? origin
             const r = anchor?.getBoundingClientRect()
             if (!r) return
             setPos({ left: r.left, bottom: window.innerHeight - r.top + 8 })
@@ -165,8 +176,9 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
     }
 
     return (
-        <div className="relative flex items-center" ref={menuRef}>
-            <Tooltip label={isOpen ? '' : t('chat.promptTemplatesTitle')}>
+        // 沒有自己的按鈕時不佔位置（不然輸入框那一排會多一格空隙），但留在輸入框裡面，面板才找得到對齊的對象
+        <div className={hideButton ? 'absolute w-0 h-0' : 'relative flex items-center'} ref={menuRef}>
+            {!hideButton && <Tooltip label={isOpen ? '' : t('chat.promptTemplatesTitle')}>
                 <button
                     ref={btnRef}
                     type="button"
@@ -186,7 +198,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     {/* 提示詞模板圖示（文件＋文字行） */}
                     <Reader className="w-[calc(1.25rem*var(--field-bk,1))] h-[calc(1.25rem*var(--field-bk,1))] shrink-0" />
                 </button>
-            </Tooltip>
+            </Tooltip>}
 
             {/* 模板面板：portal 到 body（毛玻璃才模糊得到後面）
                 外框圓角 26、內距 10 → 類別膠囊、列都是同心的 16（26 − 10）；搜尋框是膠囊（圓角＝高 ÷ 2）；懸停不變色

@@ -39,6 +39,8 @@ vi.mock('@/lib/gsapMotion', () => {
   }: React.PropsWithChildren<Record<string, unknown>>) => props
 
   return {
+    // 進出場動畫的外框：測試裡直接顯示內容
+    AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
     motion: {
       div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
         React.createElement('div', stripMotionProps(props), children),
@@ -63,9 +65,6 @@ const makeDefaultProps = (overrides: Partial<Parameters<typeof ChatInputArea>[0]
   return {
     selectedFolder: null,
     chatMode: 'general' as const,
-    webSearchEnabled: false,
-    webSearchOn: false,
-    setWebSearchOn: vi.fn(),
     isConnecting: false,
     isUploading: false,
     uploadProgress: 0,
@@ -97,23 +96,17 @@ describe('ChatInputArea', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
 
-  it('webSearchEnabled 為 false 時不顯示對外搜尋切換鈕', () => {
-    render(<ChatInputArea {...makeDefaultProps({ webSearchEnabled: false })} />)
-    expect(screen.queryByLabelText('chat.webSearch.toggle')).not.toBeInTheDocument()
+  it('沒有任何可用的功能時，連「＋」都不顯示', () => {
+    render(<ChatInputArea {...makeDefaultProps()} />)
+    expect(screen.queryByLabelText('chat.moreActions')).not.toBeInTheDocument()
   })
 
-  it('webSearchEnabled 為 true 時顯示切換鈕，點擊呼叫 setWebSearchOn', async () => {
-    const setWebSearchOn = vi.fn()
-    render(<ChatInputArea {...makeDefaultProps({ webSearchEnabled: true, webSearchOn: false, setWebSearchOn })} />)
-    const toggle = screen.getByLabelText('chat.webSearch.toggle')
-    expect(toggle).toHaveAttribute('aria-pressed', 'false')
-    await userEvent.click(toggle)
-    expect(setWebSearchOn).toHaveBeenCalledTimes(1)
-  })
-
-  it('webSearchOn 為 true 時切換鈕標記為已按下', () => {
-    render(<ChatInputArea {...makeDefaultProps({ webSearchEnabled: true, webSearchOn: true })} />)
-    expect(screen.getByLabelText('chat.webSearch.toggle')).toHaveAttribute('aria-pressed', 'true')
+  it('左邊只有一顆「＋」；對外搜尋改成自動判斷，選單裡沒有開關', async () => {
+    render(<ChatInputArea {...makeDefaultProps({ conversationId: 'conv-1' })} />)
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(screen.getByRole('menuitem', { name: 'chat.attachFiles.button' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitemcheckbox')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('chat.promptTemplatesTitle')).not.toBeInTheDocument()
   })
 
   it('輸入文字時呼叫 setInput', async () => {

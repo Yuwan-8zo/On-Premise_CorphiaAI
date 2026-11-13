@@ -5,6 +5,7 @@
 import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import AIThinkingIndicator from './AIThinkingIndicator'
 import ThinkingBlock from './ThinkingBlock'
+import WebSearchNote from './WebSearchNote'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
@@ -39,6 +40,8 @@ interface MessageBubbleProps {
     onResubmit?: (messageId: string, content: string) => void
     /** 重新生成這則 AI 回覆。會回到上一則 user 訊息並重送一次。 */
     onRegenerate?: (messageId: string) => void
+    /** 連網重答：這一則沒有連外網，同一題這次連外網查了再答。沒給（政策是完全不連外網）就不顯示按鈕 */
+    onSearchAgain?: (messageId: string) => void
     hideActions?: boolean
     /**
      * C2: 是否顯示 RAG 除錯面板（通常僅在「最後一則 AI 訊息」且開啟 Debug Mode 時為 true）。
@@ -74,7 +77,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, onSearchAgain, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     const { t } = useTranslation()
     const isDesktop = useDesktop()
@@ -352,6 +355,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             <div className="mt-4">
                                 <SourceCitations sources={message.sources} />
                             </div>
+                        )}
+
+                        {/* 這一則有沒有連外網（回答完成後才顯示；紀錄存在訊息上，重新整理後還在） */}
+                        {!isStreaming && message.webSearch && message.content && !message.blocked && (
+                            <WebSearchNote
+                                info={message.webSearch}
+                                onSearchAgain={onSearchAgain && !hideActions ? () => onSearchAgain(message.id) : undefined}
+                            />
                         )}
 
                         {/* C2: RAG 除錯面板 — 僅在最後一則 AI 訊息且開啟 Debug Mode 時顯示 */}

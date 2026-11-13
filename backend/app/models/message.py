@@ -57,6 +57,11 @@ class Message(Base):
     # RAG 來源引用 (JSON 陣列)
     sources: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     
+    # 模型的思考過程（只有會推理的模型才有；已過回答的安全檢查）。不算進對話歷史、不算進防竄改雜湊
+    reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # 這一則回答有沒有連外網：None＝沒有；有的話記 {"query": 送出去的關鍵字, "sources": [{"title", "url"}]}
+    web_search: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
     # 使用者評分 (1-5)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     

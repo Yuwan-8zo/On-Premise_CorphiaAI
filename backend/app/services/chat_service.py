@@ -30,6 +30,9 @@ from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 import app.services.browser_folder as browser_folder
+import app.services.web_search as web_search_svc
+import app.services.web_search_policy as web_search_policy
+from app.models.tenant import Tenant
 import app.services.file_builder as file_builder
 import app.services.generated_files as generated_files
 from app.services.output_guard import OutputScreen, screen_output
@@ -132,8 +135,10 @@ class ChatService:
         self.agent_graph = self._build_agent_graph()
         # 這一題「送模型前最後一關」的報告（_prepare_prompt 填）
         self.screen_report: dict = {}
-        # 這一題的對外搜尋報告（有開 web_search 才會填；_prepare_prompt 填）
+        # 這一題的對外搜尋報告（真的查了才會填；_prepare_prompt 填）
         self.web_search_report: Optional[dict] = None
+        # 這一題看起來需要即時資訊、但依政策沒有自動查（回答下面會提醒可以連網重答）
+        self.web_search_suggested = False
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -544,14 +549,23 @@ class ChatService:
             label = f"### 這台電腦的資料夾（使用者這一題附上：{'、'.join(folder_files)}；只用這一次，不是長期的參考資料）\n{folder_text}"
             context = f"{context}\n\n{label}" if context else label
 
-        # 對外搜尋：使用者這一題選了要連網查；結果當成參考資料（和檢索片段同一套篩檢，見 web_search.search）
+        # 對外搜尋：需要即時資訊時自動查（管理者可改成只提醒、或完全不連外網，見 services/web_search_policy）；
+        # 使用者按「連網重答」＝ web_search 為真，直接查。送出去的只有濃縮後的關鍵字；
+        # 結果當成參考資料（和檢索片段同一套篩檢，見 web_search.search）
         self.web_search_report = None
-        if web_search and settings.enable_web_search:
-            from app.services import web_search as web_search_svc
-            self.web_search_report = await web_search_svc.search(content)
-            search_text = web_search_svc.format_results_for_prompt(self.web_search_report)
-            if search_text:
-                context = f"{context}\n\n{search_text}" if context else search_text
+        self.web_search_suggested = False
+        search_mode = await self._web_search_mode(tenant_id)
+        if search_mode != "off":
+            # 專案資料夾只根據文件回答、這一題附了檔案就是要問檔案：這兩種不自動連外網
+            live = not final_state.get("folder_name") and not attached and web_search_policy.needs_live_info(content)
+            if web_search or (live and search_mode == "auto"):
+                query = await web_search_policy.condense_query(self.llm_service, content, self.model_name)
+                self.web_search_report = await web_search_svc.search(query)
+                search_text = web_search_svc.format_results_for_prompt(self.web_search_report)
+                if search_text:
+                    context = f"{context}\n\n{search_text}" if context else search_text
+            else:
+                self.web_search_suggested = live
 
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
@@ -721,6 +735,7 @@ class ChatService:
         # 思考過程（reasoning，只有會推理的模型才有）走同一套檢查，但不計入 full_response——
         # 不存進資料庫、不算進對話歷史，純粹是串流期間給使用者看的過程
         full_response = ""
+        reasoning_text = ""
         screen = OutputScreen()
         reasoning_screen = OutputScreen()
         try:
@@ -735,6 +750,7 @@ class ChatService:
                 if kind == "reasoning":
                     out = reasoning_screen.feed(chunk)
                     if out:
+                        reasoning_text += out
                         yield {"type": "reasoning", "content": out}
                     continue
                 chunk = screen.feed(chunk)
@@ -751,6 +767,7 @@ class ChatService:
                 yield {"type": "stream", "content": tail}
             reasoning_tail = reasoning_screen.flush()
             if reasoning_tail:
+                reasoning_text += reasoning_tail
                 yield {"type": "reasoning", "content": reasoning_tail}
         except (asyncio.CancelledError, GeneratorExit):
             # 中途停止（使用者按停止、生成逾時、連線中斷）：已經寫出來的部分存起來，
@@ -760,12 +777,13 @@ class ChatService:
                 # shield：存檔途中又收到取消也要存完
                 await asyncio.shield(
                     self._save_assistant_message(
-                        conversation_id, full_response + stopped_note(language), sources
+                        conversation_id, full_response + stopped_note(language), sources,
+                        reasoning=reasoning_text + reasoning_screen.flush(),
                     )
                 )
             raise
 
-        assistant_message = await self._save_assistant_message(conversation_id, full_response, sources)
+        assistant_message = await self._save_assistant_message(conversation_id, full_response, sources, reasoning=reasoning_text)
         if screen.changed:
             # 回答被改過：寫稽核、告訴使用者（畫面上的字已經是改過的）
             try:
@@ -929,6 +947,31 @@ class ChatService:
             logger.warning("最後一關寫稽核失敗: %s", e)
         return {"type": "context_filtered", **counts}
 
+    async def _web_search_mode(self, tenant_id: Optional[str]) -> str:
+        """這個單位的對外搜尋政策：auto／ask／off（整個系統沒開這個功能就是 off）"""
+        if not settings.enable_web_search:
+            return "off"
+        tenant = await self.db.get(Tenant, tenant_id) if tenant_id else None
+        return web_search_policy.mode_from_settings(tenant.settings if tenant else None)
+
+    def _web_search_record(self) -> Optional[dict]:
+        """
+        存在這則回答上的連網紀錄（畫面上「已連外網／未連外網」的依據，重新整理後還在）。
+        整個系統沒開對外搜尋時不記（不會連網，不必每一則都標）。
+        """
+        if not settings.enable_web_search:
+            return None
+        report = self.web_search_report
+        if report is None:
+            return {"used": False, "suggested": self.web_search_suggested}
+        if report.get("blocked"):
+            return {"used": False, "blocked": report.get("reason", ""), "query": report.get("query", "")}
+        return {
+            "used": True,
+            "query": report.get("query", ""),
+            "sources": [{"title": r["title"], "url": r["url"]} for r in report.get("results", [])],
+        }
+
     async def _report_web_search(self, conversation_id: str) -> dict:
         """對外搜尋用過了（或被擋）：寫一筆稽核，回給前端的提示事件"""
         report = self.web_search_report or {}
@@ -956,7 +999,7 @@ class ChatService:
         }
 
     async def _save_assistant_message(
-        self, conversation_id: str, content: str, sources: Optional[list]
+        self, conversation_id: str, content: str, sources: Optional[list], reasoning: str = ""
     ) -> Message:
         """存助手訊息：蓋防竄改 hash、更新對話的訊息數與更新時間（完整回答和中途停止共用）"""
         assistant_message = Message(
@@ -964,6 +1007,9 @@ class ChatService:
             role=MessageRole.ASSISTANT.value,
             content=content,
             sources=sources if sources else None,
+            # 思考過程：留著讓使用者之後還能回顧（存的是已經過安全檢查的版本）
+            reasoning=reasoning or None,
+            web_search=self._web_search_record(),
         )
         self.db.add(assistant_message)
         await self.db.commit()

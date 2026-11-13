@@ -1,5 +1,5 @@
-import { FileText, Folder, Globe, Layers3, Paperclip, X } from '@/components/snow/icons'
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import { FileText, Folder, Layers3, Paperclip, Reader, X } from '@/components/snow/icons'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
@@ -9,10 +9,10 @@ import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
 import { UPLOAD_ACCEPT } from '@/lib/uploadTypes'
 import { riseIn } from '@/lib/motionPresets'
-import OfficeMenu from '@/components/ui/OfficeMenu'
-import { desktop, useDesktop, type OfficeApp } from '@/lib/desktop'
+import InputActionsMenu, { type InputAction } from '@/components/ui/InputActionsMenu'
+import { desktop, OFFICE_APPS, useDesktop, type OfficeApp } from '@/lib/desktop'
 import { getErrorMessage } from '@/lib/errors'
-import { pickFolder, supportsFolderPicker } from '@/lib/browserFolder'
+import { BROWSER_FOLDER_MAX_FILES, BROWSER_FOLDER_MAX_TOTAL_MB, pickFolder, supportsFolderPicker } from '@/lib/browserFolder'
 import { browserFolderApi } from '@/api/browserFolder'
 
 interface ChatInputAreaProps {
@@ -20,10 +20,8 @@ interface ChatInputAreaProps {
     chatMode: 'general' | 'project'
     /** 目前對話的 id；全新對話（還沒送出第一則訊息）是 undefined，這時候不顯示「附加資料夾」按鈕 */
     conversationId?: string
-    /** 對外搜尋：後端沒開這個功能就不顯示切換鈕 */
-    webSearchEnabled: boolean
-    webSearchOn: boolean
-    setWebSearchOn: React.Dispatch<React.SetStateAction<boolean>>
+    /** 還沒有對話時先建一個並回傳它的 id（附加檔案用；沒提供就只有已存在的對話可以附） */
+    ensureConversation?: () => Promise<string | undefined>
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -51,8 +49,7 @@ interface ChatInputAreaProps {
 }
 
 export default function ChatInputArea({
-    selectedFolder, chatMode, conversationId,
-    webSearchEnabled, webSearchOn, setWebSearchOn,
+    selectedFolder, chatMode, conversationId, ensureConversation,
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
@@ -78,7 +75,9 @@ export default function ChatInputArea({
 
     /** 瀏覽器臨時資料夾：已附加、等著送給下一則訊息的（只到使用者送出訊息或按移除為止）
      *  name 是 null 時表示重新整理頁面後恢復的狀態（伺服器只記得檔名清單，不記得資料夾本身叫什麼） */
-    const [attachedFolder, setAttachedFolder] = useState<{ name: string | null; count: number } | null>(null)
+    const [attachedFolder, setAttachedFolder] = useState<{ name: string | null; count: number; files?: boolean } | null>(null)
+    /** 「附加檔案」用的隱藏檔案選取器（和上傳到專案的那一個分開：這個只附給下一則訊息，不留底） */
+    const attachInputRef = useRef<HTMLInputElement>(null)
     const [folderBusy, setFolderBusy] = useState(false)
     const showFolderButton = Boolean(conversationId) && supportsFolderPicker()
 
@@ -114,6 +113,51 @@ export default function ChatInputArea({
             setFolderBusy(false)
         }
     }
+    /** 提示詞模板面板的開關（入口在「＋」選單裡） */
+    const [promptOpen, setPromptOpen] = useState(false)
+    const hasPrompts = Array.isArray(t('chat.promptLibrary', { returnObjects: true }))
+    /** 「＋」選單的內容：依目前的情況列出用得到的功能 */
+    const actions: InputAction[] = [
+        ...(hasPrompts ? [{ key: 'prompt', icon: <Reader />, label: t('chat.promptTemplatesTitle'), onSelect: () => setPromptOpen(true) }] : []),
+        // 桌面版：讀取這台電腦上 Office 目前的內容（選取範圍；沒選就整份）
+        ...(isDesktop ? OFFICE_APPS.map((app) => ({
+            key: `office-${app}`, icon: <Layers3 />, label: t('chat.actionReadOffice', { app: t(`ui.office.app.${app}`) }),
+            disabled: isStreaming, onSelect: () => readFromOffice(app),
+        })) : []),
+        // 附加檔案：只附給下一則訊息（不留底），所有瀏覽器和手機都能用
+        ...(conversationId || ensureConversation ? [{ key: 'files', icon: <FileText />, label: t('chat.attachFiles.button'), disabled: folderBusy, onSelect: () => attachInputRef.current?.click() }] : []),
+        ...(chatMode === 'project' ? [{ key: 'upload', icon: <Paperclip />, label: t('chat.actionUpload'), onSelect: () => fileInputRef.current?.click() }] : []),
+        // 對外搜尋：後端有開這個功能才有；開著時這一題會連到自架的搜尋服務（只管這一題，送出後自動關）
+        // 附加這台電腦的資料夾（只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底）
+        ...(showFolderButton ? [{ key: 'folder', icon: <Folder />, label: t('chat.browserFolder.button'), disabled: folderBusy, onSelect: pickAndAttachFolder }] : []),
+    ]
+
+    /**
+     * 附加檔案：任何對話、任何瀏覽器（含手機）都能用，和附加資料夾走同一條路——
+     * 只附給下一則訊息，內容先過伺服器的安全檢查，送出後就丟掉，不存進文件庫。
+     */
+    const attachFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? [])
+        e.target.value = '' // 同一個檔案可以再選一次
+        if (files.length === 0 || folderBusy) return
+        if (files.length > BROWSER_FOLDER_MAX_FILES) { toast.error(t('chat.attachFiles.tooMany', { max: BROWSER_FOLDER_MAX_FILES })); return }
+        if (files.reduce((sum, f) => sum + f.size, 0) > BROWSER_FOLDER_MAX_TOTAL_MB * 1024 * 1024) { toast.error(t('chat.attachFiles.tooBig', { max: BROWSER_FOLDER_MAX_TOTAL_MB })); return }
+        setFolderBusy(true)
+        try {
+            const id = conversationId ?? await ensureConversation?.()
+            if (!id) { toast.error(t('chat.attachFiles.noConversation')); return }
+            const result = await browserFolderApi.attach(id, files)
+            if (result.accepted.length === 0) { toast.error(t('chat.attachFiles.empty')); return }
+            setAttachedFolder({ name: result.accepted.length === 1 ? result.accepted[0] : null, count: result.accepted.length, files: true })
+            if (result.skipped.length > 0) toast.info(t('chat.attachFiles.attachedSkipped', { n: result.accepted.length, skipped: result.skipped.length }))
+            else toast.success(t('chat.attachFiles.attached', { n: result.accepted.length }))
+        } catch (err) {
+            toast.error(getErrorMessage(err))
+        } finally {
+            setFolderBusy(false)
+        }
+    }
+
     const removeAttachedFolder = async () => {
         if (!conversationId) return
         setAttachedFolder(null)
@@ -212,9 +256,11 @@ export default function ChatInputArea({
                                     {/* 瀏覽器臨時資料夾：只附這一次，所以多一顆移除鈕（上面的上傳檔案是長期存到專案的，不能這樣取消） */}
                                     {attachedFolder && (
                                         <div className="flex items-center gap-1.5 snow-well pl-3 pr-1.5 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
-                                            <Folder className="w-4 h-4 text-accent" />
+                                            {attachedFolder.files ? <FileText className="w-4 h-4 text-accent" /> : <Folder className="w-4 h-4 text-accent" />}
                                             <span className="truncate max-w-[var(--sz-120)] text-text-primary">
-                                                {t('chat.browserFolder.chip', { name: attachedFolder.name ?? t('chat.browserFolder.restoredName'), n: attachedFolder.count })}
+                                                {attachedFolder.files
+                                                    ? (attachedFolder.name ?? t('chat.attachFiles.chip', { n: attachedFolder.count }))
+                                                    : t('chat.browserFolder.chip', { name: attachedFolder.name ?? t('chat.browserFolder.restoredName'), n: attachedFolder.count })}
                                             </span>
                                             <button type="button" onClick={removeAttachedFolder} aria-label={t('chat.browserFolder.remove')} className="icon-tap !w-5 !h-5 text-text-secondary">
                                                 <X className="w-3.5 h-3.5" />
@@ -228,63 +274,20 @@ export default function ChatInputArea({
                                 左右對稱 padding：原本只有 pl 沒有 pr，導致 Stop / Send 按鈕貼到 bubble 右邊緣，
                                 看起來像「凸出來」沒包住的 spacing。pr-3 sm:pr-4 讓右側留 12-16px 視覺呼吸。 */}
                             <div className="flex items-end gap-1 sm:gap-1.5 p-[var(--field-pad)] min-w-0">
-                                {/* 提示詞模版：放在欄位內左側，38 圓鈕、四邊內距 6，與外框同心 */}
+                                {/* 左邊只有一顆「＋」：提示詞模板、讀取 Office、上傳文件、對外搜尋、附加資料夾都收在它的選單裡 */}
                                 <PromptMenu
                                     inline
+                                    hideButton
+                                    open={promptOpen}
+                                    onOpenChange={setPromptOpen}
                                     disabled={isConnecting || isUploading}
                                     onSelect={(prompt: string) => {
                                         setInput((prev) => prev ? prompt + prev : prompt)
                                         setTimeout(() => inputRef.current?.focus(), 0)
                                     }}
                                 />
-
-                                {/* 桌面版：讀取這台電腦上 Office 目前的內容（選取範圍；沒選就整份） */}
-                                {isDesktop && (
-                                    <OfficeMenu
-                                        label={t('ui.office.read')}
-                                        icon={<Layers3 className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />}
-                                        buttonClassName="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
-                                        disabled={isConnecting || isUploading || isStreaming}
-                                        onPick={readFromOffice}
-                                    />
-                                )}
-
-                                {chatMode === 'project' && (
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isConnecting || isUploading}
-                                        className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
-                                    >
-                                        <Paperclip className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
-                                    </button>
-                                )}
-
-                                {/* 對外搜尋開關：後端有開這個功能才顯示；開著時這一題會連到自架的搜尋服務 */}
-                                {webSearchEnabled && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setWebSearchOn((v) => !v)}
-                                        disabled={isConnecting || isUploading}
-                                        aria-label={t('chat.webSearch.toggle')}
-                                        aria-pressed={webSearchOn}
-                                        className={`btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] disabled:opacity-50 ${webSearchOn ? 'text-accent' : 'text-text-secondary'}`}
-                                    >
-                                        <Globe className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
-                                    </button>
-                                )}
-
-                                {/* 附加這台電腦的資料夾（File System Access API，只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底） */}
-                                {showFolderButton && (
-                                    <button
-                                        type="button"
-                                        onClick={pickAndAttachFolder}
-                                        disabled={isConnecting || isUploading || folderBusy}
-                                        aria-label={t('chat.browserFolder.button')}
-                                        className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
-                                    >
-                                        <Folder className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
-                                    </button>
-                                )}
+                                <InputActionsMenu label={t('chat.moreActions')} items={actions} disabled={isConnecting || isUploading} />
+                                <input ref={attachInputRef} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={attachFiles} aria-hidden tabIndex={-1} />
 
                                 <textarea
                                     ref={inputRef}

@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 MIGRATIONS: list[tuple[str, list[str]]] = [
     # 專案資料夾的自訂指示（每個專案給 AI 的固定說明）
     ("2026-11-13-folder-instructions", ["ALTER TABLE folders ADD COLUMN IF NOT EXISTS instructions TEXT"]),
+    # 回答的思考過程、有沒有連外網的紀錄（重新整理後還看得到）
+    ("2026-11-13-message-reasoning-web-search", [
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reasoning TEXT",
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS web_search JSONB",
+    ]),
 ]
 
 

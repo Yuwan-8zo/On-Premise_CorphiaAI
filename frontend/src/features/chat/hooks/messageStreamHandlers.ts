@@ -98,7 +98,7 @@ export function buildStreamDispatcher(conversationId: string) {
                 const wasCurrent = isCurrent()
                 finish()
                 if (wasCurrent) {
-                    // 思考過程不存資料庫：重新載入會把它洗掉，先記下來，載入後掛回最後一則回答（留到離開這個對話為止）
+                    // 思考過程現在會存進資料庫；這裡是保險：萬一重新載入回來的那一則沒有帶（舊版後端、存檔失敗），仍然留著剛才看到的
                     const reasoning = [...store().messages].reverse().find((m) => m.role === 'assistant')?.reasoning
                     // 串流期間訊息 id 是暫時的；完成後重新載入，編輯／重新生成才指得到後端紀錄
                     conversationsApi

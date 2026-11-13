@@ -93,6 +93,10 @@ class MessageResponse(BaseModel):
     rating: Optional[int] = None
     content_hash: Optional[str] = None
     prev_hash: Optional[str] = None
+    # 模型的思考過程（只有會推理的模型才有）；分享頁不帶
+    reasoning: Optional[str] = None
+    # 這一則回答連外網查了什麼：{"query", "sources": [{"title", "url"}]}；沒連是 None
+    web_search: Optional[dict] = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)

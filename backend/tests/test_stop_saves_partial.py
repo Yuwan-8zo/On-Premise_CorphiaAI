@@ -30,7 +30,8 @@ class FakeLLM:
         await asyncio.sleep(self.first_delay)
         for c in self.chunks:
             await asyncio.sleep(0.05)
-            yield ("content", c)
+            # 一般的字是正式回答；要測思考過程時直接給 ("reasoning", 文字)
+            yield c if isinstance(c, tuple) else ("content", c)
 
 
 @pytest.fixture
@@ -106,3 +107,31 @@ async def test_complete_answer_has_no_note(db_session: AsyncSession, test_user: 
     svc, conv = await make_service(db_session, test_user, FakeLLM(["完", "整"]))
     await consume(svc, conv)
     assert await assistant_messages(db_session, conv) == ["完整"]
+
+
+async def test_reasoning_is_saved_separately_from_the_answer(db_session: AsyncSession, test_user: User, llm_ready):
+    """思考過程存在自己的欄位（之後還能回顧），不混進回答本身、也會先過回答的安全檢查"""
+    svc, conv = await make_service(db_session, test_user, FakeLLM([
+        ("reasoning", "先想一下："), ("reasoning", "聯絡人身分證 A123456789。"), "答案是", "四十二",
+    ]))
+    events = []
+    async with aclosing(svc.send_message_stream(conversation_id=conv.id, content="問題", language="zh-TW")) as s:
+        async for e in s:
+            events.append(e)
+    message = (await db_session.execute(
+        select(Message).where(Message.conversation_id == conv.id, Message.role == "assistant")
+    )).scalars().one()
+    assert message.content == "答案是四十二"
+    assert message.reasoning.startswith("先想一下：")
+    assert "A123456789" not in message.reasoning, "思考過程裡的個資也要遮罩後才存"
+    streamed = "".join(e["content"] for e in events if e["type"] == "reasoning")
+    assert streamed == message.reasoning, "存下來的和畫面上看到的要一樣"
+
+
+async def test_answer_without_reasoning_leaves_the_field_empty(db_session: AsyncSession, test_user: User, llm_ready):
+    svc, conv = await make_service(db_session, test_user, FakeLLM(["完", "整"]))
+    await consume(svc, conv)
+    message = (await db_session.execute(
+        select(Message).where(Message.conversation_id == conv.id, Message.role == "assistant")
+    )).scalars().one()
+    assert message.reasoning is None

@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React, { createRef } from 'react'
 
@@ -16,6 +16,8 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@/lib/gsapMotion', () => ({
+  // 進出場動畫的外框：測試裡直接顯示內容
+  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
   motion: { div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => React.createElement('div', props, children) },
 }))
 
@@ -26,6 +28,9 @@ vi.mock('@/features/chat/components/PromptMenu', () => ({
 const pickFolder = vi.fn()
 const supportsFolderPicker = vi.fn(() => true)
 vi.mock('@/lib/browserFolder', () => ({
+  // 上限和真的那一份一樣（附加檔案在送出前會先擋一次）
+  BROWSER_FOLDER_MAX_FILES: 40,
+  BROWSER_FOLDER_MAX_TOTAL_MB: 50,
   pickFolder: (...args: unknown[]) => pickFolder(...args),
   supportsFolderPicker: () => supportsFolderPicker(),
 }))
@@ -51,9 +56,6 @@ const makeProps = (overrides: Partial<Parameters<typeof ChatInputArea>[0]> = {})
     selectedFolder: null,
     chatMode: 'general' as const,
     conversationId: 'conv-1',
-    webSearchEnabled: false,
-    webSearchOn: false,
-    setWebSearchOn: vi.fn(),
     isConnecting: false,
     isUploading: false,
     uploadProgress: 0,
@@ -79,21 +81,71 @@ beforeEach(() => {
   supportsFolderPicker.mockReturnValue(true)
 })
 
+/** 「附加資料夾」收在輸入框左邊的「＋」選單裡：打開選單再點它 */
+const pickFolderFromMenu = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByLabelText('chat.moreActions'))
+  await user.click(await screen.findByRole('menuitem', { name: 'chat.browserFolder.button' }))
+}
+
 describe('ChatInputArea：附加資料夾按鈕的顯示條件', () => {
-  it('有對話 id、瀏覽器支援時顯示按鈕', async () => {
+  it('有對話 id、瀏覽器支援時選單裡有這一項', async () => {
     render(<ChatInputArea {...makeProps()} />)
-    expect(await screen.findByLabelText('chat.browserFolder.button')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(await screen.findByRole('menuitem', { name: 'chat.browserFolder.button' })).toBeInTheDocument()
   })
 
   it('沒有對話 id（全新對話）時不顯示', () => {
     render(<ChatInputArea {...makeProps({ conversationId: undefined })} />)
-    expect(screen.queryByLabelText('chat.browserFolder.button')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('chat.moreActions')).not.toBeInTheDocument()  // 沒有可用的功能，連「＋」都不顯示
   })
 
-  it('瀏覽器不支援時不顯示', () => {
+  it('瀏覽器不支援選資料夾時，選單裡沒有這一項（但還是可以附加檔案）', async () => {
     supportsFolderPicker.mockReturnValue(false)
     render(<ChatInputArea {...makeProps()} />)
-    expect(screen.queryByLabelText('chat.browserFolder.button')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(screen.queryByRole('menuitem', { name: 'chat.browserFolder.button' })).not.toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'chat.attachFiles.button' })).toBeInTheDocument()
+  })
+})
+
+describe('ChatInputArea：附加檔案（只附給下一則訊息）', () => {
+  const chooseFiles = (container: HTMLElement, files: File[]) => {
+    const input = container.querySelector('input[type="file"][aria-hidden]') as HTMLInputElement
+    fireEvent.change(input, { target: { files } })
+  }
+
+  it('選好檔案後送到伺服器，輸入框上方出現檔名的小標籤', async () => {
+    attach.mockResolvedValue({ accepted: ['報告.pdf'], skipped: [], chars: 100, pii: 0 })
+    const { container } = render(<ChatInputArea {...makeProps()} />)
+    chooseFiles(container, [new File(['x'], '報告.pdf')])
+    await waitFor(() => expect(attach).toHaveBeenCalledWith('conv-1', expect.any(Array)))
+    expect(await screen.findByText('報告.pdf')).toBeInTheDocument()
+    expect(screen.getByLabelText('chat.browserFolder.remove')).toBeInTheDocument()
+  })
+
+  it('全新對話（還沒有 id）：先建立對話再附加', async () => {
+    attach.mockResolvedValue({ accepted: ['a.txt', 'b.txt'], skipped: [], chars: 10, pii: 0 })
+    const ensureConversation = vi.fn().mockResolvedValue('new-conv')
+    const { container } = render(<ChatInputArea {...makeProps({ conversationId: undefined, ensureConversation })} />)
+    chooseFiles(container, [new File(['x'], 'a.txt'), new File(['y'], 'b.txt')])
+    await waitFor(() => expect(attach).toHaveBeenCalledWith('new-conv', expect.any(Array)))
+    expect(ensureConversation).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('chat.attachFiles.chip:{"n":2}')).toBeInTheDocument()
+  })
+
+  it('伺服器一個都沒收（格式不支援）：不出現標籤', async () => {
+    attach.mockResolvedValue({ accepted: [], skipped: [{ name: 'x.exe', reason: '不支援' }], chars: 0, pii: 0 })
+    const { container } = render(<ChatInputArea {...makeProps()} />)
+    chooseFiles(container, [new File(['x'], 'x.exe')])
+    await waitFor(() => expect(attach).toHaveBeenCalled())
+    expect(screen.queryByLabelText('chat.browserFolder.remove')).not.toBeInTheDocument()
+  })
+
+  it('超過數量上限：不送到伺服器', async () => {
+    const { container } = render(<ChatInputArea {...makeProps()} />)
+    chooseFiles(container, Array.from({ length: 41 }, (_, i) => new File(['x'], `f${i}.txt`)))
+    await new Promise((r) => setTimeout(r, 20))
+    expect(attach).not.toHaveBeenCalled()
   })
 })
 
@@ -104,7 +156,7 @@ describe('ChatInputArea：附加與移除', () => {
     attach.mockResolvedValue({ accepted: ['a.txt'], skipped: [], chars: 10, pii: 0 })
     render(<ChatInputArea {...makeProps()} />)
 
-    await user.click(await screen.findByLabelText('chat.browserFolder.button'))
+    await pickFolderFromMenu(user)
 
     await waitFor(() => expect(attach).toHaveBeenCalledWith('conv-1', expect.any(Array)))
     expect(await screen.findByLabelText('chat.browserFolder.remove')).toBeInTheDocument()
@@ -115,7 +167,7 @@ describe('ChatInputArea：附加與移除', () => {
     pickFolder.mockRejectedValue(new DOMException('cancelled', 'AbortError'))
     render(<ChatInputArea {...makeProps()} />)
 
-    await user.click(await screen.findByLabelText('chat.browserFolder.button'))
+    await pickFolderFromMenu(user)
 
     await waitFor(() => expect(pickFolder).toHaveBeenCalled())
     expect(attach).not.toHaveBeenCalled()
@@ -127,7 +179,7 @@ describe('ChatInputArea：附加與移除', () => {
     pickFolder.mockResolvedValue({ name: 'docs', files: [new File(['x'], 'a.txt')], tooManyFiles: false })
     attach.mockResolvedValue({ accepted: ['a.txt'], skipped: [], chars: 10, pii: 0 })
     render(<ChatInputArea {...makeProps()} />)
-    await user.click(await screen.findByLabelText('chat.browserFolder.button'))
+    await pickFolderFromMenu(user)
     const removeBtn = await screen.findByLabelText('chat.browserFolder.remove')
 
     await user.click(removeBtn)
@@ -142,7 +194,7 @@ describe('ChatInputArea：附加與移除', () => {
     attach.mockResolvedValue({ accepted: ['a.txt'], skipped: [], chars: 10, pii: 0 })
     const handleSend = vi.fn()
     render(<ChatInputArea {...makeProps({ handleSend })} />)
-    await user.click(await screen.findByLabelText('chat.browserFolder.button'))
+    await pickFolderFromMenu(user)
     await screen.findByLabelText('chat.browserFolder.remove')
 
     await user.click(screen.getByLabelText('chat.sendMessage'))

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { conversationsApi } from '@/api/conversations'
 import { documentsApi } from '@/api/documents'
 import { foldersApi } from '@/api/folders'
-import { webSearchApi } from '@/api/webSearch'
+import { webSearchApi, type WebSearchPolicy } from '@/api/webSearch'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
@@ -55,9 +55,8 @@ export function useChatLogic() {
     const [chatMode, setChatMode] = useState<ChatMode>('general')
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
-    // 對外搜尋：這個租戶看不看得到開關、要不要每次先問使用者才搜（enabled=false 時整個功能不顯示）
-    const [webSearchOn, setWebSearchOn] = useState(false)
-    const [searchPolicy, setSearchPolicy] = useState<{ enabled: boolean; auto: boolean }>({ enabled: false, auto: false })
+    // 對外搜尋的政策（管理者設定）：要不要查由後端判斷；這裡只用來決定回答下面有沒有「連網重答」
+    const [searchPolicy, setSearchPolicy] = useState<WebSearchPolicy>({ enabled: false, mode: 'off' })
     useEffect(() => {
         webSearchApi.policy().then(setSearchPolicy).catch(() => undefined) // 查不到就當沒開，不影響其他功能
     }, [])
@@ -277,45 +276,34 @@ export function useChatLogic() {
         if (!text || isStreaming || socket.isConnecting) return
         if (!overrideValue) setInput('')
 
-        const doSend = async (webSearch: boolean) => {
-            const conversationId = await ensureConversation(text.slice(0, 50))
-            void autoTitle(conversationId, text)
+        const conversationId = await ensureConversation(text.slice(0, 50))
+        void autoTitle(conversationId, text)
 
-            addMessage(tempMessage('user', text))
-            scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
-            addMessage(tempMessage('assistant', '', {}, 1))
-            setStreaming(true)
+        addMessage(tempMessage('user', text))
+        scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
+        addMessage(tempMessage('assistant', '', {}, 1))
+        setStreaming(true)
 
-            // 專案模式：資料夾還沒有已啟用的文件就不問 AI，直接提示先上傳
-            if (chatMode === 'project') {
-                const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
-                if (folderName) {
-                    try {
-                        if ((await listFolderDocs(folderName, true)).length === 0) {
-                            await replyNoDocs(folderName)
-                            return
-                        }
-                    } catch (err) {
-                        console.warn('無法偵測資料夾文件數量，繼續送出訊息:', err) // 偵測失敗不擋使用者
+        // 專案模式：資料夾還沒有已啟用的文件就不問 AI，直接提示先上傳
+        if (chatMode === 'project') {
+            const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
+            if (folderName) {
+                try {
+                    if ((await listFolderDocs(folderName, true)).length === 0) {
+                        await replyNoDocs(folderName)
+                        return
                     }
+                } catch (err) {
+                    console.warn('無法偵測資料夾文件數量，繼續送出訊息:', err) // 偵測失敗不擋使用者
                 }
             }
-            await askAI(conversationId, text, webSearch)
         }
-
-        const useWebSearch = webSearchOn && searchPolicy.enabled
-        // 開關只管「這一則」：不管有沒有送出，問完就關掉，下一則不會又跳出確認（跟附加資料夾同一個邏輯）
-        setWebSearchOn(false)
-        // 預設「每次先問」：不是管理者設成自動搜尋，就先讓使用者確認一次要送出的關鍵字
-        if (useWebSearch && !searchPolicy.auto) {
-            showConfirm(t('chat.webSearch.confirm', { query: text }), () => doSend(true))
-            return
-        }
-        await doSend(useWebSearch)
+        // 要不要連外網由後端判斷（需要即時資訊才查）；這裡不帶旗標
+        await askAI(conversationId, text)
     }
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
-    const handleResubmit = useStableCallback(async (messageId: string, editedContent: string) => {
+    const handleResubmit = useStableCallback(async (messageId: string, editedContent: string, webSearch: boolean = false) => {
         if (isStreaming) return
 
         useChatStore.setState((state) => {
@@ -336,7 +324,7 @@ export function useChatLogic() {
 
         const ws = socket.get(useChatStore.getState().currentConversation?.id)
         if (ws) {
-            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language, 2048, webSearchOn && searchPolicy.enabled)
+            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language, 2048, webSearch && searchPolicy.enabled)
         } else {
             console.error('WebSocket 未連接，無法使用重新生成功能')
             setStreaming(false)
@@ -344,17 +332,20 @@ export function useChatLogic() {
     })
 
     /** 重新生成某則 AI 回覆：用它上方最近一則使用者訊息重新送出 */
-    const handleRegenerate = useStableCallback(async (assistantMessageId: string) => {
+    const handleRegenerate = useStableCallback(async (assistantMessageId: string, webSearch: boolean = false) => {
         if (isStreaming) return
         const all = useChatStore.getState().messages
         const idx = all.findIndex((m) => m.id === assistantMessageId)
         for (let i = idx - 1; i >= 0; i -= 1) {
             if (all[i].role === 'user') {
-                await handleResubmit(all[i].id, all[i].content)
+                await handleResubmit(all[i].id, all[i].content, webSearch)
                 return
             }
         }
     })
+
+    /** 連網重答：這一則回答沒有連外網，使用者按了「連網重答」→ 同一題這次連外網查了再答 */
+    const handleSearchAgain = useStableCallback((assistantMessageId: string) => handleRegenerate(assistantMessageId, true))
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -455,14 +446,13 @@ export function useChatLogic() {
             handleDeleteConversation,
         },
         inputProps: {
+            // 還沒有對話時附檔案：先用預設標題建一個（送出第一句話時會自動改成那句話）
+            ensureConversation: () => ensureConversation(DEFAULT_CONVERSATION_TITLE),
             selectedFolder,
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
             conversationId: currentConversation?.id,
             // 對外搜尋：後端沒開就不顯示切換鈕
-            webSearchEnabled: searchPolicy.enabled,
-            webSearchOn,
-            setWebSearchOn,
             isConnecting: socket.isConnecting,
             isUploading: upload.isUploading,
             uploadProgress: upload.uploadProgress,
@@ -500,6 +490,8 @@ export function useChatLogic() {
             isStreaming,
             handleResubmit,
             handleRegenerate,
+            // 政策是「完全不連外網」時不提供（回答下面就不會有這顆按鈕）
+            handleSearchAgain: searchPolicy.enabled ? handleSearchAgain : undefined,
             ragDebugMode,
             messagesEndRef: scroll.messagesEndRef,
             scrollContainerRef: scroll.scrollContainerRef,

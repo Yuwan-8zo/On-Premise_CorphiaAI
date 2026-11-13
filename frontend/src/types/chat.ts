@@ -49,6 +49,20 @@ export interface MessageAttachment {
     size: number
 }
 
+/** 一則回答的連網紀錄 */
+export interface MessageWebSearch {
+    /** 有沒有真的連外網查 */
+    used: boolean
+    /** 送出去的關鍵字（只有這幾個詞離開這台主機） */
+    query?: string
+    /** 查到、給模型參考的網頁 */
+    sources?: Array<{ title: string; url: string }>
+    /** 要查但被擋下來的原因（列管字詞、搜尋服務連不上） */
+    blocked?: string
+    /** 這一題看起來需要即時資訊，但依政策沒有自動查 */
+    suggested?: boolean
+}
+
 export interface Message {
     id: string
     role: 'user' | 'assistant' | 'system'
@@ -59,8 +73,10 @@ export interface Message {
     attachments?: MessageAttachment[]
     /** 正在製作哪一種檔案（只在串流期間存在前端，顯示「正在製作 Word 文件…」） */
     making?: string
-    /** 模型的思考過程（只有支援推理的模型才有；只存在前端，不會存進資料庫，重新整理就會消失） */
+    /** 模型的思考過程（只有支援推理的模型才有）；串流時即時累加，回答完成後存進資料庫，之後還能回顧 */
     reasoning?: string
+    /** 這一則回答有沒有連外網（後端每一則都記；系統沒開對外搜尋、或舊訊息是 undefined，畫面上就不標） */
+    webSearch?: MessageWebSearch
     rating?: number
     content_hash?: string
     prev_hash?: string

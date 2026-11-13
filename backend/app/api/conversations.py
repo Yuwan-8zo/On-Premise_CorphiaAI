@@ -396,7 +396,8 @@ async def view_shared_conversation(
     )
     return SharedConversationResponse(
         conversation=ConversationResponse.model_validate(conversation),
-        messages=[MessageResponse.model_validate(m) for m in result.scalars().all()],
+        # 分享頁只給回答本身：思考過程是給本人回顧用的，不隨分享出去
+        messages=[MessageResponse.model_validate(m).model_copy(update={"reasoning": None}) for m in result.scalars().all()],
         owner_name=owner.name if owner else "",
         is_owner=is_owner,
     )
