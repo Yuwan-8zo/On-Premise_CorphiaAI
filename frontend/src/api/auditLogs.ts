@@ -126,6 +126,7 @@ export const AUDIT_ACTIONS = [
     'office_read',
     'office_write',
     'file_open',
+    'file_save',
 ] as const
 
 /** 稽核的資源代碼（顯示文字在 i18n 的 admin.audit.resourceTypes） */

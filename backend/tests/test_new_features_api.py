@@ -297,3 +297,16 @@ class TestDesktopApi:
         assert log.details["name"] == "預算.xlsx" and log.details["chars"] == 21 and log.details["app"] == "excel"
         assert "text" not in log.details and "nested" not in log.details
         assert len(log.details["scope"]) == 200
+
+    async def test_saving_a_file_is_audited_without_its_content(self, async_client: AsyncClient, db_session: AsyncSession, test_user: User, user_auth_headers: dict):
+        """把 AI 寫的內容存成這台電腦的檔案：留下檔名、字數、有沒有蓋掉舊檔；檔案內容和完整路徑都不收"""
+        r = await async_client.post(f"{API}/desktop/events", headers=user_auth_headers, json={
+            "action": "file_save", "app": "py",
+            "detail": {"name": "report.py", "chars": 120, "backup": True, "content": "print('secret')", "path": "C:\\Users\\me\\report.py"},
+        })
+        assert r.status_code == 200
+        log = (await db_session.execute(
+            select(AuditLog).where(AuditLog.user_id == test_user.id, AuditLog.action == "file_save")
+        )).scalars().first()
+        assert log is not None
+        assert log.details == {"app": "py", "name": "report.py", "chars": 120, "backup": True}

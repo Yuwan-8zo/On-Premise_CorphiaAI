@@ -14,6 +14,8 @@ import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import { copyText } from '@/lib/clipboard'
+import { useDesktop } from '@/lib/desktop'
+import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
 import { useTranslation } from 'react-i18next'
 
 SyntaxHighlighter.registerLanguage('tsx', tsx)
@@ -24,6 +26,9 @@ SyntaxHighlighter.registerLanguage('bash', bash)
 SyntaxHighlighter.registerLanguage('json', json)
 SyntaxHighlighter.registerLanguage('sql', sql)
 SyntaxHighlighter.registerLanguage('markdown', markdown)
+
+/** 程式碼區塊右上角的小按鈕（複製、存檔共用同一個樣式） */
+const CODE_BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded transition-colors'
 
 const CopyButton = ({ code }: { code: string }) => {
     const { t } = useTranslation()
@@ -40,10 +45,26 @@ const CopyButton = ({ code }: { code: string }) => {
         <button
             type="button"
             onClick={handleCopy}
-            className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)]  rounded transition-colors"
+            className={CODE_BUTTON}
         >
             <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
             {copied ? t('ui.message.copied') : t('ui.message.copy')}
+        </button>
+    )
+}
+
+/** 存成檔案：桌面版跳出另存新檔、寫到這台電腦；瀏覽器是一般下載 */
+const SaveButton = ({ code, language }: { code: string; language: string }) => {
+    const { t } = useTranslation()
+    const isDesktop = useDesktop()
+    return (
+        <button
+            type="button"
+            onClick={() => void saveTextFile(suggestFilename(language), code, isDesktop)}
+            className={CODE_BUTTON}
+        >
+            <MaterialIcon name="download" size={14} aria-hidden />
+            {t(isDesktop ? 'ui.chat.codeFile.save' : 'ui.chat.codeFile.download')}
         </button>
     )
 }
@@ -61,7 +82,10 @@ const MarkdownCodeBlock = memo(({
                 {language}
             </div>
         )}
-        <CopyButton code={children} />
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+            <SaveButton code={children} language={language} />
+            <CopyButton code={children} />
+        </div>
         <SyntaxHighlighter
             language={language || 'text'}
             style={oneDark}

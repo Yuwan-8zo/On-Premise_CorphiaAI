@@ -8,6 +8,7 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
                （顯示啟動畫面，不用先按一鍵啟動、不用開瀏覽器），關掉視窗時一起關掉；原本就開著的服務不動（見 local_stack.py）
   伺服器位址   存在 %APPDATA%\\CorphiaAI\\desktop.json；連不上（而且不是上面那種情況）時顯示連線設定頁，可以改位址
   橋           介面用 window.pywebview.api.xxx() 呼叫下面 Api 的方法（前端包在 lib/desktop.ts）
+  存檔         AI 寫的程式碼／文字可以存成這台電腦的檔案：使用者按「存檔」→ 系統的另存新檔視窗 → 才寫（見 local_files.py）
   安全         只有「目前顯示的是設定的那台伺服器」時才接受操控 Office 的呼叫（別的網頁叫不動）；
                而且每個動作都要帶「這一頁的通行碼」：伺服器的頁面載入完成時才發給它，每次載入換一把、換頁就作廢。
                只看網址不夠——換頁的瞬間，上一頁（可能是外部網頁）送出的呼叫有機會在網址已經變回伺服器之後才被處理；
@@ -46,10 +47,11 @@ from urllib.parse import urlsplit
 
 import webview
 
+import local_files
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.2.0"
+VERSION = "0.3.3"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 WINDOW_SIZE = (1280, 800)
@@ -264,9 +266,12 @@ BOOT_PAGE = """<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><
 </div><script>
   const $ = (id) => document.getElementById(id);
   let timer = null;
+  let asking = false;
   const tick = async () => {
-    if (!(window.pywebview && window.pywebview.api)) return;
-    const s = await window.pywebview.api.boot_state();
+    if (asking || !(window.pywebview && window.pywebview.api)) return;
+    asking = true;  // 上一個詢問還沒回來就不再問（桌面版那邊也只會處理一個）
+    let s;
+    try { s = await window.pywebview.api.boot_state(); } finally { asking = false; }
     if (s.phase === 'error') {
       clearInterval(timer);
       $('card').className = 'card show failed';
@@ -303,6 +308,7 @@ class Api:
         # 這台電腦上的整套服務（桌面版自己啟動時才有）；_boot_page＝現在顯示的是內建的啟動畫面
         self._stack: LocalStack | None = None
         self._boot_page = False
+        self._boot_lock = threading.Lock()
         # 伺服器上比較新的桌面版（背景檢查到才有值）
         self._update: dict | None = None
         # 這一頁的通行碼：伺服器的頁面載入完成時發給它；空的＝目前沒有任何頁面可以操控
@@ -321,7 +327,12 @@ class Api:
         return bool(self._token) and isinstance(token, str) and secrets.compare_digest(token.encode(), self._token.encode()) and self._trusted()
 
     def _guard(self, token, fn):
-        return fn() if self._allowed(token) else {"ok": False, "error": "這個頁面不能使用桌面功能"}
+        if self._allowed(token):
+            return fn()
+        # 被擋下的原因寫進記錄（不記通行碼本身）：按鈕沒反應時才分得出是通行碼沒發到、還是網址不對
+        state = "沒帶" if not token else ("桌面版還沒發" if not self._token else ("不符" if token != self._token else "符合"))
+        logger.warning("橋的呼叫被擋下：通行碼%s；目前網址 %s；設定的伺服器 %s", state, self._current_url()[:80], self._server)
+        return {"ok": False, "error": "這個頁面不能使用桌面功能"}
 
     # ── 給介面用 ──
     def info(self, token: str = "") -> dict:
@@ -355,6 +366,58 @@ class Api:
     def open_file(self, token: str, filename: str = "", data_b64: str = "") -> dict:
         return self._guard(token, lambda: office_bridge.open_file(str(filename), str(data_b64)))
 
+    def note(self, text: str = "") -> dict:
+        """介面把「發生了什麼」記到桌面版的記錄檔（只寫記錄、不做任何事；按鈕沒反應時用來查是哪一步斷掉）"""
+        logger.info("介面：%s", " ".join(str(text)[:300].split()))
+        return {"ok": True}
+
+    def save_file(self, token: str, filename: str = "", content: str = "") -> dict:
+        """把 AI 寫的內容存成這台電腦的檔案：跳出「另存新檔」讓使用者自己選位置（按取消就不寫）"""
+        logger.info("存檔：收到介面的呼叫（%s，%s 字）", local_files.safe_name(str(filename)), len(str(content)))
+        def run() -> dict:
+            folder = local_files.output_dir()
+            try:
+                folder.mkdir(parents=True, exist_ok=True)
+                path = self._ask_save_path(str(folder), local_files.safe_name(str(filename)))
+            except Exception as e:
+                logger.exception("開不了存檔視窗")
+                return {"ok": False, "error": f"開不了存檔視窗：{str(e)[:160]}"}
+            if not path:
+                logger.info("存檔：使用者取消")
+                return {"ok": False, "cancelled": True, "error": "已取消"}
+            try:
+                result = local_files.save_text(path, str(content))
+            except local_files.SaveError as e:
+                logger.info("存檔被擋下：%s", e)
+                return {"ok": False, "error": str(e)}
+            logger.info("已存檔：%s（%s 字）", result["path"], result["chars"])
+            return {"ok": True, **result}
+
+        return self._guard(token, run)
+
+    def _ask_save_path(self, folder: str, name: str) -> str:
+        """
+        跳出系統的「另存新檔」，回使用者選的完整路徑（按取消回空字串）；開不起來就丟例外。
+        自己開而不用 pywebview 的 create_file_dialog：那個函式出錯時只會回 None，和「使用者按取消」分不出來，
+        結果就是按了存檔卻什麼都沒發生、也沒有任何訊息。這裡一律排到視窗自己的主執行緒去開
+        （介面呼叫橋是在背景執行緒，系統對話框要在主執行緒才保證開得起來），出錯會如實回報。
+        """
+        import System.Windows.Forms as WinForms
+        from System import Func, Object
+
+        form = self._window.native
+
+        def ask():
+            dialog = WinForms.SaveFileDialog()
+            dialog.InitialDirectory = folder
+            dialog.FileName = name
+            dialog.Filter = "所有檔案 (*.*)|*.*"
+            dialog.OverwritePrompt = True
+            dialog.RestoreDirectory = True
+            return dialog.FileName if dialog.ShowDialog(form) == WinForms.DialogResult.OK else ""
+
+        return str(form.Invoke(Func[Object](ask)) or "")
+
     def set_server(self, url: str) -> dict:
         """連線設定頁用：換伺服器位址（連得上才記住並切過去）"""
         # 只有內建的連線設定頁可以改；任何網頁（包含被帶去的外部網頁）都不行，
@@ -374,13 +437,18 @@ class Api:
 
     def boot_state(self) -> dict:
         """啟動畫面用：這台電腦的服務開到哪了；介面連得上就直接切過去"""
-        if not self._on_boot_page():
-            return {"phase": "ready"}
-        state = self._stack.state()
-        if state["phase"] == "ready":
-            self._boot_page = False
-            self._window.load_url(self._server)
-        return state
+        # 一次只處理一個詢問，而且只切換一次：啟動畫面每 0.3 秒問一次，「好了」的那一刻常常有好幾個詢問同時成立。
+        # 重複呼叫 load_url 很危險——網址一樣時視窗不會真的重新載入，但「頁面已載入」的狀態已經被清掉、
+        # 永遠等不到下一次載入完成，之後所有要確認目前頁面的功能（操控 Office、存檔）都會卡住 20 秒後被擋下。
+        with self._boot_lock:
+            if not self._on_boot_page():
+                return {"phase": "ready"}
+            state = self._stack.state()
+            if state["phase"] == "ready":
+                self._boot_page = False
+                logger.info("服務好了，切換到介面：%s", self._server)
+                self._window.load_url(self._server)
+            return state
 
     def boot_retry(self) -> dict:
         """啟動畫面用：啟動失敗後再試一次"""
@@ -407,6 +475,7 @@ class Api:
         self._token = ""  # 換頁了：上一頁的通行碼作廢
         url = self._current_url()
         where = origin(url)
+        logger.info("頁面載入完成：%s", url[:80] or "（內建畫面）")
         if where and where != origin(self._server):
             logger.info("外部連結改用系統瀏覽器開啟：%s", where)
             webbrowser.open(url)
@@ -420,6 +489,32 @@ class Api:
                 logger.warning("發通行碼失敗：%s", e)
                 return
             self._token = token
+            logger.info("已發通行碼給這一頁")
+
+
+def _close_file_dialog_when_shown(seen: dict, seconds: int = 8) -> None:
+    """自我檢查用：等系統的檔案對話框（視窗類別 #32770）出現，記下來並關掉它"""
+    import ctypes
+    user32 = ctypes.windll.user32
+    found: list = []
+
+    @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    def each(hwnd, _):
+        name = ctypes.create_unicode_buffer(32)
+        user32.GetClassNameW(hwnd, name, 32)
+        pid = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if name.value == "#32770" and pid.value == os.getpid() and user32.IsWindowVisible(hwnd):
+            found.append(hwnd)
+        return True
+
+    deadline = time.time() + seconds
+    while time.time() < deadline and not found:
+        user32.EnumWindows(each, 0)
+        time.sleep(0.1)
+    seen["shown"] = bool(found)
+    for hwnd in found:
+        user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
 
 
 def run_selftest(window, api: Api, out: Path) -> None:
@@ -462,6 +557,20 @@ def run_selftest(window, api: Api, out: Path) -> None:
             time.sleep(0.25)
         result["js_call"] = bool(called and called.get("ok") and called.get("desktop"))
         result["js_call_has_documents"] = bool(called and "apps" in called)
+        # 存檔：從介面那一側呼叫（和按鈕走同一條路），確認「另存新檔」視窗真的會出現；出現就自動關掉它（等於按取消）
+        result["save_method_exposed"] = bool(window.evaluate_js("!!window.pywebview.api.save_file"))
+        shown: dict = {}
+        threading.Thread(target=_close_file_dialog_when_shown, args=(shown,), daemon=True).start()
+        window.evaluate_js(
+            "window.__save = null; window.pywebview.api.save_file(window.__corphiaDesktop || '', 'selftest.txt', 'x')"
+            ".then(function (r) { window.__save = r }).catch(function (e) { window.__save = {jsError: String(e)} })")
+        for _ in range(SELFTEST_TIMEOUT * 4):
+            saved = window.evaluate_js("window.__save")
+            if saved:
+                break
+            time.sleep(0.25)
+        result["save_dialog_shown"] = bool(shown.get("shown"))
+        result["save_result"] = saved
     except Exception as e:
         result["error"] = str(e)[:300]
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -478,7 +587,15 @@ def main() -> int:
         return apply_update(Path(args.apply_update))
     if not args.selftest:
         cleanup_update()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+    # 打包後沒有主控台，記錄寫到檔案（每次啟動重寫）：按鈕沒反應這類問題才查得到原因
+    log_file = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "CorphiaAI" / "desktop.log"
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
+                            handlers=[logging.FileHandler(log_file, mode="w", encoding="utf-8")])
+    except OSError:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+    logger.info("Corphia AI 桌面版 %s 啟動", VERSION)
 
     server = normalize_server(args.server) if args.server else load_server()
     if args.server and server and not args.selftest:  # 自我檢查用的位址不要記下來

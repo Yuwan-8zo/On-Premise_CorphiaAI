@@ -6,6 +6,7 @@
  *   await desktop.read('word')              // 讀目前的內容（選取範圍或整份）
  *   await desktop.write('excel', markdown)  // 把回答寫進去
  *   await desktop.openFile(name, blob)      // 把 AI 產出的檔案存到「文件\Corphia AI 產出」並打開
+ *   await desktop.saveFile(name, text)      // 把 AI 寫的程式碼／文字存成這台電腦的檔案（跳出另存新檔；取消回 null）
  *   await desktop.info() ／ desktop.update() // 版本、有沒有新版 ／ 更新（components/desktop/DesktopUpdateNotice 用）
  *
  * 失敗一律丟 Error（訊息是給使用者看的原因）。每個成功的動作都回報伺服器寫稽核（POST /desktop/events）。
@@ -47,12 +48,24 @@ export interface DesktopInfo extends BridgeResult {
     /** 伺服器上比較新的桌面版；沒有新版是 null */
     update: { version: string; size: number } | null
 }
+export interface SavedFile extends BridgeResult {
+    path: string
+    name: string
+    chars: number
+    /** 蓋掉已經存在的檔案時，舊檔的備份位置；新檔案是 null */
+    backup: string | null
+    /** 使用者在另存新檔視窗按了取消 */
+    cancelled?: boolean
+}
 interface DesktopApi {
     info: (token: string) => Promise<DesktopInfo>
     update: (token: string) => Promise<BridgeResult & { version: string }>
     office_read: (token: string, app: OfficeApp) => Promise<OfficeRead>
     office_write: (token: string, app: OfficeApp, markdown: string) => Promise<OfficeWrite>
     open_file: (token: string, filename: string, dataB64: string) => Promise<OpenedFile>
+    save_file: (token: string, filename: string, content: string) => Promise<SavedFile>
+    /** 舊版桌面程式沒有這個方法 */
+    note?: (text: string) => Promise<BridgeResult>
 }
 type DesktopWindow = { pywebview?: { api?: DesktopApi }; __corphiaDesktop?: string }
 
@@ -73,6 +86,15 @@ export function useDesktop(): boolean {
     return ready
 }
 
+/** 把介面這一側發生的事記到桌面版的記錄檔（查「按了沒反應」用）；記不了也不影響操作 */
+function note(text: string): void {
+    try {
+        void bridge()?.note?.(text)?.catch(() => undefined)
+    } catch {
+        /* 記錄失敗不影響使用者的操作 */
+    }
+}
+
 function unwrap<T extends BridgeResult>(result: T | undefined | null): T {
     if (!result) throw new Error('桌面版沒有回應')
     if (!result.ok) throw new Error(result.error || '操作失敗')
@@ -80,7 +102,7 @@ function unwrap<T extends BridgeResult>(result: T | undefined | null): T {
 }
 
 /** 回報伺服器寫稽核；失敗不影響使用者的操作 */
-function report(action: 'office_read' | 'office_write' | 'file_open', app: string, detail: Record<string, unknown>) {
+function report(action: 'office_read' | 'office_write' | 'file_open' | 'file_save', app: string, detail: Record<string, unknown>) {
     void apiClient.post('/desktop/events', { action, app, detail }).catch(() => undefined)
 }
 
@@ -123,6 +145,22 @@ export const desktop = {
     openFile: async (filename: string, blob: Blob): Promise<OpenedFile> => {
         const r = unwrap(await bridge()?.open_file(token(), filename, await blobToBase64(blob)))
         report('file_open', filename.split('.').pop() || '', { name: r.name })
+        return r
+    },
+    /** 存成這台電腦的檔案；使用者按取消回 null（不是錯誤） */
+    saveFile: async (filename: string, content: string): Promise<SavedFile | null> => {
+        note(`按了存檔：${filename}（橋 ${bridge() ? '有' : '沒有'}、save_file ${bridge()?.save_file ? '有' : '沒有'}、通行碼 ${token() ? '有' : '沒有'}）`)
+        let raw: SavedFile | undefined
+        try {
+            raw = await bridge()?.save_file(token(), filename, content)
+        } catch (err) {
+            note(`呼叫存檔時出錯：${String(err)}`)
+            throw err
+        }
+        note(`存檔的結果：${raw ? (raw.ok ? '成功' : raw.cancelled ? '取消' : `失敗（${raw.error}）`) : '沒有回應'}`)
+        if (raw?.cancelled) return null
+        const r = unwrap(raw)
+        report('file_save', r.name.split('.').pop() || '', { name: r.name, chars: r.chars, backup: !!r.backup })
         return r
     },
 }

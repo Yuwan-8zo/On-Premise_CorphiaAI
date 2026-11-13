@@ -84,6 +84,7 @@ class AuditAction:
     OFFICE_READ = "office_read"
     OFFICE_WRITE = "office_write"
     FILE_OPEN = "file_open"
+    FILE_SAVE = "file_save"
 
     # 瀏覽器臨時資料夾：使用者用瀏覽器選這台電腦的資料夾附給 AI 看（只附一次，不留底）
     BROWSER_FOLDER_ATTACH = "browser_folder_attach"

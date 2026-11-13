@@ -14,7 +14,8 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw, Layers3 } from '@/components/snow/icons'
+import { Edit2, Check, X, RefreshCw, Layers3, Download } from '@/components/snow/icons'
+import { saveTextFile } from '@/lib/saveTextFile'
 import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
@@ -25,6 +26,9 @@ import { copyText } from '@/lib/clipboard'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
 import { riseIn } from '@/lib/motionPresets'
+
+/** 把整則回答存成檔案時的建議檔名（使用者在另存新檔視窗可以改） */
+const REPLY_FILENAME = 'AI 回答.md'
 
 /** 操控 Office 的結果提示停留多久（毫秒）：要讓使用者來得及讀「寫到哪、有沒有備份」 */
 const OFFICE_TOAST_MS = 6000
@@ -375,6 +379,18 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         >
                                         <RefreshCw />
                                     </button>
+                                )}
+                                {/* 桌面版：把整則回答存成這台電腦的檔案（跳出另存新檔，預設 Markdown） */}
+                                {isDesktop && !message.blocked && (
+                                    <Tooltip placement="bottom" label={t('ui.chat.codeFile.saveReply')}>
+                                        <button
+                                            aria-label={t('ui.chat.codeFile.saveReply')}
+                                            onClick={() => void saveTextFile(REPLY_FILENAME, message.content, true)}
+                                            className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                        >
+                                            <Download />
+                                        </button>
+                                    </Tooltip>
                                 )}
                                 {/* 桌面版：把這則回答寫進這台電腦的 Word（游標處）／Excel（目前儲存格起）／PowerPoint（新增一張） */}
                                 {isDesktop && !message.blocked && (

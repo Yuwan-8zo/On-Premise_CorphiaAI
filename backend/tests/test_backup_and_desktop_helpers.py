@@ -261,3 +261,116 @@ class TestLocalStack:
         assert stack.owned is True
         assert state["phase"] == "error" and "資料庫沒有啟動" in state["detail"]
         stack._log.close()
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# 把 AI 寫的內容存成這台電腦的檔案（desktop/local_files.py）
+# ═════════════════════════════════════════════════════════════════════════
+class TestLocalFiles:
+    @pytest.mark.parametrize("given,expected", [
+        ("code.py", "code.py"),
+        (r"C:\Windows\System32\evil.bat", "evil.bat"),
+        ("../../secret.txt", "secret.txt"),
+        ("a<b>:c?.txt", "a b  c .txt"),
+        ("", "AI 產出.txt"),
+        ("...", "AI 產出.txt"),
+        ("CON.txt", "AI 產出.txt"),
+        ("nul", "AI 產出.txt"),
+    ])
+    def test_safe_name_keeps_only_a_usable_file_name(self, given, expected):
+        import local_files
+        assert local_files.safe_name(given) == expected
+
+    def test_writes_text_exactly_as_given(self, tmp_path):
+        import local_files
+        target = tmp_path / "out" / "hello.py"
+        result = local_files.save_text(str(target), "print('你好')\nx = 1\n")
+        # 換行原樣寫入（不被 Windows 改成 \r\n）、UTF-8
+        assert target.read_bytes() == "print('你好')\nx = 1\n".encode("utf-8")
+        assert result == {"path": str(target), "name": "hello.py", "chars": 18, "backup": None}
+
+    def test_overwriting_backs_up_the_old_file_first(self, tmp_path, monkeypatch):
+        import local_files
+        monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "appdata"))
+        target = tmp_path / "notes.txt"
+        target.write_text("舊內容", encoding="utf-8")
+        result = local_files.save_text(str(target), "新內容")
+        assert target.read_text(encoding="utf-8") == "新內容"
+        assert result["backup"] and Path(result["backup"]).read_text(encoding="utf-8") == "舊內容"
+
+    @pytest.mark.parametrize("where", [
+        "Windows/System32/x.txt",
+        "Program Files/App/x.txt",
+        "ProgramData/x.txt",
+        "Users/me/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/run.bat",
+        "ProgramData/Microsoft/Windows/Start Menu/Programs/StartUp/run.bat",
+    ])
+    def test_refuses_system_and_run_at_startup_folders(self, tmp_path, monkeypatch, where):
+        """AI 的回答可能被惡意內容誘導：不能寫出開機就會執行、或蓋掉系統檔的檔案"""
+        import local_files
+        monkeypatch.setenv("SystemRoot", str(tmp_path / "Windows"))
+        monkeypatch.setenv("ProgramFiles", str(tmp_path / "Program Files"))
+        monkeypatch.setenv("ProgramData", str(tmp_path / "ProgramData"))
+        target = tmp_path / where
+        with pytest.raises(local_files.SaveError):
+            local_files.save_text(str(target), "echo hi")
+        assert not target.exists()
+
+    def test_ordinary_folders_are_allowed(self, tmp_path, monkeypatch):
+        import local_files
+        monkeypatch.setenv("SystemRoot", str(tmp_path / "Windows"))
+        assert local_files.is_protected(tmp_path / "Users" / "me" / "Documents" / "a.py") is False
+
+    def test_rejects_empty_or_oversized_content(self, tmp_path):
+        import local_files
+        for content in ("", None, "x" * (local_files.MAX_CHARS + 1)):
+            with pytest.raises(local_files.SaveError):
+                local_files.save_text(str(tmp_path / "a.txt"), content)
+        assert not (tmp_path / "a.txt").exists()
+
+    def test_rejects_relative_paths_and_folders(self, tmp_path):
+        import local_files
+        with pytest.raises(local_files.SaveError):
+            local_files.save_text("a.txt", "x")
+        (tmp_path / "taken").mkdir()
+        with pytest.raises(local_files.SaveError):
+            local_files.save_text(str(tmp_path / "taken"), "x")
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# 桌面版：從啟動畫面切換到介面只能做一次（需要 pywebview；沒有安裝就略過）
+# ═════════════════════════════════════════════════════════════════════════
+class TestDesktopBootSwitch:
+    def test_overlapping_boot_checks_switch_to_the_ui_exactly_once(self):
+        """
+        回歸測試：啟動畫面每 0.3 秒問一次「好了沒」，好了的那一刻會有好幾個詢問同時成立。
+        重複切換（網址相同）不會真的重新載入，卻會把「頁面已載入」的狀態清掉，
+        之後操控 Office、存檔全部卡住 20 秒後被擋下——使用者看到的就是「按了沒反應」。
+        """
+        import threading
+        import time
+        pytest.importorskip("webview", reason="pywebview 只裝在 desktop/.venv")
+        import corphia_desktop
+
+        class FakeWindow:
+            loads = 0
+
+            def get_current_url(self):
+                return ""  # 內建的啟動畫面沒有網址
+
+            def load_url(self, url):
+                FakeWindow.loads += 1
+
+        class SlowStack:
+            def state(self):
+                time.sleep(0.2)  # 確認服務好了沒要花時間，詢問才會疊在一起
+                return {"phase": "ready"}
+
+        api = corphia_desktop.Api("http://localhost:8168")
+        api._window, api._stack, api._boot_page = FakeWindow(), SlowStack(), True
+        threads = [threading.Thread(target=api.boot_state) for _ in range(6)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert FakeWindow.loads == 1
