@@ -73,18 +73,21 @@ def _default_route_ip() -> str | None:
         s.close()
 
 
-def _detect_lan_ips() -> list[str]:
-    """
-    給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
-      1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）
-      2. 沒有預設路由（例如沒有路由器的封閉網路）時，從「有連線、不是虛擬網卡、不是 169.254 自動配置」的網卡挑，
-         內網網段（10、172.16–31、192.168）優先，三者不分先後
-    網段由所在網路的路由器決定：公司內網是 172 開頭，這裡就會回傳 172 開頭的位址
-    """
-    primary = _default_route_ip()
-    if primary:
-        return [primary]
+def _owning_nic_name(ip: str) -> str | None:
+    """這個 IP 屬於哪張網卡；psutil 讀不到或找不到就回 None（呼叫端不能因此誤判成虛擬網卡）"""
+    try:
+        import psutil
 
+        for name, addrs in psutil.net_if_addrs().items():
+            if any(a.family == socket.AF_INET and a.address == ip for a in addrs):
+                return name
+    except Exception:
+        pass
+    return None
+
+
+def _real_nic_ips() -> list[str]:
+    """掃過所有網卡，挑出「有連線、不是虛擬網卡、不是 169.254 自動配置」的 IPv4 位址"""
     candidates: list[str] = []
     try:
         import psutil
@@ -100,6 +103,30 @@ def _detect_lan_ips() -> list[str]:
                     candidates.append(ip)
     except Exception:
         pass
+    return candidates
+
+
+def _detect_lan_ips() -> list[str]:
+    """
+    給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
+      1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）——但要先確認它不是虛擬網卡：
+         裝了 Docker Desktop／WSL 的電腦，虛擬網卡的路由 metric 有時候比實體網卡低，作業系統查路由會誤答成
+         那張虛擬網卡，這張卡只存在電腦內部，手機連不到（Docker 預設的虛擬網卡網段剛好也是 172.17.x.x，
+         跟公司網路常見的 172.16–31 網段撞在一起，混在一起時單看 IP 分不出來，要照網卡名稱判斷）
+      2. 預設路由查到的是虛擬網卡、或沒有預設路由（例如沒有路由器的封閉網路）時，改成掃全部網卡，
+         從「有連線、不是虛擬網卡、不是 169.254 自動配置」裡面挑，
+         內網網段（10、172.16–31、192.168）優先，三者不分先後
+    網段由所在網路的路由器決定：公司內網是 172 開頭，這裡就會回傳 172 開頭的位址
+    """
+    primary = _default_route_ip()
+    if primary:
+        owner = _owning_nic_name(primary)
+        # 查得到網卡名稱、而且不在虛擬網卡清單裡 → 照舊直接用；查不到名稱（psutil 不能用）也照舊相信預設路由
+        if owner is None or not any(k in owner.lower() for k in _VIRTUAL_NIC_KEYWORDS):
+            return [primary]
+        logger.warning("預設路由查到的位址 %s 屬於虛擬網卡 %s，改用網卡清單重新挑選", primary, owner)
+
+    candidates = _real_nic_ips()
 
     # 三種內網網段（10.x、172.16–31.x、192.168.x）一視同仁：中小企業常用 172 網段，不能排在後面；
     # 其他（公網位址等）放最後
