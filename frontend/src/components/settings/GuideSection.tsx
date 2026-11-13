@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Lock, MessageSquare, Mic, MoreHorizontal, Play, Reader, Share, Shield, ShieldCheck, User, UserRoundCog, Users, Cpu, Server,
-    Sparkles, FileText, Search, SlidersHorizontal, Layers3, Palette,
+    Bookmark, FileText, Search, SlidersHorizontal, Layers3, Palette,
 } from '@/components/snow/icons'
 
 import { resetOnboarding } from '@/components/onboarding/onboardingFlag'
@@ -81,7 +81,7 @@ export default function GuideSection() {
             <section className="set-section">
                 <div className="set-header">{t('guide.more.title')}</div>
                 <div className="set-group guide-group">
-                    <TipRow tone="purple" icon={<Sparkles className={ic} />} title={t('guide.more.memoryTitle')} desc={t('guide.more.memoryDesc')} />
+                    <TipRow tone="purple" icon={<Bookmark className={ic} />} title={t('guide.more.memoryTitle')} desc={t('guide.more.memoryDesc')} />
                     <TipRow tone="teal" icon={<Palette className={ic} />} title={t('guide.more.styleTitle')} desc={t('guide.more.styleDesc')} />
                     <TipRow tone="blue" icon={<FileText className={ic} />} title={t('guide.more.fileTitle')} desc={t('guide.more.fileDesc')} />
                     <TipRow tone="orange" icon={<Search className={ic} />} title={t('guide.more.searchTitle')} desc={t('guide.more.searchDesc')} />

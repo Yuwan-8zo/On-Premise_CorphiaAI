@@ -13,6 +13,7 @@ import { useLayoutEffect, useRef } from 'react'
  *
  * checks＝要量哪些區塊（預設所有 data-fit-check）；varName＝比例寫到哪個變數（預設 --fit）。
  * 同一頁可以分成好幾層各自縮放：例如後台的標題列＋左側欄只看側欄（切分頁時不會變），內容區另外用自己的變數縮放。
+ * 用的地方：後台整頁（AdminPage、骨架頁）、設定視窗左邊的選單欄（SettingsModal，變數 --menu-fit）。
  */
 /** 多出來幾 px 以內不重算縮放（要小於頁面底部的內距 --space） */
 const FIT_TOLERANCE = 3

@@ -63,8 +63,11 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     }
     const posFromY = (clientY: number) => {
         const boxes = geoRef.current.boxes
-        const r = listRef.current!.getBoundingClientRect()
-        const y = clientY - r.top
+        const el = listRef.current!
+        const r = el.getBoundingClientRect()
+        // 外層有縮放（zoom）時：畫面上的距離 ÷ 縮放比例＝版面座標（boxes 用的是版面座標）
+        const k = el.offsetHeight ? r.height / el.offsetHeight : 1
+        const y = (clientY - r.top) / (k || 1)
         const c = boxes.map((b) => b.top + b.h / 2)
         if (y <= c[0]) return 0
         for (let i = 0; i < c.length - 1; i++) if (y <= c[i + 1]) return i + (y - c[i]) / (c[i + 1] - c[i])

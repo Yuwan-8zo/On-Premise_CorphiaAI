@@ -23,7 +23,7 @@ import { useAdminTenants } from '../hooks/useAdminTenants'
 import { useAdminFolders } from '../hooks/useAdminFolders'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
-import { useFitToHost } from '../hooks/useFitToHost'
+import { useFitToHost } from '@/lib/useFitToHost'
 import { usePageDirection } from '@/lib/usePageDirection'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))

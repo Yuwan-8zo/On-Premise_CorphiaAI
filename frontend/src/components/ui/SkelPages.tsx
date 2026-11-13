@@ -9,7 +9,7 @@
 import type { CSSProperties } from 'react'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { Skel, SkelMessages } from '@/components/ui/Skeleton'
-import { useFitToHost } from '@/features/admin/hooks/useFitToHost'
+import { useFitToHost } from '@/lib/useFitToHost'
 import i18n from '@/i18n'
 import { loadLayoutSnapshot, type SnapItem } from '@/lib/layoutSnapshot'
 

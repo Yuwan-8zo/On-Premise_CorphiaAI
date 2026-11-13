@@ -114,3 +114,9 @@
 .glass-nav .lens.is-active {
   background: none;
 }
+
+/* 設定視窗左邊的選單欄：放不下時整欄等比例縮小（比例由 useFitToHost 算好寫在 --menu-fit；放得下就是 1）。
+   欄寬、貼著外框的內距在元件裡都除回這個比例，所以欄的位置與同心距離不變。 */
+.settings-menu {
+  zoom: var(--menu-fit, 1);
+}

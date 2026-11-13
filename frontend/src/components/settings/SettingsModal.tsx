@@ -6,12 +6,13 @@
  *     關閉鈕、返回鈕都離頂 20、高 36，排在同一條線上；選單標題的字和導覽圖示左緣對齊、和關閉鈕上下置中
  *   各分頁內容在同一個資料夾：ProfileSection、MemorySection、AppearanceSection、LanguageSection、GuideSection、AboutSection
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Book, ChevronLeft, ChevronRight, Globe, Info, Palette, ShieldCheck, Sparkles, User, X } from '@/components/snow/icons'
+import { Book, Bookmark, ChevronLeft, ChevronRight, Globe, Info, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
 import { useDismiss } from '@/lib/useDismiss'
+import { useFitToHost } from '@/lib/useFitToHost'
 import { usePageDirection } from '@/lib/usePageDirection'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -47,6 +48,22 @@ const PAGE_CLASS: Record<SettingSection, string> = {
 
 /** 開關動畫長度（毫秒） */
 const ANIM_MS = 300
+
+/**
+ * 選單欄（標題＋導覽＋管理後台入口）：固定不捲動。
+ * 視窗矮、項目多（管理員多一顆「管理後台」）放不下時，整欄等比例縮小到剛好放得下（useFitToHost，比例寫在 --menu-fit）；
+ * 欄寬和貼著外框的內距都除回比例（樣式裡的 /var(--menu-fit,1)），所以縮放後欄的位置、和外框的同心距離都不變，只有裡面的項目變小。
+ * 導覽區不裁切（overflow 可見）：放大鏡比項目大一圈，裁切的話最上、最下那一項的放大鏡會被切掉。
+ * 獨立成元件：視窗打開時才掛上，量測才會在那時候開始。
+ */
+function MenuColumn({ dir, hiddenOnPhone, children }: { dir: string; hiddenOnPhone: boolean; children: ReactNode }) {
+    const ref = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="settings-menu"]', varName: '--menu-fit' })
+    return (
+        <div ref={ref} data-dir={dir} className={`settings-menu page-in [--fit-on:1] md:w-[calc(16rem/var(--menu-fit,1))] flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${hiddenOnPhone ? 'hidden md:flex' : 'flex'}`}>
+            {children}
+        </div>
+    )
+}
 
 export default function SettingsModal() {
     const { t } = useTranslation()
@@ -85,7 +102,7 @@ export default function SettingsModal() {
 
     const menuItems = [
         { id: 'profile' as const, icon: <User className="w-5 h-5" />, label: t('settings.profile') },
-        { id: 'memory' as const, icon: <Sparkles className="w-5 h-5" />, label: t('settings.memory.title') },
+        { id: 'memory' as const, icon: <Bookmark className="w-5 h-5" />, label: t('settings.memory.title') },
         { id: 'appearance' as const, icon: <Palette className="w-5 h-5" />, label: t('settings.theme') },
         { id: 'language' as const, icon: <Globe className="w-5 h-5" />, label: t('settings.language') },
         { id: 'guide' as const, icon: <Book className="w-5 h-5" />, label: t('settings.guide') },
@@ -121,15 +138,16 @@ export default function SettingsModal() {
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
-                        <div key={`menu-${mobileView}`} data-dir={mobileDir} className={`settings-menu page-in md:w-64 flex-1 min-h-0 md:flex-none flex-shrink-0 flex-col ${mobileView === 'content' ? 'hidden md:flex' : 'flex'}`}>
+                        <MenuColumn key={`menu-${mobileView}`} dir={mobileDir} hiddenOnPhone={mobileView === 'content'}>
                             {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
-                            <div className="pl-[var(--sp-36)] md:pl-[var(--sp-51)] pr-4 pt-[var(--sp-26)] md:pt-[var(--sp-48)] pb-2">
+                            <div className="pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pl-[calc(var(--sp-51)/var(--menu-fit,1))] pr-4 pt-[calc(var(--sp-26)/var(--menu-fit,1))] md:pt-[calc(var(--sp-48)/var(--menu-fit,1))] pb-2">
                                 <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary">
                                     {t('settings.title')}
                                 </h2>
                             </div>
               {/* 導覽項跟下方「管理後台」膠囊左右對齊：左 36、右 14 */}
-              <nav className="flex-1 px-[var(--sp-20)] md:pl-[var(--sp-36)] md:pr-4 py-4 overflow-y-auto scrollbar-none">
+              {/* 不捲動、不裁切：放不下由 MenuColumn 整欄縮小（這一塊就是被量的對象） */}
+              <nav data-fit-check="settings-menu" className="flex-1 min-h-0 px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pr-4 py-4 overflow-visible">
                                 <GlassNav
                                     aria-label={t('settings.title')}
                                     value={activeSection}
@@ -143,7 +161,7 @@ export default function SettingsModal() {
 
                             {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
                             {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                <div className="px-[var(--sp-20)] md:pl-[var(--sp-36)] md:pr-4 pt-2 pb-[var(--sp-20)] md:pb-[var(--sp-36)]">
+                                <div className="px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pr-4 pt-2 pb-[calc(var(--sp-20)/var(--menu-fit,1))] md:pb-[calc(var(--sp-36)/var(--menu-fit,1))]">
                                     <div className="set-group !rounded-full">
                                         <button
                                             type="button"
@@ -157,7 +175,7 @@ export default function SettingsModal() {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </MenuColumn>
 
                         {/* 主內容區域 */}
                         {/* 捲動區上下淡出（同聊天頁 .chat-scroll）：捲動時內容不會被外框硬切 */}
