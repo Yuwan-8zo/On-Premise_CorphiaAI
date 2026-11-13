@@ -973,6 +973,9 @@ export default {
         },
         message: {
             copy: 'Copy',
+            versions: 'Other versions of this message',
+            prevVersion: 'Previous version',
+            nextVersion: 'Next version',
             readAloud: 'Read aloud',
             stopReading: 'Stop reading',
             noVoice: 'This computer has no offline voice for this language, so the answer cannot be read aloud (online voices would send the text out and are not used)',

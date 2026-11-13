@@ -33,6 +33,14 @@ MIGRATIONS: list[tuple[str, list[str]]] = [
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reasoning TEXT",
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS web_search JSONB",
     ]),
+    # 對話分支：每則訊息記著接在哪一則後面；原本的對話是一直線，照寫入順序接起來
+    ("2026-11-14-message-parent", [
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)",
+        "CREATE INDEX IF NOT EXISTS ix_messages_parent_id ON messages (parent_id)",
+        """UPDATE messages m SET parent_id = p.prev_id
+           FROM (SELECT id, LAG(id) OVER (PARTITION BY conversation_id ORDER BY created_at, id) AS prev_id FROM messages) p
+           WHERE m.id = p.id AND m.parent_id IS NULL AND p.prev_id IS NOT NULL""",
+    ]),
 ]
 
 

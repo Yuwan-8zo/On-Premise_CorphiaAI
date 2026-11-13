@@ -973,6 +973,9 @@ export default {
         },
         message: {
             copy: '複製',
+            versions: '這一則的其他版本',
+            prevVersion: '上一版',
+            nextVersion: '下一版',
             readAloud: '朗讀',
             stopReading: '停止朗讀',
             noVoice: '這台電腦沒有可離線使用的語音，無法朗讀（線上語音會把內容送出去，所以不使用）',

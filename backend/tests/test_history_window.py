@@ -71,11 +71,14 @@ async def _conversation_with(db, user, n: int) -> Conversation:
     conv = Conversation(id=str(uuid.uuid4()), user_id=user.id, tenant_id=user.tenant_id, title="t")
     db.add(conv)
     base = datetime(2026, 1, 1)
+    previous = None
     for i in range(n):
-        db.add(Message(
-            conversation_id=conv.id, role="user" if i % 2 == 0 else "assistant",
-            content=f"第{i:03d}則", created_at=base + timedelta(seconds=i),
-        ))
+        message = Message(
+            id=str(uuid.uuid4()), conversation_id=conv.id, role="user" if i % 2 == 0 else "assistant",
+            content=f"第{i:03d}則", created_at=base + timedelta(seconds=i), parent_id=previous,  # 一直線：每則接在前一則後面
+        )
+        db.add(message)
+        previous = message.id
     await db.flush()
     return conv
 

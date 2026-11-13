@@ -77,6 +77,8 @@ export interface Message {
     reasoning?: string
     /** 這一則回答有沒有連外網（後端每一則都記；系統沒開對外搜尋、或舊訊息是 undefined，畫面上就不標） */
     webSearch?: MessageWebSearch
+    /** 對話分支：這個位置的所有版本（照建立順序，包含自己）；只有一版時是空的 */
+    versionIds?: string[]
     rating?: number
     content_hash?: string
     prev_hash?: string

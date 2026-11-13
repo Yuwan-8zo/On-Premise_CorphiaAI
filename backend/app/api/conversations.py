@@ -12,6 +12,7 @@ from app.core.query_utils import like_contains
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message
+import app.services.message_tree as message_tree
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -278,26 +279,52 @@ async def list_messages(
     # 驗證對話所有權
     await get_own_conversation(db, conversation_id, current_user)
     
-    # 查詢訊息（支援 cursor 分頁）
-    query = select(Message).where(Message.conversation_id == conversation_id)
-    
+    # 只回畫面上這一條對話（修改或重答留下的其他版本不在這條上，用 version_ids 告訴前端可以切換）
+    path, everything = await message_tree.current_path(db, conversation_id)
     if before_id:
-        # 查出 before_id 的 created_at，再取更早的訊息
-        cursor_result = await db.execute(
-            select(Message.created_at).where(Message.id == before_id, Message.conversation_id == conversation_id)
-        )
-        cursor_time = cursor_result.scalar_one_or_none()
-        if cursor_time:
-            query = query.where(Message.created_at < cursor_time)
-    
-    # 先 DESC 取最新的 N 筆，再反轉為 ASC 確保時間順序正確
-    query = query.order_by(Message.created_at.desc()).limit(limit)
-    result = await db.execute(query)
-    messages = list(reversed(result.scalars().all()))
+        # 游標分頁：回這一則之前的
+        index = next((i for i, m in enumerate(path) if m.id == before_id), None)
+        if index is not None:
+            path = path[:index]
+    messages = path[-limit:]
 
     # AI 產出的檔案（Word／Excel／簡報）掛到各自的訊息上
     await attach_to_messages(db, messages)
-    return [MessageResponse.model_validate(m) for m in messages]
+    return _with_versions(messages, everything)
+
+
+def _with_versions(messages: list[Message], everything: list[Message]) -> List[MessageResponse]:
+    """每則訊息附上同一個位置的所有版本（只有一版就不附，前端不顯示切換鈕）"""
+    siblings = message_tree.versions(everything)
+    out = []
+    for m in messages:
+        ids = siblings.get(m.id, [])
+        out.append(MessageResponse.model_validate(m).model_copy(update={"version_ids": ids if len(ids) > 1 else []}))
+    return out
+
+
+@router.post("/{conversation_id}/messages/{message_id}/activate", response_model=List[MessageResponse])
+async def activate_version(
+    conversation_id: str,
+    message_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    limit: int = Query(50, ge=1, le=200),
+):
+    """
+    對話分支：切換到某一版（修改前的問題、或另一次的回答）。
+    畫面改成顯示那一版、以及它底下最新的內容；之後的新訊息接在那後面。回傳切換後的訊息列表。
+    """
+    await get_own_conversation(db, conversation_id, current_user)
+    everything = await message_tree.load_all(db, conversation_id)
+    if not any(m.id == message_id for m in everything):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="訊息不存在")
+    leaf_id = message_tree.deepest_leaf(everything, message_id)
+    await message_tree.set_leaf_id(db, conversation_id, leaf_id)
+    await db.commit()
+    messages = message_tree.active_path(everything, leaf_id)[-limit:]
+    await attach_to_messages(db, messages)
+    return _with_versions(messages, everything)
 
 
 @router.get("/{conversation_id}/verify-chain")
@@ -388,16 +415,13 @@ async def view_shared_conversation(
     # 重新讀一次：分享開關改過後「最後更新時間」是資料庫算的，要讀回來才能用
     await db.refresh(conversation)
     owner = await db.get(User, conversation.user_id)
-    result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at)
-        .limit(SHARED_MESSAGE_LIMIT)
-    )
+    # 分享的是擁有者畫面上那一條對話（其他版本不分享）
+    path, _everything = await message_tree.current_path(db, conversation_id)
+    shared_messages = path[:SHARED_MESSAGE_LIMIT]
     return SharedConversationResponse(
         conversation=ConversationResponse.model_validate(conversation),
         # 分享頁只給回答本身：思考過程是給本人回顧用的，不隨分享出去
-        messages=[MessageResponse.model_validate(m).model_copy(update={"reasoning": None}) for m in result.scalars().all()],
+        messages=[MessageResponse.model_validate(m).model_copy(update={"reasoning": None}) for m in shared_messages],
         owner_name=owner.name if owner else "",
         is_owner=is_owner,
     )

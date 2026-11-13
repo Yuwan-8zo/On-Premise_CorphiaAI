@@ -44,6 +44,10 @@ class Message(Base):
         index=True
     )
     
+    # 對話分支：這一則接在哪一則後面（第一則是 None）。同一則後面、同角色的好幾則＝同一個位置的不同版本
+    # （見 services/message_tree.py）。不設外鍵：訊息只增不刪，整個對話刪除時跟著 conversation 一起刪
+    parent_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+
     # 訊息內容
     role: Mapped[str] = mapped_column(
         String(20),

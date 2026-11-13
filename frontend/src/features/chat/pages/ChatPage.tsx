@@ -278,6 +278,8 @@ export default function Chat() {
                                             onResubmit={mainProps.handleResubmit}
                                             onRegenerate={mainProps.handleRegenerate}
                                             onSearchAgain={mainProps.handleSearchAgain}
+                                            onSwitchVersion={mainProps.handleSwitchVersion}
+                                            busy={mainProps.isStreaming}
                                             showRAGDebug={mainProps.ragDebugMode && isLastAssistant && !mainProps.isStreaming}
                                         />
                                     )

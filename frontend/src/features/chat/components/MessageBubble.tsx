@@ -6,6 +6,7 @@ import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import AIThinkingIndicator from './AIThinkingIndicator'
 import ThinkingBlock from './ThinkingBlock'
 import WebSearchNote from './WebSearchNote'
+import VersionSwitcher from './VersionSwitcher'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
@@ -44,6 +45,10 @@ interface MessageBubbleProps {
     onRegenerate?: (messageId: string) => void
     /** 連網重答：這一則沒有連外網，同一題這次連外網查了再答。沒給（政策是完全不連外網）就不顯示按鈕 */
     onSearchAgain?: (messageId: string) => void
+    /** 對話分支：切換到同一個位置的另一版 */
+    onSwitchVersion?: (messageId: string) => void
+    /** 這個對話正在生成（不能切換版本） */
+    busy?: boolean
     hideActions?: boolean
     /**
      * C2: 是否顯示 RAG 除錯面板（通常僅在「最後一則 AI 訊息」且開啟 Debug Mode 時為 true）。
@@ -79,7 +84,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, onSearchAgain, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, onSearchAgain, onSwitchVersion, busy = false, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     const { t } = useTranslation()
     const isDesktop = useDesktop()
@@ -189,6 +194,11 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
         if (result !== 'ok') useToastStore.getState().add(t(result === 'empty' ? 'ui.message.nothingToRead' : 'ui.message.noVoice'), 'info')
     }
 
+    // 對話分支：這個位置有不只一版時，顯示「‹ 2/3 ›」
+    const versionSwitcher = onSwitchVersion && !hideActions && message.versionIds && message.versionIds.length > 1
+        ? <VersionSwitcher ids={message.versionIds} currentId={message.id} onSwitch={onSwitchVersion} disabled={busy} />
+        : null
+
     const copyButton = (
         <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
@@ -293,6 +303,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             </div>
                         )
                     )}
+                    {!isEditing && versionSwitcher && <div className="mt-1 mr-2">{versionSwitcher}</div>}
                     {!isEditing && !hideActions && (
                         <div className="hover-reveal flex items-center gap-1.5 mt-1 text-text-muted mr-2">
                             {copyButton}
@@ -389,6 +400,8 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 debug={ragDebug}
                             />
                         )}
+
+                        {!isStreaming && versionSwitcher && <div className="mt-2 -ml-1.5">{versionSwitcher}</div>}
 
                         {/* 工具列：滑鼠裝置移入才浮現，手機一直顯示（.hover-reveal） */}
                         {message.content && !isStreaming && !hideActions && (

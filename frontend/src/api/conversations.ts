@@ -79,6 +79,14 @@ export const conversationsApi = {
     },
 
     /**
+     * 對話分支：切換到某一版（修改前的問題、或另一次的回答），回傳切換後畫面上的訊息
+     */
+    activateVersion: async (conversationId: string, messageId: string): Promise<Message[]> => {
+        const response = await apiClient.post(`/conversations/${conversationId}/messages/${messageId}/activate`)
+        return response.data.map(mapMessage)
+    },
+
+    /**
      * 發送訊息（非串流）
      */
     sendMessage: async (conversationId: string, data: SendMessageRequest): Promise<Message> => {
@@ -166,6 +174,7 @@ function mapMessage(data: Record<string, unknown>): Message {
         prev_hash: data.prev_hash as string | undefined,
         reasoning: (data.reasoning as string | null) ?? undefined,
         webSearch: (data.web_search as Message['webSearch'] | null) ?? undefined,
+        versionIds: (data.version_ids as string[] | undefined)?.length ? (data.version_ids as string[]) : undefined,
         createdAt: data.created_at as string,
     }
 }

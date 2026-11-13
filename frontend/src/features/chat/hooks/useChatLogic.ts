@@ -344,6 +344,17 @@ export function useChatLogic() {
         }
     })
 
+    /** 對話分支：切換到同一個位置的另一版（修改前的問題、另一次的回答），畫面換成那一條 */
+    const handleSwitchVersion = useStableCallback(async (messageId: string) => {
+        const conversationId = useChatStore.getState().currentConversation?.id
+        if (!conversationId || isStreaming) return
+        try {
+            useChatStore.getState().setServerMessages(conversationId, await conversationsApi.activateVersion(conversationId, messageId))
+        } catch (err) {
+            console.error('切換版本失敗:', err)
+        }
+    })
+
     /** 連網重答：這一則回答沒有連外網，使用者按了「連網重答」→ 同一題這次連外網查了再答 */
     const handleSearchAgain = useStableCallback((assistantMessageId: string) => handleRegenerate(assistantMessageId, true))
 
@@ -490,6 +501,7 @@ export function useChatLogic() {
             isStreaming,
             handleResubmit,
             handleRegenerate,
+            handleSwitchVersion,
             // 政策是「完全不連外網」時不提供（回答下面就不會有這顆按鈕）
             handleSearchAgain: searchPolicy.enabled ? handleSearchAgain : undefined,
             ragDebugMode,

@@ -973,6 +973,9 @@ export default {
         },
         message: {
             copy: 'コピー',
+            versions: 'このメッセージの他のバージョン',
+            prevVersion: '前のバージョン',
+            nextVersion: '次のバージョン',
             readAloud: '読み上げ',
             stopReading: '読み上げを停止',
             noVoice: 'このパソコンにはオフラインで使える音声がないため、読み上げできません（オンライン音声は内容を外部に送信するため使用しません）',

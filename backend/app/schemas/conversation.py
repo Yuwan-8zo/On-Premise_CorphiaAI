@@ -97,6 +97,9 @@ class MessageResponse(BaseModel):
     reasoning: Optional[str] = None
     # 這一則回答連外網查了什麼：{"query", "sources": [{"title", "url"}]}；沒連是 None
     web_search: Optional[dict] = None
+    # 對話分支：這個位置的所有版本（照寫入順序，包含自己）；只有一版時是只含自己的清單或空的
+    parent_id: Optional[str] = None
+    version_ids: list[str] = []
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)

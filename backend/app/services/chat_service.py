@@ -31,6 +31,7 @@ from app.services.audit_service import AuditAction, AuditResource, write_audit_l
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 import app.services.browser_folder as browser_folder
 from app.services.history_window import select_history
+import app.services.message_tree as message_tree
 import app.services.web_search as web_search_svc
 import app.services.web_search_policy as web_search_policy
 from app.models.tenant import Tenant
@@ -457,19 +458,26 @@ class ChatService:
         )
         return list(result.scalars().all())
 
+    async def _add_user_message(self, conversation_id: str, content: str, parent_id: Optional[str]) -> Message:
+        """存一則使用者訊息（接在 parent_id 後面）、蓋防竄改 hash，並把它記成「現在看到的最後一則」"""
+        user_message = Message(conversation_id=conversation_id, role=MessageRole.USER.value, content=content, parent_id=parent_id)
+        self.db.add(user_message)
+        await self.db.commit()
+        await self.db.refresh(user_message)
+        await stamp_message(self.db, user_message, conversation_id)
+        await message_tree.set_leaf_id(self.db, conversation_id, user_message.id)
+        await self.db.commit()
+        return user_message
+
     async def _history_before_this_question(self, conversation_id: str) -> list[Message]:
         """
         這一題之前的對話（由舊到新），給模型當上下文用。
-        - 取「最新的」幾則：對話很長時也是接著最近的內容聊（不是停在最前面那幾則）
+        - 取畫面上這一條對話「最新的」幾則：對話很長時也是接著最近的內容聊（不是停在最前面那幾則）
         - 這一題本身在呼叫前已經存進資料庫了，這裡要拿掉——組提示詞時會另外放在最後，不然同一句會出現兩次
         """
-        result = await self.db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.created_at.desc(), Message.id.desc())
-            .limit(HISTORY_FETCH_LIMIT)
-        )
-        messages = list(reversed(result.scalars().all()))
+        # 只看畫面上這一條（別的版本、被換掉的回答不算在內）
+        path, _all = await message_tree.current_path(self.db, conversation_id)
+        messages = path[-HISTORY_FETCH_LIMIT:]
         if messages and messages[-1].role == MessageRole.USER.value:
             messages.pop()
         return messages
@@ -662,8 +670,7 @@ class ChatService:
             return
 
         if resubmit_message_id:
-            from sqlalchemy import delete
-            # 尋找並更新使用者訊息
+            # 找到要重送的那一則使用者訊息
             result = await self.db.execute(select(Message).where(Message.id == resubmit_message_id))
             user_message = result.scalar_one_or_none()
             # 只能重送「這個對話裡的使用者訊息」：否則會改寫別的對話的紀錄，
@@ -676,28 +683,18 @@ class ChatService:
                 # NOTE: 訊息不存在（可能是 temp ID）或不屬於此對話，返回錯誤避免改錯資料
                 yield {"type": "error", "message": "訊息不存在，無法重新生成"}
                 return
-            user_message.content = content
-            # 截斷後續所有訊息
-            await self.db.execute(
-                delete(Message).where(
-                    Message.conversation_id == conversation_id,
-                    Message.created_at > user_message.created_at
-                )
-            )
-            await self.db.commit()
+            # 對話分支：舊的那一版不刪也不改（防竄改雜湊鏈才不會斷），新的版本接在同一個位置旁邊
+            if content == user_message.content:
+                # 內容沒改＝請 AI 重答：問題用原本那一則，新的回答會成為舊回答旁邊的另一版
+                await message_tree.set_leaf_id(self.db, conversation_id, user_message.id)
+                await self.db.commit()
+            else:
+                # 改了問題：新的問題接在原本那一則的同一個位置（同一個 parent）
+                user_message = await self._add_user_message(conversation_id, content, parent_id=user_message.parent_id)
         else:
-            # 儲存新使用者訊息
-            user_message = Message(
-                conversation_id=conversation_id,
-                role=MessageRole.USER.value,
-                content=content,
-            )
-            self.db.add(user_message)
-            await self.db.commit()
-            await self.db.refresh(user_message)
-            # B2: 對使用者訊息蓋上 hash stamp
-            await stamp_message(self.db, user_message, conversation_id)
-            await self.db.commit()
+            # 新的問題接在「現在看到的最後一則」後面
+            path, _all = await message_tree.current_path(self.db, conversation_id)
+            user_message = await self._add_user_message(conversation_id, content, parent_id=path[-1].id if path else None)
 
         # ── A1/A2 安全閘道由上層 websocket.py 的 _security_gate() 統一處理 ────────
         # BUG-07 修正：此處不再重複執行 PII masking / Prompt Injection 偵測，
@@ -1023,12 +1020,15 @@ class ChatService:
             # 思考過程：留著讓使用者之後還能回顧（存的是已經過安全檢查的版本）
             reasoning=reasoning or None,
             web_search=self._web_search_record(),
+            # 接在這一題（現在看到的最後一則）後面；重答時就成為舊回答旁邊的另一版
+            parent_id=await message_tree.get_leaf_id(self.db, conversation_id),
         )
         self.db.add(assistant_message)
         await self.db.commit()
         await self.db.refresh(assistant_message)
         # B2: 對助手訊息蓋上 hash stamp
         await stamp_message(self.db, assistant_message, conversation_id)
+        await message_tree.set_leaf_id(self.db, conversation_id, assistant_message.id)
         await self.db.commit()
 
         # 依據實際 DB 訊息數量更新對話統計（resubmit 後新增數可能不是 +2）
