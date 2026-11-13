@@ -1046,7 +1046,7 @@ export default {
             updating: '正在更新，程式會自動重新開啟',
         },
         thinking: {
-            waited: '（已等待 {{seconds}} 秒）',
+            waited: '（已等待 {{time}}）',
             localRag: 'AI 在本機處理器上運算，資料不會離開這台電腦；正在閱讀找到的文件段落，需要一點時間，請稍候',
             local: 'AI 在本機處理器上運算，資料不會離開這台電腦，請稍候',
         },

@@ -25,6 +25,7 @@ import { SkelPage } from '@/components/ui/SkelPages'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
+import { formatElapsed } from '@/lib/formatElapsed'
 import { modelSize } from '@/lib/modelName'
 import { useDesktop } from '@/lib/desktop'
 
@@ -137,7 +138,7 @@ function fmtSec(row: Row, now: number): string {
 
 /** 幾分幾秒（目前語言） */
 function fmtDuration(s: number): string {
-    return s >= 60 ? i18n.t('ui.boot.minSec', { m: Math.floor(s / 60), s: s % 60 }) : i18n.t('ui.boot.sec', { s })
+    return formatElapsed(s, (key, vars) => i18n.t(key, vars))
 }
 
 /** 狀態圖示：28 的圓形（Apple 清單列的圖示底），讀取中不轉圈、用強調色圓點呼吸 */

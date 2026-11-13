@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatElapsed } from '@/lib/formatElapsed'
 
 export type ThinkingPhase = 'thinking' | 'retrieving' | 'generating'
 
@@ -80,7 +81,7 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
                 {making ? t(`ui.chat.fileMaking.${making}`, { defaultValue: t('ui.chat.fileMaking.file') }) : phaseLabels[displayPhase]}
                 <DotEllipsis />
                 {elapsed >= 3 && (
-                    <span className="ml-1 text-text-muted font-normal tabular-nums">{t('ui.thinking.waited', { seconds: elapsed })}</span>
+                    <span className="ml-1 text-text-muted font-normal tabular-nums">{t('ui.thinking.waited', { time: formatElapsed(elapsed, t) })}</span>
                 )}
             </span>
             {/* 製作檔案：一開始就說明要等多久（不用等 15 秒才出現） */}

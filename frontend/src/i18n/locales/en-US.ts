@@ -1046,7 +1046,7 @@ export default {
             updating: 'Updating. The app will reopen by itself.',
         },
         thinking: {
-            waited: '({{seconds}}s)',
+            waited: '({{time}})',
             localRag: 'The AI runs on this computer and your data never leaves it. Reading the passages it found takes a moment, please wait',
             local: 'The AI runs on this computer and your data never leaves it, please wait',
         },

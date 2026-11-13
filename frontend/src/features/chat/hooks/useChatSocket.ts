@@ -3,14 +3,30 @@
  *   - 切到別的對話時，舊對話的連線不斷，正在生成的回答在背景繼續（多工）
  *   - 每條連線綁定自己的對話，收到的字寫進那個對話（messageStreamHandlers）
  *   - 開新連線時順手關掉「不在畫面上、也沒在生成」的閒置連線，避免越開越多
+ *   - 連線池不跟著聊天頁：離開聊天頁（去管理後台、設定）再回來，正在生成的回答照樣繼續寫進對話；
+ *     以前連線綁在聊天頁上，一離開就全部斷掉，回來只剩一則空的回答。登出時才全部關掉
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { createChatWebSocket, type ChatWebSocket } from '@/api/websocket'
+import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { buildStreamDispatcher } from './messageStreamHandlers'
 
+/** 所有對話的連線（整個應用程式共用一份，不跟著哪一頁） */
+const pool = { current: new Map<string, ChatWebSocket>() }
+
+/** 關掉所有連線（登出時） */
+export function closeAllChatSockets(): void {
+    pool.current.forEach((ws) => ws.disconnect())
+    pool.current.clear()
+}
+
+// 登出（登入狀態從有變沒有）：連線全部關掉，下一位登入的人不會接到上一位的回答
+useAuthStore.subscribe((state, previous) => {
+    if (previous.isAuthenticated && !state.isAuthenticated) closeAllChatSockets()
+})
+
 export function useChatSocket() {
-    const pool = useRef(new Map<string, ChatWebSocket>())
     const [isConnecting, setIsConnecting] = useState(false)
 
     /** 關掉閒置的連線（不是 keep、不在畫面上、也沒在生成） */
@@ -56,11 +72,6 @@ export function useChatSocket() {
     const close = useCallback((conversationId: string) => {
         pool.current.get(conversationId)?.disconnect()
         pool.current.delete(conversationId)
-    }, [])
-
-    useEffect(() => {
-        const conns = pool.current
-        return () => conns.forEach((ws) => ws.disconnect())
     }, [])
 
     return { isConnecting, connect, get, close }
