@@ -98,6 +98,13 @@ class Settings(BaseSettings):
     browser_folder_max_chars_total: int = 60000
     browser_folder_ttl_min: int = 10  # 附上後多久沒送出訊息就自動作廢
 
+    # 對外搜尋（唯一出口是自架的 SearXNG；見 docker-compose.yml、app/services/web_search.py）
+    # 預設關閉：開了才會真的連到自架 SearXNG、也才會把搜尋關鍵字送出這台機器。
+    enable_web_search: bool = False
+    searxng_url: str = "http://127.0.0.1:8888"
+    web_search_max_results: int = 5
+    web_search_timeout_sec: int = 15
+
     # 上傳
     upload_directory: str = "./uploads"
     max_upload_size_mb: int = 50

@@ -1,8 +1,13 @@
-# Corphia AI - PostgreSQL + pgvector only
+# Corphia AI - PostgreSQL + pgvector, and (optional) a self-hosted SearXNG for external web search.
 #
-# The application itself runs locally. Docker is used only for the database:
+# The application itself runs locally. Docker is used only for background services:
 #   docker compose up -d
 #   docker exec -it corphia-postgres psql -U corphia -d corphia_ai
+#
+# SearXNG is the one and only egress point for external web search (see README "對外搜尋",
+# backend/app/services/web_search.py). It only listens on 127.0.0.1 — never expose this port
+# publicly. Leaving this service stopped (or enable_web_search: false in backend settings)
+# means no feature in this app ever reaches the open internet.
 
 services:
   postgres:
@@ -25,6 +30,28 @@ services:
       retries: 10
       start_period: 20s
     restart: unless-stopped
+
+  searxng:
+    # 設定檔是 build time 燒進 image 的（見 searxng/Dockerfile 開頭的說明），不是 bind mount：
+    # 改了 searxng/settings.yml 或 limiter.toml 要重新 build 才會生效：
+    #   docker compose --profile search build searxng
+    build: ./searxng
+    container_name: corphia-searxng
+    ports:
+      - "127.0.0.1:${SEARXNG_PORT:-8888}:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://127.0.0.1:${SEARXNG_PORT:-8888}/
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+    profiles:
+      - search  # 預設不會跟著 `docker compose up -d` 一起啟動；要用時 `docker compose --profile search up -d`
 
 volumes:
   corphia_pgdata:

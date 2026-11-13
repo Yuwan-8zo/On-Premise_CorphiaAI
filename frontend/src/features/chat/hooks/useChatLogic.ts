@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { conversationsApi } from '@/api/conversations'
 import { documentsApi } from '@/api/documents'
 import { foldersApi } from '@/api/folders'
+import { webSearchApi } from '@/api/webSearch'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
@@ -53,6 +54,13 @@ export function useChatLogic() {
     const [input, setInput] = useState('')
     const [chatMode, setChatMode] = useState<ChatMode>('general')
     const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    // 對外搜尋：這個租戶看不看得到開關、要不要每次先問使用者才搜（enabled=false 時整個功能不顯示）
+    const [webSearchOn, setWebSearchOn] = useState(false)
+    const [searchPolicy, setSearchPolicy] = useState<{ enabled: boolean; auto: boolean }>({ enabled: false, auto: false })
+    useEffect(() => {
+        webSearchApi.policy().then(setSearchPolicy).catch(() => undefined) // 查不到就當沒開，不影響其他功能
+    }, [])
 
     const socket = useChatSocket()
     const scroll = useChatScroll(messages, currentConversation?.id)
@@ -138,15 +146,15 @@ export function useChatLogic() {
     }
 
     /** 把問題交給 AI：有即時連線就串流，沒有就改用一般請求（拿到完整回覆一次換上） */
-    const askAI = async (conversationId: string | undefined, text: string) => {
+    const askAI = async (conversationId: string | undefined, text: string, webSearch = false) => {
         const useRag = chatMode === 'project'
         const ws = socket.get(conversationId)
         if (ws) {
-            ws.sendMessage(text, useRag, 0.7, language)
+            ws.sendMessage(text, useRag, 0.7, language, 2048, webSearch)
             return
         }
         try {
-            if (conversationId) replaceLastMessage(await conversationsApi.sendMessage(conversationId, { content: text, useRag }))
+            if (conversationId) replaceLastMessage(await conversationsApi.sendMessage(conversationId, { content: text, useRag, webSearch }))
         } catch (error) {
             console.error('發送訊息失敗:', error)
             dropLastMessage()
@@ -269,29 +277,39 @@ export function useChatLogic() {
         if (!text || isStreaming || socket.isConnecting) return
         if (!overrideValue) setInput('')
 
-        const conversationId = await ensureConversation(text.slice(0, 50))
-        void autoTitle(conversationId, text)
+        const doSend = async (webSearch: boolean) => {
+            const conversationId = await ensureConversation(text.slice(0, 50))
+            void autoTitle(conversationId, text)
 
-        addMessage(tempMessage('user', text))
-        scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
-        addMessage(tempMessage('assistant', '', {}, 1))
-        setStreaming(true)
+            addMessage(tempMessage('user', text))
+            scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
+            addMessage(tempMessage('assistant', '', {}, 1))
+            setStreaming(true)
 
-        // 專案模式：資料夾還沒有已啟用的文件就不問 AI，直接提示先上傳
-        if (chatMode === 'project') {
-            const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
-            if (folderName) {
-                try {
-                    if ((await listFolderDocs(folderName, true)).length === 0) {
-                        await replyNoDocs(folderName)
-                        return
+            // 專案模式：資料夾還沒有已啟用的文件就不問 AI，直接提示先上傳
+            if (chatMode === 'project') {
+                const folderName = (currentConversation?.settings?.folderName as string | undefined) ?? selectedFolder ?? ''
+                if (folderName) {
+                    try {
+                        if ((await listFolderDocs(folderName, true)).length === 0) {
+                            await replyNoDocs(folderName)
+                            return
+                        }
+                    } catch (err) {
+                        console.warn('無法偵測資料夾文件數量，繼續送出訊息:', err) // 偵測失敗不擋使用者
                     }
-                } catch (err) {
-                    console.warn('無法偵測資料夾文件數量，繼續送出訊息:', err) // 偵測失敗不擋使用者
                 }
             }
+            await askAI(conversationId, text, webSearch)
         }
-        await askAI(conversationId, text)
+
+        const useWebSearch = webSearchOn && searchPolicy.enabled
+        // 預設「每次先問」：不是管理者設成自動搜尋，就先讓使用者確認一次要送出的關鍵字
+        if (useWebSearch && !searchPolicy.auto) {
+            showConfirm(t('chat.webSearch.confirm', { query: text }), () => doSend(true))
+            return
+        }
+        await doSend(useWebSearch)
     }
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
@@ -316,7 +334,7 @@ export function useChatLogic() {
 
         const ws = socket.get(useChatStore.getState().currentConversation?.id)
         if (ws) {
-            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language)
+            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language, 2048, webSearchOn && searchPolicy.enabled)
         } else {
             console.error('WebSocket 未連接，無法使用重新生成功能')
             setStreaming(false)
@@ -439,6 +457,10 @@ export function useChatLogic() {
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
             conversationId: currentConversation?.id,
+            // 對外搜尋：後端沒開就不顯示切換鈕
+            webSearchEnabled: searchPolicy.enabled,
+            webSearchOn,
+            setWebSearchOn,
             isConnecting: socket.isConnecting,
             isUploading: upload.isUploading,
             uploadProgress: upload.uploadProgress,

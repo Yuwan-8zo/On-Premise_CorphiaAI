@@ -202,6 +202,12 @@ export default {
             restoredName: '之前附加的資料夾',
             removed: '已移除附加的資料夾',
         },
+        webSearch: {
+            toggle: '對外搜尋',
+            confirm: '要把「{{query}}」送出去搜尋嗎？只有這段關鍵字會離開這台機器。',
+            used: '已對外搜尋「{{query}}」，取回 {{n}} 筆結果',
+            blocked: '對外搜尋已攔阻：{{reason}}',
+        },
         noProjects: '尚無專案',
         projectFolderLabel: '專案資料夾',
         askFromSource: '基於此來源開始提問 →',

@@ -128,6 +128,8 @@ class ChatService:
         self.agent_graph = self._build_agent_graph()
         # 這一題「送模型前最後一關」的報告（_prepare_prompt 填）
         self.screen_report: dict = {}
+        # 這一題的對外搜尋報告（有開 web_search 才會填；_prepare_prompt 填）
+        self.web_search_report: Optional[dict] = None
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -454,6 +456,7 @@ class ChatService:
         use_rag: bool,
         language: str,
         extra_system: str = "",
+        web_search: bool = False,
     ) -> tuple[str, str, list, str]:
         """
         extra_system：這一題額外加在系統提示後面的說明（例如「請輸出 Word 文件內容的 JSON」）。
@@ -532,6 +535,15 @@ class ChatService:
             label = f"### 這台電腦的資料夾（使用者這一題附上：{'、'.join(folder_files)}；只用這一次，不是長期的參考資料）\n{folder_text}"
             context = f"{context}\n\n{label}" if context else label
 
+        # 對外搜尋：使用者這一題選了要連網查；結果當成參考資料（和檢索片段同一套篩檢，見 web_search.search）
+        self.web_search_report = None
+        if web_search and settings.enable_web_search:
+            from app.services import web_search as web_search_svc
+            self.web_search_report = await web_search_svc.search(content)
+            search_text = web_search_svc.format_results_for_prompt(self.web_search_report)
+            if search_text:
+                context = f"{context}\n\n{search_text}" if context else search_text
+
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
         if memory:
@@ -556,6 +568,7 @@ class ChatService:
         temperature: float = 0.7,
         max_tokens: int = 2048,
         language: str = "zh-TW",
+        web_search: bool = False,
     ) -> Message:
         """
         發送訊息並取得回應（非串流）：直接跑串流那一條，收完再回傳助手訊息，
@@ -573,6 +586,7 @@ class ChatService:
             temperature=temperature,
             max_tokens=max_tokens,
             language=language,
+            web_search=web_search,
         ):
             if event.get("type") == "error":
                 raise ChatGenerationError(event.get("message", "生成失敗"), code=event.get("code"))
@@ -591,7 +605,8 @@ class ChatService:
         temperature: float = 0.7,
         max_tokens: int = 2048,
         language: str = "zh-TW",
-        resubmit_message_id: Optional[str] = None
+        resubmit_message_id: Optional[str] = None,
+        web_search: bool = False,
     ) -> AsyncGenerator[dict, None]:
         """
         發送訊息並串流回應
@@ -664,11 +679,16 @@ class ChatService:
         prompt, context, sources, route = await self._prepare_prompt(
             conversation_id, safe_content, use_rag, language,
             extra_system=file_builder.INSTRUCTIONS[file_kind] if file_kind else "",
+            web_search=web_search,
         )
 
         # 送模型前最後一關：有文件片段被剔除或遮罩 → 寫稽核、告訴使用者
         if not report_is_empty(self.screen_report):
             yield await self._report_screen(conversation_id)
+
+        # 這一題有連對外搜尋 → 寫稽核、告訴使用者結果（或被擋的原因）
+        if self.web_search_report is not None:
+            yield await self._report_web_search(conversation_id)
 
         if file_kind:
             async for event in self._make_file(conversation_id, file_kind, prompt, sources, language):
@@ -888,6 +908,32 @@ class ChatService:
         except Exception as e:  # 稽核失敗不能擋住主流程
             logger.warning("最後一關寫稽核失敗: %s", e)
         return {"type": "context_filtered", **counts}
+
+    async def _report_web_search(self, conversation_id: str) -> dict:
+        """對外搜尋用過了（或被擋）：寫一筆稽核，回給前端的提示事件"""
+        report = self.web_search_report or {}
+        blocked = bool(report.get("blocked"))
+        result_count = len(report.get("results", []))
+        try:
+            user_id, tenant_id = await self._conversation_owner(conversation_id)
+            await write_audit_log(
+                db=self.db, action=AuditAction.WEB_SEARCH, resource_type=AuditResource.CONVERSATION,
+                resource_id=conversation_id, user_id=user_id, tenant_id=tenant_id,
+                description=(
+                    f"對外搜尋已攔阻：{report.get('reason', '')}" if blocked
+                    else f"對外搜尋「{report.get('query', '')}」，取回 {result_count} 筆結果"
+                ),
+                details={"query": report.get("query", ""), "blocked": blocked, "result_count": result_count},
+            )
+        except Exception as e:  # 稽核失敗不能擋住主流程
+            logger.warning("對外搜尋寫稽核失敗: %s", e)
+        if blocked:
+            return {"type": "web_search_blocked", "reason": report.get("reason", "")}
+        return {
+            "type": "web_search_used",
+            "query": report.get("query", ""),
+            "results": [{"title": r["title"], "url": r["url"]} for r in report.get("results", [])],
+        }
 
     async def _save_assistant_message(
         self, conversation_id: str, content: str, sources: Optional[list]

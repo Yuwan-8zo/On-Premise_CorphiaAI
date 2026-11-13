@@ -202,6 +202,12 @@ export default {
             restoredName: 'Previously attached folder',
             removed: 'Attached folder removed',
         },
+        webSearch: {
+            toggle: 'Search the web',
+            confirm: 'Send "{{query}}" out to search? Only this keyword leaves this machine.',
+            used: 'Searched the web for "{{query}}", got {{n}} results',
+            blocked: 'Web search blocked: {{reason}}',
+        },
         noProjects: 'No projects yet',
         projectFolderLabel: 'Project Folders',
         askFromSource: 'Ask questions based on this source →',

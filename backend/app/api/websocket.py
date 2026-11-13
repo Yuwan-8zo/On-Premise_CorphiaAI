@@ -63,7 +63,8 @@ async def websocket_chat(
     {
         "type": "message",
         "content": "訊息內容",
-        "use_rag": true  // 可選
+        "use_rag": true,  // 可選
+        "web_search": false  // 可選，這一題要不要連對外搜尋（需要後端開啟功能）
     }
     
     接收訊息格式:
@@ -149,6 +150,7 @@ async def websocket_chat(
             m_token: int,
             lang: str,
             resubmit_message_id: Optional[str] = None,
+            web_search_flag: bool = False,
         ) -> None:
             """
             統一的串流生成與送訊邏輯，包含：
@@ -171,6 +173,7 @@ async def websocket_chat(
                     max_tokens=m_token,
                     language=lang,
                     resubmit_message_id=resubmit_message_id,
+                    web_search=web_search_flag,
                 )) as stream:
                     async for chunk in stream:
                         await websocket.send_json(chunk)
@@ -257,6 +260,7 @@ async def websocket_chat(
                     params = clamp_generation_params(data)
                     use_rag, temperature = params["use_rag"], params["temperature"]
                     max_tokens, language = params["max_tokens"], params["language"]
+                    web_search_flag = params["web_search"]
 
                     if not content or (resubmit and not message_id):
                         await websocket.send_json({
@@ -298,6 +302,7 @@ async def websocket_chat(
                             conversation_id, content, use_rag,
                             temperature, max_tokens, language,
                             resubmit_message_id=message_id,
+                            web_search_flag=web_search_flag,
                         )
                     )
 

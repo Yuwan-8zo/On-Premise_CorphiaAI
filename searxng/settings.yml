@@ -1,0 +1,27 @@
+# 自架 SearXNG（對外搜尋的唯一出口；見 README「對外搜尋」一節、backend/app/services/web_search.py）
+#
+# 只聽 127.0.0.1（docker-compose.yml 的連接埠設定），不對外公開；只有後端會連這裡，使用者不會直接打開這個網址。
+# secret_key 只用在 SearXNG 自己的網頁（CSRF 防護），這裡用不到那個網頁，但設定檔要求一定要填：
+# 下面這把是隨機產生、只給這個自架服務用，不是共用的密鑰。
+use_default_settings: true
+
+general:
+  instance_name: "Corphia AI 對外搜尋（自架）"
+  # wikipedia/wikidata/openstreetmap 這幾個引擎啟動時會要求這個欄位，沒填就直接不註冊該引擎；
+  # 純內部服務沒有真的對外聯絡窗口，填公司首頁或隨便一個佔位網址即可，不影響功能。
+  contact_url: "https://github.com/searxng/searxng"
+
+server:
+  secret_key: "8697be3486e5202c69eff36561d9fa5ba3d9b171863860a5786bb6a1ae28b411"
+  limiter: false  # 只有我們自己的後端會呼叫，不需要防濫用限流
+  image_proxy: false
+
+search:
+  safe_search: 2  # 嚴格安全搜尋
+  formats:
+    - html
+    - json  # 後端要讀 JSON 格式的結果；SearXNG 預設關閉，要在這裡明確打開
+
+# 引擎沿用 SearXNG 內建的預設清單（use_default_settings: true）；要調整來源白名單
+# 請在這裡用 use_default_settings.engines.keep_only 指定要保留的引擎名稱，不要整段改寫 engines 清單
+# （改寫整段容易漏掉 SearXNG 內部用的必要欄位，導致啟動失敗）。

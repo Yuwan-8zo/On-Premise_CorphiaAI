@@ -202,6 +202,12 @@ export default {
             restoredName: '以前添付したフォルダ',
             removed: '添付したフォルダを削除しました',
         },
+        webSearch: {
+            toggle: 'Web検索',
+            confirm: '「{{query}}」を検索に送信しますか？このキーワードだけがこの端末から送られます。',
+            used: '「{{query}}」をWeb検索し、{{n}} 件の結果を取得しました',
+            blocked: 'Web検索をブロックしました：{{reason}}',
+        },
         noProjects: 'プロジェクトがありません',
         projectFolderLabel: 'プロジェクトフォルダ',
         askFromSource: 'このソースを元に質問する →',

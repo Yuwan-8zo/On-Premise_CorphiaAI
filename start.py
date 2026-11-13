@@ -540,6 +540,13 @@ def start_docker_desktop() -> None:
     raise RuntimeError("Docker Desktop did not become ready in time.")
 
 
+def web_search_enabled() -> bool:
+    """對外搜尋功能的開關：讀 backend/.env 的 ENABLE_WEB_SEARCH（和後端 app/core/config.py 的
+    enable_web_search 設定共用同一個環境變數，預設關閉——開了才會連自架 SearXNG，也才會把搜尋關鍵字送出網）"""
+    value = read_env(BACKEND_DIR / ".env").get("ENABLE_WEB_SEARCH", "")
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
 def start_database() -> None:
     start_docker_desktop()
 
@@ -547,11 +554,16 @@ def start_database() -> None:
     if not compose_file.exists():
         raise RuntimeError("docker-compose.yml was not found.")
 
+    # 對外搜尋開啟時，連同自架 SearXNG 一起啟動（docker-compose.yml 裡用 profile 隔開，預設不會啟動）
+    profile_args = ["--profile", "search"] if web_search_enabled() else []
+    if profile_args:
+        info("[docker] 對外搜尋已開啟，一併啟動自架 SearXNG…")
+
     info("[docker] Starting PostgreSQL + pgvector...")
     boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…", code="db_starting")
     commands = [
-        ["docker", "compose", "up", "-d"],
-        ["docker-compose", "up", "-d"],
+        ["docker", "compose", *profile_args, "up", "-d"],
+        ["docker-compose", *profile_args, "up", "-d"],
     ]
     last_output = ""
     for cmd in commands:

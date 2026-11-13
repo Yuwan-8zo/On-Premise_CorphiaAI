@@ -1,4 +1,4 @@
-import { FileText, Folder, Layers3, Paperclip, X } from '@/components/snow/icons'
+import { FileText, Folder, Globe, Layers3, Paperclip, X } from '@/components/snow/icons'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
@@ -20,6 +20,10 @@ interface ChatInputAreaProps {
     chatMode: 'general' | 'project'
     /** 目前對話的 id；全新對話（還沒送出第一則訊息）是 undefined，這時候不顯示「附加資料夾」按鈕 */
     conversationId?: string
+    /** 對外搜尋：後端沒開這個功能就不顯示切換鈕 */
+    webSearchEnabled: boolean
+    webSearchOn: boolean
+    setWebSearchOn: React.Dispatch<React.SetStateAction<boolean>>
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -48,6 +52,7 @@ interface ChatInputAreaProps {
 
 export default function ChatInputArea({
     selectedFolder, chatMode, conversationId,
+    webSearchEnabled, webSearchOn, setWebSearchOn,
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
@@ -251,6 +256,20 @@ export default function ChatInputArea({
                                         className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
                                     >
                                         <Paperclip className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
+                                    </button>
+                                )}
+
+                                {/* 對外搜尋開關：後端有開這個功能才顯示；開著時這一題會連到自架的搜尋服務 */}
+                                {webSearchEnabled && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setWebSearchOn((v) => !v)}
+                                        disabled={isConnecting || isUploading}
+                                        aria-label={t('chat.webSearch.toggle')}
+                                        aria-pressed={webSearchOn}
+                                        className={`btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] disabled:opacity-50 ${webSearchOn ? 'text-accent' : 'text-text-secondary'}`}
+                                    >
+                                        <Globe className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
                                     </button>
                                 )}
 

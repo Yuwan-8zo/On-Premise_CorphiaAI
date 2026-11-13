@@ -70,6 +70,7 @@ async def send_message(
             conversation_id=conversation_id,
             content=content,
             use_rag=request.use_rag,
+            web_search=request.web_search,
         )
     except ChatGenerationError as e:
         code = status.HTTP_503_SERVICE_UNAVAILABLE if e.code == "LLM_LOADING" else status.HTTP_400_BAD_REQUEST

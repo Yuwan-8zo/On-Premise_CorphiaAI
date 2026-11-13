@@ -65,6 +65,7 @@ class MessageCreate(BaseModel):
     """建立訊息 Schema"""
     content: str = Field(..., min_length=1)
     use_rag: bool = True
+    web_search: bool = False
 
 
 class MessageUpdate(BaseModel):

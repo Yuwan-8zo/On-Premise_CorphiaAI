@@ -223,6 +223,17 @@ export function buildStreamDispatcher(conversationId: string) {
                 }
                 useToastStore.getState().add(i18n.t('ui.chat.dlpToast'), 'error', SECURITY_TOAST_MS)
                 break
+
+            // 對外搜尋：用過了（告訴使用者查了什麼、取回幾筆）或被擋（DLP／服務打不通）
+            case 'web_search_used':
+                useToastStore.getState().add(
+                    i18n.t('chat.webSearch.used', { query: data.query || '', n: data.results?.length || 0 }),
+                    'info',
+                )
+                break
+            case 'web_search_blocked':
+                useToastStore.getState().add(i18n.t('chat.webSearch.blocked', { reason: data.reason || '' }), 'error')
+                break
         }
     }
 }

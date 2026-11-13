@@ -108,8 +108,10 @@ def stop_database() -> None:
         return
     if run([exe, "info"], timeout=10).returncode != 0:
         return
-    run([exe, "compose", "stop"], timeout=120) if (BASE_DIR / "docker-compose.yml").exists() else None
-    run([exe, "stop", "corphia-postgres"], timeout=60)
+    # --profile search：就算這次沒開對外搜尋，也要把自架 SearXNG 一起列進「這次要管的服務」裡，
+    # 不然它若曾經被 --profile search 啟動過，不加這個旗標的 stop 不會把它算進去，會被漏關
+    run([exe, "compose", "--profile", "search", "stop"], timeout=120) if (BASE_DIR / "docker-compose.yml").exists() else None
+    run([exe, "stop", "corphia-postgres", "corphia-searxng"], timeout=60)
 
 
 def clear_stale_docker_sockets() -> None:

@@ -104,9 +104,11 @@ class TestSharedTokenCheck:
 
 class TestClampParams:
     def test_defaults_and_ranges(self):
-        assert clamp_generation_params({}) == {"use_rag": True, "temperature": 0.7, "max_tokens": 2048, "language": "zh-TW"}
+        assert clamp_generation_params({}) == {
+            "use_rag": True, "web_search": False, "temperature": 0.7, "max_tokens": 2048, "language": "zh-TW",
+        }
         p = clamp_generation_params({"temperature": "hot", "max_tokens": 10**9, "language": "xx", "use_rag": 0})
-        assert p == {"use_rag": False, "temperature": 0.7, "max_tokens": 4096, "language": "zh-TW"}
+        assert p == {"use_rag": False, "web_search": False, "temperature": 0.7, "max_tokens": 4096, "language": "zh-TW"}
         assert clamp_generation_params({"temperature": -5, "max_tokens": 0})["temperature"] == 0.0
         assert clamp_generation_params({"max_tokens": 0})["max_tokens"] == 1
         assert clamp_generation_params({"language": "ja-JP"})["language"] == "ja-JP"

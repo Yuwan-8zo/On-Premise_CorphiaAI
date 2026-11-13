@@ -15,6 +15,7 @@ export interface CreateConversationRequest {
 export interface SendMessageRequest {
     content: string
     useRag?: boolean
+    webSearch?: boolean
 }
 
 export const conversationsApi = {
@@ -84,6 +85,7 @@ export const conversationsApi = {
         const response = await apiClient.post(`/messages/${conversationId}`, {
             content: data.content,
             use_rag: data.useRag ?? true,
+            web_search: data.webSearch ?? false,
         })
         return mapMessage(response.data)
     },

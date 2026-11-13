@@ -13,6 +13,8 @@ export interface WebSocketMessage {
     message_id?: string
     // NOTE: 後端 FastAPI 使用 snake_case 解析，必須與後端 websocket.py 的 data.get() 欄位一致
     use_rag?: boolean
+    /** 這一題要不要連對外搜尋（需要後端開啟 enable_web_search 功能） */
+    web_search?: boolean
     temperature?: number
     max_tokens?: number
     /** 使用者介面語言，例如 'zh-TW' | 'en-US' | 'ja-JP' */
@@ -22,6 +24,7 @@ export interface WebSocketMessage {
 export interface StreamResponse {
     type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
         | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments' | 'output_filtered'
+        | 'web_search_used' | 'web_search_blocked'
     /** 回答的檢查（output_filtered）：拿掉幾張外部圖片（pii 沿用下面的欄位） */
     images?: number
     /** 產出檔案：file_progress 的 kind＝正在做哪一種（docx／xlsx／pptx）；attachments＝做好的檔案 */
@@ -64,6 +67,9 @@ export interface StreamResponse {
         prompt_length: number
         chunks_count: number
     }
+    /** 對外搜尋（web_search_used／web_search_blocked）：搜尋關鍵字、取回的來源、被擋的原因 */
+    query?: string
+    results?: Array<{ title: string; url: string }>
 }
 
 type MessageHandler = (data: StreamResponse) => void
@@ -180,23 +186,25 @@ export class ChatWebSocket {
         }
     }
 
-    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048): void {
+    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048, webSearch = false): void {
         this.send({
             type: 'message',
             content,
             use_rag: useRag,
+            web_search: webSearch,
             temperature,
             max_tokens: maxTokens,
             language,
         })
     }
 
-    sendResubmit(messageId: string, content: string, useRag: boolean = true, temperature: number = 0.7, language: string = 'zh-TW', maxTokens: number = 2048) {
+    sendResubmit(messageId: string, content: string, useRag: boolean = true, temperature: number = 0.7, language: string = 'zh-TW', maxTokens: number = 2048, webSearch = false) {
         this.send({
             type: 'resubmit',
             message_id: messageId,
             content,
             use_rag: useRag,
+            web_search: webSearch,
             temperature,
             max_tokens: maxTokens,
             language,
