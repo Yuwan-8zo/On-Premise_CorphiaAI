@@ -280,6 +280,7 @@ export default {
         promptEmpty: '該当するテンプレートがありません',
         promptTemplatesTitle: 'プロンプトテンプレート',
         moreActions: 'その他の機能',
+        research: { button: 'ディープリサーチ', chip: 'この質問はディープリサーチ（複数回調査するため時間がかかります）', remove: 'この質問ではディープリサーチをしない' },
         attachFiles: {
             button: 'ファイルを添付',
             attached: '{{n}} 個のファイルを添付しました',

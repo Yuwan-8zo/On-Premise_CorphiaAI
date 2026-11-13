@@ -15,6 +15,8 @@ export interface WebSocketMessage {
     use_rag?: boolean
     /** 這一題要不要連對外搜尋（需要後端開啟 enable_web_search 功能） */
     web_search?: boolean
+    /** 深度研究：這一題多查幾輪、寫成有出處的報告 */
+    research?: boolean
     temperature?: number
     max_tokens?: number
     /** 使用者介面語言，例如 'zh-TW' | 'en-US' | 'ja-JP' */
@@ -191,12 +193,13 @@ export class ChatWebSocket {
         }
     }
 
-    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048, webSearch = false): void {
+    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048, webSearch = false, research = false): void {
         this.send({
             type: 'message',
             content,
             use_rag: useRag,
             web_search: webSearch,
+            research,
             temperature,
             max_tokens: maxTokens,
             language,

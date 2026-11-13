@@ -82,6 +82,17 @@ def _deep_map(value, fn):
 AGENT_MAX_ROUNDS = 4
 AGENT_MAX_CALLS_PER_ROUND = 3
 
+# 深度研究：使用者指定「這一題要研究」時，多查幾輪、回答可以寫長一點
+RESEARCH_MAX_ROUNDS = 8
+RESEARCH_MAX_TOKENS = 4096
+RESEARCH_INSTRUCTIONS = """### 深度研究
+使用者要的是一份研究報告，不是簡短回答。做法：
+1. 先想清楚回答這個問題需要查哪幾件事（3 到 5 件）。
+2. 每一件事都用工具查：公司文件優先；需要公開或最新的資訊才連外網。一次查一件，關鍵字要換著試，不要重複查一樣的字。
+3. 查到的內容互相矛盾、或還不夠回答時，再補查。
+4. 查完後寫報告：開頭一段結論，接著分小標題說明；每個重點後面標明出處（文件名稱，或 [標題](網址)）。
+5. 查不到的部分直接說查不到，不要自己編；工具沒查到東西時，可以用你本來就知道的知識補充，但要註明「這一段沒有查到出處」。"""
+
 # 組提示詞時最多往回讀幾則訊息（實際帶多少由字數預算決定，見 services/history_window.py）
 HISTORY_FETCH_LIMIT = 200
 
@@ -148,6 +159,8 @@ class ChatService:
         # 這一題模型可以用的工具範圍（None＝不給工具）；模型實際做了哪些步驟（存在回答上，畫面看得到）
         self.agent_ctx: Optional[agent_tools.ToolContext] = None
         self.agent_steps: list[dict] = []
+        # 這一題最多來回幾輪（深度研究比較多）
+        self.agent_rounds = AGENT_MAX_ROUNDS
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -499,6 +512,7 @@ class ChatService:
         language: str,
         extra_system: str = "",
         web_search: bool = False,
+        research: bool = False,
     ) -> tuple[str, str, list, str]:
         """
         extra_system：這一題額外加在系統提示後面的說明（例如「請輸出 Word 文件內容的 JSON」）。
@@ -600,6 +614,7 @@ class ChatService:
         # AI 自己動手做事：這一題模型可以用的工具（services/agent_tools.py）。
         # 專案資料夾只根據文件回答、產出檔案走另一條固定流程：這兩種不給工具
         self.agent_ctx = None
+        self.agent_rounds = AGENT_MAX_ROUNDS
         if (
             settings.enable_agent_tools and getattr(self.llm_service, "supports_tools", False)
             and not final_state.get("folder_name") and not extra_system
@@ -614,9 +629,13 @@ class ChatService:
 
             self.agent_ctx = agent_tools.ToolContext(
                 search_documents=search_documents if folder_docs else None,
-                # 模型自己決定連外網：只有政策是「自動」、而且這一題還沒查過才給
-                allow_web=search_mode == "auto" and self.web_search_report is None,
+                # 模型自己決定連外網：政策是「自動」才給。深度研究是使用者自己選的（和按「連網重答」一樣算同意），
+                # 所以政策是「只提醒」時也給；政策是「不連外網」就一律不給
+                allow_web=search_mode == "auto" or (research and search_mode == "ask"),
             )
+            if research:
+                self.agent_rounds = RESEARCH_MAX_ROUNDS
+                system_prompt = f"{system_prompt}\n\n{RESEARCH_INSTRUCTIONS}"
 
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
@@ -681,6 +700,7 @@ class ChatService:
         language: str = "zh-TW",
         resubmit_message_id: Optional[str] = None,
         web_search: bool = False,
+        research: bool = False,
     ) -> AsyncGenerator[dict, None]:
         """
         發送訊息並串流回應
@@ -743,6 +763,7 @@ class ChatService:
             conversation_id, safe_content, use_rag, language,
             extra_system=file_builder.INSTRUCTIONS[file_kind] if file_kind else "",
             web_search=web_search,
+            research=research,
         )
 
         # 送模型前最後一關：有文件片段被剔除或遮罩 → 寫稽核、告訴使用者
@@ -784,7 +805,9 @@ class ChatService:
         reasoning_screen = OutputScreen()
         self.agent_steps = []
         tools = agent_tools.available_tools(self.agent_ctx) if self.agent_ctx else None
-        rounds = AGENT_MAX_ROUNDS if tools else 0
+        rounds = self.agent_rounds if tools else 0
+        if research:
+            max_tokens = max(max_tokens, RESEARCH_MAX_TOKENS)  # 報告比一般回答長
         try:
             for round_index in range(rounds + 1):
                 tool_calls: list[dict] = []
@@ -1048,7 +1071,18 @@ class ChatService:
         if added:
             yield {"type": "sources", "sources": sources}
         if result.web_report is not None:
-            self.web_search_report = result.web_report
+            earlier, new = self.web_search_report, result.web_report
+            if earlier and not earlier.get("blocked") and not new.get("blocked"):
+                # 這一題連了不只一次：關鍵字和來源都累加起來，回答下面的連網標示才是「全部送出去過什麼」
+                seen = {r["url"] for r in earlier["results"]}
+                new = {
+                    **new,
+                    "query": f"{earlier['query']}；{new['query']}",
+                    "results": earlier["results"] + [r for r in new["results"] if r["url"] not in seen],
+                }
+            elif earlier and not earlier.get("blocked") and new.get("blocked"):
+                new = earlier  # 後面這一次被擋下：前面查到的照樣算數（被擋的那一次在步驟清單和稽核裡看得到）
+            self.web_search_report = new
             yield await self._report_web_search(conversation_id)
 
     def _prompt_with_tool_results(self, prompt, results: list) -> "ChatPrompt":

@@ -1,4 +1,4 @@
-import { FileText, Folder, Layers3, Paperclip, Reader, X } from '@/components/snow/icons'
+import { FileText, Folder, Layers3, Paperclip, Reader, Search, X } from '@/components/snow/icons'
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +22,9 @@ interface ChatInputAreaProps {
     conversationId?: string
     /** 還沒有對話時先建一個並回傳它的 id（附加檔案用；沒提供就只有已存在的對話可以附） */
     ensureConversation?: () => Promise<string | undefined>
+    /** 深度研究：下一題要不要多查幾輪、寫成報告（沒給這兩個就不顯示這個功能） */
+    researchOn?: boolean
+    setResearchOn?: React.Dispatch<React.SetStateAction<boolean>>
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -53,7 +56,7 @@ export default function ChatInputArea({
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
-    llmReady = true,
+    llmReady = true, researchOn, setResearchOn,
 }: ChatInputAreaProps) {
     const { t } = useTranslation()
     const isDesktop = useDesktop()
@@ -127,7 +130,8 @@ export default function ChatInputArea({
         // 附加檔案：只附給下一則訊息（不留底），所有瀏覽器和手機都能用
         ...(conversationId || ensureConversation ? [{ key: 'files', icon: <FileText />, label: t('chat.attachFiles.button'), disabled: folderBusy, onSelect: () => attachInputRef.current?.click() }] : []),
         ...(chatMode === 'project' ? [{ key: 'upload', icon: <Paperclip />, label: t('chat.actionUpload'), onSelect: () => fileInputRef.current?.click() }] : []),
-        // 對外搜尋：後端有開這個功能才有；開著時這一題會連到自架的搜尋服務（只管這一題，送出後自動關）
+        // 深度研究：下一題多查幾輪、寫成有出處的報告（只管那一題）。專案模式只根據文件回答，不提供
+        ...(setResearchOn && chatMode === 'general' ? [{ key: 'research', icon: <Search />, label: t('chat.research.button'), checked: Boolean(researchOn), onSelect: () => setResearchOn((v) => !v) }] : []),
         // 附加這台電腦的資料夾（只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底）
         ...(showFolderButton ? [{ key: 'folder', icon: <Folder />, label: t('chat.browserFolder.button'), disabled: folderBusy, onSelect: pickAndAttachFolder }] : []),
     ]
@@ -169,6 +173,7 @@ export default function ChatInputArea({
         }
     }
     // 送出訊息時後端會自動把附加的資料夾內容用掉（只用一次），畫面上的小標籤跟著清掉
+    const researchChip = Boolean(researchOn) && chatMode === 'general'
     const sendAndClearFolder = () => { setAttachedFolder(null); handleSend() }
     const onKeyDownClearFolder = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (attachedFolder && e.key === 'Enter' && !e.shiftKey) setAttachedFolder(null)
@@ -239,7 +244,7 @@ export default function ChatInputArea({
                         <div className="relative flex-1 min-w-0 flex flex-col glass-field">
 
                             {/* Tags / Files Row */}
-                            {(uploadedFiles.length > 0 || isUploading || attachedFolder) && (
+                            {(uploadedFiles.length > 0 || isUploading || attachedFolder || researchChip) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
                                         <div key={i} className="flex items-center gap-1.5 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
@@ -251,6 +256,16 @@ export default function ChatInputArea({
                                         <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] text-accent">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />
                                             <span>{t('ui.misc.uploading', { percent: uploadProgress })}</span>
+                                        </div>
+                                    )}
+                                    {/* 深度研究開著：讓使用者看得到「這一題會做研究」（比較久），也可以直接取消 */}
+                                    {researchChip && (
+                                        <div className="flex items-center gap-1.5 snow-well pl-3 pr-1.5 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
+                                            <Search className="w-4 h-4 text-accent" />
+                                            <span className="text-text-primary">{t('chat.research.chip')}</span>
+                                            <button type="button" onClick={() => setResearchOn?.(false)} aria-label={t('chat.research.remove')} className="icon-tap !w-5 !h-5 text-text-secondary">
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
                                     )}
                                     {/* 瀏覽器臨時資料夾：只附這一次，所以多一顆移除鈕（上面的上傳檔案是長期存到專案的，不能這樣取消） */}

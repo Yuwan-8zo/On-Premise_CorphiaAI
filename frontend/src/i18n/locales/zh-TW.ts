@@ -280,6 +280,7 @@ export default {
         promptEmpty: '找不到符合的模板',
         promptTemplatesTitle: '提示詞模板',
         moreActions: '更多功能',
+        research: { button: '深度研究', chip: '這一題做深度研究（會多查幾輪，比較久）', remove: '這一題不做深度研究' },
         attachFiles: {
             button: '附加檔案',
             attached: '已附加 {{n}} 個檔案',

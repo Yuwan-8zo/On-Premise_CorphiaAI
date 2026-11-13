@@ -280,6 +280,7 @@ export default {
         promptEmpty: 'No matching templates',
         promptTemplatesTitle: 'Prompt templates',
         moreActions: 'More actions',
+        research: { button: 'Deep research', chip: 'Deep research for this question (more lookups, takes longer)', remove: 'No deep research for this question' },
         attachFiles: {
             button: 'Attach files',
             attached: 'Attached {{n}} file(s)',

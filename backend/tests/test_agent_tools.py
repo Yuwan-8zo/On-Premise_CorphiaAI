@@ -255,3 +255,65 @@ async def test_feature_can_be_switched_off(db_session, test_user, llm_ready, mon
     svc, conv = await _chat(db_session, test_user, ["直接回答。"])
     await _run(svc, conv, "1+1")
     assert svc.llm_service.rounds[0]["tools"] == []
+
+
+# ── 深度研究 ────────────────────────────────────────────────────────────────
+
+async def _research(svc, conv, text) -> list[dict]:
+    return [e async for e in svc.send_message_stream(conversation_id=conv.id, content=text, use_rag=False, research=True)]
+
+
+def _fake_web(monkeypatch, mode: str, calls: list):
+    async def fake_search(query):
+        calls.append(query)
+        return {"blocked": False, "reason": "", "query": query, "screen": {},
+                "results": [{"title": f"結果 {query}", "url": f"https://example.test/{len(calls)}", "content": "內容"}]}
+
+    async def fixed_mode(self, _tenant_id):
+        return mode
+
+    monkeypatch.setattr(settings, "enable_web_search", True)
+    monkeypatch.setattr(web_search_svc, "search", fake_search)
+    monkeypatch.setattr(ChatService, "_web_search_mode", fixed_mode)
+
+
+async def test_research_gets_more_rounds_instructions_and_a_longer_answer(db_session, test_user, llm_ready):
+    script = [[_call("current_time")] for _ in range(chat_module.AGENT_MAX_ROUNDS + 2)] + ["# 報告\n結論……"]
+    svc, conv = await _chat(db_session, test_user, script)
+    await _research(svc, conv, "比較兩種備份策略")
+    rounds = svc.llm_service.rounds
+    assert len(rounds) == chat_module.AGENT_MAX_ROUNDS + 3, "一般最多 4 輪；研究可以查更多輪"
+    assert "深度研究" in rounds[0]["messages"][0]["content"]
+    assert (await _answer(db_session, conv)).content.startswith("# 報告")
+
+
+async def test_ordinary_question_does_not_get_research_instructions(db_session, test_user, llm_ready):
+    svc, conv = await _chat(db_session, test_user, ["好。"])
+    await _run(svc, conv, "比較兩種備份策略")
+    assert "深度研究" not in svc.llm_service.rounds[0]["messages"][0]["content"]
+
+
+@pytest.mark.parametrize("mode, research, offered", [
+    ("auto", False, True), ("auto", True, True),
+    ("ask", False, False), ("ask", True, True),   # 只提醒：使用者自己選深度研究才算同意連網
+    ("off", False, False), ("off", True, False),  # 不連外網：怎樣都不給
+])
+async def test_web_tool_follows_policy_and_explicit_research(db_session, test_user, llm_ready, monkeypatch, mode, research, offered):
+    _fake_web(monkeypatch, mode, [])
+    svc, conv = await _chat(db_session, test_user, ["好。"])
+    await (_research if research else _run)(svc, conv, "寫一段介紹")
+    assert ("web_search" in svc.llm_service.rounds[0]["tools"]) is offered
+
+
+async def test_several_web_searches_are_all_shown_on_the_answer(db_session, test_user, llm_ready, monkeypatch):
+    calls: list[str] = []
+    _fake_web(monkeypatch, "auto", calls)
+    svc, conv = await _chat(db_session, test_user, [
+        [_call("web_search", query="異地備份 做法")], [_call("web_search", query="3-2-1 備份 原則")], "報告完成。",
+    ])
+    await _research(svc, conv, "寫一份備份策略的研究")
+    message = await _answer(db_session, conv)
+    assert calls == ["異地備份 做法", "3-2-1 備份 原則"]
+    assert message.web_search["used"] and message.web_search["query"] == "異地備份 做法；3-2-1 備份 原則"
+    assert len(message.web_search["sources"]) == 2, "每一次送出去的關鍵字和查到的來源都要看得到"
+    assert len(message.steps) == 2

@@ -55,6 +55,9 @@ export function useChatLogic() {
     const [chatMode, setChatMode] = useState<ChatMode>('general')
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
+    // 深度研究：使用者在「＋」選單打開後，下一題會多查幾輪、寫成有出處的報告（只管那一題）
+    const [researchOn, setResearchOn] = useState(false)
+
     // 對外搜尋的政策（管理者設定）：要不要查由後端判斷；這裡只用來決定回答下面有沒有「連網重答」
     const [searchPolicy, setSearchPolicy] = useState<WebSearchPolicy>({ enabled: false, mode: 'off' })
     useEffect(() => {
@@ -145,11 +148,11 @@ export function useChatLogic() {
     }
 
     /** 把問題交給 AI：有即時連線就串流，沒有就改用一般請求（拿到完整回覆一次換上） */
-    const askAI = async (conversationId: string | undefined, text: string, webSearch = false) => {
+    const askAI = async (conversationId: string | undefined, text: string, webSearch = false, research = false) => {
         const useRag = chatMode === 'project'
         const ws = socket.get(conversationId)
         if (ws) {
-            ws.sendMessage(text, useRag, 0.7, language, 2048, webSearch)
+            ws.sendMessage(text, useRag, 0.7, language, 2048, webSearch, research)
             return
         }
         try {
@@ -298,8 +301,10 @@ export function useChatLogic() {
                 }
             }
         }
-        // 要不要連外網由後端判斷（需要即時資訊才查）；這裡不帶旗標
-        await askAI(conversationId, text)
+        // 要不要連外網由後端判斷（需要即時資訊才查）；這裡不帶旗標。深度研究只管這一題，送出後就關掉
+        const research = researchOn && chatMode === 'general'
+        setResearchOn(false)
+        await askAI(conversationId, text, false, research)
     }
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
@@ -459,6 +464,8 @@ export function useChatLogic() {
         inputProps: {
             // 還沒有對話時附檔案：先用預設標題建一個（送出第一句話時會自動改成那句話）
             ensureConversation: () => ensureConversation(DEFAULT_CONVERSATION_TITLE),
+            researchOn,
+            setResearchOn,
             selectedFolder,
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示

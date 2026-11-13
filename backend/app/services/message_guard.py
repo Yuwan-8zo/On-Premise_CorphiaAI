@@ -44,6 +44,8 @@ def clamp_generation_params(data: dict) -> dict:
     return {
         "use_rag": bool(data.get("use_rag", True)),
         "web_search": bool(data.get("web_search", False)),
+        # 深度研究：這一題多查幾輪、寫成有出處的報告（services/chat_service.py）
+        "research": bool(data.get("research", False)),
         "temperature": num(data.get("temperature"), 0.7, 0.0, 2.0),
         "max_tokens": int(num(data.get("max_tokens"), 2048, 1, MAX_TOKENS_LIMIT)),
         "language": language if language in SUPPORTED_LANGUAGES else "zh-TW",

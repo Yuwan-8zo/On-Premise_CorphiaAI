@@ -172,3 +172,27 @@ describe('ChatInputArea', () => {
     expect(screen.getByText('test.pdf')).toBeInTheDocument()
   })
 })
+
+describe('ChatInputArea：深度研究（只管下一題）', () => {
+  it('在「＋」選單裡打開，輸入框上方出現標籤，可以直接取消', async () => {
+    const setResearchOn = vi.fn()
+    const { rerender } = render(<ChatInputArea {...makeDefaultProps({ researchOn: false, setResearchOn })} />)
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    const item = screen.getByRole('menuitemcheckbox', { name: 'chat.research.button' })
+    expect(item).toHaveAttribute('aria-checked', 'false')
+    await userEvent.click(item)
+    expect(setResearchOn).toHaveBeenCalledTimes(1)
+
+    rerender(<ChatInputArea {...makeDefaultProps({ researchOn: true, setResearchOn })} />)
+    expect(screen.getByText('chat.research.chip')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.research.remove'))
+    expect(setResearchOn).toHaveBeenLastCalledWith(false)
+  })
+
+  it('專案模式只根據文件回答：不提供深度研究', async () => {
+    render(<ChatInputArea {...makeDefaultProps({ chatMode: 'project', conversationId: 'conv-1', researchOn: true, setResearchOn: vi.fn() })} />)
+    expect(screen.queryByText('chat.research.chip')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'chat.research.button' })).not.toBeInTheDocument()
+  })
+})

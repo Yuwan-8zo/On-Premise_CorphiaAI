@@ -64,6 +64,7 @@ async def websocket_chat(
         "type": "message",
         "content": "訊息內容",
         "use_rag": true,  // 可選
+        "research": false,   // 可選，深度研究：多查幾輪、寫成有出處的報告
         "web_search": false  // 可選，這一題要不要連對外搜尋（需要後端開啟功能）
     }
     
@@ -152,6 +153,7 @@ async def websocket_chat(
             lang: str,
             resubmit_message_id: Optional[str] = None,
             web_search_flag: bool = False,
+            research_flag: bool = False,
         ) -> None:
             """
             統一的串流生成與送訊邏輯，包含：
@@ -175,6 +177,7 @@ async def websocket_chat(
                     language=lang,
                     resubmit_message_id=resubmit_message_id,
                     web_search=web_search_flag,
+                    research=research_flag,
                 )) as stream:
                     async for chunk in stream:
                         await websocket.send_json(chunk)
@@ -262,6 +265,7 @@ async def websocket_chat(
                     use_rag, temperature = params["use_rag"], params["temperature"]
                     max_tokens, language = params["max_tokens"], params["language"]
                     web_search_flag = params["web_search"]
+                    research_flag = params["research"]
 
                     if not content or (resubmit and not message_id):
                         await websocket.send_json({
@@ -304,6 +308,7 @@ async def websocket_chat(
                             temperature, max_tokens, language,
                             resubmit_message_id=message_id,
                             web_search_flag=web_search_flag,
+                            research_flag=research_flag,
                         )
                     )
 
