@@ -9,6 +9,7 @@ if not exist ".venv\Scripts\pyinstaller.exe" (
   exit /b 1
 )
 ".venv\Scripts\pyinstaller.exe" --noconfirm --clean --onefile --windowed --name "Corphia AI" ^
+  --icon "corphia.ico" ^
   --hidden-import win32timezone --collect-submodules webview.platforms ^
   corphia_desktop.py
 if errorlevel 1 exit /b 1
