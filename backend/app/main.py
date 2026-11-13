@@ -39,6 +39,7 @@ from app.api import (
     system_shutdown_router,
     voice_router,
     browser_folder_router,
+    chat_images_router,
     web_search_router,
 )
 from app.services.llm_service import get_llm_service
@@ -288,6 +289,7 @@ app.include_router(system_monitor_router, prefix="/api/v1")
 app.include_router(system_shutdown_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(browser_folder_router, prefix="/api/v1")
+app.include_router(chat_images_router, prefix="/api/v1")
 app.include_router(web_search_router, prefix="/api/v1")
 app.include_router(websocket_router)
 

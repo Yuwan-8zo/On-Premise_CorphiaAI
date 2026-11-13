@@ -8,6 +8,7 @@ import ThinkingBlock from './ThinkingBlock'
 import WebSearchNote from './WebSearchNote'
 import VersionSwitcher from './VersionSwitcher'
 import StepsBlock from './StepsBlock'
+import ChatImage from './ChatImage'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
@@ -184,6 +185,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     }
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
+    // 這一則的圖片要用對話編號去讀
+    const conversationId = useChatStore((s) => s.currentConversation?.id)
+
     // 對話分支：這個位置有不只一版時，顯示「‹ 2/3 ›」
     const versionSwitcher = onSwitchVersion && !hideActions && message.versionIds && message.versionIds.length > 1
         ? <VersionSwitcher ids={message.versionIds} currentId={message.id} onSwitch={onSwitchVersion} disabled={busy} />
@@ -288,9 +292,20 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             </div>
                         ) : (
-                            <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
-                                {message.content}
-                            </div>
+                            <>
+                                {/* 這一則附的圖片（在文字上方，靠右對齊） */}
+                                {message.images && conversationId && (
+                                    <div className="mb-[var(--sp-8)] flex flex-wrap justify-end gap-[var(--sp-8)]">
+                                        {message.images.map((id, i) => (
+                                            <ChatImage key={id} conversationId={conversationId} imageId={id} alt={t('chat.images.alt', { n: i + 1 })}
+                                                className="h-[var(--sz-120)] w-[var(--sz-120)] rounded-[var(--r-16)]" />
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
+                                    {message.content}
+                                </div>
+                            </>
                         )
                     )}
                     {!isEditing && versionSwitcher && <div className="mt-1 mr-2">{versionSwitcher}</div>}

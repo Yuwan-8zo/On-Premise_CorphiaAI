@@ -34,6 +34,7 @@ import app.services.browser_folder as browser_folder
 from app.services.history_window import select_history
 import app.services.message_tree as message_tree
 import app.services.agent_tools as agent_tools
+import app.services.chat_images as chat_images
 import app.services.web_search as web_search_svc
 import app.services.web_search_policy as web_search_policy
 from app.models.tenant import Tenant
@@ -92,6 +93,9 @@ RESEARCH_INSTRUCTIONS = """### 深度研究
 3. 查到的內容互相矛盾、或還不夠回答時，再補查。
 4. 查完後寫報告：開頭一段結論，接著分小標題說明；每個重點後面標明出處（文件名稱，或 [標題](網址)）。
 5. 查不到的部分直接說查不到，不要自己編；工具沒查到東西時，可以用你本來就知道的知識補充，但要註明「這一段沒有查到出處」。"""
+
+# 一張圖片在提示詞裡大約佔多少空間（用字數估，決定回答還剩多少長度可以用）
+IMAGE_PROMPT_CHARS = 1500
 
 # 組提示詞時最多往回讀幾則訊息（實際帶多少由字數預算決定，見 services/history_window.py）
 HISTORY_FETCH_LIMIT = 200
@@ -161,6 +165,8 @@ class ChatService:
         self.agent_steps: list[dict] = []
         # 這一題最多來回幾輪（深度研究比較多）
         self.agent_rounds = AGENT_MAX_ROUNDS
+        # 這一題要給模型看的圖片編號（使用者那一則附的）
+        self.turn_images: list[str] = []
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -480,9 +486,14 @@ class ChatService:
         )
         return list(result.scalars().all())
 
-    async def _add_user_message(self, conversation_id: str, content: str, parent_id: Optional[str]) -> Message:
+    async def _add_user_message(
+        self, conversation_id: str, content: str, parent_id: Optional[str], images: Optional[list] = None,
+    ) -> Message:
         """存一則使用者訊息（接在 parent_id 後面）、蓋防竄改 hash，並把它記成「現在看到的最後一則」"""
-        user_message = Message(conversation_id=conversation_id, role=MessageRole.USER.value, content=content, parent_id=parent_id)
+        user_message = Message(
+            conversation_id=conversation_id, role=MessageRole.USER.value, content=content, parent_id=parent_id,
+            images=images or None,
+        )
         self.db.add(user_message)
         await self.db.commit()
         await self.db.refresh(user_message)
@@ -739,12 +750,20 @@ class ChatService:
                 await message_tree.set_leaf_id(self.db, conversation_id, user_message.id)
                 await self.db.commit()
             else:
-                # 改了問題：新的問題接在原本那一則的同一個位置（同一個 parent）
-                user_message = await self._add_user_message(conversation_id, content, parent_id=user_message.parent_id)
+                # 改了問題：新的問題接在原本那一則的同一個位置（同一個 parent）；原本附的圖片跟著過來
+                user_message = await self._add_user_message(
+                    conversation_id, content, parent_id=user_message.parent_id, images=user_message.images,
+                )
         else:
             # 新的問題接在「現在看到的最後一則」後面
             path, _all = await message_tree.current_path(self.db, conversation_id)
-            user_message = await self._add_user_message(conversation_id, content, parent_id=path[-1].id if path else None)
+            user_message = await self._add_user_message(
+                conversation_id, content, parent_id=path[-1].id if path else None,
+                # 這一則附的圖片（使用者送出前貼上或附加的；用掉就從待送清單拿掉）
+                images=chat_images.consume(conversation_id),
+            )
+        # 這一題要給模型看的圖片（重答、修改後重送時就是那一則原本附的）
+        self.turn_images = list(user_message.images or [])
 
         # ── A1/A2 安全閘道由上層 websocket.py 的 _security_gate() 統一處理 ────────
         # BUG-07 修正：此處不再重複執行 PII masking / Prompt Injection 偵測，
@@ -804,20 +823,30 @@ class ChatService:
         screen = OutputScreen()
         reasoning_screen = OutputScreen()
         self.agent_steps = []
-        tools = agent_tools.available_tools(self.agent_ctx) if self.agent_ctx else None
+        # 有圖片：這一題交給圖文模型（它不用工具；看完圖直接回答）
+        use_vision = bool(self.turn_images) and getattr(self.llm_service, "vision_available", False)
+        if use_vision:
+            prompt = self._prompt_with_images(prompt, conversation_id, self.turn_images)
+            yield {"type": "vision", "images": len(self.turn_images)}
+        elif self.turn_images:
+            # 這則訊息有圖片，但這台主機現在沒有圖文模型（例如模型檔被移走）：老實說看不到，不要假裝看過
+            yield {"type": "vision_unavailable"}
+        tools = agent_tools.available_tools(self.agent_ctx) if self.agent_ctx and not use_vision else None
         rounds = self.agent_rounds if tools else 0
         if research:
             max_tokens = max(max_tokens, RESEARCH_MAX_TOKENS)  # 報告比一般回答長
         try:
             for round_index in range(rounds + 1):
                 tool_calls: list[dict] = []
-                async for kind, chunk in self.llm_service.generate_stream(
-                    model_name=self.model_name,
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    **({"tools": tools} if tools and round_index < rounds else {}),
-                ):
+                stream = (
+                    self.llm_service.generate_vision_stream(prompt=prompt, temperature=temperature, max_tokens=max_tokens)
+                    if use_vision else
+                    self.llm_service.generate_stream(
+                        model_name=self.model_name, prompt=prompt, temperature=temperature, max_tokens=max_tokens,
+                        **({"tools": tools} if tools and round_index < rounds else {}),
+                    )
+                )
+                async for kind, chunk in stream:
                     if kind == "tool_calls":
                         tool_calls = chunk
                         continue
@@ -1084,6 +1113,22 @@ class ChatService:
                 new = earlier  # 後面這一次被擋下：前面查到的照樣算數（被擋的那一次在步驟清單和稽核裡看得到）
             self.web_search_report = new
             yield await self._report_web_search(conversation_id)
+
+    def _prompt_with_images(self, prompt, conversation_id: str, image_ids: list) -> "ChatPrompt":
+        """
+        把圖片放進這一題：最後一則使用者訊息改成「文字＋圖片」的格式（圖文模型的樣板會處理）。
+        圖片內嵌在請求裡交給本機的引擎，不經過任何網址。讀不到的圖片（檔案被刪了）就略過。
+        """
+        messages = [dict(m) for m in (getattr(prompt, "messages", None) or [{"role": "user", "content": str(prompt)}])]
+        uris = [u for u in (chat_images.data_uri(conversation_id, i) for i in image_ids) if u]
+        for message in reversed(messages):
+            if message.get("role") == "user" and uris:
+                message["content"] = [{"type": "text", "text": str(message.get("content") or "")}] + [
+                    {"type": "image_url", "image_url": {"url": uri}} for uri in uris
+                ]
+                break
+        # 長度估算：圖片不算字數，另外預留（每張大約佔一千多個 token）
+        return ChatPrompt(str(prompt) + " " * (IMAGE_PROMPT_CHARS * len(uris)), messages)
 
     def _prompt_with_tool_results(self, prompt, results: list) -> "ChatPrompt":
         """把「模型要用的工具」和「工具的結果」接在對話後面，下一輪模型就看得到"""

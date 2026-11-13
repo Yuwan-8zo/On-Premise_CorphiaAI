@@ -88,6 +88,8 @@ class AuditAction:
 
     # 瀏覽器臨時資料夾：使用者用瀏覽器選這台電腦的資料夾附給 AI 看（只附一次，不留底）
     BROWSER_FOLDER_ATTACH = "browser_folder_attach"
+    # 在聊天裡附圖片給 AI 看
+    CHAT_IMAGE_ATTACH = "chat_image_attach"
 
     # 對外搜尋：唯一會把關鍵字送出這台機器的操作，一定要留稽核
     WEB_SEARCH = "web_search"

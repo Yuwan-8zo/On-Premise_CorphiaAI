@@ -84,6 +84,8 @@ export interface Message {
     reasoning?: string
     /** 這一則回答有沒有連外網（後端每一則都記；系統沒開對外搜尋、或舊訊息是 undefined，畫面上就不標） */
     webSearch?: MessageWebSearch
+    /** 使用者這一則附的圖片（編號；用 ChatImage 元件顯示） */
+    images?: string[]
     /** AI 這一題自己做了哪些步驟（查文件、連外網、計算…）；沒用工具是 undefined */
     steps?: MessageStep[]
     /** 正在用哪個工具（只在串流期間存在前端） */

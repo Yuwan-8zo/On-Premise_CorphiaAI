@@ -44,6 +44,16 @@ HEALTH_POLL_SEC = 0.5
 STOP_WAIT_SEC = 8
 
 
+def find_projector(model_path: str) -> str | None:
+    """
+    這個模型的影像轉接檔（看圖片用）：和模型同一個資料夾、檔名 mmproj 開頭的 .gguf。沒有回 None（一般的文字模型）。
+    只在「圖文模型專用的資料夾」找——那個資料夾裡除了轉接檔只有一個模型，不會配錯。
+    """
+    folder = Path(model_path).parent
+    projectors = sorted(folder.glob("mmproj*.gguf"))
+    return str(projectors[0]) if projectors and Path(model_path).name != projectors[0].name else None
+
+
 @dataclass
 class EngineModel:
     """一個已啟動的模型（llama-server 行程）"""
@@ -158,6 +168,10 @@ class LlamaEngine:
             "--host", "127.0.0.1", "--port", str(port),
             "--alias", ENGINE_ALIAS, "--no-webui", "--api-key-file", str(key_path),
         ]
+        # 圖文模型：同一個資料夾裡有影像轉接檔（mmproj）就一起載入，模型才看得懂圖片
+        projector = find_projector(model_path)
+        if projector:
+            cmd += ["--mmproj", projector]
         logger.info("啟動推論引擎：%s（埠 %s）", Path(model_path).name, port)
         log = log_path.open("w", encoding="utf-8", errors="replace")
         proc = subprocess.Popen(

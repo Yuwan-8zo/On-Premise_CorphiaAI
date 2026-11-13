@@ -9,7 +9,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Check, ChevronDown, Clock, FileText, Gauge, Globe } from '@/components/snow/icons'
+import { AlertCircle, Check, ChevronDown, Clock, Eye, FileText, Gauge, Globe } from '@/components/snow/icons'
 import type { IconProps } from '@/components/snow/icons'
 import type { MessageStep } from '@/types/chat'
 
@@ -19,6 +19,8 @@ const TOOL_ICONS: Record<string, React.ComponentType<IconProps>> = {
     web_search: Globe,
     calculate: Gauge,
     current_time: Clock,
+    // 不是工具：這一題交給圖文模型看圖（只會出現在「正在做」那一行）
+    vision: Eye,
 }
 
 interface StepsBlockProps {

@@ -16,6 +16,7 @@ import { conversationsApi } from '@/api/conversations'
 import { documentsApi } from '@/api/documents'
 import { foldersApi } from '@/api/folders'
 import { webSearchApi, type WebSearchPolicy } from '@/api/webSearch'
+import { chatImagesApi, type VisionStatus } from '@/api/chatImages'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
@@ -54,6 +55,13 @@ export function useChatLogic() {
     const [input, setInput] = useState('')
     const [chatMode, setChatMode] = useState<ChatMode>('general')
     const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    // 看圖片：這台主機有沒有圖文模型（沒有就不顯示附圖）；輸入框送出前把剛附的圖片編號交過來
+    const [vision, setVision] = useState<VisionStatus | null>(null)
+    const sentImagesRef = useRef<string[]>([])
+    useEffect(() => {
+        chatImagesApi.status().then(setVision).catch(() => undefined) // 問不到就當沒有，不影響其他功能
+    }, [])
 
     // 深度研究：使用者在「＋」選單打開後，下一題會多查幾輪、寫成有出處的報告（只管那一題）
     const [researchOn, setResearchOn] = useState(false)
@@ -282,7 +290,10 @@ export function useChatLogic() {
         const conversationId = await ensureConversation(text.slice(0, 50))
         void autoTitle(conversationId, text)
 
-        addMessage(tempMessage('user', text))
+        // 剛附的圖片先顯示在自己的訊息上（送出後伺服器會把它們正式掛到這一則）
+        const sentImages = sentImagesRef.current
+        sentImagesRef.current = []
+        addMessage(tempMessage('user', text, sentImages.length ? { images: sentImages } : {}))
         scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
         addMessage(tempMessage('assistant', '', {}, 1))
         setStreaming(true)
@@ -466,6 +477,8 @@ export function useChatLogic() {
             ensureConversation: () => ensureConversation(DEFAULT_CONVERSATION_TITLE),
             researchOn,
             setResearchOn,
+            vision,
+            onImagesSent: (ids: string[]) => { sentImagesRef.current = ids },
             selectedFolder,
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示

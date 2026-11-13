@@ -108,6 +108,10 @@ class Settings(BaseSettings):
     # 瀏覽器臨時資料夾（使用者在聊天室用瀏覽器選這台電腦的資料夾）：只附在「下一則」訊息，
     # 不建立 documents／document_chunks 紀錄、不留在磁碟上（寫暫存檔只是為了重用既有的解析器，解析完立刻刪）
     enable_browser_folder: bool = True
+    # 看圖片：聊天裡附的圖片由本機的圖文模型讀（services/chat_images.py）。模型放在這個資料夾：
+    # 一個模型檔（.gguf）加一個影像轉接檔（檔名 mmproj 開頭的 .gguf）。資料夾是空的＝這台主機不能看圖，介面不顯示附圖
+    enable_vision: bool = True
+    vision_model_dir: str = "ai_model/vision"
     browser_folder_max_files: int = 40
     browser_folder_max_total_mb: int = 50
     browser_folder_max_chars_per_file: int = 20000

@@ -26,7 +26,7 @@ export interface WebSocketMessage {
 export interface StreamResponse {
     type: 'stream' | 'reasoning' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
         | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments' | 'output_filtered'
-        | 'web_search_used' | 'web_search_blocked' | 'tool_step'
+        | 'web_search_used' | 'web_search_blocked' | 'tool_step' | 'vision' | 'vision_unavailable'
     /** AI 自己動手做事（tool_step）：tool＝哪個工具；status＝running 開始做／done 做完（帶 summary、ok） */
     tool?: string
     status?: 'running' | 'done'

@@ -15,6 +15,7 @@
  *   - 'output_filtered'    ↦ AI 的回答送出前被改過（外部圖片拿掉、個資遮罩）
  *   - 'file_progress' / 'attachments' ↦ 正在製作檔案（等待提示換成「正在製作…」）／做好了，掛到這則回答下面
  *   - 'tool_step'          ↦ AI 自己用工具：開始做（顯示「正在查文件…」）／做完（加到這則回答的步驟清單）
+ *   - 'vision' / 'vision_unavailable' ↦ 這一題交給圖文模型看圖／主機沒有圖文模型（提示使用者 AI 看不到圖）
  *   - 'injection_block' / 'dlp_block' ↦ 已攔阻；結束生成並在回覆泡泡裡說明
  */
 
@@ -78,6 +79,8 @@ export function buildStreamDispatcher(conversationId: string) {
     return function handleStreamPacket(data: StreamResponse): void {
         if (data.type === 'stream') {
             if (data.content) {
+                // 開始寫回答了：「正在看圖片…」這類進行中的提示收掉
+                if (!pending) store().updateThread(conversationId, (messages) => (messages.some((m) => m.working) ? patchLastAssistant(messages, { working: undefined }) : messages))
                 pending += data.content
                 if (!flushTimer) flushTimer = setTimeout(flush, 50)
             }
@@ -261,6 +264,15 @@ export function buildStreamDispatcher(conversationId: string) {
                     const step = { tool: data.tool || '', summary: data.summary || '', ok: data.ok !== false }
                     return patchLastAssistant(messages, { working: undefined, steps: [...(last?.steps ?? []), step] })
                 })
+                break
+
+            // 看圖片：這一題交給圖文模型（第一次要載入模型，會久一點）→ 顯示「正在看圖片…」
+            case 'vision':
+                store().updateThread(conversationId, (messages) => patchLastAssistant(messages, { working: 'vision' }))
+                break
+            // 訊息有圖片，但主機現在沒有圖文模型：告訴使用者 AI 其實看不到圖
+            case 'vision_unavailable':
+                useToastStore.getState().add(i18n.t('chat.images.unavailable'), 'error', SECURITY_TOAST_MS)
                 break
 
             // 對外搜尋：用過了（告訴使用者查了什麼、取回幾筆）或被擋（DLP／服務打不通）

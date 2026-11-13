@@ -1,4 +1,7 @@
-import { FileText, Folder, Layers3, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { Eye, FileText, Folder, Layers3, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import ChatImage from './ChatImage'
+import { useChatImages } from '../hooks/useChatImages'
+import type { VisionStatus } from '@/api/chatImages'
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +28,10 @@ interface ChatInputAreaProps {
     /** 深度研究：下一題要不要多查幾輪、寫成報告（沒給這兩個就不顯示這個功能） */
     researchOn?: boolean
     setResearchOn?: React.Dispatch<React.SetStateAction<boolean>>
+    /** 看圖片：這台主機能不能看圖、上限多少（沒給或不能看圖就不顯示附圖） */
+    vision?: VisionStatus | null
+    /** 送出前告訴上層這一則附了哪些圖（讓剛送出的訊息馬上顯示圖片） */
+    onImagesSent?: (ids: string[]) => void
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -56,7 +63,7 @@ export default function ChatInputArea({
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
-    llmReady = true, researchOn, setResearchOn,
+    llmReady = true, researchOn, setResearchOn, vision = null, onImagesSent,
 }: ChatInputAreaProps) {
     const { t } = useTranslation()
     const isDesktop = useDesktop()
@@ -120,6 +127,8 @@ export default function ChatInputArea({
     const [promptOpen, setPromptOpen] = useState(false)
     const hasPrompts = Array.isArray(t('chat.promptLibrary', { returnObjects: true }))
     /** 「＋」選單的內容：依目前的情況列出用得到的功能 */
+    const chatImages = useChatImages({ vision, conversationId, ensureConversation })
+    const imageInputRef = useRef<HTMLInputElement | null>(null)
     const actions: InputAction[] = [
         ...(hasPrompts ? [{ key: 'prompt', icon: <Reader />, label: t('chat.promptTemplatesTitle'), onSelect: () => setPromptOpen(true) }] : []),
         // 桌面版：讀取這台電腦上 Office 目前的內容（選取範圍；沒選就整份）
@@ -130,6 +139,8 @@ export default function ChatInputArea({
         // 附加檔案：只附給下一則訊息（不留底），所有瀏覽器和手機都能用
         ...(conversationId || ensureConversation ? [{ key: 'files', icon: <FileText />, label: t('chat.attachFiles.button'), disabled: folderBusy, onSelect: () => attachInputRef.current?.click() }] : []),
         ...(chatMode === 'project' ? [{ key: 'upload', icon: <Paperclip />, label: t('chat.actionUpload'), onSelect: () => fileInputRef.current?.click() }] : []),
+        // 附加圖片：請 AI 看圖（截圖、拍下來的文件、圖表）；也可以直接在輸入框貼上。主機有圖文模型才有這一項
+        ...(chatImages.enabled && chatMode === 'general' ? [{ key: 'images', icon: <Eye />, label: t('chat.images.button'), disabled: chatImages.busy, onSelect: () => imageInputRef.current?.click() }] : []),
         // 深度研究：下一題多查幾輪、寫成有出處的報告（只管那一題）。專案模式只根據文件回答，不提供
         ...(setResearchOn && chatMode === 'general' ? [{ key: 'research', icon: <Search />, label: t('chat.research.button'), checked: Boolean(researchOn), onSelect: () => setResearchOn((v) => !v) }] : []),
         // 附加這台電腦的資料夾（只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底）
@@ -174,9 +185,14 @@ export default function ChatInputArea({
     }
     // 送出訊息時後端會自動把附加的資料夾內容用掉（只用一次），畫面上的小標籤跟著清掉
     const researchChip = Boolean(researchOn) && chatMode === 'general'
-    const sendAndClearFolder = () => { setAttachedFolder(null); handleSend() }
+    /** 送出前：把這一則附的圖片交給上層（訊息馬上顯示圖片），並清掉輸入框上的縮圖 */
+    const releaseImages = () => { const sent = chatImages.takeForSend(); if (sent.length) onImagesSent?.(sent) }
+    const sendAndClearFolder = () => { setAttachedFolder(null); releaseImages(); handleSend() }
     const onKeyDownClearFolder = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (attachedFolder && e.key === 'Enter' && !e.shiftKey) setAttachedFolder(null)
+        if (e.key === 'Enter' && !e.shiftKey) {
+            if (attachedFolder) setAttachedFolder(null)
+            releaseImages()
+        }
         handleKeyDown(e)
     }
     // 輸入內容超過欄位最大高度（160）時，送出鈕左邊出現「放大」鈕；放大後欄位變高，方便編輯長文
@@ -244,7 +260,7 @@ export default function ChatInputArea({
                         <div className="relative flex-1 min-w-0 flex flex-col glass-field">
 
                             {/* Tags / Files Row */}
-                            {(uploadedFiles.length > 0 || isUploading || attachedFolder || researchChip) && (
+                            {(uploadedFiles.length > 0 || isUploading || attachedFolder || researchChip || chatImages.images.length > 0 || chatImages.busy) && (
                                 <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
                                     {uploadedFiles.map((f, i) => (
                                         <div key={i} className="flex items-center gap-1.5 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
@@ -256,6 +272,23 @@ export default function ChatInputArea({
                                         <div className="flex items-center gap-2 snow-well px-3 py-1.5 rounded-full text-[length:var(--fs-13)] text-accent">
                                             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />
                                             <span>{t('ui.misc.uploading', { percent: uploadProgress })}</span>
+                                        </div>
+                                    )}
+                                    {/* 附加的圖片：小縮圖＋一顆全部移除；上傳中顯示轉圈 */}
+                                    {(chatImages.images.length > 0 || chatImages.busy) && (
+                                        <div className="flex items-center gap-1.5 snow-well pl-1.5 pr-1.5 py-1.5 rounded-full text-[length:var(--fs-13)] animate-fade-in-up">
+                                            {chatImages.owner && chatImages.images.map((id, i) => (
+                                                <ChatImage key={id} conversationId={chatImages.owner as string} imageId={id} alt={t('chat.images.alt', { n: i + 1 })} className="h-[var(--sz-28)] w-[var(--sz-28)] rounded-full" />
+                                            ))}
+                                            {chatImages.busy && <div className="w-3.5 h-3.5 mx-1 rounded-full border-2 border-[var(--paper-line)] border-t-transparent animate-spin" />}
+                                            {chatImages.images.length > 0 && (
+                                                <>
+                                                    <span className="text-text-primary pl-1">{t('chat.images.chip', { n: chatImages.images.length })}</span>
+                                                    <button type="button" onClick={() => void chatImages.remove()} aria-label={t('chat.images.remove')} className="icon-tap !w-5 !h-5 text-text-secondary">
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                     {/* 深度研究開著：讓使用者看得到「這一題會做研究」（比較久），也可以直接取消 */}
@@ -303,12 +336,19 @@ export default function ChatInputArea({
                                 />
                                 <InputActionsMenu label={t('chat.moreActions')} items={actions} disabled={isConnecting || isUploading} />
                                 <input ref={attachInputRef} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={attachFiles} aria-hidden tabIndex={-1} />
+                                <input ref={imageInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" className="hidden" data-testid="image-input" tabIndex={-1}
+                                    onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ''; void chatImages.attach(files) }} />
 
                                 <textarea
                                     ref={inputRef}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={onKeyDownClearFolder}
+                                    onPaste={(e) => {
+                                        // 直接貼上截圖：剪貼簿裡有圖片就附上去（文字照常貼進輸入框）
+                                        const files = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
+                                        if (files.length && chatImages.enabled && chatMode === 'general') { e.preventDefault(); void chatImages.attach(files) }
+                                    }}
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}

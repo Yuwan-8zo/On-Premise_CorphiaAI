@@ -280,6 +280,7 @@ export default {
         promptEmpty: '該当するテンプレートがありません',
         promptTemplatesTitle: 'プロンプトテンプレート',
         moreActions: 'その他の機能',
+        images: { button: '画像を添付', chip: '画像 {{n}} 枚', remove: '添付した画像を削除', alt: '添付画像 {{n}}', tooMany: '1 件のメッセージに添付できる画像は {{max}} 枚までです', tooBig: '画像が大きすぎます（1 枚 {{max}} MB まで）', skipped: '次のファイルは読み取れる画像ではないため添付されませんでした：{{names}}', unavailable: 'このホストには現在、画像を読むモデルがないため、AI は添付画像を見ることができません' },
         research: { button: 'ディープリサーチ', chip: 'この質問はディープリサーチ（複数回調査するため時間がかかります）', remove: 'この質問ではディープリサーチをしない' },
         attachFiles: {
             button: 'ファイルを添付',
@@ -1123,6 +1124,7 @@ export default {
                     web_search: '外部ネットを検索中…',
                     calculate: '計算中…',
                     current_time: '現在時刻を確認中…',
+                    vision: '画像を確認中…',
                     other: '処理中…',
                 },
             },

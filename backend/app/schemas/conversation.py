@@ -97,6 +97,8 @@ class MessageResponse(BaseModel):
     reasoning: Optional[str] = None
     # 這一則回答連外網查了什麼：{"query", "sources": [{"title", "url"}]}；沒連是 None
     web_search: Optional[dict] = None
+    # 使用者這一則附的圖片（編號；用 /chat-images/{對話}/{編號} 讀）
+    images: Optional[list] = None
     # AI 這一題自己做了哪些步驟（用了哪些工具）
     steps: Optional[list] = None
     # 對話分支：這個位置的所有版本（照寫入順序，包含自己）；只有一版時是只含自己的清單或空的

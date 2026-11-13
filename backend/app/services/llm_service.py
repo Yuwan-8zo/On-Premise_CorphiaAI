@@ -9,6 +9,7 @@ LLM 服務模組
 
 import asyncio
 import json
+from pathlib import Path
 import logging
 import queue
 import re
@@ -93,6 +94,10 @@ def _safe_max_tokens(max_tokens: int, prompt_len_chars: int, context_size: int =
     estimated_prompt_tokens = max(1, prompt_len_chars // 1)  # 偏保守，每字元當 1 token
     headroom = max(64, (context_size or settings.llama_context_size) - estimated_prompt_tokens - 256)
     return min(v, headroom)
+
+
+# 圖文模型在狀態表裡的名字（它不在模型選單裡，使用者不能選它當聊天模型）
+VISION_MODEL_LABEL = "vision"
 
 
 class LLMService:
@@ -527,6 +532,37 @@ class LLMService:
             "arguments": arguments if isinstance(arguments, dict) else {},
             "raw_arguments": call["arguments"],
         }
+
+    def vision_model_path(self) -> Optional[str]:
+        """
+        圖文模型在哪（設定的資料夾裡：一個影像轉接檔＋一個模型檔）；沒開、沒裝、或引擎不支援回 None。
+        """
+        if not settings.enable_vision or self.engine_mode != "server":
+            return None
+        folder = Path(settings.vision_model_dir)
+        if not folder.is_absolute():
+            folder = Path(__file__).resolve().parents[3] / folder
+        if not any(folder.glob("mmproj*.gguf")):
+            return None
+        models = sorted(p for p in folder.glob("*.gguf") if not p.name.startswith("mmproj"))
+        return str(models[0]) if models else None
+
+    @property
+    def vision_available(self) -> bool:
+        return self.vision_model_path() is not None
+
+    async def generate_vision_stream(self, prompt, max_tokens: int = 2048, temperature: float = 0.7, top_p: float = 0.9):
+        """
+        用圖文模型回答（訊息裡有圖片時）。第一次會載入模型（要一點時間），之後留在記憶體，
+        太久沒用、記憶體要讓給別的模型時會被關掉（規則同其他模型，見 llm_engine）。產出的格式和 generate_stream 一樣。
+        """
+        path = self.vision_model_path()
+        if path is None:
+            raise RuntimeError("這台主機沒有安裝看圖片的模型")
+        temperature, top_p, max_tokens = await self._prepare_call(prompt, max_tokens, temperature, top_p, default_temperature=0.7)
+        inst = await self._ensure_loaded(VISION_MODEL_LABEL, path)
+        async for item in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, None):
+            yield item
 
     @property
     def supports_tools(self) -> bool:

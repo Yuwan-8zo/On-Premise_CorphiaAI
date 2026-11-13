@@ -280,6 +280,7 @@ export default {
         promptEmpty: 'No matching templates',
         promptTemplatesTitle: 'Prompt templates',
         moreActions: 'More actions',
+        images: { button: 'Attach images', chip: '{{n}} image(s)', remove: 'Remove attached images', alt: 'Attached image {{n}}', tooMany: 'Up to {{max}} images per message', tooBig: 'Image too large (max {{max}} MB each)', skipped: 'These files are not readable images and were not attached: {{names}}', unavailable: 'This host has no image-reading model right now, so the AI cannot see your images' },
         research: { button: 'Deep research', chip: 'Deep research for this question (more lookups, takes longer)', remove: 'No deep research for this question' },
         attachFiles: {
             button: 'Attach files',
@@ -1123,6 +1124,7 @@ export default {
                     web_search: 'Searching the web…',
                     calculate: 'Calculating…',
                     current_time: 'Checking the current time…',
+                    vision: 'Looking at the image…',
                     other: 'Working…',
                 },
             },

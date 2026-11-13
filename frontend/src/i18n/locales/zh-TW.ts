@@ -280,6 +280,7 @@ export default {
         promptEmpty: '找不到符合的模板',
         promptTemplatesTitle: '提示詞模板',
         moreActions: '更多功能',
+        images: { button: '附加圖片', chip: '{{n}} 張圖片', remove: '移除附加的圖片', alt: '附加的圖片 {{n}}', tooMany: '一則訊息最多附 {{max}} 張圖片', tooBig: '圖片太大（單張上限 {{max}} MB）', skipped: '這些檔案不是可以讀取的圖片，沒有附上：{{names}}', unavailable: '這台主機現在沒有看圖片的模型，AI 看不到你附的圖片' },
         research: { button: '深度研究', chip: '這一題做深度研究（會多查幾輪，比較久）', remove: '這一題不做深度研究' },
         attachFiles: {
             button: '附加檔案',
@@ -1123,6 +1124,7 @@ export default {
                     web_search: '正在連外網查詢…',
                     calculate: '正在計算…',
                     current_time: '正在看現在時間…',
+                    vision: '正在看圖片…',
                     other: '正在處理…',
                 },
             },

@@ -13,6 +13,7 @@ from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message
 import app.services.message_tree as message_tree
+import app.services.chat_images as chat_images
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -245,6 +246,8 @@ async def delete_conversation(
     conversation_title = conversation.title
     
     await db.delete(conversation)
+    # 這個對話附過的圖片檔一起刪（資料庫的紀錄會跟著對話刪掉，檔案要自己清）
+    chat_images.delete_conversation_images(conversation_id)
     await db.commit()
     
     # 審計日誌

@@ -132,3 +132,5 @@ backups/
 graphify-out/
 desktop/dist_new/
 /dist/
+# vision model files (downloaded separately, several GB)
+ai_model/vision/
