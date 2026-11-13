@@ -24,7 +24,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_DIR = Path(__file__).resolve().parent
-PORTS = (8168, 5173)
+PORTS = (8168, 8443, 5173)  # backend, backend's encrypted LAN port (--built), frontend dev server
 
 sys.path.insert(0, str(BASE_DIR / "scripts"))
 from setup_postgres import PGDATA_DIR as NATIVE_PGDATA_DIR  # noqa: E402
@@ -71,6 +71,7 @@ def stop_app_processes() -> None:
     powershell(
         "Get-CimInstance Win32_Process | Where-Object { "
         "$_.CommandLine -match 'uvicorn\\s+app\\.main:app' -or "
+        "($_.Name -match '^python' -and $_.CommandLine -match 'run_server\\.py') -or "
         "($_.Name -eq 'node.exe' -and $_.CommandLine -match 'vite') -or "
         "($_.Name -match '^(cmd|npm)' -and $_.CommandLine -match 'npm(\\.cmd)?\"?\\s+run\\s+dev') } | "
         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"

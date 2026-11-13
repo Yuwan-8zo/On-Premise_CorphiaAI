@@ -31,6 +31,8 @@ DIST_DIR = PROJECT_ROOT / "frontend" / "dist"
 BOOT_STATUS_PATH = PROJECT_ROOT / "frontend" / "public" / "boot-status.json"
 LAN_PATH = PROJECT_ROOT / ".runtime" / "lan.json"
 ENV_FLAG = "CORPHIA_SERVE_FRONTEND"
+# 區網裝置要連的協定和埠（run_server.py 啟動時填；None＝開發模式，由前端開發伺服器決定）
+LAN_ENDPOINT: dict | None = None
 # 最多每隔多久重讀一次區網設定（秒）；不看修改時間：Windows 的修改時間只精確到秒，一秒內連續切換會讀不到
 LAN_REREAD_SEC = 0.3
 # 不屬於介面的路徑：找不到就是找不到，不能回 index.html（不然打錯的 API 網址會拿到一頁 HTML）
@@ -58,8 +60,29 @@ def is_loopback(host: str | None) -> bool:
     return ip.is_loopback or bool(mapped and mapped.is_loopback)
 
 
+# 內部網路的位址範圍：公司／家用區網（10、172.16～31、192.168）、沒有 DHCP 時自動配的位址（169.254）、
+# IPv6 的區網位址（fc00::/7）與同一段網路才通的位址（fe80::/10）。其他一律當成外面來的。
+PRIVATE_NETWORKS = tuple(ipaddress.ip_network(n) for n in (
+    "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "fc00::/7", "fe80::/10",
+))
+
+
+def is_private(host: str | None) -> bool:
+    """是不是內部網路的裝置（本機不算在這裡，見 is_loopback）"""
+    try:
+        # fe80::1%eth0 這種帶網路介面名稱的寫法，先把名稱拿掉
+        ip = ipaddress.ip_address((host or "").split("%")[0])
+    except ValueError:
+        return False
+    ip = getattr(ip, "ipv4_mapped", None) or ip  # ::ffff:192.168.1.5 → 192.168.1.5
+    return any(ip.version == net.version and ip in net for net in PRIVATE_NETWORKS)
+
+
 class LanGate:
-    """區網門檢（最外層）：不是本機的連線，區域網路沒開就擋在門口，後面的程式完全碰不到"""
+    """
+    區網門檢（最外層）：不是本機的連線，區域網路沒開就擋在門口，後面的程式完全碰不到。
+    區域網路開著也只收內部網路的位址：主機就算被接到外面（路由器轉埠、公開 IP），外面的裝置一樣進不來。
+    """
 
     def __init__(self, app, lan_path: Path = LAN_PATH):
         self.app = app
@@ -82,7 +105,8 @@ class LanGate:
         if scope["type"] not in ("http", "websocket"):
             return await self.app(scope, receive, send)
         client = scope.get("client")
-        if is_loopback(client[0] if client else None) or self.lan_enabled():
+        host = client[0] if client else None
+        if is_loopback(host) or (is_private(host) and self.lan_enabled()):
             return await self.app(scope, receive, send)
         if scope["type"] == "websocket":
             # 還沒接受就關閉＝拒絕連線
@@ -110,6 +134,17 @@ def install(app: FastAPI, dist: Path = DIST_DIR, boot_status: Path = BOOT_STATUS
             return Response(boot_status.read_text(encoding="utf-8"), media_type="application/json", headers={"Cache-Control": "no-store"})
         except OSError:
             return JSONResponse({}, status_code=404, headers={"Cache-Control": "no-store"})
+
+    @app.get("/lan-ca.crt", include_in_schema=False)
+    async def lan_ca() -> Response:
+        """主機的發證憑證（公開的那一半）：手機裝一次，之後連這台主機就不會再跳「連線不是私人連線」"""
+        from app.core.lan_tls import ca_der
+
+        der = ca_der()
+        if not der:
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        return Response(der, media_type="application/x-x509-ca-cert",
+                        headers={"Content-Disposition": 'attachment; filename="corphia-lan-ca.crt"', "Cache-Control": "no-store"})
 
     @app.get("/{path:path}", include_in_schema=False)
     async def web_ui(path: str) -> Response:

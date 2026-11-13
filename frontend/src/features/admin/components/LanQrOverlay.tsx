@@ -15,15 +15,24 @@ import { prefersReducedMotion } from '@/lib/reducedMotion'
 interface LanQrOverlayProps {
     /** 手機要連的本機 IP */
     ip: string
+    /** 完整網址（主機模式由後端給，含加密的協定和埠）；沒給就照目前頁面的協定與埠組 */
+    url?: string
+    /** 區網連線有沒有加密 */
+    encrypted?: boolean
+    /** 主機發證憑證的指紋：手機第一次連線跳出憑證提醒時用來核對 */
+    fingerprint?: string
     onClose: () => void
 }
+
+/** 指紋顯示前幾組（全長 32 組太長；前 8 組已經足夠讓人核對是不是同一張） */
+const FINGERPRINT_GROUPS = 8
 
 /** 區網裝置要開的網址（沿用目前頁面的協定與連接埠） */
 const lanUrl = (ip: string) => `${window.location.protocol}//${ip}${window.location.port ? `:${window.location.port}` : ''}/`
 
-export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
+export default function LanQrOverlay({ ip, url: givenUrl, encrypted = false, fingerprint = '', onClose }: LanQrOverlayProps) {
     const { t } = useTranslation()
-    const url = lanUrl(ip)
+    const url = givenUrl || lanUrl(ip)
     const [leaving, setLeaving] = useState(false)
 
     /** 關閉：先播淡出（.is-leaving，0.2 秒），播完才真的移除；減少動態效果時直接關 */
@@ -58,6 +67,13 @@ export default function LanQrOverlay({ ip, onClose }: LanQrOverlayProps) {
                     <QrCode value={url} />
                 </div>
                 <p className="lan-qr-url selectable-text">{url}</p>
+                {/* 加密連線：憑證是主機自己簽的，手機第一次會跳提醒；給指紋的前幾組讓人核對 */}
+                {encrypted && (
+                    <p className="lan-qr-sub">
+                        {t('admin.lan.encryptedHint')}
+                        {fingerprint && <span className="block tabular-nums selectable-text">{t('admin.lan.fingerprint', { value: fingerprint.split(':').slice(0, FINGERPRINT_GROUPS).join(':') })}</span>}
+                    </p>
+                )}
             </div>
         </div>,
         document.body,

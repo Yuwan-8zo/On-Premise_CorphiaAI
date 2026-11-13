@@ -814,15 +814,11 @@ def start_backend(python_exe: Path) -> None:
     stop_pre_ui()  # 先把埠讓出來（不然下面清埠會清到自己）
     kill_port(BACKEND_PORT)
     log = open_log("backend.log")
-    # --built：手機要直接連後端，所以聽所有網路介面；誰能進來由後端的區網門檢決定（app/core/web_ui.py）
-    host = "0.0.0.0" if SERVE_BUILT else BACKEND_HOST
+    # 聽哪些網路介面、區網走不走加密，由 backend/run_server.py 依模式決定：
+    # 開發模式只聽這台電腦；--built 時這台電腦走原本的埠，區網裝置走加密的埠（誰能進來另由區網門檢決定，app/core/web_ui.py）
     cmd = [
         str(python_exe),
-        "-m",
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        host,
+        "run_server.py",
         "--port",
         str(BACKEND_PORT),
         "--log-level",

@@ -181,6 +181,21 @@ class TestDesktopOrigin:
         for other in ("http://192.168.1.10:5174", "https://192.168.1.10:5173", "http://192.168.1.100:5173", "http://192.168.1.10.evil.example:5173"):
             assert app.origin(other) != server
 
+    def test_host_address_without_a_port_also_tries_the_host_port(self, app):
+        """公司其他電腦第一次連主機：多數人只記得 IP，沒打埠號就再試主機預設的埠"""
+        assert app.server_candidates("http://192.168.1.10") == [
+            "http://192.168.1.10", f"https://192.168.1.10:{app.HOST_HTTPS_PORT}", f"http://192.168.1.10:{app.HOST_PORT}",
+        ], "加密的排在沒加密的前面"
+        assert app.server_candidates("http://192.168.1.10:9000") == ["http://192.168.1.10:9000"]
+        assert app.server_candidates("http://192.168.1.10:99999") == []  # 埠號不合法
+
+    def test_connect_page_wording_for_first_run_and_lost_connection(self, app):
+        first = app.connect_page("http://localhost:5173", first_run=True)
+        assert "連線到公司的 Corphia AI" in first and 'value=""' in first, "第一次用：不預填這台電腦的位址"
+        lost = app.connect_page("http://192.168.1.10:8168", first_run=False)
+        assert "連不上主機" in lost and 'value="http://192.168.1.10:8168"' in lost
+        assert "__" not in first + lost, "樣板的空格都要填完"
+
     def test_normalize_server_and_versions(self, app):
         assert app.normalize_server(" 192.168.1.10:5173/ ") == "http://192.168.1.10:5173"
         assert app.normalize_server("ftp://x") == "" and app.normalize_server("") == ""

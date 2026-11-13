@@ -173,7 +173,7 @@ export default function Admin() {
 
                         {/* 側欄底部：區域網路開關（mt-auto 推到最下面，只在桌機顯示） */}
                         <div className="hidden lg:block mt-auto">
-                            <LanSidebarWidget enabled={lan.enabled} isLoading={lan.isLoading} lanIps={lan.lanIps} onToggle={lan.onToggle} />
+                            <LanSidebarWidget enabled={lan.enabled} isLoading={lan.isLoading} lanIps={lan.lanIps} link={lan.link} onToggle={lan.onToggle} />
                         </div>
                     </aside>
 

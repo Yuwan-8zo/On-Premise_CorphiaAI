@@ -23,10 +23,12 @@ export interface LanSidebarWidgetProps {
     enabled: boolean | null
     isLoading: boolean
     lanIps: string[]
+    /** 區網裝置要開的網址、有沒有加密、主機憑證的指紋（沒給就照目前頁面的網址組） */
+    link?: { url?: string; encrypted: boolean; fingerprint: string }
     onToggle: (nextEnabled: boolean) => void
 }
 
-export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle }: LanSidebarWidgetProps) {
+export default function LanSidebarWidget({ enabled, isLoading, lanIps, link, onToggle }: LanSidebarWidgetProps) {
     const { t } = useTranslation()
     const [showQr, setShowQr] = useState(false)
 
@@ -104,7 +106,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, onToggle 
                         </Tooltip>
                     </div>
                 )}
-                {showQr && enabled && lanIps.length > 0 && <LanQrOverlay ip={lanIps[0]} onClose={() => setShowQr(false)} />}
+                {showQr && enabled && lanIps.length > 0 && <LanQrOverlay ip={lanIps[0]} url={link?.url} encrypted={link?.encrypted} fingerprint={link?.fingerprint} onClose={() => setShowQr(false)} />}
             </div>
         </div>
     )

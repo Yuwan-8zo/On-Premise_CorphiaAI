@@ -35,6 +35,12 @@ export interface LanStatus {
     enabled: boolean
     lan_ips: string[]
     requires_restart: boolean
+    /** 區網裝置要開的完整網址（主機模式才有；開發模式是空的，照目前頁面的網址組） */
+    lan_urls?: string[]
+    /** 區網連線有沒有加密 */
+    encrypted?: boolean
+    /** 主機發證憑證的指紋（有加密才有） */
+    ca_fingerprint?: string
 }
 
 export interface RuntimeInfo {

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/api/admin'
 import { getModels, refreshModels, selectModel, type ModelItem } from '@/api/models'
-import { systemApi } from '@/api/system'
+import { systemApi, type LanStatus } from '@/api/system'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
 import { usePolling } from './usePolling'
@@ -84,11 +84,14 @@ export function useLanStatus() {
     // null＝還沒讀到狀態：畫面顯示佔位，不先畫成「關閉」再滑到「開啟」
     const [enabled, setEnabled] = useState<boolean | null>(null)
     const [lanIps, setLanIps] = useState<string[]>([])
+    // 區網裝置要開的網址、有沒有加密、主機憑證的指紋（主機模式由後端給；開發模式沒有）
+    const [link, setLink] = useState<{ url?: string; encrypted: boolean; fingerprint: string }>({ encrypted: false, fingerprint: '' })
     const [isLoading, setIsLoading] = useState(false)
 
-    const apply = (s: { enabled?: boolean; lan_ips?: unknown }) => {
+    const apply = (s: Partial<LanStatus>) => {
         setEnabled(Boolean(s.enabled))
         setLanIps(Array.isArray(s.lan_ips) ? s.lan_ips : [])
+        setLink({ url: s.lan_urls?.[0], encrypted: Boolean(s.encrypted), fingerprint: s.ca_fingerprint ?? '' })
     }
 
     // 定時重讀：電腦換網路（例如改連手機熱點）後，本機 IP 和 QR code 幾秒內就跟著更新
@@ -112,5 +115,5 @@ export function useLanStatus() {
         }
     }
 
-    return { enabled, lanIps, isLoading, onToggle }
+    return { enabled, lanIps, link, isLoading, onToggle }
 }

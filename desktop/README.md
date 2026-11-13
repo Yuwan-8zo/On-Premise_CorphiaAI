@@ -18,8 +18,8 @@ build.bat
 
 ## 使用
 
-- 直接執行 `Corphia AI.exe`；預設連 `http://localhost:5173`，連不上會出現設定頁可以改位址。
-- 指定伺服器：`"Corphia AI.exe" --server http://192.168.1.10:5173`（會記住）。
+- 直接執行 `Corphia AI.exe`：這台電腦有完整安裝就自己把服務帶起來；沒有（公司其他電腦）第一次會請你輸入主機位址，只打 IP 也可以（會自動補上主機的埠 8168）。
+- 指定伺服器：`"Corphia AI.exe" --server http://192.168.1.10:8168`（會記住）。
 - 自我檢查：`"Corphia AI.exe" --selftest result.json`（載入介面、測一次橋、寫結果後自動關閉）。
 
 設定存在 `%APPDATA%\CorphiaAI\desktop.json`；登入狀態存在 `%LOCALAPPDATA%\CorphiaAI\webview`；

@@ -76,6 +76,28 @@ class TestLanGate:
         await _run(gate, "websocket", "192.168.1.50")
         assert inner.called == 2
 
+    @pytest.mark.parametrize("ip", [
+        "10.1.2.3", "172.16.0.9", "172.31.255.1", "192.168.0.7", "169.254.10.10",
+        "::ffff:192.168.1.50", "fd12:3456::1", "fe80::1%eth0",
+    ])
+    @pytest.mark.asyncio
+    async def test_every_internal_address_range_passes_when_lan_is_on(self, tmp_path, ip):
+        gate, inner = _gate(tmp_path, lan=True)
+        await _run(gate, "http", ip)
+        assert inner.called == 1
+
+    @pytest.mark.parametrize("ip", [
+        "8.8.8.8", "203.0.113.5", "172.32.0.1", "192.169.1.1", "100.64.0.1",
+        "::ffff:8.8.8.8", "2001:4860:4860::8888", "不是位址", "",
+    ])
+    @pytest.mark.asyncio
+    async def test_outside_addresses_are_blocked_even_when_lan_is_on(self, tmp_path, ip):
+        gate, inner = _gate(tmp_path, lan=True)
+        sent = await _run(gate, "http", ip)
+        assert inner.called == 0, "出了內網就連不到：主機被接到外面也一樣"
+        assert sent[0]["status"] == 403
+        assert await _run(gate, "websocket", ip) == [{"type": "websocket.close", "code": 1008}]
+
     @pytest.mark.asyncio
     async def test_switching_off_takes_effect_without_restart(self, tmp_path, monkeypatch):
         monkeypatch.setattr(web_ui, "LAN_REREAD_SEC", 0)

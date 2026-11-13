@@ -317,16 +317,38 @@ async def network_status(
     )
 
 
+def _lan_addresses() -> dict:
+    """
+    區網裝置要連的位址。主機模式（後端直接提供介面）才知道協定和埠：
+      lan_urls        每個區網 IP 一個完整網址（QR 碼用）；開發模式是空的，前端照自己的網址組
+      encrypted       區網連線有沒有加密
+      ca_fingerprint  主機發證憑證的指紋（有加密才有），給人核對裝的是不是這台主機的憑證
+    """
+    from app.core import web_ui
+
+    ips = _detect_lan_ips()
+    endpoint = web_ui.LAN_ENDPOINT
+    if not endpoint:
+        return {"lan_ips": ips, "lan_urls": [], "encrypted": False, "ca_fingerprint": ""}
+    encrypted = endpoint["scheme"] == "https"
+    fingerprint = ""
+    if encrypted:
+        from app.core.lan_tls import ca_fingerprint
+        fingerprint = ca_fingerprint()
+    return {
+        "lan_ips": ips,
+        "lan_urls": [f"{endpoint['scheme']}://{ip}:{endpoint['port']}/" for ip in ips],
+        "encrypted": encrypted,
+        "ca_fingerprint": fingerprint,
+    }
+
+
 @router.get("/lan/status", summary="取得區域網路 (LAN) 開關狀態")
 async def get_lan_status(
     _ = RequireAdmin,
 ):
     # 切換立即生效：前端伺服器（frontend/vite-plugins/lanGate.ts）每個請求都讀 lan.json 決定放不放行
-    return {
-        "enabled": _read_lan_enabled(),
-        "lan_ips": _detect_lan_ips(),
-        "requires_restart": False,
-    }
+    return {"enabled": _read_lan_enabled(), "requires_restart": False, **_lan_addresses()}
 
 
 @router.post("/lan/toggle", summary="設定區域網路 (LAN) 開關（立即生效）")
@@ -339,11 +361,7 @@ async def toggle_lan(
     _ = db
     _write_lan_enabled(body.enabled)
     logger.info("[lan][admin=%s] set lan_enabled=%s", current_user.email, body.enabled)
-    return {
-        "enabled": bool(body.enabled),
-        "lan_ips": _detect_lan_ips(),
-        "requires_restart": False,
-    }
+    return {"enabled": bool(body.enabled), "requires_restart": False, **_lan_addresses()}
 
 
 # 模組級啟動時間 — 用 time.time() 在載入 module 時就抓

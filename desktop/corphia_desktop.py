@@ -35,6 +35,7 @@ import logging
 import os
 import secrets
 import shutil
+import ssl
 import subprocess
 import sys
 import threading
@@ -47,13 +48,19 @@ from urllib.parse import urlsplit
 
 import webview
 
+import host_trust
 import local_files
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.3.3"
+VERSION = "0.3.4"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
+# 主機（--built）提供介面的埠；連線設定頁的範例、和只打 IP 時要補的埠都用它
+HOST_PORT = 8168
+# 主機開著區網加密時，公司其他電腦要連的埠（backend/app/core/config.py 的 lan_https_port）
+HOST_HTTPS_PORT = 8443
+EXAMPLE_SERVER = "192.168.1.10"
 WINDOW_SIZE = (1280, 800)
 WINDOW_MIN = (420, 640)
 CONNECT_TIMEOUT = 3
@@ -95,6 +102,58 @@ def normalize_server(url: str) -> str:
         url = "http://" + url
     parts = urlsplit(url)
     return url if parts.scheme in ("http", "https") and parts.netloc else ""
+
+
+def server_candidates(url: str) -> list[str]:
+    """
+    要試的位址：先照使用者打的；只打了主機位址、沒有埠號的，再試主機的加密埠（公司其他電腦用的）
+    和沒加密的埠（主機關掉加密時）。加密的排前面：連得上就不會退回沒加密的。
+    """
+    parts = urlsplit(url)
+    try:
+        has_port = parts.port is not None
+    except ValueError:
+        return []
+    if has_port:
+        return [url]
+    return [url, f"https://{parts.netloc}:{HOST_HTTPS_PORT}", f"http://{parts.netloc}:{HOST_PORT}"]
+
+
+# 這台電腦已經信任的主機憑證（第一次連線核對指紋後記住，見 host_trust.py）
+TRUST = host_trust.HostTrust()
+
+
+def enable_pinned_certificates() -> None:
+    """
+    視窗裡的瀏覽器遇到 Windows 不認得的憑證（主機自己簽的）時，改問 TRUST：是我們信任的那台主機簽的才放行，
+    其他一律取消載入。要在建立視窗之前呼叫。不改 Windows 的系統設定，只影響這個程式自己的視窗。
+    """
+    from webview.platforms import edgechromium
+
+    action = edgechromium.CoreWebView2ServerCertificateErrorAction
+
+    def on_certificate_error(_self, _sender, args):
+        allowed = False
+        try:
+            target = urlsplit(str(args.RequestUri))
+            leaf = ssl.PEM_cert_to_DER_cert(str(args.ServerCertificate.ToPemEncoding()))
+            allowed = TRUST.allows(target.hostname or "", target.port or DEFAULT_PORTS["https"], leaf)
+        except Exception as e:
+            logger.warning("檢查主機憑證時出錯，不放行：%s", e)
+        args.set_Action(action.AlwaysAllow if allowed else action.Cancel)
+
+    edgechromium.EdgeChrome.on_certificate_error = on_certificate_error
+    # 這個設定在 pywebview 裡的意思是「把上面那個檢查函式掛上去」；放不放行由函式決定，不是一律略過
+    webview.settings["IGNORE_SSL_ERRORS"] = True
+
+
+def connect_page(server: str, first_run: bool) -> str:
+    """連線設定頁：第一次用（還沒設定過主機）和「原本連得上、現在連不上」說法不一樣"""
+    if first_run:
+        title, text, value = "連線到公司的 Corphia AI", f"請輸入主機的位址（例如 {EXAMPLE_SERVER}）。位址可以問管理者，或在主機的管理後台「區域網路」查看。", ""
+    else:
+        title, text, value = "連不上主機", f"請確認公司的 Corphia AI 主機已經啟動，或輸入正確的位址（例如 {EXAMPLE_SERVER}）。", server
+    return CONNECT_PAGE.replace("__TITLE__", title).replace("__TEXT__", text).replace("__SERVER__", value)
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443}
@@ -224,16 +283,31 @@ CONNECT_PAGE = """<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8
   input:focus { box-shadow:0 0 0 2px #0a84ff; }
   button { margin-top:14px; width:100%; height:46px; border:0; border-radius:23px; background:#0a84ff; color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
   button:active { transform:scale(.98); } .err { min-height:20px; margin-top:10px; font-size:13px; color:#ff6961; }
+  .pin { display:none; margin-top:16px; } .pin p { margin:0 0 10px; }
+  code { display:block; padding:12px 16px; border-radius:16px; background:#18181a; color:#fff; font:13px/1.6 Consolas,monospace; word-break:break-all; user-select:text; }
 </style></head><body><div class="card">
-  <h1>連不上伺服器</h1>
-  <p>請確認公司的 Corphia AI 伺服器已經啟動，或輸入正確的位址（例如 http://192.168.1.10:5173）。</p>
+  <h1>__TITLE__</h1>
+  <p>__TEXT__</p>
   <input id="url" value="__SERVER__" spellcheck="false" autofocus>
+  <div class="pin" id="pin"><p>第一次連這台主機。請核對下面這串指紋和主機管理後台「區域網路」的 QR 碼畫面上顯示的開頭一樣，確認連到的是公司的主機：</p><code id="fp"></code></div>
   <button id="go">連線</button><div class="err" id="err"></div>
 </div><script>
+  let confirmed = '';  // 使用者核對過的指紋；改了位址就要重新核對
   const go = async () => {
     const err = document.getElementById('err'); err.textContent = '連線中…';
-    const r = await window.pywebview.api.set_server(document.getElementById('url').value);
-    if (!r.ok) err.textContent = r.error;
+    const r = await window.pywebview.api.set_server(document.getElementById('url').value, confirmed);
+    if (r.confirm) {
+      confirmed = r.confirm;
+      document.getElementById('fp').textContent = r.confirm;
+      document.getElementById('pin').style.display = 'block';
+      document.getElementById('go').textContent = '指紋相符，連線';
+      err.textContent = '';
+    } else if (!r.ok) err.textContent = r.error;
+  };
+  document.getElementById('url').oninput = () => {
+    confirmed = '';
+    document.getElementById('pin').style.display = 'none';
+    document.getElementById('go').textContent = '連線';
   };
   document.getElementById('go').onclick = go;
   document.getElementById('url').onkeydown = (e) => { if (e.key === 'Enter') go(); };
@@ -418,17 +492,39 @@ class Api:
 
         return str(form.Invoke(Func[Object](ask)) or "")
 
-    def set_server(self, url: str) -> dict:
-        """連線設定頁用：換伺服器位址（連得上才記住並切過去）"""
+    def set_server(self, url: str, confirmed: str = "") -> dict:
+        """
+        連線設定頁用：換伺服器位址（連得上才記住並切過去）。
+        第一次連一台加密的主機：先回 {"confirm": 指紋} 請使用者核對，使用者按確認後帶著同一串指紋再呼叫一次才會信任。
+        """
         # 只有內建的連線設定頁可以改；任何網頁（包含被帶去的外部網頁）都不行，
         # 不然惡意網頁可以把「伺服器」改成自己，變成被信任的來源去操控 Office
         if not self._connect_page or origin(self._current_url()):
             return {"ok": False, "error": "這個頁面不能變更伺服器位址"}
         target = normalize_server(url)
         if not target:
-            return {"ok": False, "error": "位址格式不對，例如 http://192.168.1.10:5173"}
-        if not reachable(target):
-            return {"ok": False, "error": "連不上這個位址，請確認伺服器已經啟動"}
+            return {"ok": False, "error": f"位址格式不對，例如 {EXAMPLE_SERVER}"}
+        # 只打了主機位址、沒有打埠號：照打的連不上就改試主機預設的埠（多數人只記得 IP）
+        candidates = server_candidates(target)
+        target = ""
+        for candidate in candidates:
+            if reachable(candidate):
+                target = candidate
+                break
+            # 連不上可能是「還沒信任這台主機的憑證」：跟它要憑證、實際驗過，再請使用者核對指紋
+            found = host_trust.probe(candidate)
+            if not found:
+                continue
+            if confirmed != found["fingerprint"]:
+                return {"ok": False, "confirm": found["fingerprint"]}
+            TRUST.save(found["pem"])
+            TRUST.install_opener()
+            logger.info("已信任主機憑證：%s（%s…）", candidate, found["fingerprint"][:23])
+            if reachable(candidate):
+                target = candidate
+                break
+        if not target:
+            return {"ok": False, "error": "連不上這個位址，請確認主機已經啟動、兩台電腦在同一個網路，而且主機有開啟「區域網路」"}
         self._server = target
         save_server(target)
         self._connect_page = False
@@ -597,10 +693,16 @@ def main() -> int:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     logger.info("Corphia AI 桌面版 %s 啟動", VERSION)
 
+    # 還沒設定過主機、這台電腦也沒有完整安裝：第一次用，直接請使用者輸入主機位址
+    first_run = not args.server and not config_path().exists()
     server = normalize_server(args.server) if args.server else load_server()
     if args.server and server and not args.selftest:  # 自我檢查用的位址不要記下來
         save_server(server)
     server = server or DEFAULT_SERVER
+
+    # 主機自己簽的憑證：只信任核對過指紋的那一張（視窗裡的瀏覽器和桌面版自己發的請求都一樣）
+    TRUST.install_opener()
+    enable_pinned_certificates()
 
     api = Api(server)
     online = reachable(server)
@@ -622,7 +724,7 @@ def main() -> int:
     window = webview.create_window(
         APP_NAME,
         url=server if online else None,
-        html=None if online else (boot_html or CONNECT_PAGE.replace("__SERVER__", server)),
+        html=None if online else (boot_html or connect_page(server, first_run)),
         js_api=api,
         width=WINDOW_SIZE[0], height=WINDOW_SIZE[1], min_size=WINDOW_MIN,
         text_select=True, background_color="#18181a",
