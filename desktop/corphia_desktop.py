@@ -54,7 +54,7 @@ import single_instance
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.3.6"
+VERSION = "0.3.7"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 # 主機（--built）提供介面的埠；連線設定頁的範例、和只打 IP 時要補的埠都用它
@@ -771,9 +771,8 @@ def main() -> int:
         webview.start(run_selftest, (window, api, Path(args.selftest)), **start_args)
     else:
         webview.start(**start_args)
-    # 視窗關了：這次是桌面版自己啟動的服務就一起關掉（和一鍵關閉一樣；原本就開著的不動）
-    if api._stack:
-        api._stack.stop()
+    # 視窗關了，服務留著繼續跑：這台電腦是主機時，公司其他電腦和手機都連著它，
+    # 不能因為主機的人關了視窗就全部斷線。要關服務用明確的動作：管理後台的「關閉主機服務」或「一鍵關閉」。
     return 0
 
 

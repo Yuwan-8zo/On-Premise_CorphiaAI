@@ -5,8 +5,9 @@
 使用者不用先按「一鍵啟動」、也不用開瀏覽器：
   啟動  在背景執行安裝資料夾的 start.py --built（不開瀏覽器、不跳黑色視窗、不開前端開發伺服器——
         介面由後端直接提供，執行時不需要 Node），輸出寫到 .runtime/desktop-start.log
-  關閉  執行 stop.py（和按「一鍵關閉」一樣）；只有「這次是桌面版自己啟動的」才關——
-        使用者原本就用一鍵啟動開著的服務，關掉視窗不會動它
+  關閉  關掉視窗「不會」關服務：這台電腦是主機時，公司其他電腦和手機都連著它。
+        stop() 留給明確要求關閉的情況用（執行 stop.py，和按「一鍵關閉」一樣）；
+        而且只關「這次是桌面版自己啟動的」，原本就開著的不動
 
 這個檔案不碰視窗（不 import webview），判斷邏輯可以單獨測試（backend/tests/test_backup_and_desktop_helpers.py）。
 """
@@ -97,7 +98,7 @@ class LocalStack:
         self._proc: Optional[subprocess.Popen] = None
         self._log = None
         self._started_at = 0.0
-        # 這次是不是桌面版自己啟動的（是的話關視窗時要負責關掉）
+        # 這次是不是桌面版自己啟動的（stop() 只關自己啟動的）
         self.owned = False
 
     @property
