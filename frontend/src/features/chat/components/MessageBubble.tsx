@@ -7,6 +7,7 @@ import AIThinkingIndicator from './AIThinkingIndicator'
 import ThinkingBlock from './ThinkingBlock'
 import WebSearchNote from './WebSearchNote'
 import VersionSwitcher from './VersionSwitcher'
+import StepsBlock from './StepsBlock'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
@@ -354,11 +355,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 collapsedByDefault={Boolean(message.content)}
                             />
                         )}
+                        {/* AI 自己做了哪些步驟（查文件、連外網、計算…）；正在做的那一步只在生成期間顯示 */}
+                        <StepsBlock steps={message.steps ?? []} working={isStreaming ? message.working : undefined} />
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[var(--r-12)] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
                                 <MarkdownRenderer content={message.content} />
                             </div>
-                        ) : isStreaming && !message.reasoning ? (
+                        ) : isStreaming && !message.reasoning && !message.working && !message.steps?.length ? (
                             // 串流前置期：依 message.sources 是否已回傳，動態顯示「思考中 / 檢索 / 生成中」
                             // （模型有送思考過程時，上面的 ThinkingBlock 已經在顯示「思考中」，不用再疊一個）
                             <AIThinkingIndicator

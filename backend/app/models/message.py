@@ -66,6 +66,9 @@ class Message(Base):
     # 這一則回答有沒有連外網：None＝沒有；有的話記 {"query": 送出去的關鍵字, "sources": [{"title", "url"}]}
     web_search: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
+    # AI 這一題自己做了哪些步驟：[{"tool": 工具名稱, "summary": 給人看的一句話, "ok": 有沒有成功}]；沒用工具是 None
+    steps: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
     # 使用者評分 (1-5)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     

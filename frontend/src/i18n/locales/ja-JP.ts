@@ -1110,6 +1110,18 @@ export default {
             dlpToast: '管理対象の機密語句を含むためブロックしました',
             thinking: '考え中',
             thoughtProcess: '思考過程',
+            steps: {
+                count: '{{n}} 個のステップを実行',
+                ok: '完了',
+                failed: '未完了',
+                working: {
+                    search_documents: '社内文書を検索中…',
+                    web_search: '外部ネットを検索中…',
+                    calculate: '計算中…',
+                    current_time: '現在時刻を確認中…',
+                    other: '処理中…',
+                },
+            },
             codeFile: { preview: 'プレビュー', showCode: 'コードを表示', previewTitle: 'プレビュー（サンドボックス内・ネットワーク接続なし）', save: '保存', download: 'ダウンロード', saved: '{{path}} に保存しました', savedBackup: '{{path}} に保存しました（元のファイルはバックアップ済み）', saveReply: 'ファイルとして保存' },
             unshare: '共有を停止',
             unshared: '共有を停止しました。この会話を見られるのはあなただけです',

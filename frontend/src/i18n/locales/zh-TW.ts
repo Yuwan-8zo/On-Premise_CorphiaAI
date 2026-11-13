@@ -1110,6 +1110,18 @@ export default {
             dlpToast: '訊息含列管機密字詞，已依資料外洩防護政策攔阻',
             thinking: '思考中',
             thoughtProcess: '已完成思考',
+            steps: {
+                count: '用了 {{n}} 個步驟',
+                ok: '完成',
+                failed: '沒有完成',
+                working: {
+                    search_documents: '正在查公司文件…',
+                    web_search: '正在連外網查詢…',
+                    calculate: '正在計算…',
+                    current_time: '正在看現在時間…',
+                    other: '正在處理…',
+                },
+            },
             codeFile: { preview: '預覽', showCode: '看程式碼', previewTitle: '預覽（關在沙盒裡，不能連網）', save: '存檔', download: '下載', saved: '已存到 {{path}}', savedBackup: '已存到 {{path}}（原本的檔案已備份）', saveReply: '存成檔案' },
             unshare: '取消分享',
             unshared: '已取消分享，現在只有你看得到這個對話',

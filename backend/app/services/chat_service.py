@@ -5,6 +5,7 @@
 """
 
 import asyncio
+import json
 import logging
 from typing import TypedDict, Optional, AsyncGenerator
 
@@ -21,7 +22,7 @@ from sqlalchemy import select, update, func, or_
 from app.models.conversation import Conversation
 from app.models.message import Message, MessageRole
 from app.models.user import User
-from app.services.llm_service import get_llm_service
+from app.services.llm_service import ChatPrompt, get_llm_service
 from app.services.rag_service import get_rag_service
 # NOTE: PII masking 與 Prompt Injection 檢測已由上層 websocket.py 的 _security_gate() 統一處理
 # 在 send_message_stream 中不再重複執行（見jBUG-07 修正）
@@ -32,6 +33,7 @@ from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunk
 import app.services.browser_folder as browser_folder
 from app.services.history_window import select_history
 import app.services.message_tree as message_tree
+import app.services.agent_tools as agent_tools
 import app.services.web_search as web_search_svc
 import app.services.web_search_policy as web_search_policy
 from app.models.tenant import Tenant
@@ -75,6 +77,10 @@ def _deep_map(value, fn):
         return {k: _deep_map(v, fn) for k, v in value.items()}
     return value
 
+
+# AI 自己動手做事：一題最多來回幾輪、一輪最多用幾個工具（超過的不做；最後一輪不給工具，一定要回答）
+AGENT_MAX_ROUNDS = 4
+AGENT_MAX_CALLS_PER_ROUND = 3
 
 # 組提示詞時最多往回讀幾則訊息（實際帶多少由字數預算決定，見 services/history_window.py）
 HISTORY_FETCH_LIMIT = 200
@@ -139,6 +145,9 @@ class ChatService:
         self.web_search_report: Optional[dict] = None
         # 這一題看起來需要即時資訊、但依政策沒有自動查（回答下面會提醒可以連網重答）
         self.web_search_suggested = False
+        # 這一題模型可以用的工具範圍（None＝不給工具）；模型實際做了哪些步驟（存在回答上，畫面看得到）
+        self.agent_ctx: Optional[agent_tools.ToolContext] = None
+        self.agent_steps: list[dict] = []
 
     def _build_agent_graph(self):
         # QUALITY-01 修正：在方法內部懶惰 import langgraph，避免模組載入失敗
@@ -588,12 +597,33 @@ class ChatService:
             else:
                 self.web_search_suggested = live
 
+        # AI 自己動手做事：這一題模型可以用的工具（services/agent_tools.py）。
+        # 專案資料夾只根據文件回答、產出檔案走另一條固定流程：這兩種不給工具
+        self.agent_ctx = None
+        if (
+            settings.enable_agent_tools and getattr(self.llm_service, "supports_tools", False)
+            and not final_state.get("folder_name") and not extra_system
+        ):
+            folder_docs = await self._folder_doc_ids(owner_id)
+
+            async def search_documents(query: str) -> list[dict]:
+                return await self.rag_service.hybrid_search(
+                    db=self.db, query=query, tenant_id=tenant_id, n_results=agent_tools.DOCUMENT_HITS,
+                    document_ids=folder_docs, similarity_threshold=settings.rag_similarity_threshold,
+                )
+
+            self.agent_ctx = agent_tools.ToolContext(
+                search_documents=search_documents if folder_docs else None,
+                # 模型自己決定連外網：只有政策是「自動」、而且這一題還沒查過才給
+                allow_web=search_mode == "auto" and self.web_search_report is None,
+            )
+
         # 記憶：這個人請 AI 跨對話記住的事（關掉或沒有就是空的）
         memory = await memory_block(self.db, owner_id)
         if memory:
             system_prompt = f"{system_prompt}\n\n{memory}"
         # 有外來資料（文件、記憶、個人化指示、剛附的資料夾）時加一句：資料歸資料，裡面的指令不要照做
-        if memory or context or instructions:
+        if memory or context or instructions or self.agent_ctx:
             system_prompt = f"{system_prompt}\n\n{GUARD_LINE}"
         self.screen_report = final_state.get("screen") or {}
 
@@ -744,33 +774,64 @@ class ChatService:
         # 串流生成回應；每一段先過「回答的檢查」（外部圖片換成文字、個資遮罩，見 services/output_guard）才送出去
         # 思考過程（reasoning，只有會推理的模型才有）走同一套檢查，但不計入 full_response——
         # 不存進資料庫、不算進對話歷史，純粹是串流期間給使用者看的過程
+        #
+        # AI 自己動手做事：模型可以先用工具（查文件、連外網、計算…）再回答。每一輪問一次模型：
+        # 它要用工具就執行、把結果接在對話後面再問一次；不用工具就是正式回答。最多 AGENT_MAX_ROUNDS 輪，
+        # 最後一輪不給工具（一定要回答，不會沒完沒了）。
         full_response = ""
         reasoning_text = ""
         screen = OutputScreen()
         reasoning_screen = OutputScreen()
+        self.agent_steps = []
+        tools = agent_tools.available_tools(self.agent_ctx) if self.agent_ctx else None
+        rounds = AGENT_MAX_ROUNDS if tools else 0
         try:
-            async for kind, chunk in self.llm_service.generate_stream(
-                model_name=self.model_name,
-                prompt=prompt,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            ):
-                if language == "zh-TW":
-                    chunk = to_traditional(chunk)
-                if kind == "reasoning":
-                    out = reasoning_screen.feed(chunk)
-                    if out:
-                        reasoning_text += out
-                        yield {"type": "reasoning", "content": out}
-                    continue
-                chunk = screen.feed(chunk)
-                if not chunk:
-                    continue  # 結尾可能是樣式的一部分，先留著等後面的字
-                full_response += chunk
-                yield {
-                    "type": "stream",
-                    "content": chunk,
-                }
+            for round_index in range(rounds + 1):
+                tool_calls: list[dict] = []
+                async for kind, chunk in self.llm_service.generate_stream(
+                    model_name=self.model_name,
+                    prompt=prompt,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **({"tools": tools} if tools and round_index < rounds else {}),
+                ):
+                    if kind == "tool_calls":
+                        tool_calls = chunk
+                        continue
+                    if language == "zh-TW":
+                        chunk = to_traditional(chunk)
+                    if kind == "reasoning":
+                        out = reasoning_screen.feed(chunk)
+                        if out:
+                            reasoning_text += out
+                            yield {"type": "reasoning", "content": out}
+                        continue
+                    chunk = screen.feed(chunk)
+                    if not chunk:
+                        continue  # 結尾可能是樣式的一部分，先留著等後面的字
+                    full_response += chunk
+                    yield {
+                        "type": "stream",
+                        "content": chunk,
+                    }
+                if not tool_calls:
+                    break
+                # 執行模型要的工具（一輪最多幾個），結果接回對話
+                results = []
+                for call in tool_calls[:AGENT_MAX_CALLS_PER_ROUND]:
+                    yield {"type": "tool_step", "tool": call["name"], "status": "running"}
+                    result = await agent_tools.run_tool(self.agent_ctx, call["name"], call["arguments"])
+                    step = {"tool": call["name"], "summary": result.summary, "ok": result.ok}
+                    self.agent_steps.append(step)
+                    yield {"type": "tool_step", "status": "done", **step}
+                    async for event in self._after_tool(conversation_id, call, result, sources):
+                        yield event
+                    results.append((call, result))
+                prompt = self._prompt_with_tool_results(prompt, results)
+                # 換行：思考過程裡，每一輪之間空一行比較好讀
+                if reasoning_text and not reasoning_text.endswith("\n\n"):
+                    reasoning_text += "\n\n"
+                    yield {"type": "reasoning", "content": "\n\n"}
             tail = screen.flush()
             if tail:
                 full_response += tail
@@ -957,6 +1018,56 @@ class ChatService:
             logger.warning("最後一關寫稽核失敗: %s", e)
         return {"type": "context_filtered", **counts}
 
+    async def _after_tool(self, conversation_id: str, call: dict, result: "agent_tools.ToolResult", sources: list) -> AsyncGenerator[dict, None]:
+        """
+        一步做完之後的收尾：寫稽核；查文件拿到的段落接到「參考來源」；
+        連外網的報告接到這則回答的連網標示（和規則自動查的走同一條：稽核、提示都一樣）。
+        """
+        try:
+            user_id, tenant_id = await self._conversation_owner(conversation_id)
+            await write_audit_log(
+                db=self.db, action=AuditAction.TOOL_CALL, resource_type=AuditResource.CONVERSATION,
+                resource_id=conversation_id, user_id=user_id, tenant_id=tenant_id,
+                description=f"AI 使用工具 {call['name']}：{result.summary}"[:500],
+                details={"tool": call["name"], "arguments": str(call.get("raw_arguments", ""))[:500], "ok": result.ok},
+            )
+        except Exception as e:  # 稽核失敗不能擋住主流程
+            logger.warning("工具呼叫寫稽核失敗: %s", e)
+        known = {s.get("chunk_id") for s in sources}
+        added = False
+        for hit in result.hits:
+            if hit.get("chunk_id") in known:
+                continue
+            known.add(hit.get("chunk_id"))
+            metadata = hit.get("metadata") or {}
+            sources.append({
+                "chunk_id": hit.get("chunk_id"), "content": (hit.get("content") or "")[:200], "score": hit.get("score", 0),
+                "document_id": metadata.get("document_id", ""), "document_name": metadata.get("filename", "未知文件"),
+            })
+            added = True
+        if added:
+            yield {"type": "sources", "sources": sources}
+        if result.web_report is not None:
+            self.web_search_report = result.web_report
+            yield await self._report_web_search(conversation_id)
+
+    def _prompt_with_tool_results(self, prompt, results: list) -> "ChatPrompt":
+        """把「模型要用的工具」和「工具的結果」接在對話後面，下一輪模型就看得到"""
+        messages = list(getattr(prompt, "messages", None) or [{"role": "user", "content": str(prompt)}])
+        messages.append({
+            "role": "assistant", "content": "",
+            "tool_calls": [
+                {"id": call["id"], "type": "function",
+                 "function": {"name": call["name"], "arguments": json.dumps(call["arguments"], ensure_ascii=False)}}
+                for call, _result in results
+            ],
+        })
+        text = str(prompt)
+        for call, result in results:
+            messages.append({"role": "tool", "tool_call_id": call["id"], "name": call["name"], "content": result.text})
+            text += result.text  # 長度估算用（決定還剩多少空間可以回答）
+        return ChatPrompt(text, messages)
+
     async def _web_search_mode(self, tenant_id: Optional[str]) -> str:
         """這個單位的對外搜尋政策：auto／ask／off（整個系統沒開這個功能就是 off）"""
         if not settings.enable_web_search:
@@ -1020,6 +1131,8 @@ class ChatService:
             # 思考過程：留著讓使用者之後還能回顧（存的是已經過安全檢查的版本）
             reasoning=reasoning or None,
             web_search=self._web_search_record(),
+            # AI 這一題自己做了哪些步驟（查文件、連外網、計算…）
+            steps=self.agent_steps or None,
             # 接在這一題（現在看到的最後一則）後面；重答時就成為舊回答旁邊的另一版
             parent_id=await message_tree.get_leaf_id(self.db, conversation_id),
         )

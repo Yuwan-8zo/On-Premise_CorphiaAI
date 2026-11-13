@@ -82,6 +82,10 @@ class Settings(BaseSettings):
     # 一個模型最多等多久載入（秒）
     llm_engine_load_timeout: int = 900
     
+    # AI 自己動手做事：回答前可以自己查文件、連外網（照管理者政策）、計算、看時間（services/agent_tools.py）。
+    # 只有查和算，沒有會改東西的工具
+    enable_agent_tools: bool = True
+
     # 區網加密（主機模式）：公司其他電腦、手機走 https://主機IP:lan_https_port，憑證由主機自己簽（app/core/lan_tls.py）；
     # 關掉就退回沒加密的連線（backend/run_server.py）
     lan_https: bool = True

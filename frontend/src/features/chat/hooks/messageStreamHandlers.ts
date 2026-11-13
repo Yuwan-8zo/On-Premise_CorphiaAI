@@ -14,6 +14,7 @@
  *   - 'context_filtered'   ↦ 參考文件送模型前有片段被剔除或遮罩
  *   - 'output_filtered'    ↦ AI 的回答送出前被改過（外部圖片拿掉、個資遮罩）
  *   - 'file_progress' / 'attachments' ↦ 正在製作檔案（等待提示換成「正在製作…」）／做好了，掛到這則回答下面
+ *   - 'tool_step'          ↦ AI 自己用工具：開始做（顯示「正在查文件…」）／做完（加到這則回答的步驟清單）
  *   - 'injection_block' / 'dlp_block' ↦ 已攔阻；結束生成並在回覆泡泡裡說明
  */
 
@@ -250,6 +251,16 @@ export function buildStreamDispatcher(conversationId: string) {
                     })
                 }
                 useToastStore.getState().add(i18n.t('ui.chat.dlpToast'), 'error', SECURITY_TOAST_MS)
+                break
+
+            // AI 自己動手做事：開始一步 → 顯示正在做什麼；做完 → 記到這則回答的步驟清單
+            case 'tool_step':
+                store().updateThread(conversationId, (messages) => {
+                    const last = [...messages].reverse().find((m) => m.role === 'assistant')
+                    if (data.status !== 'done') return patchLastAssistant(messages, { working: data.tool })
+                    const step = { tool: data.tool || '', summary: data.summary || '', ok: data.ok !== false }
+                    return patchLastAssistant(messages, { working: undefined, steps: [...(last?.steps ?? []), step] })
+                })
                 break
 
             // 對外搜尋：用過了（告訴使用者查了什麼、取回幾筆）或被擋（DLP／服務打不通）

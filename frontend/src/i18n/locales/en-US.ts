@@ -1110,6 +1110,18 @@ export default {
             dlpToast: 'The message contained restricted terms and was blocked',
             thinking: 'Thinking',
             thoughtProcess: 'Thought process',
+            steps: {
+                count: 'Used {{n}} steps',
+                ok: 'Done',
+                failed: 'Not completed',
+                working: {
+                    search_documents: 'Searching company documents…',
+                    web_search: 'Searching the web…',
+                    calculate: 'Calculating…',
+                    current_time: 'Checking the current time…',
+                    other: 'Working…',
+                },
+            },
             codeFile: { preview: 'Preview', showCode: 'Show code', previewTitle: 'Preview (sandboxed, no network access)', save: 'Save', download: 'Download', saved: 'Saved to {{path}}', savedBackup: 'Saved to {{path}} (the previous file was backed up)', saveReply: 'Save as file' },
             unshare: 'Stop sharing',
             unshared: 'Sharing stopped. Only you can see this chat now',

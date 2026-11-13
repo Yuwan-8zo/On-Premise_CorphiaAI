@@ -33,6 +33,8 @@ MIGRATIONS: list[tuple[str, list[str]]] = [
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reasoning TEXT",
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS web_search JSONB",
     ]),
+    # AI 自己動手做事：這則回答用了哪些工具（畫面上的步驟清單）
+    ("2026-11-14-message-steps", ["ALTER TABLE messages ADD COLUMN IF NOT EXISTS steps JSONB"]),
     # 對話分支：每則訊息記著接在哪一則後面；原本的對話是一直線，照寫入順序接起來
     ("2026-11-14-message-parent", [
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)",

@@ -49,6 +49,13 @@ export interface MessageAttachment {
     size: number
 }
 
+/** AI 回答前自己做的一步（用了哪個工具、做了什麼、有沒有成功） */
+export interface MessageStep {
+    tool: string
+    summary: string
+    ok: boolean
+}
+
 /** 一則回答的連網紀錄 */
 export interface MessageWebSearch {
     /** 有沒有真的連外網查 */
@@ -77,6 +84,10 @@ export interface Message {
     reasoning?: string
     /** 這一則回答有沒有連外網（後端每一則都記；系統沒開對外搜尋、或舊訊息是 undefined，畫面上就不標） */
     webSearch?: MessageWebSearch
+    /** AI 這一題自己做了哪些步驟（查文件、連外網、計算…）；沒用工具是 undefined */
+    steps?: MessageStep[]
+    /** 正在用哪個工具（只在串流期間存在前端） */
+    working?: string
     /** 對話分支：這個位置的所有版本（照建立順序，包含自己）；只有一版時是空的 */
     versionIds?: string[]
     rating?: number

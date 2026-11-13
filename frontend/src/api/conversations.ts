@@ -174,6 +174,7 @@ function mapMessage(data: Record<string, unknown>): Message {
         prev_hash: data.prev_hash as string | undefined,
         reasoning: (data.reasoning as string | null) ?? undefined,
         webSearch: (data.web_search as Message['webSearch'] | null) ?? undefined,
+        steps: (data.steps as Message['steps'] | null) ?? undefined,
         versionIds: (data.version_ids as string[] | undefined)?.length ? (data.version_ids as string[]) : undefined,
         createdAt: data.created_at as string,
     }

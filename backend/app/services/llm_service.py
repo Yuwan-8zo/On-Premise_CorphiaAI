@@ -408,9 +408,14 @@ class LLMService:
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
         model_name: Optional[str] = None,
-    ) -> AsyncGenerator[tuple[str, str], None]:
+        tools: Optional[list[dict]] = None,
+    ) -> AsyncGenerator[tuple[str, Any], None]:
         """
         串流生成回應。model_name：用哪個模型（每個人自己選的；沒給用系統預設）
+
+        tools：這一題模型可以用的工具（services/agent_tools.py）。模型決定要用時，最後會多產出一筆
+        ("tool_calls", [{"id", "name", "arguments"}])，由呼叫端執行後把結果接回去再問一次。
+        只有 llama-server 引擎支援；其他引擎會忽略（先用 supports_tools 判斷要不要給）。
 
         產出 (kind, text)：kind="content" 是正式回答，kind="reasoning" 是思考過程
         （只有支援推理的模型才會有，見 _server_generate_stream 的說明）。
@@ -424,6 +429,10 @@ class LLMService:
 
         inst = await self._instance_for(model_name)
         if inst is not None:
+            if tools and isinstance(inst, EngineModel):
+                async for item in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, stop, tools=tools):
+                    yield item
+                return
             async for item in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop, inst=inst):
                 yield item
             return
@@ -506,7 +515,25 @@ class LLMService:
         self._record_server_timings(data.get("timings"), data.get("usage", {}).get("completion_tokens", 0), time.perf_counter() - start)
         return data["choices"][0]["message"].get("content") or ""
 
-    async def _server_generate_stream(self, inst: EngineModel, prompt, max_tokens, temperature, top_p, stop):
+    @staticmethod
+    def _finish_tool_call(index: int, call: dict) -> dict:
+        """收集完的一筆工具呼叫：參數從 JSON 文字轉成物件（模型寫壞了就當成沒給參數，由工具自己回報缺什麼）"""
+        try:
+            arguments = json.loads(call["arguments"]) if call["arguments"].strip() else {}
+        except ValueError:
+            arguments = {}
+        return {
+            "id": call["id"] or f"call_{index}", "name": call["name"],
+            "arguments": arguments if isinstance(arguments, dict) else {},
+            "raw_arguments": call["arguments"],
+        }
+
+    @property
+    def supports_tools(self) -> bool:
+        """現在的引擎能不能讓模型用工具（只有 llama-server；它用模型自己的樣板處理工具呼叫的格式）"""
+        return self.engine_mode == "server"
+
+    async def _server_generate_stream(self, inst: EngineModel, prompt, max_tokens, temperature, top_p, stop, tools=None):
         """
         串流。中途停止（呼叫端 break／取消）＝離開 async with，連線關掉，llama-server 偵測到就停止產生，
         不會把剩下的 max_tokens 跑完。
@@ -517,6 +544,10 @@ class LLMService:
         要不要切出 reasoning_content，這裡只是原封不動轉發，不用知道現在是哪個模型。
         """
         body = self._server_body(prompt, max_tokens, temperature, top_p, stop, stream=True)
+        if tools:
+            body["tools"] = tools
+        # 模型要用的工具是一小段一小段送來的（名稱一次到齊、參數的 JSON 分好幾段）：照編號收集起來，最後一起交出去
+        calls: dict[int, dict] = {}
         token_count = 0
         first_token_at: Optional[float] = None
         timings: Optional[dict] = None
@@ -540,12 +571,20 @@ class LLMService:
                     reasoning = delta.get("reasoning_content")
                     if reasoning:
                         yield ("reasoning", reasoning)
+                    for part in delta.get("tool_calls") or []:
+                        call = calls.setdefault(int(part.get("index") or 0), {"id": "", "name": "", "arguments": ""})
+                        fn = part.get("function") or {}
+                        call["id"] = part.get("id") or call["id"]
+                        call["name"] = fn.get("name") or call["name"]
+                        call["arguments"] += fn.get("arguments") or ""
                     text = delta.get("content")
                     if text:
                         token_count += 1
                         if token_count == 1:
                             first_token_at = time.perf_counter()
                         yield ("content", text)
+            if calls:
+                yield ("tool_calls", [self._finish_tool_call(i, c) for i, c in sorted(calls.items()) if c["name"]])
         finally:
             if first_token_at is not None and token_count > 1:
                 self._record_server_timings(timings, token_count - 1, time.perf_counter() - first_token_at)
