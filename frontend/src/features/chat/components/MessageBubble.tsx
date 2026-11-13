@@ -17,8 +17,7 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw, Layers3, Download, Volume, Square } from '@/components/snow/icons'
-import { speak, speechSupported, stopSpeaking, useSpeakingId } from '@/lib/speech'
+import { Edit2, Check, X, RefreshCw, Layers3, Download } from '@/components/snow/icons'
 import { saveTextFile } from '@/lib/saveTextFile'
 import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
@@ -29,7 +28,6 @@ import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
-import i18n from '@/i18n'
 import { riseIn } from '@/lib/motionPresets'
 
 /** 把整則回答存成檔案時的建議檔名（使用者在另存新檔視窗可以改） */
@@ -186,15 +184,6 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     }
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
-    // 朗讀這一則（再按一次、或開始唸別則就停）
-    const canSpeak = speechSupported()
-    const isSpeaking = useSpeakingId() === message.id
-    const toggleSpeak = async () => {
-        if (isSpeaking) return stopSpeaking()
-        const result = await speak(message.id, message.content, i18n.language)
-        if (result !== 'ok') useToastStore.getState().add(t(result === 'empty' ? 'ui.message.nothingToRead' : 'ui.message.noVoice'), 'info')
-    }
-
     // 對話分支：這個位置有不只一版時，顯示「‹ 2/3 ›」
     const versionSwitcher = onSwitchVersion && !hideActions && message.versionIds && message.versionIds.length > 1
         ? <VersionSwitcher ids={message.versionIds} currentId={message.id} onSwitch={onSwitchVersion} disabled={busy} />
@@ -417,19 +406,6 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         >
                                         <RefreshCw />
                                     </button>
-                                )}
-                                {/* 朗讀：用這台電腦自己的語音唸（不連網）；正在唸的那一則按鈕變成停止 */}
-                                {canSpeak && !message.blocked && (
-                                    <Tooltip placement="bottom" label={t(isSpeaking ? 'ui.message.stopReading' : 'ui.message.readAloud')}>
-                                        <button
-                                            aria-label={t(isSpeaking ? 'ui.message.stopReading' : 'ui.message.readAloud')}
-                                            aria-pressed={isSpeaking}
-                                            onClick={toggleSpeak}
-                                            className={`btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] ${isSpeaking ? 'text-accent' : 'text-text-muted'}`}
-                                        >
-                                            {isSpeaking ? <Square /> : <Volume />}
-                                        </button>
-                                    </Tooltip>
                                 )}
                                 {/* 桌面版：把整則回答存成這台電腦的檔案（跳出另存新檔，預設 Markdown） */}
                                 {isDesktop && !message.blocked && (

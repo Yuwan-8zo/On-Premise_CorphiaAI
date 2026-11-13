@@ -16,7 +16,7 @@ docker-compose.yml、README「對外搜尋」一節都指回這裡。
 from __future__ import annotations
 
 import logging
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import httpx
 

@@ -30,11 +30,11 @@ describe('saveTextFile', () => {
     })
 
     it('桌面版：存好了顯示位置', async () => {
-        saveFile.mockResolvedValue({ ok: true, path: 'C:\Users\me\Documents\code.py', name: 'code.py', chars: 5, backup: null })
+        saveFile.mockResolvedValue({ ok: true, path: 'C:\\Users\\me\\Documents\\code.py', name: 'code.py', chars: 5, backup: null })
         expect(await saveTextFile('code.py', 'print', true)).toBe(true)
         expect(saveFile).toHaveBeenCalledWith('code.py', 'print')
         expect(toasts()[0].type).toBe('success')
-        expect(toasts()[0].message).toContain('C:\Users\me\Documents\code.py')
+        expect(toasts()[0].message).toContain('C:\\Users\\me\\Documents\\code.py')
     })
 
     it('桌面版：使用者按取消，不存也不顯示任何訊息', async () => {

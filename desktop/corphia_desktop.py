@@ -50,10 +50,11 @@ import webview
 
 import host_trust
 import local_files
+import single_instance
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.3.5"
+VERSION = "0.3.6"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 # 主機（--built）提供介面的埠；連線設定頁的範例、和只打 IP 時要補的埠都用它
@@ -696,6 +697,13 @@ def main() -> int:
     if args.apply_update:
         close_splash()  # 換檔不開視窗
         return apply_update(Path(args.apply_update))
+    # 一次只開一個：已經開著就把那個視窗叫到最前面，自己結束（原因見 single_instance.py）。
+    # 要放在開記錄檔之前——不然第二個會把第一個的記錄檔清空。自我檢查不算（它不啟動服務、跑完自己關）
+    instance_guard = None if args.selftest else single_instance.acquire()
+    if not args.selftest and instance_guard is None:
+        close_splash()
+        single_instance.focus_existing(APP_NAME)
+        return 0
     if not args.selftest:
         cleanup_update()
     # 打包後沒有主控台，記錄寫到檔案（每次啟動重寫）：按鈕沒反應這類問題才查得到原因
@@ -741,7 +749,8 @@ def main() -> int:
         url=server if online else None,
         html=None if online else (boot_html or connect_page(server, first_run)),
         js_api=api,
-        width=WINDOW_SIZE[0], height=WINDOW_SIZE[1], min_size=WINDOW_MIN,
+        # 一開就填滿螢幕（最大化，保留工作列和視窗的標題列）；按「還原」時回到 WINDOW_SIZE 這個大小
+        width=WINDOW_SIZE[0], height=WINDOW_SIZE[1], min_size=WINDOW_MIN, maximized=True,
         text_select=True, background_color="#18181a",
     )
     api._window = window

@@ -6,7 +6,7 @@
  * 這個畫面逐項顯示每個服務的即時狀態，讓使用者知道「現在在等什麼」：
  *
  *   - /boot-status.json   由 start.py 寫入：Docker、資料庫、AI 引擎、資料表、後端 API
- *   - /api/v1/health      由後端提供：文件檢索模型、每個 AI 模型（3B / 7B / 14B）
+ *   - /api/v1/health      由後端提供：文件檢索模型、每個 AI 模型
  *
  * 全部就緒（使用中的模型、預先載入的模型、文件檢索都完成）才進入系統，
  * 進去之後問問題就不必再等模型載入。
@@ -26,6 +26,7 @@ import WaveBackground from '@/components/ui/WaveBackground'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
 import { modelSize } from '@/lib/modelName'
+import { useDesktop } from '@/lib/desktop'
 
 type StepState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
@@ -80,6 +81,8 @@ const POLL_MS = 1000
 const IDLE_KEY = 'models-idle'
 /** 啟動程式超過這麼久沒更新狀態檔，且後端也沒回應 → 視為啟動程式已停止 */
 const STALE_SEC = 45
+/** 讀不到啟動程式的進度時，清單照這個順序列出系統服務（和 start.py 的 BOOT_STEPS 一致；Docker 只有連外網搜尋才用，不列） */
+const FALLBACK_STEPS = ['database', 'engine', 'schema', 'backend'] as const
 
 async function getJson<T>(url: string): Promise<T | null> {
     try {
@@ -166,6 +169,7 @@ interface BackendBootSplashProps {
 export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     // 換語言時重繪（文字都用 i18n.t 取，這裡只是訂閱語言變化）
     useTranslation()
+    const isDesktop = useDesktop()
     const [launcher, setLauncher] = useState<LauncherStatus | null>(null)
     const [health, setHealth] = useState<Health | null>(null)
     const [now, setNow] = useState(() => Date.now() / 1000)
@@ -238,7 +242,17 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
             rows.push({ key: s.key, label, state, detail, started: s.started_at, finished: state === 'done' ? (s.finished_at ?? s.started_at) : s.finished_at })
         }
     } else {
-        rows.push({ key: 'backend', label: i18n.t('ui.boot.step.backend'), state: apiUp ? 'done' : 'running', detail: i18n.t(apiUp ? 'ui.boot.detail.connected' : 'ui.boot.detail.waitingBackend'), started: firstSeen.current, finished: apiUp ? firstSeen.current : null })
+        // 讀不到啟動程式的進度（例如服務整個沒在跑）：清單照樣完整列出來，不要只剩一列——
+        // 使用者才看得出系統有哪些部分、現在是全部都還沒起來。後端有回應時，它前面的每一步一定都完成了
+        for (const key of FALLBACK_STEPS) {
+            const isBackend = key === 'backend'
+            const state: StepState = apiUp ? 'done' : isBackend ? 'running' : 'pending'
+            const detail = apiUp ? (isBackend ? 'connected' : 'ready') : isBackend ? 'waitingBackend' : 'backendNotUp'
+            rows.push({
+                key, label: i18n.t(`ui.boot.step.${key}`), state, detail: i18n.t(`ui.boot.detail.${detail}`),
+                started: isBackend ? firstSeen.current : null, finished: apiUp && isBackend ? firstSeen.current : null,
+            })
+        }
     }
 
     // 後端已啟動但正忙著載入模型時，health 偶爾會逾時；這時應顯示「載入中」而不是「等待後端」
@@ -279,6 +293,8 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const launcherStale =
         launcherFresh && launcher.overall === 'starting' && !apiUp && now - launcher.updated_at > STALE_SEC
     const stopped = launcher?.overall === 'stopped' && !apiUp
+    // 進度讀不到、後端也一直沒回應：服務根本沒在跑（被關掉、或意外結束）。不說清楚的話，畫面會一直停在「載入中」
+    const unreachable = !launcherFresh && !stopped && !apiUp && now - firstSeen.current > STALE_SEC
     // 進度只算「要等的」：收起來的那一列（不預先載入的模型）不算
     const counted = [...rows, ...modelRows].filter((r) => r.key !== IDLE_KEY)
     const doneCount = counted.filter((r) => r.state === 'done' || r.state === 'skipped').length
@@ -338,13 +354,14 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                     {group(i18n.t('ui.boot.groupModels'), modelRows)}
                 </div>
 
-                {(launcherError || launcherStale || stopped) && (
+                {(launcherError || launcherStale || stopped || unreachable) && (
                     <div className="paper !rounded-[var(--r-26)] mt-4 px-[var(--sp-20)] py-[var(--sp-14)]">
                         <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-[var(--danger-ink)]">
-                            {i18n.t(stopped ? 'ui.boot.stopped' : launcherError ? 'ui.boot.launchError' : 'ui.boot.noResponse')}
+                            {i18n.t(stopped ? 'ui.boot.stopped' : unreachable ? 'ui.boot.unreachable' : launcherError ? 'ui.boot.launchError' : 'ui.boot.noResponse')}
                         </p>
                         {launcherError && launcher?.message && <p className="mt-1 break-words text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{launcher.message}</p>}
-                        <p className="mt-1 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{i18n.t('ui.boot.restartHint')}</p>
+                        {/* 桌面版關掉再開就會自己把服務帶起來；瀏覽器要請管理主機的人重新啟動 */}
+                        <p className="mt-1 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{i18n.t(isDesktop ? 'ui.boot.reopenHint' : 'ui.boot.restartHint')}</p>
                     </div>
                 )}
 

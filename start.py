@@ -1079,7 +1079,7 @@ def main() -> int:
         if SERVE_BUILT and not args.skip_browser:
             open_browser()  # 介面由後端提供：後端好了才有東西可以開
 
-        info("[wait] Loading the AI models (3B, 7B) and document search... progress is shown in the browser.")
+        info("[wait] Loading the AI model and document search... progress is shown in the browser.")
         wait_for_ai_ready()
         BOOT["overall"] = "ready"
         _boot_write()

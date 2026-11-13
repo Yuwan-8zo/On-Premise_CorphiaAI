@@ -129,3 +129,4 @@ desktop/*.spec
 # 備份（公司的全部資料，不進版本庫）
 backups/
 graphify-out/
+desktop/dist_new/
