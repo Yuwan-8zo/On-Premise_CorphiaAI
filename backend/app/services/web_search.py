@@ -21,7 +21,7 @@ from typing import Optional, TypedDict
 import httpx
 
 from app.core.config import settings
-from app.services import context_guard
+import app.services.context_guard as context_guard
 from app.services.dlp_service import check_dlp
 
 logger = logging.getLogger(__name__)

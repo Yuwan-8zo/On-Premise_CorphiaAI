@@ -29,7 +29,9 @@ from app.services.hash_chain_service import stamp_message
 from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
-from app.services import browser_folder, file_builder, generated_files
+import app.services.browser_folder as browser_folder
+import app.services.file_builder as file_builder
+import app.services.generated_files as generated_files
 from app.services.output_guard import OutputScreen, screen_output
 from app.services.memory_service import (
     MemoryLimitError, add_memory, custom_instructions_block, extract_remember, memory_block, style_directive,

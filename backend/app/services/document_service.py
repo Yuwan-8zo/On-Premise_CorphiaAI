@@ -16,7 +16,7 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
-from app.services import text_extract
+import app.services.text_extract as text_extract
 from app.services.rag_service import get_rag_service
 
 logger = logging.getLogger(__name__)

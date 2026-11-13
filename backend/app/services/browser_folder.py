@@ -23,7 +23,7 @@ from pathlib import Path
 from threading import Lock
 
 from app.core.config import settings
-from app.services import text_extract
+import app.services.text_extract as text_extract
 from app.services.context_guard import screen_chunks
 
 logger = logging.getLogger(__name__)
