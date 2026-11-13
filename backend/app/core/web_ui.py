@@ -46,6 +46,53 @@ BLOCKED_PAGE = """<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><met
 <div><h1 style="font-size:22px;margin:0 0 8px">區域網路未開啟</h1><p style="margin:0;color:#b6b6c0;font-size:15px">請在主機的管理後台開啟「區域網路」後，再重新整理這一頁。</p></div></body></html>"""
 
 
+# 手機安裝主機憑證的教學頁（/lan-setup）。裝不裝都能用：不裝的話每次瀏覽器會先提醒「連線不是私人連線」，
+# 而且手機不會把它當成可以「加入主畫面」的 App。頁面自己帶樣式，不依賴介面的程式（還沒登入也能看）。
+SETUP_PAGE = """<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>安裝主機憑證</title>
+<style>
+  body{margin:0;background:#000;color:#fff;font-family:system-ui,'Noto Sans TC',sans-serif;line-height:1.6}
+  main{max-width:560px;margin:0 auto;padding:30px}
+  h1{font-size:28px;margin:0 0 8px} h2{font-size:20px;margin:0 0 12px}
+  p{margin:0 0 12px;color:#b6b6c0;font-size:15px}
+  section{background:#1c1c1e;border-radius:25px;padding:26px;margin-top:26px}
+  ol{margin:0;padding-left:22px;font-size:15px} li{margin-bottom:8px}
+  a.btn{display:block;margin-top:26px;height:50px;line-height:50px;border-radius:25px;background:#0091ff;color:#fff;font-weight:600;font-size:17px;text-align:center;text-decoration:none}
+  a.btn:active{transform:scale(.98)}
+  code{display:block;padding:14px 16px;border-radius:15px;background:#2c2c2e;font:13px/1.6 ui-monospace,Consolas,monospace;word-break:break-all}
+</style>
+<main>
+  <h1>安裝主機憑證</h1>
+  <p>這台主機的加密憑證是它自己簽的，手機一開始不認得。裝一次之後，連線時就不會再跳提醒，也可以把 Corphia AI 加到主畫面。</p>
+  <a class="btn" href="/lan-ca.crt">下載憑證</a>
+  <section>
+    <h2>先核對指紋</h2>
+    <p>安裝時手機會顯示憑證的指紋（SHA-256）。請確認和下面這一串一樣，才是這台主機的憑證：</p>
+    <code>__FINGERPRINT__</code>
+  </section>
+  <section>
+    <h2>iPhone、iPad</h2>
+    <ol>
+      <li>用 Safari 按上面的「下載憑證」，選「允許」。</li>
+      <li>打開「設定」，最上面會出現「已下載描述檔」，點進去按「安裝」。</li>
+      <li>到「設定 → 一般 → 關於本機 → 憑證信任設定」，把「Corphia AI 區網憑證」的開關打開。</li>
+    </ol>
+  </section>
+  <section>
+    <h2>Android</h2>
+    <ol>
+      <li>按上面的「下載憑證」。</li>
+      <li>打開「設定 → 安全性 → 更多安全性設定 → 加密與憑證 → 安裝憑證 → CA 憑證」（各廠牌位置略有不同，可以在設定裡搜尋「憑證」）。</li>
+      <li>選剛才下載的 corphia-lan-ca.crt，照畫面確認。</li>
+    </ol>
+  </section>
+  <section>
+    <h2>不想安裝也可以</h2>
+    <p>瀏覽器跳出提醒時，確認網址是公司主機的位址，選「進階 → 繼續前往」就能使用，連線一樣有加密；只是每次重開瀏覽器可能會再提醒一次。</p>
+  </section>
+</main></html>"""
+
+
 def enabled() -> bool:
     return os.environ.get(ENV_FLAG) == "1"
 
@@ -134,6 +181,16 @@ def install(app: FastAPI, dist: Path = DIST_DIR, boot_status: Path = BOOT_STATUS
             return Response(boot_status.read_text(encoding="utf-8"), media_type="application/json", headers={"Cache-Control": "no-store"})
         except OSError:
             return JSONResponse({}, status_code=404, headers={"Cache-Control": "no-store"})
+
+    @app.get("/lan-setup", include_in_schema=False)
+    async def lan_setup() -> Response:
+        """手機安裝主機憑證的教學頁（不用登入就看得到：裡面只有公開的憑證和指紋）"""
+        from app.core.lan_tls import ca_fingerprint
+
+        fingerprint = ca_fingerprint()
+        if not fingerprint:
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        return HTMLResponse(SETUP_PAGE.replace("__FINGERPRINT__", fingerprint), headers={"Cache-Control": "no-store"})
 
     @app.get("/lan-ca.crt", include_in_schema=False)
     async def lan_ca() -> Response:

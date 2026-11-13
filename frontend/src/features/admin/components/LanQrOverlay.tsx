@@ -74,6 +74,7 @@ export default function LanQrOverlay({ ip, url: givenUrl, encrypted = false, fin
                     <p className="lan-qr-sub">
                         {t('admin.lan.encryptedHint')}
                         {fingerprint && <span className="block tabular-nums selectable-text">{t('admin.lan.fingerprint', { value: fingerprint.split(':').slice(0, FINGERPRINT_GROUPS).join(':') })}</span>}
+                        <span className="block selectable-text">{t('admin.lan.setupHint', { url: `${url}lan-setup` })}</span>
                     </p>
                 )}
             </div>

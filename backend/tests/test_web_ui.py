@@ -202,3 +202,29 @@ def test_flag_is_off_by_default(monkeypatch):
     assert web_ui.enabled() is False
     monkeypatch.setenv(web_ui.ENV_FLAG, "1")
     assert web_ui.enabled() is True
+
+
+class TestLanCertificatePages:
+    """手機安裝主機憑證：教學頁與憑證下載（不用登入；只有公開的憑證和指紋）"""
+
+    def test_setup_page_shows_the_hosts_fingerprint_and_download_link(self, client, monkeypatch):
+        import app.core.lan_tls as lan_tls
+        monkeypatch.setattr(lan_tls, "ca_fingerprint", lambda *_a: "AA:BB:CC")
+        r = client[0].get("/lan-setup")
+        assert r.status_code == 200 and "AA:BB:CC" in r.text and 'href="/lan-ca.crt"' in r.text
+        assert "__FINGERPRINT__" not in r.text
+        assert r.headers["cache-control"] == "no-store"
+
+    def test_certificate_download(self, client, monkeypatch):
+        import app.core.lan_tls as lan_tls
+        monkeypatch.setattr(lan_tls, "ca_der", lambda *_a: b"DER")
+        r = client[0].get("/lan-ca.crt")
+        assert r.status_code == 200 and r.content == b"DER"
+        assert r.headers["content-type"] == "application/x-x509-ca-cert"
+
+    def test_both_are_missing_when_encryption_was_never_set_up(self, client, monkeypatch):
+        import app.core.lan_tls as lan_tls
+        monkeypatch.setattr(lan_tls, "ca_fingerprint", lambda *_a: "")
+        monkeypatch.setattr(lan_tls, "ca_der", lambda *_a: None)
+        assert client[0].get("/lan-setup").status_code == 404
+        assert client[0].get("/lan-ca.crt").status_code == 404

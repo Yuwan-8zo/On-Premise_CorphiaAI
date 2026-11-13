@@ -890,6 +890,7 @@ export default {
             },
         },
         lan: {
+            setupHint: '不想每次看到提醒：手機開 {{url}} 照步驟安裝主機憑證',
             installHint: '開啟後，在手機瀏覽器的選單選「加入主畫面」，就能像 App 一樣從桌面開啟',
             encryptedHint: '連線已加密。憑證是這台主機自己簽的，手機第一次連線會跳出提醒，確認是這個網址後選「繼續」即可',
             fingerprint: '主機憑證指紋：{{value}}…',
