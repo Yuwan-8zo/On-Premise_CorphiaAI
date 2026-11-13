@@ -718,10 +718,13 @@ class ChatService:
             }
 
         # 串流生成回應；每一段先過「回答的檢查」（外部圖片換成文字、個資遮罩，見 services/output_guard）才送出去
+        # 思考過程（reasoning，只有會推理的模型才有）走同一套檢查，但不計入 full_response——
+        # 不存進資料庫、不算進對話歷史，純粹是串流期間給使用者看的過程
         full_response = ""
         screen = OutputScreen()
+        reasoning_screen = OutputScreen()
         try:
-            async for chunk in self.llm_service.generate_stream(
+            async for kind, chunk in self.llm_service.generate_stream(
                 model_name=self.model_name,
                 prompt=prompt,
                 temperature=temperature,
@@ -729,6 +732,11 @@ class ChatService:
             ):
                 if language == "zh-TW":
                     chunk = to_traditional(chunk)
+                if kind == "reasoning":
+                    out = reasoning_screen.feed(chunk)
+                    if out:
+                        yield {"type": "reasoning", "content": out}
+                    continue
                 chunk = screen.feed(chunk)
                 if not chunk:
                     continue  # 結尾可能是樣式的一部分，先留著等後面的字
@@ -741,6 +749,9 @@ class ChatService:
             if tail:
                 full_response += tail
                 yield {"type": "stream", "content": tail}
+            reasoning_tail = reasoning_screen.flush()
+            if reasoning_tail:
+                yield {"type": "reasoning", "content": reasoning_tail}
         except (asyncio.CancelledError, GeneratorExit):
             # 中途停止（使用者按停止、生成逾時、連線中斷）：已經寫出來的部分存起來，
             # 重新整理或之後再打開對話都還看得到；一個字都還沒寫就不存

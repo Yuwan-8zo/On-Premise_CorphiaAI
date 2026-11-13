@@ -59,6 +59,8 @@ export interface Message {
     attachments?: MessageAttachment[]
     /** 正在製作哪一種檔案（只在串流期間存在前端，顯示「正在製作 Word 文件…」） */
     making?: string
+    /** 模型的思考過程（只有支援推理的模型才有；只存在前端，不會存進資料庫，重新整理就會消失） */
+    reasoning?: string
     rating?: number
     content_hash?: string
     prev_hash?: string

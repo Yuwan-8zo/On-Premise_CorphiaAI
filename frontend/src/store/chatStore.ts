@@ -61,6 +61,8 @@ interface ChatState {
     setStreamingFor: (conversationId: string, streaming: boolean) => void
     /** 把字接到指定對話的最後一則訊息（畫面上或背景都可以） */
     appendToThread: (conversationId: string, content: string) => void
+    /** 把字接到指定對話最後一則訊息的思考過程（reasoning 欄位，只在串流期間存在前端） */
+    appendReasoningToThread: (conversationId: string, content: string) => void
     /** 設定指定對話最後一則訊息的來源引用 */
     setSourcesForThread: (conversationId: string, sources: MessageSource[]) => void
     /** 改寫指定對話的訊息（畫面上或背景都可以） */
@@ -87,6 +89,15 @@ const appendLast = (content: string) => (messages: Message[]) => {
     const out = [...messages]
     const last = out[out.length - 1]
     out[out.length - 1] = { ...last, content: last.content + content }
+    return out
+}
+
+/** 跟 appendLast 一樣，但接到 reasoning 欄位（思考過程）而不是 content（正式回答） */
+const appendLastReasoning = (content: string) => (messages: Message[]) => {
+    if (messages.length === 0) return messages
+    const out = [...messages]
+    const last = out[out.length - 1]
+    out[out.length - 1] = { ...last, reasoning: (last.reasoning || '') + content }
     return out
 }
 
@@ -238,6 +249,8 @@ export const useChatStore = create<ChatState>()((set) => ({
         }),
 
     appendToThread: (conversationId, content) => set((state) => onThread(state, conversationId, appendLast(content))),
+
+    appendReasoningToThread: (conversationId, content) => set((state) => onThread(state, conversationId, appendLastReasoning(content))),
 
     setSourcesForThread: (conversationId, sources) =>
         set((state) =>

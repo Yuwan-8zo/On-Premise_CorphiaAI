@@ -4,6 +4,7 @@
  * 每條 WebSocket 綁定一個對話；收到的封包一律寫進「那個對話」自己的訊息，
  * 不管它現在在畫面上還是切到背景（多工：同時問好幾個對話，切走也會繼續生成）。
  *   - 'stream'             ↦ 把字接到該對話最後一則訊息（每 50 毫秒合併一次更新）
+ *   - 'reasoning'          ↦ 思考過程（只有會推理的模型才有）；接到 reasoning 欄位，不進 content，同樣每 50 毫秒合併
  *   - 'done'               ↦ 該對話結束生成；在畫面上就重新載入拿真正的訊息 id，在背景就跳通知
  *   - 'error'              ↦ 結束生成
  *   - 'sources'            ↦ 附上引用來源（＋除錯資訊，只在畫面上的對話）
@@ -45,6 +46,9 @@ export function buildStreamDispatcher(conversationId: string) {
     // 每個字都更新一次畫面時，電腦一慢更新就會堆積而丟字、甚至卡死；先收集起來，每 50 毫秒更新一次
     let pending = ''
     let flushTimer: ReturnType<typeof setTimeout> | null = null
+    // 思考過程跟正式回答是兩個獨立欄位，各自合併批次，不會互相搶順序
+    let pendingReasoning = ''
+    let reasoningFlushTimer: ReturnType<typeof setTimeout> | null = null
 
     const flush = () => {
         if (flushTimer) {
@@ -57,6 +61,17 @@ export function buildStreamDispatcher(conversationId: string) {
         store().appendToThread(conversationId, text)
     }
 
+    const flushReasoning = () => {
+        if (reasoningFlushTimer) {
+            clearTimeout(reasoningFlushTimer)
+            reasoningFlushTimer = null
+        }
+        if (!pendingReasoning) return
+        const text = pendingReasoning
+        pendingReasoning = ''
+        store().appendReasoningToThread(conversationId, text)
+    }
+
     const finish = () => store().setStreamingFor(conversationId, false)
 
     return function handleStreamPacket(data: StreamResponse): void {
@@ -67,18 +82,31 @@ export function buildStreamDispatcher(conversationId: string) {
             }
             return
         }
+        if (data.type === 'reasoning') {
+            if (data.content) {
+                pendingReasoning += data.content
+                if (!reasoningFlushTimer) reasoningFlushTimer = setTimeout(flushReasoning, 50)
+            }
+            return
+        }
         // 其他封包（完成、錯誤、來源…）之前，先把收集中的字補上，順序才不會亂
         flush()
+        flushReasoning()
 
         switch (data.type) {
             case 'done': {
                 const wasCurrent = isCurrent()
                 finish()
                 if (wasCurrent) {
+                    // 思考過程不存資料庫：重新載入會把它洗掉，先記下來，載入後掛回最後一則回答（留到離開這個對話為止）
+                    const reasoning = [...store().messages].reverse().find((m) => m.role === 'assistant')?.reasoning
                     // 串流期間訊息 id 是暫時的；完成後重新載入，編輯／重新生成才指得到後端紀錄
                     conversationsApi
                         .getMessages(conversationId)
-                        .then((msgs) => store().setServerMessages(conversationId, msgs))
+                        .then((msgs) => {
+                            store().setServerMessages(conversationId, msgs)
+                            if (reasoning) store().updateThread(conversationId, (messages) => patchLastAssistant(messages, { reasoning }))
+                        })
                         .catch((err) => console.error('同步訊息失敗:', err))
                 } else {
                     const title = store().conversations.find((c) => c.id === conversationId)?.title

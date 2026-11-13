@@ -30,7 +30,7 @@ class FakeLLM:
         await asyncio.sleep(self.first_delay)
         for c in self.chunks:
             await asyncio.sleep(0.05)
-            yield c
+            yield ("content", c)
 
 
 @pytest.fixture

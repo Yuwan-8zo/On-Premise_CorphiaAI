@@ -7,6 +7,10 @@ const lastContent = () => {
     const msgs = useChatStore.getState().messages
     return msgs[msgs.length - 1]?.content
 }
+const lastReasoning = () => {
+    const msgs = useChatStore.getState().messages
+    return msgs[msgs.length - 1]?.reasoning
+}
 
 /** 畫面上是 c1，c1 正在生成 */
 function setup() {
@@ -32,6 +36,25 @@ describe('buildStreamDispatcher（每個對話一個）', () => {
         expect(lastContent()).toBe('')
         vi.advanceTimersByTime(60)
         expect(lastContent()).toBe('台北')
+    })
+
+    it('思考過程（reasoning）接到獨立欄位，不混進正式回答', () => {
+        const handle = setup()
+        handle({ type: 'reasoning', content: '讓我想想' } as never)
+        handle({ type: 'stream', content: '答案' } as never)
+        vi.advanceTimersByTime(60)
+        expect(lastReasoning()).toBe('讓我想想')
+        expect(lastContent()).toBe('答案')
+    })
+
+    it('收到錯誤時先補上還沒顯示的思考過程和正式回答', () => {
+        const handle = setup()
+        handle({ type: 'reasoning', content: '想' } as never)
+        handle({ type: 'stream', content: '你好' } as never)
+        handle({ type: 'error', message: 'x' } as never)
+        expect(lastReasoning()).toBe('想')
+        expect(lastContent()).toBe('你好')
+        expect(useChatStore.getState().isStreaming).toBe(false)
     })
 
     it('收到錯誤時先補上還沒顯示的字，並結束生成', () => {

@@ -22,7 +22,7 @@ export interface WebSocketMessage {
 }
 
 export interface StreamResponse {
-    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
+    type: 'stream' | 'reasoning' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
         | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments' | 'output_filtered'
         | 'web_search_used' | 'web_search_blocked'
     /** 回答的檢查（output_filtered）：拿掉幾張外部圖片（pii 沿用下面的欄位） */

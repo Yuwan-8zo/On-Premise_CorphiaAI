@@ -1071,6 +1071,8 @@ export default {
             dlpBlocked: '**此訊息已被資料外洩防護政策攔阻**\n\n訊息包含 {{n}} 個列管字詞。此事件已寫入稽核日誌，內容沒有送進 AI 模型。',
             dlpWarn: '訊息包含列管字詞，已依資料外洩防護政策攔阻送出',
             dlpToast: '訊息含列管機密字詞，已依資料外洩防護政策攔阻',
+            thinking: '思考中',
+            thoughtProcess: '已完成思考',
             unshare: '取消分享',
             unshared: '已取消分享，現在只有你看得到這個對話',
         },

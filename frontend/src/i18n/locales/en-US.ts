@@ -1071,6 +1071,8 @@ export default {
             dlpBlocked: '**This message was blocked by the data loss prevention policy**\n\nIt contains {{n}} restricted term(s). The event was recorded in the audit log and nothing was sent to the AI model.',
             dlpWarn: 'The message contains restricted terms and was blocked by policy',
             dlpToast: 'The message contained restricted terms and was blocked',
+            thinking: 'Thinking',
+            thoughtProcess: 'Thought process',
             unshare: 'Stop sharing',
             unshared: 'Sharing stopped. Only you can see this chat now',
         },

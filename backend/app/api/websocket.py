@@ -69,6 +69,7 @@ async def websocket_chat(
     
     接收訊息格式:
     - 來源: {"type": "sources", "sources": [...]}
+    - 思考過程（只有會推理的模型才有）: {"type": "reasoning", "content": "..."}
     - 串流: {"type": "stream", "content": "..."}
     - 完成: {"type": "done", "message_id": "..."}
     - 錯誤: {"type": "error", "message": "..."}

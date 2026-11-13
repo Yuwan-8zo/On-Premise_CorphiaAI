@@ -408,9 +408,12 @@ class LLMService:
         top_p: float = 0.9,
         stop: Optional[list[str]] = None,
         model_name: Optional[str] = None,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[tuple[str, str], None]:
         """
         串流生成回應。model_name：用哪個模型（每個人自己選的；沒給用系統預設）
+
+        產出 (kind, text)：kind="content" 是正式回答，kind="reasoning" 是思考過程
+        （只有支援推理的模型才會有，見 _server_generate_stream 的說明）。
 
         重要：呼叫端應在 task cancel / 客戶端斷線時 break out of the async for，
         本 generator 偵測到 GeneratorExit / CancelledError 時會設 stop_event，
@@ -421,13 +424,13 @@ class LLMService:
 
         inst = await self._instance_for(model_name)
         if inst is not None:
-            async for chunk in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop, inst=inst):
-                yield chunk
+            async for item in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop, inst=inst):
+                yield item
             return
 
         self._require_real_model()
         async for chunk in self._simulate_stream(prompt):
-            yield chunk
+            yield ("content", chunk)
 
     async def generate_structured(
         self,
@@ -502,6 +505,11 @@ class LLMService:
         """
         串流。中途停止（呼叫端 break／取消）＝離開 async with，連線關掉，llama-server 偵測到就停止產生，
         不會把剩下的 max_tokens 跑完。
+
+        產出 (kind, text) 這種二元組：kind="content" 是正式回答、kind="reasoning" 是思考過程
+        （只有會推理的模型，如 Qwen3、gpt-oss，才會有後者；其他模型這個欄位一律不存在）。
+        引擎啟動時帶 --reasoning-format auto（見 llm_engine.py），由 llama-server 自己依模型樣板判斷
+        要不要切出 reasoning_content，這裡只是原封不動轉發，不用知道現在是哪個模型。
         """
         body = self._server_body(prompt, max_tokens, temperature, top_p, stop, stream=True)
         token_count = 0
@@ -523,13 +531,16 @@ class LLMService:
                         continue
                     timings = chunk.get("timings") or timings
                     choices = chunk.get("choices") or []
-                    # 思考過程（reasoning_content）目前不顯示，只送出正式回答
-                    text = (choices[0].get("delta") or {}).get("content") if choices else None
+                    delta = (choices[0].get("delta") or {}) if choices else {}
+                    reasoning = delta.get("reasoning_content")
+                    if reasoning:
+                        yield ("reasoning", reasoning)
+                    text = delta.get("content")
                     if text:
                         token_count += 1
                         if token_count == 1:
                             first_token_at = time.perf_counter()
-                        yield text
+                        yield ("content", text)
         finally:
             if first_token_at is not None and token_count > 1:
                 self._record_server_timings(timings, token_count - 1, time.perf_counter() - first_token_at)
@@ -594,8 +605,8 @@ class LLMService:
         """
         inst = inst or self._llama_instance
         if isinstance(inst, EngineModel):
-            async for text in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, stop):
-                yield text
+            async for item in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, stop):
+                yield item
             return
 
         token_count = 0
@@ -673,7 +684,9 @@ class LLMService:
                         # tokens/sec should measure generation only, not the time spent
                         # reading the prompt and documents before the first token
                         first_token_at = time.perf_counter()
-                    yield text
+                    # 這條路（llama-cpp-python 直接呼叫，不經過 llama-server）沒有切分 reasoning_content
+                    # 的機制，統一包成 ("content", text) 跟 _server_generate_stream 的產出格式一致
+                    yield ("content", text)
         except (GeneratorExit, asyncio.CancelledError):
             # 呼叫端 break 或 task cancel → 通知 thread 停止
             logger.info("LLM 串流被外部中斷，發送停止訊號給 llama.cpp thread")

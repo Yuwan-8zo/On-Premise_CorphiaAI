@@ -4,6 +4,7 @@
 
 import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import AIThinkingIndicator from './AIThinkingIndicator'
+import ThinkingBlock from './ThinkingBlock'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
 import FileAttachments from './FileAttachments'
@@ -316,12 +317,21 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
                     {/* 內容區塊 */}
                     <div className="flex-1 min-w-0 text-text-primary text-[length:var(--fs-15d5)] leading-relaxed pb-4">
+                        {/* 思考過程（只有會推理的模型才有）：回答開始出現文字時自動收合 */}
+                        {message.reasoning && (
+                            <ThinkingBlock
+                                reasoning={message.reasoning}
+                                isThinking={isStreaming && !message.content}
+                                collapsedByDefault={Boolean(message.content)}
+                            />
+                        )}
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[var(--r-12)] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
                                 <MarkdownRenderer content={message.content} />
                             </div>
-                        ) : isStreaming ? (
+                        ) : isStreaming && !message.reasoning ? (
                             // 串流前置期：依 message.sources 是否已回傳，動態顯示「思考中 / 檢索 / 生成中」
+                            // （模型有送思考過程時，上面的 ThinkingBlock 已經在顯示「思考中」，不用再疊一個）
                             <AIThinkingIndicator
                                 making={message.making}
                                 phase={message.sources && message.sources.length > 0 ? 'generating' : 'thinking'}
