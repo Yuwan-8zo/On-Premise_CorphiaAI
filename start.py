@@ -664,6 +664,120 @@ def open_log(name: str):
 
 
 MODEL_CHOICE: str | None = None
+# --built：不開前端開發伺服器，後端自己提供打包好的介面（frontend/dist），執行時不需要 Node
+SERVE_BUILT = False
+FRONTEND_DIST = FRONTEND_DIR / "dist"
+# 介面的原始檔：比打包結果新就要重新打包
+FRONTEND_SOURCES = ("src", "index.html", "package.json", "vite.config.ts", "tailwind.config.js")
+
+
+def frontend_build_is_stale() -> bool:
+    """打包結果不存在，或原始檔比它新（改了介面卻沒重新打包，桌面版會看到舊畫面）"""
+    index = FRONTEND_DIST / "index.html"
+    if not index.is_file():
+        return True
+    built_at = index.stat().st_mtime
+    for name in FRONTEND_SOURCES:
+        path = FRONTEND_DIR / name
+        files = path.rglob("*") if path.is_dir() else [path]
+        for file in files:
+            try:
+                if file.is_file() and file.stat().st_mtime > built_at:
+                    return True
+            except OSError:
+                continue
+    return False
+
+
+def ensure_frontend_build() -> None:
+    """--built 模式：確保 frontend/dist 是最新的。有 Node 就自動打包；沒有 Node 但已經有打包結果就直接用"""
+    if not frontend_build_is_stale():
+        ok("Frontend build is up to date")
+        return
+    npm = shutil.which("npm")
+    if not npm:
+        if (FRONTEND_DIST / "index.html").is_file():
+            warn("Frontend sources changed but npm was not found; using the existing build.")
+            return
+        raise RuntimeError("介面還沒打包，而且這台電腦沒有 Node.js。請安裝 Node.js 後重試，或放入打包好的 frontend/dist。")
+    ensure_frontend_dependencies()
+    info("[frontend] Building the interface (first time or after changes, about a minute)...")
+    result = run_logged([npm, "run", "build"], cwd=FRONTEND_DIR, log_name="frontend-build.log", timeout=900)
+    if result.returncode != 0 or not (FRONTEND_DIST / "index.html").is_file():
+        raise RuntimeError(f"Frontend build failed. See {RUNTIME_DIR / 'frontend-build.log'}")
+    ok("Frontend build is ready")
+
+
+PRE_UI = None  # 後端啟動前暫時提供介面的小伺服器（見 start_pre_ui）
+
+
+def start_pre_ui() -> None:
+    """
+    --built：後端還沒起來之前，先在同一個埠提供打包好的介面（只給這台電腦），
+    視窗一打開就是完整的啟動進度畫面（和開發模式先開前端是同一個道理）。
+    只給檔案和 boot-status.json；/api、/ws 一律回 503（啟動畫面本來就會一直重試）。
+    後端要啟動時由 stop_pre_ui() 關掉，把埠讓出來。開不起來（埠被佔用）就算了，不影響啟動。
+    """
+    global PRE_UI
+    if PRE_UI or not (FRONTEND_DIST / "index.html").is_file():
+        return
+    import mimetypes
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    dist = FRONTEND_DIST.resolve()
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *_args) -> None:  # 不要把每個請求印到啟動記錄
+            pass
+
+        def _send(self, status: int, body: bytes, content_type: str, cache: str = "no-cache") -> None:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", cache)
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(body)
+
+        def do_GET(self) -> None:
+            path = self.path.split("?", 1)[0].lstrip("/")
+            try:
+                if path.startswith(("api/", "ws/")):
+                    return self._send(503, b'{"detail":"starting"}', "application/json", "no-store")
+                if path == "boot-status.json":
+                    return self._send(200, BOOT_STATUS_PATH.read_bytes(), "application/json", "no-store")
+                target = (dist / path).resolve() if path else dist / "index.html"
+                if not target.is_file() or dist not in target.parents:
+                    target = dist / "index.html"  # 單頁應用：找不到的路徑都回首頁（也擋掉 ../ 跑到外面）
+                kind = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+                if kind.startswith("text/") or kind in ("application/javascript", "application/json"):
+                    kind += "; charset=utf-8"
+                self._send(200, target.read_bytes(), kind)
+            except OSError:
+                self._send(404, b"", "text/plain")
+
+        do_HEAD = do_GET
+
+    try:
+        PRE_UI = ThreadingHTTPServer(("127.0.0.1", BACKEND_PORT), Handler)
+    except OSError:
+        return
+    PRE_UI.daemon_threads = True
+    threading.Thread(target=PRE_UI.serve_forever, daemon=True).start()
+    ok(f"Startup screen is available at {ui_url()}")
+
+
+def stop_pre_ui() -> None:
+    global PRE_UI
+    if PRE_UI:
+        PRE_UI.shutdown()
+        PRE_UI.server_close()
+        PRE_UI = None
+
+
+def ui_url() -> str:
+    return f"http://localhost:{BACKEND_PORT if SERVE_BUILT else FRONTEND_PORT}"
 
 
 def find_model_file(choice: str) -> Path | None:
@@ -676,9 +790,11 @@ def find_model_file(choice: str) -> Path | None:
 
 
 def start_backend(python_exe: Path) -> None:
+    stop_pre_ui()  # 先把埠讓出來（不然下面清埠會清到自己）
     kill_port(BACKEND_PORT)
     log = open_log("backend.log")
-    host = BACKEND_HOST
+    # --built：手機要直接連後端，所以聽所有網路介面；誰能進來由後端的區網門檢決定（app/core/web_ui.py）
+    host = "0.0.0.0" if SERVE_BUILT else BACKEND_HOST
     cmd = [
         str(python_exe),
         "-m",
@@ -700,6 +816,10 @@ def start_backend(python_exe: Path) -> None:
     backend_env = os.environ.copy()
     backend_env.setdefault("HF_HUB_OFFLINE", "1")
     backend_env.setdefault("TRANSFORMERS_OFFLINE", "1")
+    if SERVE_BUILT:
+        backend_env["CORPHIA_SERVE_FRONTEND"] = "1"
+    else:
+        backend_env.pop("CORPHIA_SERVE_FRONTEND", None)
     if MODEL_CHOICE:
         model_file = find_model_file(MODEL_CHOICE)
         if model_file:
@@ -732,7 +852,7 @@ def start_frontend() -> None:
 
 
 def open_browser() -> None:
-    url = f"http://localhost:{FRONTEND_PORT}"
+    url = ui_url()
     if sys.platform == "win32":
         os.startfile(url)  # type: ignore[attr-defined]
     elif sys.platform == "darwin":
@@ -773,7 +893,7 @@ def print_summary(ngrok_url: str | None = None) -> None:
     info("=" * 64)
     info("Corphia AI is ready")
     info("=" * 64)
-    info(f"Frontend: http://localhost:{FRONTEND_PORT}")
+    info(f"Frontend: {ui_url()}" + (" (served by the backend, no dev server)" if SERVE_BUILT else ""))
     info(f"Backend:  http://localhost:{BACKEND_PORT}")
     info(f"API docs: http://localhost:{BACKEND_PORT}/docs")
     info(f"DB:       localhost:{database_port()} (Docker PostgreSQL + pgvector)")
@@ -805,6 +925,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-frontend",
         action="store_true",
         help="Do not start Vite dev server.",
+    )
+    parser.add_argument(
+        "--built",
+        action="store_true",
+        help="Serve the built interface (frontend/dist) from the backend instead of running the Vite dev server.",
     )
     parser.add_argument(
         "--model",
@@ -863,8 +988,9 @@ def wait_for_api_health(timeout: int = 120) -> bool:
 
 def main() -> int:
     args = parse_args()
-    global MODEL_CHOICE
+    global MODEL_CHOICE, SERVE_BUILT
     MODEL_CHOICE = args.model
+    SERVE_BUILT = args.built
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
@@ -877,13 +1003,19 @@ def main() -> int:
 
     try:
         boot_init()
+        if SERVE_BUILT and not frontend_build_is_stale():
+            start_pre_ui()  # 介面不用重新打包：馬上就能顯示啟動進度
         python_exe = create_backend_venv()
         ensure_backend_dependencies(python_exe)
-        ensure_frontend_dependencies()
+        if SERVE_BUILT:
+            ensure_frontend_build()
+            start_pre_ui()  # 剛打包完的情況：現在才有介面可以顯示
+        else:
+            ensure_frontend_dependencies()
 
         # Frontend first: it does not need the backend, and the browser can then
         # show the live startup status while everything else comes up.
-        skip_frontend = args.skip_frontend or args.backend_only
+        skip_frontend = args.skip_frontend or args.backend_only or SERVE_BUILT
         if not skip_frontend:
             start_frontend()
             info("[wait] Checking frontend...")
@@ -918,6 +1050,8 @@ def main() -> int:
             raise RuntimeError(f"Backend API health check timed out. See {RUNTIME_DIR / 'backend.log'}")
         ok("Backend API is ready")
         boot("backend", "done", f"http://localhost:{BACKEND_PORT}")
+        if SERVE_BUILT and not args.skip_browser:
+            open_browser()  # 介面由後端提供：後端好了才有東西可以開
 
         info("[wait] Loading the AI models (3B, 7B) and document search... progress is shown in the browser.")
         wait_for_ai_ready()
@@ -944,6 +1078,13 @@ def main() -> int:
                     process.terminate()
             except Exception:
                 pass
+        if SERVE_BUILT:
+            # 介面是後端提供的，後端沒起來畫面就沒了：留一個小伺服器讓啟動畫面顯示失敗原因，
+            # 直到使用者關掉（一鍵關閉／關桌面版視窗會結束這個程式）
+            time.sleep(1.5)  # 等後端把埠放掉
+            start_pre_ui()
+            while PRE_UI:
+                time.sleep(1)
         return 1
 
 

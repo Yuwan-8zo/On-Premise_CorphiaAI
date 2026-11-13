@@ -13,7 +13,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from app.core import win_accept_fix
+from app.core import web_ui, win_accept_fix
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.version import APP_VERSION
@@ -189,6 +189,10 @@ app.add_middleware(RateLimitMiddleware)
 # 上傳檔案大小限制中間件
 app.add_middleware(MaxUploadSizeMiddleware, max_upload_size=settings.max_upload_size_mb * 1024 * 1024)
 
+# 由後端直接提供介面時（start.py --built、桌面版）：後端聽所有網路介面，區網門檢要放在最外層（最後加的在最外面）
+if web_ui.enabled():
+    app.add_middleware(web_ui.LanGate)
+
 # 全域例外處理
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -286,16 +290,20 @@ app.include_router(web_search_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 
-# 根路徑
-@app.get("/")
-async def root():
-    """API 根路徑"""
-    return {
-        "name": settings.app_name,
-        "version": APP_VERSION,
-        "docs": "/docs" if settings.debug else None,
-        "status": "running"
-    }
+if web_ui.enabled():
+    # 介面（打包好的前端）：一定要在所有 API 路徑之後掛，最後那條什麼路徑都接
+    web_ui.install(app)
+else:
+    # 根路徑
+    @app.get("/")
+    async def root():
+        """API 根路徑"""
+        return {
+            "name": settings.app_name,
+            "version": APP_VERSION,
+            "docs": "/docs" if settings.debug else None,
+            "status": "running"
+        }
 
 
 if __name__ == "__main__":

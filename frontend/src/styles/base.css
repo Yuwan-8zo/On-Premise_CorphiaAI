@@ -28,6 +28,13 @@ html {
   scroll-behavior: smooth;
 }
 
+/* 桌面版視窗（Edge 核心）會在密碼欄自己加一顆「顯示密碼」的眼睛、在輸入欄加清除鈕：
+   我們已經有自己的按鈕，把內建的藏起來才不會出現兩顆 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 body {
   font-family: 'Noto Sans TC', 'Source Han Sans TC', '思源黑體', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

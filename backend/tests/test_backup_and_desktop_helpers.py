@@ -186,3 +186,78 @@ class TestDesktopOrigin:
         assert app.normalize_server("ftp://x") == "" and app.normalize_server("") == ""
         assert app.parse_version("0.10.2") > app.parse_version("0.9.9")
         assert app.parse_version("abc") == ()
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# 桌面版自己啟動／關閉這台電腦的服務（desktop/local_stack.py）
+# ═════════════════════════════════════════════════════════════════════════
+class TestLocalStack:
+    @staticmethod
+    def _install(tmp_path: Path) -> Path:
+        root = tmp_path / "Corphia"
+        (root / "backend").mkdir(parents=True)
+        (root / "start.py").write_text("")
+        (root / "stop.py").write_text("")
+        (root / "desktop" / "dist").mkdir(parents=True)
+        return root
+
+    def test_finds_install_above_the_exe(self, tmp_path):
+        import local_stack
+        root = self._install(tmp_path)
+        assert local_stack.find_install_dir(root / "desktop" / "dist" / "Corphia AI.exe") == root
+
+    def test_exe_alone_is_not_an_install(self, tmp_path):
+        """只拿到一個 exe（連公司伺服器用的情況）：不是完整安裝，不會自己啟動任何東西"""
+        import local_stack
+        lone = tmp_path / "Downloads"
+        lone.mkdir()
+        assert local_stack.find_install_dir(lone / "Corphia AI.exe") is None
+
+    @pytest.mark.parametrize("url,expected", [
+        ("http://localhost:5173", True),
+        ("http://127.0.0.1:5173", True),
+        ("http://LOCALHOST:5173", True),
+        ("http://192.168.1.10:5173", False),
+        ("http://localhost.evil.example:5173", False),
+        ("", False),
+    ])
+    def test_only_this_computer_counts_as_local(self, url, expected):
+        import local_stack
+        assert local_stack.is_local_server(url) is expected
+
+    def test_clean_env_drops_packaged_app_variables(self):
+        import local_stack
+        env = local_stack.clean_env({"PATH": "x", "_PYI_ARCHIVE_FILE": "a", "_MEIPASS2": "b"})
+        assert env == {"PATH": "x", "PYTHONIOENCODING": "utf-8"}
+
+    def test_already_running_services_are_not_owned_or_stopped(self, tmp_path, monkeypatch):
+        """使用者原本就用一鍵啟動開著：桌面版不重複啟動，關視窗時也不能把它關掉"""
+        import local_stack
+        calls = []
+        monkeypatch.setattr(local_stack.subprocess, "Popen", lambda *a, **k: calls.append(a))
+        stack = local_stack.LocalStack(self._install(tmp_path), lambda: True)
+        stack.start()
+        stack.stop()
+        assert stack.owned is False and calls == []
+        assert stack.state() == {"phase": "ready"}
+
+    def test_reports_error_with_log_tail_when_launcher_exits(self, tmp_path, monkeypatch):
+        import local_stack
+        root = self._install(tmp_path)
+
+        class Dead:
+            pid = 1
+
+            def poll(self):
+                return 1
+
+        monkeypatch.setattr(local_stack, "find_python", lambda _i: "python")
+        monkeypatch.setattr(local_stack.subprocess, "Popen", lambda *a, **k: Dead())
+        stack = local_stack.LocalStack(root, lambda: False)
+        stack.start()
+        stack._log.write("第一行\n[FAIL] 資料庫沒有啟動\n")
+        stack._log.flush()
+        state = stack.state()
+        assert stack.owned is True
+        assert state["phase"] == "error" and "資料庫沒有啟動" in state["detail"]
+        stack._log.close()

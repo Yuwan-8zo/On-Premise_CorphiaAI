@@ -4,7 +4,9 @@ Corphia AI 桌面版：一個視窗顯示公司伺服器上的介面，加上本
 為什麼要桌面版：瀏覽器裡的網頁碰不到這台電腦上的程式；桌面版多了一個「橋」，介面按按鈕時可以請小幫手做事。
 介面本身還是伺服器上的那一套，所以伺服器更新後這裡重開就是新版，不用重新安裝。
 
-  伺服器位址   存在 %APPDATA%\\CorphiaAI\\desktop.json；連不上時顯示連線設定頁，可以改位址
+  單機使用     桌面程式放在完整安裝裡（往上找得到 start.py）、伺服器又是這台電腦時，服務沒開就自己在背景帶起來
+               （顯示啟動畫面，不用先按一鍵啟動、不用開瀏覽器），關掉視窗時一起關掉；原本就開著的服務不動（見 local_stack.py）
+  伺服器位址   存在 %APPDATA%\\CorphiaAI\\desktop.json；連不上（而且不是上面那種情況）時顯示連線設定頁，可以改位址
   橋           介面用 window.pywebview.api.xxx() 呼叫下面 Api 的方法（前端包在 lib/desktop.ts）
   安全         只有「目前顯示的是設定的那台伺服器」時才接受操控 Office 的呼叫（別的網頁叫不動）；
                而且每個動作都要帶「這一頁的通行碼」：伺服器的頁面載入完成時才發給它，每次載入換一把、換頁就作廢。
@@ -45,8 +47,9 @@ from urllib.parse import urlsplit
 import webview
 
 import office_bridge
+from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 WINDOW_SIZE = (1280, 800)
@@ -235,6 +238,60 @@ CONNECT_PAGE = """<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8
 </script></body></html>"""
 
 
+BOOT_PAGE = """<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>Corphia AI</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#18181a; color:#fff;
+         font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif; }
+  .card { width:min(420px,calc(100vw - 40px)); padding:28px; border-radius:32px; background:#262629; box-shadow:0 12px 40px rgba(0,0,0,.4); text-align:center; }
+  h1 { margin:0 0 6px; font-size:22px; } p { margin:0; font-size:14px; line-height:1.6; color:#b6b6c0; }
+  .spin { width:34px; height:34px; margin:0 auto 18px; border-radius:50%; border:3px solid #38383c; border-top-color:#0a84ff; animation:turn .9s linear infinite; }
+  @keyframes turn { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation-duration:2.4s; } }
+  pre { display:none; margin:16px 0 0; padding:14px 16px; border-radius:16px; background:#18181a; color:#ff6961; font-size:12px; line-height:1.5;
+        text-align:left; white-space:pre-wrap; word-break:break-all; max-height:150px; overflow:auto; }
+  button { display:none; margin-top:16px; width:100%; height:46px; border:0; border-radius:23px; background:#0a84ff; color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+  button:active { transform:scale(.98); }
+  .failed .spin { display:none; } .failed pre, .failed button { display:block; }
+  /* 正常情況一兩秒內就會換成介面自己的啟動進度畫面：這張卡片先不出現，等太久或失敗才顯示 */
+  .card { opacity:0; transition:opacity .3s ease; } .card.show { opacity:1; }
+</style></head><body><div class="card" id="card">
+  <div class="spin"></div>
+  <h1 id="title">正在啟動 Corphia AI</h1>
+  <p id="text">正在開啟這台電腦上的服務，第一次會比較久。</p>
+  <pre id="detail"></pre>
+  <button id="retry">再試一次</button>
+</div><script>
+  const $ = (id) => document.getElementById(id);
+  let timer = null;
+  const tick = async () => {
+    if (!(window.pywebview && window.pywebview.api)) return;
+    const s = await window.pywebview.api.boot_state();
+    if (s.phase === 'error') {
+      clearInterval(timer);
+      $('card').className = 'card show failed';
+      $('title').textContent = '啟動沒有成功';
+      $('text').textContent = '完整記錄在 ' + (s.log || '');
+      $('detail').textContent = s.detail || '';
+    } else if (s.phase === 'starting' && (s.step || s.seconds >= 20)) {
+      $('text').textContent = (s.step ? '正在準備：' + s.step : '資料庫和 AI 模型還在準備中') + '（已等 ' + s.seconds + ' 秒）';
+    }
+  };
+  const begin = () => {
+    timer = setInterval(tick, 300);
+    setTimeout(() => $('card').classList.add('show'), 6000);
+  };
+  $('retry').onclick = async () => {
+    $('card').className = 'card show';
+    $('title').textContent = '正在啟動 Corphia AI';
+    $('text').textContent = '正在開啟這台電腦上的服務，第一次會比較久。';
+    await window.pywebview.api.boot_retry();
+    begin();
+  };
+  begin();
+</script></body></html>"""
+
+
 class Api:
     """介面可以呼叫的方法（pywebview 會把公開方法都暴露給頁面，所以內部用的東西都放在 _ 開頭的屬性）"""
 
@@ -243,6 +300,9 @@ class Api:
         self._window = None
         # 現在顯示的是不是我們自己的連線設定頁（只有它可以改伺服器位址）
         self._connect_page = False
+        # 這台電腦上的整套服務（桌面版自己啟動時才有）；_boot_page＝現在顯示的是內建的啟動畫面
+        self._stack: LocalStack | None = None
+        self._boot_page = False
         # 伺服器上比較新的桌面版（背景檢查到才有值）
         self._update: dict | None = None
         # 這一頁的通行碼：伺服器的頁面載入完成時發給它；空的＝目前沒有任何頁面可以操控
@@ -311,6 +371,30 @@ class Api:
         self._connect_page = False
         self._window.load_url(target)
         return {"ok": True}
+
+    def boot_state(self) -> dict:
+        """啟動畫面用：這台電腦的服務開到哪了；介面連得上就直接切過去"""
+        if not self._on_boot_page():
+            return {"phase": "ready"}
+        state = self._stack.state()
+        if state["phase"] == "ready":
+            self._boot_page = False
+            self._window.load_url(self._server)
+        return state
+
+    def boot_retry(self) -> dict:
+        """啟動畫面用：啟動失敗後再試一次"""
+        if not self._on_boot_page():
+            return {"ok": False}
+        try:
+            self._stack.start()
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:200]}
+        return {"ok": True}
+
+    def _on_boot_page(self) -> bool:
+        """只有內建的啟動畫面可以問狀態、要求重試（任何網頁都不行）"""
+        return bool(self._stack) and self._boot_page and not origin(self._current_url())
 
     def _current_url(self) -> str:
         try:
@@ -403,16 +487,32 @@ def main() -> int:
 
     api = Api(server)
     online = reachable(server)
+    # 伺服器就是這台電腦、而且桌面程式放在完整安裝裡：服務沒開就自己帶起來（不用先按一鍵啟動）
+    # （用一鍵啟動開著開發模式時，上面那個位址連得上，照舊用它；不然改用後端直接提供的介面）
+    install = find_install_dir(Path(sys.executable if getattr(sys, "frozen", False) else __file__))
+    boot_html = None
+    if not online and not args.selftest and install and is_local_server(server):
+        server = api._server = LOCAL_UI_URL
+        online = serves_ui(server)
+        if not online:
+            api._stack = LocalStack(install, lambda: serves_ui(LOCAL_UI_URL))
+            try:
+                api._stack.start()
+                boot_html = BOOT_PAGE
+            except Exception as e:
+                logger.warning("自動啟動服務失敗：%s", e)
+                api._stack = None
     window = webview.create_window(
         APP_NAME,
         url=server if online else None,
-        html=None if online else CONNECT_PAGE.replace("__SERVER__", server),
+        html=None if online else (boot_html or CONNECT_PAGE.replace("__SERVER__", server)),
         js_api=api,
         width=WINDOW_SIZE[0], height=WINDOW_SIZE[1], min_size=WINDOW_MIN,
         text_select=True, background_color="#18181a",
     )
     api._window = window
-    api._connect_page = not online
+    api._boot_page = bool(boot_html)
+    api._connect_page = not online and not boot_html
     window.events.loaded += api._on_loaded
     webview.settings["ALLOW_DOWNLOADS"] = True  # 讓介面的「下載」可以存檔
 
@@ -427,6 +527,9 @@ def main() -> int:
         webview.start(run_selftest, (window, api, Path(args.selftest)), **start_args)
     else:
         webview.start(**start_args)
+    # 視窗關了：這次是桌面版自己啟動的服務就一起關掉（和一鍵關閉一樣；原本就開著的不動）
+    if api._stack:
+        api._stack.stop()
     return 0
 
 

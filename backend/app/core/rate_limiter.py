@@ -285,6 +285,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if path.startswith("/ws/"):
             return await call_next(request)
 
+        # 次數限制只管 API；介面的檔案（後端直接提供介面時，一頁就會抓幾十個）不算
+        if not path.startswith("/api/"):
+            return await call_next(request)
+
         client_ip = get_client_ip(request)
 
         # 動態取得限制規則
