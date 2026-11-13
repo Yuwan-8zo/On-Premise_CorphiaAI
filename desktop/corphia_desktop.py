@@ -53,7 +53,7 @@ import local_files
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.3.4"
+VERSION = "0.3.5"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 # 主機（--built）提供介面的埠；連線設定頁的範例、和只打 IP 時要補的埠都用它
@@ -673,6 +673,20 @@ def run_selftest(window, api: Api, out: Path) -> None:
     window.destroy()
 
 
+def close_splash() -> None:
+    """
+    收掉啟動畫面。打包成單一 exe 後，從點兩下到視窗出現要 3～5 秒（解壓縮＋視窗元件初始化），
+    這段時間由打包工具先顯示一張圖（build.bat 的 --splash），讓使用者知道有點到；視窗一出現就收掉。
+    直接用原始碼執行時沒有這張圖，什麼都不做。
+    """
+    try:
+        import pyi_splash  # 只有打包後才有這個模組
+
+        pyi_splash.close()
+    except Exception:
+        pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Corphia AI 桌面版")
     parser.add_argument("--server", help="伺服器位址（會記住）")
@@ -680,6 +694,7 @@ def main() -> int:
     parser.add_argument("--apply-update", metavar="原本的位置", help=argparse.SUPPRESS)  # 更新時由新版自己呼叫
     args = parser.parse_args()
     if args.apply_update:
+        close_splash()  # 換檔不開視窗
         return apply_update(Path(args.apply_update))
     if not args.selftest:
         cleanup_update()
@@ -733,6 +748,7 @@ def main() -> int:
     api._boot_page = bool(boot_html)
     api._connect_page = not online and not boot_html
     window.events.loaded += api._on_loaded
+    window.events.shown += close_splash  # 視窗出來了：收掉啟動畫面
     webview.settings["ALLOW_DOWNLOADS"] = True  # 讓介面的「下載」可以存檔
 
     if online and not args.selftest:
