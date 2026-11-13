@@ -73,7 +73,8 @@ class Settings(BaseSettings):
     # llama-server 執行檔（相對於專案根目錄）
     llm_engine_path: str = "engine/llama-vulkan/llama-server.exe"
     # llama-server 的上下文長度（token）；提示詞預算、回答長度上限都跟著它算
-    llm_engine_context: int = 8192
+    # 16384：模型評估（scripts/model_eval）全程用這個長度量的，20B 載入後最低還剩約 7～8 GB 記憶體
+    llm_engine_context: int = 16384
     # 放到顯示晶片的層數（99＝全部）
     llm_engine_gpu_layers: int = 99
     # 同時留在記憶體的模型數上限；超過就關掉最久沒用的（系統預設模型不關）
@@ -141,7 +142,10 @@ class Settings(BaseSettings):
     dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"
 
     # RAG 可調參數（Phase 3 預留）
-    chat_history_messages: int = 4  # 每次帶給模型的歷史訊息數（約兩輪問答）；越多越慢
+    # 帶給模型的對話歷史：總字數預算、單一則最多幾個字（services/history_window.py）。
+    # 以前只帶最後 4 則、每則 400 字（純 CPU 時代讀入很慢）；現在用顯示晶片讀入約 550 tok/s、相同的開頭還能重複利用
+    chat_history_chars: int = 6000
+    chat_history_message_chars: int = 2000
     rag_top_k: int = 2  # 純 CPU 筆電讀資料很慢：每多一段，7B 約多讀 20～30 秒；2 段已涵蓋展示問題的關鍵段落
     rag_similarity_threshold: float = 0.25
     rag_bm25_weight: float = 0.3

@@ -30,6 +30,7 @@ from app.models.user_memory import MemorySource
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 import app.services.browser_folder as browser_folder
+from app.services.history_window import select_history
 import app.services.web_search as web_search_svc
 import app.services.web_search_policy as web_search_policy
 from app.models.tenant import Tenant
@@ -74,10 +75,8 @@ def _deep_map(value, fn):
     return value
 
 
-def _clip_history(text: str, limit: int = 400) -> str:
-    text = text or ""
-    return text if len(text) <= limit else text[:limit] + "…"
-
+# 組提示詞時最多往回讀幾則訊息（實際帶多少由字數預算決定，見 services/history_window.py）
+HISTORY_FETCH_LIMIT = 200
 
 # 中途停止的回答最後加一行標記，之後看就知道這段沒寫完（斜體＝小字註記）
 STOPPED_NOTES = {
@@ -458,6 +457,23 @@ class ChatService:
         )
         return list(result.scalars().all())
 
+    async def _history_before_this_question(self, conversation_id: str) -> list[Message]:
+        """
+        這一題之前的對話（由舊到新），給模型當上下文用。
+        - 取「最新的」幾則：對話很長時也是接著最近的內容聊（不是停在最前面那幾則）
+        - 這一題本身在呼叫前已經存進資料庫了，這裡要拿掉——組提示詞時會另外放在最後，不然同一句會出現兩次
+        """
+        result = await self.db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.desc(), Message.id.desc())
+            .limit(HISTORY_FETCH_LIMIT)
+        )
+        messages = list(reversed(result.scalars().all()))
+        if messages and messages[-1].role == MessageRole.USER.value:
+            messages.pop()
+        return messages
+
     async def _prepare_prompt(
         self,
         conversation_id: str,
@@ -476,7 +492,7 @@ class ChatService:
         Returns:
             (prompt, context, sources, route)
         """
-        messages = await self.get_messages(conversation_id)
+        messages = await self._history_before_this_question(conversation_id)
 
         # 取得 tenant 和 folder
         result = await self.db.execute(
@@ -487,11 +503,8 @@ class ChatService:
         tenant_id = conversation.tenant_id if conversation else "default"
         owner_id = conversation.user_id if conversation else None
 
-        # 只帶最近幾則、每則截短：純 CPU 讀入提示詞很慢，整段歷史全帶會讓每問一題就更慢
-        chat_history = [
-            {"role": m.role, "content": _clip_history(m.content)}
-            for m in messages[-settings.chat_history_messages:]
-        ]
+        # 在字數預算內盡量把前面的對話都帶上；起點平常不動，推論引擎才能重複利用和上一題相同的開頭（見 history_window）
+        chat_history = select_history(messages, settings.chat_history_chars, settings.chat_history_message_chars)
 
         initial_state: AgentState = {
             "conversation_id": conversation_id,
