@@ -337,9 +337,16 @@ BOOT_STEPS = [
     ("backend", "後端 API 伺服器"),
 ]
 BOOT: dict = {}
+_BOOT_WRITE_LOCK = __import__("threading").Lock()
 
 
 def _boot_write() -> None:
+    # 對外搜尋在背景啟動時也會更新進度：兩邊同時寫同一個暫存檔會互相蓋掉，一次只讓一邊寫
+    with _BOOT_WRITE_LOCK:
+        _boot_write_locked()
+
+
+def _boot_write_locked() -> None:
     import json
 
     if not BOOT:
@@ -376,6 +383,8 @@ def boot_init() -> None:
         "steps": [
             {"key": k, "label": label, "state": "pending", "detail": "", "started_at": None, "finished_at": None}
             for k, label in BOOT_STEPS
+            # 資料庫直接裝在這台電腦時，系統本身用不到 Docker（只剩對外搜尋在背景用）：啟動畫面不列這一項
+            if not (k == "docker" and native_postgres_ready())
         ],
     })
     _boot_write()
@@ -562,12 +571,15 @@ def start_native_database() -> bool:
     info("[db] Starting native PostgreSQL (no Docker)...")
     boot("database", "running", "啟動原生 PostgreSQL（不靠 Docker）…", code="db_starting")
     log_path = NATIVE_PGDATA_DIR.parent / "postgres.log"
-    result = run([str(bin_dir / "pg_ctl.exe"), "-D", str(NATIVE_PGDATA_DIR), "-l", str(log_path), "-w", "start"],
-                 quiet=True, timeout=60)
-    if result.returncode != 0 and "already" not in (result.stdout + result.stderr).lower():
-        raise RuntimeError(f"Native PostgreSQL failed to start.\n{result.stdout}\n{result.stderr}")
+    # 不能接 pg_ctl 的輸出（capture_output）：Windows 上資料庫的背景程序會繼承那條管線，
+    # pg_ctl 自己結束後這裡仍然會一直等下去（和 scripts/setup_postgres.py 是同一個問題）。
+    # 成不成功看連接埠通不通就好：資料庫已經在執行時 pg_ctl 會回報失敗，但連接埠是通的。
+    subprocess.run(
+        [str(bin_dir / "pg_ctl.exe"), "-D", str(NATIVE_PGDATA_DIR), "-l", str(log_path), "-w", "start"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, timeout=120, check=False,
+    )
     if not wait_for_tcp("127.0.0.1", NATIVE_PG_PORT, timeout=60):
-        raise RuntimeError(f"Native PostgreSQL started, but localhost:{NATIVE_PG_PORT} did not become reachable.")
+        raise RuntimeError(f"Native PostgreSQL did not become reachable on localhost:{NATIVE_PG_PORT}. See {log_path}")
     ok(f"Native PostgreSQL is ready on localhost:{NATIVE_PG_PORT}")
     boot("database", "done", f"localhost:{NATIVE_PG_PORT}（原生，無 Docker）")
     return True
@@ -623,6 +635,15 @@ def start_searxng_if_enabled() -> None:
             ok("自架 SearXNG 已啟動")
             return
     warn("自架 SearXNG 啟動失敗，對外搜尋這一題會回報「服務目前無法使用」，其他功能不受影響")
+
+
+def start_searxng_in_background() -> None:
+    """背景啟動對外搜尋（見 main）：失敗只影響對外搜尋，不能讓整個啟動失敗"""
+    try:
+        start_searxng_if_enabled()
+    except Exception as exc:
+        warn(f"對外搜尋沒有啟動（Docker 沒有就緒）：{exc}")
+        boot("docker", "skipped", "Docker 沒有啟動，對外搜尋暫時不能用")
 
 
 def init_database(python_exe: Path) -> None:
@@ -1028,7 +1049,16 @@ def main() -> int:
             ok("Skipped frontend startup (use existing dev server or production build)")
 
         start_database()
-        start_searxng_if_enabled()
+        if native_postgres_ready() and web_search_enabled():
+            # 資料庫不靠 Docker 時，Docker 只剩對外搜尋在用：放到背景啟動，不讓整個系統等它
+            # （Docker Desktop 冷開機要一兩分鐘；它好之前只有對外搜尋那一題會回報暫時無法使用）
+            import threading
+            threading.Thread(target=start_searxng_in_background, daemon=True).start()
+        else:
+            start_searxng_if_enabled()
+        # 原生資料庫、又沒開對外搜尋：整個流程都沒用到 Docker，這一項標成「不需要」（不然啟動畫面會一直停在等待）
+        if any(s["key"] == "docker" and s["state"] == "pending" for s in BOOT.get("steps", [])):
+            boot("docker", "skipped", "不需要（資料庫直接裝在這台電腦）")
 
         boot("engine", "running", "檢查 llama-cpp-python…", code="engine_check")
         run_auto_engine(python_exe, force=args.force_engine)

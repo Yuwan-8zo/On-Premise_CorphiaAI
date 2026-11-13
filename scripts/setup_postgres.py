@@ -137,9 +137,11 @@ def run_initdb(bin_dir: Path) -> None:
     # 只聽本機、固定連接埠（跟 Docker 版本一樣是 5433），不對外開放
     conf = PGDATA_DIR / "postgresql.conf"
     text = conf.read_text(encoding="utf-8")
-    text += f"\nlisten_addresses = '127.0.0.1'\nport = {PG_PORT}\n"
+    # 時區固定 UTC（和 Docker 版一樣）：程式存的是「不帶時區」的時間，資料庫若跟著 Windows 用本地時區，
+    # SQL 的 now() 會比程式自己算的 UTC 時間多 8 小時，稽核紀錄的順序、時間比較都會錯
+    text += f"\nlisten_addresses = '127.0.0.1'\nport = {PG_PORT}\ntimezone = 'UTC'\n"
     conf.write_text(text, encoding="utf-8")
-    ok(f"已設定只聽 127.0.0.1:{PG_PORT}")
+    ok(f"已設定只聽 127.0.0.1:{PG_PORT}、時區 UTC")
 
 
 def start_and_wait(bin_dir: Path, timeout_sec: int = 60) -> bool:

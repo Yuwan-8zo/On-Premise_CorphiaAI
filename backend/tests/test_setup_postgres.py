@@ -93,7 +93,8 @@ class TestStartUsesNativeFirst:
     def test_start_database_skips_docker_when_native_ready(self, monkeypatch):
         monkeypatch.setattr(start, "native_postgres_ready", lambda: True)
         monkeypatch.setattr(start, "pg_bin_dir", lambda: Path("C:/fake/bin"))
-        monkeypatch.setattr(start, "run", lambda *a, **k: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})())
+        pg_ctl_calls = []
+        monkeypatch.setattr(start.subprocess, "run", lambda cmd, **k: pg_ctl_calls.append((cmd, k)))
         monkeypatch.setattr(start, "wait_for_tcp", lambda *a, **k: True)
 
         docker_called = []
@@ -101,6 +102,27 @@ class TestStartUsesNativeFirst:
 
         start.start_database()
         assert docker_called == [], "原生就緒時完全不該去碰 Docker Desktop"
+        # 回歸測試：接 pg_ctl 的輸出會讓啟動永遠卡住（資料庫的背景程序繼承管線），一定要丟掉不接
+        cmd, kwargs = pg_ctl_calls[0]
+        assert "pg_ctl.exe" in cmd[0] and "start" in cmd
+        assert kwargs.get("stdout") == start.subprocess.DEVNULL and kwargs.get("stderr") == start.subprocess.DEVNULL
+        assert not kwargs.get("capture_output")
+
+    def test_native_database_already_running_is_not_an_error(self, monkeypatch):
+        """資料庫已經開著時 pg_ctl 會回報失敗，但連接埠是通的：不能當成啟動失敗"""
+        monkeypatch.setattr(start, "native_postgres_ready", lambda: True)
+        monkeypatch.setattr(start, "pg_bin_dir", lambda: Path("C:/fake/bin"))
+        monkeypatch.setattr(start.subprocess, "run", lambda cmd, **k: type("R", (), {"returncode": 1})())
+        monkeypatch.setattr(start, "wait_for_tcp", lambda *a, **k: True)
+        assert start.start_native_database() is True
+
+    def test_native_database_unreachable_raises(self, monkeypatch):
+        monkeypatch.setattr(start, "native_postgres_ready", lambda: True)
+        monkeypatch.setattr(start, "pg_bin_dir", lambda: Path("C:/fake/bin"))
+        monkeypatch.setattr(start.subprocess, "run", lambda cmd, **k: type("R", (), {"returncode": 1})())
+        monkeypatch.setattr(start, "wait_for_tcp", lambda *a, **k: False)
+        with pytest.raises(RuntimeError):
+            start.start_native_database()
 
     def test_start_database_falls_back_to_docker_when_native_not_ready(self, monkeypatch):
         monkeypatch.setattr(start, "native_postgres_ready", lambda: False)
@@ -142,3 +164,16 @@ class TestStopUsesNativeFirst:
 
         stop.stop_native_database()
         assert calls == [], "沒裝原生時不該嘗試呼叫任何 pg_ctl"
+
+
+class TestSearchDoesNotBlockStartup:
+    def test_background_search_failure_never_raises(self, monkeypatch):
+        """Docker 起不來時只有對外搜尋受影響：背景那條不能把例外丟出去"""
+        def boom():
+            raise RuntimeError("Docker Desktop was not found")
+
+        monkeypatch.setattr(start, "start_searxng_if_enabled", boom)
+        marks = []
+        monkeypatch.setattr(start, "boot", lambda *a, **k: marks.append(a))
+        start.start_searxng_in_background()
+        assert marks and marks[0][0] == "docker" and marks[0][1] == "skipped"

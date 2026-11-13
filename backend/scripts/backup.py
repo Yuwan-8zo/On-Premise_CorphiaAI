@@ -23,7 +23,9 @@
   - restore 之前會先確認系統已經關閉，並把現在的資料庫另存一份「還原前」的備份，還原失敗可以再退回去
   - 資料庫密碼不會出現在指令列或畫面上（在資料庫容器裡面用本機連線，不需要密碼）
 
-目前只支援資料庫在 Docker 裡（容器名稱 corphia-postgres，可用環境變數 POSTGRES_CONTAINER 改）。
+資料庫在哪裡都可以：
+  - 直接裝在這台電腦（跑過 scripts/setup_postgres.py）：用它自己的工具（db/postgresql 裡的 pg_dump 等）
+  - 在 Docker 裡（容器名稱 corphia-postgres，可用環境變數 POSTGRES_CONTAINER 改）：在容器裡面執行
 """
 
 from __future__ import annotations
@@ -47,7 +49,10 @@ sys.path.insert(0, str(BACKEND))
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+sys.path.insert(0, str(ROOT / "scripts"))
+
 from app.core.config import settings  # noqa: E402
+from setup_postgres import native_postgres_ready, pg_bin_dir  # noqa: E402
 
 CONTAINER = os.environ.get("POSTGRES_CONTAINER", "corphia-postgres")
 BACKUP_ROOT = ROOT / "backups"
@@ -80,7 +85,21 @@ def data_dirs() -> dict[str, Path]:
 
 
 # ── 小工具 ────────────────────────────────────────────────────────────────
+def native_connection() -> tuple[str, str, str]:
+    """直接裝在這台電腦的資料庫怎麼連：（主機, 連接埠, 密碼）——從系統設定的連線字串取"""
+    parts = urlsplit(settings.database_url.replace("+asyncpg", ""))
+    return parts.hostname or "127.0.0.1", str(parts.port or 5433), parts.password or ""
+
+
 def docker(*args: str, stdin=None, stdout=subprocess.PIPE) -> subprocess.CompletedProcess:
+    """執行資料庫工具（psql、pg_dump、pg_restore、pg_isready）。名稱沿用舊的：資料庫直接裝在這台電腦時
+    用它自己的工具，不經過 Docker；密碼放在環境變數，不會出現在指令列"""
+    if native_postgres_ready():
+        host, port, password = native_connection()
+        tool, rest = args[0], args[1:]
+        return subprocess.run([str(pg_bin_dir() / f"{tool}.exe"), "-h", host, "-p", port, *rest],
+                              stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, creationflags=NO_WINDOW,
+                              env={**os.environ, "PGPASSWORD": password})
     try:
         return subprocess.run(["docker", "exec", *(["-i"] if stdin is not None else []), CONTAINER, *args],
                               stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, creationflags=NO_WINDOW)
@@ -99,7 +118,8 @@ def psql(database: str, sql: str) -> str:
 def ensure_database_up() -> None:
     r = docker("pg_isready", "-q")
     if r.returncode != 0:
-        raise BackupError(f"資料庫沒有在執行（容器 {CONTAINER}）。請先啟動資料庫再試一次")
+        where = "這台電腦上的資料庫" if native_postgres_ready() else f"容器 {CONTAINER}"
+        raise BackupError(f"資料庫沒有在執行（{where}）。請先啟動資料庫再試一次")
 
 
 def table_counts(database: str) -> dict[str, int]:
