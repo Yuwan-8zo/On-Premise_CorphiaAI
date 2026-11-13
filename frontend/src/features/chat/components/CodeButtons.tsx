@@ -9,13 +9,25 @@ import { copyText } from '@/lib/clipboard'
 import { useDesktop } from '@/lib/desktop'
 import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
 
-/** 小按鈕共用的樣式 */
+/** 程式碼區塊上的小按鈕（疊在深色程式碼上，刻意做小） */
 export const CODE_BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded transition-colors disabled:opacity-50'
+
+/** 面板標題列的按鈕：照《Liquid Glass 元件規範》的小型次要按鈕（膠囊、玻璃材質） */
+export const PANEL_BUTTON = 'btn btn-sm btn-secondary'
+
+interface ButtonLook {
+    /** 按鈕樣式；不給＝程式碼區塊上的小按鈕 */
+    className?: string
+    iconSize?: number
+}
+/** 小按鈕的圖示大小；規範按鈕用大一級 */
+const ICON_SM = 14
+export const PANEL_ICON = 16
 
 /** 複製後「已複製」顯示多久（毫秒） */
 const COPIED_MS = 2000
 
-export const CopyButton = ({ code }: { code: string }) => {
+export const CopyButton = ({ code, className = CODE_BUTTON, iconSize = ICON_SM }: { code: string } & ButtonLook) => {
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
 
@@ -27,20 +39,20 @@ export const CopyButton = ({ code }: { code: string }) => {
     }
 
     return (
-        <button type="button" onClick={handleCopy} className={CODE_BUTTON}>
-            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={14} aria-hidden />
+        <button type="button" onClick={handleCopy} className={className}>
+            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={iconSize} aria-hidden />
             {copied ? t('ui.message.copied') : t('ui.message.copy')}
         </button>
     )
 }
 
 /** 存成檔案：桌面版跳出另存新檔、寫到這台電腦；瀏覽器是一般下載 */
-export const SaveButton = ({ code, language }: { code: string; language: string }) => {
+export const SaveButton = ({ code, language, className = CODE_BUTTON, iconSize = ICON_SM }: { code: string; language: string } & ButtonLook) => {
     const { t } = useTranslation()
     const isDesktop = useDesktop()
     return (
-        <button type="button" onClick={() => void saveTextFile(suggestFilename(language), code, isDesktop)} className={CODE_BUTTON}>
-            <MaterialIcon name="download" size={14} aria-hidden />
+        <button type="button" onClick={() => void saveTextFile(suggestFilename(language), code, isDesktop)} className={className}>
+            <MaterialIcon name="download" size={iconSize} aria-hidden />
             {t(isDesktop ? 'ui.chat.codeFile.save' : 'ui.chat.codeFile.download')}
         </button>
     )

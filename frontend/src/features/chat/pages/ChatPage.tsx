@@ -20,9 +20,8 @@ export default function Chat() {
     // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
-    // 旁邊的顯示面板開著時聊天欄變窄：訊息左右要留邊，不然會貼到面板
+    // 旁邊的顯示面板開著時聊天欄變窄：整欄（訊息、輸入框）左右留邊，不然會貼到側欄和面板
     const panelOpen = useSidePanelStore((s) => s.open)
-    const colPad = panelOpen ? 'px-4' : 'px-4 md:px-0'
 
     // 第一次進入 chat 觸發引導；旗標寫在 localStorage，已看過就不再顯示
     // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
@@ -70,7 +69,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10">
+            <main className={`flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10 ${panelOpen ? 'md:px-[var(--sp-16)]' : ''}`}>
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -209,12 +208,12 @@ export default function Chat() {
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px -mb-px opacity-0" />
                         {mainProps.isLoadingMore && (
-                            <SkelMessages count={2} className={`w-full max-w-3xl mx-auto ${colPad} py-2`} />
+                            <SkelMessages count={2} className="w-full max-w-3xl mx-auto px-4 md:px-0 py-2" />
                         )}
                         {mainProps.messages.length === 0 ? (
                             // 空狀態：改為置頂與上方留白，讓內容可以自然向上滾動，不要用 flex-center 死鎖
                             // 上下留白是「可縮」的：螢幕夠高＝原本的 8vh／10vh；螢幕矮（橫拿的折疊手機）時先縮留白，卡片不被輸入框蓋住
-                            <div className={`w-full h-full max-w-3xl mx-auto ${colPad} flex flex-col`}>
+                            <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                                 <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                                 {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
                                     避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
@@ -270,7 +269,7 @@ export default function Chat() {
                             </div>
                         ) : (
                             // 聊天紀錄
-                            <div className={`msg-col max-w-3xl mx-auto space-y-6 w-full ${colPad}`}>
+                            <div className="msg-col max-w-3xl mx-auto space-y-6 w-full px-4 md:px-0">
                                 {mainProps.messages.map((message, index) => {
                                     const isLastAssistant =
                                         message.role === 'assistant' &&

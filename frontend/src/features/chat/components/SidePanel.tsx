@@ -16,7 +16,7 @@ import { useDebounced } from '@/lib/useDebounced'
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 import { orderedItems, useSidePanelStore } from '@/store/sidePanelStore'
 import { useUIStore } from '@/store/uiStore'
-import { CODE_BUTTON, CopyButton, SaveButton } from './CodeButtons'
+import { CopyButton, PANEL_BUTTON, PANEL_ICON, SaveButton } from './CodeButtons'
 import RunResultView from './RunResultView'
 import VersionSwitcher from './VersionSwitcher'
 
@@ -85,15 +85,15 @@ export default function SidePanel() {
                 {isPage && (
                     // 手機放不下一排：這組按鈕自己換到第二排，關閉鈕留在右上角
                     <div className="order-last flex basis-full flex-wrap items-center gap-2 md:order-none md:basis-auto">
-                        <button type="button" aria-pressed={showCode} onClick={() => setShowCode((v) => !v)} className={CODE_BUTTON}>
-                            <MaterialIcon name={showCode ? 'visibility' : 'code'} size={14} aria-hidden />
+                        <button type="button" aria-pressed={showCode} onClick={() => setShowCode((v) => !v)} className={PANEL_BUTTON}>
+                            <MaterialIcon name={showCode ? 'visibility' : 'code'} size={PANEL_ICON} aria-hidden />
                             {t(showCode ? 'ui.chat.codeFile.preview' : 'ui.chat.codeFile.showCode')}
                         </button>
-                        <SaveButton code={current.code} language={current.language} />
-                        <CopyButton code={current.code} />
+                        <SaveButton code={current.code} language={current.language} className={PANEL_BUTTON} iconSize={PANEL_ICON} />
+                        <CopyButton code={current.code} className={PANEL_BUTTON} iconSize={PANEL_ICON} />
                     </div>
                 )}
-                <button ref={closeButton} type="button" onClick={close} aria-label={t('ui.chat.sidePanel.close')} className="btn-icon btn-icon-plain !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
+                <button ref={closeButton} type="button" onClick={close} aria-label={t('ui.chat.sidePanel.close')} className="btn-icon">
                     <X />
                 </button>
             </header>
