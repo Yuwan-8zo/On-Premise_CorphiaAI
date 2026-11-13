@@ -313,6 +313,10 @@ export default {
         guide: '使用說明',
         memory: {
             title: '記憶與風格',
+            instructionsHeader: '指示',
+            instructionsPlaceholder: '例如：回答一律用台灣繁體中文、條列式重點、不要加客套話……',
+            instructionsHint: '{{n}} / {{max}} 字。套用在所有對話，跟下面的回答風格、記憶一起生效。',
+            instructionsSaved: '已儲存指示',
             enable: '使用記憶',
             enableHint: '開啟後，AI 回答前會先參考你請它記住的事。記憶只有你自己看得到，內容不會離開公司的伺服器。',
             styleHeader: '回答風格',
@@ -856,6 +860,8 @@ export default {
             disable: '停用',
             enable: '啟用',
             edit: '編輯',
+            webSearchAuto: '對外搜尋自動進行',
+            webSearchAutoHint: '關閉（預設）時，這個租戶的使用者每次要連網搜尋都要先確認關鍵字；開啟後不用確認',
         },
         lan: {
             enabled: '已開啟',

@@ -29,10 +29,14 @@ export default function MemorySection() {
     const [enabled, setEnabled] = useState(true)
     const [style, setStyle] = useState<ReplyStyle>('default')
     const [items, setItems] = useState<MemoryItem[]>([])
-    const [limits, setLimits] = useState({ items: 50, chars: 300 })
+    const [limits, setLimits] = useState({ items: 50, chars: 300, instructionsChars: 3000 })
     const [draft, setDraft] = useState('')
     const [busy, setBusy] = useState(false)
     const [editing, setEditing] = useState<{ id: string; text: string } | null>(null)
+    // 個人化指示（照 Claude.ai：一整段貼上去的說明，套用在所有對話）；savedInstructions 是後端目前存的那份，
+    // 用來判斷草稿有沒有改過（沒改過「儲存」鈕就不給按）
+    const [instructionsDraft, setInstructionsDraft] = useState('')
+    const [savedInstructions, setSavedInstructions] = useState('')
 
     const load = useCallback(async () => {
         try {
@@ -40,7 +44,9 @@ export default function MemorySection() {
             setEnabled(data.enabled)
             setStyle(data.style)
             setItems(data.items)
-            setLimits({ items: data.max_items, chars: data.max_chars })
+            setLimits({ items: data.max_items, chars: data.max_chars, instructionsChars: data.max_instructions_chars })
+            setInstructionsDraft(data.instructions)
+            setSavedInstructions(data.instructions)
         } catch (err) {
             toast(getErrorMessage(err), 'error')
         } finally {
@@ -87,11 +93,44 @@ export default function MemorySection() {
         setStyle(next) // 勾選先動，失敗再由 load 還原
         void run(() => memoriesApi.setStyle(next))
     }
+    const instructionsChanged = instructionsDraft !== savedInstructions
+    const saveInstructions = async () => {
+        const text = instructionsDraft.trim()
+        if (await run(() => memoriesApi.setInstructions(text), t('settings.memory.instructionsSaved'))) {
+            setInstructionsDraft(text)
+            setSavedInstructions(text)
+        }
+    }
     const full = items.length >= limits.items
 
     return (
         <>
             <h2 className="set-title">{t('settings.memory.title')}</h2>
+
+            {/* 個人化指示（照 Claude.ai「指示」）：使用者整段貼上去的說明，套用在所有對話。
+                跟下面「記住……」的短記憶不同——這裡放最上面，因為是「這個助理整體該怎麼表現」的設定 */}
+            <section className="set-section">
+                <div className="set-header">{t('settings.memory.instructionsHeader')}</div>
+                <div className="set-group">
+                    <div className="set-row items-start !py-[var(--sp-12)]">
+                        <textarea
+                            value={instructionsDraft}
+                            maxLength={limits.instructionsChars}
+                            onChange={(e) => setInstructionsDraft(e.target.value)}
+                            placeholder={t('settings.memory.instructionsPlaceholder')}
+                            rows={4}
+                            aria-label={t('settings.memory.instructionsHeader')}
+                            className="w-full min-w-0 resize-y bg-transparent outline-none text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary placeholder:text-text-muted"
+                        />
+                    </div>
+                </div>
+                <div className="set-footer flex items-center justify-between gap-[var(--sp-12)]">
+                    <span>{t('settings.memory.instructionsHint', { n: instructionsDraft.length, max: limits.instructionsChars })}</span>
+                    <button type="button" onClick={saveInstructions} disabled={busy || !instructionsChanged} className="btn btn-sm btn-primary flex-shrink-0">
+                        {t('common.save')}
+                    </button>
+                </div>
+            </section>
 
             {/* 回答風格放最上面、用分段切換器（一列四格）：記憶清單會越來越長（最多 50 筆），放在它下面會被擠到很後面；
                 做成四列清單又會把記憶整個擠出第一個畫面。目前選的那一種在下面用一行字說明 */}
@@ -143,7 +182,7 @@ export default function MemorySection() {
                 <div className="set-header">
                     {loaded ? t('settings.memory.listHeader', { n: items.length, max: limits.items }) : <SkelText>{t('settings.memory.listHeader', { n: 0, max: limits.items })}</SkelText>}
                 </div>
-                <div className="set-group">
+                <div className="set-group mem-list">
                     {!loaded ? (
                         <div className="set-row" aria-hidden><span className="set-label"><SkelText>000000000000000000</SkelText></span></div>
                     ) : items.length === 0 ? (

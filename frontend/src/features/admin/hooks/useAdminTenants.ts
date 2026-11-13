@@ -13,9 +13,11 @@ export interface TenantForm {
     slug: string
     description: string
     is_active: boolean
+    /** 對外搜尋每次先問使用者才搜（false，預設）還是自動搜尋不用確認（true） */
+    web_search_auto: boolean
 }
 
-const EMPTY_FORM: TenantForm = { name: '', slug: '', description: '', is_active: true }
+const EMPTY_FORM: TenantForm = { name: '', slug: '', description: '', is_active: true, web_search_auto: false }
 
 export function useAdminTenants() {
     const toast = useToastStore()
@@ -50,7 +52,10 @@ export function useAdminTenants() {
 
     const openEdit = (item: Tenant) => {
         setEditing(item)
-        setForm({ name: item.name, slug: item.slug, description: item.description || '', is_active: item.is_active })
+        setForm({
+            name: item.name, slug: item.slug, description: item.description || '', is_active: item.is_active,
+            web_search_auto: Boolean(item.settings?.web_search_auto),
+        })
         setIsModalOpen(true)
     }
 
@@ -58,8 +63,12 @@ export function useAdminTenants() {
         event.preventDefault()
         setIsSubmitting(true)
         try {
-            if (editing) await tenantsApi.updateTenant(editing.id, form)
-            else await tenantsApi.createTenant(form)
+            // settings 整個欄位是後端一次性覆蓋（不是合併），所以要帶著原本的 settings 一起送，
+            // 只改 web_search_auto 這一項，不會把這個租戶之後加的其他設定洗掉
+            const { web_search_auto, ...rest } = form
+            const payload = { ...rest, settings: { ...(editing?.settings || {}), web_search_auto } }
+            if (editing) await tenantsApi.updateTenant(editing.id, payload)
+            else await tenantsApi.createTenant(payload)
             setIsModalOpen(false)
             loadTenants()
         } catch (err) {

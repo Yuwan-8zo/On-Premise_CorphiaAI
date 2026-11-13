@@ -304,6 +304,8 @@ export function useChatLogic() {
         }
 
         const useWebSearch = webSearchOn && searchPolicy.enabled
+        // 開關只管「這一則」：不管有沒有送出，問完就關掉，下一則不會又跳出確認（跟附加資料夾同一個邏輯）
+        setWebSearchOn(false)
         // 預設「每次先問」：不是管理者設成自動搜尋，就先讓使用者確認一次要送出的關鍵字
         if (useWebSearch && !searchPolicy.auto) {
             showConfirm(t('chat.webSearch.confirm', { query: text }), () => doSend(true))

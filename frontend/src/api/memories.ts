@@ -19,9 +19,12 @@ export type ReplyStyle = (typeof REPLY_STYLES)[number]
 export interface MemoryList {
     enabled: boolean
     style: ReplyStyle
+    /** 使用者貼的一整段個人化指示，套用在所有對話（照 Claude.ai 的「指示」） */
+    instructions: string
     items: MemoryItem[]
     max_items: number
     max_chars: number
+    max_instructions_chars: number
 }
 
 export const memoriesApi = {
@@ -32,4 +35,6 @@ export const memoriesApi = {
     clear: async (): Promise<void> => { await apiClient.delete('/memories') },
     setEnabled: async (enabled: boolean): Promise<void> => { await apiClient.put('/memories/settings', { enabled }) },
     setStyle: async (style: ReplyStyle): Promise<void> => { await apiClient.put('/memories/settings', { style }) },
+    setInstructions: async (instructions: string): Promise<{ instructions: string }> =>
+        (await apiClient.put('/memories/settings', { instructions })).data,
 }

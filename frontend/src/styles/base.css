@@ -18,6 +18,11 @@ html {
   overflow: hidden;
   background-attachment: fixed;
 
+  /* 鎖住手機用手指縮放：index.html 的 viewport meta（user-scalable=no）在新版 iOS Safari
+     不會真的擋住雙指縮放手勢（Apple 的無障礙考量，meta 設定會被忽略），要靠 touch-action 才擋得住。
+     manipulation＝只保留點擊和單指滑動，縮放／雙擊放大的手勢都不觸發。 */
+  touch-action: manipulation;
+
   /* Premium feel: smooth scrolling baseline; reduced-motion query below
      short-circuits this for accessibility */
   scroll-behavior: smooth;

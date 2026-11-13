@@ -313,6 +313,10 @@ export default {
         guide: 'Guide',
         memory: {
             title: 'Memory & style',
+            instructionsHeader: 'Instructions',
+            instructionsPlaceholder: 'e.g. Always reply in Traditional Chinese, use bullet points, skip the pleasantries…',
+            instructionsHint: '{{n}} / {{max}} characters. Applies to every conversation, alongside the reply style and memories below.',
+            instructionsSaved: 'Instructions saved',
             enable: 'Use memory',
             enableHint: 'When on, the AI checks what you asked it to remember before answering. Only you can see your memories, and they never leave the company server.',
             styleHeader: 'Reply style',
@@ -856,6 +860,8 @@ export default {
             disable: 'Disable',
             enable: 'Enable',
             edit: 'Edit',
+            webSearchAuto: 'Auto web search',
+            webSearchAutoHint: "Off (default): this tenant's users must confirm the search keyword every time. On: no confirmation needed.",
         },
         lan: {
             enabled: 'On',

@@ -76,6 +76,13 @@ export function TenantFormModal({ tenants }: { tenants: ReturnType<typeof useAdm
                 <Field label={t('admin.tenants.modal.description')}><textarea className={inputClass} rows={3} value={form.description} onChange={(e) => set({ description: e.target.value })} /></Field>
                 {/* 停用／啟用租戶只有 engineer 能改 */}
                 {isEngineer && <ActiveToggle checked={form.is_active} onChange={(v) => set({ is_active: v })} />}
+                <label className="flex items-center justify-between rounded-[var(--r-16)] snow-field px-4 py-3 text-sm text-text-primary">
+                    <span>
+                        {t('admin.tenants.webSearchAuto')}
+                        <span className="block text-xs text-text-secondary mt-0.5">{t('admin.tenants.webSearchAutoHint')}</span>
+                    </span>
+                    <input type="checkbox" checked={form.web_search_auto} onChange={(e) => set({ web_search_auto: e.target.checked })} />
+                </label>
                 <div className="flex gap-3 pt-4">
                     <ActionButton variant="secondary" onClick={close}>{t('admin.tenants.modal.cancel')}</ActionButton>
                     <ActionButton disabled={isSubmitting}>{isSubmitting ? t('common.loading') : t('admin.tenants.modal.submit')}</ActionButton>

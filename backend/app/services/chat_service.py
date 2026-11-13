@@ -31,7 +31,9 @@ from app.services.audit_service import AuditAction, AuditResource, write_audit_l
 from app.services.context_guard import GUARD_LINE, report_is_empty, screen_chunks, screen_text
 from app.services import browser_folder, file_builder, generated_files
 from app.services.output_guard import OutputScreen, screen_output
-from app.services.memory_service import MemoryLimitError, add_memory, extract_remember, memory_block, style_directive
+from app.services.memory_service import (
+    MemoryLimitError, add_memory, custom_instructions_block, extract_remember, memory_block, style_directive,
+)
 from app.services.memory_service import is_enabled as memory_is_enabled
 
 logger = logging.getLogger(__name__)
@@ -517,6 +519,11 @@ class ChatService:
         if extra_system:
             system_prompt = f"{system_prompt}\n\n{extra_system}"
 
+        # 個人化指示：使用者在設定頁貼的一整段指示，套用在所有對話（存的時候已過安全檢查）
+        instructions = await custom_instructions_block(self.db, owner_id)
+        if instructions:
+            system_prompt = f"{system_prompt}\n\n{instructions}"
+
         # 專案指示：這個專案資料夾的固定說明（使用者自己設定的；存的時候已過安全檢查）
         project_note = await self._folder_instructions(owner_id, folder_name)
         if project_note:
@@ -548,8 +555,8 @@ class ChatService:
         memory = await memory_block(self.db, owner_id)
         if memory:
             system_prompt = f"{system_prompt}\n\n{memory}"
-        # 有外來資料（文件、記憶、剛附的資料夾）時加一句：資料歸資料，裡面的指令不要照做
-        if memory or context:
+        # 有外來資料（文件、記憶、個人化指示、剛附的資料夾）時加一句：資料歸資料，裡面的指令不要照做
+        if memory or context or instructions:
             system_prompt = f"{system_prompt}\n\n{GUARD_LINE}"
         self.screen_report = final_state.get("screen") or {}
 

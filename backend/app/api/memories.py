@@ -29,6 +29,7 @@ class MemorySettingsBody(BaseModel):
     """個人化設定：只改有給的那幾項"""
     enabled: Optional[bool] = None
     style: Optional[Literal["default", "concise", "detailed", "formal"]] = None
+    instructions: Optional[str] = Field(None, max_length=ms.MAX_INSTRUCTIONS_CHARS)
 
 
 class MemoryItem(BaseModel):
@@ -44,9 +45,11 @@ class MemoryList(BaseModel):
     enabled: bool
     # 回答風格：default／concise／detailed／formal
     style: str
+    instructions: str
     items: list[MemoryItem]
     max_items: int
     max_chars: int
+    max_instructions_chars: int
 
 
 def _screen(content: str) -> str:
@@ -71,9 +74,11 @@ async def list_memories(current_user: CurrentUser, db: DbSession):
     return MemoryList(
         enabled=await ms.is_enabled(db, current_user.id),
         style=await ms.get_style(db, current_user.id),
+        instructions=await ms.get_custom_instructions(db, current_user.id),
         items=await ms.list_memories(db, current_user.id),
         max_items=ms.MAX_ITEMS,
         max_chars=ms.MAX_CHARS,
+        max_instructions_chars=ms.MAX_INSTRUCTIONS_CHARS,
     )
 
 
@@ -98,7 +103,16 @@ async def update_settings(body: MemorySettingsBody, current_user: CurrentUser, d
     if body.style is not None:
         await ms.set_style(db, current_user.id, body.style)
         await _audit(db, current_user, request, AuditAction.MEMORY_UPDATE, f"變更回答風格：{body.style}", details={"style": body.style})
-    return {"enabled": await ms.is_enabled(db, current_user.id), "style": await ms.get_style(db, current_user.id)}
+    if body.instructions is not None:
+        text = body.instructions.strip()
+        clean = _screen(text) if text else ""
+        await ms.set_custom_instructions(db, current_user.id, clean)
+        await _audit(db, current_user, request, AuditAction.MEMORY_UPDATE, "變更個人化指示", details={"length": len(clean)})
+    return {
+        "enabled": await ms.is_enabled(db, current_user.id),
+        "style": await ms.get_style(db, current_user.id),
+        "instructions": await ms.get_custom_instructions(db, current_user.id),
+    }
 
 
 @router.put("/{memory_id}", response_model=MemoryItem)

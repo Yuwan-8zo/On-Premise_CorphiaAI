@@ -92,7 +92,11 @@ html.dark {
 }
 
 html.dark body {
-  background-color: transparent;
+  /* iOS 26 的 Safari 改成直接讀 html／body 的 background-color 來決定網址列底色（不再認
+     theme-color meta）；這裡原本寫 transparent，Safari 讀到「沒有顏色」就套用它自己的預設色，
+     跟畫面實際的深色背景對不起來，看起來像「網址列那一條沒填滿」。改成跟 html 同一個顏色，
+     視覺上完全不變（html 本來就在 body 後面），但 Safari 讀得到正確的底色。 */
+  background-color: rgb(var(--bg-canvas));
   color: #FFFFFF;
 }
 

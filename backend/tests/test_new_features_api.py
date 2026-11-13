@@ -81,14 +81,35 @@ class TestMemories:
 
     async def test_settings_change_only_what_is_given(self, async_client: AsyncClient, user_auth_headers: dict):
         r = await async_client.put(f"{API}/memories/settings", json={"style": "concise"}, headers=user_auth_headers)
-        assert r.status_code == 200 and r.json() == {"enabled": True, "style": "concise"}
+        assert r.status_code == 200 and r.json() == {"enabled": True, "style": "concise", "instructions": ""}
         r = await async_client.put(f"{API}/memories/settings", json={"enabled": False}, headers=user_auth_headers)
-        assert r.json() == {"enabled": False, "style": "concise"}  # 只關記憶，風格不變
+        assert r.json() == {"enabled": False, "style": "concise", "instructions": ""}  # 只關記憶，風格不變
         body = (await async_client.get(f"{API}/memories", headers=user_auth_headers)).json()
         assert (body["enabled"], body["style"]) == (False, "concise")
 
     async def test_unknown_style_is_rejected(self, async_client: AsyncClient, user_auth_headers: dict):
         assert (await async_client.put(f"{API}/memories/settings", json={"style": "pirate"}, headers=user_auth_headers)).status_code == 422
+
+    async def test_instructions_save_and_read_back(self, async_client: AsyncClient, user_auth_headers: dict):
+        r = await async_client.put(f"{API}/memories/settings", json={"instructions": "請一律用台灣繁體中文回答。"}, headers=user_auth_headers)
+        assert r.status_code == 200
+        assert r.json()["instructions"] == "請一律用台灣繁體中文回答。"
+        body = (await async_client.get(f"{API}/memories", headers=user_auth_headers)).json()
+        assert body["instructions"] == "請一律用台灣繁體中文回答。"
+        assert body["max_instructions_chars"] > 0
+
+    async def test_instructions_too_long_is_rejected(self, async_client: AsyncClient, user_auth_headers: dict):
+        r = await async_client.put(f"{API}/memories/settings", json={"instructions": "x" * 3001}, headers=user_auth_headers)
+        assert r.status_code == 422
+
+    async def test_instructions_with_dlp_term_is_rejected(self, async_client: AsyncClient, user_auth_headers: dict):
+        r = await async_client.put(f"{API}/memories/settings", json={"instructions": "請記得我們的最高機密專案代號"}, headers=user_auth_headers)
+        assert r.status_code == 400
+
+    async def test_instructions_can_be_cleared(self, async_client: AsyncClient, user_auth_headers: dict):
+        await async_client.put(f"{API}/memories/settings", json={"instructions": "先有內容"}, headers=user_auth_headers)
+        r = await async_client.put(f"{API}/memories/settings", json={"instructions": ""}, headers=user_auth_headers)
+        assert r.status_code == 200 and r.json()["instructions"] == ""
 
 
 # ═════════════════════════════════════════════════════════════════════════

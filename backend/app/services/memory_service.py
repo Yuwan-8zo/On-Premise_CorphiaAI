@@ -13,6 +13,10 @@
 
 同一頁的「回答風格」也在這裡（個人化設定都放一起）：每個人選一種，回答前加一句風格說明到系統提示。
 存在 user_settings.preferences["reply_style"]；沒選＝預設（不加任何說明）。
+
+「指示」（照 Claude.ai 的個人化設定）：使用者貼一整段固定的指示（語氣、回答規則……），套用到所有對話。
+跟上面的「記住……」短記憶不同——這是使用者自己寫好、整段貼上的，不是從對話裡自動擷取的。
+存在 user_settings.preferences["custom_instructions"]，同樣先過安全檢查才存（api/memories.py 做）。
 """
 
 from __future__ import annotations
@@ -32,6 +36,8 @@ PROMPT_CHARS = 800
 PREF_KEY = "memory_enabled"
 STYLE_KEY = "reply_style"
 STYLE_DEFAULT = "default"
+INSTRUCTIONS_KEY = "custom_instructions"
+MAX_INSTRUCTIONS_CHARS = 3000
 # 風格 → 加在系統提示後面的說明（預設不加）
 STYLE_DIRECTIVES: dict[str, str] = {
     "concise": "回答風格：精簡。先講結論，能用三句話說完就不要多寫，不要客套話和重複使用者的問題。",
@@ -107,6 +113,29 @@ async def set_style(db: AsyncSession, user_id: str, style: str) -> None:
 async def style_directive(db: AsyncSession, user_id: Optional[str]) -> str:
     """加在系統提示後面的風格說明；預設風格回空字串"""
     return STYLE_DIRECTIVES.get(await get_style(db, user_id), "")
+
+
+async def get_custom_instructions(db: AsyncSession, user_id: Optional[str]) -> str:
+    text = (await _prefs(db, user_id)).get(INSTRUCTIONS_KEY)
+    return text if isinstance(text, str) else ""
+
+
+async def set_custom_instructions(db: AsyncSession, user_id: str, text: str) -> None:
+    """呼叫前要先過安全檢查、裁到 MAX_INSTRUCTIONS_CHARS（api/memories.py 做）"""
+    await _set_pref(db, user_id, INSTRUCTIONS_KEY, text)
+
+
+async def custom_instructions_block(db: AsyncSession, user_id: Optional[str]) -> str:
+    """加在系統提示的那一段；沒設定就回空字串。放在最前面，比風格、記憶都優先（跟 Claude.ai 一樣，
+    指示是使用者對「這個助理整體該怎麼表現」的設定，不是單一事實）"""
+    if not user_id:
+        return ""
+    text = await get_custom_instructions(db, user_id)
+    if not text:
+        return ""
+    from app.services.llm_service import _sanitize_chatml_content
+
+    return "### 使用者的個人化指示（套用在所有對話）\n" + _sanitize_chatml_content(text)
 
 
 async def list_memories(db: AsyncSession, user_id: str) -> list[UserMemory]:

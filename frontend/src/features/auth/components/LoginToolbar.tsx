@@ -1,5 +1,6 @@
 /**
- * 登入頁右上角：主題切換、語言選單（兩顆玻璃圓鈕，大小同後台「回上一頁」36）
+ * 登入頁右上角：主題切換、語言選單（兩顆玻璃圓鈕，大小跟聊天頁右上角的選單鈕一樣：
+ * 讀同一個 --dock-btn token，兩邊改一次就同步，不會又兜不起來）
  */
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -45,7 +46,7 @@ export default function LoginToolbar() {
     return (
         <div className="flex items-center gap-2 ml-auto">
             {/* 深色時顯示太陽（點一下切到淺色），淺色時顯示月亮 */}
-            <button onClick={toggleTheme} className="btn-icon !w-9 !h-9 text-text-secondary" aria-label={t('settings.theme')}>
+            <button onClick={toggleTheme} className="btn-icon !w-[var(--dock-btn)] !h-[var(--dock-btn)] text-text-secondary" aria-label={t('settings.theme')}>
                 <ThemeGlyph show={theme === 'dark'} rotate={-90}><Sun className="w-5 h-5" /></ThemeGlyph>
                 <ThemeGlyph show={theme === 'light'} rotate={90}><Moon className="w-5 h-5" /></ThemeGlyph>
             </button>
@@ -56,7 +57,7 @@ export default function LoginToolbar() {
                     aria-label={t('settings.language')}
                     aria-haspopup="menu"
                     aria-expanded={isLangMenuOpen}
-                    className={`${langTrigger.className} btn-icon !w-9 !h-9 ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
+                    className={`${langTrigger.className} btn-icon !w-[var(--dock-btn)] !h-[var(--dock-btn)] ${isLangMenuOpen ? 'is-current' : 'text-text-secondary'}`}
                 >
                     <Globe className="w-5 h-5" />
                 </button>

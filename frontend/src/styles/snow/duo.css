@@ -62,6 +62,10 @@
   .fold-wide .chat-shell .chat-head {
     padding-right: calc(var(--duo-status) + var(--gutter));
   }
+  /* 登入頁右上角（主題／語言切換）：同一顆狀態列會蓋住這一排，一樣往左讓出狀態列寬度 */
+  .fold-wide .login-head {
+    padding-right: calc(var(--duo-status) + var(--gutter));
+  }
   /* 後台：狀態列只蓋住最上面一段（標題列和總覽第一排），只讓這些往左讓出狀態列寬度；
      下面的卡片照常延伸到右邊外圈間距。外層本來就有一圈間距，所以只補狀態列寬度 */
   /* 整頁有等比例縮放（--fit），讓開的寬度要除回比例，才是狀態列的實際寬度 */

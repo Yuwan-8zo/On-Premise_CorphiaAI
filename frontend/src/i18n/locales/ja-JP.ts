@@ -313,6 +313,10 @@ export default {
         guide: '使い方',
         memory: {
             title: 'メモリとスタイル',
+            instructionsHeader: '指示',
+            instructionsPlaceholder: '例：常に繁体字中国語で回答し、箇条書きにし、前置きは省く…',
+            instructionsHint: '{{n}} / {{max}} 文字。すべての会話に適用され、下の返答スタイルやメモリと一緒に働きます。',
+            instructionsSaved: '指示を保存しました',
             enable: 'メモリを使う',
             enableHint: 'オンにすると、AI は回答の前に、覚えるよう頼まれたことを参照します。メモリは自分だけが見られ、社内サーバーの外には出ません。',
             styleHeader: '回答スタイル',
@@ -856,6 +860,8 @@ export default {
             disable: '無効化',
             enable: '有効化',
             edit: '編集',
+            webSearchAuto: 'Web検索を自動実行',
+            webSearchAutoHint: 'オフ（既定）：このテナントのユーザーは検索のたびにキーワードを確認する必要があります。オン：確認不要。',
         },
         lan: {
             enabled: 'オン',
