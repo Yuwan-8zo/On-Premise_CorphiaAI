@@ -4,6 +4,7 @@
 
 from fastapi import APIRouter
 
+from app.core.version import APP_VERSION
 from app.schemas.common import HealthResponse
 from app.services.boot_service import build_health_payload
 
@@ -26,6 +27,6 @@ async def root():
     """API 根路徑"""
     return {
         "name": "Corphia AI",
-        "version": "2.3.0",
+        "version": APP_VERSION,
         "status": "running",
     }

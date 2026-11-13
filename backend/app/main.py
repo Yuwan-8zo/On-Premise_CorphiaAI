@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from app.core import win_accept_fix
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.version import APP_VERSION
 from app.api import (
     auth_router,
     conversations_router,
@@ -149,7 +150,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description="企業級私有部署 AI 問答系統",
-    version="2.3.0",
+    version=APP_VERSION,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan,
@@ -291,7 +292,7 @@ async def root():
     """API 根路徑"""
     return {
         "name": settings.app_name,
-        "version": "2.3.0",
+        "version": APP_VERSION,
         "docs": "/docs" if settings.debug else None,
         "status": "running"
     }

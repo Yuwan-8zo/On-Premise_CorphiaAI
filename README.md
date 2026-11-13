@@ -47,6 +47,20 @@ DB:       localhost:5433
 
 停止時，在啟動視窗按 `Ctrl+C`。Backend / Frontend 會關閉；Docker 資料庫會保留執行，方便下次快速啟動。
 
+## 一鍵更新
+
+雙擊 `一鍵更新.bat`（或 `python update.py`）：檢查 GitHub Release 有沒有新版本，有的話先備份目前版本、
+下載更新包、核對 SHA-256、套用、重新啟動；啟動後健康檢查沒過會自動復原回舊版本。只需要這台機器能連到
+網際網路下載更新包，不會動到 `.env`、`uploads/`、`ai_model/`、資料庫等使用者資料。
+
+```powershell
+python update.py --check   # 只看有沒有新版本，不做任何改動
+python update.py           # 檢查、確認、更新
+```
+
+發新版本（開發者自己用）：改 `VERSION` 檔 → `python scripts/build_release.py <版本號>` 打包 →
+`gh release create v<版本號> dist/corphia-update-v<版本號>.zip dist/corphia-update-v<版本號>.zip.sha256`。
+
 ## 資料庫
 
 Docker 只啟動資料庫：
