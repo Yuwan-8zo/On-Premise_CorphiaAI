@@ -27,6 +27,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documents", tags=["文件"])
 
 
+def ensure_not_folder_document(document: Document) -> None:
+    """
+    連接資料夾來的文件不能從這裡改或刪：它對應的是公司資料夾裡的原始檔，
+    要不要收錄由後台「資料夾」的設定和掃描決定（在這裡刪掉，下次掃描也會再出現）。
+    """
+    from app.services.folder_indexer import is_folder_document
+
+    if is_folder_document(document):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="這份文件來自連接的資料夾，請到後台的「資料夾」管理",
+        )
+
+
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
     current_user: CurrentUser,
@@ -201,6 +215,7 @@ async def update_document_metadata(
     """更新文件 metadata (如啟用/停用 RAG 參考)：上傳者或管理員"""
     document = await get_tenant_document(db, document_id, current_user)
     ensure_can_modify_document(current_user, document)
+    ensure_not_folder_document(document)
 
     document.doc_metadata = request.doc_metadata
     await db.commit()
@@ -236,6 +251,7 @@ async def delete_document(
     
     # 只有上傳者或管理員（admin／engineer）可以刪除
     ensure_can_modify_document(current_user, document)
+    ensure_not_folder_document(document)
     
     original_filename = document.original_filename
     

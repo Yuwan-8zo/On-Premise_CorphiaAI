@@ -16,6 +16,7 @@ from app.core.time_utils import utc_now_naive
 from app.core.security import get_password_hash
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 from app.core.request_utils import get_client_ip, get_user_agent
+from app.services import user_cleanup
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -274,8 +275,11 @@ async def delete_user(
     ensure_can_manage(current_user, user)
     
     # 實際刪除使用者 (硬刪除)，這會觸發 cascade 刪除該使用者的所有關聯資料 (對話、文件等)
+    # 磁碟上的東西（對話附的圖片、上傳的文件檔、AI 產出的檔案）不會跟著資料庫一起刪：先記下來，資料庫刪成功後再清
+    files = await user_cleanup.collect(db, user_id)
     await db.delete(user)
     await db.commit()
+    user_cleanup.remove(files)
     
     # 審計日誌
     await write_audit_log(

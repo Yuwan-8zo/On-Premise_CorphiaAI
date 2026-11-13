@@ -8,7 +8,7 @@ import logging
 import os
 import uuid
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -20,6 +20,58 @@ import app.services.text_extract as text_extract
 from app.services.rag_service import get_rag_service
 
 logger = logging.getLogger(__name__)
+
+
+# 原始檔名在資料庫的欄位長度（documents.original_filename）
+ORIGINAL_FILENAME_MAX = 255
+
+
+def is_inside(path: Path, folder: Path) -> bool:
+    """path 是不是在 folder 裡面（先解析成實際路徑，「..」或連結繞不出去）"""
+    try:
+        path.resolve().relative_to(folder.resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def remove_upload_file(file_path: Optional[str], upload_dir: Path) -> bool:
+    """
+    刪掉一份上傳的檔案；只有在系統自己的上傳區裡才刪，回傳有沒有刪。
+    文件紀錄的 file_path 不一定在上傳區：連接資料夾的文件指向公司資料夾裡的原始檔，那些不是系統的檔案。
+    """
+    if not file_path:
+        return False
+    path = Path(file_path)
+    if not is_inside(path, upload_dir) or not path.is_file():
+        return False
+    try:
+        path.unlink()
+        return True
+    except OSError as e:
+        logger.warning(f"刪除上傳檔失敗 {path.name}: {e}")
+        return False
+
+
+def clean_original_filename(filename: str) -> str:
+    """
+    使用者上傳的檔名整理成可以安全存、安全顯示的樣子：
+      - 只留最後一段（「../../x.txt」或帶磁碟路徑的檔名 → x.txt）；磁碟上的檔名本來就另外用隨機編號，這裡是顯示用的名字
+      - 去掉控制字元（含 NUL）
+      - 太長就裁短、保留副檔名（以前超過 255 個字會讓資料庫報錯，回 500 而且留下孤兒檔案）
+    """
+    name = (filename or "").replace("\\", "/").split("/")[-1]
+    name = "".join(ch for ch in name if ch.isprintable()).strip()
+    if not name:
+        name = "未命名"
+    elif name.startswith(".") and name.count(".") == 1:
+        # 只有副檔名（「.txt」）：補一個名字
+        name = f"未命名{name}"
+    suffix = Path(name).suffix
+    if len(name) > ORIGINAL_FILENAME_MAX:
+        suffix = suffix[:20]
+        name = name[: ORIGINAL_FILENAME_MAX - len(suffix)].rstrip() + suffix
+    return name
 
 
 class DocumentService:
@@ -59,6 +111,9 @@ class DocumentService:
         Returns:
             Document: 文件記錄
         """
+        # 檔名只留最後一段、去掉控制字元、裁到資料庫放得下的長度（見 clean_original_filename）
+        filename = clean_original_filename(filename)
+
         # 檢查檔案類型
         ext = Path(filename).suffix.lower()
         if ext not in self.SUPPORTED_TYPES:
@@ -153,7 +208,16 @@ class DocumentService:
         )
         
         self.db.add(document)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except Exception:
+            # 資料列沒寫成：剛存的檔案不能留在磁碟上當孤兒
+            await self.db.rollback()
+            try:
+                file_path.unlink()
+            except OSError:
+                pass
+            raise
         await self.db.refresh(document)
         
         # B3: 標記舊版被取代
@@ -344,10 +408,9 @@ class DocumentService:
             return False
         
         try:
-            # 刪除檔案
-            file_path = Path(document.file_path)
-            if file_path.exists():
-                os.remove(file_path)
+            # 刪除檔案：只刪系統自己上傳區裡的那一份。
+            # 連接資料夾來的文件，file_path 指向公司資料夾裡的原始檔——那是使用者的檔案，絕對不能刪
+            remove_upload_file(document.file_path, self.upload_dir)
             
             # 由於 DocumentChunk 設定了 CASCADE，刪除 Document 時會一併從資料庫刪除所有向量分塊
             

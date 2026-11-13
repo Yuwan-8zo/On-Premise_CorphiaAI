@@ -14,6 +14,7 @@ from app.models.conversation import Conversation
 from app.models.message import Message
 import app.services.message_tree as message_tree
 import app.services.chat_images as chat_images
+from app.services import generation_registry
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -244,7 +245,10 @@ async def delete_conversation(
     conversation = await get_own_conversation(db, conversation_id, current_user)
     
     conversation_title = conversation.title
-    
+
+    # 這個對話還在回答中：先讓它停下來，不然它寫完要存檔時對話已經不在了
+    await generation_registry.cancel(conversation_id)
+
     await db.delete(conversation)
     # 這個對話附過的圖片檔一起刪（資料庫的紀錄會跟著對話刪掉，檔案要自己清）
     chat_images.delete_conversation_images(conversation_id)

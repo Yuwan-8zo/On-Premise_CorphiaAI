@@ -2,6 +2,7 @@
 認證 API
 """
 
+import asyncio
 import re
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
@@ -121,7 +122,7 @@ async def login(
             detail={"code": "ACCOUNT_NOT_FOUND", "message": "此信箱尚未註冊，請建立帳號"},
         )
 
-    if not verify_password(request_body.password, user.password_hash):
+    if not await asyncio.to_thread(verify_password, request_body.password, user.password_hash):
         # 記錄登入失敗（累加計數）
         failure_info = await record_login_failure(db, request_body.email)
 
@@ -273,7 +274,7 @@ async def register(
         display_name = cleaned[:50] or "User"
     user = User(
         email=request_body.email,
-        password_hash=get_password_hash(request_body.password),
+        password_hash=await asyncio.to_thread(get_password_hash, request_body.password),
         name=display_name,
         tenant_id=tenant_id,
         role="user"
@@ -425,7 +426,7 @@ async def change_password(
     改完之後其他裝置的登入全部失效；這次回傳一組新的 Token，讓目前這個裝置繼續使用。
     """
     # 驗證當前密碼
-    if not verify_password(request_body.current_password, current_user.password_hash):
+    if not await asyncio.to_thread(verify_password, request_body.current_password, current_user.password_hash):
         await write_audit_log(
             db=db,
             action=AuditAction.PASSWORD_CHANGE_FAILED,
@@ -443,14 +444,14 @@ async def change_password(
         )
 
     # 檢查新密碼不能與舊密碼相同
-    if verify_password(request_body.new_password, current_user.password_hash):
+    if await asyncio.to_thread(verify_password, request_body.new_password, current_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="新密碼不能與當前密碼相同"
         )
 
     # 更新密碼，並讓之前發的所有 Token 失效（其他裝置要用新密碼重新登入）
-    current_user.password_hash = get_password_hash(request_body.new_password)
+    current_user.password_hash = await asyncio.to_thread(get_password_hash, request_body.new_password)
     revoke_before_new_tokens(current_user)
     await db.commit()
     token_data = {"sub": current_user.id}

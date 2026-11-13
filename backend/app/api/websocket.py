@@ -17,6 +17,7 @@ from app.services.chat_service import ChatService, stopped_note
 from app.services.message_guard import clamp_generation_params, screen_user_message
 from app.services.model_preference import get_user_model
 from app.services.quota_service import check_user_quota
+from app.services import generation_registry
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,23 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+async def release_db(db: AsyncSession) -> None:
+    """
+    把這條連線借走的資料庫連線還回去。
+
+    聊天連線會開很久（使用者把畫面開著就一直在），但只有在回答的那幾秒需要資料庫。
+    讀過資料之後交易沒有結束，資料庫連線就一直被這條聊天連線佔著；連線池只有幾十條，
+    開著聊天畫面的人一多就全部被佔光，所有人的請求都會卡住（壓力測試：30 條閒置連線就卡死）。
+    所以每次閒下來（等使用者下一句話之前、回答結束之後）都把交易結束掉。
+    """
+    if not db.in_transaction():
+        return
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
 
 
 @router.websocket("/ws/chat/{conversation_id}")
@@ -104,6 +122,9 @@ async def websocket_chat(
             await websocket.close(code=4004, reason="對話不存在")
             return
         
+        # 後面會把資料庫連線還回去，物件上的欄位先記成區域變數（不再回頭向資料庫要）
+        conversation_tenant_id = conversation.tenant_id
+
         # 稽核紀錄要顯示「誰、從哪裡」
         audit_email = user.email
         audit_ip = websocket.client.host if websocket.client else None
@@ -120,7 +141,7 @@ async def websocket_chat(
             return await screen_user_message(
                 db, raw_text,
                 conversation_id=conversation_id,
-                tenant_id=conversation.tenant_id,
+                tenant_id=conversation_tenant_id,
                 user_id=user_id,
                 user_email=audit_email,
                 ip_address=audit_ip,
@@ -197,7 +218,10 @@ async def websocket_chat(
                 await websocket.send_json({"type": "done", "content": stopped_note(lang)})
             except asyncio.CancelledError:
                 logger.info(f"生成任務已中斷: {connection_id}")
-                await websocket.send_json({"type": "done", "content": stopped_note(lang)})
+                try:
+                    await websocket.send_json({"type": "done", "content": stopped_note(lang)})
+                except Exception:
+                    pass  # 連線已經不在（對話被刪、分頁關掉）：沒有人要收
                 raise  # 讓 task 正常結束
             except WebSocketDisconnect:
                 # 使用者關掉頁面，不用回任何東西
@@ -215,6 +239,11 @@ async def websocket_chat(
                 err_id = _uuid.uuid4().hex[:12]
                 logger.error(f"[ERROR_ID={err_id}] 生成發生錯誤: {e}", exc_info=True)
                 try:
+                    # 資料庫那一筆交易可能已經壞了：先復原，這條連線後面才能繼續用
+                    await db.rollback()
+                except Exception:
+                    pass
+                try:
                     await websocket.send_json({
                         "type": "error",
                         "code": "GENERATION_FAILED",
@@ -223,6 +252,9 @@ async def websocket_chat(
                     })
                 except Exception:
                     pass
+            finally:
+                # 回答不管怎麼結束（寫完、停止、逾時、斷線、出錯）都把資料庫連線還回去
+                await release_db(db)
 
         # 訊息處理迴圈
         # WebSocket 單則訊息上限（防 DoS via huge payload）
@@ -234,6 +266,9 @@ async def websocket_chat(
 
         while True:
             try:
+                # 閒著等下一句話：先把資料庫連線還回去（回答還在跑的時候不動，那是它在用的交易）
+                if current_generation_task is None or current_generation_task.done():
+                    await release_db(db)
                 # 改用 receive_text 先檢查大小，再 parse JSON，避免 parse 完才發現超大
                 raw = await websocket.receive_text()
                 if len(raw.encode("utf-8")) > WS_MAX_MESSAGE_BYTES:
@@ -252,13 +287,22 @@ async def websocket_chat(
                         "message": "無效的 JSON 格式",
                     })
                     continue
+                # 合法的 JSON 但不是物件（例如一個陣列、一個數字）：以前會讓整條連線出錯斷掉
+                if not isinstance(data, dict):
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "無效的訊息格式",
+                    })
+                    continue
 
                 msg_type = data.get("type")
 
                 if msg_type in ("message", "resubmit"):
                     # 送出新訊息與重新送出（編輯後再送）走同一套檢查；差別只在重新送出要帶原本那則的 ID
                     resubmit = msg_type == "resubmit"
-                    content = str(data.get("content") or "").strip()
+                    raw_content = data.get("content")
+                    # 內容只收文字：物件、陣列不轉成字串硬送（以前會把 {'a': 1} 這種東西當成問題送給模型）
+                    content = raw_content.strip() if isinstance(raw_content, str) else ""
                     message_id = data.get("message_id") if resubmit else None
                     # 生成參數限制在合理範圍（前端送什麼都不會讓模型卡死或程式出錯）
                     params = clamp_generation_params(data)
@@ -301,6 +345,15 @@ async def websocket_chat(
                         continue
                     content = sanitized
 
+                    # 同一個對話在別的視窗／裝置正在回答：這裡不能再開一個（兩個回答會把訊息順序弄壞）。
+                    # 這個檢查和下面的登記之間不能有任何等待，否則兩邊會同時通過
+                    if generation_registry.is_generating(conversation_id):
+                        await websocket.send_json({
+                            "type": "error",
+                            "code": "CONVERSATION_BUSY",
+                            "message": "這個對話正在另一個視窗回答中，請等它完成再送出",
+                        })
+                        continue
                     # 啟動非同步生成任務
                     current_generation_task = asyncio.create_task(
                         _generate_and_send(
@@ -311,6 +364,7 @@ async def websocket_chat(
                             research_flag=research_flag,
                         )
                     )
+                    generation_registry.register(conversation_id, current_generation_task)
 
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})

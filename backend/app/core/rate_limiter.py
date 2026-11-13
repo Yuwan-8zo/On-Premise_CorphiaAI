@@ -84,9 +84,10 @@ def _build_limits() -> tuple:
             window_seconds=60,
             description="更新登入憑證的次數限制",
         ),
-        # 文件上傳：每個 IP 每分鐘最多 10 次
+        # 文件上傳：每個 IP 每分鐘最多 60 次（一次把一整個資料夾的文件拖進專案是正常用法；
+        # 以前是 10 次，拖 11 份以上後面幾份就會被擋）
         "/api/v1/documents/upload": RateLimitRule(
-            max_requests=10,
+            max_requests=60,
             window_seconds=60,
             description="文件上傳限制",
         ),
