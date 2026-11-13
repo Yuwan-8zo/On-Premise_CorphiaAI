@@ -134,3 +134,5 @@ desktop/dist_new/
 /dist/
 # vision model files (downloaded separately, several GB)
 ai_model/vision/
+# browser Python runtime for code execution (re-download with scripts/fetch_pyodide.py)
+frontend/public/pyodide/

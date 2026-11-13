@@ -24,9 +24,11 @@
         style-src / font-src  字型已經打包在程式裡（@fontsource/noto-sans-tc），不從外部載入
         img-src               只有本機圖片（同一台伺服器、data:、blob:）；回答裡的外部圖片本來就不顯示，這裡是最後一道
         connect-src           只有同一台伺服器的 API 與即時連線（ws: / wss: 保留給舊版瀏覽器的同站即時連線）
+        worker-src            允許從記憶體裡的程式開背景執行緒：執行 Python 的沙盒框用（lib/pyRunner.ts）。框會繼承這裡的政策，
+                              這裡不允許它就開不了；只開放自己這台和記憶體內容（blob:），不含任何外部網址
       之後若真的需要連某個外部服務，請在這裡「只加那一個網址」，不要整類開放。
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:;" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     
     <!-- Open Graph (Facebook/LinkedIn) -->

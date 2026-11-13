@@ -228,3 +228,26 @@ class TestLanCertificatePages:
         monkeypatch.setattr(lan_tls, "ca_der", lambda *_a: None)
         assert client[0].get("/lan-setup").status_code == 404
         assert client[0].get("/lan-ca.crt").status_code == 404
+
+
+class TestPyodideAssets:
+    """瀏覽器版 Python 的檔案：沙盒框（沒有來源身分）要讀得到；其他檔案不能跟著放寬"""
+
+    def test_runtime_files_can_be_read_from_the_sandbox(self, client, tmp_path):
+        folder = tmp_path / "dist" / "pyodide"
+        folder.mkdir()
+        (folder / "pyodide.asm.wasm").write_bytes(b"\x00asm")
+        (folder / "pyodide.mjs").write_text("export {}", encoding="utf-8")
+        r = client[0].get("/pyodide/pyodide.asm.wasm")
+        assert r.status_code == 200 and r.headers["access-control-allow-origin"] == "*"
+        assert r.headers["content-type"] == "application/wasm"
+        assert "immutable" in r.headers["cache-control"]
+        assert client[0].get("/pyodide/pyodide.mjs").headers["content-type"].startswith("text/javascript")
+
+    def test_nothing_else_gets_the_open_header(self, client):
+        for path in ("/", "/favicon.svg", "/assets/app-abc123.js", "/api/v1/ping"):
+            assert "access-control-allow-origin" not in client[0].get(path).headers
+
+    def test_cannot_escape_through_the_runtime_folder(self, client):
+        r = client[0].get("/pyodide/../../secret.txt")
+        assert "不能被讀到" not in r.text and "access-control-allow-origin" not in r.headers

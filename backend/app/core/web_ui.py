@@ -37,6 +37,8 @@ LAN_ENDPOINT: dict | None = None
 LAN_REREAD_SEC = 0.3
 # 不屬於介面的路徑：找不到就是找不到，不能回 index.html（不然打錯的 API 網址會拿到一頁 HTML）
 API_PREFIXES = ("api/", "ws/")
+# 瀏覽器版 Python（Pyodide）的檔案放在介面的這個資料夾（scripts/fetch_pyodide.py 下載）
+PYODIDE_PREFIX = "pyodide/"
 NO_CACHE = {"Cache-Control": "no-cache"}
 # 檔名帶內容雜湊的資源（dist/assets/）內容永遠不變，可以長期快取
 IMMUTABLE = {"Cache-Control": "public, max-age=31536000, immutable"}
@@ -208,6 +210,10 @@ def install(app: FastAPI, dist: Path = DIST_DIR, boot_status: Path = BOOT_STATUS
         if path.startswith(API_PREFIXES):
             return JSONResponse({"detail": "Not Found"}, status_code=404)
         asset = resolve_asset(dist, path) if path else None
+        if asset and path.startswith(PYODIDE_PREFIX):
+            # 瀏覽器版 Python 的檔案：由「沒有來源身分」的沙盒框來拿（見前端 lib/pyRunner.ts），
+            # 所以要明講任何來源都可以讀。這些是公開的程式庫檔案，沒有任何使用者資料；版本固定，可以長期快取
+            return FileResponse(asset, headers={**IMMUTABLE, "Access-Control-Allow-Origin": "*"})
         if asset:
             return FileResponse(asset, headers=IMMUTABLE if path.startswith("assets/") else NO_CACHE)
         index = dist / "index.html"

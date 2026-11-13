@@ -17,6 +17,7 @@ import { documentsApi } from '@/api/documents'
 import { foldersApi } from '@/api/folders'
 import { webSearchApi, type WebSearchPolicy } from '@/api/webSearch'
 import { chatImagesApi, type VisionStatus } from '@/api/chatImages'
+import { onAppendToChatInput } from '@/lib/chatInputBus'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
@@ -62,6 +63,12 @@ export function useChatLogic() {
     useEffect(() => {
         chatImagesApi.status().then(setVision).catch(() => undefined) // 問不到就當沒有，不影響其他功能
     }, [])
+
+    // 別處要把文字放進輸入框（例如「把執行結果交給 AI」）：接在目前內容後面，不自動送出
+    useEffect(() => onAppendToChatInput((text) => {
+        setInput((prev) => (prev ? `${prev.replace(/\s+$/, '')}\n\n${text}` : text))
+        inputRef.current?.focus()
+    }), [setInput])
 
     // 深度研究：使用者在「＋」選單打開後，下一題會多查幾輪、寫成有出處的報告（只管那一題）
     const [researchOn, setResearchOn] = useState(false)

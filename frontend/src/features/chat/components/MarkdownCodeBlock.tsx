@@ -17,6 +17,8 @@ import { copyText } from '@/lib/clipboard'
 import { useDesktop } from '@/lib/desktop'
 import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
 import { PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
+import { isRunnable } from '@/lib/pyRunner'
+import CodeRunPanel from './CodeRunPanel'
 import { useTranslation } from 'react-i18next'
 
 SyntaxHighlighter.registerLanguage('tsx', tsx)
@@ -123,6 +125,8 @@ const MarkdownCodeBlock = memo(({
             {children}
         </SyntaxHighlighter>
         )}
+        {/* Python 可以直接執行（在這台裝置瀏覽器的沙盒裡，不在主機上；見 lib/pyRunner） */}
+        {isRunnable(language) && <CodeRunPanel code={children} />}
     </div>
     )
 })
