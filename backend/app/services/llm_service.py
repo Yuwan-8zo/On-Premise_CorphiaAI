@@ -473,6 +473,11 @@ class LLMService:
         body = {"messages": messages, "max_tokens": max_tokens, "temperature": temperature, "top_p": top_p, "stream": stream}
         if stop:
             body["stop"] = stop
+        # 會思考的模型想多深（設定 llm_reasoning_effort）；兩種寫法都帶：不同模型樣板認的名字不一樣，不認得的會忽略
+        effort = (settings.llm_reasoning_effort or "").strip().lower()
+        if effort in ("low", "medium", "high"):
+            body["reasoning_effort"] = effort
+            body["chat_template_kwargs"] = {"reasoning_effort": effort}
         return body
 
     def _record_server_timings(self, timings: Optional[dict], fallback_tokens: int, fallback_sec: float) -> None:

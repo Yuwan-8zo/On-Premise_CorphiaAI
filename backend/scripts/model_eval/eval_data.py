@@ -113,8 +113,12 @@ def build_workspace(root: Path) -> Path:
     return root
 
 
+# 有些模型習慣用排版用的連字號（‑ – −）寫日期：內容是對的，比對前先換成一般的 -
+_HYPHENS = str.maketrans({"‐": "-", "‑": "-", "‒": "-", "–": "-", "−": "-"})
+
+
 def _read(p: Path) -> str:
-    return p.read_text(encoding="utf-8", errors="ignore") if p.exists() else ""
+    return p.read_text(encoding="utf-8", errors="ignore").translate(_HYPHENS) if p.exists() else ""
 
 
 TOOL_TASKS: list[dict] = [

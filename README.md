@@ -112,7 +112,7 @@ LLAMA_N_GPU_LAYERS=0
 目前預設模型路徑：
 
 ```env
-LLAMA_MODEL_PATH=../ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf
+LLAMA_MODEL_PATH=../ai_model/gpt-oss-20b-MXFP4.gguf
 ```
 
 ## 常用指令

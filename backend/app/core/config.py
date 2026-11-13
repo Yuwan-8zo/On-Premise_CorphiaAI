@@ -51,7 +51,12 @@ class Settings(BaseSettings):
     
     # LLM (local GGUF via llama.cpp)
     # 預設指向專案根目錄的 ai_model/（ModelManager 會在啟動時解析並選為預設模型）
-    llama_model_path: str = "ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf"
+    # gpt-oss-20b：同一台筆電實測（scripts/model_eval/out/summary.md）打字最快（約 24 tok/s，Qwen 7B 約 13）、
+    # 用工具完成 4/5（Qwen 7B、14B 都是 1/5）、正體中文沒有簡體字。檔案不在時自動改用 ai_model/ 裡找到的第一個模型
+    llama_model_path: str = "ai_model/gpt-oss-20b-MXFP4.gguf"
+    # 會思考的模型要想多深：low／medium／high（不會思考的模型會忽略）。
+    # low：等回答從約 4 秒降到 1.7 秒、每題平均 12.6 → 6.1 秒；中文客觀題 6/7 → 5/7、用工具一樣 4/5
+    llm_reasoning_effort: str = "low"
     llama_context_size: int = 4096
     llama_n_gpu_layers: int = 0
     # CPU threads for llama.cpp; 0 = all cores minus two (keeps the API responsive while the model runs)
@@ -60,7 +65,8 @@ class Settings(BaseSettings):
     # every answer must come from the real model, otherwise the user sees an error.
     allow_simulated_llm: bool = False
     # Models kept loaded at startup (size tags, comma separated). Others load only when selected.
-    llm_preload_models: str = "3B,7B"
+    # 預設只載入 20B（約 12 GB）；再多載小模型，32 GB 的筆電開著其他程式會不夠
+    llm_preload_models: str = "20B"
     # 推論引擎：auto＝有 llama-server 執行檔就用它（Vulkan，用內建顯示晶片，讀入快約 70 倍），沒有就用 llama-cpp-python；
     # server／python＝指定其中一種
     llm_engine: str = "auto"

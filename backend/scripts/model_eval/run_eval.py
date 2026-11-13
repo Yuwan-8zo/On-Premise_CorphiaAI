@@ -98,6 +98,7 @@ TOOLS = [
 ]
 TOOL_OUTPUT_LIMIT = 6000
 RUN_TIMEOUT_S = 60
+HYPHENS = str.maketrans({"‐": "-", "‑": "-", "‒": "-", "–": "-", "−": "-"})
 
 
 def _safe(ws: Path, name: str) -> Path:
@@ -125,7 +126,9 @@ def run_tool(ws: Path, name: str, args: dict) -> str:
         if name == "run_python":
             f = ws / "_run.py"
             f.write_text(args["code"], encoding="utf-8")
-            r = subprocess.run([sys.executable, "-I", f.name], cwd=ws, capture_output=True, text=True, encoding="utf-8", errors="ignore", timeout=RUN_TIMEOUT_S)
+            # -X utf8：子程序的輸出固定用 UTF-8。不加的話 Windows 上是 cp950，這裡用 UTF-8 讀會把中文全部弄丟——
+            # 模型看到的執行結果和錯誤訊息是亂碼，就沒辦法自己修正（之前每個模型的工具題都因此被低估）
+            r = subprocess.run([sys.executable, "-I", "-X", "utf8", f.name], cwd=ws, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=RUN_TIMEOUT_S)
             return ((r.stdout or "") + (r.stderr or ""))[:TOOL_OUTPUT_LIMIT] or "（沒有輸出）"
         return f"沒有這個工具：{name}"
     except Exception as e:  # 工具出錯也回給模型，看它會不會自己修正
@@ -173,6 +176,9 @@ def chat(messages: list[dict], tools: list | None = None, max_tokens: int = 1536
     body = {"messages": messages, "max_tokens": max_tokens, "temperature": TEMPERATURE}
     if tools:
         body["tools"] = tools
+    if EFFORT:  # 會思考的模型：想多深（low／medium／high）；不認得這個參數的模型會忽略
+        body["reasoning_effort"] = EFFORT
+        body["chat_template_kwargs"] = {"reasoning_effort": EFFORT}
     t = time.time()
     r = httpx.post(BASE + "/v1/chat/completions", json=body, timeout=1800)
     r.raise_for_status()
@@ -248,14 +254,20 @@ def test_tools(work_root: Path) -> list[dict]:
                 result = run_tool(ws, fn, args)
                 calls.append({"tool": fn, "args": {k: (v[:200] if isinstance(v, str) else v) for k, v in args.items()}, "result": result[:300]})
                 msgs.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": result})
-        ok = bool(task["check"](ws, final))
+        # 有些模型習慣用排版用的連字號（‑ – −）寫日期：內容是對的，比對前先換成一般的 -
+        ok = bool(task["check"](ws, final.translate(HYPHENS)))
         out.append({"id": task["id"], "q": task["q"], "ok": ok, "steps": len(calls), "bad_args": bad, "total_s": round(time.time() - t0, 1), "final": final, "calls": calls})
     return out
 
 
 # ── 主程式 ───────────────────────────────────────────────────────────────────────
+TOOLS_ONLY = False  # --tools-only：只重跑工具題，其他數字沿用上一次的結果
+EFFORT = ""  # --effort：思考深度；有指定時結果另存成「模型@深度」，不蓋掉原本那一份
+
+
 def eval_model(name: str, fname: str) -> dict | None:
     path = MODEL_DIR / fname
+    name = f"{name}@{EFFORT}" if EFFORT else name
     if not path.exists():
         print(f"[略過] {name}：找不到 {fname}")
         return None
@@ -269,12 +281,17 @@ def eval_model(name: str, fname: str) -> dict | None:
     t = time.time()
     proc = start_server(path, OUT / f"{name}_server.log")
     load_s = time.time() - t
+    previous = OUT / f"{name}.json"
     try:
-        print("  長文件…")
-        ld = test_long_doc()
-        print(f"    讀入 {ld['prompt_tps']} tok/s、等 {ld['wait_first_s']} 秒、打字 {ld['gen_tps']} tok/s、{'對' if ld['correct'] else '錯'}")
-        print("  正體中文…")
-        zh = test_zh()
+        if TOOLS_ONLY and previous.exists():
+            old = json.loads(previous.read_text(encoding="utf-8"))
+            ld, zh = old["long_doc"], old["zh"]
+        else:
+            print("  長文件…")
+            ld = test_long_doc()
+            print(f"    讀入 {ld['prompt_tps']} tok/s、等 {ld['wait_first_s']} 秒、打字 {ld['gen_tps']} tok/s、{'對' if ld['correct'] else '錯'}")
+            print("  正體中文…")
+            zh = test_zh()
         print("  工具…")
         with tempfile.TemporaryDirectory(prefix=f"eval_{name}_") as tmp:
             tools = test_tools(Path(tmp))
@@ -315,9 +332,9 @@ def write_answers(r: dict):
 
 def write_summary():
     rows = []
-    for name in MODELS:
-        f = OUT / f"{name}.json"
-        if f.exists():
+    # 每個模型一份結果；指定思考深度的另存成「模型@深度」，排在同一個模型後面
+    for f in sorted(OUT.glob("*.json")):
+        if f.stem.split("@")[0] in MODELS:
             rows.append(json.loads(f.read_text(encoding="utf-8")))
     head = "| 模型 | 大小 GB | 載入秒 | 最低剩餘記憶體 GB | 讀入 tok/s | 長文件等待秒 | 打字 tok/s | 長文件找答案 | 中文客觀題 | 簡體字數 | 中文平均秒 | 工具完成 |\n|---|---|---|---|---|---|---|---|---|---|---|---|"
     body = []
@@ -333,7 +350,11 @@ def write_summary():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default=",".join(MODELS))
+    ap.add_argument("--tools-only", action="store_true", help="只重跑工具題（其他數字沿用上一次的結果）")
+    ap.add_argument("--effort", default="", choices=["", "low", "medium", "high"], help="會思考的模型要想多深")
     a = ap.parse_args()
+    global TOOLS_ONLY, EFFORT
+    TOOLS_ONLY, EFFORT = a.tools_only, a.effort
     OUT.mkdir(parents=True, exist_ok=True)
     for name in a.models.split(","):
         r = eval_model(name.strip(), MODELS[name.strip()])
