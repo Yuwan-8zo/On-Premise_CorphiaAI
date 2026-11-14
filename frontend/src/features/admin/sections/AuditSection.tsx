@@ -43,6 +43,7 @@ import {
     tableBodyClass,
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
+import AuditChainCheck from '@/features/admin/components/AuditChainCheck'
 import { formatDate } from '@/features/admin/utils/formatDate'
 import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
 
@@ -183,6 +184,7 @@ export default function AuditSection({
                                 <Download className="h-4 w-4" />
                                 JSON
                             </ActionButton>
+                            <AuditChainCheck />
                         </div>
                     </div>
                 </Panel>

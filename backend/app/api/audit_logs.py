@@ -21,6 +21,7 @@ from app.core.time_utils import to_naive_utc
 from app.api.deps import CurrentUser, DbSession, RequireAdmin
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogResponse, AuditLogListResponse
+from app.services import audit_chain
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,15 @@ def _csv_safe(value):
     if isinstance(value, str) and value.startswith(_FORMULA_START):
         return "'" + value
     return value
+
+
+@router.get("/verify-chain")
+async def verify_audit_chain(db: DbSession):
+    """
+    驗證稽核紀錄有沒有被事後竄改（重算整條雜湊鏈）。
+    回傳的 head（最新一筆的編號與雜湊）可以抄到系統外，下次比對，連尾巴被刪也查得出來。
+    """
+    return await audit_chain.verify_chain(db)
 
 
 @router.get("", response_model=AuditLogListResponse)

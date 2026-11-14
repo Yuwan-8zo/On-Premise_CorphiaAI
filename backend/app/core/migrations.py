@@ -45,6 +45,13 @@ MIGRATIONS: list[tuple[str, list[str]]] = [
            FROM (SELECT id, LAG(id) OVER (PARTITION BY conversation_id ORDER BY created_at, id) AS prev_id FROM messages) p
            WHERE m.id = p.id AND m.parent_id IS NULL AND p.prev_id IS NOT NULL""",
     ]),
+    # 稽核紀錄防竄改鏈（舊紀錄沒有雜湊，鏈從加上之後的第一筆開始）
+    ("2026-11-14-audit-chain", [
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS chain_seq BIGINT",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS prev_hash VARCHAR(64)",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS entry_hash VARCHAR(64)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_audit_logs_chain_seq ON audit_logs (chain_seq)",
+    ]),
 ]
 
 

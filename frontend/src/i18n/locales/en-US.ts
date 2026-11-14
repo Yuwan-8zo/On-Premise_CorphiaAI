@@ -753,6 +753,14 @@ export default {
             resource: 'Resource',
             allResources: 'All resources',
             securityEventsOnly: 'Security Events Only',
+            chain: {
+                verify: 'Verify integrity',
+                checking: 'Verifying…',
+                ok: 'Intact ({{count}} entries)',
+                broken: 'Entry {{seq}}: {{problem}}',
+                failed: 'Verification failed, try again later',
+                hint: 'Recomputes the hash chain of every audit entry to detect edits or deletions made directly in the database',
+            },
             actionTypes: {
                 login_success: 'Login Success',
                 login_failed: 'Login Failed',

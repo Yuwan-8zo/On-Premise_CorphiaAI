@@ -4,8 +4,9 @@
 
 import uuid
 from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import String, DateTime, Text, func
+from sqlalchemy import BigInteger, String, DateTime, Text, func
 from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -52,5 +53,11 @@ class AuditLog(Base):
         index=True
     )
     
+    # 防竄改鏈：每一筆記著上一筆的雜湊，再算出自己的雜湊（見 audit_chain.py）。
+    # 事後改了任何一筆的內容、或刪掉中間一筆，驗證時都會被抓到。
+    chain_seq: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True, index=True)
+    prev_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    entry_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
     def __repr__(self) -> str:
         return f"<AuditLog(id={self.id}, action={self.action})>"

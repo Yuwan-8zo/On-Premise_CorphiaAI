@@ -10,6 +10,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
+from app.services import audit_chain
 
 logger = logging.getLogger(__name__)
 
@@ -167,9 +168,10 @@ async def write_audit_log(
         user_agent=user_agent,
     )
 
-    db.add(audit_log)
-
     try:
+        # 接上防竄改鏈（拿鎖、讀上一筆的雜湊）後才加入，和 commit 在同一個交易裡
+        await audit_chain.stamp(db, audit_log)
+        db.add(audit_log)
         await db.commit()
         await db.refresh(audit_log)
         logger.debug(

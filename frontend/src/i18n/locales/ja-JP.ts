@@ -753,6 +753,14 @@ export default {
             resource: 'リソース',
             allResources: 'すべてのリソース',
             securityEventsOnly: 'セキュリティイベントのみ',
+            chain: {
+                verify: '完全性を検証',
+                checking: '検証中…',
+                ok: '改ざんなし（{{count}} 件）',
+                broken: '{{seq}} 件目：{{problem}}',
+                failed: '検証に失敗しました',
+                hint: '監査ログのハッシュチェーンを再計算し、改ざんや削除がないか確認します',
+            },
             actionTypes: {
                 login_success: 'ログイン成功',
                 login_failed: 'ログイン失敗',

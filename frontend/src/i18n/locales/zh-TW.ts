@@ -753,6 +753,14 @@ export default {
             resource: '目標資源',
             allResources: '所有資源',
             securityEventsOnly: '只看資安事件',
+            chain: {
+                verify: '驗證完整性',
+                checking: '驗證中…',
+                ok: '紀錄完整（{{count}} 筆）',
+                broken: '第 {{seq}} 筆：{{problem}}',
+                failed: '驗證失敗，請稍後再試',
+                hint: '重算每一筆稽核紀錄的雜湊鏈，確認沒有被直接改資料庫竄改或刪除',
+            },
             actionTypes: {
                 login_success: '登入成功',
                 login_failed: '登入失敗',

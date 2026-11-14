@@ -131,3 +131,20 @@ export const AUDIT_ACTIONS = [
 
 /** 稽核的資源代碼（顯示文字在 i18n 的 admin.audit.resourceTypes） */
 export const AUDIT_RESOURCES = ['auth', 'user', 'conversation', 'document', 'model', 'memory', 'file', 'desktop', 'system'] as const
+
+/** 稽核紀錄防竄改鏈的驗證結果 */
+export interface AuditChainResult {
+    valid: boolean
+    checked: number
+    broken_at: number | null
+    broken_id: string | null
+    /** 後端回的中文說明：「內容被改過」「中間少了紀錄」「前後接不上」 */
+    problem: string | null
+    head: { seq: number; hash: string; at: string | null } | null
+}
+
+/** 重算整條稽核紀錄雜湊鏈，確認沒有被事後竄改 */
+export async function verifyAuditChain(): Promise<AuditChainResult> {
+    const response = await apiClient.get('/audit-logs/verify-chain')
+    return response.data
+}
