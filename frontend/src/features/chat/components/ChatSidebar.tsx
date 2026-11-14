@@ -135,6 +135,13 @@ export default function ChatSidebar({
     // 收合／展開＝變形（不是淡入淡出）：外框寬度、切換軌道（橫↔直）、新對話鈕（膠囊↔圓鈕）、頭像列同時過渡 0.3 秒
     //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
     const desktop = useMediaQuery(MQ_DESKTOP)
+    // 視窗從電腦寬度縮成手機寬度（縮小桌面版視窗、摺疊手機闔上）：原本展開的側欄會變成蓋住整個畫面的抽屜，
+    // 而且開關按鈕在抽屜開著時是隱藏的——使用者會卡住。變窄的那一刻自動收起來
+    const wasDesktop = useRef(desktop)
+    useEffect(() => {
+        if (wasDesktop.current && !desktop && useUIStore.getState().sidebarOpen) useUIStore.getState().setSidebarOpen(false)
+        wasDesktop.current = desktop
+    }, [desktop])
     const wide = sidebarOpen
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
     // 哪些對話正在生成（背景中的也算）→ 清單上顯示小圓點

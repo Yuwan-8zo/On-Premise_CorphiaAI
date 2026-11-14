@@ -197,25 +197,36 @@ export function useChatLogic() {
             upload.setUploadedFiles([])
             return
         }
+        // 已經在空白的新對話畫面（還沒選任何對話、也沒有訊息）：不用再做一次
+        if (!state.currentConversation && state.messages.length === 0) {
+            upload.setUploadedFiles([])
+            return
+        }
+        // 按下去就立刻換成空白畫面，不等主機。以前要等主機建立好對話才換（AI 正在回答時要 1～3 秒），
+        // 這段時間使用者打字按送出會被當成「上一個對話還在回答」而默默吃掉。原本的對話在背景繼續回答
+        setCurrentConversation(null)
+        setSelectedFolder(null)
+        upload.setUploadedFiles([])
+        // 使用者還停在空白畫面才接上主機的對話（已經送出第一句話的話，那邊會自己建立，不能把畫面搶走）
+        const stillBlank = () => { const s = useChatStore.getState(); return !s.currentConversation && s.messages.length === 0 }
         // 已經有一則還沒講過話的一般對話（例如重新整理後回到首頁）就直接打開它
         const emptyConv = state.conversations.find((c) => !c.settings?.isProject && (c.messageCount ?? 0) === 0)
         if (emptyConv) {
             try {
                 // 清單上的訊息數不會即時更新，先向後端確認真的沒有訊息
                 if ((await conversationsApi.getMessages(emptyConv.id)).length === 0) {
-                    upload.setUploadedFiles([])
-                    await selectConversation(emptyConv)
+                    if (stillBlank()) await selectConversation(emptyConv)
                     return
                 }
             } catch {
                 // 查不到就照常建立新對話
             }
         }
+        if (!stillBlank()) return
         try {
             const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: false } })
             addConversation(conversation)
-            upload.setUploadedFiles([])
-            await selectConversation(conversation)
+            if (stillBlank()) await selectConversation(conversation)
         } catch (error) {
             console.error('建立對話失敗:', error)
             toast.error(i18n.t('ui.chat.createFailed'))
