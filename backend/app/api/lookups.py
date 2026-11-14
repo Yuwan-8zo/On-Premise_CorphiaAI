@@ -65,7 +65,11 @@ async def get_tenant_document(db: AsyncSession, document_id: str, user: User) ->
     from app.services.folder_access import can_read_folder_document
     from app.services.folder_indexer import is_folder_document
 
-    if is_folder_document(document) and not await can_read_folder_document(db, user, document):
+    if is_folder_document(document):
+        if not await can_read_folder_document(db, user, document):
+            raise _not_found("文件不存在")
+    elif document.uploaded_by != user.id and not (user.is_admin or user.is_engineer):
+        # 自己上傳的文件（專案資料夾）是個人的：別人用編號也讀不到（當作不存在）
         raise _not_found("文件不存在")
     return document
 

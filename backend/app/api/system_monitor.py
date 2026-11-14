@@ -276,43 +276,22 @@ async def network_status(
     _ = RequireAdmin,
 ):
     """
-    網路連線狀態偵測 (A4 離線模式徽章)
+    這套系統會不會連到外面。
 
-    偵測本機對外網路狀態，前端可據此顯示
-    「資料主權保證：完全離線運行」徽章。
+    以前為了判斷「有沒有網路」會真的去連外面的網站，這本身就是一條連外的路，
+    和「只有搜尋關鍵字會離開主機」的說法不一致。現在不送出任何封包，只回報設定：
+    唯一會連外的功能是對外搜尋，有沒有開由管理者決定。
     """
-    is_online = False
-    latency_ms: float | None = None
-
-    try:
-        import aiohttp
-        import time
-
-        start = time.monotonic()
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
-            async with session.head("https://www.google.com") as resp:
-                if resp.status < 500:
-                    is_online = True
-                    latency_ms = round((time.monotonic() - start) * 1000, 1)
-    except ImportError:
-        # aiohttp 未安裝，改用 socket
-        import socket
-        try:
-            socket.create_connection(("8.8.8.8", 53), timeout=2)
-            is_online = True
-        except OSError:
-            is_online = False
-    except Exception:
-        is_online = False
-
+    from app.core.config import settings
     from app.schemas.system_monitor import SystemMonitorEnvelope
 
+    web_search = bool(settings.enable_web_search)
     return SystemMonitorEnvelope(
         data={
-            "is_online": is_online,
-            "latency_ms": latency_ms,
-            "data_sovereignty": not is_online,
-            "message": "資料主權保證：完全離線運行" if not is_online else "偵測到外部網路連線",
+            "is_online": web_search,
+            "latency_ms": None,
+            "data_sovereignty": not web_search,
+            "message": "已開啟對外搜尋：只有通過檢查的搜尋關鍵字會送出去" if web_search else "資料主權保證：系統不會連到外面",
         }
     )
 

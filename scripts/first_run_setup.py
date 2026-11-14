@@ -77,8 +77,26 @@ def missing_parts() -> list[str]:
     return [name for name, path in needed.items() if not path.exists()]
 
 
+def default_model_name() -> str:
+    """設定範本裡寫的預設模型檔名（LLAMA_MODEL_PATH 的最後一段）；讀不到就回空字串"""
+    try:
+        for line in ENV_EXAMPLE.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("LLAMA_MODEL_PATH="):
+                return line.split("=", 1)[1].strip().replace("\\", "/").split("/")[-1]
+    except OSError:
+        pass
+    return ""
+
+
 def model_files() -> list[Path]:
-    return sorted(MODEL_DIR.glob("*.gguf")) if MODEL_DIR.is_dir() else []
+    """
+    模型資料夾裡的模型檔，預設模型排第一個（[0] 會被寫進設定當作預設）。
+    以前只照檔名排序，大寫開頭的檔名會排到前面，選到的不是系統預設的那一個。
+    """
+    if not MODEL_DIR.is_dir():
+        return []
+    preferred = default_model_name().lower()
+    return sorted(MODEL_DIR.glob("*.gguf"), key=lambda p: (p.name.lower() != preferred, p.name.lower()))
 
 
 def webview2_installed() -> bool:

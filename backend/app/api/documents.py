@@ -27,20 +27,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documents", tags=["文件"])
 
 
-def ensure_not_folder_document(document: Document) -> None:
-    """
-    連接資料夾來的文件不能從這裡改或刪：它對應的是公司資料夾裡的原始檔，
-    要不要收錄由後台「資料夾」的設定和掃描決定（在這裡刪掉，下次掃描也會再出現）。
-    """
-    from app.services.folder_indexer import is_folder_document
-
-    if is_folder_document(document):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="這份文件來自連接的資料夾，請到後台的「資料夾」管理",
-        )
-
-
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
     current_user: CurrentUser,
@@ -51,7 +37,7 @@ async def list_documents(
     folder: Optional[str] = Query(None, max_length=128),
 ):
     """
-    取得文件列表（同租戶）
+    取得文件列表（一般使用者：自己上傳的；管理者與工程師：整個租戶）
     - folder：只列「自己」上傳到這個專案資料夾的文件（資料夾是個人的，和 AI 參考的範圍一致）
     """
     # 建立查詢
@@ -60,6 +46,9 @@ async def list_documents(
         # 連接資料夾的檔案不列在這裡（在後台「資料夾」管理）
         or_(Document.doc_metadata["source"].astext.is_(None), Document.doc_metadata["source"].astext != "folder"),
     )
+    # 一般使用者只看得到自己上傳的（專案資料夾是個人的，別人的檔名也不該看到）；管理者與工程師看得到整個租戶的
+    if not (current_user.is_admin or current_user.is_engineer):
+        query = query.where(Document.uploaded_by == current_user.id)
     if folder:
         query = query.where(
             Document.uploaded_by == current_user.id,
@@ -215,7 +204,6 @@ async def update_document_metadata(
     """更新文件 metadata (如啟用/停用 RAG 參考)：上傳者或管理員"""
     document = await get_tenant_document(db, document_id, current_user)
     ensure_can_modify_document(current_user, document)
-    ensure_not_folder_document(document)
 
     document.doc_metadata = request.doc_metadata
     await db.commit()
@@ -251,7 +239,6 @@ async def delete_document(
     
     # 只有上傳者或管理員（admin／engineer）可以刪除
     ensure_can_modify_document(current_user, document)
-    ensure_not_folder_document(document)
     
     original_filename = document.original_filename
     

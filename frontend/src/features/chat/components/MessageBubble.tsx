@@ -415,12 +415,15 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             <div className="hover-reveal flex items-center gap-1.5 mt-2 text-text-muted">
                                 {copyButton}
                                 {onRegenerate && !message.blocked && (
+                                    <Tooltip placement="bottom" label={t('chat.regenerate')}>
                                     <button
                                         onClick={() => onRegenerate(message.id)}
+                                        aria-label={t('chat.regenerate')}
                                         className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                         >
                                         <RefreshCw />
                                     </button>
+                                    </Tooltip>
                                 )}
                                 {/* 桌面版：把整則回答存成這台電腦的檔案（跳出另存新檔，預設 Markdown） */}
                                 {isDesktop && !message.blocked && (

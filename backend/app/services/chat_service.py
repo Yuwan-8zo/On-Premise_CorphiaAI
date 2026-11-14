@@ -16,7 +16,8 @@ from app.core.time_utils import utc_now_naive
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, or_
 # QUALITY-01 修正：langgraph 改為懶惰 import（在使用點 import）
-# 地端原則：本平台不提供網路搜尋，所有回答僅來自本地模型與企業內部文件，查詢不會送出內網
+# 地端原則：回答來自本地模型與企業內部文件；對外搜尋預設關閉，管理者開啟後也只有通過檢查的搜尋關鍵字會送出去
+# （見 services/web_search_policy.py）
 # 避免這些套件未安裝時阻斷整個模組載入，提升系統啟動可靠性
 
 from app.models.conversation import Conversation
@@ -105,6 +106,14 @@ STOPPED_NOTES = {
     "zh-TW": "（已停止）",
     "en-US": "(stopped)",
     "ja-JP": "（停止しました）",
+}
+
+
+# 模型這次只想了、沒有寫出任何回答（偶爾發生：思考把長度用完）：不能留一個空白的泡泡，告訴使用者再試一次
+EMPTY_NOTES = {
+    "zh-TW": "這次沒有產生回答，請再問一次，或換個方式描述問題。",
+    "en-US": "No answer was produced this time. Please ask again or rephrase the question.",
+    "ja-JP": "今回は回答が生成されませんでした。もう一度お試しいただくか、質問を言い換えてください。",
 }
 
 
@@ -906,6 +915,9 @@ class ChatService:
                 )
             raise
 
+        if not full_response.strip():
+            full_response = EMPTY_NOTES.get(language, EMPTY_NOTES["zh-TW"])
+            yield {"type": "stream", "content": full_response}
         assistant_message = await self._save_assistant_message(conversation_id, full_response, sources, reasoning=reasoning_text)
         if screen.changed:
             # 回答被改過：寫稽核、告訴使用者（畫面上的字已經是改過的）

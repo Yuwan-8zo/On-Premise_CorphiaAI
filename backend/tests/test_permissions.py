@@ -316,7 +316,8 @@ class TestDocumentPermissions:
         other = await make_user(db_session, "user", test_tenant.id)
         doc = await self._doc(db_session, owner, "P")
         body = {"doc_metadata": {"folderName": "P", "isActive": False}}
-        assert (await async_client.patch(f"{API}/documents/{doc.id}/metadata", json=body, headers=bearer(other))).status_code == 403
+        # 別人的文件當作不存在（404），不透露「有這份文件但你沒權限」
+        assert (await async_client.patch(f"{API}/documents/{doc.id}/metadata", json=body, headers=bearer(other))).status_code == 404
         assert (await async_client.patch(f"{API}/documents/{doc.id}/metadata", json=body, headers=bearer(owner))).status_code == 200
 
     async def test_folder_list_is_personal(

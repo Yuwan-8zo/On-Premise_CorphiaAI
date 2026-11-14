@@ -22,13 +22,19 @@ from app.services.chat_service import STOPPED_NOTES, ChatService
 
 
 class FakeLLM:
-    def __init__(self, chunks, first_delay=0.0):
+    def __init__(self, chunks, first_delay=0.0, hold_after=None):
         self.chunks = chunks
         self.first_delay = first_delay
+        # 寫出這麼多段之後停住等人按停止（不靠計時：電腦忙的時候用秒數猜「大約寫到第幾段」會猜錯）
+        self.hold_after = hold_after
+        self.held = asyncio.Event()
 
     async def generate_stream(self, **_kwargs):
         await asyncio.sleep(self.first_delay)
-        for c in self.chunks:
+        for i, c in enumerate(self.chunks):
+            if self.hold_after is not None and i == self.hold_after:
+                self.held.set()
+                await asyncio.sleep(3600)
             await asyncio.sleep(0.05)
             # 一般的字是正式回答；要測思考過程時直接給 ("reasoning", 文字)
             yield c if isinstance(c, tuple) else ("content", c)
@@ -66,9 +72,10 @@ async def consume(svc: ChatService, conv: Conversation):
 
 
 async def test_stop_midway_saves_partial(db_session: AsyncSession, test_user: User, llm_ready):
-    svc, conv = await make_service(db_session, test_user, FakeLLM(["第一段", "第二段", "第三段", "第四段"]))
+    llm = FakeLLM(["第一段", "第二段", "第三段", "第四段"], hold_after=2)
+    svc, conv = await make_service(db_session, test_user, llm)
     task = asyncio.create_task(consume(svc, conv))
-    await asyncio.sleep(0.13)  # 大約寫出兩段
+    await asyncio.wait_for(llm.held.wait(), timeout=30)  # 確定已經寫出兩段
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
@@ -135,3 +142,17 @@ async def test_answer_without_reasoning_leaves_the_field_empty(db_session: Async
         select(Message).where(Message.conversation_id == conv.id, Message.role == "assistant")
     )).scalars().one()
     assert message.reasoning is None
+
+
+async def test_answer_with_only_thinking_gets_a_note_instead_of_a_blank_bubble(db_session: AsyncSession, test_user: User, llm_ready):
+    """模型只想了、沒寫出回答（壓力測試 105 題裡遇到 1 次）：要告訴使用者再試一次，不能留空白"""
+    from app.services.chat_service import EMPTY_NOTES
+
+    svc, conv = await make_service(db_session, test_user, FakeLLM([("reasoning", "我想想"), ("reasoning", "還在想")]))
+    events = []
+    async with aclosing(svc.send_message_stream(conversation_id=conv.id, content="問題", language="zh-TW")) as s:
+        async for e in s:
+            events.append(e)
+    assert [e["content"] for e in events if e["type"] == "stream"] == [EMPTY_NOTES["zh-TW"]]
+    assert await assistant_messages(db_session, conv) == [EMPTY_NOTES["zh-TW"]]
+    assert events[-1]["type"] == "done"
