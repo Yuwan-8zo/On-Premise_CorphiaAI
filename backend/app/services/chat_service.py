@@ -624,7 +624,8 @@ class ChatService:
             live = not final_state.get("folder_name") and not attached and web_search_policy.needs_live_info(content)
             if web_search or (live and search_mode == "auto"):
                 query = await web_search_policy.condense_query(self.llm_service, content, self.model_name)
-                self.web_search_report = await web_search_svc.search(query)
+                # 這一題用到的內部資料（檢索片段、附加的資料夾內容）交給出口做「有沒有被帶出去」的檢查，本身不會送出
+                self.web_search_report = await web_search_svc.search(query, question=content, private_texts=[context] if context else [])
                 search_text = web_search_svc.format_results_for_prompt(self.web_search_report)
                 if search_text:
                     context = f"{context}\n\n{search_text}" if context else search_text
@@ -652,6 +653,8 @@ class ChatService:
                 # 模型自己決定連外網：政策是「自動」才給。深度研究是使用者自己選的（和按「連網重答」一樣算同意），
                 # 所以政策是「只提醒」時也給；政策是「不連外網」就一律不給
                 allow_web=search_mode == "auto" or (research and search_mode == "ask"),
+                question=content,
+                private_texts=[context] if context else [],
             )
             if research:
                 self.agent_rounds = RESEARCH_MAX_ROUNDS

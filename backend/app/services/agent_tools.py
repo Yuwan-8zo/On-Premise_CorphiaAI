@@ -46,6 +46,10 @@ class ToolContext:
     # 這一題可不可以由模型自己決定連外網（政策是「自動」而且還沒查過）
     allow_web: bool = False
     now: Callable[[], datetime] = datetime.now
+    # 使用者這一題原本的問題、這一題用到的公司內部資料（檢索片段、工具查到的文件段落）：
+    # 只給對外搜尋的出口檢查「關鍵字有沒有把內部資料帶出去」用，本身不會送出
+    question: str = ""
+    private_texts: list = field(default_factory=list)
 
 
 @dataclass
@@ -167,6 +171,7 @@ async def _run_search_documents(ctx: ToolContext, args: dict) -> ToolResult:
         return ToolResult(text="文件裡沒有找到相關內容。", summary=f"查文件「{query}」：沒有找到")
     parts = [f"[{(h.get('metadata') or {}).get('filename', '文件')}]\n{h.get('content', '')}" for h in kept]
     names = sorted({(h.get("metadata") or {}).get("filename", "") for h in kept} - {""})
+    ctx.private_texts.extend(h.get("content", "") for h in kept)  # 之後若要連外網，關鍵字不能帶出這些內容
     return ToolResult(
         text=_clip("\n\n".join(parts)), hits=kept,
         summary=f"查文件「{query}」：找到 {len(kept)} 段（{'、'.join(names[:3])}{'…' if len(names) > 3 else ''}）",
@@ -182,7 +187,7 @@ async def _run_web_search(ctx: ToolContext, args: dict) -> ToolResult:
     query = clean_query(str(args.get("query") or ""))
     if not query:
         return _failed("沒有給關鍵字")
-    report = await web_search_svc.search(query)
+    report = await web_search_svc.search(query, question=ctx.question, private_texts=ctx.private_texts)
     if report["blocked"]:
         return ToolResult(text=f"沒有完成：{report['reason']}", summary=f"連外網被擋下：{report['reason']}", ok=False, web_report=report)
     if not report["results"]:

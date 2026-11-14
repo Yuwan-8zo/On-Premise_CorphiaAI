@@ -26,6 +26,8 @@ DEFAULT_MODE = "auto"
 QUERY_MAX_CHARS = 60
 # 超過這個長度多半是貼上來的文件或程式，不是在問即時資訊
 QUESTION_MAX_CHARS = 400
+# 濃縮失敗時，問題不超過這個長度才直接拿來當關鍵字；更長的不送（寧可這次不查）
+FALLBACK_MAX_CHARS = 30
 
 
 def mode_from_settings(tenant_settings: Optional[dict]) -> str:
@@ -142,9 +144,11 @@ def clean_query(text: str) -> str:
 async def condense_query(llm_service, question: str, model_name: Optional[str] = None) -> str:
     """
     把整句問題濃縮成搜尋關鍵字（請本機模型做，格式用語法限制）。
-    模型沒回、回空的、或回得比原句還長 → 改用規則整理原句，不會因此查不了。
+    模型沒回、回空的、或回得比原句還長：問題本身很短（本來就像關鍵字）才用整理過的原句；
+    長的問題寧可這次不查（回空字串）——整句送出去會帶太多不需要離開主機的內容。
     """
-    fallback = clean_query(question)
+    cleaned = clean_query(question)
+    fallback = cleaned if len(" ".join((question or "").split())) <= FALLBACK_MAX_CHARS else ""
     try:
         result = await llm_service.generate_structured(
             _QUERY_PROMPT.format(question=question[:QUESTION_MAX_CHARS]),

@@ -223,3 +223,68 @@ def test_format_results_empty_when_no_results():
         "screen": {"injection": [], "dlp": [], "pii": 0},
     }
     assert ws.format_results_for_prompt(report) == ""
+
+
+# ── 關鍵字送出前的把關（個資、夾帶公司文件內容）：擋下時不能發出任何請求 ─────────────────────
+class TestOutboundGate:
+    @pytest.fixture(autouse=True)
+    def _on(self, monkeypatch):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "enable_web_search", True)
+        self.sent = []
+
+        class Boom:
+            def __init__(inner, *a, **k):
+                pass
+
+            async def __aenter__(inner):
+                return inner
+
+            async def __aexit__(inner, *a):
+                return False
+
+            async def get(inner, url, **kwargs):
+                self.sent.append(kwargs.get("params"))
+                raise AssertionError("不應該發出請求")
+
+        import app.services.web_search as module
+        monkeypatch.setattr(module.httpx, "AsyncClient", Boom)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("query", ["王小明 A123456789 保單", "聯絡 0912-345-678", "ａｍｙ＠ｇｍａｉｌ．ｃｏｍ 是誰", "身分證 A 1 2 3 4 5 6 7 8 9"])
+    async def test_query_with_personal_data_is_not_sent(self, query):
+        from app.services.web_search import search
+        report = await search(query)
+        assert report["blocked"] and report["results"] == []
+        assert "個人資料" in report["reason"]
+        assert self.sent == []
+
+    @pytest.mark.asyncio
+    async def test_query_carrying_document_text_is_not_sent(self):
+        from app.services.web_search import search
+        doc = "本公司2026年第三季營收為新臺幣三億二千萬元，毛利率百分之四十一。"
+        report = await search("第三季營收為新臺幣三億二千萬元 同業比較", question="幫我上網查同業的狀況", private_texts=[doc])
+        assert report["blocked"] and "公司文件" in report["reason"]
+        assert self.sent == []
+
+    def test_words_the_user_typed_are_not_a_leak(self):
+        from app.services.web_search import leaked_fragment
+        doc = "本公司2026年第三季營收為新臺幣三億二千萬元"
+        assert leaked_fragment("第三季營收為新臺幣 同業", [doc], "第三季營收為新臺幣多少，和同業比如何") == ""
+        assert leaked_fragment("台灣 匯率 今天", [doc], "今天匯率多少") == ""
+        assert leaked_fragment("quarterly report", ["the quarterly report shows growth"], "x") == ""  # 常見英文詞不算
+
+
+def test_long_question_is_not_sent_whole_when_condensing_fails():
+    """濃縮失敗：短的問題可以直接當關鍵字，長的寧可不查"""
+    import asyncio
+
+    from app.services.web_search_policy import condense_query
+
+    class Broken:
+        async def generate_structured(self, *a, **k):
+            raise RuntimeError("model down")
+
+    long_question = "我們公司下個月要和日本客戶簽新的供貨合約，想請你幫我查一下目前日圓兌新臺幣的匯率大概是多少"
+    assert asyncio.run(condense_query(Broken(), long_question)) == ""
+    assert asyncio.run(condense_query(Broken(), "今天日圓匯率")) == "今天日圓匯率"

@@ -17,6 +17,9 @@ from typing import TypedDict
 logger = logging.getLogger(__name__)
 
 
+from app.services.text_normalize import original_span, variants
+
+
 class MaskResult(TypedDict):
     """遮罩結果"""
     masked_text: str
@@ -105,26 +108,30 @@ def mask_pii(text: str) -> MaskResult:
     mask_map: list[dict] = []
 
     # 先在原文上收集所有樣式的匹配
-    all_matches: list[tuple[str, str, re.Match[str]]] = []
+    # 除了原文，也在「正規化後的版本」上比對（全形英數字、零寬字元、拆字），再換算回原文的位置：
+    # 「Ａ１２３４５６７８９」「A 1 2 3 4 5 6 7 8 9」這類變形寫法一樣遮得到，而且遮的是原文那一段
+    all_matches: list[tuple[str, str, int, int]] = []
 
-    for pii_type, pattern, label in _PATTERNS:
-        for match in pattern.finditer(text):
-            all_matches.append((pii_type, label, match))
+    for variant, index in variants(text):
+        for pii_type, pattern, label in _PATTERNS:
+            for match in pattern.finditer(variant):
+                start, end = original_span(index, match.start(), match.end())
+                all_matches.append((pii_type, label, start, end))
 
     # 依位置排序，把互相重疊的匹配合併成一段（例如金鑰後面緊接 @網域、身分證出現在電子郵件裡）。
     # 不合併的話，各自照原本的位置替換會互相踩到：吃掉旁邊的字，或留下半截沒遮的原文。
     # 合併後整段遮掉，標示用其中最長那一筆的種類。
-    all_matches.sort(key=lambda x: (x[2].start(), -x[2].end()))
+    all_matches.sort(key=lambda x: (x[2], -x[3]))
     groups: list[dict] = []
-    for pii_type, label, match in all_matches:
-        length = match.end() - match.start()
-        if groups and match.start() < groups[-1]["end"]:
+    for pii_type, label, start, end in all_matches:
+        length = end - start
+        if groups and start < groups[-1]["end"]:
             g = groups[-1]
-            g["end"] = max(g["end"], match.end())
+            g["end"] = max(g["end"], end)
             if length > g["length"]:
                 g.update(type=pii_type, label=label, length=length)
         else:
-            groups.append({"start": match.start(), "end": match.end(), "type": pii_type, "label": label, "length": length})
+            groups.append({"start": start, "end": end, "type": pii_type, "label": label, "length": length})
 
     # 由前往後一次組出遮罩後的文字
     pieces: list[str] = []

@@ -51,11 +51,27 @@ def check_dlp(text: str) -> DLPCheckResult:
     # 例如「最高機密」vs「最ⓗ機密」（圈字）、ＡＢＣ vs ABC、Ⅴ vs V
     # 沒 normalize 攻擊者用全形字就能繞過 DLP 黑名單
     import unicodedata
-    normalized = unicodedata.normalize("NFKC", text).lower()
+
+    from app.services.text_normalize import variants
+
+    # 再加上拿掉零寬字元、把拆開的字接回去的版本：「最​高機密」「機 密」這類寫法一樣比對得到
+    candidates = {unicodedata.normalize("NFKC", text).lower()}
+    for variant, _ in variants(text):
+        candidates.add(unicodedata.normalize("NFKC", variant).lower())
     matched = [
         term for term in terms
-        if term and unicodedata.normalize("NFKC", term).lower() in normalized
+        if term and any(unicodedata.normalize("NFKC", term).lower() in candidate for candidate in candidates)
     ]
+    # 整句被拆過字：接回去之後單字間的空格也不見了，列管字詞也拿掉空格再比（top secret → topsecret）
+    from app.services.text_normalize import reassembled
+
+    joined = reassembled(text)
+    if joined is not None:
+        compact = "".join(unicodedata.normalize("NFKC", joined).lower().split())
+        matched += [
+            term for term in terms
+            if term and term not in matched and "".join(unicodedata.normalize("NFKC", term).lower().split()) in compact
+        ]
 
     if matched:
         logger.warning(f"[DLP] 偵測到黑名單字詞，請求已攔阻: {matched}")

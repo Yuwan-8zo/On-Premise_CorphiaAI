@@ -26,7 +26,7 @@ def _names(ctx) -> list[str]:
     return [t["function"]["name"] for t in tools.available_tools(ctx)]
 
 
-async def _no_hits(_query):
+async def _no_hits(_query, **_gate):
     return []
 
 
@@ -91,7 +91,7 @@ async def test_current_time():
 
 
 async def test_search_documents_returns_screened_passages():
-    async def search(query):
+    async def search(query, **_gate):
         assert query == "特休"
         return [
             {"chunk_id": "c1", "content": "到職滿一年有 7 天特別休假。", "score": 0.9, "metadata": {"filename": "員工手冊.pdf", "document_id": "d1"}},
@@ -120,7 +120,7 @@ async def test_long_results_are_clipped():
 async def test_web_search_goes_through_the_single_exit(monkeypatch):
     sent = []
 
-    async def fake_search(query):
+    async def fake_search(query, **_gate):
         sent.append(query)
         return {"blocked": False, "reason": "", "query": query, "screen": {},
                 "results": [{"title": "中央氣象署", "url": "https://example.test/w", "content": "晴"}]}
@@ -132,7 +132,7 @@ async def test_web_search_goes_through_the_single_exit(monkeypatch):
 
 
 async def test_blocked_web_search_is_reported_not_hidden(monkeypatch):
-    async def blocked(query):
+    async def blocked(query, **_gate):
         return {"blocked": True, "reason": "命中列管字詞", "query": query, "results": [], "screen": {}}
 
     monkeypatch.setattr(web_search_svc, "search", blocked)
@@ -264,7 +264,7 @@ async def _research(svc, conv, text) -> list[dict]:
 
 
 def _fake_web(monkeypatch, mode: str, calls: list):
-    async def fake_search(query):
+    async def fake_search(query, **_gate):
         calls.append(query)
         return {"blocked": False, "reason": "", "query": query, "screen": {},
                 "results": [{"title": f"結果 {query}", "url": f"https://example.test/{len(calls)}", "content": "內容"}]}

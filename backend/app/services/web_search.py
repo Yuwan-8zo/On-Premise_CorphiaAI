@@ -18,11 +18,14 @@ from __future__ import annotations
 import logging
 from typing import TypedDict
 
+from typing import Sequence
+
 import httpx
 
 from app.core.config import settings
 import app.services.context_guard as context_guard
 from app.services.dlp_service import check_dlp
+from app.services.pii_masking_service import mask_pii
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +44,41 @@ class WebSearchReport(TypedDict):
     screen: dict
 
 
-async def search(query: str) -> WebSearchReport:
+# 關鍵字裡有連續這麼多個字和公司文件一模一樣（而且使用者自己的問題裡沒有）＝把文件內容帶出去了。
+# 中文 6 個字已經很具體；英文單字常見（report、system），要長一點才算
+LEAK_MIN_CJK = 6
+LEAK_MIN_LATIN = 24
+
+
+def leaked_fragment(query: str, private_texts: Sequence[str], question: str = "") -> str:
+    """
+    關鍵字有沒有夾帶公司內部資料（檢索到的文件片段、附加的資料夾內容）裡的原文。
+    回傳被帶出來的那一段；沒有回空字串。使用者自己在問題裡打的字不算（那是他要查的東西）。
+    """
+    q = " ".join((query or "").split()).lower()
+    own = " ".join((question or "").split()).lower()
+    haystacks = [" ".join(t.split()).lower() for t in private_texts if t]
+    if not q or not haystacks:
+        return ""
+    for size in range(len(q), LEAK_MIN_CJK - 1, -1):
+        for start in range(0, len(q) - size + 1):
+            piece = q[start:start + size]
+            has_cjk = any("一" <= ch <= "鿿" for ch in piece)
+            if size < (LEAK_MIN_CJK if has_cjk else LEAK_MIN_LATIN) or not piece.strip():
+                continue
+            if piece in own:
+                continue
+            if any(piece in h for h in haystacks):
+                return piece
+    return ""
+
+
+async def search(query: str, *, question: str = "", private_texts: Sequence[str] = ()) -> WebSearchReport:
     """
     對外搜尋（唯一出口）。
+
+    question：使用者原本的問題；private_texts：這一題用到的公司內部資料（檢索片段、附加的資料夾內容）。
+    兩者只用來在送出前檢查關鍵字有沒有把內部資料帶出去，本身不會送出。
 
     Returns:
         WebSearchReport：blocked=True 時 results 一定是空清單，呼叫端不該再往下用。
@@ -63,6 +98,16 @@ async def search(query: str) -> WebSearchReport:
     if dlp_result["blocked"]:
         logger.warning("[對外搜尋] 關鍵字命中 DLP 黑名單，已攔阻，未發出任何請求: %s", dlp_result["matched_terms"])
         return {**empty, "blocked": True, "reason": dlp_result["reason"]}
+    # 關鍵字裡不能有個資（身分證、電話、信箱、金鑰…，含全形與拆字的寫法）：有就整個不送，不是遮掉再送
+    pii = mask_pii(query)
+    if pii["has_pii"]:
+        logger.warning("[對外搜尋] 關鍵字含個人資料，已攔阻，未發出任何請求: %s", [m["type"] for m in pii["mask_map"]])
+        return {**empty, "blocked": True, "reason": "搜尋關鍵字含個人資料，已攔阻，沒有連到外面。"}
+    # 關鍵字不能夾帶公司文件裡的原文（模型看過文件後自己下關鍵字時可能發生）
+    fragment = leaked_fragment(query, private_texts, question)
+    if fragment:
+        logger.warning("[對外搜尋] 關鍵字夾帶內部文件內容，已攔阻，未發出任何請求（%d 個字）", len(fragment))
+        return {**empty, "blocked": True, "reason": "搜尋關鍵字夾帶公司文件的內容，已攔阻，沒有連到外面。"}
 
     try:
         async with httpx.AsyncClient(timeout=settings.web_search_timeout_sec) as client:

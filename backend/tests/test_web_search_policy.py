@@ -126,7 +126,7 @@ def search_calls(monkeypatch):
     """假的對外搜尋：記下送出去的關鍵字，回一筆結果"""
     calls: list[str] = []
 
-    async def fake_search(query: str):
+    async def fake_search(query: str, **_gate):
         calls.append(query)
         return {
             "blocked": False, "reason": "", "query": query,
@@ -199,7 +199,7 @@ async def test_project_folder_conversation_does_not_search_automatically(db_sess
 
 
 async def test_blocked_search_is_recorded_as_not_used(db_session, test_user, monkeypatch):
-    async def blocked(query: str):
+    async def blocked(query: str, **_gate):
         return {"blocked": True, "reason": "命中列管字詞", "query": query, "results": [], "screen": {}}
 
     monkeypatch.setattr(settings, "enable_web_search", True)
