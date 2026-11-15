@@ -241,20 +241,25 @@ export function buildStreamDispatcher(conversationId: string) {
                 break
 
             // DLP 黑名單命中 → 後端已攔阻，不會有回答
-            case 'dlp_block':
+            case 'dlp_block': {
                 finish()
-                store().appendToThread(conversationId, i18n.t('ui.chat.dlpBlocked', { n: data.matched_terms_count || 1 }))
+                // 列管字詞擋的 → 說幾個字詞；語意檢查擋的（字詞數 0）→ 說是判斷成索取機密，不能講成字詞
+                const termCount = Number(data.matched_terms_count) || 0
+                store().appendToThread(conversationId, termCount > 0
+                    ? i18n.t('ui.chat.dlpBlocked', { n: termCount })
+                    : i18n.t('ui.chat.dlpBlockedIntent'))
                 if (isCurrent()) {
                     store().markLastExchangeBlocked()
                     store().addSecurityWarning({
                         type: 'dlp',
-                        message: i18n.t('ui.chat.dlpWarn'),
-                        data: { matched_terms_count: data.matched_terms_count || 0 },
+                        message: i18n.t(termCount > 0 ? 'ui.chat.dlpWarn' : 'ui.chat.dlpWarnIntent'),
+                        data: { matched_terms_count: termCount },
                         timestamp: Date.now(),
                     })
                 }
-                useToastStore.getState().add(i18n.t('ui.chat.dlpToast'), 'error', SECURITY_TOAST_MS)
+                useToastStore.getState().add(i18n.t(termCount > 0 ? 'ui.chat.dlpToast' : 'ui.chat.dlpToastIntent'), 'error', SECURITY_TOAST_MS)
                 break
+            }
 
             // AI 自己動手做事：開始一步 → 顯示正在做什麼；做完 → 記到這則回答的步驟清單
             case 'tool_step':

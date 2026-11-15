@@ -105,6 +105,17 @@ export function useChatLogic() {
             })
     }, [setConversations])
 
+    // 側欄切換「一般／專案」：開著的對話不屬於要切去的模式就回到空白畫面
+    // （不然畫面還是一般聊天，送出卻變成專案問題，兩邊混在一起）
+    const switchChatMode = useCallback((mode: ChatMode) => {
+        setChatMode(mode)
+        const current = useChatStore.getState().currentConversation
+        if (current && Boolean(current.settings?.isProject) !== (mode === 'project')) {
+            setCurrentConversation(null)
+            setSelectedFolder(null)
+        }
+    }, [setCurrentConversation, setSelectedFolder])
+
     const selectConversation = useCallback(async (conversation: Conversation | null) => {
         if (!conversation) return
         const state = useChatStore.getState()
@@ -470,7 +481,7 @@ export function useChatLogic() {
             conversations,
             currentConversationId: currentConversation?.id ?? null,
             chatMode,
-            setChatMode,
+            setChatMode: switchChatMode,
             selectedFolder,
             expandedFolders: folders.expandedFolders,
             setExpandedFolders: folders.setExpandedFolders,

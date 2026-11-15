@@ -1127,7 +1127,10 @@ export default {
             injectionBlocked: '**High-risk prompt injection blocked**\n\nThe request was not sent to the AI model, system instructions cannot be overridden, and the event was recorded in the audit log.',
             dlpBlocked: '**This message was blocked by the data loss prevention policy**\n\nIt contains {{n}} restricted term(s). The event was recorded in the audit log and nothing was sent to the AI model.',
             dlpWarn: 'The message contains restricted terms and was blocked by policy',
+            dlpBlockedIntent: '**This message was blocked by the data loss prevention policy**\n\nThe system judged that it asks for confidential data. The event was logged and nothing was sent to the AI model. If this is a mistake, rephrase the question or ask an administrator to review it.',
+            dlpWarnIntent: 'The message was judged to ask for confidential data and was blocked by the data loss prevention policy',
             dlpToast: 'The message contained restricted terms and was blocked',
+            dlpToastIntent: 'Blocked by the data loss prevention policy: the message was judged to ask for confidential data',
             thinking: 'Thinking',
             thoughtProcess: 'Thought process',
             run: {
