@@ -59,6 +59,8 @@ export function useDismiss(
             // 上面還有別的層開著：這次 Esc 是它的
             if (openLayers[openLayers.length - 1] !== layer) return
             latest.current.onClose()
+            // 這次 Esc 用掉了：下面的層（例如右側面板）不要跟著關
+            e.preventDefault()
             if (opener?.isConnected) requestAnimationFrame(() => opener.focus({ preventScroll: true }))
         }
         if (outside) document.addEventListener(event, onDown, capture)

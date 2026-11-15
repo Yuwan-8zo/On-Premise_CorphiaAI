@@ -180,6 +180,7 @@ export default {
         placeholder: 'Type a message...',
         noConversations: 'No conversations yet',
         noChats: 'No recent chats',
+        loadChatsFailed: 'Could not load your chats. Please refresh the page.',
         instructionsTitle: 'Project instructions',
         instructionsPlaceholder: 'e.g. Always answer in bullet points; cite the clause number when quoting.',
         instructionsHint: 'Sent to the AI with every question in this project ({{n}} / {{max}})',
@@ -283,6 +284,8 @@ export default {
         images: { button: 'Attach images', chip: '{{n}} image(s)', remove: 'Remove attached images', alt: 'Attached image {{n}}', tooMany: 'Up to {{max}} images per message', tooBig: 'Image too large (max {{max}} MB each)', skipped: 'These files are not readable images and were not attached: {{names}}', unavailable: 'This host has no image-reading model right now, so the AI cannot see your images' },
         research: { button: 'Deep research', chip: 'Deep research for this question (more lookups, takes longer)', remove: 'No deep research for this question' },
         attachFiles: {
+            sentLabel: 'Files attached to this message',
+            dropHint: 'Drop to attach to this message',
             button: 'Attach files',
             attached: 'Attached {{n}} file(s)',
             attachedSkipped: 'Attached {{n}} file(s); {{skipped}} skipped',
@@ -291,6 +294,10 @@ export default {
             tooMany: 'You can attach up to {{max}} files at a time',
             tooBig: 'The files exceed {{max}} MB in total; please pick fewer',
             noConversation: 'Could not create the conversation; please try again',
+        },
+        actionGroups: {
+            attach: 'Attach to this message',
+            tools: 'Tools',
         },
         actionUpload: 'Upload a document to the project',
         actionReadOffice: 'Read from {{app}}',
@@ -435,9 +442,9 @@ export default {
         desktopSub: 'Windows · version {{version}} · {{size}}',
         desktopNone: 'No installer on the server yet. Please ask your administrator.',
         desktopDownload: 'Download',
-        desktopDownloadAria: 'Download the desktop app installer',
+        desktopDownloadAria: 'Download the desktop app package for staff',
         desktopInstalled: 'Installed version',
-        desktopHint: 'The desktop app can write replies into Word, Excel and PowerPoint on this computer and read the open document for questions. A notice appears at the bottom right when a new version is available. On phones and tablets, just use the browser.',
+        desktopHint: 'This is the staff package: unzip it and open the app, and it connects to this host automatically without typing an address, so you can hand it to other company computers. The desktop app can write replies into Word, Excel and PowerPoint on this computer and read the open document for questions. A notice appears at the bottom right when a new version is available. On phones and tablets, just use the browser.',
     },
 
     // Security Features (A1/A2)
@@ -1154,7 +1161,7 @@ export default {
                     other: 'Working…',
                 },
             },
-            sidePanel: { open: 'Open at the side', label: 'Side panel', pageTitle: 'Result', runTitle: 'Run result', close: 'Close panel' },
+            sidePanel: { open: 'Open at the side', full: 'Full screen', exitFull: 'Exit full screen', label: 'Side panel', pageTitle: 'Result', runTitle: 'Run result', close: 'Close panel', files: 'Files in this chat', allFiles: 'All files', previews: 'Previews', runs: 'Run results', aiFiles: 'Files made by AI', yourFiles: 'Files you attached', yourFilesNote: 'The original is kept only in this browser (the server does not keep it); click to view', notCached: 'This browser has no copy of the file (it is kept only in the browser it was attached from)', empty: 'No files in this chat yet', pageN: 'Page {{n}}', runN: 'Run result {{n}}', fromUpload: 'You attached', fromAI: 'Written by AI' },
             codeFile: { preview: 'Preview', showCode: 'Show code', previewTitle: 'Preview (sandboxed, no network access)', save: 'Save', download: 'Download', saved: 'Saved to {{path}}', savedBackup: 'Saved to {{path}} (the previous file was backed up)', saveReply: 'Save as file' },
             unshare: 'Stop sharing',
             unshared: 'Sharing stopped. Only you can see this chat now',

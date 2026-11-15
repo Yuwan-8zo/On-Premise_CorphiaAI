@@ -2,7 +2,9 @@ import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
-import { Check, ChevronDown, Edit2, Folder, Lock, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import { Check, ChevronDown, Edit2, Folder, Lock, PanelRight, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import { useSidePanelStore } from '@/store/sidePanelStore'
+import Tooltip from '@/components/ui/Tooltip'
 import { SidebarIcon } from './ChatIcons'
 import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
@@ -137,7 +139,7 @@ export default function ChatHeader({
                                 <motion.div
                                     key="model-menu"
                                     {...popIn}
-                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
@@ -209,6 +211,9 @@ export default function ChatHeader({
                     </AnimatePresence>
                 </div>
 
+                {/* 旁邊面板的開關：對話裡有可以放大看的成品（HTML／SVG、執行結果、附加的 HTML）才出現 */}
+                <SidePanelToggle />
+
                 {/* 右側：玻璃選單鈕（規範右下選單的邏輯：點一下展開圖示；長按或直接往下滑才出現文字與放大鏡） */}
                 <GlassDock
                     aria-label={t('ui.header.convOptions')}
@@ -227,5 +232,27 @@ export default function ChatHeader({
                 />
             </div>
         </header>
+    )
+}
+
+/** 右上角的面板開關（一直都在，位置固定不會忽隱忽現）：開著就關；關著就打開「這個對話的檔案」清單，沒有檔案時清單會說明 */
+function SidePanelToggle() {
+    const { t } = useTranslation()
+    const open = useSidePanelStore((s) => s.open)
+    const showList = useSidePanelStore((s) => s.showList)
+    const close = useSidePanelStore((s) => s.close)
+    const label = t(open ? 'ui.chat.sidePanel.close' : 'ui.chat.sidePanel.files')
+    return (
+        <Tooltip label={label}>
+            <button
+                type="button"
+                onClick={() => (open ? close() : showList())}
+                aria-label={label}
+                aria-pressed={open}
+                className={`btn-icon !w-[var(--dock-btn)] !h-[var(--dock-btn)] [--R:calc(var(--dock-btn)/2)] shrink-0 ${open ? 'is-current text-accent' : 'text-text-secondary'}`}
+            >
+                <PanelRight className="w-[var(--sz-20)] h-[var(--sz-20)]" />
+            </button>
+        </Tooltip>
     )
 }

@@ -27,6 +27,8 @@ interface RAGDebugInfo {
 interface ChatState {
     // 狀態
     conversations: Conversation[]
+    /** 對話清單載入狀態：還沒載完不能顯示「尚無聊天」（會被當成對話不見了） */
+    conversationsStatus: 'loading' | 'ready' | 'failed'
     currentConversation: Conversation | null
     messages: Message[]
     isStreaming: boolean
@@ -44,6 +46,7 @@ interface ChatState {
 
     // 動作
     setConversations: (conversations: Conversation[]) => void
+    setConversationsFailed: () => void
     addConversation: (conversation: Conversation) => void
     updateConversation: (id: string, data: Partial<Conversation>) => void
     deleteConversation: (id: string) => void
@@ -104,6 +107,7 @@ const appendLastReasoning = (content: string) => (messages: Message[]) => {
 export const useChatStore = create<ChatState>()((set) => ({
     // 初始狀態
     conversations: [],
+    conversationsStatus: 'loading',
     currentConversation: null,
     messages: [],
     isStreaming: false,
@@ -115,7 +119,8 @@ export const useChatStore = create<ChatState>()((set) => ({
     ragDebug: null,
 
     // 設定對話列表
-    setConversations: (conversations) => set({ conversations }),
+    setConversations: (conversations) => set({ conversations, conversationsStatus: 'ready' }),
+    setConversationsFailed: () => set({ conversationsStatus: 'failed' }),
 
     // 新增對話
     addConversation: (conversation) =>

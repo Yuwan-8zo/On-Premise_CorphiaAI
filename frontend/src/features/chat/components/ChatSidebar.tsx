@@ -146,6 +146,7 @@ export default function ChatSidebar({
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
     // 哪些對話正在生成（背景中的也算）→ 清單上顯示小圓點
     const streamingIds = useChatStore((s) => s.streamingIds)
+    const conversationsStatus = useChatStore((s) => s.conversationsStatus)
 
     const renderRow = (conv: Conversation) => (
         <ConversationRow
@@ -336,6 +337,9 @@ export default function ChatSidebar({
                                         if (searchFailed) return note(t('chat.searchFailed'))
                                         return found.length === 0 ? note(t('chat.searchEmpty')) : found.map(renderRow)
                                     }
+                                    // 清單還在載：先留白（不閃「尚無聊天」）；載不到就說載不到
+                                    if (conversationsStatus === 'loading') return null
+                                    if (conversationsStatus === 'failed') return note(t('chat.loadChatsFailed'))
                                     const filtered = conversations.filter(c => !c.settings?.isProject)
                                     return filtered.length === 0 ? note(t('chat.noChats')) : filtered.map(renderRow)
                                 })()}

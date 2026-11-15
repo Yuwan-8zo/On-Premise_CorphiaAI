@@ -22,8 +22,9 @@ export const SendDotBtn = ({ disabled }: { disabled?: boolean }) => (
 /** 停止生成按鈕（Apple 樣式：灰色毛玻璃圓＋實心方塊） */
 export const StopIcon = () => (
     <div className="w-[var(--field-btn,var(--sz-38))] h-[var(--field-btn,var(--sz-38))] rounded-full bg-[var(--glass-ctl)] text-text-primary flex items-center justify-center transition-colors">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-[calc(var(--sz-14)*var(--field-bk,1))] h-[calc(var(--sz-14)*var(--field-bk,1))]">
-            <rect x="5" y="5" width="14" height="14" rx="3" />
+        {/* 和送出鍵的箭頭同一個圖示框（sz-18），方塊佔框的 2/3，看起來和箭頭一樣大 */}
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-[calc(var(--sz-18)*var(--field-bk,1))] h-[calc(var(--sz-18)*var(--field-bk,1))]">
+            <rect x="4" y="4" width="16" height="16" rx="4" />
         </svg>
     </div>
 )

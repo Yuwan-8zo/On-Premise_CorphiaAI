@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 /**
  * MarkdownRenderer 的安全行為（回答顯示在畫面上時的最後一道）
  *
@@ -66,5 +68,20 @@ describe('MarkdownRenderer：連結', () => {
     const { container } = render(<MarkdownRenderer content={'[按我](javascript:alert(1))'} />)
     const href = container.querySelector('a')?.getAttribute('href') || ''
     expect(href.startsWith('javascript:')).toBe(false)
+  })
+
+  it('算式排成公式；單一個 $ 的金額不當公式', () => {
+    const { container } = render(<MarkdownRenderer content={String.raw`鏡片：\[ r = \frac{b}{2} + o \] 價格 $5 和 $6`} />)
+    expect(container.querySelector('.katex')).not.toBeNull()
+    expect(container.textContent).toContain('$5 和 $6')
+    expect(container.textContent).not.toContain('\frac')
+  })
+
+  it('公式的排版和樣式表是同一版（下標才會縮小）', () => {
+    const { container } = render(<MarkdownRenderer content={'$$x_{a}$$'} />)
+    const cls = [...(container.querySelector('.msupsub [class*="size"]')?.classList ?? [])].find((c) => c.includes('sizing'))
+    expect(cls).toBeTruthy()
+    const css = readFileSync(resolve(process.cwd(), 'node_modules/katex/dist/katex.min.css'), 'utf8')
+    expect(css).toContain(`.${cls}.`)
   })
 })

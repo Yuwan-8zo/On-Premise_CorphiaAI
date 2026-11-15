@@ -48,7 +48,7 @@ export function ConversationContextMenu({
                 <motion.div 
                     ref={menuRef}
                     {...menuPop}
-                    className="fixed z-[100] origin-top-left w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
+                    className="fixed z-[100] origin-top-left w-max min-w-[var(--sz-190)] paper paper-solid !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
                     style={{ left: activeMenu.x, top: activeMenu.y }}
                 >
                     <LensMenu className="">

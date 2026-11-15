@@ -11,6 +11,12 @@
 /** 預覽文件自己的內容安全政策：預設全部禁止，只開放寫在文件裡的程式、樣式，和內嵌的圖片／字型 */
 export const PREVIEW_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:"
 
+/**
+ * 預覽框本身的樣子：淺色、白底。網頁沒設底色時看到白底；網頁宣告深色時，瀏覽器會自己鋪上深色底
+ * （預覽框是淺色、網頁是深色，兩邊不一樣時瀏覽器以網頁為準）——系統本身是深色，不設的話預覽框會跟著變深色，淺色網頁就看不清楚
+ */
+export const PREVIEW_FRAME_STYLE = { colorScheme: 'light', background: '#fff' } as const
+
 /** 預覽框的沙盒權限：只允許執行程式（互動才會動），其他都不給 */
 export const PREVIEW_SANDBOX = 'allow-scripts'
 
@@ -29,9 +35,10 @@ export function buildPreviewDoc(code: string): string {
     const policy = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">`
     const isSvg = code.trimStart().toLowerCase().startsWith('<svg')
     const base = '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-    // SVG：置中顯示；HTML：原樣放進去（瀏覽器會自己整理成完整的文件）
+    // SVG：置中顯示；HTML：原樣放進去，不另外加底色和字色——網頁自己設的底色要能填滿整頁，
+    // 宣告深色（color-scheme: dark）的網頁也要照它的深底顯示（白底由預覽框本身提供，見 PREVIEW_FRAME_STYLE）
     const style = isSvg
         ? '<style>html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#fff}svg{max-width:100%;max-height:100%}</style>'
-        : '<style>html{background:#fff;color:#000}</style>'
+        : ''
     return `<!doctype html>${policy}${base}${style}${code}`
 }

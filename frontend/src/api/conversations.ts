@@ -176,6 +176,7 @@ function mapMessage(data: Record<string, unknown>): Message {
         webSearch: (data.web_search as Message['webSearch'] | null) ?? undefined,
         steps: (data.steps as Message['steps'] | null) ?? undefined,
         images: (data.images as string[] | null)?.length ? (data.images as string[]) : undefined,
+        files: (data.files as string[] | null)?.length ? (data.files as string[]) : undefined,
         versionIds: (data.version_ids as string[] | undefined)?.length ? (data.version_ids as string[]) : undefined,
         createdAt: data.created_at as string,
     }

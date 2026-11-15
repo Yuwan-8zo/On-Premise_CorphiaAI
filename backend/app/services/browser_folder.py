@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
+import re
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -50,6 +52,23 @@ class _Store:
 
 
 _store = _Store()
+
+# 程式碼和網頁原始檔：原封不動交給 AI（要改網頁、改程式時才看得到 <style>、<script> 和完整原始碼），
+# 不像知識庫那樣轉成純文字。副檔名 → 給 AI 看的語言標記
+CODE_EXTS = {
+    ".html": "html", ".htm": "html", ".css": "css", ".js": "javascript", ".mjs": "javascript",
+    ".ts": "typescript", ".tsx": "tsx", ".jsx": "jsx", ".json": "json", ".py": "python", ".xml": "xml", ".svg": "svg",
+}
+
+
+def _decode_source(data: bytes) -> str:
+    """原始碼檔：UTF-8（含 BOM）讀不出來就用 Big5 再試；都不行就丟例外（呼叫端當成讀不出內容）"""
+    for enc in ("utf-8-sig", "big5"):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError("文字編碼無法辨識")
 
 def _write_temp(data: bytes, ext: str) -> Path:
     """把上傳內容寫成暫存檔（給既有的解析器讀；呼叫端用完會刪掉）"""
@@ -91,6 +110,18 @@ async def attach(conversation_id: str, files: list[tuple[str, bytes]]) -> dict:
 
     for name, data in files:
         ext = Path(name).suffix.lower()
+        if ext in CODE_EXTS:
+            try:
+                source = _decode_source(data).strip()
+            except ValueError:
+                skipped.append({"name": name, "reason": "讀不出內容（檔案可能壞了或格式特殊）"})
+                continue
+            if not source:
+                skipped.append({"name": name, "reason": "內容是空的"})
+                continue
+            fence = f"```{CODE_EXTS[ext]}"
+            chunks.append({"chunk_id": name, "content": f"{fence}\n{source[:per_file_max]}\n```", "metadata": {"filename": name}})
+            continue
         if ext not in text_extract.SUPPORTED_EXTS:
             skipped.append({"name": name, "reason": "不支援的檔案格式"})
             continue
@@ -143,6 +174,142 @@ async def attach(conversation_id: str, files: list[tuple[str, bytes]]) -> dict:
 
 
 TRUNCATED_NOTE = "\n[……後面的內容超過模型一次能讀的長度，已省略；需要的話請分批附上或縮小資料夾……]"
+
+# 依問題挑段落：每段多長（字）、挑中的段落前後各多帶幾段（上下文）
+SELECT_PIECE_CHARS = 1200
+SELECT_NEIGHBORS = 1
+# 挑中的段落用到 CSS 變數（var(--x)）時，另外附上它定義的那一行；最多占這一題長度的比例、每行最多幾字
+SELECT_VALUES_SHARE = 0.15
+SELECT_VALUE_LINE_CHARS = 300
+VALUES_NOTE = "（上面段落用到的設定值，取自檔案裡的定義）"
+_VAR_REF = re.compile(r"--[A-Za-z0-9_-]+")
+_VAR_DEF = re.compile(r"(--[A-Za-z0-9_-]+)\s*:")
+SELECTED_NOTE = "（檔案太長，以下是依這一題挑出的相關段落，依原本順序排列；沒列出的部分這次沒有提供）"
+_FILE_HEAD = re.compile(r"^【(.+)】$")
+_WORD = re.compile(r"[A-Za-z][A-Za-z0-9_\-]{1,}")
+_CJK = re.compile(r"[\u4e00-\u9fff]+")
+
+
+# 問的說法和檔案的寫法常常不一樣（中文問、程式碼是英文；問「尺寸」、檔案寫「寬、高」）：常用的介面與文件用語補上同義詞
+_SYNONYMS = {
+    "尺寸": ["寬", "高", "大小", "size", "width", "height"], "大小": ["寬", "高", "size"], "寬度": ["寬", "width"], "高度": ["高", "height"],
+    "放大鏡": ["lens", "鏡片"], "按鈕": ["button", "btn"], "顏色": ["color", "色"], "配色": ["color", "色"], "圓角": ["radius"],
+    "字型": ["font"], "字體": ["font"], "間距": ["gap", "margin", "padding"], "動畫": ["animation", "transition"],
+    "陰影": ["shadow"], "背景": ["background"], "選單": ["menu"], "對話框": ["dialog"], "輸入框": ["input"], "時間": ["duration"],
+}
+
+
+def _terms(question: str) -> list[str]:
+    """問題裡用來比對的詞：英數字詞（小寫）＋中文兩字一組＋常用同義詞"""
+    words = [w.lower() for w in _WORD.findall(question)]
+    grams = [run[i:i + 2] for run in _CJK.findall(question) for i in range(len(run) - 1)]
+    extra = [syn.lower() for key, syns in _SYNONYMS.items() if key in question for syn in syns]
+    return list(dict.fromkeys(words + grams + extra))
+
+
+def _pieces(text: str) -> list[tuple[str, str]]:
+    """切成（檔名, 段落）：照行切、每段約 SELECT_PIECE_CHARS 字；遇到「【檔名】」換檔"""
+    out: list[tuple[str, str]] = []
+    name, buf, size = "", [], 0
+    for line in text.split("\n"):
+        head = _FILE_HEAD.match(line)
+        if head:
+            if buf:
+                out.append((name, "\n".join(buf)))
+            name, buf, size = head.group(1), [], 0
+            continue
+        while len(line) > SELECT_PIECE_CHARS:  # 一行就很長（壓縮過的 CSS／JS）：硬切
+            if buf:
+                out.append((name, "\n".join(buf)))
+                buf, size = [], 0
+            out.append((name, line[:SELECT_PIECE_CHARS]))
+            line = line[SELECT_PIECE_CHARS:]
+        buf.append(line)
+        size += len(line) + 1
+        if size >= SELECT_PIECE_CHARS:
+            out.append((name, "\n".join(buf)))
+            buf, size = [], 0
+    if buf:
+        out.append((name, "\n".join(buf)))
+    return [(n, p) for n, p in out if p.strip()]
+
+
+def select_relevant(text: str, question: str, budget_chars: int) -> tuple[str, bool]:
+    """
+    附件放得進這一題的長度就整份給；放不下時依問題挑段落（不是只給開頭）：
+    切成小段 → 每段依問題裡的詞出現次數計分（越少見的詞分數越高）→ 從高分挑起、連前後各一段一起帶，
+    直到放滿 → 照原本順序排好、標出檔名。回（文字, 有沒有節錄）。問題裡沒有可比對的詞就退回取開頭。
+    """
+    if len(text) <= budget_chars:
+        return text, False
+    pieces = _pieces(text)
+    terms = _terms(question)
+    if not pieces or not terms or budget_chars <= len(SELECTED_NOTE) + 50:
+        return fit_to_budget(text, budget_chars)
+    lowered = [p.lower() for _n, p in pieces]
+    df = {t: sum(1 for p in lowered if t in p) for t in terms}
+    n = len(pieces)
+    weight = {t: math.log((n + 1) / (df[t] + 1)) + 0.1 for t in terms if df[t]}
+    if not weight:
+        return fit_to_budget(text, budget_chars)
+    # 計分：同一段命中「越多種」詞越相關（每個詞最多算兩次，不讓一個到處都有的詞靠次數灌分），再乘上命中種類數
+    def score(p: str) -> float:
+        hit = {t: min(p.count(t), 2) for t in weight if t in p}
+        return sum(c * weight[t] for t, c in hit.items()) * len(hit)
+
+    scores = [score(p) for p in lowered]
+    chosen: set[int] = set()
+    used = len(SELECTED_NOTE) + 2
+    values_budget = int(budget_chars * SELECT_VALUES_SHARE)
+    budget_chars -= values_budget
+    for i in sorted(range(n), key=lambda k: scores[k], reverse=True):
+        if scores[i] <= 0:
+            break
+        for j in range(i - SELECT_NEIGHBORS, i + SELECT_NEIGHBORS + 1):
+            if 0 <= j < n and j not in chosen:
+                cost = len(pieces[j][1]) + len(pieces[j][0]) + 8
+                if used + cost > budget_chars:
+                    continue
+                chosen.add(j)
+                used += cost
+    if not chosen:
+        return fit_to_budget(text, budget_chars)
+    out, last_name, last_idx = [SELECTED_NOTE], None, -2
+    for i in sorted(chosen):
+        name, piece = pieces[i]
+        if name != last_name:
+            out.append(f"【{name}】（節錄）")
+            last_name = name
+        elif i != last_idx + 1:
+            out.append("……")
+        out.append(piece)
+        last_idx = i
+    values = _value_lines(text, [pieces[i][1] for i in sorted(chosen)], values_budget)
+    if values:
+        out += [VALUES_NOTE, *values]
+    return "\n".join(out), True
+
+
+def _value_lines(text: str, chosen: list[str], budget: int) -> list[str]:
+    """挑中的段落引用了、但本身沒寫出數值的 CSS 變數：從整份檔案找出定義那一行（數值才問得到）"""
+    shown = "\n".join(chosen)
+    defined_here = set(_VAR_DEF.findall(shown))
+    wanted = [v for v in dict.fromkeys(_VAR_REF.findall(shown)) if v not in defined_here]
+    if not wanted:
+        return []
+    where: dict[str, str] = {}
+    for line in text.split("\n"):
+        for name in _VAR_DEF.findall(line):
+            where.setdefault(name, line.strip()[:SELECT_VALUE_LINE_CHARS])
+    out: list[str] = []
+    used = len(VALUES_NOTE) + 1
+    for name in wanted:
+        line = where.get(name)
+        if not line or line in out or used + len(line) + 1 > budget:
+            continue
+        out.append(line)
+        used += len(line) + 1
+    return out
 
 
 def fit_to_budget(text: str, budget_chars: int) -> tuple[str, bool]:

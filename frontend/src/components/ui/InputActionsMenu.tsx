@@ -4,6 +4,7 @@
  *
  * 為什麼收成一顆：原本每個功能一顆圖示鈕，桌面版最多會排到五顆，沒有文字、要記哪顆是什麼，輸入框也被擠窄。
  * 選單裡每一項是「圖示＋文字」；會持續生效的項目（checked）右邊打勾，狀態另外用輸入框上方的小標籤顯示。
+ * 項目可以分組（group：同一組放在一起，組和組之間有分隔線和小標題），圖示可以上色（tone：系統色），一眼分得出是哪一類。
  *
  *   <InputActionsMenu label="更多功能" items={[{ key, icon, label, onSelect, checked?, disabled? }]} />
  *
@@ -30,6 +31,10 @@ export interface InputAction {
     /** 開關類的項目：true＝目前開著（右邊打勾） */
     checked?: boolean
     disabled?: boolean
+    /** 分組小標題（相鄰、同一個 group 的項目放在同一組） */
+    group?: string
+    /** 圖示顏色（系統色） */
+    tone?: 'blue' | 'green' | 'orange' | 'purple' | 'teal' | 'yellow'
 }
 
 interface InputActionsMenuProps {
@@ -104,9 +109,15 @@ export default function InputActionsMenu({ label, items, disabled }: InputAction
                             style={{ left: pos.left, bottom: pos.bottom, transformOrigin: 'bottom left' }}
                         >
                             <LensMenu className="flex flex-col gap-0.5">
-                                {items.map((item) => (
+                                {items.map((item, i) => (
+                                    <div key={item.key} className="contents">
+                                    {item.group && item.group !== items[i - 1]?.group && (
+                                        <>
+                                            {i > 0 && <div className="menu-sep" role="separator" />}
+                                            <div className="px-[var(--sp-12)] pt-[var(--sp-6)] pb-[var(--sp-2)] text-[length:var(--fs-12)] font-semibold text-text-secondary" aria-hidden>{item.group}</div>
+                                        </>
+                                    )}
                                     <button
-                                        key={item.key}
                                         type="button"
                                         role={item.checked === undefined ? 'menuitem' : 'menuitemcheckbox'}
                                         aria-checked={item.checked}
@@ -114,10 +125,11 @@ export default function InputActionsMenu({ label, items, disabled }: InputAction
                                         onClick={() => pick(item)}
                                         className="menu-item !justify-start gap-[var(--sp-10)] disabled:opacity-40"
                                     >
-                                        <span className="shrink-0 flex text-text-secondary [&_svg]:w-[var(--sz-18)] [&_svg]:h-[var(--sz-18)]">{item.icon}</span>
+                                        <span className="shrink-0 flex text-text-secondary [&_svg]:w-[var(--sz-18)] [&_svg]:h-[var(--sz-18)]" style={item.tone ? { color: `var(--ink-${item.tone})` } : undefined}>{item.icon}</span>
                                         <span className="whitespace-nowrap flex-1 text-left">{item.label}</span>
                                         {item.checked && <Check className="shrink-0 w-[var(--sz-16)] h-[var(--sz-16)] text-accent" aria-hidden />}
                                     </button>
+                                    </div>
                                 ))}
                             </LensMenu>
                         </motion.div>

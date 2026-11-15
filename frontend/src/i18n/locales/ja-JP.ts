@@ -180,6 +180,7 @@ export default {
         placeholder: 'メッセージを入力...',
         noConversations: '会話履歴がありません',
         noChats: 'チャットがありません',
+        loadChatsFailed: 'チャット一覧を読み込めませんでした。ページを再読み込みしてください',
         instructionsTitle: 'プロジェクトの指示',
         instructionsPlaceholder: '例：常に箇条書きで回答。文書を引用するときは条番号を書く。',
         instructionsHint: 'このプロジェクトのすべての質問に付けて AI に渡します（{{n}} / {{max}} 文字）',
@@ -283,6 +284,8 @@ export default {
         images: { button: '画像を添付', chip: '画像 {{n}} 枚', remove: '添付した画像を削除', alt: '添付画像 {{n}}', tooMany: '1 件のメッセージに添付できる画像は {{max}} 枚までです', tooBig: '画像が大きすぎます（1 枚 {{max}} MB まで）', skipped: '次のファイルは読み取れる画像ではないため添付されませんでした：{{names}}', unavailable: 'このホストには現在、画像を読むモデルがないため、AI は添付画像を見ることができません' },
         research: { button: 'ディープリサーチ', chip: 'この質問はディープリサーチ（複数回調査するため時間がかかります）', remove: 'この質問ではディープリサーチをしない' },
         attachFiles: {
+            sentLabel: 'このメッセージに添付したファイル',
+            dropHint: 'ドロップしてこのメッセージに添付',
             button: 'ファイルを添付',
             attached: '{{n}} 個のファイルを添付しました',
             attachedSkipped: '{{n}} 個を添付、{{skipped}} 個をスキップしました',
@@ -291,6 +294,10 @@ export default {
             tooMany: '一度に添付できるのは {{max}} 個までです',
             tooBig: '合計が {{max}} MB を超えています。数を減らしてください',
             noConversation: '会話を作成できませんでした。もう一度お試しください',
+        },
+        actionGroups: {
+            attach: 'このメッセージに添付',
+            tools: '機能',
         },
         actionUpload: 'プロジェクトに文書をアップロード',
         actionReadOffice: '{{app}} の内容を読み込む',
@@ -435,9 +442,9 @@ export default {
         desktopSub: 'Windows · バージョン {{version}} · {{size}}',
         desktopNone: 'サーバーにインストーラーがまだありません。管理者にお問い合わせください。',
         desktopDownload: 'ダウンロード',
-        desktopDownloadAria: 'デスクトップ版のインストーラーをダウンロード',
+        desktopDownloadAria: 'デスクトップ版の社員向けパッケージをダウンロード',
         desktopInstalled: 'インストール済みのバージョン',
-        desktopHint: 'デスクトップ版では、回答をこの PC の Word・Excel・PowerPoint に書き込んだり、開いている文書を読み込んで質問できます。新しいバージョンがあると画面右下に通知が出ます。スマートフォンやタブレットではブラウザをご利用ください。',
+        desktopHint: '社員向けパッケージです。解凍してアプリを開くと、アドレスを入力しなくてもこのホストに自動で接続されるため、社内の他の PC にそのまま配布できます。デスクトップ版では、回答をこの PC の Word・Excel・PowerPoint に書き込んだり、開いている文書を読み込んで質問できます。新しいバージョンがあると画面右下に通知が出ます。スマートフォンやタブレットではブラウザをご利用ください。',
     },
 
     // セキュリティ機能 (A1/A2)
@@ -1154,7 +1161,7 @@ export default {
                     other: '処理中…',
                 },
             },
-            sidePanel: { open: '横に開く', label: 'サイドパネル', pageTitle: '成果物', runTitle: '実行結果', close: 'パネルを閉じる' },
+            sidePanel: { open: '横に開く', full: '全画面', exitFull: '全画面を終了', label: 'サイドパネル', pageTitle: '成果物', runTitle: '実行結果', close: 'パネルを閉じる', files: 'この会話のファイル', allFiles: 'すべてのファイル', previews: 'プレビューできるもの', runs: '実行結果', aiFiles: 'AI が作成したファイル', yourFiles: '添付したファイル', yourFilesNote: '元のファイルはこのブラウザにだけ保存されます（サーバーには残りません）。クリックで表示', notCached: 'このブラウザにはファイルのコピーがありません（添付したブラウザにだけ保存されます）', empty: 'この会話にはまだファイルがありません', pageN: 'ページ {{n}}', runN: '実行結果 {{n}}', fromUpload: '添付したもの', fromAI: 'AI が作成' },
             codeFile: { preview: 'プレビュー', showCode: 'コードを表示', previewTitle: 'プレビュー（サンドボックス内・ネットワーク接続なし）', save: '保存', download: 'ダウンロード', saved: '{{path}} に保存しました', savedBackup: '{{path}} に保存しました（元のファイルはバックアップ済み）', saveReply: 'ファイルとして保存' },
             unshare: '共有を停止',
             unshared: '共有を停止しました。この会話を見られるのはあなただけです',

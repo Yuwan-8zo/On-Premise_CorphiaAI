@@ -86,6 +86,8 @@ export interface Message {
     webSearch?: MessageWebSearch
     /** 使用者這一則附的圖片（編號；用 ChatImage 元件顯示） */
     images?: string[]
+    /** 使用者這一則附的檔案（只有檔名；內容只給這一題用、用完就丟） */
+    files?: string[]
     /** AI 這一題自己做了哪些步驟（查文件、連外網、計算…）；沒用工具是 undefined */
     steps?: MessageStep[]
     /** 正在用哪個工具（只在串流期間存在前端） */

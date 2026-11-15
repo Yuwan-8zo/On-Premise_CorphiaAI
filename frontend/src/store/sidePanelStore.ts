@@ -11,8 +11,10 @@ import { create } from 'zustand'
 import type { PyRunResult } from '@/lib/pyRunner'
 
 export type SidePanelContent =
-    | { kind: 'page'; code: string; language: string }
+    | { kind: 'page'; code: string; language: string; title?: string }
     | { kind: 'run'; result: PyRunResult }
+    /** 附加的文字／程式碼檔（直接顯示內容） */
+    | { kind: 'text'; text: string; title: string }
 
 export type SidePanelItem = SidePanelContent & {
     id: string
@@ -24,6 +26,9 @@ interface SidePanelState {
     items: Record<string, SidePanelItem>
     currentId: string | null
     open: boolean
+    /** 面板現在顯示什麼：item＝某一個成品／執行結果；list＝這個對話的所有檔案 */
+    view: 'item' | 'list'
+    showList: () => void
     register: (id: string, content: SidePanelContent, el: Element | null) => void
     unregister: (id: string) => void
     show: (id: string) => void
@@ -46,6 +51,7 @@ export const useSidePanelStore = create<SidePanelState>((set, get) => ({
     items: {},
     currentId: null,
     open: false,
+    view: 'item',
 
     register: (id, content, el) => {
         const { items, open, currentId } = get()
@@ -77,8 +83,10 @@ export const useSidePanelStore = create<SidePanelState>((set, get) => ({
     },
 
     show: (id) => {
-        if (id in get().items) set({ currentId: id, open: true })
+        if (id in get().items) set({ currentId: id, open: true, view: 'item' })
     },
+
+    showList: () => set({ open: true, view: 'list' }),
 
     close: () => set({ open: false }),
 }))

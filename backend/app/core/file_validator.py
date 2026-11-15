@@ -21,6 +21,27 @@ MAGIC_BYTES = {
 ALLOWED_EXTENSIONS = {"pdf", "docx", "xlsx", "pptx", "txt", "md", "csv", "html", "htm"}
 
 
+def looks_like_text(file_bytes: bytes) -> bool:
+    """
+    是不是文字檔：不只試 utf-8，也試 utf-8-sig（BOM）跟常見的 cp950 / big5（台灣使用者匯出的舊 csv 常見 big5）。
+    Only the first 1 KB is sampled; that cut can land in the middle of a multi-byte character
+    (Chinese is 3 bytes in UTF-8), so decode it incrementally and ignore an unfinished character at the end.
+    含 NUL 字元的一律不是（執行檔、圖片偽裝成文字檔）。
+    """
+    import codecs
+
+    sample = file_bytes[:1024]
+    if bytes([0]) in sample:
+        return False
+    for encoding in ("utf-8", "utf-8-sig", "cp950", "big5"):
+        try:
+            codecs.getincrementaldecoder(encoding)().decode(sample, final=False)
+            return True
+        except UnicodeDecodeError:
+            continue
+    return False  # 全部 encoding 試完都不行 → 八成是 binary 偽裝成文字檔
+
+
 def validate_file_signature(file_bytes: bytes, filename: str, content_type: str) -> bool:
     """
     進行檔案簽章檢查，防止攻擊者修改副檔名上傳惡意腳本。
@@ -46,19 +67,7 @@ def validate_file_signature(file_bytes: bytes, filename: str, content_type: str)
         return file_bytes.startswith(MAGIC_BYTES["zip"])
 
     if ext in {"txt", "md", "csv", "html", "htm"}:
-        # 純文字嘗試解碼；不只試 utf-8，也試 utf-8-sig（BOM）跟常見的 cp950 / big5
-        # （台灣使用者匯出的舊 csv 常見 big5 編碼）
-        # Only the first 1 KB is sampled; that cut can land in the middle of a
-        # multi-byte character (Chinese is 3 bytes in UTF-8), so decode it
-        # incrementally and ignore an unfinished character at the end.
-        import codecs
-        for encoding in ("utf-8", "utf-8-sig", "cp950", "big5"):
-            try:
-                codecs.getincrementaldecoder(encoding)().decode(file_bytes[:1024], final=False)
-                return True
-            except UnicodeDecodeError:
-                continue
-        return False  # 全部 encoding 試完都不行 → 八成是 binary 偽裝成 .txt
+        return looks_like_text(file_bytes)
 
     # 不應該到這裡（白名單已 cover），保險 fallback：拒絕
     return False

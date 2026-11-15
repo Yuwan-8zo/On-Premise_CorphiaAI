@@ -312,7 +312,7 @@ export default function UsersSection({
                     ref={menuRef}
                     {...menuPop}
                     role="menu"
-                    className="fixed z-[1000] origin-top-right min-w-[var(--sz-168)] overflow-hidden paper !rounded-[var(--r-20)] p-1.5"
+                    className="fixed z-[1000] origin-top-right min-w-[var(--sz-168)] overflow-hidden paper paper-solid !rounded-[var(--r-20)] p-1.5"
                     style={{
                         top: menuPos.top,
                         right: menuPos.right,

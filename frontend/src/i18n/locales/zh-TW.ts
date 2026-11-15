@@ -180,6 +180,7 @@ export default {
         placeholder: '輸入訊息...',
         noConversations: '尚無對話記錄',
         noChats: '尚無聊天',
+        loadChatsFailed: '對話清單載入失敗，請重新整理頁面',
         instructionsTitle: '專案指示',
         instructionsPlaceholder: '例如：一律用條列式回答；引用文件時寫出條號。',
         instructionsHint: '這個專案裡每一題都會附給 AI（{{n}} / {{max}} 字）',
@@ -284,6 +285,8 @@ export default {
         research: { button: '深度研究', chip: '這一題做深度研究（會多查幾輪，比較久）', remove: '這一題不做深度研究' },
         attachFiles: {
             button: '附加檔案',
+            sentLabel: '這一則附的檔案',
+            dropHint: '放開即可附加到這一則訊息',
             attached: '已附加 {{n}} 個檔案',
             attachedSkipped: '已附加 {{n}} 個檔案，{{skipped}} 個檔案略過',
             chip: '{{n}} 個檔案',
@@ -291,6 +294,10 @@ export default {
             tooMany: '一次最多附 {{max}} 個檔案',
             tooBig: '檔案總共超過 {{max}} MB，請少選幾個',
             noConversation: '建立對話失敗，請再試一次',
+        },
+        actionGroups: {
+            attach: '附加到這一則',
+            tools: '功能',
         },
         actionUpload: '上傳文件到專案',
         actionReadOffice: '讀取 {{app}} 的內容',
@@ -435,9 +442,9 @@ export default {
         desktopSub: 'Windows · 版本 {{version}} · {{size}}',
         desktopNone: '伺服器上還沒有安裝檔，請洽系統管理員',
         desktopDownload: '下載',
-        desktopDownloadAria: '下載桌面版安裝檔',
+        desktopDownloadAria: '下載桌面版員工安裝包',
         desktopInstalled: '已安裝的版本',
-        desktopHint: '桌面版可以把回答寫進這台電腦的 Word、Excel、PowerPoint，也能讀取開著的文件來提問。有新版時會在畫面右下角提醒。手機和平板請直接用瀏覽器。',
+        desktopHint: '下載的是員工安裝包：解壓縮後打開程式就會自動連上這台主機，不用輸入位址，可以直接發給公司其他電腦。桌面版可以把回答寫進這台電腦的 Word、Excel、PowerPoint，也能讀取開著的文件來提問。有新版時會在畫面右下角提醒。手機和平板請直接用瀏覽器。',
     },
 
     // 資安功能 (A1/A2 差異化)
@@ -1154,7 +1161,7 @@ export default {
                     other: '正在處理…',
                 },
             },
-            sidePanel: { open: '在旁邊開啟', label: '旁邊的顯示面板', pageTitle: '成品', runTitle: '執行結果', close: '關閉面板' },
+            sidePanel: { open: '在旁邊開啟', full: '全螢幕', exitFull: '縮回', label: '旁邊的顯示面板', pageTitle: '成品', runTitle: '執行結果', close: '關閉面板', files: '這個對話的檔案', allFiles: '所有檔案', previews: '可以預覽的成品', runs: '執行結果', aiFiles: 'AI 產生的檔案', yourFiles: '你附加的檔案', yourFilesNote: '原檔只留在這個瀏覽器（系統伺服器不保留），點一下就能查看', notCached: '這個瀏覽器沒有這份檔案的副本（只留在當初附加檔案的那個瀏覽器）', empty: '這個對話還沒有檔案', pageN: '網頁 {{n}}', runN: '執行結果 {{n}}', fromUpload: '你附加的', fromAI: 'AI 寫的' },
             codeFile: { preview: '預覽', showCode: '看程式碼', previewTitle: '預覽（關在沙盒裡，不能連網）', save: '存檔', download: '下載', saved: '已存到 {{path}}', savedBackup: '已存到 {{path}}（原本的檔案已備份）', saveReply: '存成檔案' },
             unshare: '取消分享',
             unshared: '已取消分享，現在只有你看得到這個對話',

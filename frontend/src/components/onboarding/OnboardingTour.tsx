@@ -298,13 +298,13 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 ref={tooltipRef}
                 onClick={(e) => e.stopPropagation()}
                 style={tooltipStyle}
-                className="absolute paper !rounded-[var(--r-25)] transition-[top,left,opacity] duration-300 ease-out"
+                className="absolute paper paper-solid !rounded-[var(--r-25)] transition-[top,left,opacity] duration-300 ease-out"
             >
                 {/* 箭頭 —— offset 動態跟著目標走，被 clamp 過的 tooltip 也能正確指回去 */}
                 {arrowSide && arrowOffset !== null && (
                     <span
                         aria-hidden
-                        className={`absolute h-3 w-3 rotate-45 bg-[var(--glass-card)] backdrop-blur-xl ${
+                        className={`absolute h-3 w-3 rotate-45 bg-[var(--paper-solid)] ${
                             arrowSide === 'top'
                                 ? '-top-[var(--sp-7)] border-r-0 border-b-0'
                                 : arrowSide === 'bottom'

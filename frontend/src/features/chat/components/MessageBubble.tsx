@@ -18,7 +18,7 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw, Layers3, Download } from '@/components/snow/icons'
+import { Edit2, Check, X, RefreshCw, Layers3, Download, FileText } from '@/components/snow/icons'
 import { saveTextFile } from '@/lib/saveTextFile'
 import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
@@ -299,6 +299,17 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         {message.images.map((id, i) => (
                                             <ChatImage key={id} conversationId={conversationId} imageId={id} alt={t('chat.images.alt', { n: i + 1 })}
                                                 className="h-[var(--sz-120)] w-[var(--sz-120)] rounded-[var(--r-16)]" />
+                                        ))}
+                                    </div>
+                                )}
+                                {/* 這一則附的檔案（只有檔名；內容只給這一題用） */}
+                                {message.files && message.files.length > 0 && (
+                                    <div className="mb-[var(--sp-8)] flex flex-wrap justify-end gap-[var(--sp-6)]" aria-label={t('chat.attachFiles.sentLabel')}>
+                                        {message.files.map((name) => (
+                                            <span key={name} className="glass-chip inline-flex max-w-[var(--sz-260)] items-center gap-1.5 rounded-full px-3 py-1.5 text-[length:var(--fs-13)] text-text-primary">
+                                                <FileText className="h-4 w-4 shrink-0 text-accent" />
+                                                <span className="truncate" title={name}>{name}</span>
+                                            </span>
                                         ))}
                                     </div>
                                 )}

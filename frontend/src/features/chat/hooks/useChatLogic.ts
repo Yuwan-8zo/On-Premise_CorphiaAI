@@ -60,6 +60,8 @@ export function useChatLogic() {
     // 看圖片：這台主機有沒有圖文模型（沒有就不顯示附圖）；輸入框送出前把剛附的圖片編號交過來
     const [vision, setVision] = useState<VisionStatus | null>(null)
     const sentImagesRef = useRef<string[]>([])
+    // 附加檔案：送出前輸入框把這一則附的檔名交過來（剛送出的訊息馬上顯示）
+    const sentFilesRef = useRef<string[]>([])
     useEffect(() => {
         chatImagesApi.status().then(setVision).catch(() => undefined) // 問不到就當沒有，不影響其他功能
     }, [])
@@ -97,7 +99,10 @@ export function useChatLogic() {
     useEffect(() => {
         conversationsApi.list()
             .then((result) => setConversations(result.data))
-            .catch((error) => console.error('載入對話列表失敗:', error))
+            .catch((error) => {
+                console.error('載入對話列表失敗:', error)
+                useChatStore.getState().setConversationsFailed()
+            })
     }, [setConversations])
 
     const selectConversation = useCallback(async (conversation: Conversation | null) => {
@@ -311,7 +316,12 @@ export function useChatLogic() {
         // 剛附的圖片先顯示在自己的訊息上（送出後伺服器會把它們正式掛到這一則）
         const sentImages = sentImagesRef.current
         sentImagesRef.current = []
-        addMessage(tempMessage('user', text, sentImages.length ? { images: sentImages } : {}))
+        const sentFiles = sentFilesRef.current
+        sentFilesRef.current = []
+        addMessage(tempMessage('user', text, {
+            ...(sentImages.length ? { images: sentImages } : {}),
+            ...(sentFiles.length ? { files: sentFiles } : {}),
+        }))
         scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
         addMessage(tempMessage('assistant', '', {}, 1))
         setStreaming(true)
@@ -497,6 +507,7 @@ export function useChatLogic() {
             setResearchOn,
             vision,
             onImagesSent: (ids: string[]) => { sentImagesRef.current = ids },
+            onFilesSent: (names: string[]) => { sentFilesRef.current = names },
             selectedFolder,
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
@@ -541,7 +552,8 @@ export function useChatLogic() {
             handleRegenerate,
             handleSwitchVersion,
             // 政策是「完全不連外網」時不提供（回答下面就不會有這顆按鈕）
-            handleSearchAgain: searchPolicy.enabled ? handleSearchAgain : undefined,
+            // 專案只根據專案文件回答：不提供「連網重答」（後端也不會連）
+            handleSearchAgain: searchPolicy.enabled && chatMode !== 'project' ? handleSearchAgain : undefined,
             ragDebugMode,
             messagesEndRef: scroll.messagesEndRef,
             scrollContainerRef: scroll.scrollContainerRef,

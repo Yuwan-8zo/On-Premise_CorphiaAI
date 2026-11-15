@@ -6,6 +6,7 @@
 
 import asyncio
 import json
+import re
 import logging
 from typing import TypedDict, Optional, AsyncGenerator
 
@@ -125,6 +126,23 @@ def stopped_note(language: str) -> str:
     return "\n\n*" + STOPPED_NOTES.get(language, STOPPED_NOTES["zh-TW"]) + "*"
 
 
+# 「讀取／整理所有檔案」：每份文件給開頭多少字、最多幾份（總長度要放得進模型一次能讀的範圍）
+OVERVIEW_MAX_DOCS = 12
+OVERVIEW_PER_DOC_CHARS = 900
+OVERVIEW_CHUNKS_PER_DOC = 6
+OVERVIEW_CONTEXT_CHARS = 9000
+_ALL_DOCS_RE = re.compile(
+    r"(所有|全部|每一?[份個篇]|這些|整個|資料夾(裡|中|內)?的?)\s*(的)?\s*(檔案|文件|文獻|資料)"
+    r"|(檔案|文件|文獻|資料)\s*(全部|都)"
+    r"|(讀取|閱讀|讀一下|看一下|整理|總結|摘要|概述|介紹|列出)\s*(一下)?\s*(檔案|文件|文獻)\s*$"
+)
+
+
+def wants_all_documents(text: str) -> bool:
+    """是不是要看整個資料夾（讀取／整理／總結所有檔案），而不是問某個具體問題"""
+    return bool(_ALL_DOCS_RE.search((text or "").strip()))
+
+
 class ChatGenerationError(Exception):
     """無法產生回應（模型載入中、訊息不存在…）；code 給前端判斷用"""
 
@@ -141,14 +159,15 @@ class ChatService:
     # 提示詞保持精簡：純 CPU 筆電讀入提示詞很慢（7B 每秒約 12 個 token），
     # 每多 100 個 token 就多等約 8 秒。簡體字由 zh_convert 在輸出時自動轉正體，不必在這裡列舉。
     DEFAULT_SYSTEM_PROMPT = """你是 Corphia AI，企業內部的智慧助手，友善、專業，回答準確且有條理。
-1. 有參考資料時，優先使用資料中的資訊。
+1. 有參考資料時，優先使用資料中的資訊。使用者附上的檔案內容也放在參考資料裡，可以直接閱讀，不要說無法讀取檔案。
 2. 不確定時誠實說明。
 3. 必要時使用 Markdown 條列。"""
 
     STRICT_RAG_SYSTEM_PROMPT = """你是 Corphia AI，專案資料夾的知識助理。
 1. 只能根據「參考資料」回答，不可編造，也不可使用外部知識。
-2. 參考資料中沒有答案時，直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
-3. 回答條理分明，必要時使用 Markdown 條列。"""
+2. 參考資料就是專案文件的內容。使用者要你讀取、整理、摘要或介紹文件時，依參考資料逐份說明，不要說無法讀取檔案。
+3. 參考資料中沒有答案時，直接回答：「很抱歉，根據目前專案資料夾中勾選的文獻，我找不到與此問題相關的資訊。」
+4. 回答條理分明，必要時使用 Markdown 條列。"""
 
     # 語言指令對照表
     LANGUAGE_DIRECTIVES: dict[str, str] = {
@@ -318,6 +337,15 @@ class ChatService:
             )
             document_ids = [row[0] for row in docs_result.all()]
 
+        # 「讀取／整理／摘要所有檔案」這種要看整個資料夾的問題：相關度挑不出段落（問題本身沒有內容），
+        # 改成每份文件依序給開頭的內容，模型才看得到每一份在講什麼
+        if folder_name and document_ids and wants_all_documents(state.get("query", "")):
+            search_results = await self._document_overview(document_ids)
+            if search_results:
+                search_results, screen = screen_chunks(search_results)
+                context = self.rag_service.build_context(search_results, max_length=OVERVIEW_CONTEXT_CHARS)
+                return {"context": context, "sources": self._sources_of(search_results), "screen": screen}
+
         # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
         # 提高中文專有名詞與代號（例如 SOP 編號、人名）的命中率。
         # 路由時已經搜過（一般對話用連接資料夾）就直接用
@@ -415,18 +443,48 @@ class ChatService:
             search_results, screen = screen_chunks(search_results)
 
             context = self.rag_service.build_context(search_results) if search_results else ""
-            sources = [
-                {
-                    "chunk_id": r["chunk_id"],
-                    "content": r["content"][:200],
-                    "score": r["score"],
-                    "document_id": r["metadata"].get("document_id", ""),
-                    "document_name": r["metadata"].get("filename", "未知文件"),
-                }
-                for r in search_results
-            ]
-            return {"context": context, "sources": sources, "screen": screen}
+            return {"context": context, "sources": self._sources_of(search_results), "screen": screen}
         return {"context": context, "sources": sources}
+
+    @staticmethod
+    def _sources_of(results: list[dict]) -> list[dict]:
+        return [
+            {
+                "chunk_id": r["chunk_id"],
+                "content": r["content"][:200],
+                "score": r["score"],
+                "document_id": r["metadata"].get("document_id", ""),
+                "document_name": r["metadata"].get("filename", "未知文件"),
+            }
+            for r in results
+        ]
+
+    async def _document_overview(self, document_ids: list[str]) -> list[dict]:
+        """每份文件從頭依序取段落，每份最多 OVERVIEW_PER_DOC_CHARS 字（文件太多就只取前 OVERVIEW_MAX_DOCS 份）"""
+        from app.models.document import Document
+        from app.models.document_chunk import DocumentChunk
+
+        docs = (await self.db.execute(
+            select(Document.id, Document.original_filename).where(Document.id.in_(document_ids[:OVERVIEW_MAX_DOCS]))
+        )).all()
+        out: list[dict] = []
+        for doc_id, filename in docs:
+            chunks = (await self.db.execute(
+                select(DocumentChunk.id, DocumentChunk.content)
+                .where(DocumentChunk.document_id == doc_id)
+                .order_by(DocumentChunk.chunk_index)
+                .limit(OVERVIEW_CHUNKS_PER_DOC)
+            )).all()
+            used = 0
+            for chunk_id, text in chunks:
+                if used >= OVERVIEW_PER_DOC_CHARS:
+                    break
+                piece = text[: OVERVIEW_PER_DOC_CHARS - used]
+                used += len(piece)
+                # score＝1：這是整份文件的開頭，不是依相關度挑的
+                out.append({"chunk_id": chunk_id, "content": piece, "score": 1.0,
+                            "metadata": {"document_id": doc_id, "filename": filename}})
+        return out
 
     async def _chat_prep_node(self, state: AgentState) -> dict:
         return {"context": "", "sources": []}
@@ -515,11 +573,12 @@ class ChatService:
 
     async def _add_user_message(
         self, conversation_id: str, content: str, parent_id: Optional[str], images: Optional[list] = None,
+        files: Optional[list] = None,
     ) -> Message:
         """存一則使用者訊息（接在 parent_id 後面）、蓋防竄改 hash，並把它記成「現在看到的最後一則」"""
         user_message = Message(
             conversation_id=conversation_id, role=MessageRole.USER.value, content=content, parent_id=parent_id,
-            images=images or None,
+            images=images or None, files=files or None,
         )
         self.db.add(user_message)
         await self.db.commit()
@@ -528,6 +587,11 @@ class ChatService:
         await message_tree.set_leaf_id(self.db, conversation_id, user_message.id)
         await self.db.commit()
         return user_message
+
+    @staticmethod
+    def _pending_file_names(conversation_id: str) -> Optional[list]:
+        pending = browser_folder.pending_summary(conversation_id)
+        return list(pending["files"]) if pending and pending.get("files") else None
 
     async def _history_before_this_question(self, conversation_id: str) -> list[Message]:
         """
@@ -634,9 +698,10 @@ class ChatService:
                 self.llm_service.context_size - ATTACH_REPLY_RESERVE - ATTACH_HEADROOM
                 - len(system_prompt) - len(context or "") - len(content)
             )
-            folder_text, cut = browser_folder.fit_to_budget(folder_text, max(0, budget))
+            # 放不下時依這一題挑出相關段落（大檔案後面的內容也問得到），不是只給開頭
+            folder_text, cut = browser_folder.select_relevant(folder_text, content, max(0, budget))
             if cut:
-                logger.info("瀏覽器臨時資料夾內容超過模型長度，已截到 %d 字", len(folder_text))
+                logger.info("附加內容超過模型長度，已依問題挑出相關段落共 %d 字", len(folder_text))
             label = f"### 這台電腦的資料夾（使用者這一題附上：{'、'.join(folder_files)}；只用這一次，不是長期的參考資料）\n{folder_text}"
             context = f"{context}\n\n{label}" if context else label
 
@@ -649,6 +714,9 @@ class ChatService:
         if search_mode != "off":
             # 專案資料夾只根據文件回答、這一題附了檔案就是要問檔案：這兩種不自動連外網
             live = not final_state.get("folder_name") and not attached and web_search_policy.needs_live_info(content)
+            # 專案資料夾只根據專案文件回答：就算按了「連網重答」也不連（畫面上也不提供那顆按鈕）
+            if final_state.get("folder_name"):
+                web_search = False
             if web_search or (live and search_mode == "auto"):
                 query = await web_search_policy.condense_query(self.llm_service, content, self.model_name)
                 # 這一題用到的內部資料（檢索片段、附加的資料夾內容）交給出口做「有沒有被帶出去」的檢查，本身不會送出
@@ -800,6 +868,8 @@ class ChatService:
                 conversation_id, content, parent_id=path[-1].id if path else None,
                 # 這一則附的圖片（使用者送出前貼上或附加的；用掉就從待送清單拿掉）
                 images=chat_images.consume(conversation_id),
+                # 這一則附的檔案：只記檔名讓畫面顯示（內容本身在下面組提示詞時才用掉，只用這一次）
+                files=self._pending_file_names(conversation_id),
             )
         # 這一題要給模型看的圖片（重答、修改後重送時就是那一則原本附的）
         self.turn_images = list(user_message.images or [])
@@ -815,7 +885,11 @@ class ChatService:
             yield event
 
         # 使用者要的是一份檔案（Word／Excel／簡報）嗎：是的話這一題改走「產出檔案」
-        file_kind = file_builder.detect_file_request(safe_content) if settings.enable_file_generation else None
+        file_kind = (
+            file_builder.detect_file_request(safe_content)
+            # 沒明說要哪種檔，但附了 Word／Excel／簡報又要求修改：產出改好的同一種檔案
+            or file_builder.detect_edit_request(safe_content, user_message.files)
+        ) if settings.enable_file_generation else None
 
         prompt, context, sources, route = await self._prepare_prompt(
             conversation_id, safe_content, use_rag, language,
