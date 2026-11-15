@@ -5,6 +5,7 @@
 export default {
     // 通用
     common: {
+        copyFailed: '複製失敗，請選取文字後按 Ctrl+C',
         submit: '送出',
         cancel: '取消',
         save: '儲存',

@@ -155,8 +155,7 @@ export default function ModelsSection({
                                                             onClick={() => {
                                                                 // narrow null：上面 `integrity?.sha256 &&` 已保證不為 null，
                                                                 // 但 TS 不會跨 callback 推斷，所以這裡用 non-null assertion
-                                                                void copyText(integrity.sha256!)
-                                                                setCopied(model.name)
+                                                                void copyText(integrity.sha256!).then((ok) => { if (ok) setCopied(model.name) })
                                                             }}
                                                             aria-label={t('ui.models.copyHash')}
                                                             className="icon-tap text-text-muted"

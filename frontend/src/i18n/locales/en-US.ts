@@ -5,6 +5,7 @@
 export default {
     // Common
     common: {
+        copyFailed: 'Could not copy. Select the text and press Ctrl+C.',
         submit: 'Submit',
         cancel: 'Cancel',
         save: 'Save',

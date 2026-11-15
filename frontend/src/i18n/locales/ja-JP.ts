@@ -5,6 +5,7 @@
 export default {
     // 通用 (Common)
     common: {
+        copyFailed: 'コピーできませんでした。テキストを選択して Ctrl+C を押してください',
         submit: '送信',
         cancel: 'キャンセル',
         save: '保存',
