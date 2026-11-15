@@ -29,7 +29,7 @@ export function readNum(name: string): number {
 export function readMs(name: string): number {
     if (typeof document === 'undefined') return 0
     const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    const n = parseFloat(raw) || 0
+    const n = Number.parseFloat(raw) || 0
     return raw.endsWith('ms') ? n : n * 1000
 }
 

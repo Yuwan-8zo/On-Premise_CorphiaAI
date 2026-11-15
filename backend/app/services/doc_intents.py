@@ -5,6 +5,7 @@
     message_guard 用它避免把「讀我自己專案的文件」誤判成索取機密（只拿掉這句，剩下的要求照樣檢查）。
 """
 import re
+import string
 
 _ALL_DOCS_RE = re.compile(
     r"(所有|全部|每一?[份個篇]|這些|整個|資料夾(裡|中|內)?的?)\s*(的)?\s*(檔案|文件|文獻|資料)"
@@ -24,7 +25,11 @@ def wants_all_documents(text: str) -> bool:
     return bool(_ALL_DOCS_RE.search((text or "").strip()))
 
 
+# 拿掉片語後，頭尾留下的空白和標點
+_EDGE_CHARS = string.whitespace + "，,。；;：:、"
+
+
 def strip_all_documents_request(text: str) -> str:
     """拿掉「讀取所有檔案」這類片語，留下其餘的要求（例如「各用一句話說明」、「列出密碼」）"""
     rest = _STRIP_RE.sub(" ", text or "")
-    return re.sub(r"^[\s，,。；;：:、]+|[\s，,。；;：:、]+$", "", rest)
+    return rest.strip(_EDGE_CHARS)

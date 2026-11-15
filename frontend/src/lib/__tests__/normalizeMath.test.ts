@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { normalizeMath } from '../normalizeMath'
 
 describe('normalizeMath', () => {
-    it('\[…\] 換成獨立一行的公式、\(…\) 換成行內公式', () => {
+    it('方括號寫法換成獨立一行的公式、圓括號寫法換成行內公式', () => {
         const out = normalizeMath(String.raw`圓角：\[ r = b + o \] 其中 \(o\) 是凸出量`)
         expect(out).toContain('\n$$\nr = b + o\n$$\n')
         expect(out).toContain('$$o$$')
