@@ -28,7 +28,7 @@
                               這裡不允許它就開不了；只開放自己這台和記憶體內容（blob:），不含任何外部網址
       之後若真的需要連某個外部服務，請在這裡「只加那一個網址」，不要整類開放。
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:;" /><!-- NOSONAR：'unsafe-inline' 與 'unsafe-eval' 是給執行 Python 的沙盒框用（框會繼承這裡的政策；框內的啟動程式是內嵌的、Python 本體是 WebAssembly），框本身另有更嚴的政策、沒有來源身分、不能連任何外部網址；其餘來源一律只限本機 -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     
     <!-- Open Graph (Facebook/LinkedIn) -->

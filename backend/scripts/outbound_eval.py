@@ -69,6 +69,15 @@ class FakeLLM:
         return {"query": self.answer}
 
 
+def write_csv(out: str, rows: list[dict]) -> None:
+    """逐筆結果寫成 CSV（在背景執行緒寫，不卡住非同步流程）"""
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+
 async def case_direct(query, question="", private=()):
     return await web_search.search(query, question=question, private_texts=list(private))
 
@@ -144,11 +153,7 @@ async def run():
 
     headers = sorted({h.lower() for r in RECEIVED for h in r["headers"]})
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "docs", "report", "對外查詢出口實測結果.csv")
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        w.writeheader()
-        w.writerows(rows)
+    await asyncio.to_thread(write_csv, out, rows)
 
     for r in rows:
         print(f"[{r['符合預期']}] {r['類別']}／{r['情境']}：送出 {r['實際送出次數']} 次 {r['送出的內容']} {r['攔阻原因']}"

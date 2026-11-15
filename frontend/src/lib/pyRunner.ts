@@ -212,12 +212,13 @@ function ensureRunner(): Runner {
     const ready = new Promise<void>((resolve, reject) => {
         const timer = window.setTimeout(() => { cleanup(); reject(new Error('timeout')) }, PY_LOAD_TIMEOUT_MS)
         const onMessage = (event: MessageEvent) => {
-            if (event.source !== frame.contentWindow) return
+            // 沙盒框沒有來源身分（origin 是 "null"）：只接受來自這個框本身的訊息
+            if (event.source !== frame.contentWindow || event.origin !== 'null') return
             if (event.data?.type === 'ready') { cleanup(); resolve() }
             if (event.data?.type === 'boot-error') { cleanup(); reject(new Error(String(event.data.error || 'boot'))) }
         }
         const cleanup = () => { window.clearTimeout(timer); window.removeEventListener('message', onMessage) }
-        window.addEventListener('message', onMessage)
+        window.addEventListener('message', onMessage) // NOSONAR：onMessage 已核對 event.source 與 event.origin
     })
     document.body.appendChild(frame)
     runner = { frame, ready }
@@ -252,7 +253,7 @@ export async function runPython(code: string, files: PyRunFile[] = []): Promise<
             finish({ stdout: '', value: '', images: [], error: '', timedOut: true })
         }, PY_RUN_TIMEOUT_MS)
         const onMessage = (event: MessageEvent) => {
-            if (event.source !== current.frame.contentWindow || event.data?.type !== 'result' || event.data.id !== id) return
+            if (event.source !== current.frame.contentWindow || event.origin !== 'null' || event.data?.type !== 'result' || event.data.id !== id) return
             const data = event.data
             finish({
                 stdout: String(data.stdout ?? ''), value: String(data.value ?? ''), error: String(data.error ?? ''),
@@ -260,8 +261,9 @@ export async function runPython(code: string, files: PyRunFile[] = []): Promise<
                 timedOut: false,
             })
         }
-        window.addEventListener('message', onMessage)
-        current.frame.contentWindow?.postMessage(
+        window.addEventListener('message', onMessage) // NOSONAR：onMessage 已核對 event.source 與 event.origin
+        // 沙盒框沒有來源身分，無法指定目標來源，只能用 '*'；訊息只送給我們自己建立的這個框
+        current.frame.contentWindow?.postMessage( // NOSONAR
             { type: 'run', id, code, files: files.map((f) => ({ name: safeFileName(f.name), data: f.data })) }, '*',
         )
     })

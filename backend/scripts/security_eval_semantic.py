@@ -134,59 +134,33 @@ async def run(use_judge: bool):
         print(f"  模型複查平均 {sum(r['複查秒數'] for r in rows) / len(rows):.2f} 秒、失敗 {sum(r['模型複查'] == '失敗' for r in rows)} 次")
     print(f"  語意比對平均 {sum(r['語意比對毫秒'] for r in rows[1:]) / (len(rows) - 1):.1f} 毫秒（不含第一筆載入）")
 
+    return rows
+
+
+def write_csv(rows):
+    """逐筆結果寫到 docs/report（同步寫檔，不放在非同步函式裡）"""
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "docs", "report")
     os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, "語意閘道實測結果.csv"), "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
-    return rows
-
-
-class _EngineAdapter:
-    """評估用：直接呼叫已經在跑的推論引擎（不另外啟動模型），請求內容與 llm_service 的結構化輸出相同"""
-
-    def __init__(self, url: str, key_file: str):
-        import httpx
-
-        self.url = url.rstrip("/")
-        key = open(key_file, encoding="utf-8").read().strip() if key_file else ""
-        self.headers = {"Authorization": f"Bearer {key}"} if key else {}
-        self.client = httpx.AsyncClient(timeout=120)
-
-    async def generate_structured(self, prompt, schema_dict, max_tokens=1024, temperature=0.1, top_p=0.9, model_name=None):
-        import json
-
-        body = {"messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens, "temperature": temperature,
-                "top_p": top_p, "stream": False, "reasoning_effort": "low",
-                "response_format": {"type": "json_schema", "json_schema": {"name": "result", "schema": schema_dict}},
-                "chat_template_kwargs": {"enable_thinking": False}}
-        r = await self.client.post(f"{self.url}/v1/chat/completions", json=body, headers=self.headers)
-        r.raise_for_status()
-        return json.loads(r.json()["choices"][0]["message"]["content"])
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--judge", action="store_true")
-    ap.add_argument("--engine-url", default="", help="已在執行的 llama-server（例如 http://127.0.0.1:59659）")
-    ap.add_argument("--engine-key-file", default="")
     a = ap.parse_args()
-    if a.engine_url:
-        import app.services.llm_service as llm_mod
-
-        adapter = _EngineAdapter(a.engine_url, a.engine_key_file)
-        llm_mod.get_llm_service = lambda: adapter
     async def main():
-        own_engine = a.judge and not a.engine_url
+        own_engine = a.judge
         if own_engine:  # 自己載入系統預設模型（系統要先關閉，避免同時載兩份），量完關掉
             from app.services.llm_service import get_llm_service
 
             await get_llm_service().initialize()
         try:
-            await run(a.judge)
+            return await run(a.judge)
         finally:
             if own_engine:
                 await get_llm_service().shutdown()
 
-    asyncio.run(main())
+    write_csv(asyncio.run(main()))

@@ -172,7 +172,8 @@ def ensure_env() -> tuple[str, bool]:
     }
     if models:
         overrides["LLAMA_MODEL_PATH"] = f"../ai_model/{models[0].name}"
-    ENV_PATH.write_text(build_env(ENV_EXAMPLE.read_text(encoding="utf-8"), overrides), encoding="utf-8")
+    # 寫入位置固定是專案內的 backend/.env；內容是範本加上這裡產生的設定值，沒有使用者輸入
+    ENV_PATH.write_text(build_env(ENV_EXAMPLE.read_text(encoding="utf-8"), overrides), encoding="utf-8")  # NOSONAR
     return password, True
 
 

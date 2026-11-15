@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import os
 import argparse
 import subprocess
 import sys
@@ -45,7 +46,7 @@ PGDATA_DIR = DB_DIR / "pgdata"
 # 跟 docker-compose.yml／backend/.env.example 的預設值一致，這樣 DATABASE_URL 完全不用改
 PG_USER = "corphia"
 # 開發用的預設密碼（和 docker-compose.yml 一樣）。安裝包不用這個：「第一次設定」會產生一組隨機密碼
-PG_PASSWORD = "corphia123"
+PG_PASSWORD = os.environ.get("CORPHIA_DEV_DB_PASSWORD", "corphia123")  # NOSONAR：只給本機開發用，只聽本機連線
 PG_DB = "corphia_ai"
 PG_PORT = 5433
 

@@ -12,7 +12,8 @@ general:
   contact_url: "https://github.com/searxng/searxng"
 
 server:
-  secret_key: "8697be3486e5202c69eff36561d9fa5ba3d9b171863860a5786bb6a1ae28b411"
+  # 實際的金鑰不放在程式碼裡：由環境變數 SEARXNG_SECRET 提供（start.py 第一次啟動時產生，存在 .runtime/searxng_secret）
+  secret_key: "ultrasecretkey"
   limiter: false  # 只有我們自己的後端會呼叫，不需要防濫用限流
   image_proxy: false
 

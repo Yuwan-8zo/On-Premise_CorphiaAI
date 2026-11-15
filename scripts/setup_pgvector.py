@@ -17,6 +17,7 @@ pgvector 官方沒有提供 Windows 預編譯檔，所以這裡不下載任何�
 
 from __future__ import annotations
 
+import re
 import argparse
 import shutil
 import subprocess
@@ -63,6 +64,9 @@ def find_pg_include_and_pgroot() -> Path | None:
 
 
 def clone_pgvector(tag: str, dest: Path) -> None:
+    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+        fail(f"pgvector 版本號格式不對：{tag}（例如 v0.8.0）")
+        raise SystemExit(1)
     git = shutil.which("git")
     if not git:
         fail("找不到 git，請先安裝 Git for Windows（https://git-scm.com/download/win）。")

@@ -619,6 +619,22 @@ def start_database() -> None:
     raise RuntimeError(f"Could not start Docker database.\n{last_output}".strip())
 
 
+def searxng_secret() -> str:
+    """SearXNG 的簽章金鑰：第一次產生一組隨機值存在 .runtime/（不進版本控制），之後沿用"""
+    path = RUNTIME_DIR / "searxng_secret"
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        value = ""
+    if len(value) < 32:
+        import secrets
+
+        value = secrets.token_hex(32)
+        RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+        path.write_text(value, encoding="utf-8")
+    return value
+
+
 def start_searxng_if_enabled() -> None:
     """自架 SearXNG（對外搜尋用）一律走 Docker，跟資料庫是原生還是 Docker 無關；
     沒開對外搜尋功能就什麼都不做（不會為了這個單獨把 Docker Desktop 叫起來）"""
@@ -630,7 +646,8 @@ def start_searxng_if_enabled() -> None:
         exe = shutil.which(cmd[0])
         if not exe:
             continue
-        result = run([exe, *cmd[1:], "--profile", "search", "up", "-d", "searxng"], cwd=BASE_DIR, quiet=True, timeout=180)
+        result = run([exe, *cmd[1:], "--profile", "search", "up", "-d", "searxng"], cwd=BASE_DIR, quiet=True, timeout=180,
+                     env={**os.environ, "SEARXNG_SECRET": searxng_secret()})
         if result.returncode == 0:
             ok("自架 SearXNG 已啟動")
             return
@@ -757,9 +774,11 @@ def start_pre_ui() -> None:
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", cache)
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
             if self.command != "HEAD":
-                self.wfile.write(body)
+                # 內容是前端建置檔或系統自己寫的啟動狀態，Content-Type 由副檔名決定且加了 nosniff
+                self.wfile.write(body)  # NOSONAR
 
         def do_GET(self) -> None:
             path = self.path.split("?", 1)[0].lstrip("/")

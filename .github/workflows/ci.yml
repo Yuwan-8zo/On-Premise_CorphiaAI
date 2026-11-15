@@ -17,8 +17,9 @@ jobs:
         image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: corphia
-          POSTGRES_PASSWORD: corphia123
           POSTGRES_DB: corphia_test
+          # 只在這次測試裡存在、用完即丟的資料庫：不設密碼，程式碼裡就不會出現任何密碼
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -50,9 +51,9 @@ jobs:
     - name: Run Backend Tests
       working-directory: ./backend
       env:
-        TEST_DATABASE_URL: postgresql+asyncpg://corphia:corphia123@localhost:5432/corphia_test
+        TEST_DATABASE_URL: postgresql+asyncpg://corphia@localhost:5432/corphia_test
         # 程式本身的資料庫連線也指向 CI 的資料庫（.env.test 寫的是本機 Docker 的 5433）
-        DATABASE_URL: postgresql+asyncpg://corphia:corphia123@localhost:5432/corphia_test
+        DATABASE_URL: postgresql+asyncpg://corphia@localhost:5432/corphia_test
         SECRET_KEY: ci-test-secret-key
         APP_ENV: test
       run: |

@@ -68,9 +68,11 @@ def fetch_ca(url: str, timeout: float = PROBE_TIMEOUT) -> Optional[bytes]:
     跟主機要它的發證憑證。這一步還沒有東西可以驗（第一次見面），所以拿回來的只是「對方自稱的」，
     一定要再經過 probe() 的實際驗證和使用者核對指紋才會被信任。
     """
-    unverified = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    # 第一次見面還沒有可信的發證憑證，只能先不驗證地拿；拿到的憑證不會直接被信任，
+    # 一定要通過 probe() 的實際連線驗證與使用者核對指紋（見本檔開頭說明）
+    unverified = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)  # NOSONAR
     unverified.check_hostname = False
-    unverified.verify_mode = ssl.CERT_NONE
+    unverified.verify_mode = ssl.CERT_NONE  # NOSONAR
     try:
         with urllib.request.urlopen(url.rstrip("/") + CA_URL_PATH, timeout=timeout, context=unverified) as r:
             data = r.read(CA_MAX_BYTES + 1)

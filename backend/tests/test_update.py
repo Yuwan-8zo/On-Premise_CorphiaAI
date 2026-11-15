@@ -33,7 +33,7 @@ class TestParseVersion:
 
     def test_ordering(self):
         assert update.parse_version("2.10.0") > update.parse_version("2.9.0")
-        assert update.parse_version("2.3.0") == update.parse_version("2.3.0")
+        assert update.parse_version("2.3.0") == (2, 3, 0)
 
 
 # ═════════════════════════════════════════════════════════════════════════

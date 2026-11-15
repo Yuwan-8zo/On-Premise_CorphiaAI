@@ -100,7 +100,7 @@ def normalize_server(url: str) -> str:
     """整理使用者輸入的位址：補 http://、去掉結尾斜線；格式不對回空字串"""
     url = (url or "").strip().rstrip("/")
     if url and "://" not in url:
-        url = "http://" + url
+        url = "http://" + url  # NOSONAR：只用在企業內網的主機；連得上加密埠時一律優先用 https（見 server_candidates）
     parts = urlsplit(url)
     return url if parts.scheme in ("http", "https") and parts.netloc else ""
 
@@ -117,7 +117,7 @@ def server_candidates(url: str) -> list[str]:
         return []
     if has_port:
         return [url]
-    return [url, f"https://{parts.netloc}:{HOST_HTTPS_PORT}", f"http://{parts.netloc}:{HOST_PORT}"]
+    return [url, f"https://{parts.netloc}:{HOST_HTTPS_PORT}", f"http://{parts.netloc}:{HOST_PORT}"]  # NOSONAR：內網主機關掉加密時的退路，排在 https 之後
 
 
 # 這台電腦已經信任的主機憑證（第一次連線核對指紋後記住，見 host_trust.py）
@@ -240,7 +240,10 @@ def _spawn(args: list[str]) -> None:
     # 打包成單一 exe 的程式開另一個同類程式時，要請它重新建立自己的執行環境，不要沿用這一個的
     env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
     flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-    subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    # 只用來重新開啟桌面版自己（路徑由程式組出、不經過 shell），不接受外部傳入的指令
+    if not args or not Path(args[0]).is_file():
+        raise ValueError("要開啟的程式不存在")
+    subprocess.Popen(args, env=env,  # NOSONAR stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                      creationflags=flags, close_fds=True)
 
 

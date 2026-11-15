@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import tempfile
 import time
@@ -49,6 +50,13 @@ class _Store:
 
 
 _store = _Store()
+
+def _write_temp(data: bytes, ext: str) -> Path:
+    """把上傳內容寫成暫存檔（給既有的解析器讀；呼叫端用完會刪掉）"""
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+        tmp.write(data)
+        return Path(tmp.name)
+
 
 
 def _sweep_locked() -> None:
@@ -88,9 +96,7 @@ async def attach(conversation_id: str, files: list[tuple[str, bytes]]) -> dict:
             continue
         tmp_path: Path | None = None
         try:
-            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
-                tmp.write(data)
-                tmp_path = Path(tmp.name)
+            tmp_path = await asyncio.to_thread(_write_temp, data, ext)
             text = (await text_extract.extract_text(tmp_path, ext.lstrip("."))).strip()
         except Exception as e:
             logger.info("瀏覽器臨時資料夾：%s 解析失敗：%s", name, e)

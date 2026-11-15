@@ -42,6 +42,8 @@ services:
       - "127.0.0.1:${SEARXNG_PORT:-8888}:8080"
     environment:
       - SEARXNG_BASE_URL=http://127.0.0.1:${SEARXNG_PORT:-8888}/
+      # 簽章用的金鑰（start.py 會自動帶入；手動啟動時請自行設定這個環境變數）
+      - SEARXNG_SECRET=${SEARXNG_SECRET:-}
     healthcheck:
       test:
         - CMD-SHELL
