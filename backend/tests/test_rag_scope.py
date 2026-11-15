@@ -18,9 +18,10 @@ from tests.test_permissions import make_user
 
 
 async def make_doc(db: AsyncSession, owner, tenant_id: str, folder_id: str | None = None, status: str = "completed") -> Document:
+    """folder_id 有值＝連接資料夾的文件（上傳者是建立資料夾的管理者，和實際索引時一樣）"""
     meta = {"source": "folder", "folder_id": folder_id} if folder_id else {}
     d = Document(
-        id=str(uuid.uuid4()), tenant_id=tenant_id, uploaded_by=owner.id if owner else None,
+        id=str(uuid.uuid4()), tenant_id=tenant_id, uploaded_by=owner.id,
         filename=f"{uuid.uuid4().hex}.txt", original_filename="a.txt", file_path="x", file_size=1,
         file_type="txt", status=status, doc_metadata=meta,
     )
@@ -46,12 +47,13 @@ class TestSearchableDocuments:
         other = await make_user(db_session, "user", tid)
         mine = await make_doc(db_session, me, tid)
         others = await make_doc(db_session, other, tid)
+        indexer = await make_user(db_session, "admin", tid)
         open_folder = await make_folder(db_session, tid, ["user", "admin"])
         admin_folder = await make_folder(db_session, tid, ["admin"])
         off_folder = await make_folder(db_session, tid, ["user", "admin"], enabled=False)
-        in_open = await make_doc(db_session, None, tid, open_folder.id)
-        in_admin = await make_doc(db_session, None, tid, admin_folder.id)
-        in_off = await make_doc(db_session, None, tid, off_folder.id)
+        in_open = await make_doc(db_session, indexer, tid, open_folder.id)
+        in_admin = await make_doc(db_session, indexer, tid, admin_folder.id)
+        in_off = await make_doc(db_session, indexer, tid, off_folder.id)
 
         ids = set(await searchable_document_ids(db_session, me))
         assert {mine.id, in_open.id} <= ids
@@ -63,7 +65,7 @@ class TestSearchableDocuments:
         someone = await make_user(db_session, "user", tid)
         theirs = await make_doc(db_session, someone, tid)
         admin_folder = await make_folder(db_session, tid, ["admin"])
-        in_admin = await make_doc(db_session, None, tid, admin_folder.id)
+        in_admin = await make_doc(db_session, admin, tid, admin_folder.id)
 
         ids = set(await searchable_document_ids(db_session, admin))
         assert {theirs.id, in_admin.id} <= ids
