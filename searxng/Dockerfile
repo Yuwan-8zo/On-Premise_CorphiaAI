@@ -4,7 +4,8 @@
 # 改成 build time 直接把設定檔「燒」進 image：改了設定要重新 build 才會生效
 #   docker compose --profile search build searxng
 FROM searxng/searxng:latest
-COPY --chown=searxng:searxng settings.yml /etc/searxng/settings.yml
-COPY --chown=searxng:searxng limiter.toml /etc/searxng/limiter.toml
+# 設定檔屬於 root、唯讀：服務本身（searxng 使用者）只能讀，不能改
+COPY settings.yml /etc/searxng/settings.yml
+COPY limiter.toml /etc/searxng/limiter.toml
 # 以非 root 的 searxng 使用者執行（官方映像檔預設是 root；它的啟動程式支援非 root，只會略過更新系統憑證這一步）
 USER searxng
