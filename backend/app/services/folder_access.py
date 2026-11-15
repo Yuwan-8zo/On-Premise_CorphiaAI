@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.models.connected_folder import ConnectedFolder
 from app.models.document import Document, DocumentStatus
@@ -46,6 +46,24 @@ async def folder_document_ids(db, user) -> list[str]:
             Document.status == DocumentStatus.COMPLETED.value,
         )
     )).scalars().all())
+
+
+async def searchable_document_ids(db, user) -> list[str]:
+    """
+    這個人在對話裡可以檢索的所有文件（沒有指定專案資料夾時的範圍；規則和文件 API 一致）：
+      - 一般上傳的文件：一般使用者只有自己上傳的；管理者與工程師是整個租戶的
+      - 連接資料夾的文件：依資料夾權限（folder_document_ids）
+    回傳空清單＝沒有可以檢索的文件（呼叫端不可以把空清單當成「不限制」）
+    """
+    query = select(Document.id).where(
+        Document.tenant_id == user.effective_tenant_id,
+        Document.status == DocumentStatus.COMPLETED.value,
+        or_(Document.doc_metadata["source"].astext.is_(None), Document.doc_metadata["source"].astext != SOURCE),
+    )
+    if not (user.is_admin or user.is_engineer):
+        query = query.where(Document.uploaded_by == user.id)
+    uploaded = list((await db.execute(query)).scalars().all())
+    return uploaded + await folder_document_ids(db, user)
 
 
 async def can_read_folder_document(db, user, doc: Document) -> bool:

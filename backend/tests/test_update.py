@@ -254,3 +254,39 @@ class TestStartAndWaitHealthy:
         monkeypatch.setattr(update.urllib.request, "urlopen", lambda *a, **k: _FakeResp())
 
         assert update.start_and_wait_healthy(timeout_sec=5) is True
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# 重新啟動要沿用原本的模式：主機安裝包沒有 Node，要用 --built，不然會去開前端開發伺服器而失敗
+# ═════════════════════════════════════════════════════════════════════════
+class TestStartArgs:
+    def _layout(self, monkeypatch, tmp_path, launcher: str | None, dist: bool, npm: bool):
+        if launcher is not None:
+            (tmp_path / "一鍵啟動.bat").write_text(launcher, encoding="utf-8")
+        if dist:
+            (tmp_path / "frontend" / "dist").mkdir(parents=True)
+            (tmp_path / "frontend" / "dist" / "index.html").write_text("<html>", encoding="utf-8")
+        monkeypatch.setattr(update, "BASE_DIR", tmp_path)
+        monkeypatch.setattr(update, "FRONTEND_DIR", tmp_path / "frontend")
+        monkeypatch.setattr(update.shutil, "which", lambda name: "npm" if npm else None)
+
+    def test_host_package_launcher_keeps_built(self, monkeypatch, tmp_path):
+        self._layout(monkeypatch, tmp_path, '"python.exe" start.py --built\r\n', dist=True, npm=True)
+        assert update.start_args() == ["--built"]
+
+    def test_no_node_with_built_interface_uses_built(self, monkeypatch, tmp_path):
+        self._layout(monkeypatch, tmp_path, "python start.py\r\n", dist=True, npm=False)
+        assert update.start_args() == ["--built"]
+
+    def test_dev_machine_keeps_dev_mode(self, monkeypatch, tmp_path):
+        self._layout(monkeypatch, tmp_path, "python start.py\r\n", dist=True, npm=True)
+        assert update.start_args() == []
+
+    def test_restart_passes_mode_to_start_py(self, monkeypatch, tmp_path):
+        self._layout(monkeypatch, tmp_path, '"python.exe" start.py --built\r\n', dist=True, npm=False)
+        seen = []
+        monkeypatch.setattr(update.subprocess, "Popen", lambda cmd, **k: seen.append(cmd))
+        monkeypatch.setattr(update.urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(OSError()))
+        monkeypatch.setattr(update.time, "sleep", lambda s: None)
+        update.start_and_wait_healthy(timeout_sec=0)
+        assert seen and seen[0][-1] == "--built"

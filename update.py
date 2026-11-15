@@ -150,9 +150,24 @@ def stop_if_running() -> None:
     subprocess.run([sys.executable, str(BASE_DIR / "stop.py")], cwd=str(BASE_DIR))
 
 
+def start_args() -> list[str]:
+    """
+    重新啟動時要沿用原本的模式：主機安裝包（一鍵啟動.bat 帶 --built）或這台電腦沒有 Node、但已經有打包好的介面，
+    就用 --built 由後端直接提供介面；否則 start.py 會去開前端開發伺服器，沒有 npm 的主機會啟動失敗
+    """
+    launcher = BASE_DIR / "一鍵啟動.bat"
+    try:
+        built = "--built" in launcher.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        built = False
+    if not built and (FRONTEND_DIR / "dist" / "index.html").exists() and not (shutil.which("npm") or shutil.which("npm.cmd")):
+        built = True
+    return ["--built"] if built else []
+
+
 def start_and_wait_healthy(timeout_sec: int = HEALTH_TIMEOUT_SEC) -> bool:
     info("啟動新版本…")
-    subprocess.Popen([sys.executable, str(BASE_DIR / "start.py")], cwd=str(BASE_DIR))
+    subprocess.Popen([sys.executable, str(BASE_DIR / "start.py"), *start_args()], cwd=str(BASE_DIR))
     deadline = time.time() + timeout_sec
     while time.time() < deadline:
         try:

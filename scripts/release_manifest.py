@@ -23,6 +23,10 @@ RELEASE_PATHS: list[str] = [
     "scripts/setup_postgres.py",
     "scripts/setup_pgvector.py",
     "backend/app",
+    # start.py 直接執行的三支後端程式：少了任何一支，舊版用更新包升級後後端就啟動不了（或資料表不會更新）
+    "backend/run_server.py",
+    "backend/auto_engine.py",
+    "backend/scripts/init_db.py",
     "backend/requirements.txt",
     "frontend/src",
     "frontend/package.json",

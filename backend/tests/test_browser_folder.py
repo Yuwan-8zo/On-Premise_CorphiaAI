@@ -227,3 +227,18 @@ class TestBrowserFolderApi:
         files = [("files", ("a.txt", b"hello", "text/plain"))]
         r = await async_client.post(f"/api/v1/browser-folder/{cid}/attach", files=files, headers=user_auth_headers)
         assert r.status_code == 403
+
+
+class TestFitToBudget:
+    """附加內容塞不進模型長度時要截短並註明，不能讓整題因為超過長度而失敗"""
+
+    def test_short_text_untouched(self):
+        assert bf.fit_to_budget("短內容", 100) == ("短內容", False)
+
+    def test_long_text_cut_with_note(self):
+        text, cut = bf.fit_to_budget("字" * 5000, 1000)
+        assert cut and len(text) <= 1000 and text.endswith(bf.TRUNCATED_NOTE)
+
+    def test_no_room_leaves_only_note(self):
+        text, cut = bf.fit_to_budget("字" * 50, 0)
+        assert cut and "字" not in text.replace(bf.TRUNCATED_NOTE, "")

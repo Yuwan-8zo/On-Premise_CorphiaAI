@@ -84,6 +84,10 @@ def _deep_map(value, fn):
 AGENT_MAX_ROUNDS = 4
 AGENT_MAX_CALLS_PER_ROUND = 3
 
+# 附加資料夾內容放進提示前要扣掉的長度（字元≈詞元）：留給回答的、以及估算誤差的緩衝
+ATTACH_REPLY_RESERVE = 1024
+ATTACH_HEADROOM = 512
+
 # 深度研究：使用者指定「這一題要研究」時，多查幾輪、回答可以寫長一點
 RESEARCH_MAX_ROUNDS = 8
 RESEARCH_MAX_TOKENS = 4096
@@ -271,12 +275,26 @@ class ChatService:
         user = await self.db.get(User, user_id)
         return await folder_document_ids(self.db, user) if user else []
 
+    async def _searchable_doc_ids(self, user_id: Optional[str]) -> list[str]:
+        """對話主人可以檢索的所有文件（權限規則在 folder_access）；找不到使用者就是空清單"""
+        if not user_id:
+            return []
+        from app.models.user import User
+        from app.services.folder_access import searchable_document_ids
+
+        user = await self.db.get(User, user_id)
+        return await searchable_document_ids(self.db, user) if user else []
+
     async def _rag_node(self, state: AgentState) -> dict:
         context = ""
         sources = []
         folder_name = state.get("folder_name")
-        # 一般對話用連接資料夾：範圍是路由時算好的那些文件
-        document_ids = state.get("folder_doc_ids") or None
+        # 一般對話用連接資料夾：範圍是路由時算好的那些文件。
+        # 沒有指定專案資料夾、路由也沒算好範圍時，一律套用這個人能檢索的文件（自己上傳的＋有權限的連接資料夾），
+        # 空清單代表「沒有可以檢索的」，不可以變成 None（None 會變成整個租戶都搜）
+        document_ids = state.get("folder_doc_ids")
+        if document_ids is None and not folder_name:
+            document_ids = await self._searchable_doc_ids(state.get("user_id"))
 
         if folder_name:
             # FIX: 原本拉整個 tenant 的所有 Document 進記憶體 + Python loop 過濾
@@ -610,6 +628,15 @@ class ChatService:
         attached = browser_folder.consume(conversation_id)
         if attached:
             folder_text, folder_files = attached
+            # 附加的內容一定要放得進模型這一次能讀的長度：扣掉回答、系統提示、已有的參考資料、問題本身和緩衝，
+            # 剩下的才給附加內容（build_chat_prompt 只會刪歷史、截問題，不會截參考資料；塞不下整題就會失敗）
+            budget = (
+                self.llm_service.context_size - ATTACH_REPLY_RESERVE - ATTACH_HEADROOM
+                - len(system_prompt) - len(context or "") - len(content)
+            )
+            folder_text, cut = browser_folder.fit_to_budget(folder_text, max(0, budget))
+            if cut:
+                logger.info("瀏覽器臨時資料夾內容超過模型長度，已截到 %d 字", len(folder_text))
             label = f"### 這台電腦的資料夾（使用者這一題附上：{'、'.join(folder_files)}；只用這一次，不是長期的參考資料）\n{folder_text}"
             context = f"{context}\n\n{label}" if context else label
 

@@ -142,6 +142,20 @@ async def attach(conversation_id: str, files: list[tuple[str, bytes]]) -> dict:
     return {"accepted": accepted, "skipped": skipped, "chars": total_chars, "pii": report["pii"]}
 
 
+TRUNCATED_NOTE = "\n[……後面的內容超過模型一次能讀的長度，已省略；需要的話請分批附上或縮小資料夾……]"
+
+
+def fit_to_budget(text: str, budget_chars: int) -> tuple[str, bool]:
+    """
+    附加內容塞不進模型這一次能讀的長度時，只留前面能放得下的部分並註明省略。
+    回（文字, 有沒有截掉）。budget 以字元計（和 llm_service 一樣保守估計：1 字元約 1 個詞元）
+    """
+    if len(text) <= budget_chars:
+        return text, False
+    keep = max(0, budget_chars - len(TRUNCATED_NOTE))
+    return text[:keep] + TRUNCATED_NOTE, True
+
+
 def consume(conversation_id: str) -> tuple[str, list[str]] | None:
     """這個對話有沒有剛附上、還沒用掉的內容；有的話回（文字, 檔名清單）並清掉。只用一次。"""
     with _store.lock:
