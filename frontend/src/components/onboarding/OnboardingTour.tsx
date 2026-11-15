@@ -206,7 +206,11 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
     // spotlight step: 視 placement 排在目標旁；centered step: 螢幕中央
     const PADDING = 8 // spotlight 比目標多漏一圈，視覺上有呼吸感
     const TOOLTIP_GAP = 16 // tooltip 與目標距離
-    const TOOLTIP_W = 340
+    const TOOLTIP_W_BASE = 340
+    const EDGE = 16 // 卡片離螢幕邊緣至少這麼遠
+    // 手機比卡片還窄：卡片寬度跟著縮，不能超出螢幕
+    const fitWidth = (w: number) => Math.min(w, window.innerWidth - EDGE * 2)
+    const TOOLTIP_W = fitWidth(TOOLTIP_W_BASE)
 
     let tooltipStyle: React.CSSProperties = {}
     let arrowSide: 'top' | 'bottom' | 'left' | 'right' | null = null
@@ -226,7 +230,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
 
         // Tooltip 在視窗內的位置（top-left）。用 absolute 而非 transform，方便 arrow 對齊
         if (placement === 'right') {
-            const left = targetRect.left + targetRect.width + PADDING + TOOLTIP_GAP
+            const left = Math.min(targetRect.left + targetRect.width + PADDING + TOOLTIP_GAP, vw - EDGE - tooltipW)
             const top = Math.max(16, Math.min(cy - tooltipH / 2, vh - 16 - tooltipH))
             tooltipStyle = { left, top, width: TOOLTIP_W }
             arrowSide = 'left'
@@ -234,7 +238,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             arrowOffset = Math.max(14, Math.min(cy - top, tooltipH - 14))
         } else if (placement === 'left') {
             const right = vw - (targetRect.left - PADDING - TOOLTIP_GAP)
-            const left = vw - right - tooltipW
+            const left = Math.max(EDGE, vw - right - tooltipW)
             const top = Math.max(16, Math.min(cy - tooltipH / 2, vh - 16 - tooltipH))
             tooltipStyle = { left, top, width: TOOLTIP_W }
             arrowSide = 'right'
@@ -258,7 +262,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             left: '50%',
             top: '50%',
             transform: 'translate(-50%, -50%)',
-            width: TOOLTIP_W + 60,
+            width: fitWidth(TOOLTIP_W_BASE + 60),
         }
     }
 

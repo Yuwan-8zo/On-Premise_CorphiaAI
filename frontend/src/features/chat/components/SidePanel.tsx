@@ -158,10 +158,13 @@ export default function SidePanel() {
                         <CopyButton code={current.code} className={PANEL_BUTTON} iconSize={PANEL_ICON} />
                     </div>
                 )}
-                <button type="button" onClick={toggleFull} aria-pressed={full} aria-label={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')} title={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')}
-                    className={iconBtn}>
-                    {full ? <Contract className="w-[var(--sz-16)] h-[var(--sz-16)]" /> : <Expand className="w-[var(--sz-16)] h-[var(--sz-16)]" />}
-                </button>
+                {/* 全螢幕只在電腦版：手機上面板本來就蓋滿畫面，iPhone 也不支援網頁元素全螢幕 */}
+                {desktop && (
+                    <button type="button" onClick={toggleFull} aria-pressed={full} aria-label={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')} title={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')}
+                        className={iconBtn}>
+                        {full ? <Contract className="w-[var(--sz-16)] h-[var(--sz-16)]" /> : <Expand className="w-[var(--sz-16)] h-[var(--sz-16)]" />}
+                    </button>
+                )}
                 <button ref={closeButton} type="button" onClick={close} aria-label={t('ui.chat.sidePanel.close')} className={iconBtn}>
                     <X className="w-[var(--sz-16)] h-[var(--sz-16)]" />
                 </button>
