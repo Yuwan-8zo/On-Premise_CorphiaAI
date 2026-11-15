@@ -68,6 +68,8 @@ class Message(Base):
 
     # 使用者這一則附的圖片（編號清單；檔案在主機的 uploads/chat-images/，見 services/chat_images.py）；沒附是 None
     images: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    # 使用者這一則附的檔案（只有檔名清單：內容只給這一題用、用完就丟，見 services/browser_folder.py）；沒附是 None
+    files: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     # AI 這一題自己做了哪些步驟：[{"tool": 工具名稱, "summary": 給人看的一句話, "ok": 有沒有成功}]；沒用工具是 None
     steps: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)

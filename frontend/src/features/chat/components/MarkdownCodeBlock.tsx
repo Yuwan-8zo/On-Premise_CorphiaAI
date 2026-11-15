@@ -13,7 +13,7 @@ import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import MaterialIcon from '@/components/icons/MaterialIcon'
-import { PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
+import { PREVIEW_FRAME_STYLE, PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
 import { isRunnable } from '@/lib/pyRunner'
 import { useSidePanelItem } from '@/features/chat/hooks/useSidePanelItem'
 import { CODE_BUTTON, CopyButton, OpenInPanelButton, SaveButton } from './CodeButtons'
@@ -68,7 +68,8 @@ const MarkdownCodeBlock = memo(({
                     sandbox={PREVIEW_SANDBOX}
                     referrerPolicy="no-referrer"
                     srcDoc={buildPreviewDoc(children)}
-                    className="block w-full h-[var(--sz-320)] border-0 bg-white"
+                    style={PREVIEW_FRAME_STYLE}
+                    className="block w-full h-[var(--sz-320)] border-0"
                 />
             </div>
         ) : (

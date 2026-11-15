@@ -125,6 +125,11 @@ class HostTrust:
         self.reload()
 
     @property
+    def pem(self) -> str:
+        """目前信任的發證憑證（PEM）；還沒信任任何主機是空字串"""
+        return self._pem
+
+    @property
     def fingerprint(self) -> str:
         return fingerprint(ssl.PEM_cert_to_DER_cert(self._pem)) if self._pem else ""
 

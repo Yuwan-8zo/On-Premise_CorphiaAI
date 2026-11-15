@@ -11,8 +11,10 @@ import { create } from 'zustand'
 import type { PyRunResult } from '@/lib/pyRunner'
 
 export type SidePanelContent =
-    | { kind: 'page'; code: string; language: string }
+    | { kind: 'page'; code: string; language: string; title?: string }
     | { kind: 'run'; result: PyRunResult }
+    /** 附加的文字／程式碼檔（直接顯示內容） */
+    | { kind: 'text'; text: string; title: string }
 
 export type SidePanelItem = SidePanelContent & {
     id: string
@@ -24,6 +26,9 @@ interface SidePanelState {
     items: Record<string, SidePanelItem>
     currentId: string | null
     open: boolean
+    /** 面板現在顯示什麼：item＝某一個成品／執行結果；list＝這個對話的所有檔案 */
+    view: 'item' | 'list'
+    showList: () => void
     register: (id: string, content: SidePanelContent, el: Element | null) => void
     unregister: (id: string) => void
     show: (id: string) => void
@@ -46,6 +51,7 @@ export const useSidePanelStore = create<SidePanelState>((set, get) => ({
     items: {},
     currentId: null,
     open: false,
+    view: 'item',
 
     register: (id, content, el) => {
         const { items, open, currentId } = get()
@@ -77,8 +83,24 @@ export const useSidePanelStore = create<SidePanelState>((set, get) => ({
     },
 
     show: (id) => {
-        if (id in get().items) set({ currentId: id, open: true })
+        if (id in get().items) set({ currentId: id, open: true, view: 'item' })
     },
+
+    showList: () => set({ open: true, view: 'list' }),
 
     close: () => set({ open: false }),
 }))
+
+
+/** 附加檔案在面板裡的編號：綁定對話（換對話時才清得掉別的對話的檔案） */
+const ATTACHED_PREFIX = 'attached:'
+export const attachedItemId = (conversationId: string, name: string) => `${ATTACHED_PREFIX}${conversationId}:${name}`
+
+/** 換到別的對話：拿掉其他對話附加的檔案預覽（正在看的那份也一起收起來，不留著上一個對話的內容） */
+export function dropOtherAttachments(conversationId: string | undefined) {
+    const { items, unregister } = useSidePanelStore.getState()
+    const keep = conversationId ? attachedItemId(conversationId, '') : null
+    for (const id of Object.keys(items)) {
+        if (id.startsWith(ATTACHED_PREFIX) && (!keep || !id.startsWith(keep))) unregister(id)
+    }
+}

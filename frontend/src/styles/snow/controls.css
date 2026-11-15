@@ -184,11 +184,11 @@ html.dark .btn-danger {
   line-height: var(--lh-18);
   font-weight: 600;
   color: rgb(var(--text-primary));
-  /* 照範本 .tip：玻璃色底＋光邊、不模糊 */
-  background: var(--glass-ctl);
+  /* 提示會蓋在別的按鈕、文字上：用不透明底（和其他浮層一樣）＋光邊＋浮起的陰影，後面的東西不會透上來疊在字上 */
+  background: var(--paper-solid);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  box-shadow: var(--rim-glass);
+  box-shadow: var(--rim-glass), var(--shadow-float);
 }
 
 /* ---------- 對話框（Apple Alert） ---------- */

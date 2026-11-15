@@ -33,7 +33,8 @@ interface SourceGroup {
 function groupByDocument(sources: MessageSource[]): SourceGroup[] {
     const map = new Map<string, SourceGroup>()
     for (const s of sources) {
-        const key = s.document_id || s.document_name || s.chunk_id
+        // 用檔名分組：同一個檔案上傳過兩次（兩個文件編號）也只列一筆
+        const key = s.document_name || s.document_id || s.chunk_id
         const g = map.get(key) ?? { key, name: s.document_name || i18n.t('ui.sources.unknownDoc'), best: 0, chunks: [] }
         g.chunks.push(s)
         g.best = Math.max(g.best, s.score || 0)

@@ -218,15 +218,13 @@ export default function Chat() {
                                 {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
                                     避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
                                 <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
-                                    {mainProps.t('chat.emptyGreeting', {
-                                        name: (() => {
-                                            const raw =
-                                                mainProps.user?.name ||
-                                                mainProps.user?.email?.split('@')[0] ||
-                                                mainProps.t('common.user', 'User')
-                                            return raw.length > 16 ? raw.slice(0, 14) + '…' : raw
-                                        })(),
-                                    })}
+                                    {(() => {
+                                        const raw = mainProps.user?.name || mainProps.user?.email?.split('@')[0] || mainProps.t('common.user', 'User')
+                                        const name = raw.length > 16 ? raw.slice(0, 14) + '…' : raw
+                                        // 名字和後面的問號綁在一起不斷開：寬度不夠（例如旁邊面板打開）時整段換到下一行，不會剩一個「師？」掛在下面
+                                        const [before, after = ''] = mainProps.t('chat.emptyGreeting', { name: '[[NAME]]' }).split('[[NAME]]')
+                                        return <>{before}<span className="inline-block whitespace-nowrap">{name}{after}</span></>
+                                    })()}
                                 </h2>
                                 {/* 已移除「已連線本地 …」副標題，主畫面更乾淨；模型名稱仍可在右上角下拉選單看到 */}
                                 <div className="mb-[var(--fluid-block)]" />

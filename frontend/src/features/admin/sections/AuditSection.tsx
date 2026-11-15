@@ -276,10 +276,12 @@ export default function AuditSection({
                                                 {formatDate(log.created_at)}
                                             </td>
                                             <td className="px-3 sm:px-5 py-2">
+                                                {/* 名稱太長就以「…」收尾、不擠到隔壁欄；滑鼠停上去看全名 */}
                                                 <span
-                                                    className={`tag ${getActionPillClass(log.action)}`}
+                                                    title={auditActionLabel(t, log.action)}
+                                                    className={`tag ${getActionPillClass(log.action)} max-w-full`}
                                                 >
-                                                    {auditActionLabel(t, log.action)}
+                                                    <span className="min-w-0 truncate">{auditActionLabel(t, log.action)}</span>
                                                 </span>
                                             </td>
                                             <td className="hidden sm:table-cell px-5 py-2 text-sm text-text-primary">
@@ -318,7 +320,7 @@ export default function AuditSection({
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 flex flex-col overflow-hidden"
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper paper-solid !rounded-none sm:!rounded-l-[var(--r-25)] z-50 flex flex-col overflow-hidden"
                             role="dialog"
                             aria-label="audit detail"
                         >

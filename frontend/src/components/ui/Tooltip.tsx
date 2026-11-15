@@ -66,9 +66,18 @@ export default function Tooltip({
         const ttH = tooltipEl?.offsetHeight ?? 32
         const gap = 12 // 規範：距按鈕 12
 
+        const vw = window.innerWidth
+        const vh = window.innerHeight
+        // 指定的那一側放不下（例如畫面最上面的按鈕要往上放）就換到對面，不要硬塞在邊上蓋住旁邊的按鈕
+        let side: TooltipPlacement = placement
+        if (side === 'top' && wrapperRect.top - ttH - gap < 4) side = 'bottom'
+        else if (side === 'bottom' && wrapperRect.bottom + ttH + gap > vh - 4) side = 'top'
+        else if (side === 'left' && wrapperRect.left - ttW - gap < 4) side = 'right'
+        else if (side === 'right' && wrapperRect.right + ttW + gap > vw - 4) side = 'left'
+
         let top = 0
         let left = 0
-        switch (placement) {
+        switch (side) {
             case 'top':
                 top = wrapperRect.top - ttH - gap
                 left = wrapperRect.left + wrapperRect.width / 2 - ttW / 2
@@ -88,8 +97,6 @@ export default function Tooltip({
         }
 
         // viewport 邊界保護：避免 tooltip 跑出畫面
-        const vw = window.innerWidth
-        const vh = window.innerHeight
         if (left < 4) left = 4
         if (left + ttW > vw - 4) left = vw - ttW - 4
         if (top < 4) top = 4

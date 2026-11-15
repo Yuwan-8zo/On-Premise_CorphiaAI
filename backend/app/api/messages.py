@@ -57,6 +57,7 @@ async def send_message(
         ip_address=get_client_ip(http_request),
         emit=collect,
         model_name=await get_user_model(db, current_user.id),
+        own_documents=bool(request.use_rag),
     )
     if content is None:
         last = events[-1] if events else {}

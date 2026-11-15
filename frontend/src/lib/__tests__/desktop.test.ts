@@ -100,6 +100,10 @@ describe('desktopRelease：伺服器上的安裝檔', () => {
     expect(desktopRelease.downloadUrl()).toBe('/api/v1/desktop/download')
   })
 
+  it('員工安裝包也在同一台伺服器', () => {
+    expect(desktopRelease.packageUrl()).toBe('/api/v1/desktop/package')
+  })
+
   it('查最新版本', async () => {
     get.mockResolvedValue({ data: { available: true, version: '0.1.2', size: 13857788 } })
     await expect(desktopRelease.latest()).resolves.toEqual({ available: true, version: '0.1.2', size: 13857788 })

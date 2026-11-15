@@ -43,11 +43,25 @@ def is_rag_ready() -> bool:
 
 
 async def warm_ai_services() -> None:
-    """背景載入 LLM 與 RAG；失敗時標記 unavailable，不阻擋 API。"""
-    global _llm_state, _rag_state
+    """
+    背景載入 LLM 與 RAG；失敗時標記 unavailable，不阻擋 API。
+    AI 模型（大檔，讀硬碟要好幾分鐘）和文件檢索模型（小，約一分鐘）同時載入，不用一個等另一個。
+    """
+    from app.services.llm_service import get_llm_service
+
+    await asyncio.gather(_warm_llm(), _warm_rag())
+
+    # Keep the other configured models (e.g. 7B) loaded too, so switching is instant.
+    try:
+        await get_llm_service().preload_models()
+    except Exception as exc:
+        logger.error("預先載入其他模型失敗: %s", exc, exc_info=True)
+
+
+async def _warm_llm() -> None:
+    global _llm_state
 
     from app.services.llm_service import get_llm_service
-    from app.services.rag_service import get_rag_service
 
     _llm_state = ServiceState.LOADING
     try:
@@ -76,6 +90,12 @@ async def warm_ai_services() -> None:
         logger.error("LLM 背景初始化失敗: %s", exc, exc_info=True)
         _llm_state = ServiceState.ERROR
 
+
+async def _warm_rag() -> None:
+    global _rag_state
+
+    from app.services.rag_service import get_rag_service
+
     _rag_state = ServiceState.LOADING
     try:
         rag = get_rag_service()
@@ -88,12 +108,6 @@ async def warm_ai_services() -> None:
     except Exception as exc:
         logger.error("RAG 背景初始化失敗: %s", exc, exc_info=True)
         _rag_state = ServiceState.ERROR
-
-    # Keep the other configured models (e.g. 7B) loaded too, so switching is instant.
-    try:
-        await get_llm_service().preload_models()
-    except Exception as exc:
-        logger.error("預先載入其他模型失敗: %s", exc, exc_info=True)
 
 
 def start_background_warmup() -> None:

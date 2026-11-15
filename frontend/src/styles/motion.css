@@ -11,6 +11,7 @@
   --duration-normal: 250ms;
   --duration-medium: 300ms;
   --duration-slow: 600ms;
+  --duration-panel: 420ms; /* 旁邊面板展開／收起（寬度變化，太快會像瞬間出現） */
 }
 
 @keyframes spin {
@@ -171,4 +172,36 @@
   .page-transition > :not([role='status']) {
     animation: none;
   }
+}
+
+
+/* 旁邊的顯示面板（SidePanel）：開關都有動畫。
+   電腦：寬度從 0 展開到 --side-panel-w，聊天區跟著平順讓位；裡面的內容寬度固定，展開時不會一直重排。
+   手機：蓋滿畫面，由下往上浮現。 */
+@keyframes side-panel-grow {
+  from { width: 0; margin-right: 0; opacity: 0; }
+  to { width: var(--side-panel-w); opacity: 1; }
+}
+@keyframes side-panel-shrink {
+  from { width: var(--side-panel-w); opacity: 1; }
+  to { width: 0; margin-right: 0; opacity: 0; }
+}
+@keyframes side-panel-rise {
+  from { transform: translateY(var(--sp-24)); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes side-panel-sink {
+  from { transform: none; opacity: 1; }
+  to { transform: translateY(var(--sp-24)); opacity: 0; }
+}
+.side-panel-in { animation: side-panel-rise var(--duration-panel) var(--ease-sp) both; }
+.side-panel-out { animation: side-panel-sink var(--duration-panel) var(--ease-sp) both; pointer-events: none; }
+@media (min-width: 768px) {
+  .side-panel-in { animation-name: side-panel-grow; }
+  .side-panel-out { animation-name: side-panel-shrink; }
+  .side-panel > * { min-width: var(--side-panel-w); }
+  .side-panel-full > * { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-panel-in, .side-panel-out { animation-duration: 1ms; }
 }

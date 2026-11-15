@@ -136,7 +136,7 @@ async def websocket_chat(
         # 純 CPU 跑 7B 文件問答約 2.5 分鐘，若前面還有一題在排隊會更久，所以給 10 分鐘
         GENERATION_TIMEOUT_SEC = 600
 
-        async def _security_gate(raw_text: str) -> Optional[str]:
+        async def _security_gate(raw_text: str, own_documents: bool = False) -> Optional[str]:
             """安全閘道（個資遮罩 → 違禁詞 → 提示詞注入），規則在 services/message_guard；None＝已攔阻"""
             return await screen_user_message(
                 db, raw_text,
@@ -148,6 +148,8 @@ async def websocket_chat(
                 emit=websocket.send_json,
                 # 第五關（模型複查）用這位使用者正在用的模型，不另外載入別的模型
                 model_name=await get_user_model(db, user_id),
+                # 專案模式（檢索自己的專案文件）：「讀取所有檔案」不算索取機密
+                own_documents=own_documents,
             )
 
         async def _quota_ok() -> bool:
@@ -342,7 +344,7 @@ async def websocket_chat(
                         continue
 
                     # 安全閘道（個資遮罩 → 違禁詞 → 提示詞注入）；DLP 攔阻時回傳 None
-                    sanitized = await _security_gate(content)
+                    sanitized = await _security_gate(content, own_documents=bool(use_rag))
                     if sanitized is None:
                         continue
                     content = sanitized

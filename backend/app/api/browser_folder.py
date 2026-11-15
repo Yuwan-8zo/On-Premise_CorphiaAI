@@ -10,12 +10,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from app.api.deps import CurrentUser, DbSession
 from app.api.lookups import get_own_conversation
 from app.core.config import settings
-from app.core.file_validator import validate_file_signature
+from app.core.file_validator import looks_like_text, validate_file_signature
 from app.core.request_utils import get_client_ip, get_user_agent
 from app.services import browser_folder as bf
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
@@ -48,7 +50,10 @@ async def attach_folder(
     for f in files:
         name = f.filename or "（未命名）"
         data = await f.read()
-        if not validate_file_signature(data[:1024], name, f.content_type or ""):
+        # 附加給這一則的網頁、程式原始碼（.css、.js…）不在全站上傳白名單裡（知識庫不收），
+        # 這裡只確認它真的是文字檔就放行：內容原封不動交給 AI 閱讀，不會被執行
+        code_ok = Path(name).suffix.lower() in bf.CODE_EXTS and looks_like_text(data)
+        if not code_ok and not validate_file_signature(data[:1024], name, f.content_type or ""):
             rejected.append({"name": name, "reason": "副檔名和檔案內容不符，或不是支援的格式"})
             continue
         payload.append((name, data))

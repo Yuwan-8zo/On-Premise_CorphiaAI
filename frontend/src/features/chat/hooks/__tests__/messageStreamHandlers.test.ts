@@ -29,6 +29,17 @@ describe('buildStreamDispatcher（每個對話一個）', () => {
     beforeEach(() => { vi.useFakeTimers() })
     afterEach(() => { vi.useRealTimers() })
 
+    it('DLP 攔阻：列管字詞說字詞數；語意檢查擋的不說成字詞', () => {
+        const handle = setup()
+        handle({ type: 'dlp_block', matched_terms_count: 2 } as never)
+        expect(lastContent()).toContain('2')
+        expect(lastContent()).toContain('列管字詞')
+        const again = setup()
+        again({ type: 'dlp_block', matched_terms_count: 0, method: '模型複查' } as never)
+        expect(lastContent()).not.toContain('列管字詞')
+        expect(lastContent()).toContain('索取機密資料')
+    })
+
     it('把連續的字合併成一次畫面更新', () => {
         const handle = setup()
         handle({ type: 'stream', content: '台' } as never)

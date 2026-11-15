@@ -97,7 +97,7 @@ export default function AboutSection() {
                                     </span>
                                 </span>
                                 {release?.available && (
-                                    <a href={desktopRelease.downloadUrl()} download className="btn btn-sm btn-primary flex-shrink-0" aria-label={t('about.desktopDownloadAria')}>
+                                    <a href={desktopRelease.packageUrl()} download className="btn btn-sm btn-primary flex-shrink-0" aria-label={t('about.desktopDownloadAria')}>
                                         <Download className="h-4 w-4" />
                                         {t('about.desktopDownload')}
                                     </a>

@@ -48,13 +48,14 @@ from urllib.parse import urlsplit
 
 import webview
 
+import host_config
 import host_trust
 import local_files
 import single_instance
 import office_bridge
 from local_stack import LOCAL_UI_URL, LocalStack, find_install_dir, is_local_server, serves_ui
 
-VERSION = "0.3.7"
+VERSION = "0.3.8"
 APP_NAME = "Corphia AI"
 DEFAULT_SERVER = "http://localhost:5173"
 # 主機（--built）提供介面的埠；連線設定頁的範例、和只打 IP 時要補的埠都用它
@@ -83,17 +84,55 @@ def storage_dir() -> Path:
     return Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "CorphiaAI" / "webview"
 
 
-def load_server() -> str:
+def _load_config() -> dict:
     try:
-        return json.loads(config_path().read_text(encoding="utf-8")).get("server") or DEFAULT_SERVER
+        data = json.loads(config_path().read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
-        return DEFAULT_SERVER
+        return {}
 
 
-def save_server(url: str) -> None:
+def load_server() -> str:
+    return _load_config().get("server") or DEFAULT_SERVER
+
+
+def load_servers() -> list[str]:
+    """記住的整組主機位址（員工安裝包附的：電腦名稱＋各個區網 IP）；主機換 IP 時自動改試別的"""
+    servers = _load_config().get("servers")
+    return [s for s in servers if isinstance(s, str)] if isinstance(servers, list) else []
+
+
+def save_server(url: str, servers: list[str] | None = None) -> None:
+    """記住現在連的位址；servers＝整組可以試的位址（沒給就只有這一個）"""
     path = config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"server": url}, ensure_ascii=False), encoding="utf-8")
+    data = {"server": url, "servers": list(servers or [url])}
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def app_dir() -> Path:
+    """桌面版程式所在的資料夾（員工安裝包的 corphia-host.json 放在這裡）"""
+    return Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parent
+
+
+def auto_connect() -> str:
+    """
+    不用使用者輸入就連上主機：先看程式旁邊有沒有員工安裝包附的主機設定，再試之前記住的整組位址
+    （都要用信任的發證憑證驗過對方，見 host_config.py）。連上就記住並回位址，都不行回空字串。
+    """
+    configs = []
+    bundle = host_config.load(app_dir())
+    if bundle:
+        configs.append(bundle)
+    saved = load_servers()
+    if saved:
+        configs.append({"servers": saved, "ca_pem": TRUST.pem})
+    for config in configs:
+        url = host_config.connect(config, TRUST, reachable)
+        if url:
+            save_server(url, config["servers"])
+            return url
+    return ""
 
 
 def normalize_server(url: str) -> str:
@@ -153,7 +192,7 @@ def enable_pinned_certificates() -> None:
 def connect_page(server: str, first_run: bool) -> str:
     """連線設定頁：第一次用（還沒設定過主機）和「原本連得上、現在連不上」說法不一樣"""
     if first_run:
-        title, text, value = "連線到公司的 Corphia AI", f"請輸入主機的位址（例如 {EXAMPLE_SERVER}）。位址可以問管理者，或在主機的管理後台「區域網路」查看。", ""
+        title, text, value = "連線到公司的 Corphia AI", f"找不到主機設定。若管理者給你的是「員工安裝包」，請把 {host_config.FILE_NAME} 和程式放在同一個資料夾再開一次；或在下面輸入主機的位址（例如 {EXAMPLE_SERVER}）。", ""
     else:
         title, text, value = "連不上主機", f"請確認公司的 Corphia AI 主機已經啟動，或輸入正確的位址（例如 {EXAMPLE_SERVER}）。", server
     return CONNECT_PAGE.replace("__TITLE__", title).replace("__TEXT__", text).replace("__SERVER__", value)
@@ -734,9 +773,16 @@ def main() -> int:
 
     api = Api(server)
     online = reachable(server)
+    install = find_install_dir(Path(sys.executable if getattr(sys, "frozen", False) else __file__))
+    # 公司其他電腦：連不上（第一次用、或主機換了 IP）就依員工安裝包附的主機設定、或記住的整組位址自動連，不用輸入
+    if not online and not args.selftest and not args.server and not (install and is_local_server(server)):
+        found = auto_connect()
+        if found:
+            server = api._server = found
+            online = True
+            first_run = False
     # 伺服器就是這台電腦、而且桌面程式放在完整安裝裡：服務沒開就自己帶起來（不用先按一鍵啟動）
     # （用一鍵啟動開著開發模式時，上面那個位址連得上，照舊用它；不然改用後端直接提供的介面）
-    install = find_install_dir(Path(sys.executable if getattr(sys, "frozen", False) else __file__))
     boot_html = None
     if not online and not args.selftest and install and is_local_server(server):
         server = api._server = LOCAL_UI_URL

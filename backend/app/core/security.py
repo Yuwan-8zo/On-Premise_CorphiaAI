@@ -73,6 +73,12 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
+# 這次主機啟動的代號：每次啟動都不一樣，寫進每一張登入 Token。
+# 主機重開後，之前發的 Token（包含保留 7 天的那張）代號對不上就一律失效 → 每個人都要重新登入一次；
+# 平常關掉程式、瀏覽器再打開（主機沒重開）則不受影響。後端只跑一個程序，所以全系統只有這一個代號。
+BOOT_ID = uuid.uuid4().hex
+
+
 def create_access_token(
     data: dict[str, Any],
     expires_delta: Optional[timedelta] = None
@@ -105,6 +111,7 @@ def create_access_token(
         "iat_precise": now.timestamp(),
         "type": "access",
         "jti": str(uuid.uuid4()),
+        "boot": BOOT_ID,
     })
     
     return jwt.encode(
@@ -144,6 +151,7 @@ def create_refresh_token(
         "iat_precise": now.timestamp(),
         "type": "refresh",
         "jti": str(uuid.uuid4()),
+        "boot": BOOT_ID,
     })
     
     return jwt.encode(
@@ -169,7 +177,10 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
             settings.secret_key,
             algorithms=[settings.jwt_algorithm]
         )
-        return payload
     except JWTError:
         return None
+    # 主機重開前發的 Token 不再接受（見 BOOT_ID）
+    if payload.get("boot") != BOOT_ID:
+        return None
+    return payload
 

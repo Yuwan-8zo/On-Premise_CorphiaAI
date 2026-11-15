@@ -60,6 +60,8 @@ export function useChatLogic() {
     // 看圖片：這台主機有沒有圖文模型（沒有就不顯示附圖）；輸入框送出前把剛附的圖片編號交過來
     const [vision, setVision] = useState<VisionStatus | null>(null)
     const sentImagesRef = useRef<string[]>([])
+    // 附加檔案：送出前輸入框把這一則附的檔名交過來（剛送出的訊息馬上顯示）
+    const sentFilesRef = useRef<string[]>([])
     useEffect(() => {
         chatImagesApi.status().then(setVision).catch(() => undefined) // 問不到就當沒有，不影響其他功能
     }, [])
@@ -97,8 +99,22 @@ export function useChatLogic() {
     useEffect(() => {
         conversationsApi.list()
             .then((result) => setConversations(result.data))
-            .catch((error) => console.error('載入對話列表失敗:', error))
+            .catch((error) => {
+                console.error('載入對話列表失敗:', error)
+                useChatStore.getState().setConversationsFailed()
+            })
     }, [setConversations])
+
+    // 側欄切換「一般／專案」：開著的對話不屬於要切去的模式就回到空白畫面
+    // （不然畫面還是一般聊天，送出卻變成專案問題，兩邊混在一起）
+    const switchChatMode = useCallback((mode: ChatMode) => {
+        setChatMode(mode)
+        const current = useChatStore.getState().currentConversation
+        if (current && Boolean(current.settings?.isProject) !== (mode === 'project')) {
+            setCurrentConversation(null)
+            setSelectedFolder(null)
+        }
+    }, [setCurrentConversation, setSelectedFolder])
 
     const selectConversation = useCallback(async (conversation: Conversation | null) => {
         if (!conversation) return
@@ -133,9 +149,18 @@ export function useChatLogic() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setCurrentConversation, setMessages, socket.connect, setSidebarOpen, setSelectedFolder])
 
-    /** 還沒有對話時先建一個並連線；回傳對話 id（失敗回傳 undefined，畫面仍照常顯示） */
-    const ensureConversation = async (title: string) => {
-        if (currentConversation?.id) return currentConversation.id
+    /** 還沒有對話時先建一個並連線；回傳對話 id（失敗回傳 undefined，畫面仍照常顯示）
+     *  同時有好幾處要建（例如拖進圖片＋文件，兩組各自上傳）：共用同一次建立，不會建出兩個對話 */
+    const creatingRef = useRef<Promise<string | undefined> | null>(null)
+    const ensureConversation = (title: string): Promise<string | undefined> => {
+        const existing = useChatStore.getState().currentConversation?.id ?? currentConversation?.id
+        if (existing) return Promise.resolve(existing)
+        if (!creatingRef.current) {
+            creatingRef.current = createConversation(title).finally(() => { creatingRef.current = null })
+        }
+        return creatingRef.current
+    }
+    const createConversation = async (title: string) => {
         try {
             const conversation = await conversationsApi.create({ title, settings: { isProject: chatMode === 'project' } })
             addConversation(conversation)
@@ -311,7 +336,12 @@ export function useChatLogic() {
         // 剛附的圖片先顯示在自己的訊息上（送出後伺服器會把它們正式掛到這一則）
         const sentImages = sentImagesRef.current
         sentImagesRef.current = []
-        addMessage(tempMessage('user', text, sentImages.length ? { images: sentImages } : {}))
+        const sentFiles = sentFilesRef.current
+        sentFilesRef.current = []
+        addMessage(tempMessage('user', text, {
+            ...(sentImages.length ? { images: sentImages } : {}),
+            ...(sentFiles.length ? { files: sentFiles } : {}),
+        }))
         scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
         addMessage(tempMessage('assistant', '', {}, 1))
         setStreaming(true)
@@ -460,7 +490,7 @@ export function useChatLogic() {
             conversations,
             currentConversationId: currentConversation?.id ?? null,
             chatMode,
-            setChatMode,
+            setChatMode: switchChatMode,
             selectedFolder,
             expandedFolders: folders.expandedFolders,
             setExpandedFolders: folders.setExpandedFolders,
@@ -497,6 +527,7 @@ export function useChatLogic() {
             setResearchOn,
             vision,
             onImagesSent: (ids: string[]) => { sentImagesRef.current = ids },
+            onFilesSent: (names: string[]) => { sentFilesRef.current = names },
             selectedFolder,
             chatMode,
             // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
@@ -541,7 +572,8 @@ export function useChatLogic() {
             handleRegenerate,
             handleSwitchVersion,
             // 政策是「完全不連外網」時不提供（回答下面就不會有這顆按鈕）
-            handleSearchAgain: searchPolicy.enabled ? handleSearchAgain : undefined,
+            // 專案只根據專案文件回答：不提供「連網重答」（後端也不會連）
+            handleSearchAgain: searchPolicy.enabled && chatMode !== 'project' ? handleSearchAgain : undefined,
             ragDebugMode,
             messagesEndRef: scroll.messagesEndRef,
             scrollContainerRef: scroll.scrollContainerRef,

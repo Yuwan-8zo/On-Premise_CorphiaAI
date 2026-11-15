@@ -130,3 +130,10 @@ html:not(.dark) .menu-item.is-danger {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
+
+/* 展開時會蓋在聊天內容上：和其他浮層一樣用不透明底，後面的字不會透上來 */
+.dock-shell.is-open {
+  background: var(--paper-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

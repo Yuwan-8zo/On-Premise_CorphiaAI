@@ -7,6 +7,10 @@
 import React, { lazy, memo, Suspense } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import type { PluggableList } from 'unified'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 
 /** 圖片網址是不是本機的（同一台伺服器的相對或絕對路徑、data:image、blob:）；外部網址回 false */
 function isLocalImage(src?: string): boolean {
@@ -51,6 +55,7 @@ function urlTransform(url: string, key: string): string {
     return defaultUrlTransform(url)
 }
 import i18n from '@/i18n'
+import { normalizeMath } from '@/lib/normalizeMath'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
 
@@ -130,16 +135,21 @@ class MarkdownErrorBoundary extends React.Component<
     }
 }
 
+// 算式：$$ … $$ 排成公式（單一個 $ 不算，金額才不會被當成公式）；排版失敗就顯示原文、不讓整則訊息壞掉
+const REMARK_PLUGINS: PluggableList = [remarkGfm, [remarkMath, { singleDollarTextMath: false }]]
+const REHYPE_PLUGINS: PluggableList = [[rehypeKatex, { throwOnError: false, strict: 'ignore' }]]
+
 // 主元件
 const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProps) => {
     // 確保 content 一定是字串，防止因為 undefined 或 obj 導致 react-markdown 崩潰
-    const safeContent = normalizeBreaks(typeof content === 'string' ? content : String(content || ''))
+    const safeContent = normalizeMath(normalizeBreaks(typeof content === 'string' ? content : String(content || '')))
     
     return (
         <MarkdownErrorBoundary fallbackContent={safeContent}>
             <div className={`markdown-body ${className}`}>
                 <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
+                    remarkPlugins={REMARK_PLUGINS}
+                    rehypePlugins={REHYPE_PLUGINS}
                     urlTransform={urlTransform}
                     components={{
                         // 程式碼區塊

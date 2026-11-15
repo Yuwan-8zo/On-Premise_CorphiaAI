@@ -8,16 +8,22 @@
 另外提供桌面版自己更新用的兩個端點（不用登入：桌面版在登入前就要能檢查；內容只有版本資訊和公司自己的程式）：
   GET /desktop/latest    目前伺服器上的桌面版版本、檔案大小、SHA-256
   GET /desktop/download  下載 exe
+以及給管理者發給同仁的員工安裝包（壓縮檔：exe＋這台主機的位址與發證憑證＋使用說明，見 services/desktop_package.py）：
+  GET /desktop/package   同仁打開就自動連上主機，不用輸入位址、不用核對指紋
+  （不用登入：內容只有公司自己的程式、公開的發證憑證和區網位址；區網門檢只讓內網來源連進來）
 版本以 desktop/corphia_desktop.py 裡的 VERSION 為準；exe 是 desktop/dist/Corphia AI.exe（build.bat 產生）。
 """
 
+import asyncio
 import hashlib
 import re
+import socket
 from pathlib import Path
+from urllib.parse import quote
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
 from app.api.deps import CurrentUser, DbSession
@@ -95,6 +101,29 @@ async def download_desktop():
     if not exe.is_file():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="伺服器上沒有桌面版安裝檔")
     return FileResponse(exe, media_type="application/octet-stream", filename=EXE_NAME)
+
+
+@router.get("/package")
+async def download_package():
+    """員工安裝包（壓縮檔）：exe＋這台主機的連線設定＋使用說明"""
+    from app.api.system_monitor import _detect_lan_ips
+    from app.core import web_ui
+    from app.services import desktop_package
+
+    exe, version = _exe_path(), _source_version()
+    if not exe.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="伺服器上沒有桌面版安裝檔")
+    # 和區網伺服器憑證寫的是同一組（run_server.py 用 _detect_lan_ips 發憑證）：寫別的 IP 進去也驗不過
+    ips = _detect_lan_ips()
+    config = desktop_package.current_config(web_ui.LAN_ENDPOINT, ips, socket.gethostname())
+    if config is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="主機模式啟動（一鍵啟動）後才能產生員工安裝包")
+    name = f"Corphia AI 桌面版（員工安裝包）v{version or '0'}"
+    data = await asyncio.to_thread(desktop_package.build_zip, exe, config, name)
+    return Response(
+        content=data, media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name + '.zip')}", "Cache-Control": "no-store"},
+    )
 
 
 @router.post("/events")

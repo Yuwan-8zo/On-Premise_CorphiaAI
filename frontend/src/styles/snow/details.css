@@ -26,6 +26,10 @@
   color: rgb(var(--text-primary));
   animation: toastIn 0.23s var(--ease-out) both;
 }
+/* 通知蓋在別的內容上（例如右上角的按鈕）：和其他浮層一樣用不透明底，後面的東西不會透上來疊在字上 */
+.toast-pill.glass-chip {
+  background: var(--paper-solid);
+}
 @keyframes toastIn {
   from {
     opacity: 0;
@@ -205,6 +209,20 @@ html.dark {
 .drop-hint svg {
   width: var(--sz-28);
   height: var(--sz-28);
+}
+/* 輸入框版：輸入框比較矮，圖示和字橫排；蓋滿整個輸入框，圓角和輸入框同心（輸入框圓角 − 內縮） */
+.drop-hint-field {
+  inset: var(--sp-4);
+  flex-direction: row;
+  gap: var(--sp-10);
+  border-radius: calc(var(--field-h) / 2 - var(--sp-4));
+  font-size: var(--fs-15);
+  /* 不透明：下面的附件標籤、輸入框不要透上來 */
+  background: color-mix(in srgb, var(--paper-solid) 86%, rgb(var(--accent)));
+}
+.drop-hint-field svg {
+  width: var(--sz-20);
+  height: var(--sz-20);
 }
 
 /* 骨架畫面（讀取中）：灰色預留方塊緩慢呼吸；「減少動態效果」時靜止（元件見 components/ui/Skeleton.tsx） */

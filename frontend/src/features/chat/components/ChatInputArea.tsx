@@ -1,4 +1,4 @@
-import { Eye, FileText, Folder, Layers3, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { Eye, FileText, Folder, Paperclip, Reader, Search, X } from '@/components/snow/icons'
 import ChatImage from './ChatImage'
 import { useChatImages } from '../hooks/useChatImages'
 import type { VisionStatus } from '@/api/chatImages'
@@ -10,13 +10,15 @@ import { PromptMenu } from './PromptMenu'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
-import { UPLOAD_ACCEPT } from '@/lib/uploadTypes'
+import { ATTACH_ACCEPT, UPLOAD_ACCEPT } from '@/lib/uploadTypes'
 import { riseIn } from '@/lib/motionPresets'
 import InputActionsMenu, { type InputAction } from '@/components/ui/InputActionsMenu'
-import { desktop, OFFICE_APPS, useDesktop, type OfficeApp } from '@/lib/desktop'
 import { getErrorMessage } from '@/lib/errors'
 import { BROWSER_FOLDER_MAX_FILES, BROWSER_FOLDER_MAX_TOTAL_MB, pickFolder, supportsFolderPicker } from '@/lib/browserFolder'
 import { browserFolderApi } from '@/api/browserFolder'
+import { bundleHtml } from '@/lib/htmlBundle'
+import { saveAttachments } from '@/lib/attachmentCache'
+import { attachedItemId, useSidePanelStore } from '@/store/sidePanelStore'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -32,6 +34,8 @@ interface ChatInputAreaProps {
     vision?: VisionStatus | null
     /** 送出前告訴上層這一則附了哪些圖（讓剛送出的訊息馬上顯示圖片） */
     onImagesSent?: (ids: string[]) => void
+    /** 送出前告訴上層這一則附了哪些檔案（只有檔名；讓剛送出的訊息馬上顯示） */
+    onFilesSent?: (names: string[]) => void
     isConnecting: boolean
     isUploading: boolean
     uploadProgress: number
@@ -63,29 +67,15 @@ export default function ChatInputArea({
     isConnecting, isUploading, uploadProgress, uploadedFiles, isStreaming,
     input, setInput, inputRef, fileInputRef,
     handleKeyDown, handleStop, handleSend, handleFileUpload, handleSendVoice,
-    llmReady = true, researchOn, setResearchOn, vision = null, onImagesSent,
+    llmReady = true, researchOn, setResearchOn, vision = null, onImagesSent, onFilesSent,
 }: ChatInputAreaProps) {
     const { t } = useTranslation()
-    const isDesktop = useDesktop()
-    /** 桌面版：把 Word／Excel／PowerPoint 目前的內容接到輸入框後面（標明來源），使用者接著打問題再送出 */
-    const readFromOffice = async (app: OfficeApp) => {
-        const toast = useToastStore.getState().add
-        try {
-            const r = await desktop.read(app)
-            const head = t(r.truncated ? 'ui.office.quoteHeadTruncated' : 'ui.office.quoteHead', { app: t(`ui.office.app.${app}`), name: r.name, n: r.chars })
-            setInput((prev) => `${prev ? prev.trimEnd() + '\n\n' : ''}${head}\n${r.text}\n\n`)
-            toast(t('ui.office.readDone', { n: r.chars }), 'success')
-            setTimeout(() => inputRef.current?.focus(), 0)
-        } catch (err) {
-            toast(getErrorMessage(err), 'error')
-        }
-    }
     const toast = useToastStore()
     const [isRecording, setIsRecording] = useState(false)
 
     /** 瀏覽器臨時資料夾：已附加、等著送給下一則訊息的（只到使用者送出訊息或按移除為止）
      *  name 是 null 時表示重新整理頁面後恢復的狀態（伺服器只記得檔名清單，不記得資料夾本身叫什麼） */
-    const [attachedFolder, setAttachedFolder] = useState<{ name: string | null; count: number; files?: boolean } | null>(null)
+    const [attachedFolder, setAttachedFolder] = useState<{ name: string | null; count: number; files?: boolean; names?: string[] } | null>(null)
     /** 「附加檔案」用的隱藏檔案選取器（和上傳到專案的那一個分開：這個只附給下一則訊息，不留底） */
     const attachInputRef = useRef<HTMLInputElement>(null)
     const [folderBusy, setFolderBusy] = useState(false)
@@ -97,7 +87,8 @@ export default function ChatInputArea({
         if (!conversationId) return
         let stale = false
         browserFolderApi.pending(conversationId).then((p) => {
-            if (!stale && p.files.length > 0) setAttachedFolder({ name: null, count: p.files.length })
+            // 重新整理後恢復：伺服器只記得檔名，不知道當初是附檔案還是資料夾——照檔案顯示（一個就顯示檔名，多個顯示幾個檔案）
+            if (!stale && p.files.length > 0) setAttachedFolder({ name: p.files.length === 1 ? p.files[0] : null, count: p.files.length, names: p.files, files: true })
         }).catch(() => undefined)
         return () => { stale = true }
     }, [conversationId])
@@ -108,9 +99,11 @@ export default function ChatInputArea({
         try {
             const picked = await pickFolder()
             if (picked.files.length === 0) { toast.error(t('chat.browserFolder.empty')); return }
+            void previewHtml(conversationId, picked.files)
             const result = await browserFolderApi.attach(conversationId, picked.files)
             if (result.accepted.length === 0) { toast.error(t('chat.browserFolder.empty')); return }
-            setAttachedFolder({ name: picked.name, count: result.accepted.length })
+            void saveAttachments(conversationId, picked.files)
+            setAttachedFolder({ name: picked.name, count: result.accepted.length, names: result.accepted })
             const suffix = picked.tooManyFiles ? t('chat.browserFolder.tooMany') : ''
             if (result.skipped.length > 0) {
                 toast.info(t('chat.browserFolder.attachedSkipped', { name: picked.name, n: result.accepted.length, skipped: result.skipped.length }) + suffix)
@@ -129,22 +122,21 @@ export default function ChatInputArea({
     /** 「＋」選單的內容：依目前的情況列出用得到的功能 */
     const chatImages = useChatImages({ vision, conversationId, ensureConversation })
     const imageInputRef = useRef<HTMLInputElement | null>(null)
+    // 分兩組、圖示用系統色區分：上面是「附加到這一則」，下面是「功能」
+    // （讀取 Word／Excel／PowerPoint 不另外放按鈕：直接附加檔案就讀得到）
+    const attachGroup = t('chat.actionGroups.attach')
+    const toolGroup = t('chat.actionGroups.tools')
     const actions: InputAction[] = [
-        ...(hasPrompts ? [{ key: 'prompt', icon: <Reader />, label: t('chat.promptTemplatesTitle'), onSelect: () => setPromptOpen(true) }] : []),
-        // 桌面版：讀取這台電腦上 Office 目前的內容（選取範圍；沒選就整份）
-        ...(isDesktop ? OFFICE_APPS.map((app) => ({
-            key: `office-${app}`, icon: <Layers3 />, label: t('chat.actionReadOffice', { app: t(`ui.office.app.${app}`) }),
-            disabled: isStreaming, onSelect: () => readFromOffice(app),
-        })) : []),
-        // 附加檔案：只附給下一則訊息（不留底），所有瀏覽器和手機都能用
-        ...(conversationId || ensureConversation ? [{ key: 'files', icon: <FileText />, label: t('chat.attachFiles.button'), disabled: folderBusy, onSelect: () => attachInputRef.current?.click() }] : []),
-        ...(chatMode === 'project' ? [{ key: 'upload', icon: <Paperclip />, label: t('chat.actionUpload'), onSelect: () => fileInputRef.current?.click() }] : []),
+        // 附加檔案：只附給下一則訊息（不留底），所有瀏覽器和手機都能用；也可以直接把檔案拖到輸入框
+        ...(conversationId || ensureConversation ? [{ key: 'files', group: attachGroup, tone: 'blue' as const, icon: <FileText />, label: t('chat.attachFiles.button'), disabled: folderBusy, onSelect: () => attachInputRef.current?.click() }] : []),
         // 附加圖片：請 AI 看圖（截圖、拍下來的文件、圖表）；也可以直接在輸入框貼上。主機有圖文模型才有這一項
-        ...(chatImages.enabled && chatMode === 'general' ? [{ key: 'images', icon: <Eye />, label: t('chat.images.button'), disabled: chatImages.busy, onSelect: () => imageInputRef.current?.click() }] : []),
-        // 深度研究：下一題多查幾輪、寫成有出處的報告（只管那一題）。專案模式只根據文件回答，不提供
-        ...(setResearchOn && chatMode === 'general' ? [{ key: 'research', icon: <Search />, label: t('chat.research.button'), checked: Boolean(researchOn), onSelect: () => setResearchOn((v) => !v) }] : []),
+        ...(chatImages.enabled && chatMode === 'general' ? [{ key: 'images', group: attachGroup, tone: 'green' as const, icon: <Eye />, label: t('chat.images.button'), disabled: chatImages.busy, onSelect: () => imageInputRef.current?.click() }] : []),
         // 附加這台電腦的資料夾（只有 Chromium 系瀏覽器支援；只附給下一則訊息，不留底）
-        ...(showFolderButton ? [{ key: 'folder', icon: <Folder />, label: t('chat.browserFolder.button'), disabled: folderBusy, onSelect: pickAndAttachFolder }] : []),
+        ...(showFolderButton ? [{ key: 'folder', group: attachGroup, tone: 'orange' as const, icon: <Folder />, label: t('chat.browserFolder.button'), disabled: folderBusy, onSelect: pickAndAttachFolder }] : []),
+        ...(chatMode === 'project' ? [{ key: 'upload', group: attachGroup, tone: 'teal' as const, icon: <Paperclip />, label: t('chat.actionUpload'), onSelect: () => fileInputRef.current?.click() }] : []),
+        // 深度研究：下一題多查幾輪、寫成有出處的報告（只管那一題）。專案模式只根據文件回答，不提供
+        ...(setResearchOn && chatMode === 'general' ? [{ key: 'research', group: toolGroup, tone: 'purple' as const, icon: <Search />, label: t('chat.research.button'), checked: Boolean(researchOn), onSelect: () => setResearchOn((v) => !v) }] : []),
+        ...(hasPrompts ? [{ key: 'prompt', group: toolGroup, tone: 'yellow' as const, icon: <Reader />, label: t('chat.promptTemplatesTitle'), onSelect: () => setPromptOpen(true) }] : []),
     ]
 
     /**
@@ -154,6 +146,22 @@ export default function ChatInputArea({
     const attachFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? [])
         e.target.value = '' // 同一個檔案可以再選一次
+        await attachFileList(files)
+    }
+    /** 附加的檔案裡有 HTML：連同一起附加的 CSS／JS 直接在旁邊面板預覽（只在這個瀏覽器裡，不經過伺服器） */
+    const previewHtml = async (convId: string, files: File[]) => {
+        try {
+            const page = await bundleHtml(files)
+            if (!page) return
+            const panel = useSidePanelStore.getState()
+            const id = attachedItemId(convId, page.name)
+            panel.register(id, { kind: 'page', code: page.code, language: 'html', title: page.name }, null)
+            panel.show(id)
+        } catch {
+            // 讀不出來就不預覽，不影響附加本身
+        }
+    }
+    const attachFileList = async (files: File[]) => {
         if (files.length === 0 || folderBusy) return
         if (files.length > BROWSER_FOLDER_MAX_FILES) { toast.error(t('chat.attachFiles.tooMany', { max: BROWSER_FOLDER_MAX_FILES })); return }
         if (files.reduce((sum, f) => sum + f.size, 0) > BROWSER_FOLDER_MAX_TOTAL_MB * 1024 * 1024) { toast.error(t('chat.attachFiles.tooBig', { max: BROWSER_FOLDER_MAX_TOTAL_MB })); return }
@@ -161,9 +169,12 @@ export default function ChatInputArea({
         try {
             const id = conversationId ?? await ensureConversation?.()
             if (!id) { toast.error(t('chat.attachFiles.noConversation')); return }
+            void previewHtml(id, files)
             const result = await browserFolderApi.attach(id, files)
             if (result.accepted.length === 0) { toast.error(t('chat.attachFiles.empty')); return }
-            setAttachedFolder({ name: result.accepted.length === 1 ? result.accepted[0] : null, count: result.accepted.length, files: true })
+            // 原檔留一份在這個瀏覽器（伺服器不保留），右側面板的檔案清單才點得開
+            void saveAttachments(id, files)
+            setAttachedFolder({ name: result.accepted.length === 1 ? result.accepted[0] : null, count: result.accepted.length, files: true, names: result.accepted })
             if (result.skipped.length > 0) toast.info(t('chat.attachFiles.attachedSkipped', { n: result.accepted.length, skipped: result.skipped.length }))
             else toast.success(t('chat.attachFiles.attached', { n: result.accepted.length }))
         } catch (err) {
@@ -171,6 +182,28 @@ export default function ChatInputArea({
         } finally {
             setFolderBusy(false)
         }
+    }
+
+    /** 把檔案拖到輸入框：圖片（主機能看圖時）附成圖片，其他附成這一則的檔案；拖曳中顯示「放開即可附加」 */
+    const [dragOver, setDragOver] = useState(false)
+    const dragDepth = useRef(0)
+    const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes('Files')
+    const dropHandlers = {
+        onDragEnter: (e: React.DragEvent) => { if (hasFiles(e)) { e.preventDefault(); dragDepth.current++; setDragOver(true) } },
+        onDragOver: (e: React.DragEvent) => { if (hasFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } },
+        onDragLeave: () => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (dragDepth.current === 0) setDragOver(false) },
+        onDrop: (e: React.DragEvent) => {
+            if (!hasFiles(e)) return
+            e.preventDefault()
+            dragDepth.current = 0
+            setDragOver(false)
+            const dropped = Array.from(e.dataTransfer.files)
+            const useImages = chatImages.enabled && chatMode === 'general'
+            const images = useImages ? dropped.filter((f) => f.type.startsWith('image/')) : []
+            const others = dropped.filter((f) => !images.includes(f))
+            if (images.length) void chatImages.attach(images)
+            if (others.length) void attachFileList(others)
+        },
     }
 
     const removeAttachedFolder = async () => {
@@ -187,10 +220,15 @@ export default function ChatInputArea({
     const researchChip = Boolean(researchOn) && chatMode === 'general'
     /** 送出前：把這一則附的圖片交給上層（訊息馬上顯示圖片），並清掉輸入框上的縮圖 */
     const releaseImages = () => { const sent = chatImages.takeForSend(); if (sent.length) onImagesSent?.(sent) }
-    const sendAndClearFolder = () => { setAttachedFolder(null); releaseImages(); handleSend() }
+    /** 送出前：把這一則附的檔名交給上層（訊息馬上顯示），並清掉輸入框上的小標籤 */
+    const releaseFiles = () => {
+        if (attachedFolder?.names?.length) onFilesSent?.(attachedFolder.names)
+        setAttachedFolder(null)
+    }
+    const sendAndClearFolder = () => { releaseFiles(); releaseImages(); handleSend() }
     const onKeyDownClearFolder = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            if (attachedFolder) setAttachedFolder(null)
+        if (e.key === 'Enter' && !e.shiftKey && input.trim() && !isStreaming) {
+            releaseFiles()
             releaseImages()
         }
         handleKeyDown(e)
@@ -257,7 +295,13 @@ export default function ChatInputArea({
                             />
                         </div>
                     ) : (
-                        <div className="relative flex-1 min-w-0 flex flex-col glass-field">
+                        <div className="relative flex-1 min-w-0 flex flex-col glass-field" {...dropHandlers}>
+                            {dragOver && (
+                                <div className="drop-hint drop-hint-field absolute" aria-hidden>
+                                    <FileText />
+                                    <span>{t('chat.attachFiles.dropHint')}</span>
+                                </div>
+                            )}
 
                             {/* Tags / Files Row */}
                             {(uploadedFiles.length > 0 || isUploading || attachedFolder || researchChip || chatImages.images.length > 0 || chatImages.busy) && (
@@ -335,7 +379,7 @@ export default function ChatInputArea({
                                     }}
                                 />
                                 <InputActionsMenu label={t('chat.moreActions')} items={actions} disabled={isConnecting || isUploading} />
-                                <input ref={attachInputRef} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={attachFiles} aria-hidden tabIndex={-1} />
+                                <input ref={attachInputRef} type="file" multiple accept={ATTACH_ACCEPT} className="hidden" onChange={attachFiles} aria-hidden tabIndex={-1} />
                                 <input ref={imageInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" className="hidden" data-testid="image-input" tabIndex={-1}
                                     onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ''; void chatImages.attach(files) }} />
 

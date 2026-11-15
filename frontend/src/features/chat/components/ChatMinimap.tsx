@@ -174,7 +174,7 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                       - 用 right: calc(100% + 8px) 把右邊緣鎖到 marker 左側 8px
                     */
                     <div
-                        className="absolute z-50 pointer-events-none flex items-start gap-2 paper !rounded-[var(--r-14)] px-3 py-2 break-words"
+                        className="absolute z-50 pointer-events-none flex items-start gap-2 paper paper-solid !rounded-[var(--r-14)] px-3 py-2 break-words"
                         style={{
                             top: `${hoveredMarker.top + hoveredMarker.height / 2}%`,
                             right: 'calc(100% + 8px)',

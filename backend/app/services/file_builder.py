@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import json
 import re
+from pathlib import Path
 from typing import Optional
 
 KIND_DOCX = "docx"
@@ -85,6 +86,30 @@ def detect_file_request(text: str) -> Optional[str]:
             if m and (best is None or m.end() > best[0]):
                 best = (m.end(), kind)
     return best[1] if best else None
+
+
+# 使用者附了一份 Word／Excel／簡報，要 AI「改」它：產出同一種檔案（不用特別說「做成 Word」）
+_EDIT_RE = re.compile(
+    r"改|修正|調整|潤飾|潤稿|校對|更新|翻譯|重寫|改寫|精簡|補充|美化|排版|edit|revise|fix|rewrite|translate|update|proofread",
+    re.I,
+)
+_EXT_KIND = {".docx": KIND_DOCX, ".doc": KIND_DOCX, ".xlsx": KIND_XLSX, ".xls": KIND_XLSX, ".csv": KIND_XLSX,
+             ".pptx": KIND_PPTX, ".ppt": KIND_PPTX}
+
+
+def detect_edit_request(text: str, filenames: Optional[list]) -> Optional[str]:
+    """
+    這一則附了檔案、而且是要修改它（「幫我改這份」「把錯字修正」）：回附檔的種類（docx／xlsx／pptx），讓 AI 產出改好的同一種檔案。
+    問問題（「這份在講什麼」「怎麼改比較好」）不算；附的不是 Office 檔（網頁、程式碼）也不算——那些直接回原始碼。
+    """
+    t = text or ""
+    if not filenames or _HOWTO_RE.search(t) or not _EDIT_RE.search(t):
+        return None
+    for name in filenames:
+        kind = _EXT_KIND.get(Path(str(name)).suffix.lower())
+        if kind:
+            return kind
+    return None
 
 
 # ── 內容規格（引擎照這個限制模型的輸出）────────────────────────────────────

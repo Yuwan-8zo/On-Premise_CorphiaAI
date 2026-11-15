@@ -114,8 +114,10 @@ class Settings(BaseSettings):
     vision_model_dir: str = "ai_model/vision"
     browser_folder_max_files: int = 40
     browser_folder_max_total_mb: int = 50
-    browser_folder_max_chars_per_file: int = 20000
-    browser_folder_max_chars_total: int = 60000
+    # 附件在記憶體裡保留的字數上限（只放到送出那一題、用完就丟）。比模型一次能讀的多很多：
+    # 送出時再依問題挑出相關的段落（browser_folder.select_relevant），大檔案後面的內容才問得到
+    browser_folder_max_chars_per_file: int = 1_000_000
+    browser_folder_max_chars_total: int = 2_000_000
     browser_folder_ttl_min: int = 10  # 附上後多久沒送出訊息就自動作廢
 
     # 對外搜尋（唯一出口是自架的 SearXNG；見 docker-compose.yml、app/services/web_search.py）

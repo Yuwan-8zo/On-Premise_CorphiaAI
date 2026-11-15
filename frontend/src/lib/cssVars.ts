@@ -25,6 +25,14 @@ export function readNum(name: string): number {
     return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0
 }
 
+/** 讀時間設定（例如 '--duration-medium'：300ms 或 0.3s）→ 毫秒 */
+export function readMs(name: string): number {
+    if (typeof document === 'undefined') return 0
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    const n = Number.parseFloat(raw) || 0
+    return raw.endsWith('ms') ? n : n * 1000
+}
+
 /** 讀一組像素設定；回傳 name → 像素 */
 export function useCssPx(names: readonly string[]): Record<string, number> {
     const key = names.join('|')
