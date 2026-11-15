@@ -100,7 +100,8 @@ def normalize_server(url: str) -> str:
     """整理使用者輸入的位址：補 http://、去掉結尾斜線；格式不對回空字串"""
     url = (url or "").strip().rstrip("/")
     if url and "://" not in url:
-        url = "http://" + url  # NOSONAR：只用在企業內網的主機；連得上加密埠時一律優先用 https（見 server_candidates）
+        # 只用在企業內網的主機；連得上加密埠時一律優先用 https（見 server_candidates）
+        url = "http://" + url  # NOSONAR
     parts = urlsplit(url)
     return url if parts.scheme in ("http", "https") and parts.netloc else ""
 
@@ -117,7 +118,8 @@ def server_candidates(url: str) -> list[str]:
         return []
     if has_port:
         return [url]
-    return [url, f"https://{parts.netloc}:{HOST_HTTPS_PORT}", f"http://{parts.netloc}:{HOST_PORT}"]  # NOSONAR：內網主機關掉加密時的退路，排在 https 之後
+    # 沒加密的埠只是內網主機關掉加密時的退路，排在 https 之後
+    return [url, f"https://{parts.netloc}:{HOST_HTTPS_PORT}", f"http://{parts.netloc}:{HOST_PORT}"]  # NOSONAR
 
 
 # 這台電腦已經信任的主機憑證（第一次連線核對指紋後記住，見 host_trust.py）
