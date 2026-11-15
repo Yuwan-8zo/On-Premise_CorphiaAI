@@ -6,7 +6,7 @@
  *     關閉鈕、返回鈕都離頂 20、高 36，排在同一條線上；選單標題的字和導覽圖示左緣對齊、和關閉鈕上下置中
  *   各分頁內容在同一個資料夾：ProfileSection、MemorySection、AppearanceSection、LanguageSection、GuideSection、AboutSection
  */
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Book, Bookmark, ChevronLeft, ChevronRight, Globe, Info, Palette, ShieldCheck, User, X } from '@/components/snow/icons'
@@ -108,6 +108,15 @@ export default function SettingsModal() {
         { id: 'guide' as const, icon: <Book className="w-5 h-5" />, label: t('settings.guide') },
         { id: 'about' as const, icon: <Info className="w-5 h-5" />, label: t('settings.about') },
     ]
+    // 換到別的設定頁：從最上面開始看（不沿用上一頁捲到的位置）
+    const scrollRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        el.scrollTop = 0
+        el.classList.remove('is-scrolled')
+    }, [activeSection])
+
     const ActivePage = PAGES[activeSection]
 
     if (!isVisible) return null
@@ -179,7 +188,7 @@ export default function SettingsModal() {
 
                         {/* 主內容區域 */}
                         {/* 捲動區上下淡出（同聊天頁 .chat-scroll）：捲動時內容不會被外框硬切 */}
-                        <div onScroll={(e) => { const el = e.currentTarget; el.classList.toggle('is-scrolled', el.scrollTop > 4) }} className={`chat-scroll settings-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
+                        <div ref={scrollRef} onScroll={(e) => { const el = e.currentTarget; el.classList.toggle('is-scrolled', el.scrollTop > 4) }} className={`chat-scroll settings-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
                             <div className="p-[var(--sp-20)] md:pl-10 md:pr-[var(--sp-36)] md:pt-14 md:pb-[var(--sp-36)] min-h-full">
                                 {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
                                 <button
