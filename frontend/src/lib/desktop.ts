@@ -125,6 +125,8 @@ export const desktopRelease = {
     latest: async (): Promise<DesktopRelease> => (await apiClient.get<DesktopRelease>('/desktop/latest')).data,
     /** 下載安裝檔的網址（同一台伺服器） */
     downloadUrl: (): string => `${apiClient.defaults.baseURL ?? ''}/desktop/download`,
+    /** 員工安裝包（壓縮檔：程式＋這台主機的連線設定，同仁打開就自動連上主機） */
+    packageUrl: (): string => `${apiClient.defaults.baseURL ?? ''}/desktop/package`,
 }
 
 export const desktop = {
