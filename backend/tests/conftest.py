@@ -102,6 +102,15 @@ def _ensure_api_ready_for_health():
     yield
 
 
+@pytest.fixture(autouse=True)
+def _semantic_guard_off_by_default(monkeypatch):
+    """語意比對要載入嵌入模型、模型複查要推論引擎；一般測試關掉，test_semantic_guard.py 自己打開並換成假的"""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "enable_semantic_guard", False)
+    yield
+
+
 @pytest_asyncio.fixture
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """

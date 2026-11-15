@@ -36,6 +36,8 @@ class MaskResult(TypedDict):
 # 沒有字詞邊界，號碼緊貼中文時整筆漏判。改用「前後不是英數字」的明確邊界 _L / _R。
 _L = r'(?<![A-Za-z0-9])'
 _R = r'(?![A-Za-z0-9])'
+# 一位數字：阿拉伯數字、全形數字或中文數字
+_ANY_DIGIT = r'[0-9０-９零〇一二三四五六七八九]'
 
 _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 台灣身分證字號 (A123456789)
@@ -67,6 +69,18 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         "tw_phone",
         re.compile(_L + r'09\d{2}[-\s]?\d{3}[-\s]?\d{3}' + _R),
         "手機號碼",
+    ),
+    # 用中文數字寫的手機與身分證（「零九一二三四五六七八」「A一二三四五六七八九」）：
+    # 規則原本只認阿拉伯數字，換成中文數字就整筆漏掉。數字之間允許空白或連字號
+    (
+        "tw_phone",
+        re.compile(r'[0０零〇][9９九](?:[-\s]?' + _ANY_DIGIT + r'){8}(?!' + _ANY_DIGIT + r')'),
+        "手機號碼",
+    ),
+    (
+        "tw_national_id",
+        re.compile(_L + r'[A-Z][12一二](?:[-\s]?' + _ANY_DIGIT + r'){8}(?!' + _ANY_DIGIT + r')'),
+        "台灣身分證",
     ),
     # 電子郵件 — 加 lookbehind/lookahead 避免誤殺像 user.name.dept 這種無 @ 的「.連結」
     # 確保 @ 之前是 word char，@ 之後 TLD 至少 2 字（已有）

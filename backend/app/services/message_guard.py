@@ -1,10 +1,12 @@
 """
 使用者訊息安全閘道：即時串流（WebSocket）與一般 API 送訊息共用，兩條路一定經過同一套檢查。
 
-依序三層：
+依序五層（全部在送進模型回答之前）：
   1. 個資遮罩（PII）：命中就改用遮罩後的文字，後面的檢查、模型、資料庫都不接觸原值
   2. 違禁詞（DLP）：命中直接攔阻，不送模型
   3. 提示詞注入（Prompt Injection）：高風險攔阻；其他淨化後繼續
+  4. 語意比對：跟攻擊範例、正常範例比「意思」，很像攻擊就攔阻（換句話說的攻擊，規則比對不到）
+  5. 模型複查：第 4 層覺得「有點可疑」時，請本機模型做是非題；判定是攻擊就攔阻
 
 每一層命中都寫稽核紀錄，並透過 emit 把事件交給呼叫端（WebSocket 直接送給前端；一般 API 收集起來）。
 回傳：要送進模型的文字；None ＝ 已攔阻（最後一個事件的 type 是 dlp_block 或 injection_block）。
@@ -22,6 +24,7 @@ from app.services.audit_service import AuditAction, AuditResource, write_audit_l
 from app.services.dlp_service import check_dlp
 from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
+from app.services.semantic_guard import SECRET, llm_judge, semantic_check
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +65,7 @@ async def screen_user_message(
     user_email: Optional[str],
     ip_address: Optional[str],
     emit: Emit,
+    model_name: Optional[str] = None,
 ) -> Optional[str]:
     async def audit(action: str, description: str, details: dict) -> None:
         try:
@@ -136,4 +140,45 @@ async def screen_user_message(
                 return None
             processed = guard["sanitized_text"]
 
+    # 4. 語意比對、5. 模型複查：規則比對不到的換句話說攻擊（services/semantic_guard.py）
+    if settings.enable_semantic_guard:
+        verdict = await _semantic_gate(processed, model_name)
+        if verdict is not None:
+            category, method, score = verdict
+            if category == SECRET:
+                message = "這個問題看起來是在索取大量或他人的機密資料，請求已攔阻，未送入 AI 模型。"
+                await emit({"type": "dlp_block", "message": message, "matched_terms_count": 0, "method": method})
+                await audit(AuditAction.DLP_HIT, f"語意檢查判定為索取機密資料並已攔阻（{method}）",
+                            {"method": method, "score": score})
+            else:
+                message = "偵測到試圖改寫系統規則或套取系統設定的提問，請求已攔阻，未送入 AI 模型。"
+                await emit({"type": "injection_block", "message": message, "risk_level": "high", "method": method})
+                await audit(AuditAction.PROMPT_INJECTION_BLOCKED, f"語意檢查判定為提示詞注入並已攔阻（{method}）",
+                            {"method": method, "score": score, "risk_level": "high"})
+            return None
+
     return processed
+
+
+async def _semantic_gate(text: str, model_name: Optional[str]) -> Optional[tuple[str, str, float]]:
+    """回 (類別, 判定方式, 相似度) ＝要攔阻；None ＝放行"""
+    try:
+        sem = await semantic_check(text)
+    except Exception as e:  # 語意比對壞掉不能讓整個系統不能用：前三關規則照樣有效，記下來給管理者看
+        logger.warning("語意比對失敗，本則只用規則檢查: %s", e)
+        sem = None
+    if sem is None:
+        logger.warning("語意比對無法使用（嵌入模型未載入），本則只用規則檢查")
+        return None
+    score = round(sem.score, 3)
+    if sem.decision == "block":
+        return sem.category, "語意比對", score
+    if sem.decision != "review" or not settings.enable_llm_judge:
+        return None
+    verdict = await llm_judge(text, model_name=model_name)
+    if verdict is None:
+        # 模型沒載入、逾時、回答看不懂：依設定寧可錯擋（預設）或放行
+        return (sem.category, "模型複查失敗", score) if settings.llm_judge_fail_closed else None
+    if verdict == "safe":
+        return None
+    return verdict, "模型複查", score

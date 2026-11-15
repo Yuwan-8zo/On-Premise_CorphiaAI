@@ -149,6 +149,20 @@ class Settings(BaseSettings):
     # DLP 黑名單，逗號分隔；可從環境變數覆寫
     dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"
 
+    # 規則之後的第四、五關（services/semantic_guard.py）：換句話說的攻擊規則比對不到，改比「意思」。
+    # 語意比對：提問轉成向量，跟攻擊範例、正常提問範例比相似度（每則多約幾十毫秒）
+    enable_semantic_guard: bool = True
+    # 最像的攻擊範例相似度 ≥ 這個值、而且比最像的正常範例高出 semantic_guard_margin → 直接攔阻
+    semantic_guard_block: float = 0.80
+    # ≥ 這個值、而且比正常範例更像攻擊 → 「有點可疑」，交給本機模型複查
+    semantic_guard_review: float = 0.50
+    semantic_guard_margin: float = 0.10
+    # 模型複查：只在語意比對覺得可疑時才問本機模型（是非題，不回答原問題）；多約 1～2 秒
+    enable_llm_judge: bool = True
+    # 複查失敗（模型沒載入、逾時、回答看不懂）時：True＝攔阻（寧可錯擋），False＝放行
+    llm_judge_fail_closed: bool = True
+    llm_judge_max_tokens: int = 256
+
     # RAG 可調參數（Phase 3 預留）
     # 帶給模型的對話歷史：總字數預算、單一則最多幾個字（services/history_window.py）。
     # 以前只帶最後 4 則、每則 400 字（純 CPU 時代讀入很慢）；現在用顯示晶片讀入約 550 tok/s、相同的開頭還能重複利用

@@ -146,6 +146,8 @@ async def websocket_chat(
                 user_email=audit_email,
                 ip_address=audit_ip,
                 emit=websocket.send_json,
+                # 第五關（模型複查）用這位使用者正在用的模型，不另外載入別的模型
+                model_name=await get_user_model(db, user_id),
             )
 
         async def _quota_ok() -> bool:
