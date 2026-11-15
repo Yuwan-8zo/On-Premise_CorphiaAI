@@ -6,7 +6,6 @@
 
 import asyncio
 import json
-import re
 import logging
 from typing import TypedDict, Optional, AsyncGenerator
 
@@ -26,6 +25,7 @@ from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.services.llm_service import ChatPrompt, get_llm_service
 from app.services.rag_service import get_rag_service
+from app.services.doc_intents import wants_all_documents
 # NOTE: PII masking 與 Prompt Injection 檢測已由上層 websocket.py 的 _security_gate() 統一處理
 # 在 send_message_stream 中不再重複執行（見jBUG-07 修正）
 from app.services.hash_chain_service import stamp_message
@@ -131,16 +131,6 @@ OVERVIEW_MAX_DOCS = 12
 OVERVIEW_PER_DOC_CHARS = 900
 OVERVIEW_CHUNKS_PER_DOC = 6
 OVERVIEW_CONTEXT_CHARS = 9000
-_ALL_DOCS_RE = re.compile(
-    r"(所有|全部|每一?[份個篇]|這些|整個|資料夾(裡|中|內)?的?)\s*(的)?\s*(檔案|文件|文獻|資料)"
-    r"|(檔案|文件|文獻|資料)\s*(全部|都)"
-    r"|(讀取|閱讀|讀一下|看一下|整理|總結|摘要|概述|介紹|列出)\s*(一下)?\s*(檔案|文件|文獻)\s*$"
-)
-
-
-def wants_all_documents(text: str) -> bool:
-    """是不是要看整個資料夾（讀取／整理／總結所有檔案），而不是問某個具體問題"""
-    return bool(_ALL_DOCS_RE.search((text or "").strip()))
 
 
 class ChatGenerationError(Exception):

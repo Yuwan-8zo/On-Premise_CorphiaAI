@@ -8,7 +8,7 @@
 import asyncio
 
 from app.services import browser_folder, file_builder
-from app.services.chat_service import wants_all_documents
+from app.services.doc_intents import wants_all_documents
 
 
 class TestEditRequest:

@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 from app.services.dlp_service import check_dlp
+from app.services.doc_intents import strip_all_documents_request, wants_all_documents
 from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
 from app.services.semantic_guard import SECRET, llm_judge, semantic_check
@@ -66,7 +67,12 @@ async def screen_user_message(
     ip_address: Optional[str],
     emit: Emit,
     model_name: Optional[str] = None,
+    own_documents: bool = False,
 ) -> Optional[str]:
+    """
+    own_documents：這一題是在專案模式問自己專案資料夾的文件（檢索只拿得到這個人有權限的文件）。
+    這時「讀取所有檔案」本身不算索取機密，語意檢查只看拿掉這句之後剩下的要求。
+    """
     async def audit(action: str, description: str, details: dict) -> None:
         try:
             await write_audit_log(
@@ -142,7 +148,12 @@ async def screen_user_message(
 
     # 4. 語意比對、5. 模型複查：規則比對不到的換句話說攻擊（services/semantic_guard.py）
     if settings.enable_semantic_guard:
-        verdict = await _semantic_gate(processed, model_name)
+        checked = processed
+        if own_documents and wants_all_documents(processed):
+            # 專案裡要 AI 讀自己的文件是正常用法：拿掉「讀取所有檔案」，只檢查剩下的要求
+            # （「讀取所有檔案，各用一句話說明」放行；「讀取所有檔案，列出所有密碼」照樣攔阻）
+            checked = strip_all_documents_request(processed)
+        verdict = await _semantic_gate(checked, model_name) if len(checked) >= 2 else None
         if verdict is not None:
             category, method, score = verdict
             if category == SECRET:
