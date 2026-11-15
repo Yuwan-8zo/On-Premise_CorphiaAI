@@ -71,3 +71,28 @@ def test_select_relevant_small_text_kept_whole():
     from app.services import browser_folder as bf
 
     assert bf.select_relevant("短短的內容", "隨便問", 1000) == ("短短的內容", False)
+
+
+def test_select_relevant_takes_the_match_before_its_neighbors():
+    """長度只夠放一段時，放的是答案那段，不是它前面的段落"""
+    from app.services import browser_folder as bf
+
+    before = "\n".join(f"前面無關的第 {i} 行。" for i in range(150))
+    answer = "答案：放大鏡寬 93。\n" + "\n".join(f"補充說明第 {i} 行。" for i in range(140))
+    text = "【a.txt】\n" + before + "\n" + answer
+    out, cut = bf.select_relevant(text, "放大鏡寬多少", 1800)
+    assert cut
+    assert "放大鏡寬 93" in out
+
+
+def test_overview_budget_fits_small_model():
+    """4096 的模型：總覽長度要扣掉回答、提示和問題，不能照 9000 字給（會整題失敗）"""
+    from types import SimpleNamespace
+
+    from app.services import chat_service as cs
+
+    svc = SimpleNamespace(llm_service=SimpleNamespace(context_size=4096))
+    small = cs.ChatService._overview_budget(svc, "讀取所有檔案")
+    assert 0 < small < 4096 - cs.ATTACH_REPLY_RESERVE
+    svc.llm_service.context_size = 32768
+    assert cs.ChatService._overview_budget(svc, "讀取所有檔案") == cs.OVERVIEW_CONTEXT_CHARS

@@ -90,3 +90,17 @@ export const useSidePanelStore = create<SidePanelState>((set, get) => ({
 
     close: () => set({ open: false }),
 }))
+
+
+/** 附加檔案在面板裡的編號：綁定對話（換對話時才清得掉別的對話的檔案） */
+const ATTACHED_PREFIX = 'attached:'
+export const attachedItemId = (conversationId: string, name: string) => `${ATTACHED_PREFIX}${conversationId}:${name}`
+
+/** 換到別的對話：拿掉其他對話附加的檔案預覽（正在看的那份也一起收起來，不留著上一個對話的內容） */
+export function dropOtherAttachments(conversationId: string | undefined) {
+    const { items, unregister } = useSidePanelStore.getState()
+    const keep = conversationId ? attachedItemId(conversationId, '') : null
+    for (const id of Object.keys(items)) {
+        if (id.startsWith(ATTACHED_PREFIX) && (!keep || !id.startsWith(keep))) unregister(id)
+    }
+}

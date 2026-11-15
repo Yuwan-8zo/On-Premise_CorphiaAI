@@ -18,7 +18,7 @@ import { BROWSER_FOLDER_MAX_FILES, BROWSER_FOLDER_MAX_TOTAL_MB, pickFolder, supp
 import { browserFolderApi } from '@/api/browserFolder'
 import { bundleHtml } from '@/lib/htmlBundle'
 import { saveAttachments } from '@/lib/attachmentCache'
-import { useSidePanelStore } from '@/store/sidePanelStore'
+import { attachedItemId, useSidePanelStore } from '@/store/sidePanelStore'
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -154,7 +154,7 @@ export default function ChatInputArea({
             const page = await bundleHtml(files)
             if (!page) return
             const panel = useSidePanelStore.getState()
-            const id = `attached:${convId}:${page.name}`
+            const id = attachedItemId(convId, page.name)
             panel.register(id, { kind: 'page', code: page.code, language: 'html', title: page.name }, null)
             panel.show(id)
         } catch {

@@ -265,7 +265,9 @@ def select_relevant(text: str, question: str, budget_chars: int) -> tuple[str, b
     for i in sorted(range(n), key=lambda k: scores[k], reverse=True):
         if scores[i] <= 0:
             break
-        for j in range(i - SELECT_NEIGHBORS, i + SELECT_NEIGHBORS + 1):
+        # 先放命中的這一段，剩下的長度才給前後文（長度只夠一段時不能先被前一段吃掉）
+        neighbors = [j for d in range(1, SELECT_NEIGHBORS + 1) for j in (i - d, i + d)]
+        for j in [i, *neighbors]:
             if 0 <= j < n and j not in chosen:
                 cost = len(pieces[j][1]) + len(pieces[j][0]) + 8
                 if used + cost > budget_chars:

@@ -149,9 +149,18 @@ export function useChatLogic() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setCurrentConversation, setMessages, socket.connect, setSidebarOpen, setSelectedFolder])
 
-    /** 還沒有對話時先建一個並連線；回傳對話 id（失敗回傳 undefined，畫面仍照常顯示） */
-    const ensureConversation = async (title: string) => {
-        if (currentConversation?.id) return currentConversation.id
+    /** 還沒有對話時先建一個並連線；回傳對話 id（失敗回傳 undefined，畫面仍照常顯示）
+     *  同時有好幾處要建（例如拖進圖片＋文件，兩組各自上傳）：共用同一次建立，不會建出兩個對話 */
+    const creatingRef = useRef<Promise<string | undefined> | null>(null)
+    const ensureConversation = (title: string): Promise<string | undefined> => {
+        const existing = useChatStore.getState().currentConversation?.id ?? currentConversation?.id
+        if (existing) return Promise.resolve(existing)
+        if (!creatingRef.current) {
+            creatingRef.current = createConversation(title).finally(() => { creatingRef.current = null })
+        }
+        return creatingRef.current
+    }
+    const createConversation = async (title: string) => {
         try {
             const conversation = await conversationsApi.create({ title, settings: { isProject: chatMode === 'project' } })
             addConversation(conversation)

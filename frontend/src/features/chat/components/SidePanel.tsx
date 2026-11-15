@@ -17,7 +17,7 @@ import MaterialIcon from '@/components/icons/MaterialIcon'
 import { PREVIEW_FRAME_STYLE, PREVIEW_SANDBOX, buildPreviewDoc } from '@/lib/previewDoc'
 import { useDebounced } from '@/lib/useDebounced'
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
-import { orderedItems, useSidePanelStore, type SidePanelItem } from '@/store/sidePanelStore'
+import { attachedItemId, dropOtherAttachments, orderedItems, useSidePanelStore, type SidePanelItem } from '@/store/sidePanelStore'
 import { useChatStore } from '@/store/chatStore'
 import FileAttachments from './FileAttachments'
 import { loadAttachments } from '@/lib/attachmentCache'
@@ -42,6 +42,8 @@ export default function SidePanel() {
     const close = useSidePanelStore((s) => s.close)
     const messages = useChatStore((s) => s.messages)
     const conversationId = useChatStore((s) => s.currentConversation?.id)
+    // 換對話：上一個對話附加的檔案不能還留在面板裡
+    useEffect(() => { dropOtherAttachments(conversationId) }, [conversationId])
     const desktop = useMediaQuery(MQ_DESKTOP)
     const [showCode, setShowCode] = useState(false)
     const closeButton = useRef<HTMLButtonElement | null>(null)
@@ -230,7 +232,7 @@ function FileList({ items, messages, onOpen, conversationId }: {
                 useToastStore.getState().add(t('ui.chat.sidePanel.notCached'), 'info')
                 return
             }
-            const id = `attached:${conversationId}:${name}`
+            const id = attachedItemId(conversationId, name)
             const panel = useSidePanelStore.getState()
             const ext = name.split('.').pop()?.toLowerCase() ?? ''
             if (/^(html?|xhtml)$/.test(ext)) {

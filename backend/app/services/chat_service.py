@@ -131,6 +131,8 @@ OVERVIEW_MAX_DOCS = 12
 OVERVIEW_PER_DOC_CHARS = 900
 OVERVIEW_CHUNKS_PER_DOC = 6
 OVERVIEW_CONTEXT_CHARS = 9000
+# 總覽之外還要放得下的系統提示（含專案指示）字數；總覽長度＝模型一次能讀的長度扣掉回答、緩衝、這個和問題
+OVERVIEW_PROMPT_RESERVE = 1024
 
 
 class ChatGenerationError(Exception):
@@ -333,7 +335,9 @@ class ChatService:
             search_results = await self._document_overview(document_ids)
             if search_results:
                 search_results, screen = screen_chunks(search_results)
-                context = self.rag_service.build_context(search_results, max_length=OVERVIEW_CONTEXT_CHARS)
+                context = self.rag_service.build_context(
+                    search_results, max_length=self._overview_budget(state.get("query", "")),
+                )
                 return {"context": context, "sources": self._sources_of(search_results), "screen": screen}
 
         # C1: 使用 Hybrid Search（向量 + 關鍵字 re-rank），
@@ -448,6 +452,17 @@ class ChatService:
             }
             for r in results
         ]
+
+    def _overview_budget(self, query: str) -> int:
+        """
+        總覽最多給多少字：不超過 OVERVIEW_CONTEXT_CHARS，也要放得進模型這一次能讀的長度
+        （build_chat_prompt 不會截參考資料；4096 的模型塞 9000 字會整題失敗）。1 字約 1 個詞元，保守估計
+        """
+        room = (
+            self.llm_service.context_size - ATTACH_REPLY_RESERVE - ATTACH_HEADROOM
+            - OVERVIEW_PROMPT_RESERVE - len(query or "")
+        )
+        return max(0, min(OVERVIEW_CONTEXT_CHARS, room))
 
     async def _document_overview(self, document_ids: list[str]) -> list[dict]:
         """每份文件從頭依序取段落，每份最多 OVERVIEW_PER_DOC_CHARS 字（文件太多就只取前 OVERVIEW_MAX_DOCS 份）"""
