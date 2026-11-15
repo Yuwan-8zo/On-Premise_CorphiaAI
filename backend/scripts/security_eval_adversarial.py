@@ -87,14 +87,17 @@ def run():
     start = time.perf_counter()
     for _ in range(rounds):
         for s in samples:
-            mask_pii(s); check_dlp(s); check_prompt_injection(s)
+            mask_pii(s)
+            check_dlp(s)
+            check_prompt_injection(s)
     per = (time.perf_counter() - start) / (rounds * len(samples)) * 1000
 
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "docs", "report", "資安閘道對抗樣本實測結果.csv")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        w.writeheader(); w.writerows(rows)
+        w.writeheader()
+        w.writerows(rows)
 
     def rate(stage, gate, name, kind):
         sel = [r for r in rows if r["階段"] == stage and r["閘道"] == gate and r["變形"] == name and r["類別"] == kind]
@@ -111,7 +114,8 @@ def run():
     for stage in ("加強前", "加強後"):
         pos = [r for r in rows if r["階段"] == stage and r["類別"] == "應偵測"]
         neg = [r for r in rows if r["階段"] == stage and r["類別"] == "正常"]
-        tp = sum(r["是否攔截"] == "是" for r in pos); fp = sum(r["是否攔截"] == "是" for r in neg)
+        tp = sum(r["是否攔截"] == "是" for r in pos)
+        fp = sum(r["是否攔截"] == "是" for r in neg)
         print(f"{stage}：偵測 {tp}/{len(pos)}（{tp / len(pos) * 100:.1f}%）　誤判 {fp}/{len(neg)}（{fp / len(neg) * 100:.1f}%）")
     print(f"三道閘道串接平均處理時間（加強後）：{per:.3f} ms／則")
     print("\n加強後仍漏判：")

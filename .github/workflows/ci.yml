@@ -51,6 +51,8 @@ jobs:
       working-directory: ./backend
       env:
         TEST_DATABASE_URL: postgresql+asyncpg://corphia:corphia123@localhost:5432/corphia_test
+        # 程式本身的資料庫連線也指向 CI 的資料庫（.env.test 寫的是本機 Docker 的 5433）
+        DATABASE_URL: postgresql+asyncpg://corphia:corphia123@localhost:5432/corphia_test
         SECRET_KEY: ci-test-secret-key
         APP_ENV: test
       run: |

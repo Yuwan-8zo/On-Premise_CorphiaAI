@@ -32,10 +32,12 @@ from app.models.tenant import Tenant
 import os
 from dotenv import load_dotenv
 
-# 先嘗試載入 .env.test，讓測試可以使用獨立 DB
+# 先嘗試載入 .env.test，讓測試可以使用獨立 DB。
+# 已經設定的環境變數優先（override=False）：GitHub Actions 的資料庫在 5432，
+# .env.test 寫的是本機 Docker 的 5433；以前用 override=True 把 CI 的設定蓋掉，所有測試都連不上資料庫
 _env_test = os.path.join(os.path.dirname(__file__), "..", ".env.test")
 if os.path.exists(_env_test):
-    load_dotenv(_env_test, override=True)
+    load_dotenv(_env_test, override=False)
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",

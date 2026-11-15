@@ -14,10 +14,9 @@ import re
 import logging
 from typing import TypedDict
 
-logger = logging.getLogger(__name__)
-
-
 from app.services.text_normalize import original_span, variants
+
+logger = logging.getLogger(__name__)
 
 
 class MaskResult(TypedDict):

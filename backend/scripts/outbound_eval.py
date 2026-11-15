@@ -147,7 +147,8 @@ async def run():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        w.writeheader(); w.writerows(rows)
+        w.writeheader()
+        w.writerows(rows)
 
     for r in rows:
         print(f"[{r['符合預期']}] {r['類別']}／{r['情境']}：送出 {r['實際送出次數']} 次 {r['送出的內容']} {r['攔阻原因']}"
