@@ -10,6 +10,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
+from app.services import audit_chain
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,50 @@ class AuditAction:
     PROMPT_INJECTION_BLOCKED = "prompt_injection_blocked"
     DLP_HIT = "dlp_hit"
 
+    # 租戶管理
+    TENANT_CREATE = "tenant_create"
+    TENANT_UPDATE = "tenant_update"
+    TENANT_DELETE = "tenant_delete"
+
+    # 連接資料夾
+    FOLDER_CONNECT = "folder_connect"
+    FOLDER_UPDATE = "folder_update"
+    FOLDER_DISCONNECT = "folder_disconnect"
+
+    # 記憶（跨對話記住的事）
+    MEMORY_CREATE = "memory_create"
+    MEMORY_UPDATE = "memory_update"
+    MEMORY_DELETE = "memory_delete"
+    MEMORY_CLEAR = "memory_clear"
+    MEMORY_REJECTED = "memory_rejected"
+
+    # AI 產出檔案（Word、Excel、簡報）
+    FILE_CREATE = "file_create"
+    FILE_DOWNLOAD = "file_download"
+
+    # 桌面版：操控使用者電腦上的 Office（介面在動作成功後回報）
+    OFFICE_READ = "office_read"
+    OFFICE_WRITE = "office_write"
+    FILE_OPEN = "file_open"
+    FILE_SAVE = "file_save"
+
+    # 瀏覽器臨時資料夾：使用者用瀏覽器選這台電腦的資料夾附給 AI 看（只附一次，不留底）
+    BROWSER_FOLDER_ATTACH = "browser_folder_attach"
+    # 在聊天裡附圖片給 AI 看
+    CHAT_IMAGE_ATTACH = "chat_image_attach"
+
+    # 對外搜尋：唯一會把關鍵字送出這台機器的操作，一定要留稽核
+    WEB_SEARCH = "web_search"
+    # AI 回答前自己用了工具（查文件、連外網、計算…）
+    TOOL_CALL = "tool_call"
+    # 管理員從管理後台關閉主機服務
+    SYSTEM_SHUTDOWN = "system_shutdown"
+
+    # 送模型前最後一關：文件片段被剔除或遮罩
+    CONTEXT_FILTERED = "context_filtered"
+    # 模型的回答被改過：外部圖片拿掉、個資遮罩
+    OUTPUT_FILTERED = "output_filtered"
+
     # 系統 / 公開連結（高敏感：把 server 暴露到 internet）
     NGROK_START = "ngrok_start"
     NGROK_STOP = "ngrok_stop"
@@ -72,6 +117,9 @@ class AuditResource:
     CONVERSATION = "conversation"
     DOCUMENT = "document"
     MODEL = "model"
+    MEMORY = "memory"
+    FILE = "file"
+    DESKTOP = "desktop"
     SYSTEM = "system"
 
 
@@ -120,9 +168,10 @@ async def write_audit_log(
         user_agent=user_agent,
     )
 
-    db.add(audit_log)
-
     try:
+        # 接上防竄改鏈（拿鎖、讀上一筆的雜湊）後才加入，和 commit 在同一個交易裡
+        await audit_chain.stamp(db, audit_log)
+        db.add(audit_log)
         await db.commit()
         await db.refresh(audit_log)
         logger.debug(

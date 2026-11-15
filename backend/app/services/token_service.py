@@ -5,13 +5,13 @@ Token 黑名單服務模組
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
-from app.core.time_utils import utc_now_naive, utc_now_naive_plus
+from app.core.time_utils import to_aware_utc, utc_now_naive, utc_now_naive_plus
 from app.models.token_blacklist import TokenBlacklist
 
 logger = logging.getLogger(__name__)
@@ -142,6 +142,37 @@ async def revoke_all_user_tokens(
         return 1
 
     return 0
+
+
+def issued_before_revocation(user, payload: dict) -> bool:
+    """
+    Token 是不是在「撤銷這個使用者所有 Token」之前發的（強制踢出、修改密碼）。
+
+    用 Token 裡有小數的 iat_precise 精確比較；時間相同也算撤銷前（寧可多擋：
+    Windows 的時鐘精度有限，發 Token 和撤銷可能落在同一個時間點）。
+    撤銷後要立刻發新 Token 給目前裝置的情況（改密碼）用 revoke_before_new_tokens()。
+    舊 Token 只有到秒的 iat：同一秒內的一律當作撤銷前。
+    """
+    revoked_at = to_aware_utc(getattr(user, "token_revoked_at", None))
+    if revoked_at is None:
+        return False
+    revoked_ts = revoked_at.timestamp()
+    precise = payload.get("iat_precise")
+    if isinstance(precise, (int, float)):
+        return precise <= revoked_ts
+    iat = payload.get("iat")
+    if not iat:
+        # 沒有發放時間的 Token 無法證明是撤銷之後發的
+        return True
+    return int(iat) <= int(revoked_ts)
+
+
+def revoke_before_new_tokens(user) -> None:
+    """
+    撤銷這個使用者之前發的所有 Token，接著馬上會發一組新的給目前裝置（例如改密碼）。
+    撤銷時間往前一微秒，新發的 Token 一定比它晚，不會因為時鐘精度被誤判失效。
+    """
+    user.token_revoked_at = utc_now_naive() - timedelta(microseconds=1)
 
 
 async def cleanup_expired_blacklist(db: AsyncSession) -> int:

@@ -10,6 +10,8 @@ export default {
          *   寬 1024 以上；或橫放、寬 768 以上、高 500 以上（iPhone Duo、iPad 橫放：寬約 1000 也該用寬版）。
          *   一般手機橫放高度只有 400 左右，仍用直版。其餘斷點維持 Tailwind 預設。
          */
+        // 注意：lg 用了自訂的媒體查詢（raw），Tailwind 會因此停用所有 max-sm:／max-md: 這類寫法（寫了也不會產生樣式）。
+        // 要「只在小螢幕」就寫成「預設值＋md:覆蓋」，例如 opacity-0 md:opacity-100
         screens: {
             sm: '640px',
             md: '768px',

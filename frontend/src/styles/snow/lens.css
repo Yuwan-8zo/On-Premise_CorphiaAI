@@ -20,8 +20,8 @@
   --lens-dish: inset 0 1.1px 0.6px -0.3px var(--lens-edge), inset 0 -1.1px 0.6px -0.3px var(--lens-edge);
 }
 
-/* ---------- 選單放大鏡：規範的鏡片材質（不模糊、底面亮 9%、亮邊只在長邊、外圈細線＋淡陰影）；
- * 0.12 秒長大（先快後慢）、淡入從 0.95 開始 ---------- */
+/* ---------- 選單放大鏡：和設定頁側欄（.glass-nav .lens）同一個樣子——
+ * 鏡片透明（直接透出卡片）、亮邊只在長邊（.lens-dish）、外圈細線＋淡陰影；大小與長大動畫在 LensMenu ---------- */
 .menu-lens {
   position: absolute;
   left: 0;
@@ -30,33 +30,38 @@
   pointer-events: none;
   overflow: hidden;
   opacity: 0;
-  scale: 0.95;
-  background: var(--lens-glass);
-  box-shadow: var(--lens-dish), var(--lens-ring);
-  transition:
-    opacity var(--lens-grow) var(--lens-grow-ease),
-    scale var(--lens-grow) var(--lens-grow-ease);
+  background: none;
+  box-shadow: var(--lens-ring);
+  transition: opacity var(--lens-grow) var(--lens-grow-ease);
 }
 .menu-lens.on {
   opacity: 1;
-  scale: 1;
 }
-/* 放開：放大鏡留在原地 0.3 秒淡出並縮到 0.95（規範：右下選單「放開」） */
+/* 放開：放大鏡留在原地淡出（規範：右下選單「放開」） */
 .menu-lens:not(.on) {
-  transition:
-    opacity 0.3s var(--ease-out),
-    scale 0.3s var(--ease-out);
+  transition: opacity 0.3s var(--ease-out);
 }
-/* 放大鏡內的項目：強調色、不畫底盤、無動畫（範本 .lens .menu a） */
-.menu-lens * {
+/* 放大鏡內的項目：和側欄目前項目一樣＝強調色、粗體，不畫底盤、無動畫 */
+.menu-lens .lens-ghost,
+.menu-lens .lens-ghost * {
   color: var(--accent-ink) !important;
+  font-weight: 600 !important;
   background: transparent !important;
   box-shadow: none !important;
   transition: none !important;
 }
-.menu-lens *::before,
-.menu-lens *::after {
+.menu-lens .lens-ghost *::before,
+.menu-lens .lens-ghost *::after {
   display: none !important;
+}
+/* 放大鏡裡的刪除、驗證：保留原本的紅色、綠色（不換成強調色） */
+.menu-lens .is-danger,
+.menu-lens .is-danger * {
+  color: var(--sys-red) !important;
+}
+.menu-lens .is-success,
+.menu-lens .is-success * {
+  color: var(--sys-green) !important;
 }
 
 /* ════════════════════════════════════════════════════════════════

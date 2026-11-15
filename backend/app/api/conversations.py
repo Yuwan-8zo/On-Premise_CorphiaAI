@@ -3,23 +3,28 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, status, Query, Request
+from fastapi import APIRouter, HTTPException, status, Query, Request
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, or_
 
-from app.api.lookups import get_own_conversation
+from app.api.lookups import ensure_own_folder, get_own_conversation
 from app.core.query_utils import like_contains
 from app.api.deps import CurrentUser, DbSession
 from app.models.conversation import Conversation
 from app.models.message import Message
+import app.services.message_tree as message_tree
+import app.services.chat_images as chat_images
+from app.services import generation_registry
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
     ConversationResponse,
     ConversationListResponse,
     MessageResponse,
+    SharedConversationResponse,
 )
 from app.services.audit_service import write_audit_log, AuditAction, AuditResource
+from app.services.generated_files import attach_to_messages
 from app.core.request_utils import get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/conversations", tags=["對話"])
@@ -49,7 +54,7 @@ async def list_conversations(
     取得對話列表
     
     - 支援分頁
-    - 支援搜尋標題
+    - 支援搜尋：標題或訊息內容（只找自己的對話）
     - 支援資料夾過濾
     - 支援置頂/封存過濾
     """
@@ -62,9 +67,15 @@ async def list_conversations(
     if search:
         # 跳脫 LIKE 萬用字元，限制長度避免 DoS
         if len(search) > 128:
-            from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
-        query = query.where(Conversation.title.ilike(like_contains(search), escape="\\"))
+        pattern = like_contains(search)
+        # 標題符合，或對話裡有任何一則訊息的內容符合（子查詢也限定是自己的對話）
+        in_messages = (
+            select(Message.conversation_id)
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(Conversation.user_id == current_user.id, Message.content.ilike(pattern, escape="\\"))
+        )
+        query = query.where(or_(Conversation.title.ilike(pattern, escape="\\"), Conversation.id.in_(in_messages)))
     if folder_id:
         query = query.where(Conversation.folder_id == folder_id)
     if is_pinned is not None:
@@ -149,6 +160,8 @@ async def create_conversation(
     request: Request = None,
 ):
     """建立新對話"""
+    await ensure_own_folder(db, request_body.folder_id, current_user)
+
     # 自我修復：若 user 的 tenant_id 指向不存在的 tenant，先 remap 到 default
     safe_tenant_id = await _ensure_valid_tenant_id(db, current_user)
 
@@ -206,6 +219,8 @@ async def update_conversation(
     
     # 更新欄位
     update_data = request.model_dump(exclude_unset=True)
+    if update_data.get("folder_id"):
+        await ensure_own_folder(db, update_data["folder_id"], current_user)
     # NOTE: 防止 title 被更新為空字串
     if 'title' in update_data:
         update_data['title'] = (update_data['title'] or '').strip() or conversation.title
@@ -230,8 +245,13 @@ async def delete_conversation(
     conversation = await get_own_conversation(db, conversation_id, current_user)
     
     conversation_title = conversation.title
-    
+
+    # 這個對話還在回答中：先讓它停下來，不然它寫完要存檔時對話已經不在了
+    await generation_registry.cancel(conversation_id)
+
     await db.delete(conversation)
+    # 這個對話附過的圖片檔一起刪（資料庫的紀錄會跟著對話刪掉，檔案要自己清）
+    chat_images.delete_conversation_images(conversation_id)
     await db.commit()
     
     # 審計日誌
@@ -242,7 +262,7 @@ async def delete_conversation(
         resource_id=conversation_id,
         user_id=current_user.id,
         user_email=current_user.email,
-        tenant_id=current_user.tenant_id,
+        tenant_id=conversation.tenant_id,
         description=f"刪除對話: {conversation_title}",
         ip_address=get_client_ip(request) if request else None,
         user_agent=get_user_agent(request) if request else None,
@@ -266,24 +286,52 @@ async def list_messages(
     # 驗證對話所有權
     await get_own_conversation(db, conversation_id, current_user)
     
-    # 查詢訊息（支援 cursor 分頁）
-    query = select(Message).where(Message.conversation_id == conversation_id)
-    
+    # 只回畫面上這一條對話（修改或重答留下的其他版本不在這條上，用 version_ids 告訴前端可以切換）
+    path, everything = await message_tree.current_path(db, conversation_id)
     if before_id:
-        # 查出 before_id 的 created_at，再取更早的訊息
-        cursor_result = await db.execute(
-            select(Message.created_at).where(Message.id == before_id)
-        )
-        cursor_time = cursor_result.scalar_one_or_none()
-        if cursor_time:
-            query = query.where(Message.created_at < cursor_time)
-    
-    # 先 DESC 取最新的 N 筆，再反轉為 ASC 確保時間順序正確
-    query = query.order_by(Message.created_at.desc()).limit(limit)
-    result = await db.execute(query)
-    messages = list(reversed(result.scalars().all()))
-    
-    return [MessageResponse.model_validate(m) for m in messages]
+        # 游標分頁：回這一則之前的
+        index = next((i for i, m in enumerate(path) if m.id == before_id), None)
+        if index is not None:
+            path = path[:index]
+    messages = path[-limit:]
+
+    # AI 產出的檔案（Word／Excel／簡報）掛到各自的訊息上
+    await attach_to_messages(db, messages)
+    return _with_versions(messages, everything)
+
+
+def _with_versions(messages: list[Message], everything: list[Message]) -> List[MessageResponse]:
+    """每則訊息附上同一個位置的所有版本（只有一版就不附，前端不顯示切換鈕）"""
+    siblings = message_tree.versions(everything)
+    out = []
+    for m in messages:
+        ids = siblings.get(m.id, [])
+        out.append(MessageResponse.model_validate(m).model_copy(update={"version_ids": ids if len(ids) > 1 else []}))
+    return out
+
+
+@router.post("/{conversation_id}/messages/{message_id}/activate", response_model=List[MessageResponse])
+async def activate_version(
+    conversation_id: str,
+    message_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    limit: int = Query(50, ge=1, le=200),
+):
+    """
+    對話分支：切換到某一版（修改前的問題、或另一次的回答）。
+    畫面改成顯示那一版、以及它底下最新的內容；之後的新訊息接在那後面。回傳切換後的訊息列表。
+    """
+    await get_own_conversation(db, conversation_id, current_user)
+    everything = await message_tree.load_all(db, conversation_id)
+    if not any(m.id == message_id for m in everything):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="訊息不存在")
+    leaf_id = message_tree.deepest_leaf(everything, message_id)
+    await message_tree.set_leaf_id(db, conversation_id, leaf_id)
+    await db.commit()
+    messages = message_tree.active_path(everything, leaf_id)[-limit:]
+    await attach_to_messages(db, messages)
+    return _with_versions(messages, everything)
 
 
 @router.get("/{conversation_id}/verify-chain")
@@ -299,3 +347,88 @@ async def verify_conversation_chain(
 
     from app.services.hash_chain_service import verify_chain
     return await verify_chain(db, conversation_id)
+
+
+# ── 分享（同租戶唯讀）────────────────────────────────────────────
+# 對話主人按「分享」才會打開；打開後同租戶的人拿到連結可以唯讀觀看，主人自己永遠看得到。
+# 沒分享、不同租戶、不存在都回 404（不透露對話是否存在）。
+
+SHARED_KEY = "shared"
+SHARED_MESSAGE_LIMIT = 500
+
+
+@router.post("/{conversation_id}/share")
+async def share_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+):
+    """開啟分享：同租戶的人可以用連結唯讀觀看"""
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+    if not (conversation.settings or {}).get(SHARED_KEY):
+        # JSON 欄位要換一個新的 dict，SQLAlchemy 才知道內容變了
+        conversation.settings = {**(conversation.settings or {}), SHARED_KEY: True}
+        await db.commit()
+        await write_audit_log(
+            db=db,
+            action=AuditAction.CONVERSATION_UPDATE,
+            resource_type=AuditResource.CONVERSATION,
+            resource_id=conversation_id,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=conversation.tenant_id,
+            description=f"分享對話（同租戶唯讀）: {conversation.title}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    return {"shared": True}
+
+
+@router.delete("/{conversation_id}/share")
+async def unshare_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """關閉分享：之後只有自己看得到"""
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+    settings = dict(conversation.settings or {})
+    if settings.pop(SHARED_KEY, None):
+        conversation.settings = settings
+        await db.commit()
+    return {"shared": False}
+
+
+@router.get("/{conversation_id}/shared", response_model=SharedConversationResponse)
+async def view_shared_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """唯讀觀看分享的對話：主人自己，或主人已分享且同租戶的人"""
+    from app.core.tenancy import same_tenant
+    from app.models.user import User
+
+    conversation = await db.get(Conversation, conversation_id)
+    is_owner = conversation is not None and conversation.user_id == current_user.id
+    allowed = conversation is not None and (
+        is_owner
+        or ((conversation.settings or {}).get(SHARED_KEY) and same_tenant(current_user, conversation.tenant_id))
+    )
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="對話不存在或沒有分享")
+
+    # 重新讀一次：分享開關改過後「最後更新時間」是資料庫算的，要讀回來才能用
+    await db.refresh(conversation)
+    owner = await db.get(User, conversation.user_id)
+    # 分享的是擁有者畫面上那一條對話（其他版本不分享）
+    path, _everything = await message_tree.current_path(db, conversation_id)
+    shared_messages = path[:SHARED_MESSAGE_LIMIT]
+    return SharedConversationResponse(
+        conversation=ConversationResponse.model_validate(conversation),
+        # 分享頁只給回答本身：思考過程是給本人回顧用的，不隨分享出去
+        messages=[MessageResponse.model_validate(m).model_copy(update={"reasoning": None}) for m in shared_messages],
+        owner_name=owner.name if owner else "",
+        is_owner=is_owner,
+    )

@@ -82,6 +82,28 @@ def _tokenize_query(query: str, min_len: int = 2, max_tokens: int = 32) -> list[
             break
     return uniq
 
+# 多語言檢索模型（384 維，和資料庫裡的向量欄位一致）
+EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+
+
+def _load_embedding_model():
+    """
+    地端：先只從本機快取載入，完全不連網（每次啟動都去 Hugging Face 檢查會連外、也慢十幾秒）。
+    本機還沒有（新電腦第一次安裝）才下載一次；EMBEDDING_ALLOW_DOWNLOAD=false 時連這一次也不准，直接報錯。
+    """
+    from sentence_transformers import SentenceTransformer
+
+    try:
+        return SentenceTransformer(EMBEDDING_MODEL, local_files_only=True)
+    except Exception as e:
+        if not settings.embedding_allow_download:
+            raise RuntimeError(
+                f"本機找不到 Embedding 模型 {EMBEDDING_MODEL}，而且已設定不允許下載（EMBEDDING_ALLOW_DOWNLOAD=false）"
+            ) from e
+        logger.warning(f"本機還沒有 Embedding 模型，第一次使用：從 Hugging Face 下載 {EMBEDDING_MODEL}（之後都離線載入）")
+        return SentenceTransformer(EMBEDDING_MODEL)
+
+
 class RAGService:
     """RAG 檢索服務"""
 
@@ -131,15 +153,9 @@ class RAGService:
     async def _init_embedding_model(self) -> bool:
         """初始化 Embedding 模型"""
         try:
-            from sentence_transformers import SentenceTransformer
-
             logger.info("正在載入 Embedding 模型...")
-
-            # 使用多語言模型，其維度應為 384
-            self.embed_model = SentenceTransformer(
-                "paraphrase-multilingual-MiniLM-L12-v2"
-            )
-
+            # 在背景執行緒載入：模型載入要十幾秒的 CPU，放在主迴圈會讓整個後端這段時間都不回應
+            self.embed_model = await asyncio.to_thread(_load_embedding_model)
             logger.info("Embedding 模型載入完成")
             return True
 

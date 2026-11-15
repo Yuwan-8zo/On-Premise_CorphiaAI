@@ -10,6 +10,8 @@ import asyncio
 import logging
 from enum import Enum
 
+from app.core.version import APP_VERSION
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,18 +32,6 @@ _warmup_task: asyncio.Task | None = None
 def mark_api_ready() -> None:
     global _api_ready
     _api_ready = True
-
-
-def is_api_ready() -> bool:
-    return _api_ready
-
-
-def get_llm_state() -> ServiceState:
-    return _llm_state
-
-
-def get_rag_state() -> ServiceState:
-    return _rag_state
 
 
 def is_llm_ready() -> bool:
@@ -120,7 +110,7 @@ def build_health_payload() -> dict:
     if not _api_ready:
         return {
             "status": "starting",
-            "version": "2.3.0",
+            "version": APP_VERSION,
             "database": "connecting",
             "llm": ServiceState.LOADING.value,
             "rag": ServiceState.LOADING.value,
@@ -133,7 +123,7 @@ def build_health_payload() -> dict:
         models = []
     return {
         "status": "ok",
-        "version": "2.3.0",
+        "version": APP_VERSION,
         "database": "connected",
         "llm": _llm_state.value,
         "rag": _rag_state.value,

@@ -82,11 +82,12 @@ def _build_limits() -> tuple:
         "/api/v1/auth/refresh": RateLimitRule(
             max_requests=20,
             window_seconds=60,
-            description="Token 刷新限制",
+            description="更新登入憑證的次數限制",
         ),
-        # 文件上傳：每個 IP 每分鐘最多 10 次
+        # 文件上傳：每個 IP 每分鐘最多 60 次（一次把一整個資料夾的文件拖進專案是正常用法；
+        # 以前是 10 次，拖 11 份以上後面幾份就會被擋）
         "/api/v1/documents/upload": RateLimitRule(
-            max_requests=10,
+            max_requests=60,
             window_seconds=60,
             description="文件上傳限制",
         ),
@@ -283,6 +284,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # WebSocket 連接不使用此中間件
         if path.startswith("/ws/"):
+            return await call_next(request)
+
+        # 次數限制只管 API；介面的檔案（後端直接提供介面時，一頁就會抓幾十個）不算
+        if not path.startswith("/api/"):
             return await call_next(request)
 
         client_ip = get_client_ip(request)

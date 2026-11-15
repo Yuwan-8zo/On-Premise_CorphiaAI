@@ -87,6 +87,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
     const shl = cx * LENS_SX > half ? 1 : 0
     const shr = (W - cx) * LENS_SX > half ? 1 : 0
     const sx = 1 - (1 - LENS_SX) * f.grow
+    // 開關用固定比例：軌道、旋鈕、放大鏡全部等比例縮放，固定比例本來就和大小無關（見 lensKit 的 lensCrossScale 說明）
     const sy = 1 - (1 - LENS_SY) * f.grow
 
     return (
@@ -120,7 +121,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
                                 className="lens-bar"
                                 style={{ left: -L, top: -T, width: W, height: H, borderRadius: H / 2, transformOrigin: `${L + lw / 2}px ${T + lh / 2}px`, transform: `scale(${sx}, ${sy})` }}
                             />
-                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: shoulderMask(lensW, lensH, (lensH - H) / 2, H) /* 同一組公式：鏡片、比軌道凸出（上下一樣）、軌道高 */ }}>
+                            <span className="lens-wall" style={{ opacity: f.wall, ['--lens-wall-mask' as string]: shoulderMask(lensW, lensH, (lensH - H) / 2, H, false, undefined, LENS_SY) /* 同一組公式：鏡片、比軌道凸出（上下一樣）、軌道高 */ }}>
                                 <i className="l" style={{ opacity: shl }} />
                                 <i className="r" style={{ opacity: shr }} />
                             </span>

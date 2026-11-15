@@ -1,0 +1,20 @@
+# 這個檔案只影響「要不要擋請求」的名單，跟 settings.yml 的 server.limiter 是分開的設定。
+#
+# 問題：curl 127.0.0.1:8888 這種從主機打進來的請求，經過 Docker 連接埠轉發後，
+# SearXNG 容器看到的來源 IP 其實是 Docker 橋接網路的位址（例如 172.17.x.x 或 172.18.x.x），
+# 不是真正的 127.0.0.1；SearXNG 判斷不出真實使用者 IP、又沒有反向代理加的
+# X-Forwarded-For/X-Real-IP 標頭，就當成可疑連線擋下來（403）。
+#
+# 這裡只有我們自己的後端會連（docker-compose.yml 已把連接埠綁在 127.0.0.1，不對外開放），
+# 所以把本機與 Docker 私有網段都放進白名單，不會被當成惡意爬蟲擋下。
+[botdetection.ip_lists]
+pass_ip = [
+  '127.0.0.0/8',
+  '172.16.0.0/12',
+  '192.168.0.0/16',
+  '::1',
+]
+
+[botdetection.ip_limit]
+filter_link_local = false
+link_token = false

@@ -59,6 +59,11 @@
 .set-group:has(> button.set-row:only-child) {
   border-radius: var(--r-9999);
 }
+/* 記憶清單例外：只有一則時內容可能是一整段長文字、會折成好幾行，整張卡變很高，
+   這時候還套膠囊圓角看起來會整段被切成橢圓形；改回一般圓角矩形 */
+.mem-list:has(> .set-row:only-child) {
+  border-radius: var(--r-32);
+}
 .set-row {
   position: relative;
   display: flex;

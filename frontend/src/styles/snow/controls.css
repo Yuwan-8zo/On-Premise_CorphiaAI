@@ -39,6 +39,12 @@ html.dark {
   transform: scale(0.97);
 }
 
+/* 全站可按的東西：按下的瞬間就回饋（--duration-press-in），放開才照各自的時間慢慢彈回。
+ * 原則（apple-design §1）：回饋在按下時、不是放開時；按下的動畫拖太久會覺得「沒按到」 */
+:is(.btn, .btn-icon, .menu-item, .nav-item, .set-row-btn, .set-swatch, .side-item, .dock-btn, .model-row, .prompt-item, .search-clear, .icon-tap):active {
+  transition-duration: var(--duration-press-in);
+}
+
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

@@ -5,19 +5,18 @@
 """
 
 import uuid
-from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, Integer, func
+from sqlalchemy import String, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.conversation import Conversation
 
 
-class Folder(Base):
+class Folder(TimestampMixin, Base):
     """資料夾資料表"""
     
     __tablename__ = "folders"
@@ -45,22 +44,12 @@ class Folder(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     icon: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # 專案的自訂指示：這個專案裡每一題都會附給 AI 的固定說明（例如「一律用條列式、引用條號」）
+    instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # 排序
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     
-    # 時間戳
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
     
     # 關聯
     conversations: Mapped[List["Conversation"]] = relationship(

@@ -14,7 +14,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCssPx } from '@/lib/cssVars'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { LENS_CFG, LENS_MAG, LENS_SX, LENS_SY, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { LENS_CFG, LENS_MAG, LENS_SX, lensCrossScale, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { swallowNextClick } from '@/lib/swallowClick'
 import { useTranslation } from 'react-i18next'
 import { useDismiss } from '@/lib/useDismiss'
 
@@ -136,7 +137,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
             setLeaving({ y })
             window.setTimeout(() => setLeaving(null), LENS_CFG.leave)
             close()
-            if (commit && idx >= 1 && idx <= items.length) items[idx - 1].onSelect()
+            if (commit && idx >= 1 && idx <= items.length) { items[idx - 1].onSelect(); swallowNextClick() }
             return
         }
         if (!commit) return
@@ -144,7 +145,8 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const r = wrapRef.current!.getBoundingClientRect()
         const idx = Math.round((e.clientY - r.top - PAD - BTN_N / 2) / (BTN_N + GAP_N))
         if (idx <= 0 || !p.startedOpen) { setOpen((o) => !o); return }
-        if (idx <= items.length) { close(); items[idx - 1].onSelect() }
+        // 執行後（例如打開重新命名的對話框）同一下的 click 不能落到新出現的東西上
+        if (idx <= items.length) { close(); items[idx - 1].onSelect(); swallowNextClick() }
     }
 
     // 放大鏡幾何（寬版）
@@ -162,9 +164,11 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const isBtn = i === 0
         const it = isBtn ? null : items[i - 1]
         const icon = isBtn ? (open ? <X /> : <MoreHorizontal />) : it!.icon
-        const tone = it?.tone === 'danger' ? 'text-[#ff4245]' : it?.tone === 'success' ? 'text-[#30d158]' : 'text-text-primary'
-        // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除＝紅）
-        const lensTone = it?.tone === 'danger' || it?.tone === 'success' ? tone : 'text-accent'
+        // 展開後最上面的選單鈕是「關閉」，和刪除一樣用紅色
+        const toneKey = isBtn ? (open ? 'danger' : undefined) : it!.tone
+        const tone = toneKey === 'danger' ? 'text-[var(--sys-red)]' : toneKey === 'success' ? 'text-[var(--sys-green)]' : 'text-text-primary'
+        // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除與關閉＝紅）
+        const lensTone = toneKey ? tone : 'text-accent'
         return (
             <span
                 key={i}
@@ -237,7 +241,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                     className="lens is-active is-v dock-lens"
                     style={{ left: shellX + lensL, top: shellY + lensT, width: LENS_W, height: LENS_H, borderRadius: LENS_R }}
                 >
-                    {/* 凹陷：跟一般／專案同一套——縮小的選單（橫向 0.768、縱向 0.93）＋肩（鏡內整片挖掉左右兩條底面），
+                    {/* 凹陷：跟一般／專案同一套——選單的副本（橫向依大小算、縱向 0.93）＋肩（鏡內整片挖掉左右兩條底面），
                         肩分上下兩半，最上／最下一格時那一半淡掉，露出選單的圓頭 */}
                     <span className="lens-ink">
                         <span
@@ -245,7 +249,8 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                             style={{
                                 left: -lensL, top: -lensT, width: shellW, height: wideH, borderRadius: R_WIDE,
                                 transformOrigin: `${lensL + LENS_W / 2}px ${lensT + LENS_H / 2}px`,
-                                transform: `scale(${LENS_SY}, ${LENS_SX})`,
+                                // 直的選單：短邊（橫向）依鏡片寬和外殼寬算，左右露出的折射凹陷和其他元件同比例
+                                transform: `scale(${lensCrossScale(LENS_W, SHELL_W)}, ${LENS_SX})`,
                             }}
                         />
                         {/* 肩：跟一般／專案同一個遮罩（底面末端用圓弧彎進肩裡，不是直角），轉 90 度 */}

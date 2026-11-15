@@ -9,6 +9,7 @@ import { ItshoverIcon } from '@/components/icons/itshover'
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { adminApi } from '@/api/admin'
+import { SkelText } from '@/components/ui/Skeleton'
 
 import { SECURITY_KPI_DEFINITIONS } from './securityEventsKpis'
 
@@ -55,7 +56,8 @@ export default function SecurityEventsPanel({
                                 </p>
 
                                 <p className={`ml-auto shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? kpi.valueColor : 'text-text-muted'}`}>
-                                    {value}
+                                    {/* 還沒讀到之前用佔位，不先顯示 0 再跳成真的數字 */}
+                                    {data ? value : <SkelText>0</SkelText>}
                                 </p>
                             </div>
                         )

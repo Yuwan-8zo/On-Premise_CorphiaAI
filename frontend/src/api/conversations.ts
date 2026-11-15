@@ -4,6 +4,7 @@
 
 import apiClient from './client'
 import type { Conversation, Message } from '../types/chat'
+import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
 
 export interface CreateConversationRequest {
     title?: string
@@ -14,15 +15,17 @@ export interface CreateConversationRequest {
 export interface SendMessageRequest {
     content: string
     useRag?: boolean
+    webSearch?: boolean
 }
 
 export const conversationsApi = {
     /**
      * 取得對話列表
      */
-    list: async (page = 1, pageSize = 20): Promise<{ data: Conversation[]; total: number }> => {
+    list: async (page = 1, pageSize = 20, search?: string): Promise<{ data: Conversation[]; total: number }> => {
         const response = await apiClient.get('/conversations', {
-            params: { page, page_size: pageSize },
+            // search：找標題或訊息內容裡有這段字的對話
+            params: { page, page_size: pageSize, ...(search ? { search } : {}) },
         })
         return {
             data: response.data.data.map(mapConversation),
@@ -35,7 +38,7 @@ export const conversationsApi = {
      */
     create: async (data: CreateConversationRequest = {}): Promise<Conversation> => {
         const response = await apiClient.post('/conversations', {
-            title: data.title || '新對話',
+            title: data.title || DEFAULT_CONVERSATION_TITLE,
             model: data.model || 'default',
             settings: data.settings || {},
         })
@@ -76,12 +79,21 @@ export const conversationsApi = {
     },
 
     /**
+     * 對話分支：切換到某一版（修改前的問題、或另一次的回答），回傳切換後畫面上的訊息
+     */
+    activateVersion: async (conversationId: string, messageId: string): Promise<Message[]> => {
+        const response = await apiClient.post(`/conversations/${conversationId}/messages/${messageId}/activate`)
+        return response.data.map(mapMessage)
+    },
+
+    /**
      * 發送訊息（非串流）
      */
     sendMessage: async (conversationId: string, data: SendMessageRequest): Promise<Message> => {
         const response = await apiClient.post(`/messages/${conversationId}`, {
             content: data.content,
             use_rag: data.useRag ?? true,
+            web_search: data.webSearch ?? false,
         })
         return mapMessage(response.data)
     },
@@ -99,6 +111,33 @@ export const conversationsApi = {
     /**
      * 驗證對話完整性
      */
+    /**
+     * 開啟分享（同租戶的人拿到連結可以唯讀觀看）
+     */
+    share: async (conversationId: string): Promise<void> => {
+        await apiClient.post(`/conversations/${conversationId}/share`)
+    },
+
+    /**
+     * 關閉分享
+     */
+    unshare: async (conversationId: string): Promise<void> => {
+        await apiClient.delete(`/conversations/${conversationId}/share`)
+    },
+
+    /**
+     * 分享頁：唯讀讀取對話與全部訊息（主人，或已分享且同租戶的人）
+     */
+    getShared: async (conversationId: string): Promise<{ conversation: Conversation; messages: Message[]; ownerName: string; isOwner: boolean }> => {
+        const response = await apiClient.get(`/conversations/${conversationId}/shared`)
+        return {
+            conversation: mapConversation(response.data.conversation),
+            messages: response.data.messages.map(mapMessage),
+            ownerName: response.data.owner_name,
+            isOwner: response.data.is_owner,
+        }
+    },
+
     verifyChain: async (conversationId: string): Promise<{ valid: boolean; total_messages: number; first_broken_index: number | null }> => {
         const response = await apiClient.get(`/conversations/${conversationId}/verify-chain`)
         return response.data
@@ -129,9 +168,15 @@ function mapMessage(data: Record<string, unknown>): Message {
         content: data.content as string,
         tokens: data.tokens as number,
         sources: data.sources as Message['sources'],
+        attachments: (data.attachments as Message['attachments']) ?? undefined,
         rating: data.rating as number | undefined,
         content_hash: data.content_hash as string | undefined,
         prev_hash: data.prev_hash as string | undefined,
+        reasoning: (data.reasoning as string | null) ?? undefined,
+        webSearch: (data.web_search as Message['webSearch'] | null) ?? undefined,
+        steps: (data.steps as Message['steps'] | null) ?? undefined,
+        images: (data.images as string[] | null)?.length ? (data.images as string[]) : undefined,
+        versionIds: (data.version_ids as string[] | undefined)?.length ? (data.version_ids as string[]) : undefined,
         createdAt: data.created_at as string,
     }
 }

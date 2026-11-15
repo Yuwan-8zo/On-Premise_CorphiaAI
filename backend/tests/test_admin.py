@@ -172,34 +172,3 @@ class TestAdminRateLimit:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
-
-
-# ═══════════════════════════════════════════════════════════════
-# POST /api/v1/admin/cache/clear
-# ═══════════════════════════════════════════════════════════════
-
-class TestAdminCacheClear:
-    """快取清除 RBAC 測試"""
-
-    async def test_regular_user_forbidden(
-        self,
-        async_client: AsyncClient,
-        user_auth_headers: dict,
-    ):
-        """❌ 一般使用者 → 403"""
-        response = await async_client.post(
-            "/api/v1/admin/cache/clear", headers=user_auth_headers
-        )
-        assert response.status_code == 403
-
-    async def test_admin_allowed(
-        self,
-        async_client: AsyncClient,
-        admin_auth_headers: dict,
-    ):
-        """✅ 管理員清除快取 → 200"""
-        response = await async_client.post(
-            "/api/v1/admin/cache/clear", headers=admin_auth_headers
-        )
-        assert response.status_code == 200
-        assert response.json()["status"] == "success"

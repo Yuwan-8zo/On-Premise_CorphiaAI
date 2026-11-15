@@ -4,7 +4,8 @@
 
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
-import type { MessageSource } from '@/types/chat'
+import type { MessageSource, MessageAttachment } from '@/types/chat'
+import i18n from '@/i18n'
 
 export interface WebSocketMessage {
     type: 'message' | 'ping' | 'stop' | 'resubmit'
@@ -12,6 +13,10 @@ export interface WebSocketMessage {
     message_id?: string
     // NOTE: 後端 FastAPI 使用 snake_case 解析，必須與後端 websocket.py 的 data.get() 欄位一致
     use_rag?: boolean
+    /** 這一題要不要連對外搜尋（需要後端開啟 enable_web_search 功能） */
+    web_search?: boolean
+    /** 深度研究：這一題多查幾輪、寫成有出處的報告 */
+    research?: boolean
     temperature?: number
     max_tokens?: number
     /** 使用者介面語言，例如 'zh-TW' | 'en-US' | 'ja-JP' */
@@ -19,7 +24,26 @@ export interface WebSocketMessage {
 }
 
 export interface StreamResponse {
-    type: 'stream' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
+    type: 'stream' | 'reasoning' | 'done' | 'error' | 'sources' | 'pong' | 'pii_warning' | 'injection_warning' | 'injection_block' | 'dlp_block'
+        | 'memory_saved' | 'memory_rejected' | 'context_filtered' | 'file_progress' | 'attachments' | 'output_filtered'
+        | 'web_search_used' | 'web_search_blocked' | 'tool_step' | 'vision' | 'vision_unavailable'
+    /** AI 自己動手做事（tool_step）：tool＝哪個工具；status＝running 開始做／done 做完（帶 summary、ok） */
+    tool?: string
+    status?: 'running' | 'done'
+    summary?: string
+    ok?: boolean
+    /** 回答的檢查（output_filtered）：拿掉幾張外部圖片（pii 沿用下面的欄位） */
+    images?: number
+    /** 產出檔案：file_progress 的 kind＝正在做哪一種（docx／xlsx／pptx）；attachments＝做好的檔案 */
+    kind?: string
+    attachments?: MessageAttachment[]
+    /** 記憶：memory_saved 的 created＝false 表示這件事早就記過了；memory_rejected 的 reason＝dlp／injection／limit */
+    created?: boolean
+    reason?: string
+    /** 送模型前最後一關（context_filtered）：被剔除的片段數（藏指令、列管字詞）、被遮罩的個資數 */
+    injection?: number
+    dlp?: number
+    pii?: number
     content?: string
     messageId?: string
     /** 引用來源（欄位名稱跟後端一致：chunk_id、document_id…） */
@@ -50,6 +74,9 @@ export interface StreamResponse {
         prompt_length: number
         chunks_count: number
     }
+    /** 對外搜尋（web_search_used／web_search_blocked）：搜尋關鍵字、取回的來源、被擋的原因 */
+    query?: string
+    results?: Array<{ title: string; url: string }>
 }
 
 type MessageHandler = (data: StreamResponse) => void
@@ -85,7 +112,7 @@ export class ChatWebSocket {
 
             const token = useAuthStore.getState().accessToken
             if (!token) {
-                reject(new Error('未登入'))
+                reject(new Error('NOT_AUTHENTICATED'))
                 return
             }
 
@@ -97,7 +124,6 @@ export class ChatWebSocket {
             this.ws = new WebSocket(url)
 
             this.ws.onopen = () => {
-                console.log('WebSocket 已連接')
                 this.reconnectAttempts = 0
                 this.openHandlers.forEach((handler) => handler())
                 resolve()
@@ -113,7 +139,6 @@ export class ChatWebSocket {
             }
 
             this.ws.onclose = () => {
-                console.log('WebSocket 已斷開')
 
                 // 回答到一半連線斷了（系統被關閉、電腦睡眠…）：在泡泡裡說明，不要留一個空白泡泡像卡住
                 const st = useChatStore.getState()
@@ -126,7 +151,7 @@ export class ChatWebSocket {
                     if (last?.role === 'assistant') {
                         st.appendToLastMessage(
                             (last.content ? '\n\n' : '') +
-                            '與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
+                            i18n.t('ui.chat.connectionLost'),
                         )
                     }
                 }
@@ -168,23 +193,26 @@ export class ChatWebSocket {
         }
     }
 
-    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048): void {
+    sendMessage(content: string, useRag = true, temperature = 0.7, language = 'zh-TW', maxTokens = 2048, webSearch = false, research = false): void {
         this.send({
             type: 'message',
             content,
             use_rag: useRag,
+            web_search: webSearch,
+            research,
             temperature,
             max_tokens: maxTokens,
             language,
         })
     }
 
-    sendResubmit(messageId: string, content: string, useRag: boolean = true, temperature: number = 0.7, language: string = 'zh-TW', maxTokens: number = 2048) {
+    sendResubmit(messageId: string, content: string, useRag: boolean = true, temperature: number = 0.7, language: string = 'zh-TW', maxTokens: number = 2048, webSearch = false) {
         this.send({
             type: 'resubmit',
             message_id: messageId,
             content,
             use_rag: useRag,
+            web_search: webSearch,
             temperature,
             max_tokens: maxTokens,
             language,

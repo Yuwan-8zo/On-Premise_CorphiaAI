@@ -1,3 +1,4 @@
+import { formatBytes } from '@/lib/formatBytes'
 import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
 import { parseServerDate } from '@/lib/utils'
 import { useEffect, useRef, useState } from 'react'
@@ -6,8 +7,10 @@ import OnboardingTour from '@/components/onboarding/OnboardingTour'
 import { isOnboardingDone } from '@/components/onboarding/onboardingFlag'
 import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '@/features/chat/components'
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
+import SidePanel from '@/features/chat/components/SidePanel'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
+import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { SkelMessages } from '@/components/ui/Skeleton'
@@ -17,6 +20,8 @@ export default function Chat() {
     // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
+    // 旁邊的顯示面板開著時聊天欄變窄：整欄（訊息、輸入框）左右留邊，不然會貼到側欄和面板
+    const panelOpen = useSidePanelStore((s) => s.open)
 
     // 第一次進入 chat 觸發引導；旗標寫在 localStorage，已看過就不再顯示
     // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
@@ -64,7 +69,7 @@ export default function Chat() {
             <ChatSidebar {...sidebarProps} />
 
             {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
-            <main className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300 bg-transparent z-10">
+            <main className={`flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10 ${panelOpen ? 'md:px-[var(--sp-16)]' : ''}`}>
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
@@ -123,7 +128,7 @@ export default function Chat() {
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
+                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-colors before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
@@ -135,12 +140,7 @@ export default function Chat() {
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-medium text-[length:var(--fs-15)] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
                                                     <span className="text-[length:var(--fs-13)] text-text-secondary mt-0.5">
-                                                        {parseServerDate(doc.created_at).toLocaleString()} • {(() => {
-                                                            const bytes = doc.file_size || 0
-                                                            if (bytes < 1024) return `${bytes} B`
-                                                            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-                                                            return `${(bytes / 1024 / 1024).toFixed(2)} MB`
-                                                        })()}
+                                                        {parseServerDate(doc.created_at).toLocaleString()} • {formatBytes(doc.file_size || 0)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -163,7 +163,7 @@ export default function Chat() {
                                                                 }
                                                             })
                                                         }}
-                                                        className="p-2 text-text-muted  rounded-full  md:opacity-0 group-hover:opacity-100 transition-all"
+                                                        className="hover-reveal p-2 text-text-muted rounded-full"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
@@ -181,7 +181,7 @@ export default function Chat() {
                             <div className="mt-6 p-4 glass-chip rounded-[var(--r-18)] flex items-center justify-between animate-fade-in-up shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-                                    <span className="text-accent text-[length:var(--fs-15)] font-medium">正在上傳並進行語意分析與 Chunking...</span>
+                                    <span className="text-accent text-[length:var(--fs-15)] font-medium">{mainProps.t('ui.chat.uploadAnalyzing')}</span>
                                 </div>
                                 <span className="text-accent font-semibold">{mainProps.uploadProgress}%</span>
                             </div>
@@ -281,6 +281,9 @@ export default function Chat() {
                                             isStreaming={mainProps.isStreaming && isLastAssistant}
                                             onResubmit={mainProps.handleResubmit}
                                             onRegenerate={mainProps.handleRegenerate}
+                                            onSearchAgain={mainProps.handleSearchAgain}
+                                            onSwitchVersion={mainProps.handleSwitchVersion}
+                                            busy={mainProps.isStreaming}
                                             showRAGDebug={mainProps.ragDebugMode && isLastAssistant && !mainProps.isStreaming}
                                         />
                                     )
@@ -295,6 +298,10 @@ export default function Chat() {
                 {/* 底部輸入區 Chat Input Area */}
                 <ChatInputArea {...inputProps} />
             </main>
+
+            {/* 旁邊的顯示面板：AI 做的成品、執行程式的結果（沒有開啟時不佔位置） */}
+            <SidePanel />
+
             {/* --- 彈出視窗 Modals --- */}
             <ConversationContextMenu
                 activeMenu={modalProps.activeMenu}
@@ -303,6 +310,7 @@ export default function Chat() {
                 onRename={modalProps.handleRenameConversation}
                 onMove={modalProps.handleMoveToProject}
                 onShare={modalProps.handleShareConversation}
+                onUnshare={modalProps.handleUnshareConversation}
                 onDelete={modalProps.handleDeleteConversation}
                 onClose={modalProps.closeMenu}
             />

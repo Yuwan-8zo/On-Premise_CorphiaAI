@@ -7,6 +7,7 @@ import { usersApi, type CreateUserPayload, type UpdateUserPayload } from '@/api/
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
 import { useUIStore } from '@/store/uiStore'
+import i18n from '@/i18n'
 
 export interface UserData {
     id: string
@@ -99,10 +100,10 @@ export function useAdminUsers() {
     }
 
     const remove = (item: UserData) => {
-        showConfirm(`確定要刪除 ${item.name}（${item.email}）？此操作無法復原。`, async () => {
+        showConfirm(i18n.t('ui.users.confirmDelete', { name: item.name, email: item.email }), async () => {
             try {
                 await usersApi.deleteUser(item.id)
-                toast.success(`已刪除使用者 ${item.name}`)
+                toast.success(i18n.t('ui.users.deleted', { name: item.name }))
                 loadUsers()
             } catch (err) {
                 console.error('Failed to delete user', err)
@@ -112,9 +113,9 @@ export function useAdminUsers() {
     }
 
     const forceLogout = (item: UserData) => {
-        showConfirm(`確定要強制登出 ${item.name}？對方目前的登入會立即失效，需要重新登入。`, async () => {
-            if (await adminApi.forceLogout(item.id)) toast.success(`已強制登出 ${item.name}`)
-            else toast.error('強制登出失敗，請稍後再試')
+        showConfirm(i18n.t('ui.users.confirmForceLogout', { name: item.name }), async () => {
+            if (await adminApi.forceLogout(item.id)) toast.success(i18n.t('ui.users.forcedOut', { name: item.name }))
+            else toast.error(i18n.t('ui.users.forceLogoutFail'))
         })
     }
 

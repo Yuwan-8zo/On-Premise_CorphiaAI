@@ -4,9 +4,10 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.user import UserRole
+from app.schemas.common import require_strong_password, validate_email_like
 
 
 class UserBase(BaseModel):
@@ -16,10 +17,22 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """建立使用者 Schema"""
+    """管理員建立使用者"""
     password: str = Field(..., min_length=8)
-    role: str = UserRole.USER.value
+    # 只能是 engineer／admin／user，其他值直接 422
+    role: UserRole = UserRole.USER
+    is_active: bool = True
     tenant_id: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def _email(cls, v: str) -> str:
+        return validate_email_like(v.strip())
+
+    @field_validator("password")
+    @classmethod
+    def _password(cls, v: str) -> str:
+        return require_strong_password(v)
 
 
 class UserUpdate(BaseModel):
@@ -27,6 +40,17 @@ class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     avatar_url: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+class AdminUserUpdate(UserUpdate):
+    """管理員編輯使用者：多了角色和重設密碼（沒填就不改）"""
+    role: Optional[UserRole] = None
+    password: Optional[str] = Field(None, min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def _password(cls, v: Optional[str]) -> Optional[str]:
+        return v if v is None else require_strong_password(v)
 
 
 class UserResponse(UserBase):

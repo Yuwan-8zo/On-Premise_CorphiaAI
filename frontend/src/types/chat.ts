@@ -41,12 +41,57 @@ export interface MessageAudio {
     error?: string
 }
 
+/** AI 產出的檔案（Word、Excel、簡報）；下載見 api/files.ts */
+export interface MessageAttachment {
+    id: string
+    filename: string
+    kind: 'docx' | 'xlsx' | 'pptx' | string
+    size: number
+}
+
+/** AI 回答前自己做的一步（用了哪個工具、做了什麼、有沒有成功） */
+export interface MessageStep {
+    tool: string
+    summary: string
+    ok: boolean
+}
+
+/** 一則回答的連網紀錄 */
+export interface MessageWebSearch {
+    /** 有沒有真的連外網查 */
+    used: boolean
+    /** 送出去的關鍵字（只有這幾個詞離開這台主機） */
+    query?: string
+    /** 查到、給模型參考的網頁 */
+    sources?: Array<{ title: string; url: string }>
+    /** 要查但被擋下來的原因（列管字詞、搜尋服務連不上） */
+    blocked?: string
+    /** 這一題看起來需要即時資訊，但依政策沒有自動查 */
+    suggested?: boolean
+}
+
 export interface Message {
     id: string
     role: 'user' | 'assistant' | 'system'
     content: string
     tokens: number
     sources?: MessageSource[]
+    /** AI 產出的檔案 */
+    attachments?: MessageAttachment[]
+    /** 正在製作哪一種檔案（只在串流期間存在前端，顯示「正在製作 Word 文件…」） */
+    making?: string
+    /** 模型的思考過程（只有支援推理的模型才有）；串流時即時累加，回答完成後存進資料庫，之後還能回顧 */
+    reasoning?: string
+    /** 這一則回答有沒有連外網（後端每一則都記；系統沒開對外搜尋、或舊訊息是 undefined，畫面上就不標） */
+    webSearch?: MessageWebSearch
+    /** 使用者這一則附的圖片（編號；用 ChatImage 元件顯示） */
+    images?: string[]
+    /** AI 這一題自己做了哪些步驟（查文件、連外網、計算…）；沒用工具是 undefined */
+    steps?: MessageStep[]
+    /** 正在用哪個工具（只在串流期間存在前端） */
+    working?: string
+    /** 對話分支：這個位置的所有版本（照建立順序，包含自己）；只有一版時是空的 */
+    versionIds?: string[]
     rating?: number
     content_hash?: string
     prev_hash?: string
@@ -57,23 +102,4 @@ export interface Message {
     blocked?: boolean
     /** 被攔截訊息之前有幾則一般訊息（重新載入時用來插回原位，不依賴時間，避免各元件時鐘不一致） */
     blockedAfter?: number
-}
-
-export interface ChatRequest {
-    message: string
-    useRag?: boolean
-    temperature?: number
-    maxTokens?: number
-}
-
-export interface ChatStreamResponse {
-    type: 'stream' | 'done' | 'error'
-    content?: string
-    messageId?: string
-    sources?: MessageSource[]
-    usage?: {
-        promptTokens: number
-        completionTokens: number
-    }
-    error?: string
 }

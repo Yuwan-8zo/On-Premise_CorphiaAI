@@ -4,13 +4,22 @@
 
 import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import AIThinkingIndicator from './AIThinkingIndicator'
+import ThinkingBlock from './ThinkingBlock'
+import WebSearchNote from './WebSearchNote'
+import VersionSwitcher from './VersionSwitcher'
+import StepsBlock from './StepsBlock'
+import ChatImage from './ChatImage'
 import MarkdownRenderer from './MarkdownRenderer'
 import SourceCitations from './SourceCitations'
+import FileAttachments from './FileAttachments'
+import OfficeMenu from '@/components/ui/OfficeMenu'
+import { desktop, useDesktop, type OfficeApp } from '@/lib/desktop'
 import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw } from '@/components/snow/icons'
+import { Edit2, Check, X, RefreshCw, Layers3, Download } from '@/components/snow/icons'
+import { saveTextFile } from '@/lib/saveTextFile'
 import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
@@ -18,7 +27,15 @@ import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
+import { getErrorMessage } from '@/lib/errors'
+import { useToastStore } from '@/store/toastStore'
 import { riseIn } from '@/lib/motionPresets'
+
+/** 把整則回答存成檔案時的建議檔名（使用者在另存新檔視窗可以改） */
+const REPLY_FILENAME = 'AI 回答.md'
+
+/** 操控 Office 的結果提示停留多久（毫秒）：要讓使用者來得及讀「寫到哪、有沒有備份」 */
+const OFFICE_TOAST_MS = 6000
 
 interface MessageBubbleProps {
     message: Message
@@ -26,6 +43,12 @@ interface MessageBubbleProps {
     onResubmit?: (messageId: string, content: string) => void
     /** 重新生成這則 AI 回覆。會回到上一則 user 訊息並重送一次。 */
     onRegenerate?: (messageId: string) => void
+    /** 連網重答：這一則沒有連外網，同一題這次連外網查了再答。沒給（政策是完全不連外網）就不顯示按鈕 */
+    onSearchAgain?: (messageId: string) => void
+    /** 對話分支：切換到同一個位置的另一版 */
+    onSwitchVersion?: (messageId: string) => void
+    /** 這個對話正在生成（不能切換版本） */
+    busy?: boolean
     hideActions?: boolean
     /**
      * C2: 是否顯示 RAG 除錯面板（通常僅在「最後一則 AI 訊息」且開啟 Debug Mode 時為 true）。
@@ -61,9 +84,20 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     </div>
 )
 
-const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
+const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegenerate, onSearchAgain, onSwitchVersion, busy = false, hideActions = false, showRAGDebug = false }: MessageBubbleProps) => {
     const isUser = message.role === 'user'
     const { t } = useTranslation()
+    const isDesktop = useDesktop()
+    /** 寫入 Office：成功說明寫到哪、有沒有備份；失敗顯示原因（例如「Word 沒有開啟的文件」） */
+    const writeToOffice = async (app: OfficeApp) => {
+        const toast = useToastStore.getState().add
+        try {
+            const r = await desktop.write(app, message.content)
+            toast(r.backup ? t('ui.office.writtenBackup', { detail: r.detail }) : r.detail, 'success', OFFICE_TOAST_MS)
+        } catch (err) {
+            toast(getErrorMessage(err), 'error', OFFICE_TOAST_MS)
+        }
+    }
     // C2: 從 store 取得 RAG 除錯資訊（僅反映最近一次回應，配合 showRAGDebug 使用）
     const ragDebug = useChatStore((s) => s.ragDebug)
     
@@ -151,8 +185,16 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     }
 
     // 複製按鈕（使用者訊息、AI 回覆共用）
+    // 這一則的圖片要用對話編號去讀
+    const conversationId = useChatStore((s) => s.currentConversation?.id)
+
+    // 對話分支：這個位置有不只一版時，顯示「‹ 2/3 ›」
+    const versionSwitcher = onSwitchVersion && !hideActions && message.versionIds && message.versionIds.length > 1
+        ? <VersionSwitcher ids={message.versionIds} currentId={message.id} onSwitch={onSwitchVersion} disabled={busy} />
+        : null
+
     const copyButton = (
-        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
+        <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
                 <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
@@ -174,6 +216,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
             initial={riseIn.initial}
             animate={riseIn.animate}
             transition={riseIn.transition}
+            data-role={message.role}
             className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} py-2`}
         >
             {isUser ? (
@@ -249,18 +292,30 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             </div>
                         ) : (
-                            <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
-                                {message.content}
-                            </div>
+                            <>
+                                {/* 這一則附的圖片（在文字上方，靠右對齊） */}
+                                {message.images && conversationId && (
+                                    <div className="mb-[var(--sp-8)] flex flex-wrap justify-end gap-[var(--sp-8)]">
+                                        {message.images.map((id, i) => (
+                                            <ChatImage key={id} conversationId={conversationId} imageId={id} alt={t('chat.images.alt', { n: i + 1 })}
+                                                className="h-[var(--sz-120)] w-[var(--sz-120)] rounded-[var(--r-16)]" />
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
+                                    {message.content}
+                                </div>
+                            </>
                         )
                     )}
+                    {!isEditing && versionSwitcher && <div className="mt-1 mr-2">{versionSwitcher}</div>}
                     {!isEditing && !hideActions && (
-                        <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted mr-2">
+                        <div className="hover-reveal flex items-center gap-1.5 mt-1 text-text-muted mr-2">
                             {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
-                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted">
-                                    <Edit2 className="w-3.5 h-3.5" />
+                                <Tooltip placement="bottom" label={t('ui.message.edit')}><button aria-label={t('ui.message.edit')} onClick={() => { setEditContent(message.audio?.transcript || message.content); setIsEditing(true); }} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
+                                    <Edit2 />
                                 </button></Tooltip>
                             )}
                             {/*
@@ -271,9 +326,9 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
                                 <button
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
-                                    className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
+                                    className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                 >
-                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    <RefreshCw />
                                 </button>
                             )}
                             {message.tokens > 0 && (
@@ -296,24 +351,47 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
 
                     {/* 內容區塊 */}
                     <div className="flex-1 min-w-0 text-text-primary text-[length:var(--fs-15d5)] leading-relaxed pb-4">
+                        {/* 思考過程（只有會推理的模型才有）：回答開始出現文字時自動收合 */}
+                        {message.reasoning && (
+                            <ThinkingBlock
+                                reasoning={message.reasoning}
+                                isThinking={isStreaming && !message.content}
+                                collapsedByDefault={Boolean(message.content)}
+                            />
+                        )}
+                        {/* AI 自己做了哪些步驟（查文件、連外網、計算…）；正在做的那一步只在生成期間顯示 */}
+                        <StepsBlock steps={message.steps ?? []} working={isStreaming ? message.working : undefined} />
                         {message.content ? (
                             <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:bg-[var(--chip)] dark:prose-pre:bg-[var(--chip)] prose-pre:rounded-[var(--r-12)] prose-pre:border prose-pre:border-[var(--paper-line)] dark:prose-pre:border-[var(--paper-line)] max-w-none [&_.markdown-body>*:first-child]:!mt-0 selectable-text">
                                 <MarkdownRenderer content={message.content} />
                             </div>
-                        ) : isStreaming ? (
+                        ) : isStreaming && !message.reasoning && !message.working && !message.steps?.length ? (
                             // 串流前置期：依 message.sources 是否已回傳，動態顯示「思考中 / 檢索 / 生成中」
+                            // （模型有送思考過程時，上面的 ThinkingBlock 已經在顯示「思考中」，不用再疊一個）
                             <AIThinkingIndicator
+                                making={message.making}
                                 phase={message.sources && message.sources.length > 0 ? 'generating' : 'thinking'}
                                 ragEnabled={Boolean(message.sources !== undefined)}
                                 readingDocs={Boolean(message.sources && message.sources.length > 0)}
                             />
                         ) : null}
 
+                        {/* AI 產出的檔案（Word、Excel、簡報）：檔案卡片＋下載 */}
+                        {message.attachments && message.attachments.length > 0 && <FileAttachments files={message.attachments} />}
+
                         {/* 來源引用：回答完成後才顯示，避免還沒回答就先出現「參考了哪些段落」 */}
                         {!isStreaming && message.sources && message.sources.length > 0 && (
                             <div className="mt-4">
                                 <SourceCitations sources={message.sources} />
                             </div>
+                        )}
+
+                        {/* 這一則有沒有連外網（回答完成後才顯示；紀錄存在訊息上，重新整理後還在） */}
+                        {!isStreaming && message.webSearch && message.content && !message.blocked && (
+                            <WebSearchNote
+                                info={message.webSearch}
+                                onSearchAgain={onSearchAgain && !hideActions ? () => onSearchAgain(message.id) : undefined}
+                            />
                         )}
 
                         {/* C2: RAG 除錯面板 — 僅在最後一則 AI 訊息且開啟 Debug Mode 時顯示 */}
@@ -330,17 +408,43 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             />
                         )}
 
-                        {/* 工具列，滑鼠移入 (group-hover) 時浮現 */}
+                        {!isStreaming && versionSwitcher && <div className="mt-2 -ml-1.5">{versionSwitcher}</div>}
+
+                        {/* 工具列：滑鼠裝置移入才浮現，手機一直顯示（.hover-reveal） */}
                         {message.content && !isStreaming && !hideActions && (
-                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-text-muted">
+                            <div className="hover-reveal flex items-center gap-1.5 mt-2 text-text-muted">
                                 {copyButton}
                                 {onRegenerate && !message.blocked && (
+                                    <Tooltip placement="bottom" label={t('chat.regenerate')}>
                                     <button
                                         onClick={() => onRegenerate(message.id)}
-                                        className="btn-icon btn-icon-plain !w-8 !h-8 text-text-muted"
+                                        aria-label={t('chat.regenerate')}
+                                        className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                         >
-                                        <RefreshCw className="w-3.5 h-3.5" />
+                                        <RefreshCw />
                                     </button>
+                                    </Tooltip>
+                                )}
+                                {/* 桌面版：把整則回答存成這台電腦的檔案（跳出另存新檔，預設 Markdown） */}
+                                {isDesktop && !message.blocked && (
+                                    <Tooltip placement="bottom" label={t('ui.chat.codeFile.saveReply')}>
+                                        <button
+                                            aria-label={t('ui.chat.codeFile.saveReply')}
+                                            onClick={() => void saveTextFile(REPLY_FILENAME, message.content, true)}
+                                            className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                        >
+                                            <Download />
+                                        </button>
+                                    </Tooltip>
+                                )}
+                                {/* 桌面版：把這則回答寫進這台電腦的 Word（游標處）／Excel（目前儲存格起）／PowerPoint（新增一張） */}
+                                {isDesktop && !message.blocked && (
+                                    <OfficeMenu
+                                        label={t('ui.office.write')}
+                                        icon={<Layers3 />}
+                                        buttonClassName="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
+                                        onPick={writeToOffice}
+                                    />
                                 )}
                                 {/* token 用量：來自 chatStream usage 寫回 message.tokens */}
                                 {message.tokens > 0 && (

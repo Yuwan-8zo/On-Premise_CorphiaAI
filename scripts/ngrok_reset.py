@@ -166,8 +166,8 @@ def main():
         print("     /ws/*   → port 8168 (WebSocket)")
         print()
         print("  本機存取（若公開網址無效請改用）:")
-        print(f"    前端: http://localhost:5173")
-        print(f"    後端: http://localhost:8168")
+        print("    前端: http://localhost:5173")
+        print("    後端: http://localhost:8168")
         print(f"    LAN:  http://{local_ip}:5173")
     else:
         print("  ⚠️  Ngrok 網址取得失敗")

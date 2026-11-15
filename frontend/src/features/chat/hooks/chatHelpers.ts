@@ -4,6 +4,7 @@
 import { documentsApi, type DocumentResponse } from '@/api/documents'
 import { useChatStore } from '@/store/chatStore'
 import type { Message } from '@/types/chat'
+import i18n from '@/i18n'
 
 /** 沒指定名稱時的預設資料夾名稱 */
 export const DEFAULT_FOLDER = '新資料夾'
@@ -38,12 +39,12 @@ export async function typeOut(text: string, append: (chunk: string) => void, del
 
 /** 專案資料夾還沒有文件時，AI 回覆的提示文字 */
 export function noDocsText(folderName: string) {
-    return `您好！此專案資料夾「${folderName}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請點擊輸入區左側的「附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**`
+    return i18n.t('ui.chat.noDocs', { folder: folderName })
 }
 
 /** 讀取某個資料夾的文件；activeOnly＝只要有啟用（會被 AI 參考）的 */
 export async function listFolderDocs(folderName: string, activeOnly = false): Promise<DocumentResponse[]> {
-    const res = await documentsApi.list()
+    const res = await documentsApi.list({ folder: folderName })
     return res.data.filter(
         (d) => d.doc_metadata?.folderName === folderName && (!activeOnly || (d.doc_metadata?.isActive ?? true)),
     )

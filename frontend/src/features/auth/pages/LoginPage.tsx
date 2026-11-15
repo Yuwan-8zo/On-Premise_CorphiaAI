@@ -60,7 +60,7 @@ export default function Login() {
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col relative z-30">
-                <div className="relative z-40 flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
+                <div className="login-head relative z-40 flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
                     <div className="lg:hidden">
                         <BackendStatusPill status={backendStatus} compact />
                     </div>

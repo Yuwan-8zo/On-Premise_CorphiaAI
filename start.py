@@ -2,13 +2,14 @@
 Corphia AI one-click local launcher.
 
 This starts the full local development stack:
-  1. Docker PostgreSQL + pgvector
+  1. PostgreSQL + pgvector — native (scripts/setup_postgres.py) if set up, otherwise Docker
   2. Backend environment checks, llama-cpp-python, and DB initialization
   3. FastAPI backend
   4. Vite frontend
   5. Browser at http://localhost:5173
 
-The app itself runs locally. Docker is used only for PostgreSQL + pgvector.
+Docker (if used at all) only runs PostgreSQL as a fallback, plus the optional self-hosted
+SearXNG for external web search (ENABLE_WEB_SEARCH=true). See README "不靠 Docker".
 """
 
 from __future__ import annotations
@@ -38,6 +39,11 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 RUNTIME_DIR = BASE_DIR / ".runtime"
 BACKEND_PORT = 8168
 FRONTEND_PORT = 5173
+
+sys.path.insert(0, str(BASE_DIR / "scripts"))
+from setup_postgres import PGDATA_DIR as NATIVE_PGDATA_DIR  # noqa: E402
+from setup_postgres import PG_PORT as NATIVE_PG_PORT  # noqa: E402
+from setup_postgres import native_postgres_ready, pg_bin_dir  # noqa: E402
 DEFAULT_DB_PORT = 5433
 
 PROCESSES: list[subprocess.Popen] = []
@@ -331,9 +337,16 @@ BOOT_STEPS = [
     ("backend", "後端 API 伺服器"),
 ]
 BOOT: dict = {}
+_BOOT_WRITE_LOCK = __import__("threading").Lock()
 
 
 def _boot_write() -> None:
+    # 對外搜尋在背景啟動時也會更新進度：兩邊同時寫同一個暫存檔會互相蓋掉，一次只讓一邊寫
+    with _BOOT_WRITE_LOCK:
+        _boot_write_locked()
+
+
+def _boot_write_locked() -> None:
     import json
 
     if not BOOT:
@@ -370,13 +383,16 @@ def boot_init() -> None:
         "steps": [
             {"key": k, "label": label, "state": "pending", "detail": "", "started_at": None, "finished_at": None}
             for k, label in BOOT_STEPS
+            # 資料庫直接裝在這台電腦時，系統本身用不到 Docker（只剩對外搜尋在背景用）：啟動畫面不列這一項
+            if not (k == "docker" and native_postgres_ready())
         ],
     })
     _boot_write()
 
 
-def boot(key: str, state: str | None = None, detail: str | None = None) -> None:
-    """Update one step: state in pending/running/done/error/skipped."""
+def boot(key: str, state: str | None = None, detail: str | None = None, code: str | None = None) -> None:
+    """Update one step: state in pending/running/done/error/skipped.
+    code：說明的代碼，前端啟動畫面用它顯示目前語言的文字（沒有代碼就直接顯示 detail，例如網址）"""
     if not BOOT:
         return
     for step in BOOT["steps"]:
@@ -392,6 +408,7 @@ def boot(key: str, state: str | None = None, detail: str | None = None) -> None:
             step["state"] = state
         if detail is not None:
             step["detail"] = detail
+            step["code"] = code
     _boot_write()
 
 
@@ -403,6 +420,7 @@ def boot_fail_running(message: str) -> None:
             step["state"] = "error"
             step["finished_at"] = time.time()
             step["detail"] = message[:300]
+            step["code"] = None  # 顯示錯誤原因本身，不要用之前的說明代碼
     BOOT["overall"] = "error"
     BOOT["message"] = message[:300]
     _boot_write()
@@ -492,10 +510,10 @@ def wait_for_docker(seconds: int) -> bool:
 
 
 def start_docker_desktop() -> None:
-    boot("docker", "running", "檢查 Docker 是否已在執行…")
+    boot("docker", "running", "檢查 Docker 是否已在執行…", code="docker_check")
     if docker_info_ok():
         ok("Docker daemon is ready")
-        boot("docker", "done", "已在執行")
+        boot("docker", "done", "已在執行", code="docker_running")
         return
 
     info("[docker] Docker daemon is not ready. Starting Docker Desktop...")
@@ -503,41 +521,74 @@ def start_docker_desktop() -> None:
         # Docker was opened some other way (e.g. its own icon) and is not answering:
         # usually it crashed on leftover files and is showing an error dialog.
         # Give it a short grace period in case it is still booting, then repair.
-        boot("docker", detail="Docker 已開啟但沒有回應，確認中…")
+        boot("docker", detail="Docker 已開啟但沒有回應，確認中…", code="docker_unresponsive")
         if wait_for_docker(30):
             ok("Docker daemon is ready")
-            boot("docker", "done", "已在執行")
+            boot("docker", "done", "已在執行", code="docker_running")
             return
         warn("Docker Desktop is open but not responding. Restarting it cleanly...")
-        boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+        boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…", code="docker_reset")
         kill_docker_desktop()
-    boot("docker", detail="清理上次留下的殘留檔…")
+    boot("docker", detail="清理上次留下的殘留檔…", code="docker_cleanup")
     reset_docker_vm()
     clear_stale_docker_sockets()
     launch_docker_desktop()
 
     # A cold boot of Docker Desktop can take a couple of minutes.
-    boot("docker", detail="啟動 Docker Desktop（冷開機約 1～2 分鐘）…")
+    boot("docker", detail="啟動 Docker Desktop（冷開機約 1～2 分鐘）…", code="docker_starting")
     if wait_for_docker(150):
         ok("Docker daemon is ready")
-        boot("docker", "done", "啟動完成")
+        boot("docker", "done", "啟動完成", code="docker_started")
         return
 
     # Still not up: most likely Docker crashed on leftover files. Restart it cleanly once.
     warn("Docker Desktop did not start. Closing it, cleaning leftover files and trying once more...")
-    boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…")
+    boot("docker", detail="Docker 沒有回應：重置 Docker 虛擬機並重新啟動…", code="docker_reset")
     kill_docker_desktop()
     clear_stale_docker_sockets()
     launch_docker_desktop()
     if wait_for_docker(240):
         ok("Docker daemon is ready")
-        boot("docker", "done", "自動修復後啟動完成")
+        boot("docker", "done", "自動修復後啟動完成", code="docker_autofixed")
         return
 
     raise RuntimeError("Docker Desktop did not become ready in time.")
 
 
+def web_search_enabled() -> bool:
+    """對外搜尋功能的開關：讀 backend/.env 的 ENABLE_WEB_SEARCH（和後端 app/core/config.py 的
+    enable_web_search 設定共用同一個環境變數，預設關閉——開了才會連自架 SearXNG，也才會把搜尋關鍵字送出網）"""
+    value = read_env(BACKEND_DIR / ".env").get("ENABLE_WEB_SEARCH", "")
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def start_native_database() -> bool:
+    """跑過 scripts/setup_postgres.py 的機器：用 pg_ctl 管原生 PostgreSQL，完全不需要 Docker。
+    回傳 True 代表這條路走成功了（呼叫端不用再試 Docker）。"""
+    if not native_postgres_ready():
+        return False
+    bin_dir = pg_bin_dir()
+    info("[db] Starting native PostgreSQL (no Docker)...")
+    boot("database", "running", "啟動原生 PostgreSQL（不靠 Docker）…", code="db_starting")
+    log_path = NATIVE_PGDATA_DIR.parent / "postgres.log"
+    # 不能接 pg_ctl 的輸出（capture_output）：Windows 上資料庫的背景程序會繼承那條管線，
+    # pg_ctl 自己結束後這裡仍然會一直等下去（和 scripts/setup_postgres.py 是同一個問題）。
+    # 成不成功看連接埠通不通就好：資料庫已經在執行時 pg_ctl 會回報失敗，但連接埠是通的。
+    subprocess.run(
+        [str(bin_dir / "pg_ctl.exe"), "-D", str(NATIVE_PGDATA_DIR), "-l", str(log_path), "-w", "start"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, timeout=120, check=False,
+    )
+    if not wait_for_tcp("127.0.0.1", NATIVE_PG_PORT, timeout=60):
+        raise RuntimeError(f"Native PostgreSQL did not become reachable on localhost:{NATIVE_PG_PORT}. See {log_path}")
+    ok(f"Native PostgreSQL is ready on localhost:{NATIVE_PG_PORT}")
+    boot("database", "done", f"localhost:{NATIVE_PG_PORT}（原生，無 Docker）")
+    return True
+
+
 def start_database() -> None:
+    if start_native_database():
+        return
+
     start_docker_desktop()
 
     compose_file = BASE_DIR / "docker-compose.yml"
@@ -545,10 +596,10 @@ def start_database() -> None:
         raise RuntimeError("docker-compose.yml was not found.")
 
     info("[docker] Starting PostgreSQL + pgvector...")
-    boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…")
+    boot("database", "running", "啟動 PostgreSQL＋pgvector 容器…", code="db_starting")
     commands = [
-        ["docker", "compose", "up", "-d"],
-        ["docker-compose", "up", "-d"],
+        ["docker", "compose", "up", "-d", "postgres"],
+        ["docker-compose", "up", "-d", "postgres"],
     ]
     last_output = ""
     for cmd in commands:
@@ -568,6 +619,50 @@ def start_database() -> None:
     raise RuntimeError(f"Could not start Docker database.\n{last_output}".strip())
 
 
+def searxng_secret() -> str:
+    """SearXNG 的簽章金鑰：第一次產生一組隨機值存在 .runtime/（不進版本控制），之後沿用"""
+    path = RUNTIME_DIR / "searxng_secret"
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        value = ""
+    if len(value) < 32:
+        import secrets
+
+        value = secrets.token_hex(32)
+        RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+        path.write_text(value, encoding="utf-8")
+    return value
+
+
+def start_searxng_if_enabled() -> None:
+    """自架 SearXNG（對外搜尋用）一律走 Docker，跟資料庫是原生還是 Docker 無關；
+    沒開對外搜尋功能就什麼都不做（不會為了這個單獨把 Docker Desktop 叫起來）"""
+    if not web_search_enabled():
+        return
+    start_docker_desktop()
+    info("[docker] 對外搜尋已開啟，啟動自架 SearXNG…")
+    for cmd in (["docker", "compose"], ["docker-compose"]):
+        exe = shutil.which(cmd[0])
+        if not exe:
+            continue
+        result = run([exe, *cmd[1:], "--profile", "search", "up", "-d", "searxng"], cwd=BASE_DIR, quiet=True, timeout=180,
+                     env={**os.environ, "SEARXNG_SECRET": searxng_secret()})
+        if result.returncode == 0:
+            ok("自架 SearXNG 已啟動")
+            return
+    warn("自架 SearXNG 啟動失敗，對外搜尋這一題會回報「服務目前無法使用」，其他功能不受影響")
+
+
+def start_searxng_in_background() -> None:
+    """背景啟動對外搜尋（見 main）：失敗只影響對外搜尋，不能讓整個啟動失敗"""
+    try:
+        start_searxng_if_enabled()
+    except Exception as exc:
+        warn(f"對外搜尋沒有啟動（Docker 沒有就緒）：{exc}")
+        boot("docker", "skipped", "Docker 沒有啟動，對外搜尋暫時不能用")
+
+
 def init_database(python_exe: Path) -> None:
     script = BACKEND_DIR / "scripts" / "init_db.py"
     if not script.exists():
@@ -585,7 +680,8 @@ def kill_port(port: int) -> None:
     if sys.platform != "win32":
         return
 
-    result = subprocess.run("netstat -ano -p tcp", shell=True, capture_output=True, text=True)
+    # 參數用清單、不經過系統 shell（和其他指令一致）
+    result = subprocess.run(["netstat", "-ano", "-p", "tcp"], capture_output=True, text=True)
     pattern = re.compile(rf"^\s*TCP\s+\S+:{port}\s+\S+\s+LISTENING\s+(\d+)\s*$", re.IGNORECASE)
     pids = set()
     for line in result.stdout.splitlines():
@@ -606,6 +702,122 @@ def open_log(name: str):
 
 
 MODEL_CHOICE: str | None = None
+# --built：不開前端開發伺服器，後端自己提供打包好的介面（frontend/dist），執行時不需要 Node
+SERVE_BUILT = False
+FRONTEND_DIST = FRONTEND_DIR / "dist"
+# 介面的原始檔：比打包結果新就要重新打包
+FRONTEND_SOURCES = ("src", "index.html", "package.json", "vite.config.ts", "tailwind.config.js")
+
+
+def frontend_build_is_stale() -> bool:
+    """打包結果不存在，或原始檔比它新（改了介面卻沒重新打包，桌面版會看到舊畫面）"""
+    index = FRONTEND_DIST / "index.html"
+    if not index.is_file():
+        return True
+    built_at = index.stat().st_mtime
+    for name in FRONTEND_SOURCES:
+        path = FRONTEND_DIR / name
+        files = path.rglob("*") if path.is_dir() else [path]
+        for file in files:
+            try:
+                if file.is_file() and file.stat().st_mtime > built_at:
+                    return True
+            except OSError:
+                continue
+    return False
+
+
+def ensure_frontend_build() -> None:
+    """--built 模式：確保 frontend/dist 是最新的。有 Node 就自動打包；沒有 Node 但已經有打包結果就直接用"""
+    if not frontend_build_is_stale():
+        ok("Frontend build is up to date")
+        return
+    npm = shutil.which("npm")
+    if not npm:
+        if (FRONTEND_DIST / "index.html").is_file():
+            warn("Frontend sources changed but npm was not found; using the existing build.")
+            return
+        raise RuntimeError("介面還沒打包，而且這台電腦沒有 Node.js。請安裝 Node.js 後重試，或放入打包好的 frontend/dist。")
+    ensure_frontend_dependencies()
+    info("[frontend] Building the interface (first time or after changes, about a minute)...")
+    result = run_logged([npm, "run", "build"], cwd=FRONTEND_DIR, log_name="frontend-build.log", timeout=900)
+    if result.returncode != 0 or not (FRONTEND_DIST / "index.html").is_file():
+        raise RuntimeError(f"Frontend build failed. See {RUNTIME_DIR / 'frontend-build.log'}")
+    ok("Frontend build is ready")
+
+
+PRE_UI = None  # 後端啟動前暫時提供介面的小伺服器（見 start_pre_ui）
+
+
+def start_pre_ui() -> None:
+    """
+    --built：後端還沒起來之前，先在同一個埠提供打包好的介面（只給這台電腦），
+    視窗一打開就是完整的啟動進度畫面（和開發模式先開前端是同一個道理）。
+    只給檔案和 boot-status.json；/api、/ws 一律回 503（啟動畫面本來就會一直重試）。
+    後端要啟動時由 stop_pre_ui() 關掉，把埠讓出來。開不起來（埠被佔用）就算了，不影響啟動。
+    """
+    global PRE_UI
+    if PRE_UI or not (FRONTEND_DIST / "index.html").is_file():
+        return
+    import mimetypes
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    dist = FRONTEND_DIST.resolve()
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *_args) -> None:  # 不要把每個請求印到啟動記錄
+            pass
+
+        def _send(self, status: int, body: bytes, content_type: str, cache: str = "no-cache") -> None:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", cache)
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            if self.command != "HEAD":
+                # 內容是前端建置檔或系統自己寫的啟動狀態，Content-Type 由副檔名決定且加了 nosniff
+                self.wfile.write(body)  # NOSONAR
+
+        def do_GET(self) -> None:
+            path = self.path.split("?", 1)[0].lstrip("/")
+            try:
+                if path.startswith(("api/", "ws/")):
+                    return self._send(503, b'{"detail":"starting"}', "application/json", "no-store")
+                if path == "boot-status.json":
+                    return self._send(200, BOOT_STATUS_PATH.read_bytes(), "application/json", "no-store")
+                target = (dist / path).resolve() if path else dist / "index.html"
+                if not target.is_file() or dist not in target.parents:
+                    target = dist / "index.html"  # 單頁應用：找不到的路徑都回首頁（也擋掉 ../ 跑到外面）
+                kind = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+                if kind.startswith("text/") or kind in ("application/javascript", "application/json"):
+                    kind += "; charset=utf-8"
+                self._send(200, target.read_bytes(), kind)
+            except OSError:
+                self._send(404, b"", "text/plain")
+
+        do_HEAD = do_GET
+
+    try:
+        PRE_UI = ThreadingHTTPServer(("127.0.0.1", BACKEND_PORT), Handler)
+    except OSError:
+        return
+    PRE_UI.daemon_threads = True
+    threading.Thread(target=PRE_UI.serve_forever, daemon=True).start()
+    ok(f"Startup screen is available at {ui_url()}")
+
+
+def stop_pre_ui() -> None:
+    global PRE_UI
+    if PRE_UI:
+        PRE_UI.shutdown()
+        PRE_UI.server_close()
+        PRE_UI = None
+
+
+def ui_url() -> str:
+    return f"http://localhost:{BACKEND_PORT if SERVE_BUILT else FRONTEND_PORT}"
 
 
 def find_model_file(choice: str) -> Path | None:
@@ -618,16 +830,14 @@ def find_model_file(choice: str) -> Path | None:
 
 
 def start_backend(python_exe: Path) -> None:
+    stop_pre_ui()  # 先把埠讓出來（不然下面清埠會清到自己）
     kill_port(BACKEND_PORT)
     log = open_log("backend.log")
-    host = BACKEND_HOST
+    # 聽哪些網路介面、區網走不走加密，由 backend/run_server.py 依模式決定：
+    # 開發模式只聽這台電腦；--built 時這台電腦走原本的埠，區網裝置走加密的埠（誰能進來另由區網門檢決定，app/core/web_ui.py）
     cmd = [
         str(python_exe),
-        "-m",
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        host,
+        "run_server.py",
         "--port",
         str(BACKEND_PORT),
         "--log-level",
@@ -640,8 +850,16 @@ def start_backend(python_exe: Path) -> None:
     # 會被卡住一兩分鐘，導致 start.py 的 health 檢查超時、誤判後端啟動失敗並 kill backend。
     # 注：cache 必須已存在於 ~/.cache/huggingface/，第一次安裝完 requirements 後就會有。
     backend_env = os.environ.copy()
+    # 安裝包自帶文件檢索、語音辨識的模型（models-cache/）：有就用它，不去找使用者家目錄裡的快取
+    bundled_models = BASE_DIR / "models-cache"
+    if bundled_models.is_dir():
+        backend_env["HF_HOME"] = str(bundled_models)
     backend_env.setdefault("HF_HUB_OFFLINE", "1")
     backend_env.setdefault("TRANSFORMERS_OFFLINE", "1")
+    if SERVE_BUILT:
+        backend_env["CORPHIA_SERVE_FRONTEND"] = "1"
+    else:
+        backend_env.pop("CORPHIA_SERVE_FRONTEND", None)
     if MODEL_CHOICE:
         model_file = find_model_file(MODEL_CHOICE)
         if model_file:
@@ -674,7 +892,7 @@ def start_frontend() -> None:
 
 
 def open_browser() -> None:
-    url = f"http://localhost:{FRONTEND_PORT}"
+    url = ui_url()
     if sys.platform == "win32":
         os.startfile(url)  # type: ignore[attr-defined]
     elif sys.platform == "darwin":
@@ -715,7 +933,7 @@ def print_summary(ngrok_url: str | None = None) -> None:
     info("=" * 64)
     info("Corphia AI is ready")
     info("=" * 64)
-    info(f"Frontend: http://localhost:{FRONTEND_PORT}")
+    info(f"Frontend: {ui_url()}" + (" (served by the backend, no dev server)" if SERVE_BUILT else ""))
     info(f"Backend:  http://localhost:{BACKEND_PORT}")
     info(f"API docs: http://localhost:{BACKEND_PORT}/docs")
     info(f"DB:       localhost:{database_port()} (Docker PostgreSQL + pgvector)")
@@ -747,6 +965,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-frontend",
         action="store_true",
         help="Do not start Vite dev server.",
+    )
+    parser.add_argument(
+        "--built",
+        action="store_true",
+        help="Serve the built interface (frontend/dist) from the backend instead of running the Vite dev server.",
     )
     parser.add_argument(
         "--model",
@@ -805,8 +1028,9 @@ def wait_for_api_health(timeout: int = 120) -> bool:
 
 def main() -> int:
     args = parse_args()
-    global MODEL_CHOICE
+    global MODEL_CHOICE, SERVE_BUILT
     MODEL_CHOICE = args.model
+    SERVE_BUILT = args.built
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
@@ -819,13 +1043,19 @@ def main() -> int:
 
     try:
         boot_init()
+        if SERVE_BUILT and not frontend_build_is_stale():
+            start_pre_ui()  # 介面不用重新打包：馬上就能顯示啟動進度
         python_exe = create_backend_venv()
         ensure_backend_dependencies(python_exe)
-        ensure_frontend_dependencies()
+        if SERVE_BUILT:
+            ensure_frontend_build()
+            start_pre_ui()  # 剛打包完的情況：現在才有介面可以顯示
+        else:
+            ensure_frontend_dependencies()
 
         # Frontend first: it does not need the backend, and the browser can then
         # show the live startup status while everything else comes up.
-        skip_frontend = args.skip_frontend or args.backend_only
+        skip_frontend = args.skip_frontend or args.backend_only or SERVE_BUILT
         if not skip_frontend:
             start_frontend()
             info("[wait] Checking frontend...")
@@ -838,19 +1068,29 @@ def main() -> int:
             ok("Skipped frontend startup (use existing dev server or production build)")
 
         start_database()
+        if native_postgres_ready() and web_search_enabled():
+            # 資料庫不靠 Docker 時，Docker 只剩對外搜尋在用：放到背景啟動，不讓整個系統等它
+            # （Docker Desktop 冷開機要一兩分鐘；它好之前只有對外搜尋那一題會回報暫時無法使用）
+            import threading
+            threading.Thread(target=start_searxng_in_background, daemon=True).start()
+        else:
+            start_searxng_if_enabled()
+        # 原生資料庫、又沒開對外搜尋：整個流程都沒用到 Docker，這一項標成「不需要」（不然啟動畫面會一直停在等待）
+        if any(s["key"] == "docker" and s["state"] == "pending" for s in BOOT.get("steps", [])):
+            boot("docker", "skipped", "不需要（資料庫直接裝在這台電腦）")
 
-        boot("engine", "running", "檢查 llama-cpp-python…")
+        boot("engine", "running", "檢查 llama-cpp-python…", code="engine_check")
         run_auto_engine(python_exe, force=args.force_engine)
-        boot("engine", "done", "已安裝")
+        boot("engine", "done", "已安裝", code="engine_ok")
 
         if not args.skip_init_db:
-            boot("schema", "running", "建立／檢查資料表…")
+            boot("schema", "running", "建立 / 檢查資料表…", code="schema_check")
             init_database(python_exe)
-            boot("schema", "done", "資料表已就緒")
+            boot("schema", "done", "資料表已就緒", code="schema_ready")
         else:
-            boot("schema", "skipped", "略過")
+            boot("schema", "skipped", "略過", code="skipped")
 
-        boot("backend", "running", "啟動 FastAPI 伺服器…")
+        boot("backend", "running", "啟動 FastAPI 伺服器…", code="backend_starting")
         start_backend(python_exe)
 
         info("[wait] Checking backend API health...")
@@ -859,8 +1099,10 @@ def main() -> int:
             raise RuntimeError(f"Backend API health check timed out. See {RUNTIME_DIR / 'backend.log'}")
         ok("Backend API is ready")
         boot("backend", "done", f"http://localhost:{BACKEND_PORT}")
+        if SERVE_BUILT and not args.skip_browser:
+            open_browser()  # 介面由後端提供：後端好了才有東西可以開
 
-        info("[wait] Loading the AI models (3B, 7B) and document search... progress is shown in the browser.")
+        info("[wait] Loading the AI model and document search... progress is shown in the browser.")
         wait_for_ai_ready()
         BOOT["overall"] = "ready"
         _boot_write()
@@ -885,6 +1127,13 @@ def main() -> int:
                     process.terminate()
             except Exception:
                 pass
+        if SERVE_BUILT:
+            # 介面是後端提供的，後端沒起來畫面就沒了：留一個小伺服器讓啟動畫面顯示失敗原因，
+            # 直到使用者關掉（一鍵關閉／關桌面版視窗會結束這個程式）
+            time.sleep(1.5)  # 等後端把埠放掉
+            start_pre_ui()
+            while PRE_UI:
+                time.sleep(1)
         return 1
 
 

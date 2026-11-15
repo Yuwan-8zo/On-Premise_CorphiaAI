@@ -3,15 +3,16 @@
 """
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.query_utils import like_contains, page_count
-from app.api.deps import RequireAdmin, get_db, Depends
+from app.api.deps import RequireAdmin, RequireEngineer, get_db, Depends
+from app.core.tenancy import DEFAULT_TENANT_ID, sees_all_tenants
 from app.models.tenant import Tenant
 from app.schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, TenantListResponse
-from app.services.audit_service import write_audit_log, AuditResource
+from app.services.audit_service import write_audit_log, AuditAction, AuditResource
 from app.core.request_utils import get_client_ip, get_user_agent
 from app.api.deps import CurrentUser
 
@@ -26,15 +27,17 @@ async def list_tenants(
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
 ):
-    """取得所有租戶列表 (僅限管理員)"""
-    
+    """租戶列表：engineer 看全部，租戶管理員只看到自己的租戶"""
+
     query = select(Tenant)
     count_query = select(func.count(Tenant.id))
+    if not sees_all_tenants(current_user):
+        query = query.where(Tenant.id == current_user.effective_tenant_id)
+        count_query = count_query.where(Tenant.id == current_user.effective_tenant_id)
     
     if search:
         # 跳脫 LIKE 萬用字元，避免使用者輸入的 % / _ 被當通配
         if len(search) > 128:
-            from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="search 字串過長")
         search_filter = like_contains(search)
         query = query.where(
@@ -67,9 +70,9 @@ async def create_tenant(
     current_user: CurrentUser,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    _ = RequireAdmin
+    _ = RequireEngineer
 ):
-    """建立租戶 (僅限管理員)"""
+    """建立租戶（只有 engineer：租戶是整個系統層級的設定）"""
     
     # Check if slug exists
     existing = await db.execute(select(Tenant).where(Tenant.slug == data.slug))
@@ -83,7 +86,7 @@ async def create_tenant(
     
     await write_audit_log(
         db=db,
-        action="tenant_create",
+        action=AuditAction.TENANT_CREATE,
         resource_type=AuditResource.SYSTEM,
         resource_id=new_tenant.id,
         user_id=current_user.id,
@@ -105,15 +108,26 @@ async def update_tenant(
     db: AsyncSession = Depends(get_db),
     _ = RequireAdmin
 ):
-    """更新租戶 (僅限管理員)"""
-    
+    """
+    更新租戶：engineer 可以改任何租戶；租戶管理員只能改自己租戶的名稱等資料，
+    不能停用／啟用（停用自己的租戶會把所有人鎖在外面）
+    """
+    everything = sees_all_tenants(current_user)
+    if not everything and tenant_id != current_user.effective_tenant_id:
+        raise HTTPException(status_code=404, detail="找不到此租戶")
+
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
-    
+
     if not tenant:
         raise HTTPException(status_code=404, detail="找不到此租戶")
-        
+
     update_data = data.model_dump(exclude_unset=True)
+    if "is_active" in update_data and update_data["is_active"] != tenant.is_active:
+        if not everything:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只有系統管理員能停用或啟用租戶")
+        if tenant.id == DEFAULT_TENANT_ID and update_data["is_active"] is False:
+            raise HTTPException(status_code=400, detail="無法停用預設租戶")
     if "slug" in update_data and update_data["slug"] != tenant.slug:
         existing = await db.execute(select(Tenant).where(Tenant.slug == update_data["slug"]))
         if existing.scalar_one_or_none():
@@ -127,7 +141,7 @@ async def update_tenant(
     
     await write_audit_log(
         db=db,
-        action="tenant_update",
+        action=AuditAction.TENANT_UPDATE,
         resource_type=AuditResource.SYSTEM,
         resource_id=tenant.id,
         user_id=current_user.id,
@@ -146,11 +160,11 @@ async def delete_tenant(
     current_user: CurrentUser,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    _ = RequireAdmin
+    _ = RequireEngineer
 ):
-    """刪除或停用租戶 (僅限管理員)"""
-    
-    if tenant_id == "default":
+    """停用租戶（只有 engineer；不刪資料）"""
+
+    if tenant_id == DEFAULT_TENANT_ID:
          raise HTTPException(status_code=400, detail="無法刪除預設租戶")
     
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
@@ -164,7 +178,7 @@ async def delete_tenant(
     
     await write_audit_log(
         db=db,
-        action="tenant_delete",
+        action=AuditAction.TENANT_DELETE,
         resource_type=AuditResource.SYSTEM,
         resource_id=tenant.id,
         user_id=current_user.id,

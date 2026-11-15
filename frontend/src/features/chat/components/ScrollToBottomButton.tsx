@@ -28,8 +28,8 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
             // 使用者一旦滑出 60px 就視為「主動離開底部」，
             // 此時 auto-scroll 已停止，所以馬上把「正在輸入」膠囊 / 回底部箭頭浮上來，
             // 讓使用者明確看到「AI 還在生成，但畫面不再追隨」。
-            // 額外條件 scrollHeight > clientHeight * 1.5 防止短內容時誤觸發。
-            if (distanceFromBottom > 60 && scrollHeight > clientHeight * 1.5) {
+            // 只要捲得動、離底部超過門檻就顯示（原本還限制「內容超過 1.5 個畫面高」，稍短的對話往上滑就沒有按鈕）
+            if (distanceFromBottom > 60) {
                 setShowToBottom(true)
             } else {
                 setShowToBottom(false)
@@ -65,37 +65,38 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
     // 串流中 + 使用者已捲離底部 → 顯示膠囊狀「正在輸入…」指示器
     const showTypingPill = Boolean(isStreaming) && showToBottom
 
+    // 位置：貼在訊息區底部；手機置中、桌機靠右。
+    // 置中用 inset-x-0＋mx-auto（不用 translate）：進場動畫會設定 transform，用位移置中會被蓋掉。
+    // 位置一定要放在最外層：按鈕外面包了 Tooltip，定位寫在按鈕上會變成相對於 Tooltip，整顆跑到畫面最上面被工具列蓋住
+    const place = 'absolute bottom-6 inset-x-0 mx-auto w-fit md:inset-x-auto md:right-8 md:mx-0 z-30'
+    // 材質：浮在訊息文字上面，用卡片材質（.paper，九成二不透明＋光邊）；半透明的玻璃按鈕疊在字上會幾乎看不見
+    const surface = 'paper !rounded-full text-text-primary transition-transform duration-[var(--duration-press-out)] active:scale-95 active:duration-[var(--duration-press-in)]'
+
     return (
         <AnimatePresence mode="wait">
             {showTypingPill ? (
-                
-                    <motion.button
-                        key="typing-pill"
-                        {...popIn}
-                        onClick={scrollToBottom}
-                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 flex items-center gap-2 pl-3 pr-3.5 py-2 btn-secondary [--R:16px] rounded-full text-text-secondary"
-                        aria-label={t('ui.scroll.typingAria')}
-                    >
-                        <span className="flex items-center gap-1" aria-hidden="true">
-                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
-                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
-                            <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
-                        </span>
-                        <span className="text-[length:var(--fs-12d5)] font-medium leading-none">{t('ui.scroll.typing')}</span>
-                    </motion.button>
-                
+                <motion.button
+                    key="typing-pill"
+                    {...popIn}
+                    onClick={scrollToBottom}
+                    className={`${place} ${surface} flex items-center gap-2 pl-3 pr-3.5 py-2`}
+                    aria-label={t('ui.scroll.typingAria')}
+                >
+                    <span className="flex items-center gap-1" aria-hidden="true">
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '0ms' }} />
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
+                        <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
+                    </span>
+                    <span className="text-[length:var(--fs-12d5)] font-medium leading-none">{t('ui.scroll.typing')}</span>
+                </motion.button>
             ) : showToBottom ? (
-                <Tooltip label={t('ui.scroll.toBottom')} placement="bottom">
-                    <motion.button
-                        key="to-bottom-arrow"
-                        {...popIn}
-                        onClick={scrollToBottom}
-                        className="absolute bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-8 z-30 btn-icon !w-11 !h-11 text-text-secondary"
-                        aria-label="Scroll to bottom"
-                    >
-                        <ArrowDown className="w-[var(--sz-20)] h-[var(--sz-20)]" />
-                    </motion.button>
-                </Tooltip>
+                <motion.div key="to-bottom-arrow" {...popIn} className={place}>
+                    <Tooltip label={t('ui.scroll.toBottom')} placement="top">
+                        <button type="button" onClick={scrollToBottom} className={`${surface} flex h-[var(--sz-44)] w-[var(--sz-44)] items-center justify-center`} aria-label={t('ui.scroll.toBottom')}>
+                            <ArrowDown className="w-[var(--sz-20)] h-[var(--sz-20)]" />
+                        </button>
+                    </Tooltip>
+                </motion.div>
             ) : null}
         </AnimatePresence>
     )

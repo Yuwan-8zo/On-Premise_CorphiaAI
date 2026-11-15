@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft } from '@/components/snow/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -9,6 +9,7 @@ import MessageBubble from '@/features/chat/components/MessageBubble'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { SkelMessages } from '@/components/ui/Skeleton'
+import { displayTitle } from '@/lib/conversationTitle'
 
 export default function Share() {
     const { t } = useTranslation()
@@ -21,6 +22,7 @@ export default function Share() {
     const [messages, setMessages] = useState<Message[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [ownerName, setOwnerName] = useState('')
 
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -32,12 +34,11 @@ export default function Share() {
             if (!conversationId) return
             try {
                 setIsLoading(true)
-                const [convData, msgsData] = await Promise.all([
-                    conversationsApi.get(conversationId),
-                    conversationsApi.getMessages(conversationId)
-                ])
-                setConversation(convData)
-                setMessages(msgsData)
+                // 唯讀分享：主人自己，或主人已分享且同租戶的人才拿得到
+                const shared = await conversationsApi.getShared(conversationId)
+                setConversation(shared.conversation)
+                setMessages(shared.messages)
+                setOwnerName(shared.isOwner ? '' : shared.ownerName)
                 
                 // 捲動到底部
                 setTimeout(() => {
@@ -47,7 +48,7 @@ export default function Share() {
                 }, 100)
             } catch (err) {
                 console.error(err)
-                setError(t('share.loadError'))
+                setError((err as { response?: { status?: number } })?.response?.status === 404 ? t('ui.share.notShared') : t('share.loadError'))
             } finally {
                 setIsLoading(false)
             }
@@ -65,7 +66,7 @@ export default function Share() {
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full h-[var(--sz-50)] rounded-full bg-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))] text-text-primary font-semibold"
+                        className="btn btn-lg btn-primary w-full"
                     >
                         {t('share.goToLogin')}
                     </button>
@@ -104,15 +105,16 @@ export default function Share() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/')}
-                        className="p-2 -ml-2 rounded-full text-text-secondary   transition-colors"
+                        aria-label={t('share.backToHome')}
+                        className="p-2 -ml-2 rounded-full text-text-secondary transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <h1 className="font-semibold text-text-primary text-[length:var(--fs-15)]">
-                            {conversation.title}
+                            {displayTitle(conversation.title)}
                         </h1>
-                        <p className="text-[length:var(--fs-12)] text-text-secondary">{t('share.readonly')}</p>
+                        <p className="text-[length:var(--fs-12)] text-text-secondary">{ownerName ? t('ui.share.byOwner', { name: ownerName }) : t('share.readonly')}</p>
                     </div>
                 </div>
             </header>

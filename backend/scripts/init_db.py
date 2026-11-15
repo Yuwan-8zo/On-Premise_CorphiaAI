@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.database import engine, Base, async_session_maker
 from app.core.security import get_password_hash
+from app.core.config import settings
 from app.models import Tenant, User, UserRole
 
 
@@ -57,7 +58,14 @@ async def init_database():
         
         print(f"✅ 建立預設租戶: {default_tenant.name}")
         
-        # 建立預設帳號
+        # 正式環境（安裝包）：不建立任何預設帳號——密碼是公開的，等於留一個後門。
+        # 管理員由「第一次設定」精靈建立（scripts/first_run_setup.py），密碼是安裝的人自己設的
+        if settings.app_env.lower() in {"production", "prod"}:
+            await session.commit()
+            print("✅ 正式環境：只建立預設組織，不建立預設帳號")
+            return
+
+        # 建立預設帳號（開發、展示用）
         users = [
             User(
                 email="engineer@local",

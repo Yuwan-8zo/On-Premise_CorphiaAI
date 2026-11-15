@@ -5,6 +5,31 @@
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
+from app.services.password_service import validate_password_strength
+
+
+# ── 共用欄位檢查（註冊、改密碼、管理員建立／編輯帳號都用同一套） ──
+
+def validate_email_like(value: str) -> str:
+    """一般信箱和本機帳號（例如 admin@local）都接受；要有 @ 前後內容、不能有空白"""
+    local_part, separator, domain_part = value.partition("@")
+    if (
+        not separator
+        or not local_part
+        or not domain_part
+        or any(ch.isspace() for ch in value)
+    ):
+        raise ValueError("invalid email format")
+    return value
+
+
+def require_strong_password(value: str) -> str:
+    """密碼政策（長度、大小寫、數字、特殊字元）；不符合就丟出所有原因"""
+    errors = validate_password_strength(value)
+    if errors:
+        raise ValueError("; ".join(errors))
+    return value
+
 
 class ApiResponse(BaseModel):
     """通用 API 回應"""

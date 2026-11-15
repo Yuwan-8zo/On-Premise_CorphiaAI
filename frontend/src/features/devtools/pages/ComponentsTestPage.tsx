@@ -57,7 +57,7 @@ export default function ComponentsTest() {
                         onClick={() => { 
                             logEvent('Opened ConfirmModal')
                             showConfirm(
-                                t('settings.confirmDeleteFolder', '這是一個測試對話框，是否確定執行此操作？'),
+                                '這是一個測試對話框，是否確定執行此操作？',
                                 () => {
                                     logEvent('Clicked Confirm on ConfirmModal')
                                     add(t('common.success', '確認操作成功！'), 'success')

@@ -1,6 +1,7 @@
 /**
  * 對話的「⋯」選單與彈出視窗：重新命名、移至專案、新增資料夾，以及分享連結、完整性驗證
  */
+import type { ViewportAnchor } from '@/lib/useKeepInViewport'
 import { useRef, useState } from 'react'
 import { conversationsApi } from '@/api/conversations'
 import { foldersApi } from '@/api/folders'
@@ -9,11 +10,19 @@ import { useChatStore } from '@/store/chatStore'
 import { useToastStore } from '@/store/toastStore'
 import { DEFAULT_FOLDER, folderOf } from './chatHelpers'
 import { useDismiss } from '@/lib/useDismiss'
+import i18n from '@/i18n'
+import { getErrorMessage } from '@/lib/errors'
 
 type ChatMode = 'general' | 'project'
 
 /** 等彈窗畫出來再把游標放進輸入框 */
 const focusSoon = (ref: React.RefObject<HTMLInputElement | null>) => setTimeout(() => ref.current?.focus(), 100)
+
+/** 對話「⋯」選單的位置：x、y＝選單左上角；anchor＝按鈕的位置（放不下時換邊用，見 useKeepInViewport） */
+export type ConvMenuState = { convId: string; x: number; y: number; anchor?: ViewportAnchor }
+
+/** 選單和「⋯」按鈕之間的間隔 */
+const MENU_GAP = 6
 
 export function useConversationDialogs({
     setChatMode,
@@ -26,7 +35,7 @@ export function useConversationDialogs({
     const { conversations, updateConversation, setCurrentConversation, setMessages } = useChatStore()
 
     // ── 「⋯」選單 ──
-    const [activeMenu, setActiveMenu] = useState<{ convId: string; x: number; y: number } | null>(null)
+    const [activeMenu, setActiveMenu] = useState<ConvMenuState | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
     // 點外面、按 Esc 關閉。按在「⋯」本身不算點外面：它是按下就打開、可以直接拖到項目上的觸發鈕
@@ -36,7 +45,8 @@ export function useConversationDialogs({
     const handleOpenMenu = (e: React.MouseEvent, convId: string) => {
         e.stopPropagation()
         const rect = e.currentTarget.getBoundingClientRect()
-        setActiveMenu({ convId, x: rect.left, y: rect.bottom + 4 }) // 放在按鈕正下方
+        // 開在按鈕右邊、上緣對齊按鈕；右邊放不下（手機的側欄抽屜）就換到左邊或下方
+        setActiveMenu({ convId, x: rect.right + MENU_GAP, y: rect.top, anchor: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, side: true } })
     }
     const closeMenu = () => setActiveMenu(null)
 
@@ -117,7 +127,7 @@ export function useConversationDialogs({
             await loadFolders()
         } catch (err) {
             console.error('Failed to create folder:', err)
-            toast.error('建立資料夾失敗')
+            toast.error(i18n.t('ui.chat.folderCreateFailed'))
         }
         setChatMode('project')
         // 清空目前選取的對話，顯示空資料夾內容
@@ -128,19 +138,45 @@ export function useConversationDialogs({
     // ── 分享、完整性驗證 ──
     const handleShareConversation = async (convId: string) => {
         const link = `${window.location.origin}/share/${convId}`
-        if (await copyText(link)) toast.success('已成功複製對話分享連結！')
-        else toast.error('複製失敗，請手動複製連結：' + link)
+        // 先開啟分享（同租戶的人才看得到），再複製連結
+        try {
+            await conversationsApi.share(convId)
+            setShared(convId, true)
+        } catch (err) {
+            toast.error(getErrorMessage(err))
+            return
+        }
+        if (await copyText(link)) toast.success(i18n.t('ui.chat.shareCopied'))
+        else toast.error(i18n.t('ui.chat.shareCopyFailed', { link }))
+    }
+
+    /** 取消分享：之後只有自己看得到 */
+    const handleUnshareConversation = async (convId: string) => {
+        try {
+            await conversationsApi.unshare(convId)
+            setShared(convId, false)
+            toast.success(i18n.t('ui.chat.unshared'))
+        } catch (err) {
+            toast.error(getErrorMessage(err))
+        }
+    }
+
+    /** 畫面上的分享狀態跟著改（選單才會顯示／隱藏「取消分享」） */
+    const setShared = (convId: string, shared: boolean) => {
+        const conv = useChatStore.getState().conversations.find((c) => c.id === convId)
+        if (conv) updateConversation(convId, { settings: { ...(conv.settings ?? {}), shared } })
     }
 
     const handleVerifyChain = async (convId: string) => {
         try {
             const res = await conversationsApi.verifyChain(convId)
             // 展示時要讓評審看清楚：通過停留 6 秒、失敗 8 秒
-            if (res.valid) toast.add(`對話完整性驗證通過：共 ${res.total_messages} 則訊息皆未被竄改（雜湊鏈）`, 'success', 6000)
-            else toast.add(`對話紀錄遭竄改！第 ${res.first_broken_index} 則訊息的雜湊鏈斷裂`, 'error', 8000)
+            if (res.valid) toast.add(i18n.t('ui.chat.verifyOk', { n: res.total_messages }), 'success', 6000)
+            // first_broken_index 從 0 開始算，給人看要 +1
+            else toast.add(i18n.t('ui.chat.verifyBroken', { n: (res.first_broken_index ?? 0) + 1 }), 'error', 8000)
         } catch (err) {
             console.error('驗證失敗', err)
-            toast.error('無法進行對話完整性驗證')
+            toast.error(i18n.t('ui.chat.verifyFailed'))
         }
     }
 
@@ -149,6 +185,6 @@ export function useConversationDialogs({
         renameModal, setRenameModal, renameInput, setRenameInput, renameInputRef, handleRenameConversation, submitRename,
         moveModal, setMoveModal, moveInput, setMoveInput, handleMoveToProject, submitMove,
         newFolderModal, setNewFolderModal, newFolderInput, setNewFolderInput, newFolderInputRef, openNewFolderModal, submitNewFolder,
-        handleShareConversation, handleVerifyChain,
+        handleShareConversation, handleUnshareConversation, handleVerifyChain,
     }
 }

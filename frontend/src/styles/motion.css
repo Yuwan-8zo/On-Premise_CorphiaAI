@@ -4,6 +4,8 @@
   --ease-standard: var(--ease-out);
   --ease-pulse: cubic-bezier(0.4, 0, 0.6, 1);
   --duration-press: 170ms;
+  --duration-press-in: 100ms; /* 按下的瞬間：0.1 秒內就要有反應（放開彈回沿用各元件自己的時間） */
+  --duration-press-out: 260ms; /* 放開彈回 */
   --duration-fast: 200ms;
   --duration-hover: 170ms;
   --duration-normal: 250ms;

@@ -80,24 +80,6 @@ export function useAccentColor(): AccentColor {
 }
 
 /**
- * Generate N shades from the accent color for use in stacked charts, donuts,
- * etc. Shades go from light (0.4 alpha) to dark (0.95 alpha) by default.
- */
-export function makeAccentShades(
-    accent: AccentColor,
-    count: number,
-    { from = 0.95, to = 0.4 }: { from?: number; to?: number } = {},
-): string[] {
-    if (count <= 0) return []
-    if (count === 1) return [accent.alpha(from)]
-    return Array.from({ length: count }, (_, i) => {
-        const t = i / (count - 1)
-        return accent.alpha(from + (to - from) * t)
-    })
-}
-
-
-/**
  * 圖表分類色：Apple 系統色（藍、綠、橘、紅、紫、青、黃、粉、靛、灰），每一類一個明顯不同的色相，
  * 不用同一個顏色的深淺（太相近、分不出來）。深色外觀用 Apple 深色版，淺色外觀用淺色版。
  */

@@ -34,6 +34,7 @@ _DEFAULT_MODEL = "openai/whisper-base"
 _TARGET_SAMPLE_RATE = 16000
 _MAX_AUDIO_BYTES = 25 * 1024 * 1024  # 25 MB
 _MAX_AUDIO_SECONDS = 5 * 60  # 5 分鐘上限
+_SUPPORTED_LANGS = {"zh", "en", "ja"}
 
 
 def _get_pipeline():
@@ -102,7 +103,8 @@ def _normalize_lang(lang: Optional[str]) -> Optional[str]:
     if not lang:
         return None
     base = lang.split("-")[0].split("_")[0].lower()
-    return base or None
+    # 只接受介面支援的語言；其他值交給 Whisper 自動判斷（亂給語言碼 Whisper 會直接出錯）
+    return base if base in _SUPPORTED_LANGS else None
 
 
 def _run_whisper(arr: np.ndarray, sample_rate: int, language: Optional[str]) -> str:
@@ -149,7 +151,7 @@ async def transcribe_voice(
         arr, sample_rate = _wav_bytes_to_float_array(raw)
     except Exception as e:
         logger.exception("[voice] WAV 解析失敗")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法解析 WAV: {e}") from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="無法解析錄音檔，請重新錄音") from e
 
     duration_ms = int(len(arr) / max(sample_rate, 1) * 1000)
     if duration_ms > _MAX_AUDIO_SECONDS * 1000:
@@ -161,7 +163,7 @@ async def transcribe_voice(
         sample_rate = _TARGET_SAMPLE_RATE
     except Exception as e:
         logger.exception("[voice] 重採樣失敗")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"無法重採樣至 16kHz: {e}") from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="無法處理錄音檔，請重新錄音") from e
 
     norm_lang = _normalize_lang(language)
     t0 = time.perf_counter()

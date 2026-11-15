@@ -32,10 +32,12 @@ from app.models.tenant import Tenant
 import os
 from dotenv import load_dotenv
 
-# 先嘗試載入 .env.test，讓測試可以使用獨立 DB
+# 先嘗試載入 .env.test，讓測試可以使用獨立 DB。
+# 已經設定的環境變數優先（override=False）：GitHub Actions 的資料庫在 5432，
+# .env.test 寫的是本機 Docker 的 5433；以前用 override=True 把 CI 的設定蓋掉，所有測試都連不上資料庫
 _env_test = os.path.join(os.path.dirname(__file__), "..", ".env.test")
 if os.path.exists(_env_test):
-    load_dotenv(_env_test, override=True)
+    load_dotenv(_env_test, override=False)
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
@@ -99,6 +101,15 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 def _ensure_api_ready_for_health():
     """測試環境未必跑完整 lifespan；health 端點需 API 層標記就緒。"""
     mark_api_ready()
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _semantic_guard_off_by_default(monkeypatch):
+    """語意比對要載入嵌入模型、模型複查要推論引擎；一般測試關掉，test_semantic_guard.py 自己打開並換成假的"""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "enable_semantic_guard", False)
     yield
 
 

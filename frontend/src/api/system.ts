@@ -35,6 +35,12 @@ export interface LanStatus {
     enabled: boolean
     lan_ips: string[]
     requires_restart: boolean
+    /** 區網裝置要開的完整網址（主機模式才有；開發模式是空的，照目前頁面的網址組） */
+    lan_urls?: string[]
+    /** 區網連線有沒有加密 */
+    encrypted?: boolean
+    /** 主機發證憑證的指紋（有加密才有） */
+    ca_fingerprint?: string
 }
 
 export interface RuntimeInfo {
@@ -66,6 +72,13 @@ export const systemApi = {
     toggleLan: async (enabled: boolean): Promise<LanStatus> => {
         const response = await apiClient.post<LanStatus>('/system/lan/toggle', { enabled })
         return response.data
+    },
+
+    /**
+     * 關閉主機服務（後端、AI 模型、資料庫）。只有在主機本機登入的管理員可以用；其他裝置會被拒絕
+     */
+    shutdownHost: async (): Promise<void> => {
+        await apiClient.post('/system/shutdown')
     },
 
     /**

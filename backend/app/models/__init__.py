@@ -12,6 +12,9 @@ from app.models.folder import Folder
 from app.models.user_settings import UserSettings
 from app.models.audit_log import AuditLog
 from app.models.token_blacklist import TokenBlacklist
+from app.models.connected_folder import ConnectedFolder
+from app.models.user_memory import UserMemory
+from app.models.generated_file import GeneratedFile
 
 __all__ = [
     "Tenant",
@@ -27,5 +30,8 @@ __all__ = [
     "UserSettings",
     "AuditLog",
     "TokenBlacklist",
+    "ConnectedFolder",
+    "UserMemory",
+    "GeneratedFile",
 ]
 

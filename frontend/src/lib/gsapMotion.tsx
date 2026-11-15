@@ -199,10 +199,10 @@ function createMotionElement(tag: keyof React.JSX.IntrinsicElements) {
             const exitVars = stripForReducedMotion(motionExit ?? resolveMotionValue(motionInitial, motionVariants) ?? { opacity: 0 }) as GsapVars
             const blur = exitVars.opacity === 0 && exitVars.filter === undefined && !prefersReducedMotion()
             gsap.to(element, {
-                ...exitVars,
+                duration: EXIT_SECONDS,
+                ...exitVars, // exit 裡寫了 duration 就用它的（例如選單收起 0.15 秒）
                 ...(blur ? { filter: `blur(${EXIT_BLUR}px)` } : {}),
                 pointerEvents: 'none',
-                duration: EXIT_SECONDS,
                 ease: MOTION.gsapEase.default,
                 overwrite: 'auto',
             })
@@ -316,8 +316,11 @@ export function AnimatePresence({
     renderedRef.current = out
 
     useEffect(() => {
-        for (const k of exitingRef.current.keys()) {
+        for (const [k, el] of exitingRef.current) {
             if (timersRef.current.has(k)) continue
+            // 等這個元件自己的離場時間（exit 裡寫的 duration，例如選單 0.15 秒），沒寫就用預設
+            const own = (el.props as { exit?: { duration?: number } }).exit?.duration
+            const secs = typeof own === 'number' ? own : EXIT_SECONDS
             timersRef.current.set(
                 k,
                 window.setTimeout(() => {
@@ -327,7 +330,7 @@ export function AnimatePresence({
                     // 移除後再出現就是新的一次，要播進場
                     skipKeysRef.current?.delete(k)
                     rerender((n) => n + 1)
-                }, EXIT_SECONDS * 1000 + 30),
+                }, secs * 1000 + 30),
             )
         }
         for (const [k, t] of timersRef.current) {

@@ -1,51 +1,67 @@
 /**
  * 管理後台
  *   左側：目前模型、分頁導覽（手機版變成上方的分段切換）、區域網路開關
- *   右側：總覽／使用者／模型／稽核／租戶
+ *   右側：總覽／使用者／模型／資料夾／稽核／租戶
  * 資料與動作都在 features/admin/hooks（每個分頁一個），這裡只負責版面與把資料接到各分頁
  */
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Building2, Cpu, FileText, Gauge, Users } from '@/components/snow/icons'
+import { ArrowLeft, Building2, Cpu, FileText, Folder, Gauge, Users } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { SkelCards } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { TenantFormModal, UserFormModal } from '../components/AdminFormModals'
+import { FolderFormModal } from '../components/FolderFormModal'
 import LanSidebarWidget from '../components/LanSidebarWidget'
+import HostShutdownButton from '../components/HostShutdownButton'
 import { useAdminAudit } from '../hooks/useAdminAudit'
 import { useAdminModels, useAdminStats, useLanStatus } from '../hooks/useAdminSystem'
 import { useAdminTenants } from '../hooks/useAdminTenants'
+import { useAdminFolders } from '../hooks/useAdminFolders'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
-import { useFitToHost } from '../hooks/useFitToHost'
+import { useFitToHost } from '@/lib/useFitToHost'
 import { usePageDirection } from '@/lib/usePageDirection'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
 const ModelsSection = lazy(() => import('../sections/ModelsSection'))
 const TenantsSection = lazy(() => import('../sections/TenantsSection'))
+const FoldersSection = lazy(() => import('../sections/FoldersSection'))
 
-type AdminSection = 'overview' | 'users' | 'models' | 'audit' | 'tenants'
+type AdminSection = 'overview' | 'users' | 'models' | 'folders' | 'audit' | 'tenants'
 
 const TABS: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'overview', i18nKey: 'admin.tabs.overview', icon: Gauge },
     { id: 'users', i18nKey: 'admin.tabs.users', icon: Users },
     { id: 'models', i18nKey: 'admin.tabs.models', icon: Cpu },
+    { id: 'folders', i18nKey: 'admin.tabs.folders', icon: Folder },
     { id: 'audit', i18nKey: 'admin.tabs.audit', icon: FileText },
     { id: 'tenants', i18nKey: 'admin.tabs.tenants', icon: Building2 },
 ]
 
 /** 分頁程式還在下載時顯示的骨架 */
-const SectionSkeleton = <div className="grid gap-4 p-5"><SkelCards count={3} className="h-[var(--sz-120)]" /></div>
+const SectionSkeleton = (
+    // 和分頁的大卡片（Panel＋SectionHeader）同一個外形：標題、補充、內容區
+    <section aria-hidden className="paper !rounded-[var(--admin-r)] h-full min-h-[var(--sz-320)] flex flex-col">
+        <div className="pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)]">
+            <h2 className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold"><SkelText>0000</SkelText></h2>
+            <p className="mt-0.5 text-[length:var(--fs-13)] leading-[var(--lh-18)]"><SkelText>000000</SkelText></p>
+        </div>
+        <div className="flex-1 mx-[var(--space)] mb-[var(--space)] rounded-[var(--admin-in)] bg-[var(--chip)]" />
+    </section>
+)
 
 export default function Admin() {
     const { t } = useTranslation()
     // 寬版時整頁縮放到剛好一個畫面，不捲動、不被裁
-    const fitRef = useFitToHost<HTMLDivElement>()
+    // 兩層縮放：整頁（標題列＋左側欄）只看左側欄放不放得下，切分頁時不會變；內容區依各分頁自己的內容另外縮放
+    const fitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="page"]' })
+    const contentFitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="content"]', varName: '--fit-content' })
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
@@ -58,6 +74,7 @@ export default function Admin() {
     const models = useAdminModels()
     const audit = useAdminAudit()
     const tenants = useAdminTenants()
+    const folders = useAdminFolders()
     const lan = useLanStatus()
 
     // 只有管理員與工程師可以進後台
@@ -69,11 +86,15 @@ export default function Admin() {
     const { loadModels } = models
     const { loadAuditLogs } = audit
     const { loadTenants } = tenants
+    const { loadFolders } = folders
+    // 側欄的「目前模型」每一頁都看得到：進後台就讀一次，切到模型頁再重讀
+    useEffect(() => { loadModels() }, [loadModels])
     useEffect(() => {
         if (activeSection === 'models') loadModels()
         if (activeSection === 'audit' || activeSection === 'overview') loadAuditLogs()
         if (activeSection === 'tenants') loadTenants()
-    }, [activeSection, loadAuditLogs, loadModels, loadTenants])
+        if (activeSection === 'folders') loadFolders()
+    }, [activeSection, loadAuditLogs, loadModels, loadTenants, loadFolders])
 
     /** 展示模式：路徑只顯示最後兩段，不露出使用者目錄 */
     const sanitizePath = (p: string) => {
@@ -117,12 +138,12 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside data-fit-check className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
+                    <aside data-fit-check="page" className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
                                 <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
-                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || t('admin.standby')}</p>
+                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || (models.modelsLoaded ? t('admin.standby') : <SkelText>Qwen2.5-7B-Instruct</SkelText>)}</p>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
@@ -153,12 +174,14 @@ export default function Admin() {
 
                         {/* 側欄底部：區域網路開關（mt-auto 推到最下面，只在桌機顯示） */}
                         <div className="hidden lg:block mt-auto">
-                            <LanSidebarWidget enabled={lan.enabled} isLoading={lan.isLoading} lanIps={lan.lanIps} onToggle={lan.onToggle} />
+                            <LanSidebarWidget enabled={lan.enabled} isLoading={lan.isLoading} lanIps={lan.lanIps} link={lan.link} onToggle={lan.onToggle} />
+                            <HostShutdownButton />
                         </div>
                     </aside>
 
                     {/* 內容區：總覽是不捲動的滿版儀表板，其他分頁靠這層捲動 */}
-                    <div key={activeSection} data-fit-check data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none lg:h-full lg:flex-none">
+                    <div ref={contentFitRef} className="admin-content-fit flex flex-col flex-1 min-h-0 min-w-0 lg:h-full lg:flex-none">
+                    <div key={activeSection} data-fit-check="content" data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} />
@@ -187,6 +210,19 @@ export default function Admin() {
                                     onSelectModel={models.onSelectModel}
                                 />
                             )}
+                            {activeSection === 'folders' && (
+                                <FoldersSection
+                                    folders={folders.folders}
+                                    loaded={folders.loaded}
+                                    loadError={folders.loadError}
+                                    onRetry={folders.loadFolders}
+                                    onAdd={folders.openAdd}
+                                    onEdit={folders.openEdit}
+                                    onToggle={folders.toggleEnabled}
+                                    onDisconnect={folders.disconnect}
+                                    onScan={folders.scanNow}
+                                />
+                            )}
                             {activeSection === 'audit' && <AuditSection {...audit.sectionProps} />}
                             {activeSection === 'tenants' && (
                                 <TenantsSection
@@ -200,11 +236,13 @@ export default function Admin() {
                             )}
                         </Suspense>
                     </div>
+                    </div>
                 </main>
             </div>
 
             <UserFormModal users={users} />
             <TenantFormModal tenants={tenants} />
+            <FolderFormModal folders={folders} />
         </div>
     )
 }

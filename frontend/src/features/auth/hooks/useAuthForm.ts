@@ -71,14 +71,14 @@ export function useAuthForm() {
             setTabState('register')
             setConfirmState('')
             setLoginFailedOnce(false)
-            setFieldErrors({ email: '尚未註冊' })
+            setFieldErrors({ email: t('ui.auth.notRegistered') })
             return
         }
         // 後端為了不洩漏帳號是否存在，帳號不存在與密碼錯都回 401：一律給「聯絡管理員重設」的入口
         if (tab === 'login' && (status === 401 || status === 403)) setLoginFailedOnce(true)
 
         if (status === 429) {
-            setFieldErrors({ password: detailText || data?.error?.message || '請求過於頻繁，或者發生了錯誤' })
+            setFieldErrors({ password: detailText || data?.error?.message || t('ui.auth.tooManyRequests') })
         } else if (status === 422) {
             // 後端驗證訊息是英文：依欄位改成中文提示
             const details = data?.error?.details ?? []
@@ -96,9 +96,9 @@ export function useAuthForm() {
         setFieldErrors({})
 
         const errs: FieldErrors = {}
-        if (!email.trim()) errs.email = t('auth.account') + '不能為空'
-        if (!password) errs.password = t('auth.password') + '不能為空'
-        if (tab === 'register' && !confirmPassword) errs.confirmPassword = t('auth.confirmPassword') + '不能為空'
+        if (!email.trim()) errs.email = t('ui.auth.required', { field: t('auth.account') })
+        if (!password) errs.password = t('ui.auth.required', { field: t('auth.password') })
+        if (tab === 'register' && !confirmPassword) errs.confirmPassword = t('ui.auth.required', { field: t('auth.confirmPassword') })
         if (Object.keys(errs).length) return setFieldErrors(errs)
         if (tab === 'register' && password !== confirmPassword) return setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
 

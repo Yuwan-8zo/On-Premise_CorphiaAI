@@ -10,6 +10,7 @@ import { usersApi } from '@/api/users'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import PasswordDialog from './PasswordDialog'
+import { RoleBadge } from '@/features/admin/components/AdminPrimitives'
 
 export default function ProfileSection() {
     const { t } = useTranslation()
@@ -58,7 +59,6 @@ export default function ProfileSection() {
         window.location.href = '/login'
     }
 
-    const isStaff = user?.role === 'admin' || user?.role === 'engineer'
 
     return (
         <>
@@ -109,7 +109,7 @@ export default function ProfileSection() {
                     </div>
                     <div className="set-row">
                         <span className="set-label">{t('settings.roleLabel', '角色')}</span>
-                        <span className={`tag ${isStaff ? 'tag-accent' : ''}`}>{user?.role}</span>
+                        {user?.role && <RoleBadge role={user.role} />}
                     </div>
                 </div>
             </section>

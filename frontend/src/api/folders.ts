@@ -7,7 +7,12 @@ import apiClient from './client'
 export interface FolderResponse {
     id: string
     name: string
+    /** 專案的自訂指示（沒設定是 null） */
+    instructions?: string | null
 }
+
+/** 專案自訂指示的長度上限（和後端 INSTRUCTIONS_MAX 一致） */
+export const FOLDER_INSTRUCTIONS_MAX = 1000
 
 export const foldersApi = {
     /**
@@ -23,6 +28,14 @@ export const foldersApi = {
      */
     create: async (name: string): Promise<FolderResponse> => {
         const response = await apiClient.post('/folders', { name })
+        return response.data
+    },
+
+    /**
+     * 設定專案的自訂指示（空字串＝清除）
+     */
+    setInstructions: async (name: string, instructions: string): Promise<FolderResponse> => {
+        const response = await apiClient.put(`/folders/${encodeURIComponent(name)}/instructions`, { instructions })
         return response.data
     },
 

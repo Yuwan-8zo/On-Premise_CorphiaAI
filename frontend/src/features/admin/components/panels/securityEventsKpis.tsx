@@ -14,11 +14,6 @@ export interface SecurityKpiDefinition {
     colorClass: string
 }
 
-export interface SecurityKpiDefinitionExtended extends SecurityKpiDefinition {
-    valueColor: string
-    borderAccent: string
-}
-
 export const SECURITY_KPI_DEFINITIONS: (SecurityKpiDefinition & { valueColor: string; borderAccent: string })[] = [
     {
         labelKey: 'admin.overview.piiDetected',

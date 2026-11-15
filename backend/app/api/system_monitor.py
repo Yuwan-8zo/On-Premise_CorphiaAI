@@ -73,18 +73,21 @@ def _default_route_ip() -> str | None:
         s.close()
 
 
-def _detect_lan_ips() -> list[str]:
-    """
-    給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
-      1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）
-      2. 沒有預設路由（例如沒有路由器的封閉網路）時，從「有連線、不是虛擬網卡、不是 169.254 自動配置」的網卡挑，
-         內網網段（10、172.16–31、192.168）優先，三者不分先後
-    網段由所在網路的路由器決定：公司內網是 172 開頭，這裡就會回傳 172 開頭的位址
-    """
-    primary = _default_route_ip()
-    if primary:
-        return [primary]
+def _owning_nic_name(ip: str) -> str | None:
+    """這個 IP 屬於哪張網卡；psutil 讀不到或找不到就回 None（呼叫端不能因此誤判成虛擬網卡）"""
+    try:
+        import psutil
 
+        for name, addrs in psutil.net_if_addrs().items():
+            if any(a.family == socket.AF_INET and a.address == ip for a in addrs):
+                return name
+    except Exception:
+        pass
+    return None
+
+
+def _real_nic_ips() -> list[str]:
+    """掃過所有網卡，挑出「有連線、不是虛擬網卡、不是 169.254 自動配置」的 IPv4 位址"""
     candidates: list[str] = []
     try:
         import psutil
@@ -100,6 +103,30 @@ def _detect_lan_ips() -> list[str]:
                     candidates.append(ip)
     except Exception:
         pass
+    return candidates
+
+
+def _detect_lan_ips() -> list[str]:
+    """
+    給手機連線用的本機 IP：只回傳真正連著區網、手機連得到的那一個（放在第一個）。
+      1. 優先用預設路由的那張網卡（就是電腦平常上網用的 Wi-Fi／網路線）——但要先確認它不是虛擬網卡：
+         裝了 Docker Desktop／WSL 的電腦，虛擬網卡的路由 metric 有時候比實體網卡低，作業系統查路由會誤答成
+         那張虛擬網卡，這張卡只存在電腦內部，手機連不到（Docker 預設的虛擬網卡網段剛好也是 172.17.x.x，
+         跟公司網路常見的 172.16–31 網段撞在一起，混在一起時單看 IP 分不出來，要照網卡名稱判斷）
+      2. 預設路由查到的是虛擬網卡、或沒有預設路由（例如沒有路由器的封閉網路）時，改成掃全部網卡，
+         從「有連線、不是虛擬網卡、不是 169.254 自動配置」裡面挑，
+         內網網段（10、172.16–31、192.168）優先，三者不分先後
+    網段由所在網路的路由器決定：公司內網是 172 開頭，這裡就會回傳 172 開頭的位址
+    """
+    primary = _default_route_ip()
+    if primary:
+        owner = _owning_nic_name(primary)
+        # 查得到網卡名稱、而且不在虛擬網卡清單裡 → 照舊直接用；查不到名稱（psutil 不能用）也照舊相信預設路由
+        if owner is None or not any(k in owner.lower() for k in _VIRTUAL_NIC_KEYWORDS):
+            return [primary]
+        logger.warning("預設路由查到的位址 %s 屬於虛擬網卡 %s，改用網卡清單重新挑選", primary, owner)
+
+    candidates = _real_nic_ips()
 
     # 三種內網網段（10.x、172.16–31.x、192.168.x）一視同仁：中小企業常用 172 網段，不能排在後面；
     # 其他（公網位址等）放最後
@@ -189,7 +216,7 @@ async def _get_llm_stats() -> dict:
 
     stats: dict = {
         "model_loaded": model_loaded,
-        "provider": "llama.cpp" if llm.use_llama_cpp else "simulation",
+        "provider": llm.provider_label if llm.use_llama_cpp else "simulation",
         "model_path": manager.current_model_path or "Simulation Mode",
         "context_size": getattr(settings, "llama_context_size", 4096),
         "n_gpu_layers": getattr(settings, "llama_n_gpu_layers", 0),
@@ -249,45 +276,50 @@ async def network_status(
     _ = RequireAdmin,
 ):
     """
-    網路連線狀態偵測 (A4 離線模式徽章)
+    這套系統會不會連到外面。
 
-    偵測本機對外網路狀態，前端可據此顯示
-    「資料主權保證：完全離線運行」徽章。
+    以前為了判斷「有沒有網路」會真的去連外面的網站，這本身就是一條連外的路，
+    和「只有搜尋關鍵字會離開主機」的說法不一致。現在不送出任何封包，只回報設定：
+    唯一會連外的功能是對外搜尋，有沒有開由管理者決定。
     """
-    is_online = False
-    latency_ms: float | None = None
-
-    try:
-        import aiohttp
-        import time
-
-        start = time.monotonic()
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
-            async with session.head("https://www.google.com") as resp:
-                if resp.status < 500:
-                    is_online = True
-                    latency_ms = round((time.monotonic() - start) * 1000, 1)
-    except ImportError:
-        # aiohttp 未安裝，改用 socket
-        import socket
-        try:
-            socket.create_connection(("8.8.8.8", 53), timeout=2)
-            is_online = True
-        except OSError:
-            is_online = False
-    except Exception:
-        is_online = False
-
+    from app.core.config import settings
     from app.schemas.system_monitor import SystemMonitorEnvelope
 
+    web_search = bool(settings.enable_web_search)
     return SystemMonitorEnvelope(
         data={
-            "is_online": is_online,
-            "latency_ms": latency_ms,
-            "data_sovereignty": not is_online,
-            "message": "資料主權保證：完全離線運行" if not is_online else "偵測到外部網路連線",
+            "is_online": web_search,
+            "latency_ms": None,
+            "data_sovereignty": not web_search,
+            "message": "已開啟對外搜尋：只有通過檢查的搜尋關鍵字會送出去" if web_search else "資料主權保證：系統不會連到外面",
         }
     )
+
+
+def _lan_addresses() -> dict:
+    """
+    區網裝置要連的位址。主機模式（後端直接提供介面）才知道協定和埠：
+      lan_urls        每個區網 IP 一個完整網址（QR 碼用）；開發模式是空的，前端照自己的網址組
+      encrypted       區網連線有沒有加密
+      ca_fingerprint  主機發證憑證的指紋（有加密才有），給人核對裝的是不是這台主機的憑證
+    """
+    from app.core import web_ui
+
+    ips = _detect_lan_ips()
+    endpoint = web_ui.LAN_ENDPOINT
+    if not endpoint:
+        return {"lan_ips": ips, "lan_urls": [], "encrypted": False, "ca_fingerprint": ""}
+    encrypted = endpoint["scheme"] == "https"
+    fingerprint = ""
+    if encrypted:
+        from app.core.lan_tls import ca_fingerprint
+        fingerprint = ca_fingerprint()
+    return {
+        "lan_ips": ips,
+        "lan_urls": [f"{endpoint['scheme']}://{ip}:{endpoint['port']}/" for ip in ips],
+        "encrypted": encrypted,
+        "ca_fingerprint": fingerprint,
+    }
 
 
 @router.get("/lan/status", summary="取得區域網路 (LAN) 開關狀態")
@@ -295,11 +327,7 @@ async def get_lan_status(
     _ = RequireAdmin,
 ):
     # 切換立即生效：前端伺服器（frontend/vite-plugins/lanGate.ts）每個請求都讀 lan.json 決定放不放行
-    return {
-        "enabled": _read_lan_enabled(),
-        "lan_ips": _detect_lan_ips(),
-        "requires_restart": False,
-    }
+    return {"enabled": _read_lan_enabled(), "requires_restart": False, **_lan_addresses()}
 
 
 @router.post("/lan/toggle", summary="設定區域網路 (LAN) 開關（立即生效）")
@@ -312,11 +340,7 @@ async def toggle_lan(
     _ = db
     _write_lan_enabled(body.enabled)
     logger.info("[lan][admin=%s] set lan_enabled=%s", current_user.email, body.enabled)
-    return {
-        "enabled": bool(body.enabled),
-        "lan_ips": _detect_lan_ips(),
-        "requires_restart": False,
-    }
+    return {"enabled": bool(body.enabled), "requires_restart": False, **_lan_addresses()}
 
 
 # 模組級啟動時間 — 用 time.time() 在載入 module 時就抓

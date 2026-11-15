@@ -5,8 +5,51 @@
  */
 
 import React, { lazy, memo, Suspense } from 'react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+/** 圖片網址是不是本機的（同一台伺服器的相對或絕對路徑、data:image、blob:）；外部網址回 false */
+function isLocalImage(src?: string): boolean {
+    if (!src) return false
+    if (/^(data:image\/|blob:)/i.test(src)) return true
+    try {
+        return new URL(src, window.location.href).origin === window.location.origin
+    } catch {
+        return false
+    }
+}
+
+/**
+ * 外部連結實際會連到哪個網站（主機名稱）；站內連結、不是 http(s) 的回 null。
+ * 連結顯示的字可以和實際網址完全不同（「點這裡看詳情」其實連到別的網站、把資料帶在網址裡），
+ * 所以外部連結一律在後面標出主機，讓使用者按之前看得到要去哪裡。
+ */
+function externalHost(href?: string): string | null {
+    if (!href) return null
+    try {
+        const url = new URL(href, window.location.href)
+        return /^https?:$/.test(url.protocol) && url.origin !== window.location.origin ? url.host : null
+    } catch {
+        return null
+    }
+}
+
+/** 節點裡的純文字（用來判斷連結的字是不是已經寫出網站了） */
+function nodeText(node: React.ReactNode): string {
+    if (typeof node === 'string' || typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(nodeText).join('')
+    if (React.isValidElement<{ children?: React.ReactNode }>(node)) return nodeText(node.props.children)
+    return ''
+}
+
+/**
+ * 網址過濾：沿用套件的預設（擋掉 javascript: 之類），只多放行「圖片的內嵌資料」（data:image/…、blob:）。
+ * 內嵌圖片的資料就在文字裡，不會連到任何地方；預設會把它整個清掉，結果被當成外部圖片顯示「已封鎖」。
+ */
+function urlTransform(url: string, key: string): string {
+    if (key === 'src' && /^(data:image\/|blob:)/i.test(url)) return url
+    return defaultUrlTransform(url)
+}
 import i18n from '@/i18n'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
@@ -97,6 +140,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
             <div className={`markdown-body ${className}`}>
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
+                    urlTransform={urlTransform}
                     components={{
                         // 程式碼區塊
                         code({ className, children, ...props }) {
@@ -183,16 +227,22 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         ),
 
                         // 連結
-                        a: ({ href, children }) => (
-                            <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-accent "
-                            >
-                                {children}
-                            </a>
-                        ),
+                        // 外部連結：字的後面標出實際的網站（字裡已經寫了就不重複），滑鼠停著看得到完整網址
+                        a: ({ href, children }) => {
+                            const host = externalHost(href)
+                            return (
+                                <a
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={host ? href : undefined}
+                                    className="text-accent "
+                                >
+                                    {children}
+                                    {host && !nodeText(children).includes(host) && <span className="md-link-host">{host}</span>}
+                                </a>
+                            )
+                        },
 
                         // 表格
                         table: ({ children }) => (
@@ -219,13 +269,18 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         ),
 
                         // 圖片
-                        img: ({ src, alt }) => (
-                            <img
-                                src={src}
-                                alt={alt || ''}
-                                className="max-w-full h-auto rounded-[var(--r-16)] my-4"
-                            />
-                        ),
+                        // 只顯示本機的圖片（同一台伺服器、data:、blob:）。外部網址一律不載入：
+                        // 瀏覽器一載入就等於連到外面，被惡意內容誘導的回答可以把資料帶在網址裡送出去
+                        img: ({ src, alt }) =>
+                            isLocalImage(src) ? (
+                                <img
+                                    src={src}
+                                    alt={alt || ''}
+                                    className="max-w-full h-auto rounded-[var(--r-16)] my-4"
+                                />
+                            ) : (
+                                <span className="tag">{i18n.t('ui.chat.imageBlocked', { alt: alt || '' }).trim()}</span>
+                            ),
                     }}
                 >
                     {safeContent}

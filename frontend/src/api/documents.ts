@@ -19,8 +19,11 @@ export interface DocumentResponse {
 
 export const documentsApi = {
     // 列表 - 回傳 { data: DocumentResponse[], total: number }，與後端 DocumentListResponse schema 一致
-    list: async (): Promise<{ data: DocumentResponse[], total: number }> => {
-        const response = await apiClient.get('/documents')
+    /**
+     * 文件清單。folder：只拿自己上傳到這個專案資料夾的（後端過濾，不會因為分頁漏掉舊檔）
+     */
+    list: async (params: { folder?: string } = {}): Promise<{ data: DocumentResponse[], total: number }> => {
+        const response = await apiClient.get('/documents', { params: { page_size: 200, ...params } })
         return response.data
     },
 

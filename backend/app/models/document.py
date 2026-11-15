@@ -7,11 +7,11 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, Integer, BigInteger, Text, func
+from sqlalchemy import String, DateTime, ForeignKey, Integer, BigInteger, Text
 from sqlalchemy.dialects.postgresql import JSONB as JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.tenant import Tenant
@@ -27,7 +27,7 @@ class DocumentStatus(str, Enum):
     FAILED = "failed"
 
 
-class Document(Base):
+class Document(TimestampMixin, Base):
     """文件資料表"""
     
     __tablename__ = "documents"
@@ -86,18 +86,6 @@ class Document(Base):
         nullable=True,
     )
     
-    # 時間戳
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # 關聯

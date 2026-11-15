@@ -15,6 +15,9 @@ import { useTranslation } from 'react-i18next'
 import { conversationsApi } from '@/api/conversations'
 import { documentsApi } from '@/api/documents'
 import { foldersApi } from '@/api/folders'
+import { webSearchApi, type WebSearchPolicy } from '@/api/webSearch'
+import { chatImagesApi, type VisionStatus } from '@/api/chatImages'
+import { onAppendToChatInput } from '@/lib/chatInputBus'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
@@ -32,6 +35,9 @@ import { useConversationDialogs } from './useConversationDialogs'
 import { useFileUpload } from './useFileUpload'
 import { useFolders } from './useFolders'
 import { useModels } from './useModels'
+import i18n from '@/i18n'
+import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
+import { isDesktop } from '@/lib/useMediaQuery'
 
 type ChatMode = 'general' | 'project'
 
@@ -50,6 +56,28 @@ export function useChatLogic() {
     const [input, setInput] = useState('')
     const [chatMode, setChatMode] = useState<ChatMode>('general')
     const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    // 看圖片：這台主機有沒有圖文模型（沒有就不顯示附圖）；輸入框送出前把剛附的圖片編號交過來
+    const [vision, setVision] = useState<VisionStatus | null>(null)
+    const sentImagesRef = useRef<string[]>([])
+    useEffect(() => {
+        chatImagesApi.status().then(setVision).catch(() => undefined) // 問不到就當沒有，不影響其他功能
+    }, [])
+
+    // 別處要把文字放進輸入框（例如「把執行結果交給 AI」）：接在目前內容後面，不自動送出
+    useEffect(() => onAppendToChatInput((text) => {
+        setInput((prev) => (prev ? `${prev.replace(/\s+$/, '')}\n\n${text}` : text))
+        inputRef.current?.focus()
+    }), [setInput])
+
+    // 深度研究：使用者在「＋」選單打開後，下一題會多查幾輪、寫成有出處的報告（只管那一題）
+    const [researchOn, setResearchOn] = useState(false)
+
+    // 對外搜尋的政策（管理者設定）：要不要查由後端判斷；這裡只用來決定回答下面有沒有「連網重答」
+    const [searchPolicy, setSearchPolicy] = useState<WebSearchPolicy>({ enabled: false, mode: 'off' })
+    useEffect(() => {
+        webSearchApi.policy().then(setSearchPolicy).catch(() => undefined) // 查不到就當沒開，不影響其他功能
+    }, [])
 
     const socket = useChatSocket()
     const scroll = useChatScroll(messages, currentConversation?.id)
@@ -77,7 +105,7 @@ export function useChatLogic() {
         const state = useChatStore.getState()
 
         setSelectedFolder(null)
-        if (window.innerWidth < 768) setSidebarOpen(false)
+        if (!isDesktop()) setSidebarOpen(false)
 
         // 唯一不重新載入的情況：同一個對話且還在生成中（避免中斷進行中的回覆）
         if (state.currentConversation?.id === conversation.id && state.isStreaming) return
@@ -121,11 +149,10 @@ export function useChatLogic() {
     }
 
     /** 預設標題的對話（用「新對話」按鈕開的）送出第一句話時，改用這句話當標題，清單上才分得出來 */
-    const DEFAULT_TITLE = '新對話'
     const autoTitle = async (conversationId: string | undefined, text: string) => {
         const st = useChatStore.getState()
         const conv = st.conversations.find((c) => c.id === conversationId)
-        if (!conversationId || !conv || conv.title !== DEFAULT_TITLE || st.messages.length > 0) return
+        if (!conversationId || !conv || conv.title !== DEFAULT_CONVERSATION_TITLE || st.messages.length > 0) return
         const title = text.slice(0, 50)
         st.updateConversation(conversationId, { title })
         try {
@@ -136,15 +163,15 @@ export function useChatLogic() {
     }
 
     /** 把問題交給 AI：有即時連線就串流，沒有就改用一般請求（拿到完整回覆一次換上） */
-    const askAI = async (conversationId: string | undefined, text: string) => {
+    const askAI = async (conversationId: string | undefined, text: string, webSearch = false, research = false) => {
         const useRag = chatMode === 'project'
         const ws = socket.get(conversationId)
         if (ws) {
-            ws.sendMessage(text, useRag, 0.7, language)
+            ws.sendMessage(text, useRag, 0.7, language, 2048, webSearch, research)
             return
         }
         try {
-            if (conversationId) replaceLastMessage(await conversationsApi.sendMessage(conversationId, { content: text, useRag }))
+            if (conversationId) replaceLastMessage(await conversationsApi.sendMessage(conversationId, { content: text, useRag, webSearch }))
         } catch (error) {
             console.error('發送訊息失敗:', error)
             dropLastMessage()
@@ -170,28 +197,39 @@ export function useChatLogic() {
             upload.setUploadedFiles([])
             return
         }
+        // 已經在空白的新對話畫面（還沒選任何對話、也沒有訊息）：不用再做一次
+        if (!state.currentConversation && state.messages.length === 0) {
+            upload.setUploadedFiles([])
+            return
+        }
+        // 按下去就立刻換成空白畫面，不等主機。以前要等主機建立好對話才換（AI 正在回答時要 1～3 秒），
+        // 這段時間使用者打字按送出會被當成「上一個對話還在回答」而默默吃掉。原本的對話在背景繼續回答
+        setCurrentConversation(null)
+        setSelectedFolder(null)
+        upload.setUploadedFiles([])
+        // 使用者還停在空白畫面才接上主機的對話（已經送出第一句話的話，那邊會自己建立，不能把畫面搶走）
+        const stillBlank = () => { const s = useChatStore.getState(); return !s.currentConversation && s.messages.length === 0 }
         // 已經有一則還沒講過話的一般對話（例如重新整理後回到首頁）就直接打開它
         const emptyConv = state.conversations.find((c) => !c.settings?.isProject && (c.messageCount ?? 0) === 0)
         if (emptyConv) {
             try {
                 // 清單上的訊息數不會即時更新，先向後端確認真的沒有訊息
                 if ((await conversationsApi.getMessages(emptyConv.id)).length === 0) {
-                    upload.setUploadedFiles([])
-                    await selectConversation(emptyConv)
+                    if (stillBlank()) await selectConversation(emptyConv)
                     return
                 }
             } catch {
                 // 查不到就照常建立新對話
             }
         }
+        if (!stillBlank()) return
         try {
-            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: false } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: false } })
             addConversation(conversation)
-            upload.setUploadedFiles([])
-            await selectConversation(conversation)
+            if (stillBlank()) await selectConversation(conversation)
         } catch (error) {
             console.error('建立對話失敗:', error)
-            toast.error('建立對話失敗，請確認系統已啟動完成後再試一次')
+            toast.error(i18n.t('ui.chat.createFailed'))
         }
     }
 
@@ -199,10 +237,10 @@ export function useChatLogic() {
     const createConvInFolder = async (folderName: string, e: React.MouseEvent) => {
         e.stopPropagation()
         try {
-            const conversation = await conversationsApi.create({ title: DEFAULT_TITLE, settings: { isProject: true, folderName } })
+            const conversation = await conversationsApi.create({ title: DEFAULT_CONVERSATION_TITLE, settings: { isProject: true, folderName } })
             addConversation(conversation)
             upload.setUploadedFiles([])
-            folders.setExpandedFolders((prev) => new Set(prev).add(folderName)) // 展開資料夾，新對話立刻出現在側欄
+            folders.setExpandedFolders(new Set([folderName])) // 只展開這個資料夾（其他收起），新對話立刻出現在側欄
             await selectConversation(conversation)
 
             if ((await listFolderDocs(folderName, true)).length === 0) {
@@ -241,7 +279,8 @@ export function useChatLogic() {
                 for (const conv of conversations.filter((c) => Boolean(c.settings?.isProject) && folderOf(c.settings) === folderName)) {
                     await removeConversation(conv.id)
                 }
-                const docs = (await documentsApi.list()).data.filter((d) => folderOf(d.doc_metadata) === folderName)
+                // 後端已依資料夾過濾；這裡再篩一次當保險（刪除是不能復原的動作）
+                const docs = (await documentsApi.list({ folder: folderName })).data.filter((d) => folderOf(d.doc_metadata) === folderName)
                 for (const doc of docs) await documentsApi.delete(doc.id)
 
                 try {
@@ -249,7 +288,7 @@ export function useChatLogic() {
                     await folders.loadFolders()
                 } catch (err) {
                     console.error('刪除資料夾失敗:', err)
-                    toast.error('無法刪除資料夾')
+                    toast.error(i18n.t('ui.chat.folderDeleteFailed'))
                 }
                 if (selectedFolder === folderName) {
                     setSelectedFolder(null)
@@ -269,7 +308,10 @@ export function useChatLogic() {
         const conversationId = await ensureConversation(text.slice(0, 50))
         void autoTitle(conversationId, text)
 
-        addMessage(tempMessage('user', text))
+        // 剛附的圖片先顯示在自己的訊息上（送出後伺服器會把它們正式掛到這一則）
+        const sentImages = sentImagesRef.current
+        sentImagesRef.current = []
+        addMessage(tempMessage('user', text, sentImages.length ? { images: sentImages } : {}))
         scroll.followBottom() // 剛送出 → AI 回覆時要看得到內容捲進來
         addMessage(tempMessage('assistant', '', {}, 1))
         setStreaming(true)
@@ -288,11 +330,14 @@ export function useChatLogic() {
                 }
             }
         }
-        await askAI(conversationId, text)
+        // 要不要連外網由後端判斷（需要即時資訊才查）；這裡不帶旗標。深度研究只管這一題，送出後就關掉
+        const research = researchOn && chatMode === 'general'
+        setResearchOn(false)
+        await askAI(conversationId, text, false, research)
     }
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
-    const handleResubmit = useStableCallback(async (messageId: string, editedContent: string) => {
+    const handleResubmit = useStableCallback(async (messageId: string, editedContent: string, webSearch: boolean = false) => {
         if (isStreaming) return
 
         useChatStore.setState((state) => {
@@ -313,7 +358,7 @@ export function useChatLogic() {
 
         const ws = socket.get(useChatStore.getState().currentConversation?.id)
         if (ws) {
-            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language)
+            ws.sendResubmit(messageId, editedContent, chatMode === 'project', 0.7, language, 2048, webSearch && searchPolicy.enabled)
         } else {
             console.error('WebSocket 未連接，無法使用重新生成功能')
             setStreaming(false)
@@ -321,17 +366,31 @@ export function useChatLogic() {
     })
 
     /** 重新生成某則 AI 回覆：用它上方最近一則使用者訊息重新送出 */
-    const handleRegenerate = useStableCallback(async (assistantMessageId: string) => {
+    const handleRegenerate = useStableCallback(async (assistantMessageId: string, webSearch: boolean = false) => {
         if (isStreaming) return
         const all = useChatStore.getState().messages
         const idx = all.findIndex((m) => m.id === assistantMessageId)
         for (let i = idx - 1; i >= 0; i -= 1) {
             if (all[i].role === 'user') {
-                await handleResubmit(all[i].id, all[i].content)
+                await handleResubmit(all[i].id, all[i].content, webSearch)
                 return
             }
         }
     })
+
+    /** 對話分支：切換到同一個位置的另一版（修改前的問題、另一次的回答），畫面換成那一條 */
+    const handleSwitchVersion = useStableCallback(async (messageId: string) => {
+        const conversationId = useChatStore.getState().currentConversation?.id
+        if (!conversationId || isStreaming) return
+        try {
+            useChatStore.getState().setServerMessages(conversationId, await conversationsApi.activateVersion(conversationId, messageId))
+        } catch (err) {
+            console.error('切換版本失敗:', err)
+        }
+    })
+
+    /** 連網重答：這一則回答沒有連外網，使用者按了「連網重答」→ 同一題這次連外網查了再答 */
+    const handleSearchAgain = useStableCallback((assistantMessageId: string) => handleRegenerate(assistantMessageId, true))
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -412,6 +471,7 @@ export function useChatLogic() {
             selectConversation,
             handleRenameConversation: dialogs.handleRenameConversation,
             handleOpenMenu: dialogs.handleOpenMenu,
+            closeMenu: dialogs.closeMenu,
             createConvInFolder,
             handleDeleteConversation,
             handleDeleteFolder,
@@ -424,14 +484,24 @@ export function useChatLogic() {
             ...models,
             currentConversation,
             handleShareConversation: dialogs.handleShareConversation,
+            handleUnshareConversation: dialogs.handleUnshareConversation,
             handleRenameConversation: dialogs.handleRenameConversation,
             handleMoveToProject: dialogs.handleMoveToProject,
             handleVerifyChain: dialogs.handleVerifyChain,
             handleDeleteConversation,
         },
         inputProps: {
+            // 還沒有對話時附檔案：先用預設標題建一個（送出第一句話時會自動改成那句話）
+            ensureConversation: () => ensureConversation(DEFAULT_CONVERSATION_TITLE),
+            researchOn,
+            setResearchOn,
+            vision,
+            onImagesSent: (ids: string[]) => { sentImagesRef.current = ids },
             selectedFolder,
             chatMode,
+            // 瀏覽器臨時資料夾只能附給「已經存在的對話」的下一則訊息；全新對話（還沒送出第一則）沒有 id，按鈕不顯示
+            conversationId: currentConversation?.id,
+            // 對外搜尋：後端沒開就不顯示切換鈕
             isConnecting: socket.isConnecting,
             isUploading: upload.isUploading,
             uploadProgress: upload.uploadProgress,
@@ -469,6 +539,9 @@ export function useChatLogic() {
             isStreaming,
             handleResubmit,
             handleRegenerate,
+            handleSwitchVersion,
+            // 政策是「完全不連外網」時不提供（回答下面就不會有這顆按鈕）
+            handleSearchAgain: searchPolicy.enabled ? handleSearchAgain : undefined,
             ragDebugMode,
             messagesEndRef: scroll.messagesEndRef,
             scrollContainerRef: scroll.scrollContainerRef,

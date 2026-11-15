@@ -4,8 +4,8 @@ Corphia AI one-click shutdown.
 Stops everything started by start.py and shuts Docker Desktop down cleanly:
   1. the start.py launcher window
   2. backend (port 8168) and frontend (port 5173)
-  3. the PostgreSQL container (data is kept)
-  4. Docker Desktop itself, using its own "stop" command
+  3. PostgreSQL (native via pg_ctl if set up, otherwise the Docker container; data is kept either way)
+  4. Docker Desktop itself, using its own "stop" command (no-op if it was never started)
 
 A clean Docker shutdown matters: when Docker is killed it leaves socket files
 behind and crashes on the next start.
@@ -24,7 +24,11 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_DIR = Path(__file__).resolve().parent
-PORTS = (8168, 5173)
+PORTS = (8168, 8443, 5173)  # backend, backend's encrypted LAN port (--built), frontend dev server
+
+sys.path.insert(0, str(BASE_DIR / "scripts"))
+from setup_postgres import PGDATA_DIR as NATIVE_PGDATA_DIR  # noqa: E402
+from setup_postgres import native_postgres_ready, pg_bin_dir  # noqa: E402
 
 
 def say(msg: str) -> None:
@@ -50,6 +54,12 @@ def stop_launcher() -> None:
         "Where-Object { $_.CommandLine -match '(^|[\\\\/ \"])start\\.py' } | "
         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
     )
+    # 後端開的推論引擎（llama-server，命令列帶 --alias corphia-engine）：後端被強制結束時它不會自己關
+    powershell(
+        "Get-CimInstance Win32_Process -Filter \"Name='llama-server.exe'\" | "
+        "Where-Object { $_.CommandLine -match 'corphia-engine' } | "
+        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+    )
     # Close the launcher's console window too (title set in 一鍵啟動.bat).
     run(["taskkill", "/F", "/T", "/FI", "WINDOWTITLE eq Corphia AI Launcher*"], timeout=30)
 
@@ -61,6 +71,7 @@ def stop_app_processes() -> None:
     powershell(
         "Get-CimInstance Win32_Process | Where-Object { "
         "$_.CommandLine -match 'uvicorn\\s+app\\.main:app' -or "
+        "($_.Name -match '^python' -and $_.CommandLine -match 'run_server\\.py') -or "
         "($_.Name -eq 'node.exe' -and $_.CommandLine -match 'vite') -or "
         "($_.Name -match '^(cmd|npm)' -and $_.CommandLine -match 'npm(\\.cmd)?\"?\\s+run\\s+dev') } | "
         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
@@ -96,14 +107,27 @@ def docker_desktop_running() -> bool:
     return "Docker Desktop.exe" in out
 
 
+def stop_native_database() -> None:
+    """跑過 scripts/setup_postgres.py 的機器：原生 PostgreSQL 用 pg_ctl 關，跟 Docker 無關"""
+    if not native_postgres_ready():
+        return
+    bin_dir = pg_bin_dir()
+    run([str(bin_dir / "pg_ctl.exe"), "-D", str(NATIVE_PGDATA_DIR), "-m", "fast", "stop"], timeout=60)
+
+
 def stop_database() -> None:
+    stop_native_database()
+
     exe = docker()
     if not exe:
         return
     if run([exe, "info"], timeout=10).returncode != 0:
         return
-    run([exe, "compose", "stop"], timeout=120) if (BASE_DIR / "docker-compose.yml").exists() else None
-    run([exe, "stop", "corphia-postgres"], timeout=60)
+    # --profile search：就算這次沒開對外搜尋，也要把自架 SearXNG 一起列進「這次要管的服務」裡，
+    # 不然它若曾經被 --profile search 啟動過，不加這個旗標的 stop 不會把它算進去，會被漏關
+    # corphia-postgres：原生安裝時這個容器本來就不存在，docker stop 會回報「找不到」，無害地跳過
+    run([exe, "compose", "--profile", "search", "stop"], timeout=120) if (BASE_DIR / "docker-compose.yml").exists() else None
+    run([exe, "stop", "corphia-postgres", "corphia-searxng"], timeout=60)
 
 
 def clear_stale_docker_sockets() -> None:

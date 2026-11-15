@@ -31,7 +31,7 @@ export const ConfirmModal: React.FC = () => {
             {confirmConfig && (
                 <>
                     <h3 className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>
-                    <p className="dialog-body">{t('common.confirmHint', '此動作無法復原。')}</p>
+                    <p className="dialog-body">{confirmConfig.hint ?? t('common.confirmHint', '此動作無法復原。')}</p>
                     <div className="dialog-actions">
                         <button onClick={closeConfirm} disabled={isProcessing} className="btn btn-lg btn-secondary">
                             {t('common.cancel')}

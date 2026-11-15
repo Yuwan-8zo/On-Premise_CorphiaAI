@@ -10,7 +10,6 @@ export { default as ScrollToBottomButton } from './ScrollToBottomButton'
 export { default as RAGDebugPanel } from './RAGDebugPanel'
 
 export * from './PromptMenu'
-export * from './SecurityBanners'
 
 // D2: 拆分元件
 export { default as ChatSidebar } from './ChatSidebar'

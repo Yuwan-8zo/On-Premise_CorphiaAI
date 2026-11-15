@@ -14,6 +14,8 @@ import re
 import logging
 from typing import TypedDict
 
+from app.services.text_normalize import original_span, variants
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +35,8 @@ class MaskResult(TypedDict):
 # 沒有字詞邊界，號碼緊貼中文時整筆漏判。改用「前後不是英數字」的明確邊界 _L / _R。
 _L = r'(?<![A-Za-z0-9])'
 _R = r'(?![A-Za-z0-9])'
+# 一位數字：阿拉伯數字、全形數字或中文數字
+_ANY_DIGIT = r'[0-9０-９零〇一二三四五六七八九]'
 
 _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 台灣身分證字號 (A123456789)
@@ -64,6 +68,18 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         "tw_phone",
         re.compile(_L + r'09\d{2}[-\s]?\d{3}[-\s]?\d{3}' + _R),
         "手機號碼",
+    ),
+    # 用中文數字寫的手機與身分證（「零九一二三四五六七八」「A一二三四五六七八九」）：
+    # 規則原本只認阿拉伯數字，換成中文數字就整筆漏掉。數字之間允許空白或連字號
+    (
+        "tw_phone",
+        re.compile(r'[0０零〇][9９九](?:[-\s]?' + _ANY_DIGIT + r'){8}(?!' + _ANY_DIGIT + r')'),
+        "手機號碼",
+    ),
+    (
+        "tw_national_id",
+        re.compile(_L + r'[A-Z][12一二](?:[-\s]?' + _ANY_DIGIT + r'){8}(?!' + _ANY_DIGIT + r')'),
+        "台灣身分證",
     ),
     # 電子郵件 — 加 lookbehind/lookahead 避免誤殺像 user.name.dept 這種無 @ 的「.連結」
     # 確保 @ 之前是 word char，@ 之後 TLD 至少 2 字（已有）
@@ -103,42 +119,59 @@ def mask_pii(text: str) -> MaskResult:
         MaskResult: 包含遮罩後文字、對照表、是否偵測到 PII
     """
     mask_map: list[dict] = []
-    masked_text = text
 
-    # 先收集所有匹配，從後往前替換避免 offset 位移
-    all_matches: list[tuple[str, str, re.Match[str]]] = []
+    # 先在原文上收集所有樣式的匹配
+    # 除了原文，也在「正規化後的版本」上比對（全形英數字、零寬字元、拆字），再換算回原文的位置：
+    # 「Ａ１２３４５６７８９」「A 1 2 3 4 5 6 7 8 9」這類變形寫法一樣遮得到，而且遮的是原文那一段
+    all_matches: list[tuple[str, str, int, int]] = []
 
-    for pii_type, pattern, label in _PATTERNS:
-        for match in pattern.finditer(text):
-            all_matches.append((pii_type, label, match))
+    for variant, index in variants(text):
+        for pii_type, pattern, label in _PATTERNS:
+            for match in pattern.finditer(variant):
+                start, end = original_span(index, match.start(), match.end())
+                all_matches.append((pii_type, label, start, end))
 
-    # 按起始位置降序排列，從後往前替換
-    all_matches.sort(key=lambda x: x[2].start(), reverse=True)
+    # 依位置排序，把互相重疊的匹配合併成一段（例如金鑰後面緊接 @網域、身分證出現在電子郵件裡）。
+    # 不合併的話，各自照原本的位置替換會互相踩到：吃掉旁邊的字，或留下半截沒遮的原文。
+    # 合併後整段遮掉，標示用其中最長那一筆的種類。
+    all_matches.sort(key=lambda x: (x[2], -x[3]))
+    groups: list[dict] = []
+    for pii_type, label, start, end in all_matches:
+        length = end - start
+        if groups and start < groups[-1]["end"]:
+            g = groups[-1]
+            g["end"] = max(g["end"], end)
+            if length > g["length"]:
+                g.update(type=pii_type, label=label, length=length)
+        else:
+            groups.append({"start": start, "end": end, "type": pii_type, "label": label, "length": length})
 
-    for pii_type, label, match in all_matches:
-        original = match.group()
+    # 由前往後一次組出遮罩後的文字
+    pieces: list[str] = []
+    pos = 0
+    for g in groups:
+        original = text[g["start"]:g["end"]]
         # 遮罩策略：保留頭尾各 2 字元，中間用 * 替代
         if len(original) > 4:
             masked = original[:2] + '*' * (len(original) - 4) + original[-2:]
         else:
             masked = '*' * len(original)
 
-        mask_tag = f"[{label}已遮罩]"
+        mask_tag = f"[{g['label']}已遮罩]"
 
         mask_map.append({
             "original_preview": masked,  # 不回傳完整原文！只給遮罩版
             "masked": mask_tag,
-            "type": pii_type,
-            "label": label,
-            "start": match.start(),
-            "end": match.end(),
+            "type": g["type"],
+            "label": g["label"],
+            "start": g["start"],
+            "end": g["end"],
         })
-
-        # 替換文字
-        masked_text = masked_text[:match.start()] + mask_tag + masked_text[match.end():]
-
-    # mask_map 轉回正序（給前端用）
-    mask_map.reverse()
+        pieces.append(text[pos:g["start"]])
+        pieces.append(mask_tag)
+        pos = g["end"]
+    pieces.append(text[pos:])
+    masked_text = "".join(pieces)
 
     has_pii = len(mask_map) > 0
 

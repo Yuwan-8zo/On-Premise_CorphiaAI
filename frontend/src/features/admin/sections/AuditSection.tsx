@@ -15,22 +15,24 @@
  */
 
 import StyledSelect from '@/components/ui/StyledSelect'
+import SearchField from '@/components/ui/SearchField'
+import { useScrollFade } from '@/lib/useScrollFade'
+import { useMediaQuery, MQ_DESKTOP } from '@/lib/useMediaQuery'
 import {
     ChevronLeft,
     ChevronRight,
     Download,
-    Search,
     Shield,
     X,
 } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { spring } from '@/lib/motionPresets'
-import { SkelTableRows } from '@/components/ui/Skeleton'
+import { SkelText } from '@/components/ui/Skeleton'
 
 import {
-    ACTION_LABELS,
-    RESOURCE_LABELS,
+    AUDIT_ACTIONS,
+    AUDIT_RESOURCES,
     type AuditLogItem,
     type AuditLogQuery,
 } from '@/api/auditLogs'
@@ -41,19 +43,20 @@ import {
     tableBodyClass,
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
+import AuditChainCheck from '@/features/admin/components/AuditChainCheck'
 import { formatDate } from '@/features/admin/utils/formatDate'
+import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
 
-// Pure helper — colors the action pill based on the verb.
-// Lifted to module scope so it doesn't need to live on the component.
+// 依操作代碼的動詞決定標籤顏色（收到的是代碼，不是翻譯後的文字）
 function getActionPillClass(action: string): string {
     const a = (action || '').toLowerCase()
-    if (/(delete|disable|fail|revoke|deactivate|刪除|停用|失敗|撤銷)/.test(a)) {
+    if (/(delete|disable|fail|revoke|deactivate)/.test(a)) {
         return 'tag-red'
     }
-    if (/(login_success|token_refresh|activate|enable|登入成功|啟用|刷新)/.test(a)) {
+    if (/(login_success|token_refresh|activate|enable)/.test(a)) {
         return 'tag-green'
     }
-    if (/(create|update|register|建立|更新|註冊|新增)/.test(a)) {
+    if (/(create|update|register)/.test(a)) {
         return 'tag-accent'
     }
     return ''
@@ -85,6 +88,8 @@ export interface AuditSectionProps {
     auditDrawer: AuditLogItem | null
     setAuditDrawer: (log: AuditLogItem | null) => void
     onSearch: () => void
+    /** 清空搜尋字並重新查詢全部 */
+    onClearSearch: () => void
     onFilterChange: (key: 'action' | 'resource_type', value: string) => void
     onPageChange: (page: number) => void
     onExportCSV: () => void
@@ -103,12 +108,16 @@ export default function AuditSection({
     auditDrawer,
     setAuditDrawer,
     onSearch,
+    onClearSearch,
     onFilterChange,
     onPageChange,
     onExportCSV,
     onExportJSON,
 }: AuditSectionProps) {
     const { t } = useTranslation()
+    const drawerScrollRef = useScrollFade()
+    // 手機版：聚焦時右邊長出取消 ×（收鍵盤、清空）；桌機有滑鼠就不需要
+    const desktop = useMediaQuery(MQ_DESKTOP)
 
     return (
         <>
@@ -118,45 +127,34 @@ export default function AuditSection({
                 {/* Filter bar */}
                 <Panel className="p-[var(--space)] shrink-0">
                     {/* 篩選列（Apple）：搜尋欄＋兩個下拉選單＋動作鈕排成一列，窄螢幕自動換行；不在欄位上方放標題 */}
-                    <div className="flex flex-wrap items-center gap-[var(--space)]">
-                        <label className="admin-search flex-1 min-w-[var(--sz-220)]">
-                            <button type="button" onClick={onSearch} aria-label={t('common.search')} className="admin-search-icon">
-                                <Search className="h-[var(--sz-16)] w-[var(--sz-16)]" />
-                            </button>
-                            <input
-                                type="search"
-                                aria-label={t('common.search')}
-                                value={auditSearchInput}
-                                onChange={(event) => setAuditSearchInput(event.target.value)}
-                                onKeyDown={(event) => event.key === 'Enter' && onSearch()}
-                                placeholder={t('admin.audit.searchPlaceholder')}
-                            />
-                        </label>
-                        <div className="w-[var(--sz-180)]">
+                    {/* 搜尋欄和右邊的膠囊鈕同高（--sz-40），整列對齊；下拉選單 140～180 之間伸縮，窄一點的螢幕也排得下一列、搜尋欄放得下提示字 */}
+                    <div className="flex flex-wrap items-center gap-[var(--space)] [--search-h:var(--sz-40)]">
+                        <SearchField
+                            className="flex-1 min-w-[var(--sz-200)]"
+                            value={auditSearchInput}
+                            onChange={setAuditSearchInput}
+                            onSubmit={onSearch}
+                            onClear={onClearSearch}
+                            cancelable={!desktop}
+                            placeholder={t('admin.audit.searchPlaceholder')}
+                        />
+                        <div className="w-full sm:w-auto sm:flex-[1_1_var(--sz-140)] sm:max-w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.action || ''}
                                 onChange={(v) => onFilterChange('action', v)}
                                 options={[
                                     { value: '', label: t('admin.audit.allActions') },
-                                    { value: 'login_success', label: t('admin.audit.actionTypes.login_success') },
-                                    { value: 'login_failed', label: t('admin.audit.actionTypes.login_failed') },
-                                    { value: 'user_update', label: t('admin.audit.actionTypes.user_update') },
-                                    { value: 'document_upload', label: t('admin.audit.actionTypes.document_upload') },
-                                    { value: 'document_delete', label: t('admin.audit.actionTypes.document_delete') },
+                                    ...AUDIT_ACTIONS.map((a) => ({ value: a, label: auditActionLabel(t, a) })),
                                 ]}
                             />
                         </div>
-                        <div className="w-[var(--sz-180)]">
+                        <div className="w-full sm:w-auto sm:flex-[1_1_var(--sz-140)] sm:max-w-[var(--sz-180)]">
                             <StyledSelect
                                 value={auditFilter.resource_type || ''}
                                 onChange={(v) => onFilterChange('resource_type', v)}
                                 options={[
                                     { value: '', label: t('admin.audit.allResources') },
-                                    { value: 'auth', label: t('admin.audit.resourceTypes.auth') },
-                                    { value: 'user', label: t('admin.audit.resourceTypes.user') },
-                                    { value: 'conversation', label: t('admin.audit.resourceTypes.conversation') },
-                                    { value: 'document', label: t('admin.audit.resourceTypes.document') },
-                                    { value: 'model', label: t('admin.audit.resourceTypes.model') },
+                                    ...AUDIT_RESOURCES.map((r) => ({ value: r, label: auditResourceLabel(t, r) })),
                                 ]}
                             />
                         </div>
@@ -186,6 +184,7 @@ export default function AuditSection({
                                 <Download className="h-4 w-4" />
                                 JSON
                             </ActionButton>
+                            <AuditChainCheck />
                         </div>
                     </div>
                 </Panel>
@@ -195,7 +194,7 @@ export default function AuditSection({
                     <div className="shrink-0">
                         <SectionHeader
                             title={t('admin.audit.title')}
-                            eyebrow={`${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
+                            eyebrow={isLoadingAudit && !auditTotal ? <SkelText>{`0,000 ${t('admin.audit.events')}`}</SkelText> : `${auditTotal.toLocaleString()} ${t('admin.audit.events')}`}
                             action={
                                 <div className="flex items-center gap-2">
                                     <ActionButton
@@ -250,7 +249,16 @@ export default function AuditSection({
                             </thead>
                             <tbody className={tableBodyClass}>
                                 {isLoadingAudit ? (
-                                    <SkelTableRows rows={10} cols={5} />
+                                    // 和下面的資料列同一組儲存格與字級，列高一樣（操作欄是標籤膠囊）
+                                    Array.from({ length: 10 }, (_, i) => (
+                                        <tr key={i} aria-hidden>
+                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-sm whitespace-nowrap"><SkelText>{formatDate(new Date().toISOString())}</SkelText></td>
+                                            <td className="px-3 sm:px-5 py-2"><span className="tag"><SkelText>{i % 2 ? '0000' : '000000'}</SkelText></span></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 text-sm"><SkelText>00</SkelText></td>
+                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm"><SkelText>user@example.com</SkelText></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs"><SkelText>127.0.0.1</SkelText></td>
+                                        </tr>
+                                    ))
                                 ) : auditLogs.length === 0 ? (
                                     <tr>
                                         <td className={tableEmptyCellClass} colSpan={5}>
@@ -271,15 +279,11 @@ export default function AuditSection({
                                                 <span
                                                     className={`tag ${getActionPillClass(log.action)}`}
                                                 >
-                                                    {t(`admin.audit.actionTypes.${log.action}`, {
-                                                        defaultValue: ACTION_LABELS[log.action] || log.action,
-                                                    })}
+                                                    {auditActionLabel(t, log.action)}
                                                 </span>
                                             </td>
                                             <td className="hidden sm:table-cell px-5 py-2 text-sm text-text-primary">
-                                                {t(`admin.audit.resourceTypes.${log.resource_type}`, {
-                                                    defaultValue: RESOURCE_LABELS[log.resource_type] || log.resource_type,
-                                                })}
+                                                {auditResourceLabel(t, log.resource_type)}
                                             </td>
                                             <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
@@ -314,19 +318,17 @@ export default function AuditSection({
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 overflow-y-auto custom-scrollbar"
+                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper !rounded-none sm:!rounded-l-[var(--r-25)] z-50 flex flex-col overflow-hidden"
                             role="dialog"
                             aria-label="audit detail"
                         >
-                            <div className="sticky top-0 bg-[var(--glass-card)] backdrop-blur-xl px-[var(--sp-26)] py-4 flex items-center justify-between">
+                            <div className="shrink-0 px-[var(--sp-26)] py-4 flex items-center justify-between">
                                 <div>
                                     <p className="text-[length:var(--fs-12)] font-bold text-accent">
                                         {t('admin.audit.detailEyebrow', '稽核細節')}
                                     </p>
                                     <h3 className="mt-0.5 text-base font-semibold text-text-primary">
-                                        {t(`admin.audit.actionTypes.${auditDrawer.action}`, {
-                                            defaultValue: ACTION_LABELS[auditDrawer.action] || auditDrawer.action,
-                                        })}
+                                        {auditActionLabel(t, auditDrawer.action)}
                                     </h3>
                                 </div>
                                 <button
@@ -337,14 +339,16 @@ export default function AuditSection({
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
+                            {/* 抽屜本身不捲、這層捲（玻璃光邊才不會跟著內容捲走） */}
+                            <div ref={drawerScrollRef} className="glass-scroll flex-1 min-h-0">
                             <dl className="px-5 py-4 space-y-3 text-sm">
                                 {(
                                     [
                                         [t('admin.audit.table.time'), formatDate(auditDrawer.created_at)],
-                                        [t('admin.audit.table.action'), auditDrawer.action],
+                                        [t('admin.audit.table.action'), auditActionLabel(t, auditDrawer.action)],
                                         [
                                             t('admin.audit.table.resource'),
-                                            auditDrawer.resource_type +
+                                            auditResourceLabel(t, auditDrawer.resource_type) +
                                                 (auditDrawer.resource_id ? ` · ${auditDrawer.resource_id}` : ''),
                                         ],
                                         [t('admin.audit.table.user'), auditDrawer.user_email || auditDrawer.user_id || '-'],
@@ -369,6 +373,7 @@ export default function AuditSection({
                                     </pre>
                                 </div>
                             )}
+                            </div>
                         </motion.aside>
                     </>
                 )}

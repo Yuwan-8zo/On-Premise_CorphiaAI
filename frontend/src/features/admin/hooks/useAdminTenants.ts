@@ -3,18 +3,22 @@
  */
 import { useCallback, useMemo, useState } from 'react'
 import { tenantsApi, type Tenant } from '@/api/tenants'
+import { webSearchModeOf, type WebSearchMode } from '@/api/webSearch'
 import { getErrorMessage } from '@/lib/errors'
 import { useToastStore } from '@/store/toastStore'
 import { useUIStore } from '@/store/uiStore'
+import i18n from '@/i18n'
 
 export interface TenantForm {
     name: string
     slug: string
     description: string
     is_active: boolean
+    /** 對外搜尋政策：auto＝需要即時資訊時自動查、ask＝不自動查（可以按連網重答）、off＝完全不連外網 */
+    web_search_mode: WebSearchMode
 }
 
-const EMPTY_FORM: TenantForm = { name: '', slug: '', description: '', is_active: true }
+const EMPTY_FORM: TenantForm = { name: '', slug: '', description: '', is_active: true, web_search_mode: 'auto' }
 
 export function useAdminTenants() {
     const toast = useToastStore()
@@ -49,7 +53,10 @@ export function useAdminTenants() {
 
     const openEdit = (item: Tenant) => {
         setEditing(item)
-        setForm({ name: item.name, slug: item.slug, description: item.description || '', is_active: item.is_active })
+        setForm({
+            name: item.name, slug: item.slug, description: item.description || '', is_active: item.is_active,
+            web_search_mode: webSearchModeOf(item.settings),
+        })
         setIsModalOpen(true)
     }
 
@@ -57,8 +64,12 @@ export function useAdminTenants() {
         event.preventDefault()
         setIsSubmitting(true)
         try {
-            if (editing) await tenantsApi.updateTenant(editing.id, form)
-            else await tenantsApi.createTenant(form)
+            // settings 整個欄位是後端一次性覆蓋（不是合併），所以要帶著原本的 settings 一起送，
+            // 只改 web_search_mode 這一項，不會把這個租戶之後加的其他設定洗掉
+            const { web_search_mode, ...rest } = form
+            const payload = { ...rest, settings: { ...(editing?.settings || {}), web_search_mode } }
+            if (editing) await tenantsApi.updateTenant(editing.id, payload)
+            else await tenantsApi.createTenant(payload)
             setIsModalOpen(false)
             loadTenants()
         } catch (err) {
@@ -70,8 +81,8 @@ export function useAdminTenants() {
 
     /** 啟用／停用：只切換 is_active，不刪資料（使用者、對話、文件都還指向這個租戶） */
     const toggleStatus = (item: Tenant) => {
-        const action = item.is_active ? '停用' : '啟用'
-        showConfirm(`確定要${action}租戶 ${item.name}？`, async () => {
+        const message = i18n.t(item.is_active ? 'ui.tenants.confirmDisable' : 'ui.tenants.confirmEnable', { name: item.name })
+        showConfirm(message, async () => {
             try {
                 await tenantsApi.updateTenant(item.id, { is_active: !item.is_active })
                 loadTenants()
@@ -79,7 +90,7 @@ export function useAdminTenants() {
                 console.error('Failed to toggle tenant status', err)
                 toast.error(getErrorMessage(err))
             }
-        })
+        }, i18n.t('ui.tenants.toggleHint'))
     }
 
     return {

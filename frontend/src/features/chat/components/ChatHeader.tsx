@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
-import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
-import { Check, ChevronDown, Edit2, Folder, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import { Check, ChevronDown, Edit2, Folder, Lock, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
 import { SidebarIcon } from './ChatIcons'
 import type { ModelItem } from '@/api/models'
 import modelsApi from '@/api/models'
@@ -11,6 +11,11 @@ import type { Conversation } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
 import { popIn } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
+import { getErrorMessage } from '@/lib/errors'
+import { useScrollFade } from '@/lib/useScrollFade'
+import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
+import { shortModelName } from '@/lib/modelName'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -33,6 +38,7 @@ interface ChatHeaderProps {
     
     // 動作
     handleShareConversation: (id: string) => void
+    handleUnshareConversation: (id: string) => void
     handleRenameConversation: (id: string) => void
     handleMoveToProject: (id: string) => void
     handleVerifyChain: (id: string) => void
@@ -48,13 +54,35 @@ export default function ChatHeader({
     selectedModel, setSelectedModel,
     availableModels, setAvailableModels,
     currentConversation,
-    handleShareConversation, handleRenameConversation,
+    handleShareConversation, handleUnshareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
 }: ChatHeaderProps) {
     const { t } = useTranslation()
+    // 模型清單捲動區：不顯示捲軸，上下還有內容時邊緣淡出（全站捲動區同一套）
+    const modelScrollRef = useScrollFade()
     // 每個模型是否已預先載入（來自 /health），用來在選單標示並在切換到未載入的大模型前確認
     const modelStates = useSystemStore((s) => s.health?.models) ?? NO_MODEL_STATES
+    const showConfirm = useUIStore((s) => s.showConfirm)
+    const toast = useToastStore()
+
+    /** 換成「自己」用的模型（只影響自己，其他人不變） */
+    const switchModel = async (model: ModelItem) => {
+        try {
+            setIsModelLoading(true)
+            await modelsApi.selectModel(model.name)
+            setSelectedModel(model)
+            setModelDropdownOpen(false)
+        } catch (err) {
+            console.error('選擇模型失敗', err)
+            toast.error(getErrorMessage(err))
+        } finally {
+            setIsModelLoading(false)
+        }
+    }
     // 模型選單：點外面由透明層處理，這裡補上 Esc 關閉
+    // 按住模型鈕直接拖進選單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const modelTrigger = trigger(modelDropdownOpen, () => setModelDropdownOpen(true), () => setModelDropdownOpen(false))
     useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
@@ -68,22 +96,20 @@ export default function ChatHeader({
                     <SidebarIcon className="w-5 h-5" />
                 </button>
 
-                {/* Left: Corphia title - hidden on mobile to give space to model selector */}
-                {/* 品牌字：和登入頁同一個字標（含星星） */}
-                <h1 className={`hidden sm:flex items-center transition-opacity ${sidebarOpen ? 'max-md:opacity-0' : 'opacity-100'}`}>
-                    {/* 字標圖片上下有留白：圖高 63、看得到的字（含 p 的下伸）＝40，跟右側按鈕同高同位；負邊距加在外層（星星那層跟著圖片對齊），讓排版仍佔 40 */}
-                    <span className="-mt-[var(--sp-2)] -mb-[var(--sp-21)] flex"><CorphiaWordmark className="h-[var(--sz-63)] w-auto object-contain object-left pointer-events-none select-none" /></span>
-                    <span className="sr-only">Corphia</span>
-                </h1>
+                {/* 品牌字標移到側欄（展開＝完整字標、收合＝C 星芒）；這裡只留給讀螢幕軟體的標題 */}
+                <h1 className="sr-only">Corphia</h1>
             </div>
 
             <div className="flex items-center gap-2 min-w-0 shrink">
                 {/* 右側：GGUF 模型選擇下拉選單（自己一條膠囊：內距 2、按鈕高 46、外框圓角 25，同心） */}
                 <div className="btn-group btn-group-36 relative min-w-0">
                     <button
-                        onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                        onPointerDown={isModelLoading ? undefined : modelTrigger.onPointerDown}
+                        onClick={modelTrigger.onClick}
                         disabled={isModelLoading}
-                        className="flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
+                        aria-haspopup="listbox"
+                        aria-expanded={modelDropdownOpen}
+                        className="touch-none flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
                     >
                         <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-14)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
@@ -96,16 +122,7 @@ export default function ChatHeader({
                                 <>
                                     {/* Mobile: short abbreviation to avoid overflow */}
                                     <span className="md:hidden truncate max-w-[var(--sz-110)]">
-                                        {(() => {
-                                            const name = selectedModel.name.toLowerCase();
-                                            if (name.includes('qwen') && name.includes('2.5') && name.includes('7b')) {
-                                                if (name.includes('q5_k_m')) return 'Qwen2.5·Q5';
-                                                if (name.includes('q4_k_m')) return 'Qwen2.5·Q4';
-                                                return 'Qwen2.5·7B';
-                                            }
-                                            if (name.includes('llama') && name.includes('3')) return 'Llama3';
-                                            return selectedModel.name.split('.')[0].substring(0, 10);
-                                        })()}
+                                        {shortModelName(selectedModel.name)}
                                     </span>
                                     <span className="hidden md:inline truncate">{selectedModel.name}</span>
                                 </>
@@ -120,10 +137,10 @@ export default function ChatHeader({
                                 <motion.div
                                     key="model-menu"
                                     {...popIn}
-                                    className="absolute right-0 top-full mt-2 w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
+                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper overflow-hidden z-50 p-2"
                                 >
                                     <LensMenu className="">
-                                    <div className="max-h-[var(--sz-300)] overflow-y-auto custom-scrollbar">
+                                    <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
                                         ) : (
@@ -133,21 +150,17 @@ export default function ChatHeader({
                                                 return (
                                                 <button
                                                     key={model.name}
-                                                    onClick={async () => {
-                                                        if (isModelLoading) return;
-                                                        // 沒有預先載入的大模型（如 14B）切換要等很久，先確認避免展示時誤點
-                                                        if (!preloaded && selectedModel?.name !== model.name &&
-                                                            !window.confirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }))) return;
-                                                        try {
-                                                            setIsModelLoading(true);
-                                                            await modelsApi.selectModel(model.name);
-                                                            setSelectedModel(model);
-                                                            setModelDropdownOpen(false);
-                                                        } catch (err) {
-                                                            console.error('選擇模型失敗', err);
-                                                        } finally {
-                                                            setIsModelLoading(false);
+                                                    onClick={() => {
+                                                        if (isModelLoading) return
+                                                        // 選到目前的模型：和一般下拉一樣，直接收起來
+                                                        if (selectedModel?.name === model.name) { setModelDropdownOpen(false); return }
+                                                        // 沒有預先載入的大模型（如 14B）切換要等很久，先用共用確認框確認，避免誤點
+                                                        if (!preloaded) {
+                                                            setModelDropdownOpen(false)
+                                                            showConfirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }), () => switchModel(model))
+                                                            return
                                                         }
+                                                        void switchModel(model)
                                                     }}
                                                     className={`model-row ${selectedModel?.name === model.name ? 'is-current' : ''}`}
                                                 >
@@ -201,6 +214,8 @@ export default function ChatHeader({
                     aria-label={t('ui.header.convOptions')}
                     items={[
                         { id: 'share', label: t('chat.shareChat'), icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
+                        // 分享過的對話才有「取消分享」
+                        ...(currentConversation?.settings?.shared ? [{ id: 'unshare', label: t('ui.chat.unshare'), icon: <Lock />, onSelect: () => handleUnshareConversation(currentConversation.id) }] : []),
                         { id: 'rename', label: t('chat.renameChat'), icon: <Edit2 />, onSelect: () => { if (currentConversation) handleRenameConversation(currentConversation.id) } },
                         { id: 'move', label: t('chat.moveToProject'), icon: <Folder />, onSelect: () => { if (currentConversation) handleMoveToProject(currentConversation.id) } },
                         { id: 'verify', label: t('ui.header.verifyChain'), tone: 'success', icon: <ShieldCheck />, onSelect: () => { if (currentConversation) handleVerifyChain(currentConversation.id) } },

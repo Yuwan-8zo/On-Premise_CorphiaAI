@@ -13,6 +13,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LENS_CFG, LENS_MAG, capsuleHole, lensActive, useLensMotion } from './lensKit'
+import { swallowNextClick } from '@/lib/swallowClick'
 import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 
 export interface GlassNavItem<T extends string> {
@@ -62,8 +63,11 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     }
     const posFromY = (clientY: number) => {
         const boxes = geoRef.current.boxes
-        const r = listRef.current!.getBoundingClientRect()
-        const y = clientY - r.top
+        const el = listRef.current!
+        const r = el.getBoundingClientRect()
+        // 外層有縮放（zoom）時：畫面上的距離 ÷ 縮放比例＝版面座標（boxes 用的是版面座標）
+        const k = el.offsetHeight ? r.height / el.offsetHeight : 1
+        const y = (clientY - r.top) / (k || 1)
         const c = boxes.map((b) => b.top + b.h / 2)
         if (y <= c[0]) return 0
         for (let i = 0; i < c.length - 1; i++) if (y <= c[i + 1]) return i + (y - c[i]) / (c[i + 1] - c[i])
@@ -115,7 +119,11 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
         const next = commit ? Math.round(d.moved ? lens.current.current.pos : posFromY(e.clientY)) : index
         lens.glideTo(next)
         const it = items[next]
-        if (commit && it) onChange(it.id)
+        if (commit && it) {
+            onChange(it.id)
+            // 手機設定：切到內容頁後，同一下的 click 不能落到新頁面上（會誤按到「日本語」之類的選項）
+            swallowNextClick()
+        }
     }
 
     // ── 幾何 ──

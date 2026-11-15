@@ -65,11 +65,20 @@ class MessageCreate(BaseModel):
     """建立訊息 Schema"""
     content: str = Field(..., min_length=1)
     use_rag: bool = True
+    web_search: bool = False
 
 
 class MessageUpdate(BaseModel):
     """更新訊息 Schema"""
     content: str = Field(..., min_length=1)
+
+
+class MessageAttachment(BaseModel):
+    """AI 產出的檔案（下載：GET /files/{id}/download）"""
+    id: str
+    filename: str
+    kind: str
+    size: int
 
 
 class MessageResponse(BaseModel):
@@ -79,12 +88,33 @@ class MessageResponse(BaseModel):
     content: str
     tokens: int
     sources: Optional[List[MessageSource]] = None
+    # AI 產出的檔案；只有本人讀自己的對話時才帶（分享頁不帶，別人下載不了）
+    attachments: Optional[List[MessageAttachment]] = None
     rating: Optional[int] = None
     content_hash: Optional[str] = None
     prev_hash: Optional[str] = None
+    # 模型的思考過程（只有會推理的模型才有）；分享頁不帶
+    reasoning: Optional[str] = None
+    # 這一則回答連外網查了什麼：{"query", "sources": [{"title", "url"}]}；沒連是 None
+    web_search: Optional[dict] = None
+    # 使用者這一則附的圖片（編號；用 /chat-images/{對話}/{編號} 讀）
+    images: Optional[list] = None
+    # AI 這一題自己做了哪些步驟（用了哪些工具）
+    steps: Optional[list] = None
+    # 對話分支：這個位置的所有版本（照寫入順序，包含自己）；只有一版時是只含自己的清單或空的
+    parent_id: Optional[str] = None
+    version_ids: list[str] = []
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class SharedConversationResponse(BaseModel):
+    """分享頁：對話＋全部訊息（唯讀）"""
+    conversation: ConversationResponse
+    messages: List[MessageResponse]
+    owner_name: str
+    is_owner: bool
 
 
 class ChatRequest(BaseModel):

@@ -5,7 +5,7 @@
 - Docker：只負責 PostgreSQL + pgvector
 - Backend：本機 FastAPI + SQLAlchemy + asyncpg
 - Frontend：本機 React + Vite
-- LLM：本機 GGUF + `llama-cpp-python`
+- LLM：本機 GGUF；推論引擎是 llama.cpp 的 `llama-server`（放在 `engine/llama-vulkan/`，每個模型一個行程、只聽本機）；找不到引擎時退回 `llama-cpp-python`
 - 不使用 Ollama
 
 ## 一鍵啟動全部
@@ -47,6 +47,20 @@ DB:       localhost:5433
 
 停止時，在啟動視窗按 `Ctrl+C`。Backend / Frontend 會關閉；Docker 資料庫會保留執行，方便下次快速啟動。
 
+## 一鍵更新
+
+雙擊 `一鍵更新.bat`（或 `python update.py`）：檢查 GitHub Release 有沒有新版本，有的話先備份目前版本、
+下載更新包、核對 SHA-256、套用、重新啟動；啟動後健康檢查沒過會自動復原回舊版本。只需要這台機器能連到
+網際網路下載更新包，不會動到 `.env`、`uploads/`、`ai_model/`、資料庫等使用者資料。
+
+```powershell
+python update.py --check   # 只看有沒有新版本，不做任何改動
+python update.py           # 檢查、確認、更新
+```
+
+發新版本（開發者自己用）：改 `VERSION` 檔 → `python scripts/build_release.py <版本號>` 打包 →
+`gh release create v<版本號> dist/corphia-update-v<版本號>.zip dist/corphia-update-v<版本號>.zip.sha256`。
+
 ## 資料庫
 
 Docker 只啟動資料庫：
@@ -62,6 +76,24 @@ DATABASE_URL=postgresql+asyncpg://corphia:corphia123@localhost:5433/corphia_ai
 ```
 
 因為本機可能已經有 PostgreSQL 佔用 `5432`，所以 Docker PostgreSQL 對外使用 `5433`，container 內仍是 `5432`。
+
+## 不靠 Docker（原生 PostgreSQL）
+
+伺服器安裝包不想依賴 Docker Desktop 時，可以改用原生安裝的 PostgreSQL + pgvector——`start.py`／`stop.py`
+會自動偵測 `db/postgresql` 存不存在，有的話一律走原生（`pg_ctl` 啟動/關閉），完全不用 Docker；沒裝的話照舊用
+Docker，兩種模式並存、互不影響。
+
+```powershell
+python scripts/setup_postgres.py   # 下載官方 PostgreSQL（EnterpriseDB 發布）、initdb、建資料庫（一次性）
+python scripts/setup_pgvector.py   # 用本機的 Visual Studio 編譯 pgvector（官方沒有 Windows 預編譯檔）
+```
+
+`setup_pgvector.py` 需要先裝好 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+（勾選「使用 C++ 的桌面開發」）和 [Git for Windows](https://git-scm.com/download/win)；兩者都是編譯過程用的，
+裝好之後整個流程不用再碰它們。資料庫帳密、連接埠跟 Docker 版本完全一致（`corphia` / `corphia123` /
+`localhost:5433`），`DATABASE_URL` 不用改。
+
+對外搜尋用的自架 SearXNG 仍然走 Docker（跟資料庫是不是原生無關），開啟 `ENABLE_WEB_SEARCH` 時才會用到。
 
 ## llama-cpp-python
 
@@ -80,7 +112,7 @@ LLAMA_N_GPU_LAYERS=0
 目前預設模型路徑：
 
 ```env
-LLAMA_MODEL_PATH=../ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf
+LLAMA_MODEL_PATH=../ai_model/gpt-oss-20b-MXFP4.gguf
 ```
 
 ## 常用指令
@@ -106,6 +138,55 @@ docker ps --filter name=corphia-postgres
 
 # 停止資料庫 container
 docker compose down
+```
+
+## 備份與還原
+
+更新系統前、或平常定期，備份資料庫、使用者上傳的文件與 AI 產出的檔案（放在 `backups\`，不進版本庫）：
+
+```powershell
+# 做一份備份
+backend\.venv\Scripts\python.exe backend\scripts\backup.py create
+
+# 列出備份
+backend\.venv\Scripts\python.exe backend\scripts\backup.py list
+
+# 還原演練：還原到暫時的資料庫、核對每張表的筆數後刪掉，不動正式資料
+backend\.venv\Scripts\python.exe backend\scripts\backup.py check backups\corphia-日期-時間
+
+# 真的還原（會蓋掉現在的資料；要先關閉系統，還原前會自動把現在的資料另存一份）
+backend\.venv\Scripts\python.exe backend\scripts\backup.py restore backups\corphia-日期-時間 --yes
+```
+
+資料庫的結構升級是自動的：功能更新若要在舊資料表加欄位，寫在 `backend/app/core/migrations.py`（只能往後加），後端啟動時會自動套用還沒做過的步驟。
+
+## 桌面版（操控 Word / Excel / PowerPoint）
+
+桌面版是一個視窗顯示伺服器上的同一套介面，加上本機小幫手：把 AI 的回答寫進這台電腦的 Word、Excel、PowerPoint，讀取開著的文件來提問，直接開啟 AI 產出的檔案。
+
+- 打包：`desktop\build.bat`（輸出 `desktop\dist\Corphia AI.exe`；第一次要先照 `desktop/README.md` 建立環境）
+- 發給使用者：伺服器會提供下載，使用者在「設定 › 關於」按下載；之後有新版，桌面版開啟時會向伺服器查詢並提示更新（只連公司自己的伺服器）
+- 手機、平板直接用瀏覽器（沒有桌面功能，但可以請 AI 在伺服器產生檔案再下載）
+
+安全設計與細節見 `desktop/README.md`。
+
+## 資料不出公司
+
+- 模型、向量檢索、語音轉文字都在這台伺服器上執行，後端啟動時設定為離線模式
+- 頁面的安全政策（`frontend/index.html` 的 Content-Security-Policy）只允許連自己這台伺服器：字型已打包在程式裡，外部圖片、外部連線在瀏覽器層級就被擋下。之後若真的需要連某個外部服務，只在政策裡加那一個網址
+- 進模型之前（使用者訊息、文件片段、記憶、專案指示）與模型的回答，都會先經過檢查：個資遮罩、列管字詞、藏在文件裡的指令、外部圖片
+
+## 測試
+
+```powershell
+# 後端（需要資料庫容器；使用獨立的測試資料庫 corphia_test）
+cd backend
+python -m pytest tests -q
+
+# 前端型別與規範
+cd frontend
+npx tsc --noEmit -p .
+npx eslint src --max-warnings=0
 ```
 
 ## 建議硬體規格（地端）

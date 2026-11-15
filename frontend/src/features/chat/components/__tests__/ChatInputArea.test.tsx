@@ -20,6 +20,8 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: { changeLanguage: vi.fn() },
   }),
+  // 共用工具會載入 i18n 設定檔，它需要這個外掛物件
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }))
 
 // GSAP animation facade is mocked to plain elements in jsdom.
@@ -37,6 +39,8 @@ vi.mock('@/lib/gsapMotion', () => {
   }: React.PropsWithChildren<Record<string, unknown>>) => props
 
   return {
+    // 進出場動畫的外框：測試裡直接顯示內容
+    AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
     motion: {
       div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
         React.createElement('div', stripMotionProps(props), children),
@@ -90,6 +94,19 @@ describe('ChatInputArea', () => {
   it('selectedFolder 有值時不渲染輸入框', () => {
     render(<ChatInputArea {...makeDefaultProps({ selectedFolder: 'project-folder-1' })} />)
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('沒有任何可用的功能時，連「＋」都不顯示', () => {
+    render(<ChatInputArea {...makeDefaultProps()} />)
+    expect(screen.queryByLabelText('chat.moreActions')).not.toBeInTheDocument()
+  })
+
+  it('左邊只有一顆「＋」；對外搜尋改成自動判斷，選單裡沒有開關', async () => {
+    render(<ChatInputArea {...makeDefaultProps({ conversationId: 'conv-1' })} />)
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(screen.getByRole('menuitem', { name: 'chat.attachFiles.button' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitemcheckbox')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('chat.promptTemplatesTitle')).not.toBeInTheDocument()
   })
 
   it('輸入文字時呼叫 setInput', async () => {
@@ -153,5 +170,29 @@ describe('ChatInputArea', () => {
     const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })]
     render(<ChatInputArea {...makeDefaultProps({ uploadedFiles: files })} />)
     expect(screen.getByText('test.pdf')).toBeInTheDocument()
+  })
+})
+
+describe('ChatInputArea：深度研究（只管下一題）', () => {
+  it('在「＋」選單裡打開，輸入框上方出現標籤，可以直接取消', async () => {
+    const setResearchOn = vi.fn()
+    const { rerender } = render(<ChatInputArea {...makeDefaultProps({ researchOn: false, setResearchOn })} />)
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    const item = screen.getByRole('menuitemcheckbox', { name: 'chat.research.button' })
+    expect(item).toHaveAttribute('aria-checked', 'false')
+    await userEvent.click(item)
+    expect(setResearchOn).toHaveBeenCalledTimes(1)
+
+    rerender(<ChatInputArea {...makeDefaultProps({ researchOn: true, setResearchOn })} />)
+    expect(screen.getByText('chat.research.chip')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.research.remove'))
+    expect(setResearchOn).toHaveBeenLastCalledWith(false)
+  })
+
+  it('專案模式只根據文件回答：不提供深度研究', async () => {
+    render(<ChatInputArea {...makeDefaultProps({ chatMode: 'project', conversationId: 'conv-1', researchOn: true, setResearchOn: vi.fn() })} />)
+    expect(screen.queryByText('chat.research.chip')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('chat.moreActions'))
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'chat.research.button' })).not.toBeInTheDocument()
   })
 })

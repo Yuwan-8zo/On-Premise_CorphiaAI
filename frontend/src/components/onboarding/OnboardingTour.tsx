@@ -279,7 +279,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             {targetRect ? (
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute rounded-[var(--r-14)] transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute rounded-[var(--r-14)] transition-[top,left,width,height] duration-300 ease-out"
                     style={{
                         top: targetRect.top - PADDING,
                         left: targetRect.left - PADDING,
@@ -298,7 +298,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 ref={tooltipRef}
                 onClick={(e) => e.stopPropagation()}
                 style={tooltipStyle}
-                className="absolute paper !rounded-[var(--r-25)] transition-all duration-300 ease-out"
+                className="absolute paper !rounded-[var(--r-25)] transition-[top,left,opacity] duration-300 ease-out"
             >
                 {/* 箭頭 —— offset 動態跟著目標走，被 clamp 過的 tooltip 也能正確指回去 */}
                 {arrowSide && arrowOffset !== null && (
@@ -360,7 +360,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                                 type="button"
                                 onClick={() => setStep(i)}
                                 aria-label={`Step ${i + 1}`}
-                                className={`h-1 rounded-full transition-all ${
+                                className={`h-1 rounded-full transition-[width,background-color] ${
                                     i === step
                                         ? 'w-4 bg-accent'
                                         : 'w-1 bg-text-muted/40 '

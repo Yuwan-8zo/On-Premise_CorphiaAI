@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 對話 Modal 集合
  * 
  * 從 Chat.tsx 拆分出來，包含：
@@ -10,22 +10,25 @@
 
 import StyledSelect from '@/components/ui/StyledSelect'
 import LensMenu from '@/components/ui/LensMenu'
-import { ChevronRight, Edit2, Folder, Share, Trash2 } from '@/components/snow/icons'
+import { ChevronRight, Edit2, Folder, Lock, Share, Trash2 } from '@/components/snow/icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import DialogShell from '@/components/ui/DialogShell'
-import { dialogSheet } from '@/lib/motionPresets'
+import { menuPop } from '@/lib/motionPresets'
+import { useKeepInViewport } from '@/lib/useKeepInViewport'
 
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
+import type { ConvMenuState } from '../hooks/useConversationDialogs'
 
 /* ── Context Menu ── */
 
 interface ContextMenuProps {
-    activeMenu: { convId: string; x: number; y: number } | null
+    activeMenu: ConvMenuState | null
     menuRef: React.RefObject<HTMLDivElement | null>
     conversations: Array<{ id: string; settings?: Record<string, unknown> }>
     onShare: (id: string) => void
+    onUnshare: (id: string) => void
     onRename: (id: string) => void
     onMove: (id: string) => void
     onDelete: (id: string, e: React.MouseEvent) => void
@@ -33,18 +36,20 @@ interface ContextMenuProps {
 }
 
 export function ConversationContextMenu({
-    activeMenu, menuRef, conversations, onShare, onRename, onMove, onDelete, onClose,
+    activeMenu, menuRef, conversations, onShare, onUnshare, onRename, onMove, onDelete, onClose,
 }: ContextMenuProps) {
     const { t } = useTranslation()
+    // 按鈕靠近螢幕右邊（手機側欄）時，選單往內推，不被切掉
+    useKeepInViewport(menuRef, activeMenu, activeMenu?.anchor)
 
     return (
         <AnimatePresence>
             {activeMenu && (
                 <motion.div 
                     ref={menuRef}
-                    {...dialogSheet}
-                    className="fixed z-[100] w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
-                    style={{ left: activeMenu.x, top: Math.min(activeMenu.y, window.innerHeight - 300) }}
+                    {...menuPop}
+                    className="fixed z-[100] origin-top-left w-max min-w-[var(--sz-190)] paper !rounded-[var(--r-20)] overflow-hidden p-1.5 text-text-primary"
+                    style={{ left: activeMenu.x, top: activeMenu.y }}
                 >
                     <LensMenu className="">
                     <button className="menu-item"
@@ -52,6 +57,14 @@ export function ConversationContextMenu({
                         <Share />
                         {t('chat.shareChat', '分享')}
                     </button>
+                    {/* 分享過的對話才有「取消分享」 */}
+                    {Boolean(conversations.find((c) => c.id === activeMenu.convId)?.settings?.shared) && (
+                        <button className="menu-item"
+                            onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onUnshare(id), 50) }}>
+                            <Lock />
+                            {t('ui.chat.unshare')}
+                        </button>
+                    )}
                     <button className="menu-item"
                         onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
                         <Edit2 />
@@ -79,10 +92,10 @@ export function ConversationContextMenu({
 
 /* ── 對話框共用：寬度、輸入框、按鈕列（外殼用 DialogShell） ── */
 
-const SHEET_W = 'w-[var(--sz-360)] max-w-[calc(100vw-32px)]'
-const INPUT_CLASS = 'snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted'
+export const SHEET_W = 'w-[var(--sz-360)] max-w-[calc(100vw-32px)]'
+export const INPUT_CLASS = 'snow-input w-full text-[length:var(--fs-15)] text-text-primary placeholder:text-text-muted'
 
-function DialogActions({ onCancel, onOk, okLabel }: { onCancel: () => void; onOk: () => void; okLabel?: string }) {
+export function DialogActions({ onCancel, onOk, okLabel }: { onCancel: () => void; onOk: () => void; okLabel?: string }) {
     const { t } = useTranslation()
     return (
         <div className="dialog-actions">

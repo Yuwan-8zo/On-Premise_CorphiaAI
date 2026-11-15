@@ -51,7 +51,12 @@ class Settings(BaseSettings):
     
     # LLM (local GGUF via llama.cpp)
     # 預設指向專案根目錄的 ai_model/（ModelManager 會在啟動時解析並選為預設模型）
-    llama_model_path: str = "ai_model/Qwen2.5-7B-Instruct-Q5_K_M.gguf"
+    # gpt-oss-20b：同一台筆電實測（scripts/model_eval/out/summary.md）打字最快（約 24 tok/s，Qwen 7B 約 13）、
+    # 用工具完成 4/5（Qwen 7B、14B 都是 1/5）、正體中文沒有簡體字。檔案不在時自動改用 ai_model/ 裡找到的第一個模型
+    llama_model_path: str = "ai_model/gpt-oss-20b-MXFP4.gguf"
+    # 會思考的模型要想多深：low／medium／high（不會思考的模型會忽略）。
+    # low：等回答從約 4 秒降到 1.7 秒、每題平均 12.6 → 6.1 秒；中文客觀題 6/7 → 5/7、用工具一樣 4/5
+    llm_reasoning_effort: str = "low"
     llama_context_size: int = 4096
     llama_n_gpu_layers: int = 0
     # CPU threads for llama.cpp; 0 = all cores minus two (keeps the API responsive while the model runs)
@@ -60,8 +65,66 @@ class Settings(BaseSettings):
     # every answer must come from the real model, otherwise the user sees an error.
     allow_simulated_llm: bool = False
     # Models kept loaded at startup (size tags, comma separated). Others load only when selected.
-    llm_preload_models: str = "3B,7B"
+    # 預設只載入 20B（約 12 GB）；再多載小模型，32 GB 的筆電開著其他程式會不夠
+    llm_preload_models: str = "20B"
+    # 推論引擎：auto＝有 llama-server 執行檔就用它（Vulkan，用內建顯示晶片，讀入快約 70 倍），沒有就用 llama-cpp-python；
+    # server／python＝指定其中一種
+    llm_engine: str = "auto"
+    # llama-server 執行檔（相對於專案根目錄）
+    llm_engine_path: str = "engine/llama-vulkan/llama-server.exe"
+    # llama-server 的上下文長度（token）；提示詞預算、回答長度上限都跟著它算
+    # 16384：模型評估（scripts/model_eval）全程用這個長度量的，20B 載入後最低還剩約 7～8 GB 記憶體
+    llm_engine_context: int = 16384
+    # 放到顯示晶片的層數（99＝全部）
+    llm_engine_gpu_layers: int = 99
+    # 同時留在記憶體的模型數上限；超過就關掉最久沒用的（系統預設模型不關）
+    llm_engine_max_loaded: int = 3
+    # 一個模型最多等多久載入（秒）
+    llm_engine_load_timeout: int = 900
     
+    # AI 自己動手做事：回答前可以自己查文件、連外網（照管理者政策）、計算、看時間（services/agent_tools.py）。
+    # 只有查和算，沒有會改東西的工具
+    enable_agent_tools: bool = True
+
+    # 區網加密（主機模式）：公司其他電腦、手機走 https://主機IP:lan_https_port，憑證由主機自己簽（app/core/lan_tls.py）；
+    # 關掉就退回沒加密的連線（backend/run_server.py）
+    lan_https: bool = True
+    lan_https_port: int = 8443
+
+    # 文件檢索模型：本機沒有時（新電腦第一次）可不可以從網路下載一次；完全不連外的環境設 false
+    embedding_allow_download: bool = True
+
+    # AI 產出檔案（使用者說「幫我做一份 Word／Excel／簡報」）：開關、存放位置、內容最多寫多長（token）
+    enable_file_generation: bool = True
+    generated_files_dir: str = "./generated"
+    file_max_tokens: int = 3000
+
+    # 桌面版程式（desktop/）：伺服器提供最新版讓桌面版自己更新；這裡是放 exe 和原始碼的資料夾（相對於專案根目錄）
+    desktop_dir: str = "desktop"
+
+    # 連接資料夾：只允許接這些資料夾底下的路徑（逗號分隔；空的＝除了系統資料夾都可以）
+    connected_folder_roots: str = ""
+
+    # 瀏覽器臨時資料夾（使用者在聊天室用瀏覽器選這台電腦的資料夾）：只附在「下一則」訊息，
+    # 不建立 documents／document_chunks 紀錄、不留在磁碟上（寫暫存檔只是為了重用既有的解析器，解析完立刻刪）
+    enable_browser_folder: bool = True
+    # 看圖片：聊天裡附的圖片由本機的圖文模型讀（services/chat_images.py）。模型放在這個資料夾：
+    # 一個模型檔（.gguf）加一個影像轉接檔（檔名 mmproj 開頭的 .gguf）。資料夾是空的＝這台主機不能看圖，介面不顯示附圖
+    enable_vision: bool = True
+    vision_model_dir: str = "ai_model/vision"
+    browser_folder_max_files: int = 40
+    browser_folder_max_total_mb: int = 50
+    browser_folder_max_chars_per_file: int = 20000
+    browser_folder_max_chars_total: int = 60000
+    browser_folder_ttl_min: int = 10  # 附上後多久沒送出訊息就自動作廢
+
+    # 對外搜尋（唯一出口是自架的 SearXNG；見 docker-compose.yml、app/services/web_search.py）
+    # 預設關閉：開了才會真的連到自架 SearXNG、也才會把搜尋關鍵字送出這台機器。
+    enable_web_search: bool = False
+    searxng_url: str = "http://127.0.0.1:8888"
+    web_search_max_results: int = 5
+    web_search_timeout_sec: int = 15
+
     # 上傳
     upload_directory: str = "./uploads"
     max_upload_size_mb: int = 50
@@ -78,12 +141,33 @@ class Settings(BaseSettings):
     # 差異化資安功能旗標（Phase 2）
     enable_pii_masking: bool = True            # A1: 自動遮罩身分證/信用卡/手機/email
     enable_prompt_injection_guard: bool = True  # A2: 偵測 Prompt Injection 攻擊
+    # 送模型前最後一關：文件片段、記憶等「不是使用者打的字」也先篩過（藏指令／違禁詞的片段不送、個資遮罩）
+    enable_context_guard: bool = True
+    # 模型「回答」的檢查：外部圖片換成純文字（避免瀏覽器自動連出去把資料帶走）、個資遮罩
+    enable_output_guard: bool = True
     enable_dlp: bool = True                    # A3: 關鍵字黑名單阻擋
     # DLP 黑名單，逗號分隔；可從環境變數覆寫
     dlp_blocklist: str = "最高機密,絕對機密,top secret,classified secret,薪資明細,客戶名單"
 
+    # 規則之後的第四、五關（services/semantic_guard.py）：換句話說的攻擊規則比對不到，改比「意思」。
+    # 語意比對：提問轉成向量，跟攻擊範例、正常提問範例比相似度（每則多約幾十毫秒）
+    enable_semantic_guard: bool = True
+    # 最像的攻擊範例相似度 ≥ 這個值、而且比最像的正常範例高出 semantic_guard_margin → 直接攔阻
+    semantic_guard_block: float = 0.80
+    # ≥ 這個值、而且比正常範例更像攻擊 → 「有點可疑」，交給本機模型複查
+    semantic_guard_review: float = 0.50
+    semantic_guard_margin: float = 0.10
+    # 模型複查：只在語意比對覺得可疑時才問本機模型（是非題，不回答原問題）；多約 1～2 秒
+    enable_llm_judge: bool = True
+    # 複查失敗（模型沒載入、逾時、回答看不懂）時：True＝攔阻（寧可錯擋），False＝放行
+    llm_judge_fail_closed: bool = True
+    llm_judge_max_tokens: int = 256
+
     # RAG 可調參數（Phase 3 預留）
-    chat_history_messages: int = 4  # 每次帶給模型的歷史訊息數（約兩輪問答）；越多越慢
+    # 帶給模型的對話歷史：總字數預算、單一則最多幾個字（services/history_window.py）。
+    # 以前只帶最後 4 則、每則 400 字（純 CPU 時代讀入很慢）；現在用顯示晶片讀入約 550 tok/s、相同的開頭還能重複利用
+    chat_history_chars: int = 6000
+    chat_history_message_chars: int = 2000
     rag_top_k: int = 2  # 純 CPU 筆電讀資料很慢：每多一段，7B 約多讀 20～30 秒；2 段已涵蓋展示問題的關鍵段落
     rag_similarity_threshold: float = 0.25
     rag_bm25_weight: float = 0.3

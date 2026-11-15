@@ -62,7 +62,7 @@ export default function NotFound() {
                 </div>
 
                 {/* 標題與內文 */}
-                <h1 className="text-xl md:text-[length:var(--fs-22)] font-bold text-text-primary mb-4 tracking-wide">
+                <h1 className="text-xl md:text-[length:var(--fs-22)] font-bold text-text-primary mb-4">
                     {t('ui.notFound.title')}
                 </h1>
                 <p className="text-[length:var(--fs-13)] md:text-[length:var(--fs-14)] text-text-muted text-center max-w-[var(--sz-420)] mb-10 leading-relaxed font-medium">

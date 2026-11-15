@@ -11,6 +11,7 @@
 
 import { useTranslation } from 'react-i18next'
 import DialogShell from '@/components/ui/DialogShell'
+import { useScrollFade } from '@/lib/useScrollFade'
 
 // ---------------------------------------------------------------------------
 // Panel — flat surface card with hairline border.
@@ -42,13 +43,17 @@ export function SectionHeader({
     title,
     eyebrow,
     action,
+    inlineAction = false,
 }: {
     title: string
-    eyebrow?: string
+    /** 標題下方的補充（可放 SkelText 佔位） */
+    eyebrow?: React.ReactNode
     action?: React.ReactNode
+    /** 手機上動作鈕也和標題排同一列（不另起一列，省高度；動作鈕要夠窄） */
+    inlineAction?: boolean
 }) {
     return (
-        <div className="flex flex-col gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] md:flex-row md:flex-wrap md:items-center md:justify-between">
+        <div className={`flex gap-3 pl-[var(--sp-21)] pr-[var(--sp-16)] pt-[var(--sp-16)] pb-[var(--space)] ${inlineAction ? 'flex-row items-center justify-between' : 'flex-col md:flex-row md:flex-wrap md:items-center md:justify-between'}`}>
             <div className="min-w-0 md:shrink-0 md:max-w-full">
                 {/* 規範：標題上方不放眉標；補充資訊放在標題下方（Footnote 13/18 次要文字） */}
                 <h2 className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
@@ -85,6 +90,8 @@ export function ActionButton({
     }
     return (
         <button
+            // 有 onClick＝一般按鈕；沒有＝送出表單。不寫的話放在表單裡的「取消」也會送出表單
+            type={onClick ? 'button' : 'submit'}
             onClick={onClick}
             disabled={disabled}
             className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0 min-w-max ${variants[variant]}`}
@@ -142,6 +149,11 @@ export function RoleBadge({ role }: { role: AdminUserRole }) {
 // via portal so it sits above the rest of the admin chrome.
 // ---------------------------------------------------------------------------
 
+function ModalScroll({ children }: { children: React.ReactNode }) {
+    const ref = useScrollFade()
+    return <div ref={ref} className="glass-scroll min-h-0 p-6">{children}</div>
+}
+
 export function ModalFrame({
     children,
     onClose,
@@ -152,9 +164,11 @@ export function ModalFrame({
     maxWidth?: string
 }) {
     // 外殼（遮罩、置中、動畫、Esc）共用 DialogShell；後台視窗用卡片外觀
+    // 比畫面高時在視窗「裡面」捲動（矮螢幕、手機橫拿），上下各留 16
     return (
-        <DialogShell open onClose={onClose} sheet={false} className={`w-full ${maxWidth} paper !rounded-[var(--r-32)] p-6 text-text-primary`}>
-            {children}
+        <DialogShell open onClose={onClose} sheet={false} className={`w-full ${maxWidth} max-h-[calc(100dvh-var(--sp-32))] flex flex-col overflow-hidden paper !rounded-[var(--r-32)] text-text-primary`}>
+            {/* 卡片不捲、裡面這層捲（光邊才不會跟著內容捲走） */}
+            <ModalScroll>{children}</ModalScroll>
         </DialogShell>
     )
 }

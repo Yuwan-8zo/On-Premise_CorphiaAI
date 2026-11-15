@@ -101,6 +101,8 @@ def create_access_token(
     to_encode.update({
         "exp": expire,
         "iat": now,
+        # iat 只到秒；這個有小數，用來和「撤銷所有 Token」的時間精確比較
+        "iat_precise": now.timestamp(),
         "type": "access",
         "jti": str(uuid.uuid4()),
     })
@@ -139,6 +141,7 @@ def create_refresh_token(
     to_encode.update({
         "exp": expire,
         "iat": now,
+        "iat_precise": now.timestamp(),
         "type": "refresh",
         "jti": str(uuid.uuid4()),
     })

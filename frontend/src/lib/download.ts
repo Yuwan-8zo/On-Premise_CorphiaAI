@@ -1,3 +1,5 @@
+import { localDate } from './dates'
+
 /** 把瀏覽器裡的檔案資料（Blob）存成下載檔（全站共用） */
 export function downloadBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob)
@@ -8,5 +10,5 @@ export function downloadBlob(blob: Blob, filename: string) {
     URL.revokeObjectURL(url)
 }
 
-/** 今天的日期（YYYY-MM-DD），給下載檔名用 */
-export const todayStamp = () => new Date().toISOString().slice(0, 10)
+/** 今天的本地日期（YYYY-MM-DD），給下載檔名用 */
+export const todayStamp = () => localDate()

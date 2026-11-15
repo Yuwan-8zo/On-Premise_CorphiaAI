@@ -110,7 +110,8 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 分隔符欺騙（試圖模仿 ChatML 結構）
     (
         "ChatML標籤注入",
-        re.compile(r'<\|im_(?:start|end)\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]'),
+        # <|名稱|> 是各家模型共用的控制字元形狀（ChatML 的 im_start、Llama 3 的 eot_id、gpt-oss 的 start／channel…）
+        re.compile(r'<\|[A-Za-z0-9_]{1,40}\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]'),
         "high",
     ),
     # DAN / jailbreak 關鍵模式
@@ -123,6 +124,18 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         "high",
     ),
 ]
+
+
+_SPACELESS: dict[str, re.Pattern[str]] = {}
+
+
+def _spaceless(pattern: re.Pattern[str]) -> re.Pattern[str]:
+    """同一個樣式的「不看空格」版本（原本要求有空白的地方改成可有可無）"""
+    cached = _SPACELESS.get(pattern.pattern)
+    if cached is None:
+        cached = re.compile(pattern.pattern.replace(chr(92) + "s+", chr(92) + "s*"), pattern.flags)
+        _SPACELESS[pattern.pattern] = cached
+    return cached
 
 
 def check_prompt_injection(text: str) -> InjectionCheckResult:
@@ -139,11 +152,29 @@ def check_prompt_injection(text: str) -> InjectionCheckResult:
     max_risk = "none"
     risk_order = {"none": 0, "low": 1, "medium": 2, "high": 3}
 
-    for pattern_name, pattern, risk_level in _INJECTION_PATTERNS:
-        if pattern.search(text):
+    # 除了原文，也檢查正規化後的版本（全形英數字、零寬字元、拆字）。
+    # 只有在正規化後才比對得到＝有人刻意把字變形來躲偵測，一律當成高風險
+    from app.services.text_normalize import variants
+
+    for position, (variant, _) in enumerate(variants(text)):
+        for pattern_name, pattern, risk_level in _INJECTION_PATTERNS:
+            if pattern_name in matched_patterns or not pattern.search(variant):
+                continue
             matched_patterns.append(pattern_name)
+            if position > 0:
+                risk_level = "high"
             if risk_order.get(risk_level, 0) > risk_order.get(max_risk, 0):
                 max_risk = risk_level
+
+    # 整句被拆過字：接回去之後單字間的空格也不見了，用「不看空格」的樣式再比對一次
+    from app.services.text_normalize import reassembled
+
+    joined = reassembled(text)
+    if joined is not None:
+        for pattern_name, pattern, _ in _INJECTION_PATTERNS:
+            if pattern_name not in matched_patterns and _spaceless(pattern).search(joined):
+                matched_patterns.append(pattern_name)
+                max_risk = "high"
 
     is_suspicious = len(matched_patterns) > 0
 
@@ -151,7 +182,7 @@ def check_prompt_injection(text: str) -> InjectionCheckResult:
     sanitized_text = text
     if is_suspicious:
         sanitized_text = re.sub(
-            r'<\|im_(?:start|end)\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]',
+            r'<\|[A-Za-z0-9_]{1,40}\|>|<<SYS>>|<</SYS>>|\[INST\]|\[/INST\]',
             '[BLOCKED]',
             sanitized_text
         )

@@ -6,16 +6,6 @@
   mask-image: linear-gradient(to bottom, transparent 0, transparent 60px, #000 100px, #000 calc(100% - 24px), transparent 100%);
 }
 
-/* 提示詞模板面板：外框 26、內距 10 → 裡面的搜尋框、類別膠囊、列都是同心的 16 */
-.prompt-search {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  height: var(--sz-40);
-  padding: 0 var(--sp-14);
-  border-radius: var(--r-9999);
-  background: var(--chip);
-}
 /* 類別工具列（GlassSegmented toolbar） */
 .prompt-cats {
   margin: var(--sp-10) 0 var(--sp-2);
@@ -123,4 +113,10 @@
  * 直接透出後面的卡片，只留亮邊＋外圈細線 */
 .glass-nav .lens.is-active {
   background: none;
+}
+
+/* 設定視窗左邊的選單欄：放不下時整欄等比例縮小（比例由 useFitToHost 算好寫在 --menu-fit；放得下就是 1）。
+   欄寬、貼著外框的內距在元件裡都除回這個比例，所以欄的位置與同心距離不變。 */
+.settings-menu {
+  zoom: var(--menu-fit, 1);
 }

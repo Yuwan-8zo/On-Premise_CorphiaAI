@@ -44,6 +44,10 @@ class Message(Base):
         index=True
     )
     
+    # 對話分支：這一則接在哪一則後面（第一則是 None）。同一則後面、同角色的好幾則＝同一個位置的不同版本
+    # （見 services/message_tree.py）。不設外鍵：訊息只增不刪，整個對話刪除時跟著 conversation 一起刪
+    parent_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+
     # 訊息內容
     role: Mapped[str] = mapped_column(
         String(20),
@@ -57,6 +61,17 @@ class Message(Base):
     # RAG 來源引用 (JSON 陣列)
     sources: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     
+    # 模型的思考過程（只有會推理的模型才有；已過回答的安全檢查）。不算進對話歷史、不算進防竄改雜湊
+    reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # 這一則回答有沒有連外網：None＝沒有；有的話記 {"query": 送出去的關鍵字, "sources": [{"title", "url"}]}
+    web_search: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # 使用者這一則附的圖片（編號清單；檔案在主機的 uploads/chat-images/，見 services/chat_images.py）；沒附是 None
+    images: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    # AI 這一題自己做了哪些步驟：[{"tool": 工具名稱, "summary": 給人看的一句話, "ok": 有沒有成功}]；沒用工具是 None
+    steps: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
     # 使用者評分 (1-5)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     

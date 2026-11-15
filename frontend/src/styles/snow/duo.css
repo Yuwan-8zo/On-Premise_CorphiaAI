@@ -23,9 +23,10 @@
 .fold-wide .chat-shell .chat-head {
   padding-right: var(--gutter);
 }
-/* 輸入框：膠囊圓角和左側收合欄一樣（高＝2 × --edge-n）；內距、按鈕、圖示照同一個比例放大，按鈕置中所以和外框同心 */
+/* 輸入框：高＝--field-n-duo（不再跟螢幕圓角一樣高，太厚重、和側欄的列不平衡）；
+   內距、按鈕、圖示照同一個比例縮放，按鈕置中，所以仍然和外框同心 */
 .fold-wide .chat-shell {
-  --field-scale: calc(2 * var(--edge-n) / var(--field-n));
+  --field-scale: calc(var(--field-n-duo) / var(--field-n));
 }
 /* 聊天訊息左右內縮＝外圈間距＋輸入框內距：訊息邊緣對齊輸入框裡的按鈕，輸入框變大時一起跟著動 */
 .fold-wide .chat-shell .msg-col {
@@ -45,7 +46,11 @@
 .fold-wide .admin-shell .admin-nav {
   padding-block: 0;
 }
-/* 管理後台：寬版時放不下就整頁（標題列、左側欄、內容）等比例縮小到剛好一個畫面（--fit 由 useFitToHost 算），不捲動 */
+/* 管理後台：寬版時放不下就等比例縮小到剛好一個畫面（useFitToHost 算），不捲動。分兩層：
+   整頁（標題列、左側欄）的 --fit 只看左側欄，切分頁時不變；內容區的 --fit-content 依各分頁內容另外算 */
+.admin-content-fit {
+  zoom: var(--fit-content, 1);
+}
 .admin-fit {
   zoom: var(--fit, 1);
   padding: calc(var(--space) / var(--fit, 1)); /* 外圈間距除回比例：縮放後在畫面上仍是原本的間距 */
@@ -57,6 +62,10 @@
   .fold-wide .chat-shell .chat-head {
     padding-right: calc(var(--duo-status) + var(--gutter));
   }
+  /* 登入頁右上角（主題／語言切換）：同一顆狀態列會蓋住這一排，一樣往左讓出狀態列寬度 */
+  .fold-wide .login-head {
+    padding-right: calc(var(--duo-status) + var(--gutter));
+  }
   /* 後台：狀態列只蓋住最上面一段（標題列和總覽第一排），只讓這些往左讓出狀態列寬度；
      下面的卡片照常延伸到右邊外圈間距。外層本來就有一圈間距，所以只補狀態列寬度 */
   /* 整頁有等比例縮放（--fit），讓開的寬度要除回比例，才是狀態列的實際寬度 */
@@ -64,10 +73,10 @@
     padding-right: calc(var(--duo-status) / var(--fit, 1));
   }
   .fold-wide .admin-shell .admin-overview > :first-child {
-    margin-right: calc(var(--duo-status) / var(--fit, 1));
+    margin-right: calc(var(--duo-status) / var(--fit, 1) / var(--fit-content, 1));
   }
   /* 其他分頁的內容從最上面就開始，整欄讓開 */
   .fold-wide .admin-shell .admin-page-enter:not(:has(.admin-overview)) {
-    padding-right: calc(var(--duo-status) / var(--fit, 1));
+    padding-right: calc(var(--duo-status) / var(--fit, 1) / var(--fit-content, 1));
   }
 }

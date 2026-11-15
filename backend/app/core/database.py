@@ -5,7 +5,10 @@
 import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from datetime import datetime
+
+from sqlalchemy import DateTime, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.core.config import settings
 
@@ -36,7 +39,14 @@ async_session_maker = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """SQLAlchemy 基礎模型類別"""
-    pass
+
+
+class TimestampMixin:
+    """共用的建立／更新時間欄位（各資料表不要各自重寫一份）。
+    需要依建立時間查詢、要加索引的資料表（使用者、對話）自己定義 created_at。"""
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -78,6 +88,9 @@ async def init_db() -> None:
             # 建立所有表格（checkfirst=True 確保已存在的表格不會重建）
             await conn.run_sync(Base.metadata.create_all, checkfirst=True)
         logger.info("Database tables initialized (create_all completed)")
+        # 舊資料表補上新版需要的欄位（create_all 不會改已經存在的表，見 core/migrations）
+        from app.core.migrations import run_migrations
+        await run_migrations(engine)
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise

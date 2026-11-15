@@ -1,10 +1,15 @@
-import { Book, Code, FileText, Languages, Layers3, Mail, Reader, Search, ShieldCheck, Sparkles } from '@/components/snow/icons'
+import { Book, Code, FileText, Languages, Layers3, Mail, Reader, ShieldCheck, Sparkles } from '@/components/snow/icons'
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Tooltip from '@/components/ui/Tooltip'
 import GlassSegmented from '@/components/ui/GlassSegmented'
+import SearchField from '@/components/ui/SearchField'
 import { useDismiss } from '@/lib/useDismiss'
+import LensMenu from '@/components/ui/LensMenu'
+import { useMenuTrigger } from '@/lib/menuDrag'
+import { MQ_HOVER } from '@/lib/useMediaQuery'
+import { MOTION } from '@/design-system'
 
 interface PromptTemplate {
     title: string
@@ -33,10 +38,20 @@ interface PromptMenuProps {
     disabled?: boolean
     /** 放在輸入欄裡：38 圓鈕、內距 6，與欄位外框同心（25 − 6 = 19） */
     inline?: boolean
+    /** 由外面控制開關（輸入框的「＋」選單用）；不給就由自己的按鈕控制 */
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    /** 不顯示自己的按鈕（入口改放在「＋」選單裡），面板一樣貼著輸入框開 */
+    hideButton?: boolean
 }
 
-export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuProps) {
-    const [isOpen, setIsOpen] = useState(false)
+export function PromptMenu({ onSelect, disabled, inline = false, open, onOpenChange, hideButton = false }: PromptMenuProps) {
+    const [innerOpen, setInnerOpen] = useState(false)
+    const isOpen = open ?? innerOpen
+    const setIsOpen = (next: boolean) => {
+        setInnerOpen(next)
+        onOpenChange?.(next)
+    }
     // 「進場 / 退場動畫」雙 state pattern：
     //   - isVisible：是否真的 mount 在 DOM（控制 unmount 延遲）
     //   - isAnimating：當前是否在「展開」狀態（控制 transform / opacity）
@@ -75,10 +90,11 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
             .filter((c) => c.items.length > 0)
     }, [library, query, cat])
 
-    // 打開時清空搜尋、聚焦搜尋框
+    // 打開時清空搜尋、聚焦搜尋框（只有滑鼠裝置：手機一聚焦就跳出鍵盤，蓋住面板，按住拖曳選取時更礙事）
     useEffect(() => {
         if (isOpen) {
             setQuery('')
+            if (!window.matchMedia(MQ_HOVER).matches) return
             const id = window.setTimeout(() => searchRef.current?.focus(), 60)
             return () => window.clearTimeout(id)
         }
@@ -94,7 +110,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
             return () => cancelAnimationFrame(id)
         } else if (isVisible) {
             setIsAnimating(false)
-            const t = setTimeout(() => setIsVisible(false), 220)
+            // 收起動畫（menuOut）跑完才卸下
+            const t = setTimeout(() => setIsVisible(false), MOTION.durationSeconds.menuOut * 1000)
             return () => clearTimeout(t)
         }
     }, [isOpen, isVisible])
@@ -107,7 +124,8 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         if (!isVisible) return
         const place = () => {
             // 在輸入框裡時，以整個輸入框為準（左緣對齊、上方留 8）；輸入框尺寸會隨裝置變，所以用量的，不寫死內距
-            const anchor = (inline ? btnRef.current?.closest('.glass-field') : null) ?? btnRef.current
+            const origin = btnRef.current ?? menuRef.current  // 沒有自己的按鈕時，用外層容器找輸入框
+            const anchor = (inline ? origin?.closest('.glass-field') : null) ?? origin
             const r = anchor?.getBoundingClientRect()
             if (!r) return
             setPos({ left: r.left, bottom: window.innerHeight - r.top + 8 })
@@ -147,20 +165,28 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
         else list[i - 1].focus()
     }
 
+    const menuSec = isAnimating ? MOTION.durationSeconds.menuIn : MOTION.durationSeconds.menuOut
+    // 按住模板鈕直接拖進清單、放大鏡選取（lib/menuDrag）
+    const trigger = useMenuTrigger()
+    const promptTrigger = trigger(isOpen, () => setIsOpen(true), () => setIsOpen(false))
+
     // 如果沒有設定模板或格式不對，不顯示按鈕
     if (!Array.isArray(library) || library.length === 0) {
         return null
     }
 
     return (
-        <div className="relative flex items-center" ref={menuRef}>
-            <Tooltip label={isOpen ? '' : t('chat.promptTemplatesTitle')}>
+        // 沒有自己的按鈕時不佔位置（不然輸入框那一排會多一格空隙），但留在輸入框裡面，面板才找得到對齊的對象
+        <div className={hideButton ? 'absolute w-0 h-0' : 'relative flex items-center'} ref={menuRef}>
+            {!hideButton && <Tooltip label={isOpen ? '' : t('chat.promptTemplatesTitle')}>
                 <button
                     ref={btnRef}
                     type="button"
-                    onClick={() => setIsOpen(!isOpen)}
+                    onPointerDown={disabled ? undefined : promptTrigger.onPointerDown}
+                    onClick={promptTrigger.onClick}
                     disabled={disabled}
-                    className={`btn-icon ${inline ? '!w-[var(--field-btn)] !h-[var(--field-btn)] [--R:calc(var(--field-btn)/2)]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
+                    aria-haspopup="dialog"
+                    className={`touch-none btn-icon ${inline ? '!w-[var(--field-btn)] !h-[var(--field-btn)] [--R:calc(var(--field-btn)/2)]' : ''} shrink-0 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30
                         transition-[transform,background-color,border-color,color] duration-200 ease-apple
                         active:scale-90
                         ${isOpen
@@ -172,10 +198,10 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                     {/* 提示詞模板圖示（文件＋文字行） */}
                     <Reader className="w-[calc(1.25rem*var(--field-bk,1))] h-[calc(1.25rem*var(--field-bk,1))] shrink-0" />
                 </button>
-            </Tooltip>
+            </Tooltip>}
 
             {/* 模板面板：portal 到 body（毛玻璃才模糊得到後面）
-                外框圓角 26、內距 10 → 搜尋框、類別膠囊、列都是同心的 16（26 − 10）；懸停不變色
+                外框圓角 26、內距 10 → 類別膠囊、列都是同心的 16（26 − 10）；搜尋框是膠囊（圓角＝高 ÷ 2）；懸停不變色
                 結構：標題 → 搜尋框 → 類別工具列（一排圖示）→ 依類別分組的模板清單（圖示＋標題＋一行預覽） */}
             {isVisible && pos && createPortal(
                 <div
@@ -188,29 +214,28 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                         bottom: pos.bottom,
                         // 固定高度：切換分類時清單長短不同，面板也不會縮放，工具列不會在滑鼠底下跳動
                         height: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
+                        // 同全站選單：打開 0.25 秒從 96% 放大＋淡入，收起 0.15 秒（design-system 的 menuIn／menuOut／menuScale）
                         opacity: isAnimating ? 1 : 0,
-                        transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
-                        transition: 'opacity 200ms var(--ease-out), transform 300ms var(--ease-out)',
+                        transform: `scale(${isAnimating ? 1 : MOTION.menuScale})`,
+                        transition: `opacity ${menuSec}s var(--ease-out), transform ${menuSec}s var(--ease-out)`,
                         pointerEvents: isAnimating ? 'auto' : 'none',
                     }}
-                    onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
+                    onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented) setIsOpen(false) }}
                 >
                     <div className="shrink-0 px-[var(--sp-10)] pt-[var(--sp-6)] pb-[var(--sp-10)] text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                         {t('chat.promptTemplatesTitle')}
                     </div>
 
-                    {/* 搜尋框 */}
-                    <label className="prompt-search shrink-0">
-                        <Search className="h-[var(--sz-16)] w-[var(--sz-16)] shrink-0 text-text-muted" />
-                        <input
-                            ref={searchRef}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            onKeyDown={onSearchKey}
-                            placeholder={t('chat.promptSearch')}
-                            className="min-w-0 flex-1 bg-transparent text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary outline-none placeholder:text-text-muted"
-                        />
-                    </label>
+                    {/* 搜尋框（共用 SearchField）：有字時 Esc 先清空，空的再按 Esc 才關面板 */}
+                    <SearchField
+                        ref={searchRef}
+                        className="shrink-0"
+                        value={query}
+                        onChange={setQuery}
+                        onKeyDown={onSearchKey}
+                        placeholder={t('chat.promptSearch')}
+                        label={t('chat.promptSearch')}
+                    />
 
                     {/* 類別工具列：一排圖示（分段切換＋放大鏡），名稱顯示在下面清單的分組標題；搜尋時隱藏 */}
                     {!query.trim() && (
@@ -231,6 +256,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
 
                     {/* 模板清單 */}
                     <div className="prompt-list chat-scroll min-h-0 flex-1 overflow-y-auto scrollbar-none" onKeyDown={onListKey}>
+                        <LensMenu fitCard={false}>
                         {groups.length === 0 && (
                             <p className="px-[var(--sp-10)] py-[var(--sp-24)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-muted">{t('chat.promptEmpty')}</p>
                         )}
@@ -256,6 +282,7 @@ export function PromptMenu({ onSelect, disabled, inline = false }: PromptMenuPro
                                 })}
                             </div>
                         ))}
+                        </LensMenu>
                     </div>
                 </div>,
                 document.body,
