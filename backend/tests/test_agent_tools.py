@@ -317,3 +317,29 @@ async def test_several_web_searches_are_all_shown_on_the_answer(db_session, test
     assert message.web_search["used"] and message.web_search["query"] == "異地備份 做法；3-2-1 備份 原則"
     assert len(message.web_search["sources"]) == 2, "每一次送出去的關鍵字和查到的來源都要看得到"
     assert len(message.steps) == 2
+
+
+class ChoiceLLM(AgentLLM):
+    """另外記下每一輪有沒有要求「一定要用工具」"""
+
+    async def generate_stream(self, prompt=None, tools=None, tool_choice=None, **kwargs):
+        async for item in super().generate_stream(prompt=prompt, tools=tools, **kwargs):
+            yield item
+        self.rounds[-1]["tool_choice"] = tool_choice
+
+
+async def test_research_must_search_a_few_times_before_writing(db_session, test_user, llm_ready):
+    script = [[_call("current_time")] for _ in range(chat_module.RESEARCH_MIN_SEARCHES)] + ["研究報告。"]
+    svc, conv = await _chat(db_session, test_user, script)
+    svc.llm_service = ChoiceLLM(svc.llm_service._real, script)
+    events = [e async for e in svc.send_message_stream(conversation_id=conv.id, content="研究一下", use_rag=False, research=True)]
+    choices = [r["tool_choice"] for r in svc.llm_service.rounds]
+    assert choices == ["required"] * chat_module.RESEARCH_MIN_SEARCHES + [None]
+    assert len([e for e in events if e["type"] == "tool_step" and e["status"] == "done"]) == chat_module.RESEARCH_MIN_SEARCHES
+
+
+async def test_normal_chat_never_forces_tools(db_session, test_user, llm_ready):
+    svc, conv = await _chat(db_session, test_user, ["你好！"])
+    svc.llm_service = ChoiceLLM(svc.llm_service._real, ["你好！"])
+    await _run(svc, conv, "你好")
+    assert [r["tool_choice"] for r in svc.llm_service.rounds] == [None]

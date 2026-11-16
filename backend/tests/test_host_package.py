@@ -124,3 +124,46 @@ def test_batch_files_use_the_bundled_python_and_stay_ascii():
         assert build.PYTHON_IN_PACKAGE in text, f"{name} 要用包裡的 Python（目標電腦沒有裝 Python）"
         text.encode("ascii")  # 內容只有英數：任何語系的 Windows 都能正確執行
         assert "\r\n" in text and "\n" not in text.replace("\r\n", "")
+
+
+class TestCopyModels:
+    """模型檔放進安裝包：聊天模型在 ai_model、看圖片的圖文模型在 ai_model/vision（系統依 vision_model_dir 找這裡）"""
+
+    @pytest.fixture
+    def repo(self, tmp_path, monkeypatch):
+        src = tmp_path / "repo"
+        (src / "ai_model" / "vision").mkdir(parents=True)
+        (src / "ai_model" / "chat.gguf").write_bytes(b"c")
+        (src / "ai_model" / "vision" / "vl.gguf").write_bytes(b"v")
+        (src / "ai_model" / "vision" / "mmproj-vl.gguf").write_bytes(b"m")
+        monkeypatch.setattr(build, "BASE_DIR", src)
+        monkeypatch.setattr(build, "log", lambda _t: None)
+        return src
+
+    def names(self, folder):
+        return sorted(p.name for p in folder.glob("*.gguf"))
+
+    def test_no_models_still_makes_both_folders(self, repo, tmp_path):
+        out = tmp_path / "out"
+        build.copy_models(out, chat=False, vision=False)
+        assert self.names(out / "ai_model") == []
+        assert self.names(out / "ai_model" / "vision") == []
+        assert (out / "ai_model" / "vision" / "看圖片的模型放這裡.txt").is_file()
+
+    def test_vision_only(self, repo, tmp_path):
+        out = tmp_path / "out"
+        build.copy_models(out, chat=False, vision=True)
+        assert self.names(out / "ai_model") == []
+        assert self.names(out / "ai_model" / "vision") == ["mmproj-vl.gguf", "vl.gguf"]
+
+    def test_all_models(self, repo, tmp_path):
+        out = tmp_path / "out"
+        build.copy_models(out, chat=True, vision=True)
+        assert self.names(out / "ai_model") == ["chat.gguf"]
+        assert self.names(out / "ai_model" / "vision") == ["mmproj-vl.gguf", "vl.gguf"]
+
+    def test_incomplete_vision_model_is_skipped(self, repo, tmp_path):
+        (repo / "ai_model" / "vision" / "mmproj-vl.gguf").unlink()
+        out = tmp_path / "out"
+        build.copy_models(out, chat=False, vision=True)
+        assert self.names(out / "ai_model" / "vision") == []
