@@ -89,7 +89,8 @@ export default function ChatHeader({
     const trigger = useMenuTrigger()
     const modelTrigger = trigger(modelDropdownOpen, () => setModelDropdownOpen(true), () => setModelDropdownOpen(false))
     useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
-    // 手機：模型選單靠右對齊按鈕會往左超出螢幕 → 打開時量按鈕位置，讓選單左右各離螢幕邊 --sp-12
+    // 手機：模型選單（寬 --sz-340）靠右對齊按鈕會往左超出螢幕 → 打開時量按鈕位置：
+    // 放得下就照電腦版靠右對齊；放不下就撐滿畫面，左右各留 --sp-12（不歪一邊、文字也不被擠到換行）
     const isDesktop = useMediaQuery(MQ_DESKTOP)
     const modelGroupRef = useRef<HTMLDivElement>(null)
     const [phoneMenuBox, setPhoneMenuBox] = useState<{ right: number; width: number } | null>(null)
@@ -98,7 +99,9 @@ export default function ChatHeader({
         if (!modelDropdownOpen || isDesktop || !group) { setPhoneMenuBox(null); return }
         const edge = readPx('--sp-12')
         const vw = window.innerWidth
-        setPhoneMenuBox({ right: group.getBoundingClientRect().right - (vw - edge), width: vw - 2 * edge })
+        const buttonRight = group.getBoundingClientRect().right
+        const fits = buttonRight - readPx('--sz-340') >= edge
+        setPhoneMenuBox(fits ? null : { right: buttonRight - (vw - edge), width: vw - 2 * edge })
     }, [modelDropdownOpen, isDesktop])
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
