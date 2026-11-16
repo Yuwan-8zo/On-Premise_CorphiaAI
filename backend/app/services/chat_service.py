@@ -91,6 +91,8 @@ ATTACH_HEADROOM = 512
 
 # 深度研究：使用者指定「這一題要研究」時，多查幾輪、回答可以寫長一點
 RESEARCH_MAX_ROUNDS = 8
+# 深度研究至少要查幾次才能交報告：模型常常查一次就寫，前幾輪改成「一定要用工具」
+RESEARCH_MIN_SEARCHES = 3
 RESEARCH_MAX_TOKENS = 4096
 RESEARCH_INSTRUCTIONS = """### 深度研究
 使用者要的是一份研究報告，不是簡短回答。做法：
@@ -956,12 +958,15 @@ class ChatService:
         try:
             for round_index in range(rounds + 1):
                 tool_calls: list[dict] = []
+                # 深度研究：還沒查滿 RESEARCH_MIN_SEARCHES 次就不讓它直接寫報告
+                must_search = research and len(self.agent_steps) < RESEARCH_MIN_SEARCHES and round_index < rounds
                 stream = (
                     self.llm_service.generate_vision_stream(prompt=prompt, temperature=temperature, max_tokens=max_tokens)
                     if use_vision else
                     self.llm_service.generate_stream(
                         model_name=self.model_name, prompt=prompt, temperature=temperature, max_tokens=max_tokens,
                         **({"tools": tools} if tools and round_index < rounds else {}),
+                        **({"tool_choice": "required"} if tools and must_search else {}),
                     )
                 )
                 async for kind, chunk in stream:

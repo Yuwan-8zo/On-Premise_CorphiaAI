@@ -414,6 +414,7 @@ class LLMService:
         stop: Optional[list[str]] = None,
         model_name: Optional[str] = None,
         tools: Optional[list[dict]] = None,
+        tool_choice: Optional[str] = None,
     ) -> AsyncGenerator[tuple[str, Any], None]:
         """
         串流生成回應。model_name：用哪個模型（每個人自己選的；沒給用系統預設）
@@ -421,6 +422,7 @@ class LLMService:
         tools：這一題模型可以用的工具（services/agent_tools.py）。模型決定要用時，最後會多產出一筆
         ("tool_calls", [{"id", "name", "arguments"}])，由呼叫端執行後把結果接回去再問一次。
         只有 llama-server 引擎支援；其他引擎會忽略（先用 supports_tools 判斷要不要給）。
+        tool_choice："required"＝這一輪一定要用工具（深度研究前幾輪用，免得只查一次就交報告）；沒給＝模型自己決定。
 
         產出 (kind, text)：kind="content" 是正式回答，kind="reasoning" 是思考過程
         （只有支援推理的模型才會有，見 _server_generate_stream 的說明）。
@@ -435,7 +437,7 @@ class LLMService:
         inst = await self._instance_for(model_name)
         if inst is not None:
             if tools and isinstance(inst, EngineModel):
-                async for item in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, stop, tools=tools):
+                async for item in self._server_generate_stream(inst, prompt, max_tokens, temperature, top_p, stop, tools=tools, tool_choice=tool_choice):
                     yield item
                 return
             async for item in self._llama_generate_stream(prompt, max_tokens, temperature, top_p, stop, inst=inst):
@@ -569,7 +571,7 @@ class LLMService:
         """現在的引擎能不能讓模型用工具（只有 llama-server；它用模型自己的樣板處理工具呼叫的格式）"""
         return self.engine_mode == "server"
 
-    async def _server_generate_stream(self, inst: EngineModel, prompt, max_tokens, temperature, top_p, stop, tools=None):
+    async def _server_generate_stream(self, inst: EngineModel, prompt, max_tokens, temperature, top_p, stop, tools=None, tool_choice=None):
         """
         串流。中途停止（呼叫端 break／取消）＝離開 async with，連線關掉，llama-server 偵測到就停止產生，
         不會把剩下的 max_tokens 跑完。
@@ -582,6 +584,8 @@ class LLMService:
         body = self._server_body(prompt, max_tokens, temperature, top_p, stop, stream=True)
         if tools:
             body["tools"] = tools
+            if tool_choice:
+                body["tool_choice"] = tool_choice
         # 模型要用的工具是一小段一小段送來的（名稱一次到齊、參數的 JSON 分好幾段）：照編號收集起來，最後一起交出去
         calls: dict[int, dict] = {}
         token_count = 0
