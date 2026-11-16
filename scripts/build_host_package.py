@@ -6,7 +6,8 @@
 
     python scripts/build_host_package.py                 輸出到 dist/CorphiaAI-Host-<版本>/
     python scripts/build_host_package.py --out D:\\某處   指定輸出位置
-    python scripts/build_host_package.py --with-models   連 AI 模型檔一起放進去（很大，預設不放）
+    python scripts/build_host_package.py --with-models   連 AI 模型檔一起放進去（很大，預設不放；含看圖片的圖文模型）
+    python scripts/build_host_package.py --with-vision   只放看圖片的圖文模型（ai_model/vision，約 6 GB）
 
 打包前這台開發用的電腦要先準備好（缺什麼會直接告訴你）：
   - backend/.venv 裝好所有套件（一鍵啟動跑過一次就有）
@@ -68,6 +69,8 @@ README = """Corphia AI 主機安裝包
 第一次使用
   1. 把整個資料夾複製到主機（路徑不要太深，例如 C:\\CorphiaAI）。
   2. 把 AI 模型檔（.gguf）複製到 ai_model 資料夾。
+     要讓 AI 看圖片：把圖文模型（模型檔＋mmproj 開頭的影像轉接檔）放到 ai_model\\vision。
+     沒放也能正常使用，只是對話不能附圖片。
   3. 按兩下「第一次設定.bat」，照畫面回答（設定管理員帳號、要不要開機自動啟動、要不要開放內部網路）。
   4. 按兩下「Corphia AI.exe」開始使用。
 
@@ -149,7 +152,32 @@ def write_text(path: Path, text: str, bom: bool = False) -> None:
     path.write_bytes((b"\xef\xbb\xbf" if bom else b"") + text.encode("utf-8"))
 
 
-def build(out: Path, with_models: bool) -> None:
+def copy_models(out: Path, chat: bool, vision: bool) -> None:
+    """
+    模型檔：ai_model 最外層是聊天用的模型；ai_model/vision 是看圖片的圖文模型（模型檔＋mmproj 影像轉接檔，
+    系統依 settings.vision_model_dir 找這裡）。沒帶模型也先建好兩個資料夾和說明，讓使用者知道要放哪裡。
+    """
+    target = out / "ai_model"
+    (target / "vision").mkdir(parents=True, exist_ok=True)
+    write_text(target / "把模型檔放這裡.txt", "把 AI 模型檔（.gguf）複製到這個資料夾，再執行「第一次設定.bat」。\r\n", bom=True)
+    write_text(target / "vision" / "看圖片的模型放這裡.txt",
+               "要讓 AI 看圖片：把圖文模型的模型檔和 mmproj 開頭的影像轉接檔（都是 .gguf）放在這個資料夾。\r\n"
+               "沒放也能正常使用，只是對話不能附圖片。\r\n", bom=True)
+    sources = []
+    if chat:
+        sources += [(m, target) for m in sorted((BASE_DIR / "ai_model").glob("*.gguf"))]
+    if vision:
+        vision_files = sorted((BASE_DIR / "ai_model" / "vision").glob("*.gguf"))
+        if not any(f.name.startswith("mmproj") for f in vision_files):
+            log("    （ai_model/vision 裡沒有 mmproj 影像轉接檔，圖文模型不完整，跳過）")
+            vision_files = []
+        sources += [(m, target / "vision") for m in vision_files]
+    for model, dest in sources:
+        log(f"    模型 {model.relative_to(BASE_DIR)}（{model.stat().st_size / 1e9:.1f} GB）…")
+        shutil.copy2(model, dest / model.name)
+
+
+def build(out: Path, with_models: bool, with_vision: bool = False) -> None:
     started = time.time()
     if out.exists():
         raise SystemExit(f"{out} 已經存在。請先刪掉或換一個位置（不會自動覆蓋，免得刪到有資料的安裝）。")
@@ -187,12 +215,7 @@ def build(out: Path, with_models: bool) -> None:
 
     log("7/7 桌面版、說明與批次檔…")
     shutil.copy2(BASE_DIR / "desktop" / "dist" / "Corphia AI.exe", out / "Corphia AI.exe")
-    (out / "ai_model").mkdir()
-    write_text(out / "ai_model" / "把模型檔放這裡.txt", "把 AI 模型檔（.gguf）複製到這個資料夾，再執行「第一次設定.bat」。\r\n", bom=True)
-    if with_models:
-        for model in sorted((BASE_DIR / "ai_model").glob("*.gguf")):
-            log(f"    模型 {model.name}（{model.stat().st_size / 1e9:.1f} GB）…")
-            shutil.copy2(model, out / "ai_model" / model.name)
+    copy_models(out, chat=with_models, vision=with_models or with_vision)
     write_text(out / "安裝說明.txt", README.replace("\n", "\r\n"), bom=True)
     for name, body in BATS.items():
         write_text(out / name, BAT_HEADER + body)
@@ -204,7 +227,8 @@ def build(out: Path, with_models: bool) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="打包 Corphia AI 主機安裝包")
     parser.add_argument("--out", help="輸出資料夾（預設 dist/CorphiaAI-Host-<版本>）")
-    parser.add_argument("--with-models", action="store_true", help="連 ai_model 裡的模型檔一起放進去")
+    parser.add_argument("--with-models", action="store_true", help="連 ai_model 裡的模型檔一起放進去（含看圖片的圖文模型）")
+    parser.add_argument("--with-vision", action="store_true", help="只放看圖片的圖文模型（ai_model/vision，約 6 GB）")
     args = parser.parse_args()
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -217,7 +241,7 @@ def main() -> int:
         return 1
     version = (BASE_DIR / "VERSION").read_text(encoding="utf-8").strip()
     out = Path(args.out) if args.out else BASE_DIR / "dist" / f"CorphiaAI-Host-{version}"
-    build(out.resolve(), args.with_models)
+    build(out.resolve(), args.with_models, args.with_vision)
     return 0
 
 
