@@ -190,12 +190,14 @@ export default function ChatSidebar({
 
     return (
         <aside
+            // 手機：側欄從狀態列下方開始（外層已留 safe-area-inset-top），高度要扣掉這段，底部再讓出主畫面橫條；
+            // 不扣的話「加入主畫面」時底部超出螢幕，最下面的使用者按鈕（設定、登出）會看不到
             // 手機上收起的側欄只是移到畫面外：設成 inert，鍵盤和讀螢幕軟體才不會走到看不見的按鈕
             inert={!desktop && !sidebarOpen}
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
                 : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
-                } paper ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-full chat-side md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:ml-4`}
+                } paper ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-[calc(100%-env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] md:pb-0 chat-side md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:ml-4`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}

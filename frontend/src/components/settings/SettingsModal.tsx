@@ -127,8 +127,9 @@ export default function SettingsModal() {
                 className={`fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={() => setSettingsOpen(false)}
             />
+            {/* 外圍間距加上狀態列、主畫面橫條的保留區：「加入主畫面」全螢幕時視窗才不會壓到狀態列底下 */}
             <div
-                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none transition-[opacity,transform,filter] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95] [filter:blur(8px)]' : 'opacity-100 scale-100 [filter:none]'}`}
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pt-[calc(1.5rem+env(safe-area-inset-top))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pt-12 md:pb-12 pointer-events-none transition-[opacity,transform,filter] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95] [filter:blur(8px)]' : 'opacity-100 scale-100 [filter:none]'}`}
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
