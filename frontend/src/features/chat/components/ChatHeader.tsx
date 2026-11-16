@@ -1,4 +1,7 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
+import { readPx } from '@/lib/cssVars'
+import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
@@ -86,6 +89,20 @@ export default function ChatHeader({
     const trigger = useMenuTrigger()
     const modelTrigger = trigger(modelDropdownOpen, () => setModelDropdownOpen(true), () => setModelDropdownOpen(false))
     useDismiss(modelDropdownOpen, () => setModelDropdownOpen(false), [], { outside: false })
+    // 手機：模型選單（寬 --sz-340）靠右對齊按鈕會往左超出螢幕 → 打開時量按鈕位置：
+    // 放得下就照電腦版靠右對齊；放不下就撐滿畫面，左右各留 --sp-12（不歪一邊、文字也不被擠到換行）
+    const isDesktop = useMediaQuery(MQ_DESKTOP)
+    const modelGroupRef = useRef<HTMLDivElement>(null)
+    const [phoneMenuBox, setPhoneMenuBox] = useState<{ right: number; width: number } | null>(null)
+    useLayoutEffect(() => {
+        const group = modelGroupRef.current
+        if (!modelDropdownOpen || isDesktop || !group) { setPhoneMenuBox(null); return }
+        const edge = readPx('--sp-12')
+        const vw = window.innerWidth
+        const buttonRight = group.getBoundingClientRect().right
+        const fits = buttonRight - readPx('--sz-340') >= edge
+        setPhoneMenuBox(fits ? null : { right: buttonRight - (vw - edge), width: vw - 2 * edge })
+    }, [modelDropdownOpen, isDesktop])
     // Mobile RWD: gap + min-w-0 for truncation; hide Corphia title on small screens; shorter model abbrev
     return (
         <header className="shrink-0 w-full p-3 md:pt-[var(--sp-21)] md:pb-4 md:px-[var(--sp-21)] chat-head flex items-center justify-between gap-2 z-30 bg-transparent sticky top-0">
@@ -104,7 +121,7 @@ export default function ChatHeader({
 
             <div className="flex items-center gap-2 min-w-0 shrink">
                 {/* 右側：GGUF 模型選擇下拉選單（自己一條膠囊：內距 2、按鈕高 46、外框圓角 25，同心） */}
-                <div className="btn-group btn-group-36 relative min-w-0">
+                <div ref={modelGroupRef} className="btn-group btn-group-36 relative min-w-0">
                     <button
                         onPointerDown={isModelLoading ? undefined : modelTrigger.onPointerDown}
                         onClick={modelTrigger.onClick}
@@ -140,6 +157,7 @@ export default function ChatHeader({
                                     key="model-menu"
                                     {...popIn}
                                     className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-2"
+                                    style={phoneMenuBox ?? undefined}
                                 >
                                     <LensMenu className="">
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">

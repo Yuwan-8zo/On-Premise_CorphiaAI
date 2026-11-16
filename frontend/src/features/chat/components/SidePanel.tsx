@@ -45,6 +45,7 @@ export default function SidePanel() {
     // 換對話：上一個對話附加的檔案不能還留在面板裡
     useEffect(() => { dropOtherAttachments(conversationId) }, [conversationId])
     const desktop = useMediaQuery(MQ_DESKTOP)
+    const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled === true
     const [showCode, setShowCode] = useState(false)
     const closeButton = useRef<HTMLButtonElement | null>(null)
 
@@ -158,10 +159,13 @@ export default function SidePanel() {
                         <CopyButton code={current.code} className={PANEL_BUTTON} iconSize={PANEL_ICON} />
                     </div>
                 )}
-                <button type="button" onClick={toggleFull} aria-pressed={full} aria-label={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')} title={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')}
-                    className={iconBtn}>
-                    {full ? <Contract className="w-[var(--sz-16)] h-[var(--sz-16)]" /> : <Expand className="w-[var(--sz-16)] h-[var(--sz-16)]" />}
-                </button>
+                {/* 全螢幕：手機上面板本來就蓋滿畫面；iPhone（含 Duo 這種寬的）Safari 不支援網頁元素全螢幕，按了沒反應 */}
+                {desktop && canFullscreen && (
+                    <button type="button" onClick={toggleFull} aria-pressed={full} aria-label={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')} title={t(full ? 'ui.chat.sidePanel.exitFull' : 'ui.chat.sidePanel.full')}
+                        className={iconBtn}>
+                        {full ? <Contract className="w-[var(--sz-16)] h-[var(--sz-16)]" /> : <Expand className="w-[var(--sz-16)] h-[var(--sz-16)]" />}
+                    </button>
+                )}
                 <button ref={closeButton} type="button" onClick={close} aria-label={t('ui.chat.sidePanel.close')} className={iconBtn}>
                     <X className="w-[var(--sz-16)] h-[var(--sz-16)]" />
                 </button>
