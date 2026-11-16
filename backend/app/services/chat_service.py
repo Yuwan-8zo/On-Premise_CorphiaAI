@@ -960,15 +960,17 @@ class ChatService:
                 tool_calls: list[dict] = []
                 # 深度研究：還沒查滿 RESEARCH_MIN_SEARCHES 次就不讓它直接寫報告
                 must_search = research and len(self.agent_steps) < RESEARCH_MIN_SEARCHES and round_index < rounds
-                stream = (
-                    self.llm_service.generate_vision_stream(prompt=prompt, temperature=temperature, max_tokens=max_tokens)
-                    if use_vision else
-                    self.llm_service.generate_stream(
-                        model_name=self.model_name, prompt=prompt, temperature=temperature, max_tokens=max_tokens,
-                        **({"tools": tools} if tools and round_index < rounds else {}),
-                        **({"tool_choice": "required"} if tools and must_search else {}),
+                tool_args: dict = {}
+                if tools and round_index < rounds:
+                    tool_args["tools"] = tools
+                    if must_search:
+                        tool_args["tool_choice"] = "required"
+                if use_vision:
+                    stream = self.llm_service.generate_vision_stream(prompt=prompt, temperature=temperature, max_tokens=max_tokens)
+                else:
+                    stream = self.llm_service.generate_stream(
+                        model_name=self.model_name, prompt=prompt, temperature=temperature, max_tokens=max_tokens, **tool_args,
                     )
-                )
                 async for kind, chunk in stream:
                     if kind == "tool_calls":
                         tool_calls = chunk

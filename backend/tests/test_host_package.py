@@ -146,7 +146,8 @@ class TestCopyModels:
     def test_no_models_still_makes_both_folders(self, repo, tmp_path):
         out = tmp_path / "out"
         build.copy_models(out, chat=False, vision=False)
-        assert self.names(out / "ai_model") == [] and self.names(out / "ai_model" / "vision") == []
+        assert self.names(out / "ai_model") == []
+        assert self.names(out / "ai_model" / "vision") == []
         assert (out / "ai_model" / "vision" / "看圖片的模型放這裡.txt").is_file()
 
     def test_vision_only(self, repo, tmp_path):
