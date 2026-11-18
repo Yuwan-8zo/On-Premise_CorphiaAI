@@ -128,7 +128,7 @@ export default function ChatHeader({
                         disabled={isModelLoading}
                         aria-haspopup="listbox"
                         aria-expanded={modelDropdownOpen}
-                        className="touch-none flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
+                        className="touch-none flex items-center gap-1.5 md:gap-2 h-[var(--top-in)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
                     >
                         <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-14)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (

@@ -55,7 +55,7 @@ function SkelChat() {
                         <span className="hidden sm:flex h-[var(--sz-40)] items-center"><Skel className="h-[var(--sz-30)] w-[var(--sz-100)] !rounded-[var(--r-10)]" /></span>
                     </div>
                     <div className="flex items-center gap-2 min-w-0 shrink">
-                        <div className="btn-group btn-group-36 flex items-center h-[var(--sz-36)] px-3.5 text-[length:var(--fs-12)] md:text-[length:var(--fs-14)]"><SkelChars chars={9} /></div>
+                        <div className="btn-group btn-group-36 flex items-center h-[var(--top-in)] px-3.5 text-[length:var(--fs-12)] md:text-[length:var(--fs-14)]"><SkelChars chars={9} /></div>
                         <div className="btn-group btn-group-36 h-[var(--top-btn)] w-[var(--top-btn)] !rounded-full" />
                     </div>
                 </header>
