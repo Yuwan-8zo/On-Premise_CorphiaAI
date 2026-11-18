@@ -135,7 +135,7 @@ export default function SidePanel() {
             aria-label={t('ui.chat.sidePanel.label')}
             className={full
                 ? 'paper side-panel side-panel-full fixed inset-0 z-[60] flex flex-col overflow-hidden !rounded-none'
-                : `paper side-panel ${leaving ? 'side-panel-out' : 'side-panel-in'} fixed inset-0 z-50 flex flex-col overflow-hidden !rounded-none pt-[env(safe-area-inset-top)] md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
+                : `paper side-panel ${leaving ? 'side-panel-out' : 'side-panel-in'} fixed inset-0 z-50 flex flex-col overflow-hidden !rounded-none pt-[env(safe-area-inset-top)] md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--gutter))] md:my-[var(--gutter)] md:mr-[var(--gutter)] md:!rounded-[var(--r-card)]`}
         >
             <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--paper-line)] px-[var(--sp-16)] py-[var(--sp-12)]">
                 {!listMode && (
@@ -173,7 +173,7 @@ export default function SidePanel() {
 
             {listMode && <FileList items={items} messages={messages} onOpen={show} conversationId={conversationId} />}
             {isPage && !showCode && !frameReady && (
-                <div className="flex min-h-0 flex-1 items-center justify-center text-[length:var(--fs-14)] text-text-secondary" role="status">
+                <div className="flex min-h-0 flex-1 items-center justify-center text-[length:var(--fs-15)] text-text-secondary" role="status">
                     {t('common.loading')}
                 </div>
             )}
@@ -269,10 +269,10 @@ function FileList({ items, messages, onOpen, conversationId }: {
     const runs = orderedItems(items, 'run').filter((r) => r.el?.isConnected)
     const made = messages.flatMap((m) => m.attachments ?? [])
     const attached = [...new Set(messages.flatMap((m) => m.files ?? []))]
-    const row = 'flex w-full items-center gap-[var(--sp-10)] rounded-[var(--r-14)] px-[var(--sp-12)] py-[var(--sp-10)] text-left text-[length:var(--fs-14)] text-text-primary transition-colors'
+    const row = 'flex w-full items-center gap-[var(--sp-10)] rounded-[var(--r-14)] px-[var(--sp-12)] py-[var(--sp-10)] text-left text-[length:var(--fs-15)] text-text-primary transition-colors'
     const heading = 'px-[var(--sp-12)] pb-[var(--sp-6)] text-[length:var(--fs-12)] font-semibold text-text-secondary'
     if (!pages.length && !runs.length && !made.length && !attached.length) {
-        return <div className="flex min-h-0 flex-1 items-center justify-center text-[length:var(--fs-14)] text-text-secondary">{t('ui.chat.sidePanel.empty')}</div>
+        return <div className="flex min-h-0 flex-1 items-center justify-center text-[length:var(--fs-15)] text-text-secondary">{t('ui.chat.sidePanel.empty')}</div>
     }
     return (
         <div className="min-h-0 flex-1 overflow-auto p-[var(--sp-10)] flex flex-col gap-[var(--sp-16)]">

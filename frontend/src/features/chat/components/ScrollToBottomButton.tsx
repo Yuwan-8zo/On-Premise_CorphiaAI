@@ -87,7 +87,7 @@ export default function ScrollToBottomButton({ containerRef, dependsOn, isStream
                         <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '150ms' }} />
                         <span className="animate-typing-bounce block w-1.5 h-1.5 rounded-full bg-accent" style={{ animationDelay: '300ms' }} />
                     </span>
-                    <span className="text-[length:var(--fs-12d5)] font-medium leading-none">{t('ui.scroll.typing')}</span>
+                    <span className="text-[length:var(--fs-12)] font-medium leading-none">{t('ui.scroll.typing')}</span>
                 </motion.button>
             ) : showToBottom ? (
                 <motion.div key="to-bottom-arrow" {...popIn} className={place}>

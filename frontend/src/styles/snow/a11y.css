@@ -1,19 +1,13 @@
 /* 系統輔助設定（由 snow.css 最後載入，蓋過前面的玻璃樣式）
- *   減少透明度（prefers-reduced-transparency）：玻璃改成實色、拿掉背景模糊——後面的波浪、內容不再透上來
- *   提高對比（prefers-contrast: more）：同上，再加卡片外框、控制項描邊，次要文字調深（淺色）／調亮（深色）
- * 原則（apple-design §12、§14）：使用者開了這些設定，畫面要真的變，不是只有動畫變 */
+ *   減少透明度：不處理——規範第 15 版硬規則 8，玻璃在任何裝置上都和 iPhone 一樣是半透明模糊（刻意的選擇）
+ *   提高對比（prefers-contrast: more）：玻璃改實色、拿掉背景模糊，再加卡片外框、控制項描邊，次要文字調深（淺色）／調亮（深色） */
 
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+@media (prefers-contrast: more) {
   *,
   *::before,
   *::after {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-  }
-  /* 卡片：同一個顏色、不透明（--glass-card 可能由 App.tsx 依主題色調過，所以從它換算，不另寫顏色） */
-  .paper,
-  .dialog-sheet {
-    background: oklch(from var(--glass-card) l c h / 1);
   }
   .glass {
     background-color: rgb(var(--bg-base));

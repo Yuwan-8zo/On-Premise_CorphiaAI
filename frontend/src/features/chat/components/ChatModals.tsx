@@ -158,7 +158,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
                 <>
                     <div className="px-2">
                         <h3 className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
-                        <p className="text-[length:var(--fs-14)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
+                        <p className="text-[length:var(--fs-15)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
                     </div>
                     <DialogActions onCancel={onClose} onOk={() => submitMove()} />
                 </>

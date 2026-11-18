@@ -75,7 +75,7 @@ const AIThinkingIndicator = ({ phase = 'thinking', ragEnabled = false, readingDo
     return (
         <div className="flex flex-col py-1 select-none">
             <span
-                className="text-[length:var(--fs-14)] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
+                className="text-[length:var(--fs-15)] font-medium text-text-secondary tracking-wide transition-opacity duration-200"
                 style={{ opacity: fading ? 0 : 1 }}
             >
                 {making ? t(`ui.chat.fileMaking.${making}`, { defaultValue: t('ui.chat.fileMaking.file') }) : phaseLabels[displayPhase]}

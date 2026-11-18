@@ -92,7 +92,7 @@ export default function ModelsSection({
                                     <div className="mt-3 flex flex-wrap gap-4 text-sm"><SkelText>0000 0.00 GB</SkelText></div>
                                     <div className="mt-3 flex flex-wrap gap-4 text-xs"><SkelText>Hash: 000000000000</SkelText></div>
                                 </div>
-                                <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0"><SkelText>{t('admin.models.select', '選擇')}</SkelText></span>
+                                <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-15)] shrink-0"><SkelText>{t('admin.models.select', '選擇')}</SkelText></span>
                             </div>
                         ))
                     ) : models.length === 0 ? (

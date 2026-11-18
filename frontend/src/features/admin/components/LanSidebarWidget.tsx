@@ -48,7 +48,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, link, onT
                         <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none">
                             LAN
                         </p>
-                        <p className="text-[length:var(--fs-10)] text-text-secondary leading-tight mt-0.5">
+                        <p className="text-[length:var(--fs-11)] text-text-secondary leading-tight mt-0.5">
                             {known ? statusText : <SkelText>{statusText}</SkelText>}
                         </p>
                     </div>
@@ -67,7 +67,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, link, onT
                 </div>
 
                 <div className="mt-1.5 flex items-center justify-between border-t border-[var(--paper-line)] pt-1.5">
-                    <span className="text-[length:var(--fs-10)] font-medium text-text-secondary">
+                    <span className="text-[length:var(--fs-11)] font-medium text-text-secondary">
                         {t('admin.lan.toggleLabel', '區域網路')}
                     </span>
                     {known ? (
@@ -87,11 +87,11 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, link, onT
                 {enabled && lanIps.length > 0 && (
                     <div className="mt-1.5 flex items-end gap-2 border-t border-[var(--paper-line)] pt-1.5">
                         <div className="min-w-0 flex-1">
-                            <p className="text-[length:var(--fs-10)] text-text-muted leading-tight">
+                            <p className="text-[length:var(--fs-11)] text-text-muted leading-tight">
                                 {t('admin.lan.ips', '本機 IP')}
                             </p>
                             {/* 只顯示手機連得到的那一個（後端已排除虛擬網卡） */}
-                            <div className="mt-1 text-[length:var(--fs-10)] text-text-secondary tabular-nums">{lanIps[0]}</div>
+                            <div className="mt-1 text-[length:var(--fs-11)] text-text-secondary tabular-nums">{lanIps[0]}</div>
                         </div>
                         {/* 右下角：QR code，點開全螢幕給手機掃描 */}
                         <Tooltip label={t('admin.lan.qrOpen', '顯示手機連線 QR code')}>

@@ -130,7 +130,7 @@ export default function ChatHeader({
                         aria-expanded={modelDropdownOpen}
                         className="touch-none flex items-center gap-1.5 md:gap-2 h-[var(--sz-36)] px-3.5 rounded-full text-text-primary transition-[background-color,transform] duration-200 active:scale-[0.97] disabled:opacity-50 max-w-[var(--sz-180)] md:max-w-none"
                     >
-                        <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-14)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
+                        <span className="text-[length:var(--fs-12)] md:text-[length:var(--fs-15)] font-semibold tabular-nums tracking-tight transition-colors flex items-center gap-2 min-w-0">
                             {isModelLoading ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-[var(--paper-line)] border-t-transparent rounded-full animate-spin shrink-0" />
@@ -220,7 +220,7 @@ export default function ChatHeader({
                                             className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors  text-text-secondary group"
                                         >
                                             <RefreshCw className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" />
-                                            <span className="font-semibold text-[length:var(--fs-14)]">{t('ui.header.scanModels')}</span>
+                                            <span className="font-semibold text-[length:var(--fs-15)]">{t('ui.header.scanModels')}</span>
                                         </button>
                                     </div>
                                     </LensMenu>

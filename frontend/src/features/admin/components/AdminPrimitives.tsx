@@ -94,7 +94,7 @@ export function ActionButton({
             type={onClick ? 'button' : 'submit'}
             onClick={onClick}
             disabled={disabled}
-            className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0 min-w-max ${variants[variant]}`}
+            className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-15)] shrink-0 min-w-max ${variants[variant]}`}
         >
             {children}
         </button>

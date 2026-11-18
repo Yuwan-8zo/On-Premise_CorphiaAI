@@ -28,7 +28,7 @@ function SkelChat() {
     return (
         <div className="flex absolute inset-0 w-full h-full overflow-hidden">
             {/* 桌機側欄（手機收在抽屜裡，不畫） */}
-            <aside className="paper hidden md:flex flex-col relative shrink-0 w-[var(--sz-260)] h-[calc(100%-2*var(--sp-16))] my-4 ml-4 !rounded-[var(--r-35)]">
+            <aside className="paper hidden md:flex flex-col relative shrink-0 w-[var(--sz-260)] h-[calc(100%-2*var(--gutter))] my-[var(--gutter)] ml-[var(--gutter)] !rounded-[var(--r-card)]">
                 <div className="flex items-center justify-between p-4 pb-1 h-[var(--sz-60)] pr-[var(--sp-16)] shrink-0">
                     <Skel className="ml-[var(--sp-8)] h-[var(--sz-28)] w-[var(--sz-28)] !rounded-full" />
                     <Skel className="h-[var(--sz-20)] w-[var(--sz-20)] mr-3 !rounded-[var(--r-6)]" />
@@ -55,14 +55,14 @@ function SkelChat() {
                         <span className="hidden sm:flex h-[var(--sz-40)] items-center"><Skel className="h-[var(--sz-30)] w-[var(--sz-100)] !rounded-[var(--r-10)]" /></span>
                     </div>
                     <div className="flex items-center gap-2 min-w-0 shrink">
-                        <div className="btn-group btn-group-36 flex items-center h-[var(--sz-36)] px-3.5 text-[length:var(--fs-12)] md:text-[length:var(--fs-14)]"><SkelChars chars={9} /></div>
+                        <div className="btn-group btn-group-36 flex items-center h-[var(--sz-36)] px-3.5 text-[length:var(--fs-12)] md:text-[length:var(--fs-15)]"><SkelChars chars={9} /></div>
                         <div className="btn-group btn-group-36 h-[var(--dock-btn)] w-[var(--dock-btn)] !rounded-full" />
                     </div>
                 </header>
                 <div className="flex-1 min-h-0 overflow-hidden pt-6 pb-4">
                     <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                         <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
-                        <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-center leading-[1.3] md:leading-tight"><SkelChars chars={13} /></h2>
+                        <h2 className="text-[length:var(--fs-17)] sm:text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-center leading-[1.3] md:leading-tight"><SkelChars chars={13} /></h2>
                         <div className="mb-[var(--fluid-block)]" />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-[min(600px,100%)] mx-auto">
                             {[4, 4, 5, 5].map((c, i) => (
@@ -101,7 +101,7 @@ function SkelLogin() {
                 <div className="glass-chip flex items-center gap-2 rounded-full px-3.5 py-2 w-fit text-[length:var(--fs-13)] leading-[var(--lh-18)]"><span className="w-2 h-2" /><SkelChars chars={3} /></div>
                 <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
                     <div className="mx-auto max-w-[var(--sz-460)] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                        <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold leading-tight"><SkelChars chars={4} /></h2>
+                        <h2 className="text-[length:var(--fs-34)] xl:text-[length:var(--fs-34)] font-bold leading-tight"><SkelChars chars={4} /></h2>
                         <div className="mt-5 -mb-6 flex h-[var(--sz-96)] items-center"><Skel className="h-[var(--sz-64)] w-[var(--sz-200)] !rounded-[var(--r-16)]" /></div>
                         <p className="mt-2 mb-10 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelChars chars={11} /></p>
                         <div className="space-y-7">
@@ -193,10 +193,10 @@ function SkelAdmin() {
                             <div className={`p-[var(--sp-9d5)] ${box}`}>
                                 <div className="flex items-start gap-1.5 text-[length:var(--fs-12)] leading-none">
                                     <Skel className="h-6 w-6 !rounded-full shrink-0" />
-                                    <div className="flex-1 flex flex-col gap-1"><SkelChars chars={3} /><span className="text-[length:var(--fs-10)]"><SkelChars chars={3} /></span></div>
+                                    <div className="flex-1 flex flex-col gap-1"><SkelChars chars={3} /><span className="text-[length:var(--fs-11)]"><SkelChars chars={3} /></span></div>
                                 </div>
-                                <div className="mt-1.5 pt-1.5 flex items-center justify-between text-[length:var(--fs-10)]"><SkelChars chars={4} /><Skel className="w-[calc(var(--sw-w)*var(--sw-sm))] h-[calc(var(--sw-h)*var(--sw-sm))]" /></div>
-                                <div className="mt-1.5 pt-1.5 flex items-end justify-between text-[length:var(--fs-10)]"><span className="flex flex-col gap-1"><SkelChars chars={4} /><SkelChars chars={7} /></span><Skel className="h-[var(--sz-28)] w-[var(--sz-28)] !rounded-full" /></div>
+                                <div className="mt-1.5 pt-1.5 flex items-center justify-between text-[length:var(--fs-11)]"><SkelChars chars={4} /><Skel className="w-[calc(var(--sw-w)*var(--sw-sm))] h-[calc(var(--sw-h)*var(--sw-sm))]" /></div>
+                                <div className="mt-1.5 pt-1.5 flex items-end justify-between text-[length:var(--fs-11)]"><span className="flex flex-col gap-1"><SkelChars chars={4} /><SkelChars chars={7} /></span><Skel className="h-[var(--sz-28)] w-[var(--sz-28)] !rounded-full" /></div>
                             </div>
                         </div>
                     </aside>
@@ -209,7 +209,7 @@ function SkelAdmin() {
                                             <Skel className="h-7 w-7 shrink-0 !rounded-[var(--r-13)]" />
                                             <div className="flex-1 basis-[max-content]">
                                                 <p className="text-[length:var(--fs-12)] font-medium"><SkelChars chars={c} /></p>
-                                                <p className="text-[length:var(--fs-18)] font-semibold leading-tight"><SkelChars chars={1.4} /></p>
+                                                <p className="text-[length:var(--fs-17)] font-semibold leading-tight"><SkelChars chars={1.4} /></p>
                                             </div>
                                         </div>
                                     </div>

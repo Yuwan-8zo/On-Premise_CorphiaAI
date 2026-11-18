@@ -42,61 +42,22 @@ html:not(.dark) .paper .seg-track {
 }
 
 /* ════════════════════════════════════════════════════════════════
- * 全系統 Liquid Glass（使用者 2026-11-11 決定：卡片、側欄、對話框、後台面板也全部玻璃，不用平面實色）
- *   半透明＋背景模糊 24（不加飽和度）；邊緣用規範的三層光邊（亮線＋內光暈＋左右暗線），不用實線邊框
- *   下拉選單等會蓋在內容上的浮層另用 .paper-solid（不透明）
+ * 內容卡片（規範第 15 版「基礎」「材質」：玻璃只給可以操作的控制元件）
+ *   卡片、側欄、對話框、後台面板＝實色（--paper，深色 #1C1C1E）＋0.5px 分隔線色細邊；不模糊、不加光邊
+ *   --glass-card 保留這個名稱給舊的引用，值就是卡片實色
  * ════════════════════════════════════════════════════════════════ */
-:root {
-  /* 卡片：九成二不透明（保留玻璃材質與光邊，後面的波浪不會透上來）；深色由 App.tsx 依主題色調一點點色調 */
-  --glass-card: rgba(255, 255, 255, 0.92);
-}
+:root,
 html.dark {
-  --glass-card: rgba(38, 38, 41, 0.92); /* 同 App.tsx 設定值，重整第一幀就一致 */
+  --glass-card: var(--paper);
 }
 
 .paper,
 .dialog-sheet {
-  --R: calc(25 * var(--ui-unit));
-  --rimC: oklch(from var(--glass-bg) min(0.97, calc(l + 0.35)) calc(c * (1.4 - l)) h);
-  --rimD: linear-gradient(180deg, transparent 0, transparent calc(var(--R) * 0.45), var(--rim-out) calc(var(--R) * 0.8), var(--rim-out) calc(100% - var(--R) * 0.8), transparent calc(100% - var(--R) * 0.45), transparent 100%);
-  --rimA: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) calc(var(--R) * 0.13), rgba(0, 0, 0, 0.25) calc(var(--R) * 0.3), rgba(0, 0, 0, 0.1) calc(var(--R) * 0.5), transparent calc(var(--R) * 0.75), transparent calc(100% - var(--R) * 0.75), rgba(0, 0, 0, 0.1) calc(100% - var(--R) * 0.5), rgba(0, 0, 0, 0.25) calc(100% - var(--R) * 0.3), rgba(0, 0, 0, 0.45) calc(100% - var(--R) * 0.13), #000 100%);
-  --glowA: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.38) 0.35px, rgba(0, 0, 0, 0.24) 1px, rgba(0, 0, 0, 0.13) 2px, rgba(0, 0, 0, 0.07) 3px, transparent 5px, transparent calc(100% - 5px), rgba(0, 0, 0, 0.07) calc(100% - 3px), rgba(0, 0, 0, 0.13) calc(100% - 2px), rgba(0, 0, 0, 0.24) calc(100% - 1px), rgba(0, 0, 0, 0.38) calc(100% - 0.35px), rgba(0, 0, 0, 0.55) 100%);
-  background: var(--glass-card);
-  -webkit-backdrop-filter: blur(var(--blur-24));
-  backdrop-filter: blur(var(--blur-24));
-  border: 0;
+  background: var(--paper);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: var(--sp-0d5) solid var(--paper-line);
   box-shadow: var(--shadow-paper);
-}
-/* 亮線＋內光暈 */
-.paper::before,
-.dialog-sheet::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 3;
-  padding: var(--sp-0d5);
-  background: var(--rimC);
-  -webkit-mask: var(--glowA), var(--rimA), linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: source-over, source-in, xor;
-  mask: var(--glowA) add, var(--rimA) intersect, linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-}
-/* 左右兩側外面的細暗線 */
-.paper::after,
-.dialog-sheet::after {
-  content: '';
-  display: block;
-  position: absolute;
-  inset: calc(var(--sp-0d5) * -1);
-  border-radius: inherit;
-  padding: var(--sp-0d5);
-  pointer-events: none;
-  z-index: 3;
-  background: var(--rimD);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 
 /* 玻璃卡片裡的輸入欄位、分段軌道維持淡墨色（見上方），不疊第二層模糊 */

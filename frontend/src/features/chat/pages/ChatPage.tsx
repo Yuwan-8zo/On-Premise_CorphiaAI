@@ -106,7 +106,7 @@ export default function Chat() {
                                 <h3 className="font-semibold text-text-primary">{mainProps.t('ui.folder.sources', { count: mainProps.folderDocuments.length })}</h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
-                                    className="btn btn-primary !h-9 !px-4 !text-[length:var(--fs-14)] gap-1.5"
+                                    className="btn btn-primary !h-9 !px-4 !text-[length:var(--fs-15)] gap-1.5"
                                 >
                                     <PlusIcon /> <span className="mr-1">{mainProps.t('ui.folder.addSource')}</span>
                                 </button>
@@ -117,7 +117,7 @@ export default function Chat() {
                                     <div className="p-16 text-center h-full flex flex-col items-center justify-center">
                                     <Copy className="w-16 h-16 mx-auto text-text-secondary mb-4 stroke-1" />
                                     <p className="text-[length:var(--fs-17)] font-semibold text-text-secondary mb-1">{mainProps.t('ui.folder.emptyTitle')}</p>
-                                    <p className="text-[length:var(--fs-14)] text-text-muted">{mainProps.t('ui.folder.emptyHint')}</p>
+                                    <p className="text-[length:var(--fs-15)] text-text-muted">{mainProps.t('ui.folder.emptyHint')}</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border-subtle dark:divide-border-subtle">
@@ -217,7 +217,7 @@ export default function Chat() {
                                 <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                                 {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
                                     避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
-                                <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
+                                <h2 className="text-[length:var(--fs-17)] sm:text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
                                     {(() => {
                                         const raw = mainProps.user?.name || mainProps.user?.email?.split('@')[0] || mainProps.t('common.user', 'User')
                                         const name = raw.length > 16 ? raw.slice(0, 14) + '…' : raw

@@ -76,7 +76,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                                 {t('admin.overview.tokensPerSec', 'Tokens/秒')}
                             </p>
                         </div>
-                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
+                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
                             {data ? tokensPerSec.toFixed(1) : <SkelText>0.0</SkelText>}
                         </p>
                     </div>
@@ -88,7 +88,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                                 {t('admin.overview.totalGenerations', '推論次數')}
                             </p>
                         </div>
-                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
+                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
                             {data ? totalGenerations.toLocaleString() : <SkelText>00</SkelText>}
                         </p>
                     </div>

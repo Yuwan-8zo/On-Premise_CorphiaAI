@@ -76,7 +76,7 @@ export default function LoginToolbar() {
                                             setLanguage(lang.code)
                                             setIsLangMenuOpen(false)
                                         }}
-                                        className={`menu-item !text-[length:var(--fs-14)] ${i > 0 ? 'mt-1' : ''} ${language === lang.code ? 'is-selected' : '!text-text-secondary'}`}
+                                        className={`menu-item !text-[length:var(--fs-15)] ${i > 0 ? 'mt-1' : ''} ${language === lang.code ? 'is-selected' : '!text-text-secondary'}`}
                                     >
                                         {lang.label}
                                     </button>

@@ -93,7 +93,7 @@ export default function TenantsSection({
                             ))}
                         </div>
                         <div className="mt-auto flex justify-end gap-2">
-                            <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)]"><SkelText>{t('admin.tenants.edit', '編輯')}</SkelText></span>
+                            <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-15)]"><SkelText>{t('admin.tenants.edit', '編輯')}</SkelText></span>
                         </div>
                     </div>
                 ) : tenants.length === 0 ? (

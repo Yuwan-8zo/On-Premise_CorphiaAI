@@ -13,14 +13,14 @@
 
 :root {
   /* 圓角與間距 */
-  --r-card: calc(25 * var(--ui-unit));     /* 內容卡片 */
-  --pad-card: calc(26 * var(--ui-unit));   /* 卡片內距 */
+  --r-card: var(--edge-r);                 /* 內容卡片：螢幕圓角 48 − 離邊（寬畫面 28、手機 32），和螢幕同心 */
+  --pad-card: var(--gutter);               /* 卡片內距：和離邊同一個值（20／手機 16） */
   --r-in: max(calc(var(--r-card) - var(--pad-card) / 2), calc(10 * var(--ui-unit))); /* 卡片裡的圖片、列 */
   --r-row: calc(18 * var(--ui-unit));      /* 列表列、輸入框 */
   --r-ctl: calc(24 * var(--ui-unit));      /* 控制項群組 */
   --r-xl: calc(46 * var(--ui-unit));       /* 大型浮層 */
-  --edge: calc(16 * var(--ui-unit));       /* 貼著視窗邊的元素 */
-  --space: calc(12 * var(--ui-unit));      /* 版面間距（唯一一個）：區塊之間、大卡片與畫面邊、卡片之間；Tailwind 寫 p-[var(--space)]、gap-[var(--space)]… */
+  --edge: var(--gutter);                   /* 貼著視窗邊的元素：iOS 版面邊距 20（手機 16） */
+  --space: var(--gutter);                  /* 版面間距（唯一一個，和離邊同值）：區塊之間、大卡片與畫面邊、卡片之間；Tailwind 寫 p-[var(--space)]、gap-[var(--space)]… */
   --stat-min: calc(88 * var(--ui-unit));   /* 數字小卡的最小寬：放不下就自動換列 */
   --btn-h: calc(44 * var(--ui-unit));      /* 一般按鈕高度（Apple 最小觸控尺寸） */
   --btn-h-lg: calc(52 * var(--ui-unit));   /* 對話框主按鈕 */

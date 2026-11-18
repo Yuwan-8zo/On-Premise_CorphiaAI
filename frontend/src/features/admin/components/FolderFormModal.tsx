@@ -169,7 +169,7 @@ export function FolderFormModal({ folders }: { folders: ReturnType<typeof useAdm
                                 {FOLDER_ROLES.map((r) => {
                                     const on = form.allowed_roles.includes(r)
                                     return (
-                                        <button key={r} type="button" aria-pressed={on} onClick={() => toggleRole(r)} className={`btn !h-[var(--sz-36)] !px-[var(--sp-16)] !text-[length:var(--fs-14)] ${on ? 'btn-primary' : 'btn-secondary'}`}>
+                                        <button key={r} type="button" aria-pressed={on} onClick={() => toggleRole(r)} className={`btn !h-[var(--sz-36)] !px-[var(--sp-16)] !text-[length:var(--fs-15)] ${on ? 'btn-primary' : 'btn-secondary'}`}>
                                             {on && <CheckCircle2 className="h-4 w-4" />}
                                             {roleLabel(r)}
                                         </button>

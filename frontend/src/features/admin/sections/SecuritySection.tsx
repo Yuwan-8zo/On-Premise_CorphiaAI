@@ -123,7 +123,7 @@ export default function SecuritySection({ security }: { security: AdminSecurity 
                     <div role="alert" className="admin-fill-body flex flex-col items-center justify-center text-center gap-3 px-[var(--sp-24)]">
                         <span className="snow-row-icon !w-[var(--sz-52)] !h-[var(--sz-52)] !rounded-[var(--r-18)] text-[var(--danger-ink)]"><AlertCircle className="w-6 h-6" /></span>
                         <p className="text-[length:var(--fs-17)] font-semibold text-text-primary">{t('admin.security.loadFailed')}</p>
-                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-22)] text-text-secondary">{loadError}</p>
+                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{loadError}</p>
                         <ActionButton variant="secondary" onClick={load}>{t('common.retry')}</ActionButton>
                     </div>
                 ) : tab === 'rules' ? (

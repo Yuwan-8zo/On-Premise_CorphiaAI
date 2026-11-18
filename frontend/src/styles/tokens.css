@@ -156,24 +156,15 @@
   --r-900: calc(900 * var(--ui-unit));
 
   /* 字級 */
-  --fs-10: calc(10 * var(--type-unit));
   --fs-11: calc(11 * var(--type-unit));
   --fs-12: calc(12 * var(--type-unit));
-  --fs-12d5: calc(12.5 * var(--type-unit));
   --fs-13: calc(13 * var(--type-unit));
-  --fs-14: calc(14 * var(--type-unit));
   --fs-15: calc(15 * var(--type-unit));
-  --fs-15d5: calc(15.5 * var(--type-unit));
   --fs-16: calc(16 * var(--type-unit));
   --fs-17: calc(17 * var(--type-unit));
-  --fs-18: calc(18 * var(--type-unit));
   --fs-22: calc(22 * var(--type-unit));
-  --fs-24: calc(24 * var(--type-unit));
   --fs-28: calc(28 * var(--type-unit));
-  --fs-32: calc(32 * var(--type-unit));
   --fs-34: calc(34 * var(--type-unit));
-  --fs-44: calc(44 * var(--type-unit));
-  --fs-52: calc(52 * var(--type-unit));
   --fs-120: calc(120 * var(--type-unit));
   --fs-160: calc(160 * var(--type-unit));
 
@@ -204,6 +195,9 @@
   --lh-13: calc(13 * var(--type-unit));
   --lh-23: calc(23 * var(--type-unit));
   --lh-26: calc(26 * var(--type-unit));
+  --lh-25: calc(25 * var(--type-unit)); /* Title 3 20/25 */
+  --lh-34: calc(34 * var(--type-unit)); /* Title 1 28/34 */
+  --lh-41: calc(41 * var(--type-unit)); /* Large Title 34/41 */
 
   /* 模糊（玻璃、遮罩） */
   --blur-6: calc(6 * var(--ui-unit));
@@ -241,12 +235,13 @@
   --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
   --nav-gap-sm: calc(4 * var(--ui-unit));
 
-  /* 畫面外圈間距：聊天頁的左、右、下，以及側邊欄和主區之間，全部用同一個值 */
-  --gutter-n: 14;
+  /* 畫面外圈間距（規範第 15 版：iOS 版面邊距，寬畫面 20、手機 16，見下方 600 以下）：
+     聊天頁的左、右、下，側邊欄和主區之間，元件與元件之間，全部用同一個值 */
+  --gutter-n: 20;
   --gutter: calc(var(--gutter-n) * var(--ui-unit));
-  /* 同心原則（規範「間距與圓角」）：貼著螢幕邊的元件圓角＝螢幕圓角 − 離螢幕邊的距離
-     → 55 − 14 ＝ 41：左側收合欄、平板以上的輸入框（膠囊，高＝2 × 41） */
-  --screen-n: 55;
+  /* 同心原則（規範「間距與圓角」）：貼著螢幕邊的元件圓角＝螢幕圓角 48 − 離螢幕邊的距離
+     → 寬畫面 48 − 20 ＝ 28、手機 48 − 16 ＝ 32：內容卡片、左側收合欄、平板以上的輸入框（膠囊，高＝2 × 圓角） */
+  --screen-n: 48;
   /* iPhone Duo 加入主畫面（全螢幕）時，右上角的狀態列（時間、電量、Wi-Fi）從右邊算起佔的寬度（實機截圖量測） */
   --duo-status: calc(73 * var(--ui-unit));
   --admin-back: var(--sz-34); /* 後台上一頁按鈕 */
@@ -302,5 +297,12 @@
     --tap-msg: var(--sz-40);
     --side-row-h: var(--sz-44); /* 手指點：列高 44 → 圓鈕 36，按得到 */
     --search-fs: var(--fs-17); /* 手機輸入框字小於 16 會被 Safari 自動放大畫面 */
+  }
+}
+
+/* 手機（寬 600 以下）：iOS 版面邊距 16（規範第 15 版「間距與圓角」） */
+@media (max-width: 600px) {
+  :root {
+    --gutter-n: 16;
   }
 }

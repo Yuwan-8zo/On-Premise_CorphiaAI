@@ -177,7 +177,7 @@ export default function OverviewSection({
                                     <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                         {item.label}
                                     </p>
-                                    <p className={`text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
+                                    <p className={`text-[length:var(--fs-17)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
                                         {item.loading ? <SkelText>00</SkelText> : item.value.toLocaleString()}
                                     </p>
                                 </div>

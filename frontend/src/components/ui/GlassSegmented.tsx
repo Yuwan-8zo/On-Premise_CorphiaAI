@@ -6,7 +6,7 @@
  *   - 軌道的底色與光邊在鏡片底下真的挖洞（背景模糊不挖）；鏡片本身只有 --lens-glass（底面亮 9%、兩端漸暗）
  *   - 鏡內：一份縮小的「整條軌道」（長邊 0.93、短邊 0.768，以鏡片中心為準）＋從鏡緣進來的肩，
  *     同一個容器、同一個顏色（深色＝白 6.6%：疊上鏡片的 9% 剛好等於軌道的 15%）——鏡內鏡外同一個顏色
- *   - 鏡內文字用強調色、以鏡片中心放大 1.12 倍（規範右下選單）；真正的文字在鏡片位置挖洞；亮邊只在長邊兩緣；外圈 --lens-ring
+ *   - 鏡內文字用強調色、以鏡片中心放大 LENS_MAG（1.17）倍（規範右下選單）；真正的文字在鏡片位置挖洞；亮邊只在長邊兩緣；外圈 --lens-ring
  * vertical：直的軌道（側欄收合時用）；做法相同、方向轉 90 度（規範「右下選單」：鏡片用 --lens-glass-v、肩在上下）
  * 拖曳每幀追 30%、兩端硬鎖在第一格～最後一格；鍵盤 ← →（直的用 ↑ ↓）Home End。時間表與共用工具在 lensKit.ts。
  */
@@ -167,7 +167,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         options.map((o, i) => {
             const on = i === index
             const common = {
-                className: `${toolbar ? 'relative' : ''} flex-1 flex items-center justify-center rounded-full text-[length:var(--fs-14)] font-semibold text-center whitespace-nowrap ${
+                className: `${toolbar ? 'relative' : ''} flex-1 flex items-center justify-center rounded-full text-[length:var(--fs-15)] font-semibold text-center whitespace-nowrap ${
                     ghost || (on && !active) ? 'text-accent' : 'text-text-primary'
                 }`,
                 style: { [vertical ? 'height' : 'width']: sg || undefined, flex: 'none', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties,

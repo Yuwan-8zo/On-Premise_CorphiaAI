@@ -76,7 +76,7 @@ export default function ProjectInstructionsModal({ folder, onClose }: Props) {
                     aria-label={t('chat.instructionsTitle')}
                     className={`${INPUT_CLASS} resize-none !rounded-[var(--r-16)] !h-auto !py-[var(--sp-10)] leading-[var(--lh-22)]`}
                 />
-                <p className={`mt-2 min-h-[var(--lh-18)] text-[length:var(--fs-12)] leading-[var(--lh-18)] ${error ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`} role={error ? 'alert' : undefined}>
+                <p className={`mt-2 min-h-[var(--lh-18)] text-[length:var(--fs-12)] leading-[var(--lh-16)] ${error ? 'text-[var(--danger-ink)]' : 'text-text-secondary'}`} role={error ? 'alert' : undefined}>
                     {error || t('chat.instructionsHint', { n: text.length, max: FOLDER_INSTRUCTIONS_MAX })}
                 </p>
             </div>

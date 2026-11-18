@@ -38,7 +38,7 @@ export default function AuditChainCheck() {
             disabled={state.kind === 'checking'}
             title={t('admin.audit.chain.hint')}
             aria-live="polite"
-            className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0 min-w-max whitespace-nowrap ${
+            className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-15)] shrink-0 min-w-max whitespace-nowrap ${
                 broken ? 'btn-danger-solid' : 'btn-secondary'
             }`}
         >

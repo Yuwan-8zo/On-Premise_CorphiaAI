@@ -263,7 +263,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--sys-red)] opacity-75 animate-ping" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--sys-red)]" />
                 </span>
-                <span className="text-[length:var(--fs-14)] tabular-nums text-text-primary min-w-[var(--sz-44)]">
+                <span className="text-[length:var(--fs-15)] tabular-nums text-text-primary min-w-[var(--sz-44)]">
                     {formatDuration(elapsedMs)}
                 </span>
             </div>
