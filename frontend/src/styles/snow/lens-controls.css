@@ -217,3 +217,40 @@ html:not(.dark) .seg-track {
   font-size: var(--fs-13);
   font-weight: 600;
 }
+
+/* ---------- 拉桿（DualRange）：規範「拉桿與放大鏡」，照 iOS 亮度拉桿 ----------
+ * 平常：44×28 白色把手（.sw-veil），上面寫目前的值
+ * 按住拖曳（.is-lens）：0.32 秒長成 68×44 的深灰霧面鏡片（白 9%＋背景模糊 12），外圈一條深色細線＋底下一圈淡陰影；
+ * 值的文字淡掉，鏡內畫放大的軌道（.dr-mag：粗 1.25 倍、碰到鏡緣張到 1.6 倍） */
+.dr-knob {
+  width: var(--dr-knob-w);
+  height: var(--dr-knob-h);
+  overflow: hidden;
+  transition:
+    width 0.32s var(--ease-sp),
+    height 0.32s var(--ease-sp),
+    background-color 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
+}
+.dr-knob .dr-val {
+  transition: opacity 0.12s var(--ease-out);
+}
+.dr-knob.is-lens {
+  width: var(--dr-lens-w);
+  height: var(--dr-lens-h);
+  background: var(--sl-lens-tint) !important;
+  -webkit-backdrop-filter: blur(var(--blur-12));
+  backdrop-filter: blur(var(--blur-12));
+  box-shadow: var(--lens-ring-knob), var(--sl-lens-shadow) !important;
+}
+.dr-knob.is-lens .dr-val {
+  opacity: 0;
+}
+.dr-mag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+  animation: fadeIn 0.2s var(--ease-out);
+}

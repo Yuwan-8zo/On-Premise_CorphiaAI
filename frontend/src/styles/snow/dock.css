@@ -64,14 +64,9 @@
   font-weight: 600;
   white-space: nowrap;
 }
-/* 選單的放大鏡（右上選單、彈出選單）照 iOS 27：外圈只留一條深色細線，不加陰影 */
+/* 長按展開的寬選單圖示 27（規範「右下選單」）；放大鏡外圈的細線用全站的 --lens-ring（不加陰影） */
 :root {
   --dock-ic: calc(27 * var(--ui-unit));
-  --menu-lens-ring: 0 0 0 1px rgba(0, 0, 0, 0.32);
-}
-.dock-lens.lens,
-.menu-lens {
-  box-shadow: var(--menu-lens-ring) !important;
 }
 .dock-lens {
   position: absolute;

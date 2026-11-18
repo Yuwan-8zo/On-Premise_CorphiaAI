@@ -17,8 +17,9 @@ import { prefersReducedMotion } from '@/lib/reducedMotion'
 export const LENS_CFG = {
     sx: 0.93, // --lens-sx 鏡內的底沿長邊的縮放
     sy: 0.768, // --lens-sy 鏡內的底垂直長邊的縮放（切換開關用；整條列類用 band 依大小算）
-    band: 0.17, // --lens-band 折射凹陷（肩）的寬度佔鏡片短邊的比例（整條列類，見 lensCrossScale）
-    zoom: 1.12, // --lens-zoom 鏡內文字與圖示放大倍率
+    band: 0.11, // --lens-band 折射凹陷（肩）的寬度佔鏡片短邊的比例（整條列類，見 lensCrossScale；規範第 15 版）
+    zoom: 1.17, // --lens-zoom 鏡內文字與圖示放大倍率（規範第 15 版）
+    overK: 0.084, // --lens-over-k 放大鏡凸出軌道外的量＝軌道粗細 × 這個值（App Store 分頁列實測）
     grow: 120, // --lens-grow 按下時原地長大
     veilOut: 100, // --lens-veil-out 平常的樣子淡掉
     veilWait: 30, // --lens-veil-wait 縮回開始後多久，平常的樣子開始蓋回
@@ -198,13 +199,10 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
  * 切換開關不用：它的軌道、旋鈕、放大鏡全部等比例縮放，固定的 LENS_SY 本來就和大小無關。
  * lensCross＝放大鏡短邊、barCross＝底的粗細
  */
-export function lensCrossScale(lensCross: number, barCross: number, band: number = LENS_CFG.band) {
+export function lensCrossScale(lensCross: number, barCross: number) {
     if (!(barCross > 0) || !(lensCross > 0)) return LENS_SY
-    return Math.min(1, (lensCross * (1 - 2 * band)) / barCross)
+    return Math.min(1, (lensCross * (1 - 2 * LENS_CFG.band)) / barCross)
 }
-
-/** 右上選單的放大鏡（規範第 15 版「右下選單」：鏡內放大 1.17、凹陷佔鏡片短邊 0.11）；其他放大鏡元件維持 LENS_CFG */
-export const DOCK_LENS = { zoom: 1.17, band: 0.11 } as const
 
 /** 放大鏡是否在作用中（按住、滑動或縮回中）；平常只顯示凹陷底盤／白色旋鈕 */
 export const lensActive = (f: LensFrame) => f.grow > 0.001 || f.veil < 0.999

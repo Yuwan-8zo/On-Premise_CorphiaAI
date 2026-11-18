@@ -87,6 +87,7 @@
   --sz-60: calc(60 * var(--ui-unit));
   --sz-63: calc(63 * var(--ui-unit));
   --sz-64: calc(64 * var(--ui-unit));
+  --sz-68: calc(68 * var(--ui-unit));
   --sz-72: calc(72 * var(--ui-unit));
   --sz-80: calc(80 * var(--ui-unit));
   --sz-86: calc(86 * var(--ui-unit));
@@ -239,9 +240,8 @@
   --seg-pad: calc(4 * var(--ui-unit));        /* 分段切換器：軌道內距 */
   --seg-pad-lg: calc(5 * var(--ui-unit));
   --seg-pad-xs: calc(2 * var(--ui-unit));
-  --lens-over: calc(8 * var(--ui-unit));      /* 放大鏡比格子多出去（分段切換器，四邊一樣） */
-  --lens-over-x: calc(11.5 * var(--ui-unit)); /* 工具列：沿長邊 */
-  --lens-over-y: calc(4.5 * var(--ui-unit));  /* 工具列：垂直長邊 */
+  /* 清單類放大鏡（側欄導覽、彈出選單、對話清單）比一列多出去的量；分段切換器與工具列不用這個，照規範由軌道粗細算（GlassSegmented） */
+  --lens-over: calc(8 * var(--ui-unit));
   --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
   --nav-gap-sm: calc(4 * var(--ui-unit));
 
@@ -294,6 +294,15 @@
   --dr-knob-w: var(--sz-44);       /* 把手（白色膠囊，上面寫門檻值） */
   --dr-knob-h: var(--sz-28);
   --dr-step: 0.01;                 /* 方向鍵一次動多少（Shift 加速 ×5） */
+  /* 拉桿按住時的放大鏡（規範「拉桿與放大鏡」，照 iOS 亮度拉桿，是放大鏡裡唯一的例外）：
+     44×28 白色把手 → 68×44 深灰霧面鏡片＋底下一圈淡陰影；鏡內軌道粗 1.25 倍、碰到鏡緣往外張到 1.6 倍 */
+  --dr-lens-w: var(--sz-68);
+  --dr-lens-h: var(--sz-44);
+  --sl-in: 1.25;
+  --sl-flare: 1.6;
+  --sl-flare-len: 0.16;            /* 張開那一段長＝鏡寬 × 這個值 */
+  --sl-lens-tint: color-mix(in srgb, rgb(var(--text-primary)) 9%, transparent);
+  --sl-lens-shadow: 0 8px 18px rgba(0, 0, 0, 0.42);
   --hist-h: var(--sz-160);         /* 分數分布長條圖高 */
   --spark-w: var(--sz-64);         /* 閘道列的近 7 天小長條圖 */
   --gate-tag-w: calc(var(--fs-12) * 8 + var(--sp-10) * 2); /* 閘道列的動作標籤欄：放得下最長的標籤（日文 8 個字），各列對齊 */

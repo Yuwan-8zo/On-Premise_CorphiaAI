@@ -6,7 +6,7 @@
  *   - 軌道的底色與光邊在鏡片底下真的挖洞（背景模糊不挖）；鏡片本身只有 --lens-glass（底面亮 9%、兩端漸暗）
  *   - 鏡內：一份縮小的「整條軌道」（長邊 0.93、短邊 0.768，以鏡片中心為準）＋從鏡緣進來的肩，
  *     同一個容器、同一個顏色（深色＝白 6.6%：疊上鏡片的 9% 剛好等於軌道的 15%）——鏡內鏡外同一個顏色
- *   - 鏡內文字用強調色、以鏡片中心放大 1.12 倍（規範右下選單）；真正的文字在鏡片位置挖洞；亮邊只在長邊兩緣；外圈 --lens-ring
+ *   - 鏡內文字用強調色、以鏡片中心放大 LENS_MAG（1.17）倍（規範右下選單）；真正的文字在鏡片位置挖洞；亮邊只在長邊兩緣；外圈 --lens-ring
  * vertical：直的軌道（側欄收合時用）；做法相同、方向轉 90 度（規範「右下選單」：鏡片用 --lens-glass-v、肩在上下）
  * 拖曳每幀追 30%、兩端硬鎖在第一格～最後一格；鍵盤 ← →（直的用 ↑ ↓）Home End。時間表與共用工具在 lensKit.ts。
  */
@@ -33,8 +33,9 @@ interface Props<T extends string> {
     /** 直的軌道 */
     vertical?: boolean
     /** 放大鏡沿長邊、垂直長邊各加多少（px）；分段切換器 8／8，浮動工具列（只有圖示）11.5／4.5 */
-    growLong?: PxOrVar
-    growCross?: PxOrVar
+    /** 放大鏡比一格多長出去的量；不給＝照規範自動算（軌道內距＋軌道粗細×0.084） */
+    growLong?: PxOrVar | 'auto'
+    growCross?: PxOrVar | 'auto'
     /** 格子之間的空隙（沿長邊，px）；右下選單規格：按鈕 46、列距 53 → 空隙 7 */
     gap?: PxOrVar
     /** 純圖示的工具列：滑過每格顯示 name 的提示泡泡 */
@@ -44,11 +45,13 @@ interface Props<T extends string> {
     'data-tour'?: string
 }
 
-export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad: padIn = '--seg-pad', vertical = false, growLong: growLongIn = '--lens-over', growCross: growCrossIn = '--lens-over', gap: gapIn = 0, tooltips = false, toolbar = false, ...rest }: Props<T>) {
+export default function GlassSegmented<T extends string>({ options, value, onChange, className = '', pad: padIn = '--seg-pad', vertical = false, growLong: growLongIn = 'auto', growCross: growCrossIn = 'auto', gap: gapIn = 0, tooltips = false, toolbar = false, ...rest }: Props<T>) {
     // 尺寸參數可以給像素或設定名稱（預設讀 tokens.css 的 --seg-pad、--lens-over），不寫死
-    const sizeIn = [padIn, growLongIn, growCrossIn, gapIn]
+    // growLong／growCross 不給（'auto'）＝照規範算：放大鏡從一格往外長「軌道內距 ＋ 軌道粗細 × 0.084」，四邊一樣
+    //（軌道 44、內距 4 → 凸出軌道上下 3.7、凸出格子左右 7.7）
+    const sizeIn = [padIn, growLongIn === 'auto' ? 0 : growLongIn, growCrossIn === 'auto' ? 0 : growCrossIn, gapIn]
     const px = useCssPx(sizeIn.filter((v): v is `--${string}` => typeof v === 'string'))
-    const [pad, growLong, growCross, gap] = sizeIn.map((v) => (typeof v === 'string' ? px[v] : v))
+    const [pad, growLongSet, growCrossSet, gap] = sizeIn.map((v) => (typeof v === 'string' ? px[v] : v))
     const trackRef = useRef<HTMLDivElement | null>(null)
     const [size, setSize] = useState({ w: 0, h: 0 })
     const n = options.length
@@ -130,6 +133,9 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
     const cross = vertical ? W : H
     const rowLong = Math.max(0, long - pad * 2)
     const rowCross = Math.max(0, cross - pad * 2)
+    const growAuto = pad + cross * LENS_CFG.overK
+    const growLong = growLongIn === 'auto' ? growAuto : growLongSet
+    const growCross = growCrossIn === 'auto' ? growAuto : growCrossSet
     const sg = n ? (rowLong - gap * (n - 1)) / n : 0 // 一格的大小
     const pitch = sg + gap // 相鄰兩格中心的距離
     sgRef.current = pitch
