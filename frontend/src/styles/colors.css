@@ -59,21 +59,21 @@ html.dark {
    *   頁面 #000000 → 卡片 #1C1C1E → 卡片內區塊 #2C2C2E；分隔線 #38383A
    *   文字 #FFFFFF／#B6B6C0／#85858F */
   /* 跟 App.tsx 執行後設定的值一致（黑色漸層最上方 24）：重整第一幀就是正確底色，不會先閃純黑 */
-  background-color: #0C0C0D;
+  background-color: #18181A;
   color: #FFFFFF;
 
-  --bg-canvas: 12 12 13;
-  --bg-base: 12 12 13;
-  --bg-main: 12 12 13;
-  --bg-surface: 28 28 30;   /* #1C1C1E 內容卡片 */
-  --bg-elevated: 44 44 46;  /* #2C2C2E 卡片內的區塊 */
-  --wave-d1: 8 8 9;
-  --wave-d2: 4 4 5;
-  --wave-d3: 0 0 0;
+  --bg-canvas: 24 24 26;
+  --bg-base: 24 24 26;
+  --bg-main: 24 24 26;
+  --bg-surface: 32 32 35;
+  --bg-elevated: 46 46 49;
+  --wave-d1: 17 17 19;
+  --wave-d2: 10 10 11;
+  --wave-d3: 3 3 4;
   --text-primary: 255 255 255;
-  --text-secondary: 152 152 159; /* 次要文字：rgba(235,235,245,.6) 疊在卡片 #1C1C1E 上的結果 */
-  --text-muted: 136 136 142;     /* 系統的「淡一階說明字」：規範第三層（.3）當內文太暗，保留在卡片上 4.5:1 的最低值 */
-  --text-disabled: 90 90 93;     /* 第三層文字：rgba(235,235,245,.3) 疊在卡片上的結果（佔位、停用） */
+  --text-secondary: 182 182 192;
+  --text-muted: 165 165 172; /* 第三層：在深色卡片（elevated）上達 4.5:1，仍比次要文字（182）淡一階 */
+  --text-disabled: 99 99 102;
   --border-subtle: 56 56 58;
   --border-strong: 72 72 74;
   --scrollbar-thumb: 99 99 102;

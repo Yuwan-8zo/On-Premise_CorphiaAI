@@ -17,7 +17,7 @@ export default function LoginHero() {
         // 整塊往右推約 4% 視窗寬，視覺重心不要太靠左
         <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
             <div className="mx-auto max-w-[var(--sz-460)] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                <h2 className="text-[length:var(--fs-34)] xl:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.025em] leading-tight relative z-10 transition-colors">
+                <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold text-text-primary tracking-[-0.025em] leading-tight relative z-10 transition-colors">
                     {t('auth.welcomeTitle')}
                 </h2>
                 <div className="mt-5 -mb-6 relative z-0 flex items-center">

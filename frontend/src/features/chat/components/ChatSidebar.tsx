@@ -197,7 +197,7 @@ export default function ChatSidebar({
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
                 : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
-                } paper ${sidebarOpen ? 'md:rounded-[var(--r-card)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-[calc(100%-env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] md:pb-0 chat-side md:h-[calc(100%-2*var(--gutter))] md:my-[var(--gutter)] md:ml-[var(--gutter)]`}
+                } paper ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-[calc(100%-env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] md:pb-0 chat-side md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:ml-4`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}
@@ -456,7 +456,7 @@ export default function ChatSidebar({
                         className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
                         style={{ width: wide ? 232 : 44 }}
                     >
-                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[length:var(--fs-15)]">
+                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[length:var(--fs-14)]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {(
@@ -467,7 +467,7 @@ export default function ChatSidebar({
                               物件 race condition / refresh bug 導致暫時 null）。
                               優先順序：name → email → 「…」（載入中佔位）
                             */}
-                            <p className="font-semibold text-[length:var(--fs-15)] text-text-primary truncate text-left m-0 leading-snug">
+                            <p className="font-semibold text-[length:var(--fs-14)] text-text-primary truncate text-left m-0 leading-snug">
                                 {user?.name || user?.email || '…'}
                             </p>
                         </div>

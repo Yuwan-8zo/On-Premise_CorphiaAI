@@ -167,7 +167,7 @@ export default function AuditSection({
                                     const securityActions = ['pii_detected', 'prompt_injection_blocked', 'dlp_hit', 'login_failed', 'account_locked', 'token_revoke', 'ngrok_start']
                                     onFilterChange('action', auditFilter.action === securityActions.join(',') ? '' : securityActions.join(','))
                                 }}
-                                className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-15)] whitespace-nowrap ${
+                                className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] whitespace-nowrap ${
                                     auditFilter.action?.includes('pii_detected') || auditFilter.action?.includes('login_failed')
                                         ? 'btn-danger-solid'
                                         : 'btn-secondary'

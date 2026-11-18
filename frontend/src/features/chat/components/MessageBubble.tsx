@@ -251,7 +251,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.transcript && message.content && (
-                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 mt-1.5 whitespace-pre-wrap text-[length:var(--fs-15)] leading-relaxed selectable-text">
+                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 mt-1.5 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed selectable-text">
                                     {message.content}
                                 </div>
                             )}
@@ -313,7 +313,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         ))}
                                     </div>
                                 )}
-                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15)] leading-relaxed relative selectable-text">
+                                <div className="glass-chip text-text-primary rounded-[var(--r-22)] px-5 py-3 whitespace-pre-wrap text-[length:var(--fs-15d5)] leading-relaxed relative selectable-text">
                                     {message.content}
                                 </div>
                             </>
@@ -361,7 +361,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                     </div>
 
                     {/* 內容區塊 */}
-                    <div className="flex-1 min-w-0 text-text-primary text-[length:var(--fs-15)] leading-relaxed pb-4">
+                    <div className="flex-1 min-w-0 text-text-primary text-[length:var(--fs-15d5)] leading-relaxed pb-4">
                         {/* 思考過程（只有會推理的模型才有）：回答開始出現文字時自動收合 */}
                         {message.reasoning && (
                             <ThinkingBlock

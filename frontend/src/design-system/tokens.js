@@ -17,28 +17,19 @@ export const radius = {
 }
 
 export const fontSize = {
-    // 規範第 15 版：只用 iOS 文字樣式十一級（字級／行高），Tailwind 內建的 text-* 也對到這十一級
-    xs: ['12px', '16px'],        // Caption 1
-    sm: ['15px', '20px'],        // Subheadline
-    base: ['17px', '22px'],      // Body
-    lg: ['17px', '22px'],        // Headline（字重由 font-semibold 決定）
-    xl: ['20px', '25px'],        // Title 3
-    '2xl': ['22px', '28px'],     // Title 2
-    '3xl': ['28px', '34px'],     // Title 1
-    '4xl': ['34px', '41px'],     // Large Title
-    caption: ['12px', '16px'],   // Caption 1
-    'body-sm': ['13px', '18px'], // Footnote
-    body: ['15px', '20px'],      // Subheadline
-    'body-lg': ['16px', '21px'], // Callout
-    'title-sm': ['17px', '22px'],// Headline
-    title: ['22px', '28px'],     // Title 2
-    display: ['34px', '41px'],   // Large Title
+    caption: ['12px', '16px'],
+    'body-sm': ['13px', '18px'],
+    body: ['14px', '20px'],
+    'body-lg': ['16px', '24px'],
+    'title-sm': ['18px', '24px'],
+    title: ['22px', '28px'],
+    display: ['36px', '44px'],
 }
 
 export const themeColors = {
     // 暖色調米色 / 深灰，避開純白純黑造成的視覺壓迫
-    darkBg: '#0C0C0D', // 深色頁面底色（規範第 15 版：頁面接近純黑，保留波浪）
-    darkSurface: '#1C1C1E', // 深色卡片（Apple #1C1C1E）
+    darkBg: '#202022',
+    darkSurface: '#28282A',
     darkBgGradient: 'linear-gradient(135deg, #202022 0%, #101012 100%)',
     lightBg: '#F6F4F0',
     lightSurface: '#F2EFEA',

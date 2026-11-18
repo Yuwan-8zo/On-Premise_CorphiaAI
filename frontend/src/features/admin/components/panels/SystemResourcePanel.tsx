@@ -73,7 +73,7 @@ export default function SystemResourcePanel({ className }: SystemResourcePanelPr
                             </div>
                             <p className="min-w-0 truncate text-[length:var(--fs-11)] text-text-muted">{info ? item.note : <SkelText>{item.placeholder}</SkelText>}</p>
                         </div>
-                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
+                        <p className="text-[length:var(--fs-28)] leading-[var(--lh-30)] font-semibold tabular-nums whitespace-nowrap text-text-primary">
                             {/* 載入中用同格式的佔位（數字＋小一號的 %），高度和真資料一樣 */}
                             {info ? <>{item.percent.toFixed(1)}<span className="ml-0.5 text-[length:var(--fs-15)] font-medium text-text-secondary">%</span></> : <SkelText>00.0<span className="ml-0.5 text-[length:var(--fs-15)] font-medium">%</span></SkelText>}
                         </p>

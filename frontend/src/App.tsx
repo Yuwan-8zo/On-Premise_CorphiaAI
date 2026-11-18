@@ -87,9 +87,9 @@ export default function App() {
         html.style.setProperty('--color-ios-accent-dark', preset.rgbDark)
         html.style.setProperty('--text-on-accent', '#FFFFFF')
 
-        // 深色：規範第 15 版頁面背景是純黑（#000000）；保留波浪，最上方 12 → 三層 8／4／0，越往下越接近純黑
-        const darkBase = '12 12 13'
-        const darkWaves = ['8 8 9', '4 4 5', '0 0 0']
+        // 深色：黑色漸層（不帶品牌色）。畫面最上方 24 → 三層波浪 17／10／3，一層比一層黑（上淺下深，跟淺色模式同方向）
+        const darkBase = '24 24 26'
+        const darkWaves = ['17 17 19', '10 10 11', '3 3 4']
         darkWaves.forEach((c, i) => {
             if (isDark) html.style.setProperty(`--wave-d${i + 1}`, c)
             else html.style.removeProperty(`--wave-d${i + 1}`)
@@ -98,12 +98,13 @@ export default function App() {
             if (isDark) html.style.setProperty(k, darkBase)
             else html.style.removeProperty(k)
         }
-        // 卡片／側欄／對話框（實色）與卡片內的區塊：Apple 深色系統色 #1C1C1E／#2C2C2E（規範第 15 版「基礎」色彩）
+        // 卡片／側欄／對話框（玻璃，九成二不透明）與不透明浮層（選單）：中性深灰，比背景亮一階；光邊由卡片色自動算（snow.css）
         if (isDark) {
-            html.style.setProperty('--bg-surface', '28 28 30')
-            html.style.setProperty('--bg-elevated', '44 44 46')
+            html.style.setProperty('--glass-card', 'rgba(38, 38, 41, 0.92)')
+            html.style.setProperty('--bg-surface', '32 32 35')
+            html.style.setProperty('--bg-elevated', '46 46 49')
         } else {
-            for (const k of ['--bg-surface', '--bg-elevated']) html.style.removeProperty(k)
+            for (const k of ['--glass-card', '--bg-surface', '--bg-elevated']) html.style.removeProperty(k)
         }
 
         // 分隔線：Apple opaqueSeparator（深色 #38383A、淺色 #C6C6C8），不跟強調色走

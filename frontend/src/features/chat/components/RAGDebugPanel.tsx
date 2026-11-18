@@ -119,7 +119,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                                         {(source.score * 100).toFixed(1)}%
                                     </span>
                                     {source.distance !== undefined && (
-                                        <span className="text-[length:var(--fs-11)] tabular-nums text-text-muted">
+                                        <span className="text-[length:var(--fs-10)] tabular-nums text-text-muted">
                                             d={source.distance}
                                         </span>
                                     )}

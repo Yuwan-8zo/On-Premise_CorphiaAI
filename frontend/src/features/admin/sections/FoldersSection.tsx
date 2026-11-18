@@ -95,14 +95,14 @@ export default function FoldersSection({ folders, loaded, loadError, onRetry, on
                     <div role="alert" className="admin-fill-body flex flex-col items-center justify-center text-center gap-3 px-[var(--sp-24)]">
                         <span className="snow-row-icon !w-[var(--sz-52)] !h-[var(--sz-52)] !rounded-[var(--r-18)] text-[var(--danger-ink)]"><AlertCircle className="w-6 h-6" /></span>
                         <p className="text-[length:var(--fs-17)] font-semibold text-text-primary">{t('admin.folders.loadFailed')}</p>
-                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{loadError}</p>
+                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-22)] text-text-secondary">{loadError}</p>
                         <ActionButton variant="secondary" onClick={onRetry}>{t('common.retry')}</ActionButton>
                     </div>
                 ) : folders.length === 0 ? (
                     <div className="admin-fill-body flex flex-col items-center justify-center text-center gap-3 px-[var(--sp-24)]">
                         <span className="snow-row-icon !w-[var(--sz-52)] !h-[var(--sz-52)] !rounded-[var(--r-18)] text-accent"><Folder className="w-6 h-6" /></span>
                         <p className="text-[length:var(--fs-17)] font-semibold text-text-primary">{t('admin.folders.emptyTitle')}</p>
-                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('admin.folders.emptyDesc')}</p>
+                        <p className="max-w-[var(--sz-420)] text-[length:var(--fs-15)] leading-[var(--lh-22)] text-text-secondary">{t('admin.folders.emptyDesc')}</p>
                         <ActionButton onClick={onAdd}>
                             <Plus className="h-4 w-4" />
                             {t('admin.folders.add')}

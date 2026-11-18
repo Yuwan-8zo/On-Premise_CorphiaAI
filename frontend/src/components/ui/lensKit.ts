@@ -17,8 +17,8 @@ import { prefersReducedMotion } from '@/lib/reducedMotion'
 export const LENS_CFG = {
     sx: 0.93, // --lens-sx 鏡內的底沿長邊的縮放
     sy: 0.768, // --lens-sy 鏡內的底垂直長邊的縮放（切換開關用；整條列類用 band 依大小算）
-    band: 0.11, // --lens-band 折射凹陷（肩）的寬度佔鏡片短邊的比例（整條列類，見 lensCrossScale；規範第 15 版 iOS 27）
-    zoom: 1.17, // --lens-zoom 鏡內文字與圖示放大倍率（規範第 15 版 iOS 27）
+    band: 0.17, // --lens-band 折射凹陷（肩）的寬度佔鏡片短邊的比例（整條列類，見 lensCrossScale）
+    zoom: 1.12, // --lens-zoom 鏡內文字與圖示放大倍率
     grow: 120, // --lens-grow 按下時原地長大
     veilOut: 100, // --lens-veil-out 平常的樣子淡掉
     veilWait: 30, // --lens-veil-wait 縮回開始後多久，平常的樣子開始蓋回
