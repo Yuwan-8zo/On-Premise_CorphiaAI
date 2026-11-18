@@ -54,6 +54,22 @@ class TestValidate:
         assert settings.semantic_guard_review == 0.4
 
 
+class TestSavedFile:
+    def test_only_known_keys_with_current_values(self, tmp_path, monkeypatch):
+        """舊檔裡不認得的欄位丟掉；存的是目前套用中的值，不是檔案原本的內容"""
+        monkeypatch.setattr(sg, "RUNTIME_DIR", tmp_path)
+        monkeypatch.setattr(sg, "_testing", lambda: False)
+        f = tmp_path / sg.GATES_FILE
+        f.write_text('{"enabled": {"pii": "x", "nope": true}, "semantic_review": 0.3, "extra": "../../etc"}', encoding="utf-8")
+        sg.save_update(sg.validate_update({"dlp": False}, None, None))
+        import json
+        saved = json.loads(f.read_text(encoding="utf-8"))
+        assert saved == {
+            "enabled": {"pii": bool(settings.enable_pii_masking), "dlp": False},
+            "semantic_review": round(settings.semantic_guard_review, 2),
+        }
+
+
 class TestGateOf:
     def test_rule_vs_semantic_vs_judge(self):
         assert sg._gate_of(AuditAction.DLP_HIT, {"matched_terms_count": 1}) == "dlp"

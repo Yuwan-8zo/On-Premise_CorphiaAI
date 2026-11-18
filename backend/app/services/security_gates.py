@@ -125,16 +125,22 @@ def save_update(update: dict[str, Any]) -> dict[str, Any]:
     if _testing():
         return current_config()
     path = _runtime_path(GATES_FILE)
-    saved: dict[str, Any] = {}
     try:
-        saved = json.loads(path.read_text(encoding="utf-8"))
+        old = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        saved = {}
-    if "enabled" in update:
-        saved.setdefault("enabled", {}).update(update["enabled"])
+        old = {}
+    # 舊檔只用來知道「哪些項目改過」；名稱只取程式裡定義的閘道，數值一律取目前套用中的設定，
+    # 不把檔案內容原樣寫回去
+    old_enabled = old.get("enabled") if isinstance(old, dict) else None
+    changed = {g.key for g in GATES if isinstance(old_enabled, dict) and g.key in old_enabled}
+    changed |= {g.key for g in GATES if g.key in update.get("enabled", {})}
+    cfg = current_config()
+    saved: dict[str, Any] = {}
+    if changed:
+        saved["enabled"] = {g.key: cfg["enabled"][g.key] for g in GATES if g.key in changed}
     for k in ("semantic_block", "semantic_review"):
-        if k in update:
-            saved[k] = update[k]
+        if k in update or (isinstance(old, dict) and k in old):
+            saved[k] = cfg[k]
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(saved, ensure_ascii=False, indent=2), encoding="utf-8")
