@@ -36,6 +36,8 @@ export interface DailyCount {
     /** ISO date — for tooltip / debugging */
     iso: string
     count: number
+    /** 前一段同一天（例如上週同一天）的次數；沒給前一段資料時不填 */
+    previous?: number
 }
 
 export interface ActionCount {
@@ -54,6 +56,8 @@ export function aggregateByDay(
     days = 7,
     /** 介面語言（星期幾的寫法） */
     lang: string = i18n.language,
+    /** 前一段（更早的 days 天）的紀錄：填進每一天的 previous，趨勢圖畫成虛線對照 */
+    previousLogs?: AuditLogItem[],
 ): DailyCount[] {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -80,6 +84,18 @@ export function aggregateByDay(
         )
         if (diffDays >= 0 && diffDays < days) {
             buckets[days - 1 - diffDays].count += 1
+        }
+    }
+
+    if (previousLogs) {
+        buckets.forEach((b) => { b.previous = 0 })
+        for (const log of previousLogs) {
+            if (!log.created_at) continue
+            const created = parseServerDate(log.created_at)
+            if (Number.isNaN(created.getTime())) continue
+            created.setHours(0, 0, 0, 0)
+            const diffDays = Math.round((today.getTime() - created.getTime()) / 86400000) - days
+            if (diffDays >= 0 && diffDays < days) buckets[days - 1 - diffDays].previous! += 1
         }
     }
 

@@ -7,7 +7,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Building2, Cpu, FileText, Folder, Gauge, Users } from '@/components/snow/icons'
+import { ArrowLeft, Building2, Cpu, FileText, Folder, Gauge, ShieldCheck, Users } from '@/components/snow/icons'
 import GlassNav from '@/components/ui/GlassNav'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import { SkelText } from '@/components/ui/Skeleton'
@@ -22,6 +22,7 @@ import { useAdminAudit } from '../hooks/useAdminAudit'
 import { useAdminModels, useAdminStats, useLanStatus } from '../hooks/useAdminSystem'
 import { useAdminTenants } from '../hooks/useAdminTenants'
 import { useAdminFolders } from '../hooks/useAdminFolders'
+import { useAdminSecurity } from '../hooks/useAdminSecurity'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
 import { useFitToHost } from '@/lib/useFitToHost'
@@ -32,11 +33,14 @@ const UsersSection = lazy(() => import('../sections/UsersSection'))
 const ModelsSection = lazy(() => import('../sections/ModelsSection'))
 const TenantsSection = lazy(() => import('../sections/TenantsSection'))
 const FoldersSection = lazy(() => import('../sections/FoldersSection'))
+const SecuritySection = lazy(() => import('../sections/SecuritySection'))
 
-type AdminSection = 'overview' | 'users' | 'models' | 'folders' | 'audit' | 'tenants'
+type AdminSection = 'overview' | 'security' | 'users' | 'models' | 'folders' | 'audit' | 'tenants'
 
-const TABS: Array<{ id: AdminSection; i18nKey: string; icon: React.ComponentType<{ className?: string }> }> = [
+const TABS: Array<{ id: AdminSection; i18nKey: string; shortKey?: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'overview', i18nKey: 'admin.tabs.overview', icon: Gauge },
+    // 資安閘道：專題主軸，放在總覽後面
+    { id: 'security', i18nKey: 'admin.tabs.security', shortKey: 'admin.tabs.securityShort', icon: ShieldCheck },
     { id: 'users', i18nKey: 'admin.tabs.users', icon: Users },
     { id: 'models', i18nKey: 'admin.tabs.models', icon: Cpu },
     { id: 'folders', i18nKey: 'admin.tabs.folders', icon: Folder },
@@ -75,6 +79,7 @@ export default function Admin() {
     const audit = useAdminAudit()
     const tenants = useAdminTenants()
     const folders = useAdminFolders()
+    const security = useAdminSecurity()
     const lan = useLanStatus()
 
     // 只有管理員與工程師可以進後台
@@ -155,7 +160,8 @@ export default function Admin() {
                             className="lg:hidden w-full h-[var(--sz-40)]"
                             value={activeSection}
                             onChange={(v) => setActiveSection(v)}
-                            options={TABS.map((tab) => ({ value: tab.id, label: t(tab.i18nKey) }))}
+                            // 手機一格很窄：名稱太長的分頁用短名（完整名稱留在 aria-label）
+                            options={TABS.map((tab) => ({ value: tab.id, label: t(tab.shortKey ?? tab.i18nKey), name: tab.shortKey ? t(tab.i18nKey) : undefined }))}
                         />
                         {/* 桌機：直向導覽；不裁切，放大鏡長大超出範圍也完整顯示 */}
                         <nav className="admin-nav relative z-10 hidden lg:flex lg:flex-col gap-1 py-2 shrink-0 overflow-visible">
@@ -184,7 +190,7 @@ export default function Admin() {
                     <div key={activeSection} data-fit-check="content" data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
-                            <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} />
+                            <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} previousLogs={audit.auditPrevious} />
                         )}
 
                         <Suspense fallback={SectionSkeleton}>
@@ -223,6 +229,7 @@ export default function Admin() {
                                     onScan={folders.scanNow}
                                 />
                             )}
+                            {activeSection === 'security' && <SecuritySection security={security} />}
                             {activeSection === 'audit' && <AuditSection {...audit.sectionProps} />}
                             {activeSection === 'tenants' && (
                                 <TenantsSection

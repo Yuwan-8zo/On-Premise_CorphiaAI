@@ -59,6 +59,8 @@ class AuditAction:
     PII_DETECTED = "pii_detected"
     PROMPT_INJECTION_BLOCKED = "prompt_injection_blocked"
     DLP_HIT = "dlp_hit"
+    # 後台改了資安閘道的開關或語意檢查門檻
+    SECURITY_SETTING_UPDATE = "security_setting_update"
 
     # 租戶管理
     TENANT_CREATE = "tenant_create"

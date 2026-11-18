@@ -95,6 +95,48 @@ interface TenantUsageResponse {
     data: TenantUsageStats[]
 }
 
+/** 資安閘道代號（順序＝訊息經過的順序） */
+export type SecurityGateKey = 'pii' | 'dlp' | 'injection' | 'semantic' | 'llm_judge' | 'context' | 'output'
+
+export interface SecurityGateHits {
+    key: SecurityGateKey
+    /** false＝這一關不寫稽核，沒有次數 */
+    counted: boolean
+    hits?: number
+    previous?: number
+    /** 每天幾次（舊到新） */
+    daily?: number[]
+    daily_previous?: number[]
+}
+
+export interface SecurityGatesConfig {
+    enabled: Record<SecurityGateKey, boolean>
+    semantic_block: number
+    semantic_review: number
+    semantic_margin: number
+}
+
+export interface SecurityGatesData extends SecurityGatesConfig {
+    window_days: number
+    gates: SecurityGateHits[]
+    depends_on: Partial<Record<SecurityGateKey, SecurityGateKey>>
+    messages: number
+    messages_previous: number
+    can_edit: boolean
+}
+
+export interface SemanticScoresData extends SecurityGatesConfig {
+    /** [最像攻擊範例的相似度, 最像正常範例的相似度]，舊到新 */
+    scores: Array<[number, number]>
+    keep: number
+}
+
+export interface SecurityGatesUpdate {
+    enabled?: Partial<Record<SecurityGateKey, boolean>>
+    semantic_block?: number
+    semantic_review?: number
+}
+
 export const adminApi = {
     /**
      * 取得系統使用統計（使用者、對話、文件、訊息總數）
@@ -151,6 +193,29 @@ export const adminApi = {
     /**
      * 強制登出指定使用者
      */
+    /** 資安閘道：開關、門檻、各關近 7 天命中次數（日期照瀏覽器所在時區分） */
+    getSecurityGates: async (): Promise<SecurityGatesData | null> => {
+        const response = await apiClient.get<{ status: string; data: SecurityGatesData }>('/admin/security/gates', {
+            params: { tz_offset: -new Date().getTimezoneOffset() },
+        })
+        if (response.data?.status === 'success') return response.data.data
+        return null
+    },
+
+    /** 改開關或語意檢查門檻（工程師）；回改完的設定 */
+    updateSecurityGates: async (body: SecurityGatesUpdate): Promise<SecurityGatesConfig | null> => {
+        const response = await apiClient.put<{ status: string; data: SecurityGatesConfig }>('/admin/security/gates', body)
+        if (response.data?.status === 'success') return response.data.data
+        return null
+    },
+
+    /** 最近各則的語意比對分數（門檻規劃器） */
+    getSemanticScores: async (): Promise<SemanticScoresData | null> => {
+        const response = await apiClient.get<{ status: string; data: SemanticScoresData }>('/admin/security/semantic-scores')
+        if (response.data?.status === 'success') return response.data.data
+        return null
+    },
+
     forceLogout: async (userId: string): Promise<{ status: string } | null> => {
         try {
             const response = await apiClient.post(`/users/${userId}/force-logout`)
