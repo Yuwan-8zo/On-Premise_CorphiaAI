@@ -267,7 +267,7 @@ function SidePanelToggle() {
                 onClick={() => (open ? close() : showList())}
                 aria-label={label}
                 aria-pressed={open}
-                className={`btn-icon !w-[var(--dock-btn)] !h-[var(--dock-btn)] [--R:calc(var(--dock-btn)/2)] shrink-0 ${open ? 'is-current text-accent' : 'text-text-secondary'}`}
+                className={`btn-icon !w-[var(--top-btn)] !h-[var(--top-btn)] [--R:calc(var(--top-btn)/2)] shrink-0 ${open ? 'is-current text-accent' : 'text-text-secondary'}`}
             >
                 <PanelRight className="w-[var(--sz-20)] h-[var(--sz-20)]" />
             </button>

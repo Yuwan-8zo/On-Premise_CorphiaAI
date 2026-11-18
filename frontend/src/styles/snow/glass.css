@@ -150,7 +150,7 @@ html:not(.dark) .paper .glass-field {
 /* 頂部列的膠囊：高 40（按鈕 36＋內距 2），圓角 20，和右邊 40 的選單鈕一樣高 */
 /* 頂部的群組（模型膠囊）：右上角特例，維持原本大小——按鈕 36＋內距 2＝高 40，圓角 18＋2＝20 同心 */
 .btn-group.btn-group-36 {
-  --grp-btn: var(--dock-btn);
+  --grp-btn: var(--top-btn);
   --grp-pad: var(--dock-pad);
 }
 

@@ -216,10 +216,11 @@
   /* 元件尺寸：放大鏡相關元件（程式用 useCssPx 讀出實際像素；同心、凸出量等由這些算出來，不另外寫） */
   /* 右上選單：長按展開的寬選單與放大鏡照規範「右下選單」；
      收合的選單鈕與右上角其他按鈕是特例（使用者決定），維持原本的小尺寸，和頂部列對齊 */
-  --dock-n: calc(40 * var(--ui-unit));        /* 收合時的外殼 */
-  --dock-btn: calc(36 * var(--ui-unit));      /* 收合時每顆按鈕；也是側邊面板鈕、登入頁主題／語言鈕的大小 */
-  --dock-gap: calc(6 * var(--ui-unit));       /* 收合時按鈕之間 */
-  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距：40 ＝ 36 ＋ 2 × 2，同心 */
+  --top-btn: calc(36 * var(--ui-unit));       /* 右上角的圓鈕：側邊面板鈕、登入頁主題／語言鈕；模型膠囊裡的按鈕 */
+  --dock-n: var(--top-btn);                   /* 選單鈕收合時的外殼：和旁邊的圓鈕一樣 36（使用者要求縮小） */
+  --dock-btn: calc(32 * var(--ui-unit));      /* 點開後每顆按鈕 */
+  --dock-gap: calc(6 * var(--ui-unit));       /* 點開後按鈕之間 */
+  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距：36 ＝ 32 ＋ 2 × 2，同心 */
   --dock-w: calc(76 * var(--ui-unit));        /* 長按展開時的外殼寬（圓角 32） */
   --dock-r: calc(32 * var(--ui-unit));
   --dock-row-w: calc(72 * var(--ui-unit));    /* 長按展開時每列 72×60 */
