@@ -250,8 +250,6 @@ export default function ChatSidebar({
                         data-tour="mode-toggle"
                         className="w-full h-full"
                         pad={wide ? '--seg-pad-lg' : '--seg-pad-xs'}
-                        growLong={wide ? '--lens-over' : '--lens-over-x'}
-                        growCross={wide ? '--lens-over' : '--lens-over-y'}
                         value={chatMode}
                         onChange={(v) => setChatMode(v)}
                         options={wide ? [

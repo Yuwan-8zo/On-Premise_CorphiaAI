@@ -49,19 +49,24 @@
 .dock-icon {
   display: flex;
 }
+/* 收合（右上角特例，原本大小）圖示 20；長按展開的寬選單照規範「右下選單」圖示 27 */
 .dock-icon svg {
   width: var(--sz-20);
   height: var(--sz-20);
 }
 .dock-row.is-wide .dock-icon svg {
-  width: var(--sz-22);
-  height: var(--sz-22);
+  width: var(--dock-ic);
+  height: var(--dock-ic);
 }
 .dock-label {
   font-size: var(--fs-11);
   line-height: var(--lh-13);
   font-weight: 600;
   white-space: nowrap;
+}
+/* 長按展開的寬選單圖示 27（規範「右下選單」）；放大鏡外圈的細線用全站的 --lens-ring（不加陰影） */
+:root {
+  --dock-ic: calc(27 * var(--ui-unit));
 }
 .dock-lens {
   position: absolute;

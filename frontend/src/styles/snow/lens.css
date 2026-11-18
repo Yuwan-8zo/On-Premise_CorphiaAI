@@ -10,9 +10,10 @@
   --lens-veil-out: 0.1s;
   --lens-veil-in: 0.12s;
   --lens-veil-wait: 0.03s;
-  --lens-edge: rgba(255, 255, 255, 0.42);
-  --lens-ring: 0 0 0 1px rgba(0, 0, 0, 0.32), 0 3px 8px rgba(0, 0, 0, 0.2);
-  --lens-ring-knob: 0 0 0 1px rgba(0, 0, 0, 0.42), 0 3px 8px rgba(0, 0, 0, 0.2);
+  /* 規範第 15 版（iOS 27）：鏡緣亮邊更亮；外圈只留一條深色細線，不加陰影（拉桿的淡陰影另外加，見 .dr-knob） */
+  --lens-edge: rgba(255, 255, 255, 0.55);
+  --lens-ring: 0 0 0 1px rgba(0, 0, 0, 0.32);
+  --lens-ring-knob: 0 0 0 1px rgba(0, 0, 0, 0.42);
   /* 鏡片的玻璃：底面亮 9%，兩端往邊緣漸暗（橫的／直的） */
   --lens-glass: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
   --lens-glass-v: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.2)), linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
@@ -21,7 +22,7 @@
 }
 
 /* ---------- 選單放大鏡：和設定頁側欄（.glass-nav .lens）同一個樣子——
- * 鏡片透明（直接透出卡片）、亮邊只在長邊（.lens-dish）、外圈細線＋淡陰影；大小與長大動畫在 LensMenu ---------- */
+ * 鏡片透明（直接透出卡片）、亮邊只在長邊（.lens-dish）、外圈一條細線（不加陰影）；大小與長大動畫在 LensMenu ---------- */
 .menu-lens {
   position: absolute;
   left: 0;
@@ -67,7 +68,7 @@
 /* ════════════════════════════════════════════════════════════════
  * 通用：選單項目／側欄導覽項目（全站選單共用，不要在元件裡另寫一長串樣式）
  *   .menu-item   彈出選單的一列：膠囊、圖示 18、按下淡底＋0.98；
- *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，品牌色實底）
+ *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，凹陷底盤＋強調色）
  *   .menu-sep    選單分隔線
  *   .nav-item    側欄導覽的一列：膠囊；目前頁面加 .is-current（淡底＋粗體，圖示用品牌色）
  * 選單容器一律用 .paper，內容包在 <LensMenu>（長按放大鏡）
@@ -110,9 +111,11 @@
 html.dark .menu-item.is-success {
   color: rgb(52 211 153);
 }
+/* 目前選取：規範「目前項目在每個列裡都用同一種標示」＝凹陷底盤＋強調色（不用實心色塊） */
 .menu-item.is-selected {
-  background: rgb(var(--accent));
-  color: var(--text-on-accent, #fff);
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 .menu-sep {

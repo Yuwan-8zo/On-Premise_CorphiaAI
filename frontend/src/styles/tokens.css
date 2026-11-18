@@ -87,6 +87,7 @@
   --sz-60: calc(60 * var(--ui-unit));
   --sz-63: calc(63 * var(--ui-unit));
   --sz-64: calc(64 * var(--ui-unit));
+  --sz-68: calc(68 * var(--ui-unit));
   --sz-72: calc(72 * var(--ui-unit));
   --sz-80: calc(80 * var(--ui-unit));
   --sz-86: calc(86 * var(--ui-unit));
@@ -214,16 +215,21 @@
   --blur-24: calc(24 * var(--ui-unit));
 
   /* 元件尺寸：放大鏡相關元件（程式用 useCssPx 讀出實際像素；同心、凸出量等由這些算出來，不另外寫） */
-  --dock-n: calc(40 * var(--ui-unit));        /* 右上選單：收合時的外殼 */
-  --dock-btn: calc(36 * var(--ui-unit));      /* 收合時每顆按鈕 */
-  --dock-gap: calc(6 * var(--ui-unit));       /* 收合時按鈕之間 */
-  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距 */
-  --dock-w: calc(79 * var(--ui-unit));        /* 長按展開時的外殼寬 */
-  --dock-r: calc(33 * var(--ui-unit));        /* 長按展開時的外殼圓角 */
-  --dock-row-w: calc(75 * var(--ui-unit));    /* 長按展開時每列 */
-  --dock-row-h: calc(62 * var(--ui-unit));
-  --dock-lens-w: calc(93 * var(--ui-unit));   /* 放大鏡；圓角＝外殼圓角＋凸出量（同心），由程式算 */
-  --dock-lens-h: calc(95 * var(--ui-unit));
+  /* 右上選單：長按展開的寬選單與放大鏡照規範「右下選單」；
+     收合的選單鈕與右上角其他按鈕是特例（使用者決定），維持原本的小尺寸，和頂部列對齊 */
+  --top-btn: calc(36 * var(--ui-unit));       /* 右上角一排的高度：側邊面板鈕、登入頁主題／語言鈕、選單鈕、模型膠囊 */
+  --top-in: calc(var(--top-btn) - 2 * var(--dock-pad)); /* 模型膠囊裡的按鈕：36 − 2 × 2 ＝ 32，膠囊整體和旁邊的圓鈕同高 */
+  --dock-n: var(--top-btn);                   /* 選單鈕收合時的外殼：和旁邊的圓鈕一樣 36（使用者要求縮小） */
+  --dock-btn: calc(32 * var(--ui-unit));      /* 點開後每顆按鈕 */
+  --dock-gap: calc(6 * var(--ui-unit));       /* 點開後按鈕之間 */
+  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距：36 ＝ 32 ＋ 2 × 2，同心 */
+  --dock-w: calc(76 * var(--ui-unit));        /* 長按展開時的外殼寬（圓角 32） */
+  --dock-r: calc(32 * var(--ui-unit));
+  --dock-row-w: calc(72 * var(--ui-unit));    /* 長按展開時每列 72×60 */
+  --dock-row-h: calc(60 * var(--ui-unit));
+  /* 放大鏡 89×85：寬＝外殼寬 ×（1 ＋ 2 × 0.084）；高＝列距 ＋ 2 ×（外殼寬 × 0.084 ＋ 列距 × 0.105）；圓角＝外殼圓角＋凸出量，由程式算 */
+  --dock-lens-w: calc(var(--dock-w) * (1 + 2 * 0.084));
+  --dock-lens-h: calc(var(--dock-row-h) + 2 * (var(--dock-w) * 0.084 + var(--dock-row-h) * 0.105));
   --sw-w: calc(72 * var(--ui-unit));          /* 切換開關：軌道 */
   --sw-h: calc(32 * var(--ui-unit));
   --sw-knob-w: calc(42 * var(--ui-unit));     /* 旋鈕 */
@@ -235,9 +241,8 @@
   --seg-pad: calc(4 * var(--ui-unit));        /* 分段切換器：軌道內距 */
   --seg-pad-lg: calc(5 * var(--ui-unit));
   --seg-pad-xs: calc(2 * var(--ui-unit));
-  --lens-over: calc(8 * var(--ui-unit));      /* 放大鏡比格子多出去（分段切換器，四邊一樣） */
-  --lens-over-x: calc(11.5 * var(--ui-unit)); /* 工具列：沿長邊 */
-  --lens-over-y: calc(4.5 * var(--ui-unit));  /* 工具列：垂直長邊 */
+  /* 清單類放大鏡（側欄導覽、彈出選單、對話清單）比一列多出去的量；分段切換器與工具列不用這個，照規範由軌道粗細算（GlassSegmented） */
+  --lens-over: calc(8 * var(--ui-unit));
   --nav-gap: calc(6 * var(--ui-unit));        /* 直向導覽：項目之間 */
   --nav-gap-sm: calc(4 * var(--ui-unit));
 
@@ -290,6 +295,15 @@
   --dr-knob-w: var(--sz-44);       /* 把手（白色膠囊，上面寫門檻值） */
   --dr-knob-h: var(--sz-28);
   --dr-step: 0.01;                 /* 方向鍵一次動多少（Shift 加速 ×5） */
+  /* 拉桿按住時的放大鏡（規範「拉桿與放大鏡」，照 iOS 亮度拉桿，是放大鏡裡唯一的例外）：
+     44×28 白色把手 → 68×44 深灰霧面鏡片＋底下一圈淡陰影；鏡內軌道粗 1.25 倍、碰到鏡緣往外張到 1.6 倍 */
+  --dr-lens-w: var(--sz-68);
+  --dr-lens-h: var(--sz-44);
+  --sl-in: 1.25;
+  --sl-flare: 1.6;
+  --sl-flare-len: 0.16;            /* 張開那一段長＝鏡寬 × 這個值 */
+  --sl-lens-tint: color-mix(in srgb, rgb(var(--text-primary)) 9%, transparent);
+  --sl-lens-shadow: 0 8px 18px rgba(0, 0, 0, 0.42);
   --hist-h: var(--sz-160);         /* 分數分布長條圖高 */
   --spark-w: var(--sz-64);         /* 閘道列的近 7 天小長條圖 */
   --gate-tag-w: calc(var(--fs-12) * 8 + var(--sp-10) * 2); /* 閘道列的動作標籤欄：放得下最長的標籤（日文 8 個字），各列對齊 */
