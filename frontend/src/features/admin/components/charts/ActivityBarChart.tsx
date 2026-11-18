@@ -1,5 +1,6 @@
 /**
  * ActivityBarChart — 過去 N 天每日事件數柱狀圖
+ * 資料有 previous（前一段同一天）時，另外畫一條虛線對照（例如和上週比）
  *
  * 配色從 useAccentColor 抽出，跟著使用者選的品牌色變。
  * 軸線、文字、背景色全部走 CSS 變數，dark mode 自動切。
@@ -7,8 +8,9 @@
 
 import {
     Bar,
-    BarChart,
     CartesianGrid,
+    ComposedChart,
+    Line,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -49,6 +51,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             <p className="mt-1 text-sm text-accent tabular-nums">
                 {t('ui.charts.count', { n: item.count.toLocaleString() })}
             </p>
+            {item.previous !== undefined && (
+                <p className="text-text-secondary tabular-nums">
+                    {t('ui.charts.previousWeek', { n: item.previous.toLocaleString() })}
+                </p>
+            )}
         </div>
     )
 }
@@ -58,10 +65,11 @@ export default function ActivityBarChart({
     height = 220,
 }: ActivityBarChartProps) {
     const accent = useAccentColor()
+    const hasPrevious = data.some((d) => d.previous !== undefined)
 
     return (
         <ResponsiveContainer width="100%" height={height}>
-            <BarChart
+            <ComposedChart
                 data={data}
                 margin={{ top: 12, right: 8, bottom: 0, left: -6 }}
             >
@@ -99,7 +107,19 @@ export default function ActivityBarChart({
                     radius={[8, 8, 4, 4]}
                     maxBarSize={36}
                 />
-            </BarChart>
+                {hasPrevious && (
+                    <Line
+                        dataKey="previous"
+                        type="monotone"
+                        stroke="rgb(var(--text-secondary))"
+                        strokeWidth={1.5}
+                        strokeDasharray="4 4"
+                        dot={false}
+                        activeDot={false}
+                        isAnimationActive={false}
+                    />
+                )}
+            </ComposedChart>
         </ResponsiveContainer>
     )
 }

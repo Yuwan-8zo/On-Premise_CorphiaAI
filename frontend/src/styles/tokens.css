@@ -285,6 +285,15 @@
   --search-move: 0.32s;            /* 取消 × 長出來的時間 */
   --scroll-fade: var(--sp-24);     /* 捲動區上下邊緣淡出的長度（.glass-scroll） */
   --menu-max-h: calc(280 * var(--ui-unit)); /* 下拉選單最高，超過在裡面捲動 */
+  /* 後台「資安閘道」門檻規劃器（features/admin/components/DualRange.tsx） */
+  --dr-track-h: var(--sz-10);      /* 拉桿軌道高 */
+  --dr-knob-w: var(--sz-44);       /* 把手（白色膠囊，上面寫門檻值） */
+  --dr-knob-h: var(--sz-28);
+  --dr-step: 0.01;                 /* 方向鍵一次動多少（Shift 加速 ×5） */
+  --hist-h: var(--sz-160);         /* 分數分布長條圖高 */
+  --spark-w: var(--sz-64);         /* 閘道列的近 7 天小長條圖 */
+  --gate-tag-w: calc(var(--fs-12) * 8 + var(--sp-10) * 2); /* 閘道列的動作標籤欄：放得下最長的標籤（日文 8 個字），各列對齊 */
+  --spark-h: var(--sz-22);
 }
 /* 手指操作的裝置：小圖示按鈕放大到 36，按得到、不誤觸 */
 @media (pointer: coarse) {

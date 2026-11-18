@@ -9,6 +9,10 @@ import {
 } from '@/api/auditLogs'
 import { downloadBlob, todayStamp } from '@/lib/download'
 import { localDate } from '@/lib/dates'
+import { parseServerDate } from '@/lib/utils'
+
+/** 總覽圖表看幾天（另外再抓前一段同樣天數做對照） */
+const SUMMARY_DAYS = 7
 
 
 export function useAdminAudit() {
@@ -22,6 +26,8 @@ export function useAdminAudit() {
     const [auditDrawer, setAuditDrawer] = useState<AuditLogItem | null>(null)
     /** null＝還在載入（總覽顯示骨架，不顯示 0 或「沒有資料」） */
     const [auditSummary, setAuditSummary] = useState<AuditLogItem[] | null>(null)
+    /** 前 7 天（第 8～14 天），總覽趨勢圖畫成虛線和近 7 天對照 */
+    const [auditPrevious, setAuditPrevious] = useState<AuditLogItem[]>([])
 
     const loadAuditLogs = useCallback(async (query: AuditLogQuery = auditFilter) => {
         setIsLoadingAudit(true)
@@ -38,21 +44,32 @@ export function useAdminAudit() {
         }
     }, [auditFilter])
 
-    /** 近 7 天全部紀錄（每頁上限 100 筆，最多 2000 筆）給總覽的趨勢圖與分布圖：先抓第一頁知道總頁數，其餘同時抓 */
+    /**
+     * 近 14 天全部紀錄（每頁上限 100 筆，最多 4000 筆）：先抓第一頁知道總頁數，其餘同時抓
+     * 近 7 天（含今天）給總覽的趨勢圖與分布圖；更早的 7 天只給趨勢圖畫「上週同一天」的虛線
+     */
     const loadAuditSummary = useCallback(async () => {
         try {
-            const since = new Date()
-            since.setDate(since.getDate() - 7)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const since = new Date(today)
+            since.setDate(today.getDate() - (SUMMARY_DAYS * 2 - 1))
+            const split = new Date(today)
+            split.setDate(today.getDate() - (SUMMARY_DAYS - 1))
             const query = { page_size: 100, start_date: localDate(since) }
             const first = await getAuditLogs({ ...query, page: 1 })
-            const pages = Math.min(first.total_pages || 1, 20)
+            const pages = Math.min(first.total_pages || 1, 40)
             const rest = await Promise.all(
                 Array.from({ length: pages - 1 }, (_, i) => getAuditLogs({ ...query, page: i + 2 })),
             )
-            setAuditSummary([first, ...rest].flatMap((d) => d.data))
+            const all = [first, ...rest].flatMap((d) => d.data)
+            const recent = (log: AuditLogItem) => parseServerDate(log.created_at).getTime() >= split.getTime()
+            setAuditSummary(all.filter(recent))
+            setAuditPrevious(all.filter((log) => !recent(log)))
         } catch (err) {
             console.error('Failed to load audit summary:', err)
             setAuditSummary([])
+            setAuditPrevious([])
         }
     }, [])
 
@@ -87,6 +104,7 @@ export function useAdminAudit() {
 
     return {
         auditSummary,
+        auditPrevious,
         loadAuditLogs,
         sectionProps: {
             auditSearchInput, setAuditSearchInput,

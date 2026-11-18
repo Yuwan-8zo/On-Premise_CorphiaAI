@@ -68,12 +68,15 @@ export interface OverviewSectionProps {
     activeUsers: number
     /** null＝還在載入 */
     auditLogs: AuditLogItem[] | null
+    /** 前 7 天的紀錄（趨勢圖的虛線） */
+    previousLogs?: AuditLogItem[]
 }
 
 export default function OverviewSection({
     stats,
     activeUsers,
     auditLogs: auditLogsOrNull,
+    previousLogs,
 }: OverviewSectionProps) {
     const { t, i18n } = useTranslation()
     const auditLoading = auditLogsOrNull === null
@@ -88,7 +91,7 @@ export default function OverviewSection({
     // 前端聚合圖表所需 series（memoised — 來源資料沒變就不重算）
     // 星期、分類名稱跟著介面語言，換語言時重算
     const lang = i18n.language
-    const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7, lang), [auditLogs, lang])
+    const dailySeries = useMemo(() => aggregateByDay(auditLogs, 7, lang, previousLogs), [auditLogs, lang, previousLogs])
     const actionSeries = useMemo(() => aggregateByAction(auditLogs, 5, lang), [auditLogs, lang])
 
     // 今日事件數 — 從 auditLogs（即近 7 天的 summary）篩出 created_at 在今天的

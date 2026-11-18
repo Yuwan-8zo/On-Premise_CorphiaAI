@@ -3,10 +3,11 @@
 """
 
 import hashlib
-from typing import Any
+from typing import Any, Optional
 
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
@@ -21,7 +22,8 @@ from app.models.document import Document
 from app.models.message import Message
 from app.models.audit_log import AuditLog
 from app.models.tenant import Tenant
-from app.services.audit_service import AuditAction
+from app.core.request_utils import get_client_ip, get_user_agent
+from app.services.audit_service import AuditAction, AuditResource, write_audit_log
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -471,3 +473,109 @@ async def get_dashboard_snapshot(
         },
     }
 
+
+
+# ── 資安閘道（後台「資安閘道」分頁）──────────────────────────────────────
+
+
+class SecurityGatesUpdate(BaseModel):
+    """要改的開關（閘道代號 → 開／關）與語意檢查門檻；沒給的維持原狀"""
+    enabled: Optional[dict[str, bool]] = None
+    semantic_block: Optional[float] = Field(default=None, ge=0, le=1)
+    semantic_review: Optional[float] = Field(default=None, ge=0, le=1)
+
+
+async def _messages_checked(db: AsyncSession, viewer: User, days: int) -> tuple[int, int]:
+    """近 days 天、前一段同長度，使用者送出的訊息數（每一則都經過資安閘道）"""
+    now = utc_now_naive()
+    split, start = now - timedelta(days=days), now - timedelta(days=days * 2)
+    base = select(func.count(Message.id)).join(Conversation, Message.conversation_id == Conversation.id).where(Message.role == "user")
+    if not sees_all_tenants(viewer):
+        base = base.where(tenant_of(Conversation.tenant_id) == viewer.effective_tenant_id)
+    recent = (await db.execute(base.where(Message.created_at >= split))).scalar() or 0
+    before = (await db.execute(base.where(Message.created_at >= start, Message.created_at < split))).scalar() or 0
+    return recent, before
+
+
+@router.get("/security/gates", summary="資安閘道：開關、門檻、近 7 天命中次數")
+async def get_security_gates(
+    tz_offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _=RequireAdmin,
+) -> dict[str, Any]:
+    from app.services import security_gates as sg
+
+    hits = await sg.gate_hits(db, current_user, tz_offset)
+    checked, checked_prev = await _messages_checked(db, current_user, sg.WINDOW_DAYS)
+    return {
+        "status": "success",
+        "data": {
+            **sg.current_config(),
+            "window_days": sg.WINDOW_DAYS,
+            "gates": [{"key": g.key, "counted": g.counted, **hits.get(g.key, {})} for g in sg.GATES],
+            "depends_on": sg.DEPENDS_ON,
+            "messages": checked,
+            "messages_previous": checked_prev,
+            # 只有工程師能改（全系統共用的設定）；租戶管理員看得到但不能改
+            "can_edit": current_user.role == "engineer",
+        },
+    }
+
+
+@router.put("/security/gates", summary="資安閘道：改開關或語意檢查門檻（工程師）")
+async def update_security_gates(
+    body: SecurityGatesUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _=RequireEngineer,
+) -> dict[str, Any]:
+    from app.services import security_gates as sg
+
+    before = sg.current_config()
+    try:
+        update = sg.validate_update(body.enabled, body.semantic_block, body.semantic_review)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    after = sg.save_update(update)
+    changes = {}
+    for key, on in (update.get("enabled") or {}).items():
+        if before["enabled"].get(key) != on:
+            changes[key] = on
+    for key in ("semantic_block", "semantic_review"):
+        if key in update and before[key] != update[key]:
+            changes[key] = update[key]
+    if changes:
+        await write_audit_log(
+            db=db,
+            action=AuditAction.SECURITY_SETTING_UPDATE,
+            resource_type=AuditResource.SYSTEM,
+            resource_id="security_gates",
+            user_id=current_user.id,
+            user_email=current_user.email,
+            tenant_id=current_user.tenant_id,
+            description="更改資安閘道設定",
+            details={"changes": changes},
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    return {"status": "success", "data": after}
+
+
+@router.get("/security/semantic-scores", summary="語意檢查：最近各則的分數（門檻規劃器用）")
+async def get_semantic_scores(
+    current_user: User = Depends(get_current_user),
+    _=RequireAdmin,
+) -> dict[str, Any]:
+    from app.services import security_gates as sg
+
+    rows = sg.recent_scores()
+    return {
+        "status": "success",
+        "data": {
+            "scores": [[s, n] for s, n in rows],
+            "keep": sg.SCORE_KEEP,
+            **sg.current_config(),
+        },
+    }

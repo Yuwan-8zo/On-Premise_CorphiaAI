@@ -25,6 +25,7 @@ from app.services.dlp_service import check_dlp
 from app.services.doc_intents import strip_all_documents_request, wants_all_documents
 from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
+from app.services.security_gates import record_score
 from app.services.semantic_guard import SECRET, llm_judge, semantic_check
 
 logger = logging.getLogger(__name__)
@@ -181,6 +182,8 @@ async def _semantic_gate(text: str, model_name: Optional[str]) -> Optional[tuple
     if sem is None:
         logger.warning("語意比對無法使用（嵌入模型未載入），本則只用規則檢查")
         return None
+    if sem.category:  # 有真的比對過（不是關掉時回的空結果）：分數留給後台的門檻規劃器
+        record_score(sem.score, sem.normal_score)
     score = round(sem.score, 3)
     if sem.decision == "block":
         return sem.category, "語意比對", score

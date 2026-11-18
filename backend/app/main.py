@@ -64,6 +64,10 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("資料庫初始化完成")
 
+    # 後台改過的資安閘道開關與門檻（.runtime/security_gates.json）套回 settings
+    from app.services.security_gates import load_saved as load_security_gates
+    load_security_gates()
+
     # AI 產出的檔案：訊息、對話被刪掉後留在磁碟上的，啟動時清掉
     try:
         from app.core.database import async_session_maker
