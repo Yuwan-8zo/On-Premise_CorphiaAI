@@ -158,6 +158,34 @@ class TestApi:
         assert gates["dlp"]["daily"][-1] - base["dlp"]["daily"][-1] == 1
         assert gates["context"]["counted"] is False and "hits" not in gates["context"]
 
+    async def test_window_edges_and_blocked_messages(
+        self, async_client: AsyncClient, db_session: AsyncSession, test_engineer: User, engineer_auth_headers: dict,
+    ):
+        """總數和每天的長條用同一組分界（從午夜算）；被擋下沒存進對話的訊息也算「檢查過」"""
+        async def read():
+            r = await async_client.get("/api/v1/admin/security/gates?tz_offset=480", headers=engineer_auth_headers)
+            return r.json()["data"]
+        base = await read()
+        _start, split, _shift, _today = sg.window_bounds(480)
+        rows = [
+            (AuditAction.DLP_HIT, {"matched_terms_count": 1}, split + timedelta(minutes=1)),   # 最舊那一天
+            (AuditAction.DLP_HIT, {"matched_terms_count": 1}, split - timedelta(minutes=1)),   # 前一段最後一天
+            (AuditAction.PROMPT_INJECTION_BLOCKED, {"risk_level": "medium"}, split + timedelta(hours=1)),  # 只淨化，訊息有存
+        ]
+        for action, details, at in rows:
+            db_session.add(AuditLog(action=action, resource_type="conversation", details=details, created_at=at))
+        await db_session.commit()
+        data = await read()
+        gates = {g["key"]: g for g in data["gates"]}
+        base_gates = {g["key"]: g for g in base["gates"]}
+        assert gates["dlp"]["hits"] - base_gates["dlp"]["hits"] == 1
+        assert gates["dlp"]["daily"][0] - base_gates["dlp"]["daily"][0] == 1
+        assert gates["dlp"]["previous"] - base_gates["dlp"]["previous"] == 1
+        assert gates["dlp"]["daily_previous"][-1] - base_gates["dlp"]["daily_previous"][-1] == 1
+        assert sum(gates["dlp"]["daily"]) == gates["dlp"]["hits"]
+        assert data["messages"] - base["messages"] == 1            # 淨化那筆不算擋下
+        assert data["messages_previous"] - base["messages_previous"] == 1
+
     async def test_semantic_scores_endpoint(self, async_client: AsyncClient, test_admin: User, admin_auth_headers: dict):
         sg.record_score(0.72, 0.4)
         r = await async_client.get("/api/v1/admin/security/semantic-scores", headers=admin_auth_headers)

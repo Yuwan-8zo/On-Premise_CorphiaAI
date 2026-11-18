@@ -13,7 +13,7 @@ import logging
 import os
 from collections import deque
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -182,37 +182,60 @@ def _gate_of(action: str, details: Any) -> Optional[str]:
     return None
 
 
-async def gate_hits(db: AsyncSession, viewer: User, tz_offset_min: int = 0) -> dict[str, dict[str, Any]]:
+def window_bounds(tz_offset_min: int = 0) -> tuple[datetime, datetime, timedelta, date]:
+    """近 WINDOW_DAYS 天與前一段的分界，都從使用者那一天的午夜算（UTC，和資料庫的時間同一套）
+    回 (前一段開始, 這一段開始, 時區差, 使用者的今天)。總數、每天的長條、和上週比都用同一組分界"""
+    shift = timedelta(minutes=max(-840, min(840, int(tz_offset_min))))
+    today = (utc_now_naive() + shift).date()
+    today_start = datetime.combine(today, time()) - shift
+    split = today_start - timedelta(days=WINDOW_DAYS - 1)
+    return split - timedelta(days=WINDOW_DAYS), split, shift, today
+
+
+def _is_block(action: str, details: Any) -> bool:
+    """這筆稽核代表「整則訊息被擋下、沒有存進對話」：
+    違禁詞攔阻、高風險注入、語意比對／模型複查判定攔阻（每則被擋的訊息只會有一筆）"""
+    if action == AuditAction.DLP_HIT:
+        return True
+    if action == AuditAction.PROMPT_INJECTION_BLOCKED and isinstance(details, dict):
+        return details.get("risk_level") == "high" or details.get("method") is not None
+    return False
+
+
+async def gate_hits(
+    db: AsyncSession, viewer: User, tz_offset_min: int = 0,
+) -> tuple[dict[str, dict[str, Any]], tuple[int, int]]:
     """各閘道近 WINDOW_DAYS 天、前一段同長度的命中次數，和每天的次數（看得到的租戶）
-    tz_offset_min：瀏覽器所在時區比 UTC 快幾分鐘（台灣 480），「哪一天」照使用者的日期分"""
-    now = utc_now_naive()
-    start = now - timedelta(days=WINDOW_DAYS * 2)
-    split = now - timedelta(days=WINDOW_DAYS)
+    tz_offset_min：瀏覽器所在時區比 UTC 快幾分鐘（台灣 480），「哪一天」照使用者的日期分
+    另外回 (這一段, 前一段) 被整則擋下的訊息數：它們沒有存進對話，檢查則數要另外加上"""
+    start, _split, shift, today = window_bounds(tz_offset_min)
     actions = sorted({a for g in GATES for a in g.actions})
     q = scope_audit(
         select(AuditLog.action, AuditLog.details, AuditLog.created_at)
         .where(AuditLog.created_at >= start, AuditLog.action.in_(actions)),
         viewer,
     )
-    shift = timedelta(minutes=max(-840, min(840, int(tz_offset_min))))
-    today = (now + shift).date()
     # daily／daily_previous：每天幾次（舊到新），後台趨勢圖用虛線對照前一段
     out = {g.key: {"hits": 0, "previous": 0, "daily": [0] * WINDOW_DAYS, "daily_previous": [0] * WINDOW_DAYS}
            for g in GATES if g.counted}
+    blocked = [0, 0]
     for action, details, created in (await db.execute(q)).all():
+        day = (today - (created + shift).date()).days   # 0＝今天
+        if not 0 <= day < WINDOW_DAYS * 2:
+            continue
+        recent = day < WINDOW_DAYS
+        if _is_block(action, details):
+            blocked[0 if recent else 1] += 1
         key = _gate_of(action, details)
         if key is None:
             continue
-        day = (today - (created + shift).date()).days   # 0＝今天
-        if created >= split:
+        if recent:
             out[key]["hits"] += 1
-            if 0 <= day < WINDOW_DAYS:
-                out[key]["daily"][WINDOW_DAYS - 1 - day] += 1
+            out[key]["daily"][WINDOW_DAYS - 1 - day] += 1
         else:
             out[key]["previous"] += 1
-            if WINDOW_DAYS <= day < WINDOW_DAYS * 2:
-                out[key]["daily_previous"][WINDOW_DAYS * 2 - 1 - day] += 1
-    return out
+            out[key]["daily_previous"][WINDOW_DAYS * 2 - 1 - day] += 1
+    return out, (blocked[0], blocked[1])
 
 
 # ── 語意分數（門檻規劃器用） ──────────────────────────────────────────────

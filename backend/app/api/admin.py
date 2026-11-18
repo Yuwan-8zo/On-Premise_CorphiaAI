@@ -485,10 +485,12 @@ class SecurityGatesUpdate(BaseModel):
     semantic_review: Optional[float] = Field(default=None, ge=0, le=1)
 
 
-async def _messages_checked(db: AsyncSession, viewer: User, days: int) -> tuple[int, int]:
-    """近 days 天、前一段同長度，使用者送出的訊息數（每一則都經過資安閘道）"""
-    now = utc_now_naive()
-    split, start = now - timedelta(days=days), now - timedelta(days=days * 2)
+async def _messages_checked(db: AsyncSession, viewer: User, tz_offset: int) -> tuple[int, int]:
+    """近 WINDOW_DAYS 天、前一段同長度，存進對話的使用者訊息數（每一則都經過資安閘道）；
+    被整則擋下的不會存，由呼叫的地方另外加上。分界和命中次數一樣從使用者的午夜算"""
+    from app.services import security_gates as sg
+
+    start, split, _shift, _today = sg.window_bounds(tz_offset)
     base = select(func.count(Message.id)).join(Conversation, Message.conversation_id == Conversation.id).where(Message.role == "user")
     if not sees_all_tenants(viewer):
         base = base.where(tenant_of(Conversation.tenant_id) == viewer.effective_tenant_id)
@@ -506,8 +508,10 @@ async def get_security_gates(
 ) -> dict[str, Any]:
     from app.services import security_gates as sg
 
-    hits = await sg.gate_hits(db, current_user, tz_offset)
-    checked, checked_prev = await _messages_checked(db, current_user, sg.WINDOW_DAYS)
+    hits, (blocked, blocked_prev) = await sg.gate_hits(db, current_user, tz_offset)
+    saved, saved_prev = await _messages_checked(db, current_user, tz_offset)
+    # 檢查過的＝存進對話的＋被擋下沒存的
+    checked, checked_prev = saved + blocked, saved_prev + blocked_prev
     return {
         "status": "success",
         "data": {
