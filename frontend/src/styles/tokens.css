@@ -214,16 +214,18 @@
   --blur-24: calc(24 * var(--ui-unit));
 
   /* 元件尺寸：放大鏡相關元件（程式用 useCssPx 讀出實際像素；同心、凸出量等由這些算出來，不另外寫） */
-  --dock-n: calc(40 * var(--ui-unit));        /* 右上選單：收合時的外殼 */
-  --dock-btn: calc(36 * var(--ui-unit));      /* 收合時每顆按鈕 */
-  --dock-gap: calc(6 * var(--ui-unit));       /* 收合時按鈕之間 */
-  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距 */
-  --dock-w: calc(79 * var(--ui-unit));        /* 長按展開時的外殼寬 */
-  --dock-r: calc(33 * var(--ui-unit));        /* 長按展開時的外殼圓角 */
-  --dock-row-w: calc(75 * var(--ui-unit));    /* 長按展開時每列 */
-  --dock-row-h: calc(62 * var(--ui-unit));
-  --dock-lens-w: calc(93 * var(--ui-unit));   /* 放大鏡；圓角＝外殼圓角＋凸出量（同心），由程式算 */
-  --dock-lens-h: calc(95 * var(--ui-unit));
+  /* 右上選單（規範第 15 版「右下選單」，同一套尺寸；右上角其他按鈕跟著外殼同高 48） */
+  --dock-n: calc(48 * var(--ui-unit));        /* 收合時的外殼（圓角 24） */
+  --dock-btn: calc(44 * var(--ui-unit));      /* 收合時每顆按鈕（圓角 22） */
+  --dock-gap: calc(8 * var(--ui-unit));       /* 收合時按鈕之間：列距 52 − 44 */
+  --dock-pad: calc(2 * var(--ui-unit));       /* 外殼內距：48 ＝ 44 ＋ 2 × 2，同心 */
+  --dock-w: calc(76 * var(--ui-unit));        /* 長按展開時的外殼寬（圓角 32） */
+  --dock-r: calc(32 * var(--ui-unit));
+  --dock-row-w: calc(72 * var(--ui-unit));    /* 長按展開時每列 72×60 */
+  --dock-row-h: calc(60 * var(--ui-unit));
+  /* 放大鏡 89×85：寬＝外殼寬 ×（1 ＋ 2 × 0.084）；高＝列距 ＋ 2 ×（外殼寬 × 0.084 ＋ 列距 × 0.105）；圓角＝外殼圓角＋凸出量，由程式算 */
+  --dock-lens-w: calc(var(--dock-w) * (1 + 2 * 0.084));
+  --dock-lens-h: calc(var(--dock-row-h) + 2 * (var(--dock-w) * 0.084 + var(--dock-row-h) * 0.105));
   --sw-w: calc(72 * var(--ui-unit));          /* 切換開關：軌道 */
   --sw-h: calc(32 * var(--ui-unit));
   --sw-knob-w: calc(42 * var(--ui-unit));     /* 旋鈕 */

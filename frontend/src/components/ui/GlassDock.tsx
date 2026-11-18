@@ -7,14 +7,14 @@
  * 定點按住 0.32 秒、或按下後直接往下滑：列變寬成 79、圓角 33，每列 75×62 並顯示文字
  *   （同心放大：寬版右上角圓弧（半徑 33）和圓鈕（半徑 20）同一個圓心，外殼往上、往右各外擴 13；放大鏡四邊凸出外殼一樣多）
  *   放大鏡 93×88、圓角 40，跟著手指（每幀追 30%），中心不超過第一列與最後一列；
- *   鏡內圖示與文字放大 1.12 倍並變強調色，鏡片底下原本的項目隱藏（不重影）
+ *   鏡內圖示與文字放大 DOCK_LENS.zoom（1.17）倍並變強調色，鏡片底下原本的項目隱藏（不重影）
  * 放開：在項目上就執行該項目；在 × 上只關閉；選單立刻收合，放大鏡留在原地 0.3 秒淡出並縮到 0.95
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCssPx } from '@/lib/cssVars'
 import { MoreHorizontal, X } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
-import { LENS_CFG, LENS_MAG, LENS_SX, lensCrossScale, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
+import { DOCK_LENS, LENS_CFG, LENS_SX, lensCrossScale, reduceMotion, roundRectHole, shoulderMask } from './lensKit'
 import { swallowNextClick } from '@/lib/swallowClick'
 import { useTranslation } from 'react-i18next'
 import { useDismiss } from '@/lib/useDismiss'
@@ -164,11 +164,12 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         const isBtn = i === 0
         const it = isBtn ? null : items[i - 1]
         const icon = isBtn ? (open ? <X /> : <MoreHorizontal />) : it!.icon
-        // 展開後最上面的選單鈕是「關閉」，和刪除一樣用紅色
+        // 展開後最上面的選單鈕是「關閉」：規範「右下選單」——平常是一般顏色，放大鏡移到上面才變紅（關閉＝離開，和刪除同色）
         const toneKey = isBtn ? (open ? 'danger' : undefined) : it!.tone
-        const tone = toneKey === 'danger' ? 'text-[var(--sys-red)]' : toneKey === 'success' ? 'text-[var(--sys-green)]' : 'text-text-primary'
+        const toneOf = (k: typeof toneKey) => (k === 'danger' ? 'text-[var(--sys-red)]' : k === 'success' ? 'text-[var(--sys-green)]' : 'text-text-primary')
+        const tone = isBtn ? 'text-text-primary' : toneOf(toneKey)
         // 放大鏡出現時：鏡片外的項目一律白色；鏡片蓋到的項目才變色（一般＝強調色，驗證＝綠、刪除與關閉＝紅）
-        const lensTone = toneKey ? tone : 'text-accent'
+        const lensTone = toneKey ? toneOf(toneKey) : 'text-accent'
         return (
             <span
                 key={i}
@@ -250,7 +251,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                                 left: -lensL, top: -lensT, width: shellW, height: wideH, borderRadius: R_WIDE,
                                 transformOrigin: `${lensL + LENS_W / 2}px ${lensT + LENS_H / 2}px`,
                                 // 直的選單：短邊（橫向）依鏡片寬和外殼寬算，左右露出的折射凹陷和其他元件同比例
-                                transform: `scale(${lensCrossScale(LENS_W, SHELL_W)}, ${LENS_SX})`,
+                                transform: `scale(${lensCrossScale(LENS_W, SHELL_W, DOCK_LENS.band)}, ${LENS_SX})`,
                             }}
                         />
                         {/* 肩：跟一般／專案同一個遮罩（底面末端用圓弧彎進肩裡，不是直角），轉 90 度 */}
@@ -265,7 +266,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                             width: shellW,
                             padding: PAD,
                             transformOrigin: '0 0',
-                            transform: `translate(${LENS_W / 2}px, ${LENS_H / 2}px) scale(${LENS_MAG}) translate(${-LENS_W / 2}px, ${-LENS_H / 2}px) translate(${-lensL}px, ${-lensT}px)`,
+                            transform: `translate(${LENS_W / 2}px, ${LENS_H / 2}px) scale(${DOCK_LENS.zoom}) translate(${-LENS_W / 2}px, ${-LENS_H / 2}px) translate(${-lensL}px, ${-lensT}px)`,
                         }}
                     >
                         {Array.from({ length: rows }, (_, i) => rowContent(i, true))}

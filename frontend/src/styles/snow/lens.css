@@ -67,7 +67,7 @@
 /* ════════════════════════════════════════════════════════════════
  * 通用：選單項目／側欄導覽項目（全站選單共用，不要在元件裡另寫一長串樣式）
  *   .menu-item   彈出選單的一列：膠囊、圖示 18、按下淡底＋0.98；
- *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，品牌色實底）
+ *                變化：.is-danger（刪除）、.is-success（驗證）、.is-selected（目前選取，凹陷底盤＋強調色）
  *   .menu-sep    選單分隔線
  *   .nav-item    側欄導覽的一列：膠囊；目前頁面加 .is-current（淡底＋粗體，圖示用品牌色）
  * 選單容器一律用 .paper，內容包在 <LensMenu>（長按放大鏡）
@@ -110,9 +110,11 @@
 html.dark .menu-item.is-success {
   color: rgb(52 211 153);
 }
+/* 目前選取：規範「目前項目在每個列裡都用同一種標示」＝凹陷底盤＋強調色（不用實心色塊） */
 .menu-item.is-selected {
-  background: rgb(var(--accent));
-  color: var(--text-on-accent, #fff);
+  background: var(--well);
+  box-shadow: var(--well-shadow);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 .menu-sep {

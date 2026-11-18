@@ -198,10 +198,13 @@ export function useLensMotion(initial: number, distPx: (a: number, b: number) =>
  * 切換開關不用：它的軌道、旋鈕、放大鏡全部等比例縮放，固定的 LENS_SY 本來就和大小無關。
  * lensCross＝放大鏡短邊、barCross＝底的粗細
  */
-export function lensCrossScale(lensCross: number, barCross: number) {
+export function lensCrossScale(lensCross: number, barCross: number, band: number = LENS_CFG.band) {
     if (!(barCross > 0) || !(lensCross > 0)) return LENS_SY
-    return Math.min(1, (lensCross * (1 - 2 * LENS_CFG.band)) / barCross)
+    return Math.min(1, (lensCross * (1 - 2 * band)) / barCross)
 }
+
+/** 右上選單的放大鏡（規範第 15 版「右下選單」：鏡內放大 1.17、凹陷佔鏡片短邊 0.11）；其他放大鏡元件維持 LENS_CFG */
+export const DOCK_LENS = { zoom: 1.17, band: 0.11 } as const
 
 /** 放大鏡是否在作用中（按住、滑動或縮回中）；平常只顯示凹陷底盤／白色旋鈕 */
 export const lensActive = (f: LensFrame) => f.grow > 0.001 || f.veil < 0.999
