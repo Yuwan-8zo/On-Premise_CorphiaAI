@@ -14,6 +14,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LENS_CFG, LENS_MAG, capsuleHole, lensActive, useLensMotion } from './lensKit'
 import { swallowNextClick } from '@/lib/swallowClick'
+import { useLensPull } from './useLensPull'
 import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 
 export interface GlassNavItem<T extends string> {
@@ -43,6 +44,8 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     const gap = typeof gapIn === 'string' ? px[gapIn] : gapIn
     const GROW_PX = px['--lens-over']
     const listRef = useRef<HTMLDivElement | null>(null)
+    // 拉過頭：按住拖到第一項上面／最後一項下面再往外拉，整列被拉長、放開彈回（和拉桿一樣）
+    useLensPull(listRef, { axis: 'y' })
     const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
     const [geo, setGeo] = useState<{ w: number; boxes: Box[] }>({ w: 0, boxes: [] })
     const geoRef = useRef(geo)

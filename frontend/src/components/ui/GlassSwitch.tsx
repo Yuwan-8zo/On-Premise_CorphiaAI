@@ -14,6 +14,7 @@ import { useEffect, useRef } from 'react'
 import { readNum, useCssPx } from '@/lib/cssVars'
 import { Loader2 } from '@/components/snow/icons'
 import { LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
+import { useLensPull } from './useLensPull'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -41,6 +42,9 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
     const lens = useLensMotion(checked ? 1 : 0, (a, b) => Math.abs(a - b) * (xOn - xOff))
     const drag = useRef<{ id: number; sx: number; moved: boolean; rect: DOMRect } | null>(null)
     const skipClick = useRef(false)
+    // 拉過頭：按住拖到端點再往外拉，整顆開關被拉長、放開彈回（和拉桿一樣）
+    const btnRef = useRef<HTMLButtonElement | null>(null)
+    useLensPull(btnRef, { axis: 'x', disabled: isDisabled })
 
     // 外部改變狀態（鍵盤、程式）→ 滑過去
     useEffect(() => {
@@ -92,6 +96,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
 
     return (
         <button
+            ref={btnRef}
             type="button"
             role="switch"
             aria-checked={checked}

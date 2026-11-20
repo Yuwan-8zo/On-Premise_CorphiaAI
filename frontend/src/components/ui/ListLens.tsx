@@ -17,6 +17,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LENS_CFG, LENS_MAG, lensActive, useLensMotion } from './lensKit'
 import { readPx } from '@/lib/cssVars'
+import { useLensPull } from './useLensPull'
 import { swallowNextClick } from '@/lib/swallowClick'
 
 type Box = { cy: number; h: number; left: number; w: number }
@@ -41,6 +42,11 @@ export default function ListLens({ watch }: { watch: unknown }) {
     lensRef.current = lens
 
     const host = () => selfRef.current?.parentElement ?? null
+    // 拉過頭：拖著放大鏡超出清單上下緣再往外拉，整個清單被拉長、放開彈回（和拉桿一樣）
+    const hostRef = useRef<HTMLElement | null>(null)
+    const dragging = useRef(false)
+    useLayoutEffect(() => { hostRef.current = host() }, [])
+    useLensPull(hostRef, { axis: 'y', active: () => dragging.current })
     /** 可選的列（不含放大鏡裡的複本） */
     const rows = () => {
         const h = host()
@@ -128,6 +134,7 @@ export default function ListLens({ watch }: { watch: unknown }) {
             try { h.releasePointerCapture(drag.id) } catch { /* 已經放開 */ }
             h.style.removeProperty('user-select')
             drag = null
+            dragging.current = false
         }
         const down = (e: PointerEvent) => {
             // 觸控完全不處理（見檔頭）：這裡任何畫面變化都可能讓手機瀏覽器吃掉這一下點擊
@@ -153,6 +160,7 @@ export default function ListLens({ watch }: { watch: unknown }) {
             if (!drag.moved && Math.abs(e.clientY - drag.sy) < LENS_CFG.slop) return
             if (!drag.moved) {
                 drag.moved = true
+                dragging.current = true
                 clearTimeout(drag.timer)
                 try { h.setPointerCapture(e.pointerId) } catch { /* 部分瀏覽器不支援 */ }
                 h.style.setProperty('user-select', 'none')
@@ -163,6 +171,7 @@ export default function ListLens({ watch }: { watch: unknown }) {
             if (!drag || drag.id !== e.pointerId) return
             const d = drag
             drag = null
+            dragging.current = false
             clearTimeout(d.timer)
             lensRef.current.follow(null)
             h.style.removeProperty('user-select')

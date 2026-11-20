@@ -9,6 +9,7 @@
  */
 import { useRef, useState } from 'react'
 import { readNum, readPx } from '@/lib/cssVars'
+import { useLensPull } from '@/components/ui/useLensPull'
 
 export interface DualRangeProps {
     low: number
@@ -39,6 +40,11 @@ export default function DualRange({ low, high, onChange, disabled = false, lowLa
     // 正在拖曳哪一個把手（放大鏡）；軌道寬在按下時量一次
     const [active, setActive] = useState<'low' | 'high' | null>(null)
     const [trackW, setTrackW] = useState(0)
+    // 拉過頭（規範「拉桿」）：拖到端點再往外拉，整條拉桿被拉長、放開彈回；端點看軌道
+    const rootRef = useRef<HTMLDivElement>(null)
+    const activeRef = useRef(active)
+    activeRef.current = active
+    useLensPull(rootRef, { axis: 'x', bounds: () => trackRef.current, active: () => activeRef.current !== null, disabled })
 
     const clamp = (which: 'low' | 'high', v: number) => {
         v = round2(Math.min(1, Math.max(0, v)))
@@ -132,7 +138,7 @@ export default function DualRange({ low, high, onChange, disabled = false, lowLa
     }
 
     return (
-        <div className="relative w-full" style={{ height: 'var(--dr-knob-h)' }}>
+        <div ref={rootRef} className="relative w-full" style={{ height: 'var(--dr-knob-h)' }}>
             <div
                 ref={trackRef}
                 aria-hidden
