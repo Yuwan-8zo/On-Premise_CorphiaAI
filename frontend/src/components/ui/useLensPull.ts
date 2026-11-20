@@ -24,7 +24,10 @@ export function pullDamp(over: number, max: number = LENS_CFG.pullMax): number {
  *   回傳 s（沿這個方向的縮放）、t（位移）；沒超出時 s＝1、t＝0
  */
 export function pullTransform(pos: number, lo: number, hi: number, o: number): { s: number; t: number } {
-    const d = pos < lo ? pos - lo : pos > hi ? pos - hi : 0
+    // 超出多少：往前端是負的、往後端是正的
+    let d = 0
+    if (pos < lo) d = pos - lo
+    else if (pos > hi) d = pos - hi
     const len = hi - lo
     if (!d || len <= 0) return { s: 1, t: 0 }
     const sign = Math.sign(d)
@@ -142,9 +145,9 @@ export function useLensPull(ref: RefObject<HTMLElement | null>, opts: PullOption
  * 不換回去的話，放大鏡會被算進一次縮放、又跟著卡片再縮放一次，越靠近被拉的那端偏越多。
  */
 export function unpullRect(el: HTMLElement | null, r: DOMRect): DOMRect {
-    if (!el || !el.style.scale) return r
+    if (!el?.style.scale) return r
     const [sx, sy = sx] = el.style.scale.split(' ').map(Number)
-    const [tx, ty = 0] = (el.style.translate || '0px 0px').split(' ').map((v) => parseFloat(v) || 0)
+    const [tx, ty = 0] = (el.style.translate || '0px 0px').split(' ').map((v) => Number.parseFloat(v) || 0)
     const c = el.getBoundingClientRect()
     // 畫面座標＝中心＋縮放 ×（版面座標−中心）＋位移；現在的中心（c 的中心）＝版面中心＋位移
     const cx = c.left + c.width / 2, cy = c.top + c.height / 2
