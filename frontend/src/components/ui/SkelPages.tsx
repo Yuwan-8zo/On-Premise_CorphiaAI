@@ -26,7 +26,7 @@ function SkelChars({ chars }: { chars: number }) {
 }
 
 /** 聊天頁：conv＝打開某個對話（畫訊息），否則是新對話首頁（畫歡迎標題與建議卡片） */
-function SkelChat({ conv = false }: { conv?: boolean }) {
+function SkelChat({ conv = false }: Readonly<{ conv?: boolean }>) {
     return (
         <div className="flex absolute inset-0 w-full h-full overflow-hidden">
             {/* 桌機側欄（手機收在抽屜裡，不畫） */}
@@ -294,18 +294,21 @@ function SkelSnapshot({ items }: { items: SnapItem[] }) {
 export function SkelPage() {
     const path = landingPath(useLocation().pathname)
     const snap = loadLayoutSnapshot(path)
-    const view = snap ? <SkelSnapshot items={snap} />
-        : path.startsWith('/login') ? <SkelLogin />
-        : path.startsWith('/admin') ? <SkelAdmin />
-        : path.startsWith('/share/') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
-        : path.startsWith('/chat/') ? <SkelChat conv />
-        : path === '/' || path === '/chat' ? <SkelChat />
-        : null /* 其他網址（例如 404）：只留底色與波浪，不要冒出別頁的骨架 */
     return (
         <div role="status" aria-label={i18n.t('common.loading')} className="relative h-[100dvh] w-full bg-bg-base">
             {/* 波浪背景跟真實頁面一樣，載入完成時背景不會閃 */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden"><WaveBackground /></div>
-            <div className="relative h-full">{view}</div>
+            <div className="relative h-full">{snap ? <SkelSnapshot items={snap} /> : skelFor(path)}</div>
         </div>
     )
+}
+
+/** 沒記過版面時：手刻的那一頁骨架；不認得的網址（例如 404）只留底色與波浪，不要冒出別頁的骨架 */
+function skelFor(path: string) {
+    if (path.startsWith('/login')) return <SkelLogin />
+    if (path.startsWith('/admin')) return <SkelAdmin />
+    if (path.startsWith('/share/')) return <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
+    if (path.startsWith('/chat/')) return <SkelChat conv />
+    if (path === '/' || path === '/chat') return <SkelChat />
+    return null
 }
