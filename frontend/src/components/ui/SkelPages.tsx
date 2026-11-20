@@ -10,8 +10,10 @@ import type { CSSProperties } from 'react'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { Skel, SkelMessages } from '@/components/ui/Skeleton'
 import { useFitToHost } from '@/lib/useFitToHost'
+import { useLocation } from 'react-router-dom'
 import i18n from '@/i18n'
 import { loadLayoutSnapshot, type SnapItem } from '@/lib/layoutSnapshot'
+import { landingPath } from '@/lib/landingPath'
 
 /** 文字灰條：用 em 當單位，放在跟真實文字同字級的容器裡，長度＝字數、高度＝字身，會跟著字級縮放 */
 function SkelChars({ chars }: { chars: number }) {
@@ -23,8 +25,8 @@ function SkelChars({ chars }: { chars: number }) {
     )
 }
 
-/** 聊天頁 */
-function SkelChat() {
+/** 聊天頁：conv＝打開某個對話（畫訊息），否則是新對話首頁（畫歡迎標題與建議卡片） */
+function SkelChat({ conv = false }: { conv?: boolean }) {
     return (
         <div className="flex absolute inset-0 w-full h-full overflow-hidden">
             {/* 桌機側欄（手機收在抽屜裡，不畫） */}
@@ -59,6 +61,11 @@ function SkelChat() {
                         <div className="btn-group btn-group-36 h-[var(--top-btn)] w-[var(--top-btn)] !rounded-full" />
                     </div>
                 </header>
+                {conv ? (
+                    <div className="flex-1 min-h-0 overflow-hidden pt-6 pb-4">
+                        <SkelMessages count={4} className="w-full max-w-3xl mx-auto px-4 md:px-0" />
+                    </div>
+                ) : (
                 <div className="flex-1 min-h-0 overflow-hidden pt-6 pb-4">
                     <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                         <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
@@ -77,6 +84,7 @@ function SkelChat() {
                         </div>
                     </div>
                 </div>
+                )}
                 {/* 輸入欄：高＝按鈕高＋上下內距，和真的一樣 */}
                 <div className="shrink-0 pt-2 pb-4 md:pb-8 w-full">
                     <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 w-full">
@@ -282,15 +290,16 @@ function SkelSnapshot({ items }: { items: SnapItem[] }) {
     )
 }
 
-/** 整頁骨架：依目前網址顯示那一頁的外形（在哪一頁重整就顯示哪一頁） */
+/** 整頁骨架：畫「載入完會看到的那一頁」的外形；網址換了（被導向別頁）就跟著換 */
 export function SkelPage() {
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/'
+    const path = landingPath(useLocation().pathname)
     const snap = loadLayoutSnapshot(path)
     const view = snap ? <SkelSnapshot items={snap} />
         : path.startsWith('/login') ? <SkelLogin />
         : path.startsWith('/admin') ? <SkelAdmin />
-        : path.startsWith('/share') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
-        : path === '/' || path.startsWith('/chat') ? <SkelChat />
+        : path.startsWith('/share/') ? <SkelMessages count={5} className="mx-auto max-w-3xl px-4 pt-[var(--sp-96)]" />
+        : path.startsWith('/chat/') ? <SkelChat conv />
+        : path === '/' || path === '/chat' ? <SkelChat />
         : null /* 其他網址（例如 404）：只留底色與波浪，不要冒出別頁的骨架 */
     return (
         <div role="status" aria-label={i18n.t('common.loading')} className="relative h-[100dvh] w-full bg-bg-base">

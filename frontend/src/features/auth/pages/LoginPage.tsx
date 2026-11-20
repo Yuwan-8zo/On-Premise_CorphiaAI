@@ -40,6 +40,8 @@ export default function Login() {
     return (
         <div
             // 多個高度單位當備援：部分內嵌瀏覽器的 dvh 算錯時版面不會上下偏移
+            // 重新整理一律回到登入分頁：停在註冊分頁時不記骨架版面（見 lib/layoutSnapshot）
+            data-skel-nosave={isRegister || undefined}
             className="min-h-screen min-h-[100svh] min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
             style={{
                 // 輸入框邊線：依深淺色給不同灰

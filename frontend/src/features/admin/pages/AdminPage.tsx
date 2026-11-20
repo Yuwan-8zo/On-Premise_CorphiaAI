@@ -109,6 +109,8 @@ export default function Admin() {
 
     return (
         <div
+            // 重新整理一律回到總覽：停在其他分頁時不記骨架版面（見 lib/layoutSnapshot）
+            data-skel-nosave={activeSection !== 'overview' || undefined}
             className="edge-shell admin-shell fixed inset-0 overflow-hidden bg-bg-base text-text-primary transition-colors duration-300"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >

@@ -49,6 +49,8 @@ export default function Chat() {
         // 主畫面全區背景 (使用 fixed inset-0 完全鎖定在視窗內部，防止 iOS Safari 整頁回彈拖拉)
         // 與 LoginPage / Admin 同款：bg-bg-base + 三條弧線 SVG，sidebar / main 玻璃化
         <div
+            // 專案模式、資料夾頁：重新整理會回到一般聊天，這時不記骨架版面（見 lib/layoutSnapshot）
+            data-skel-nosave={sidebarProps.chatMode === 'project' || !!mainProps.selectedFolder || undefined}
             className="edge-shell chat-shell flex fixed inset-0 bg-bg-base text-text-primary overflow-hidden font-sans selection:bg-accent transition-colors"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
