@@ -172,7 +172,8 @@ def test_normal_questions_pass(text):
 
 def test_refusal_message_is_clear():
     hit = check_sensitive_request("我要王曉明的身分證")
-    assert "個人資料" in hit.message and "攔阻" in hit.message
+    assert "個人資料" in hit.message
+    assert "攔阻" in hit.message
 
 
 # ── 2. 整條閘道 ──────────────────────────────────────────────────────────
@@ -205,9 +206,11 @@ class TestGatewayBlocks:
         )).scalars().all()
         assert len(logs) == 1
         details = logs[0].details or {}
-        assert details.get("rule") == "sensitive_request" and details.get("category") == PERSONAL
+        assert details.get("rule") == "sensitive_request"
+        assert details.get("category") == PERSONAL
         assert "method" not in details  # 算在後台「DLP」那一關的命中次數
-        assert "王曉明" not in (logs[0].description or "") and "王曉明" not in str(details)  # 稽核不存原文
+        assert "王曉明" not in (logs[0].description or "")  # 稽核不存原文
+        assert "王曉明" not in str(details)
 
     async def test_attack_request_blocked_as_injection(
         self, async_client: AsyncClient, db_session: AsyncSession, test_user: User, user_auth_headers: dict, monkeypatch

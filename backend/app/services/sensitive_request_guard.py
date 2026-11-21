@@ -96,7 +96,7 @@ _SURNAMES_1 = (
     "陈黄张刘杨许郑谢叶苏庄吕钟罗萧赵颜孙邓冯汤邹龚严韩钱谭骆顾"
 )
 _NAME_RE = re.compile(rf"(?:{_SURNAMES_2}|[{_SURNAMES_1}])[一-鿿]{{1,2}}$")
-_NICKNAME_RE = re.compile(r"(?:小|阿)[一-鿿]{1,2}$")
+_NICKNAME_RE = re.compile(r"[小阿][一-鿿]{1,2}$")
 # 看起來像姓名、其實是一般詞（姓氏開頭的常用詞）
 _NOT_NAMES = (
     "高鐵", "高雄", "高層", "高階", "方法", "方式", "方面", "方案", "石油", "金額", "金融", "白天", "程式", "程序", "連結", "連線",
@@ -126,9 +126,18 @@ _SYSTEM_NOUNS = re.compile(
     re.IGNORECASE,
 )
 # 名字和個資之間常見的修飾詞（「王曉明的完整身分證字號」「王曉明家裡的地址」）
-_MODIFIERS = re.compile(
-    r"(?:有沒有|有没有|有無|是否有|是否|有|的|之|那張|那支|那個|這張|這支|完整|詳細|目前|現在|最新|真實|真正|正確|全部|所有|私人|個人|家裡|家裏|老家|住家|聯絡|上面|上的|身上|手上)$"
-)
+
+
+def _words(*words: str) -> str:
+    """字詞清單 → 正規表示式的「其中一個」（清單比一長串 | 好讀、好增補）"""
+    return "|".join(words)
+
+
+_MODIFIERS = re.compile("(?:" + _words(
+    "有沒有", "有没有", "有無", "是否有", "是否", "有", "的", "之", "那張", "那支", "那個", "這張", "這支",
+    "完整", "詳細", "目前", "現在", "最新", "真實", "真正", "正確", "全部", "所有", "私人", "個人",
+    "家裡", "家裏", "老家", "住家", "聯絡", "上面", "上的", "身上", "手上",
+) + ")$")
 _BULK = re.compile(r"(?:所有|全部|全體|全体|每一?[個位个]|整份|完整|一整批|everyone|every|all)")
 
 # ── 要「取得」的意圖 ─────────────────────────────────────────────────────
@@ -163,6 +172,15 @@ _EN_PERSON = re.compile(
     re.IGNORECASE,
 )
 
+_EN_WORD = r"[a-z][\w\-]*"
+_EN_POSSESSIVE_BEFORE = re.compile(rf"({_EN_WORD}(?:\s+{_EN_WORD}){{0,2}})['’]s?\s+(?:[a-z]+\s+){{0,3}}$", re.IGNORECASE)
+_EN_PRONOUN_BEFORE = re.compile(r"\b(his|her|their|my|our)\s+(?:[a-z]+\s+){0,3}$", re.IGNORECASE)
+_EN_OF_AFTER = re.compile(
+    rf"\s*(?:number\s+|no\.?\s+)?(?:of|for|belonging\s+to)\s+(?:the\s+|all\s+|every\s+)?({_EN_WORD}(?:\s+{_EN_WORD}){{0,2}})",
+    re.IGNORECASE,
+)
+_EN_ADJACENT_BEFORE = re.compile(rf"\b({_EN_WORD})\s+$", re.IGNORECASE)
+
 # ── 要求協助攻擊 ─────────────────────────────────────────────────────────
 _MALWARE = re.compile(
     r"勒索(?:病毒|軟體|程式|软件)|木馬|木马|後門|后门|鍵盤側錄|側錄程式|惡意(?:程式|軟體|腳本|巨集)|恶意(?:程序|软件)|病毒程式|蠕蟲|殭屍網路"
@@ -170,7 +188,10 @@ _MALWARE = re.compile(
     r"|rootkit|keylogger|ransomware|malware|trojan|backdoor|botnet|reverse\s+shell|web\s*shell|phishing\s+(?:email|e-mail|page|site|kit|message)",
     re.IGNORECASE,
 )
-_BUILD = re.compile(r"寫|写|撰寫|做|製作|制作|產生|产生|生成|開發|开发|設計|给我|給我|提供|弄一|write|create|make|build|generate|code|develop|craft|draft", re.IGNORECASE)
+_BUILD = re.compile(_words(
+    "寫", "写", "撰寫", "做", "製作", "制作", "產生", "产生", "生成", "開發", "开发", "設計", "给我", "給我", "提供", "弄一",
+    "write", "create", "make", "build", "generate", "code", "develop", "craft", "draft",
+), re.IGNORECASE)
 _INTRUSION = re.compile(
     r"入侵|駭進|駭入|黑進|攻進|攻破|滲透進|提權|權限提升|竊取|窃取|偷(?:取|看|走|拿)|盜(?:取|用|刷)|盗(?:取|用)|側錄|監聽|撞庫|暴力破解"
     r"|破解(?:密碼|帳號|wifi|wi-fi|系統|加密|授權|序號)|ddos|阻斷服務攻擊|sql\s*(?:注入|injection)|xss|拿到(?:別人|他人)的(?:帳號|權限)"
@@ -181,7 +202,10 @@ _INTRUSION = re.compile(
     r"|\bsteal\b|exfiltrat\w*|brute[\s-]?force|credential\s+stuffing|crack\s+(?:the\s+)?(?:password|wifi|account)",
     re.IGNORECASE,
 )
-_HOW = re.compile(r"怎麼|怎么|如何|教我|教學|步驟|方法|幫我|帮我|給我|告訴我|可以|能不能|how\s+(?:do|can|to|would)|steps|teach|help\s+me|show\s+me|ways?\s+to|tutorial", re.IGNORECASE)
+_HOW = re.compile(_words(
+    "怎麼", "怎么", "如何", "教我", "教學", "步驟", "方法", "幫我", "帮我", "給我", "告訴我", "可以", "能不能",
+    r"how\s+(?:do|can|to|would)", "steps", "teach", r"help\s+me", r"show\s+me", r"ways?\s+to", "tutorial",
+), re.IGNORECASE)
 _DEFENSIVE = re.compile(
     r"防範|防范|防止|防禦|防护|防護|預防|预防|避免(?!被)|辨識|辨别|識別|识别|偵測|侦测|檢測|检测|察覺|發現|应变|應變|通報|中了|中毒|被(?:駭|入侵|攻擊|勒索|竊取|盜|偷|釣)"
     r"|保護|教育訓練|宣導|意識|案例|新聞|是什麼|什麼是|原理|定義|差別|區別|有哪些(?:類型|種類)|怎麼辦|處理"
@@ -189,9 +213,17 @@ _DEFENSIVE = re.compile(
     re.IGNORECASE,
 )
 
+# 規避本系統的資安閘道（「怎麼繞過資安閘道」「怎麼問才不會被資安閘道擋」）
+_GATE_WORDS = _words("資安閘道", "資安檢查", "dlp", "稽核紀錄", "稽核", "過濾")
+_EVADE_VERBS = _words("繞過", "跳過", "關掉", "關閉", "停用", "躲過", "不會被", "才不會")
+_EVADE_GATE = re.compile(
+    rf"(?:{_GATE_WORDS})\S{{0,8}}(?:{_EVADE_VERBS})|(?:{_words('繞過', '跳過', '躲過', '避開')})\S{{0,6}}(?:{_GATE_WORDS})",
+    re.IGNORECASE,
+)
+
 _CJK_SPACE = re.compile(r"(?<=[一-鿿])\s+(?=[一-鿿])")
 _PUNCT_SPLIT = re.compile(r"[，。！？、；：,.!?;:\n「」『』（）()\[\]【】]")
-_FILLERS = re.compile(r"[\s的之字號號碼码請麻煩一下拜託謝謝please\-:：，。！？?!、]|number|no\.", re.IGNORECASE)
+_FILLERS = re.compile(r"please|number|no\.|[\s的之字號碼码請麻煩一下拜託謝謝\-:：，。！？?!、]", re.IGNORECASE)
 
 
 def _normalize(text: str) -> str:
@@ -201,32 +233,42 @@ def _normalize(text: str) -> str:
     return _CJK_SPACE.sub("", squeezed)
 
 
-def _owner_zh(before: str) -> str:
-    """個資字詞前面那一段，判斷是誰的：self／person／system／org／none"""
-    seg = _PUNCT_SPLIT.split(before)[-1].strip()[-16:]
+def _strip_modifiers(seg: str) -> str:
+    """拿掉名字和個資之間的修飾詞（最多剝四層：「王曉明家裡的完整」→「王曉明」）"""
     for _ in range(4):
         stripped = _MODIFIERS.sub("", seg).strip()
         if stripped == seg:
             break
         seg = stripped
+    return seg
+
+
+def _ends_with_name(seg: str) -> bool:
+    """結尾像人名（姓氏＋一兩個字、小明、阿華）"""
+    name = _NAME_RE.search(seg) or _NICKNAME_RE.search(seg)
+    if not name:
+        return False
+    word = name.group(0)
+    prev = seg[: name.start()][-1:]
+    # 「這張表」「每位」這種量詞開頭的不是名字；姓氏開頭的常用詞也不是
+    if prev and prev in "這那每一哪幾兩三半整这":
+        return False
+    return not any(word.startswith(w) or word.endswith(w) for w in _NOT_NAMES)
+
+
+def _owner_zh(before: str) -> str:
+    """個資字詞前面那一段，判斷是誰的：self／person／system／org／none"""
+    seg = _strip_modifiers(_PUNCT_SPLIT.split(before)[-1].strip()[-16:])
     if not seg:
         return "none"
     if _PLACES.search(seg) or _ORG_SUFFIX.search(seg):
         return "org"
-    if re.search(r"(?:本人|自己|我自己)$", seg):
+    if seg.endswith(("本人", "自己")):
         return "self"
-    if seg.endswith("其他") or seg.endswith("個人"):
+    if seg.endswith(("其他", "個人")):
         return "none"
-    if _PERSON_NOUNS.search(seg):
+    if _PERSON_NOUNS.search(seg) or _ends_with_name(seg):
         return "person"
-    name = _NAME_RE.search(seg) or _NICKNAME_RE.search(seg)
-    if name:
-        word = name.group(0)
-        prev = seg[: name.start()][-1:]
-        # 「這張表」「每位」這種量詞開頭的不是名字；姓氏開頭的常用詞也不是
-        if not (prev and prev in "這那每一哪幾兩三半整这") and not any(word.startswith(w) or word.endswith(w) for w in _NOT_NAMES):
-            return "person"
-        # 三個字時，後兩個字也可能是名字（「查一下陳明」）——上面已涵蓋；這裡只排除常用詞
     if _SELF_EXACT.search(seg):
         return "self"
     if _SYSTEM_NOUNS.search(seg):
@@ -238,34 +280,40 @@ def _owner_en(text: str, start: int, end: int) -> str:
     """英文：個資字詞前的所有格（John's、his），或後面的 of／for 某人"""
     before = text[max(0, start - 60):start]
     after = text[end:end + 60]
-    m = re.search(r"([A-Za-z][\w\-]*(?:\s+[A-Za-z][\w\-]*){0,2})['’]s?\s+(?:[a-z]+\s+){0,3}$", before)
-    m2 = re.search(r"\b(his|her|their|my|our)\s+(?:[a-z]+\s+){0,3}$", before, re.IGNORECASE)
-    m3 = re.match(r"\s*(?:number\s+|no\.?\s+)?(?:of|for|belonging\s+to)\s+(?:the\s+|all\s+|every\s+)?([A-Za-z][\w\-]*(?:\s+[A-Za-z][\w\-]*){0,2})", after, re.IGNORECASE)
-    m4 = re.search(r"\b([A-Za-z][\w\-]*)\s+$", before)
-    for found in (m2, m, m3, m4):
-        if not found:
-            continue
-        owner = found.group(1).strip()
-        # 只看最靠近個資字詞的那個字（「Give me John Smith's」看 Smith，不是 me）
-        first = owner.split()[-1].lower() if found is m else owner.split()[0].lower()
-        if found is m4:  # 只看緊鄰的一個字：admin password、employee salary
-            if _EN_SYSTEM.search(owner):
-                return "system"
-            if _EN_PERSON.search(owner):
-                return "person"
-            continue
-        if _EN_PERSON.search(owner):
-            return "person"
-        if first in _EN_SELF:
-            return "self"
-        if _EN_ORG.search(owner):
-            return "org"
-        if _EN_SYSTEM.search(owner):
-            return "system"
-        if first in _EN_SKIP:
-            continue
+    # 依序看三個線索；只看最靠近個資字詞的那個字（「Give me John Smith's」看 Smith，不是 me）
+    clues = (
+        (_EN_PRONOUN_BEFORE.search(before), 0),
+        (_EN_POSSESSIVE_BEFORE.search(before), -1),
+        (_EN_OF_AFTER.match(after), 0),
+    )
+    for found, key_index in clues:
+        if found:
+            owner = found.group(1).strip()
+            kind = _classify_en_owner(owner, owner.split()[key_index].lower())
+            if kind:
+                return kind
+    # 只看緊鄰的一個字：admin password、employee salary
+    adjacent = _EN_ADJACENT_BEFORE.search(before)
+    if adjacent and _EN_SYSTEM.search(adjacent.group(1)):
+        return "system"
+    if adjacent and _EN_PERSON.search(adjacent.group(1)):
         return "person"
     return "none"
+
+
+def _classify_en_owner(owner: str, key_word: str) -> Optional[str]:
+    """英文的擁有者 → person／self／org／system；看不出來（the、this…）回 None 換下一個線索"""
+    if _EN_PERSON.search(owner):
+        return "person"
+    if key_word in _EN_SELF:
+        return "self"
+    if _EN_ORG.search(owner):
+        return "org"
+    if _EN_SYSTEM.search(owner):
+        return "system"
+    if key_word in _EN_SKIP:
+        return None
+    return "person"
 
 
 def _remainder_is_short(text: str, start: int, end: int) -> bool:
@@ -279,27 +327,38 @@ def _remainder_is_short(text: str, start: int, end: int) -> bool:
     return len(rest) <= 4
 
 
+def _owner_of(text: str, m: re.Match, category: str) -> str:
+    """這個個資字詞是誰的"""
+    owner = "none"
+    if re.match(r"[a-z]", m.group(0), re.IGNORECASE):
+        owner = _owner_en(text, m.start(), m.end())
+    if owner == "none":
+        owner = _owner_zh(text[: m.start()])
+    if owner == "none" and category == PERSONAL and _BULK.search(text[max(0, m.start() - 12): m.start()]):
+        owner = "person"  # 「列出所有的電話號碼」：大量索取
+    return owner
+
+
+def _owner_is_sensitive(owner: str, category: str, kind: str) -> bool:
+    """這個擁有者的這種資料算不算敏感：個人的都算；單位的只有強個資（身分證、病歷…）；系統的只有憑證"""
+    if owner == "person":
+        return True
+    if owner == "org":
+        return category == PERSONAL and kind in _STRONG_PERSONAL and kind != "銀行帳號"
+    if owner == "system":
+        return category == CREDENTIAL
+    return False  # self、none
+
+
 def _check_data_request(text: str) -> Optional[SensitiveHit]:
     benign_only = bool(_BENIGN.search(text)) and not _VALUE_REQUEST.search(text)
     wants = bool(_VALUE_REQUEST.search(text) or _ACQUIRE_EXTRA.search(text))
     for category, kind, regex in _KIND_RES:
         for m in regex.finditer(text):
-            is_en = bool(re.match(r"[A-Za-z]", m.group(0)))
-            owner = _owner_en(text, m.start(), m.end()) if is_en else _owner_zh(text[: m.start()])
-            if is_en and owner == "none":
-                owner = _owner_zh(text[: m.start()])
-            if owner == "none" and _BULK.search(text[max(0, m.start() - 12): m.start()]) and category == PERSONAL:
-                owner = "person"  # 「列出所有的電話號碼」：大量索取
             # 反查：「A123456789 這個身分證是誰的」
             if category == PERSONAL and _REVERSE_LOOKUP.search(text):
                 return SensitiveHit(category, kind, MESSAGES[category])
-            if owner in ("self", "none"):
-                continue
-            if owner == "org" and not (category == PERSONAL and kind in _STRONG_PERSONAL and kind not in ("銀行帳號",)):
-                continue
-            if owner == "system" and category != CREDENTIAL:
-                continue
-            if benign_only:
+            if benign_only or not _owner_is_sensitive(_owner_of(text, m, category), category, kind):
                 continue
             if wants or _remainder_is_short(text, m.start(), m.end()):
                 return SensitiveHit(category, kind, MESSAGES[category])
@@ -318,8 +377,7 @@ def _check_attack(text: str) -> Optional[SensitiveHit]:
     if intrusion and _HOW.search(text) and not _DEFENSIVE.search(text):
         return SensitiveHit(ATTACK, "入侵／竊取／繞過防護", MESSAGES[ATTACK])
     # 規避本系統的資安閘道：防禦詞也不能當掩護
-    if re.search(r"(?:資安閘道|資安檢查|dlp|稽核|過濾)\S{0,8}(?:繞過|跳過|關掉|關閉|停用|躲過|不會被|才不會)|(?:繞過|跳過|躲過|避開)\S{0,6}(?:資安閘道|資安檢查|dlp|稽核紀錄|過濾)",
-                 text, re.IGNORECASE):
+    if _EVADE_GATE.search(text):
         return SensitiveHit(ATTACK, "規避資安閘道", MESSAGES[ATTACK])
     return None
 
