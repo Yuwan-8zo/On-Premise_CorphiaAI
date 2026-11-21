@@ -84,7 +84,7 @@ export default function PdfPreview({ documentId, quote }: Readonly<Props>) {
         settle.current = setTimeout(() => {
             const marks = Array.from(boxRef.current?.querySelectorAll('mark.cite-hl') ?? [])
             if (!marks.length) return
-            const best = marks.reduce((a, b) => ((b.textContent?.length ?? 0) > (a.textContent?.length ?? 0) ? b : a))
+            const best = marks.reduce((a, b) => ((b.textContent?.length ?? 0) > (a.textContent?.length ?? 0) ? b : a), marks[0])
             scrolled.current = true
             best.scrollIntoView({ block: 'center', behavior: 'smooth' })
         }, SETTLE_MS)
