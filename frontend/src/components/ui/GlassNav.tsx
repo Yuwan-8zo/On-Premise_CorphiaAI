@@ -109,6 +109,9 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
         if (e.button > 0) return
         drag.current = { id: e.pointerId, sy: e.clientY, moved: false }
         try { listRef.current?.setPointerCapture(e.pointerId) } catch { /* 部分瀏覽器不支援 */ }
+        // 沒有標出目前項目（手機設定清單）：放大鏡直接在按下的那一項長出來，不從上一次選的位置滑過來——
+        // 點下去就換頁了，滑行過程根本看不到
+        if (!showSelection) lens.jump(Math.round(posFromY(e.clientY)))
         lens.press()
     }
     const onPointerMove = (e: React.PointerEvent) => {
