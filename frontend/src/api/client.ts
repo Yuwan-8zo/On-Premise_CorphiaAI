@@ -47,6 +47,16 @@ apiClient.interceptors.request.use(
 
 let refreshInflight: Promise<string | null> | null = null
 
+/** 續期被限流（429）時，後端說要等多久（毫秒）；沒給就等這麼久 */
+const REFRESH_LIMITED_WAIT_MS = 30_000
+let refreshRetryAfterMs = 0
+/** 上一次續期被限流時要等多久（讀一次就歸零）；開機的重試迴圈照這個等，不然會一直撞限流出不來 */
+export function takeRefreshRetryDelay(): number {
+    const ms = refreshRetryAfterMs
+    refreshRetryAfterMs = 0
+    return ms
+}
+
 export async function refreshAccessTokenOnce(): Promise<string | null> {
     if (refreshInflight) return refreshInflight
 
@@ -76,7 +86,12 @@ export async function refreshAccessTokenOnce(): Promise<string | null> {
         } catch (err) {
             // 只有伺服器明確拒絕（401/403：憑證失效或已用過）才登出；
             // 連不上或伺服器錯誤（系統重啟中）保留登入狀態，讓呼叫端稍後重試
-            const status = (err as AxiosError)?.response?.status
+            const res = (err as AxiosError)?.response
+            const status = res?.status
+            if (status === 429) {
+                const sec = Number(res?.headers?.['retry-after'])
+                refreshRetryAfterMs = Number.isFinite(sec) && sec > 0 ? sec * 1000 : REFRESH_LIMITED_WAIT_MS
+            }
             if (status === 401 || status === 403) {
                 useAuthStore.getState().clearAuth()
             }
