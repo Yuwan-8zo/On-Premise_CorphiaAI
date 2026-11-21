@@ -132,7 +132,7 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                         <span className="drp-month">{monthFmt.format(new Date(view.y, view.m, 1))}</span>
                         <button type="button" className="icon-tap" aria-label={t('ui.range.next')} disabled={view.y === today.getFullYear() && view.m === today.getMonth()} onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></button>
                     </div>
-                    <div className="drp-grid" role="grid">
+                    <div className="drp-grid" role="group" aria-label={monthFmt.format(new Date(view.y, view.m, 1))}>
                         {weekdays.map((w) => <span key={w.id} className="drp-wd" aria-hidden>{w.label}</span>)}
                         {monthCells(view.y, view.m).map(({ key, day: d }, i) => {
                             if (!d) return <span key={key} />

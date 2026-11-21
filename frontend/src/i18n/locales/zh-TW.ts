@@ -745,6 +745,7 @@ export default {
             emptyDesc: "連接伺服器或公司 NAS 上的資料夾後，同事可以直接問 AI 資料夾裡的內容，例如「整理業務部今年所有報價單的總金額」。",
         },
         overview: {
+            ux: { unavailable: '暫時讀不到量測資料', title: '使用者體驗（近 7 天）', hint: '大家實際使用時量到的速度；數字是第 75 百分位：四分之三的使用都比這個快', INP: '按下去的反應', LCP: '畫面載入', CLS: '版面穩定', ms: '{{n}} 毫秒', sec: '{{n}} 秒', samples: '{{n}} 次量測', empty: '還沒有量測資料，大家用一陣子就會出現', rating: { good: '良好', 'needs-improvement': '待改善', poor: '偏慢' } },
             users: '使用者總數',
             usersDetail: '{{active}} 位活躍',
             conversations: '對話總數',

@@ -8,7 +8,11 @@
 
 import '@testing-library/jest-dom'
 import { server } from './mocks/server'
-import { vi, beforeAll, afterEach, afterAll } from 'vitest'
+import { vi, beforeAll, afterEach, afterAll, expect } from 'vitest'
+// 無障礙自動檢查（axe-core）：expect(container).toHaveNoViolations()，見 src/test/a11y.test.tsx
+import 'vitest-axe/extend-expect'
+import * as axeMatchers from 'vitest-axe/matchers'
+expect.extend(axeMatchers)
 
 // ── MSW 生命週期 ──────────────────────────────────────────────
 // 在所有測試開始前啟動 mock server

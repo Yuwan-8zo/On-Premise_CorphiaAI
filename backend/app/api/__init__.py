@@ -25,6 +25,7 @@ from app.api.voice import router as voice_router
 from app.api.browser_folder import router as browser_folder_router
 from app.api.chat_images import router as chat_images_router
 from app.api.web_search import router as web_search_router
+from app.api.vitals import router as vitals_router
 
 __all__ = [
     "auth_router",
@@ -50,5 +51,6 @@ __all__ = [
     "browser_folder_router",
     "chat_images_router",
     "web_search_router",
+    "vitals_router",
 ]
 

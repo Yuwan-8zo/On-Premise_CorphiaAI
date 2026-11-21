@@ -745,6 +745,7 @@ export default {
             emptyDesc: "Connect a folder on the server or company NAS, and colleagues can ask the AI about its contents, e.g. \"Total all quotes in the sales folder this year\".",
         },
         overview: {
+            ux: { unavailable: 'Measurements are unavailable right now', title: 'User experience (last 7 days)', hint: 'Measured during real use. Values are the 75th percentile: three quarters of uses were faster', INP: 'Response to input', LCP: 'Page load', CLS: 'Layout stability', ms: '{{n}} ms', sec: '{{n}} s', samples: '{{n}} samples', empty: 'No measurements yet. They appear after people use the system for a while', rating: { good: 'Good', 'needs-improvement': 'Needs work', poor: 'Slow' } },
             users: 'Total Users',
             usersDetail: '{{active}} active',
             conversations: 'Conversations',
