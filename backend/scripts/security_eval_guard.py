@@ -22,7 +22,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from security_eval_semantic import ATTACK, NORMAL, rules_block  # noqa: E402
 
+from app.core.config import settings  # noqa: E402
 from app.services import guard_model, semantic_guard  # noqa: E402
+from app.services.pii_masking_service import mask_pii  # noqa: E402
+from app.services.sensitive_request_guard import check_sensitive_request  # noqa: E402
+
+
+def gateway_rules_block(text: str) -> bool:
+    """實際閘道在語意比對之前的所有規則關卡：個資遮罩後的違禁詞、提示詞注入，加上「索取他人資料／協助攻擊」
+    （和 message_guard.screen_user_message 同樣的順序與設定；以前只算前兩個，高估了資安模型多擋的數量）"""
+    if rules_block(text):
+        return True
+    masked = mask_pii(text)["masked_text"]
+    return check_sensitive_request(
+        masked, data=settings.enable_dlp, attack=settings.enable_prompt_injection_guard
+    ) is not None
 
 # Qwen3Guard 擅長、規則和語意範例比較少涵蓋的類別（句子自擬，不含真實個資）
 EXTRA_ATTACK = [
@@ -39,7 +53,7 @@ async def run():
     rows = []
     cases = [(c, t) for c, t in ATTACK + EXTRA_ATTACK] + [("正常", t) for t in NORMAL]
     for label, text in cases:
-        rule = rules_block(text)
+        rule = gateway_rules_block(text)
         sem = await semantic_guard.semantic_check(text)
         t0 = time.perf_counter()
         verdict = await guard_model.guard_check(text)
