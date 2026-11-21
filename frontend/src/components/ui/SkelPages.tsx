@@ -69,15 +69,17 @@ function SkelChat({ conv = false }: Readonly<{ conv?: boolean }>) {
                 <div className="flex-1 min-h-0 overflow-hidden pt-6 pb-4">
                     <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                         <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
-                        <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-center leading-[1.3] md:leading-tight"><SkelChars chars={13} /></h2>
+                        {/* 和 ChatPage 空狀態一樣：標題＋一句說明＋一張卡片裡的建議清單 */}
+                        <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-center leading-[1.3] md:leading-tight"><SkelChars chars={8} /></h2>
+                        <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelChars chars={24} /></p>
                         <div className="mb-[var(--fluid-block)]" />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-[min(600px,100%)] mx-auto">
-                            {[4, 4, 5, 5].map((c, i) => (
-                                <div key={i} className="paper !rounded-[var(--r-25)] p-[var(--fluid-pad)] w-full flex flex-col gap-[var(--fluid-gap)]">
-                                    <span className="snow-row-icon !rounded-[var(--r-10)]" />
-                                    <span className="min-w-0">
-                                        <span className="block font-semibold text-[length:var(--fs-15)]"><SkelChars chars={c} /></span>
-                                        <span className="block text-[length:var(--fs-13)] leading-snug mt-1"><SkelChars chars={i % 2 ? 15 : 14} /></span>
+                        <div className="suggest-list paper !rounded-[var(--r-25)] w-[min(560px,100%)] mx-auto">
+                            {[4, 4, 8, 5].map((c, i) => (
+                                <div key={i} className="suggest-row">
+                                    <span className="suggest-row-icon" />
+                                    <span className="suggest-row-text">
+                                        <span className="suggest-row-title"><SkelChars chars={c} /></span>
+                                        <span className="suggest-row-desc"><SkelChars chars={i % 2 ? 15 : 14} /></span>
                                     </span>
                                 </div>
                             ))}

@@ -853,7 +853,7 @@ export default {
                 document_delete: '文件刪除',
                 pii_detected: '個資偵測',
                 prompt_injection_blocked: '注入攻擊',
-                dlp_hit: 'DLP 命中',
+                dlp_hit: '機密資料命中',
                 security_setting_update: '更改資安閘道設定',
                 account_locked: '帳號鎖定',
                 token_revoke: '撤銷登入憑證',

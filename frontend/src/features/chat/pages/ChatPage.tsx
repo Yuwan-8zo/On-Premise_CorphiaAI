@@ -224,7 +224,7 @@ export default function Chat() {
                                 <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
                                     {mainProps.t('chat.emptyGreeting')}
                                 </h2>
-                                <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance">
+                                <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">
                                     {mainProps.t('chat.emptyNote')}
                                 </p>
                                 <div className="mb-[var(--fluid-block)]" />

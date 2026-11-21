@@ -853,7 +853,7 @@ export default {
                 document_delete: 'Document Delete',
                 pii_detected: 'PII Detected',
                 prompt_injection_blocked: 'Injection Blocked',
-                dlp_hit: 'DLP Hit',
+                dlp_hit: 'Confidential data hit',
                 security_setting_update: 'Security gate settings changed',
                 account_locked: 'Account Locked',
                 token_revoke: 'Token Revoked',
