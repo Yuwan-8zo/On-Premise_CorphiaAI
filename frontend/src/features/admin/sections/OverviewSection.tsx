@@ -105,50 +105,42 @@ export default function OverviewSection({
         }).length
     }, [auditLogs])
 
-    // 6 張 KPI 卡（4 個業務 stat + 2 個即時數）— 各自配色
+    // 6 張 KPI 卡（4 個業務 stat + 2 個即時數）
+    // 不再每張一種顏色（藍綠紫橘青紅，沒有一張突出）：一般卡片圖示用強調色、數字用主要文字色；
+    // 只有「今日稽核事件」是重點（資安是系統主軸），數字用強調色
     const metricCards = [
         {
             label: t('admin.overview.users'),
             value: stats.totalUsers,
             icon: Users,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-blue)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-blue)]',
         },
         {
             label: t('admin.overview.conversations'),
             value: stats.totalConversations,
             icon: MessageSquare,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-green)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-green)]',
         },
         {
             label: t('admin.overview.documents'),
             value: stats.totalDocuments,
             icon: Layers3,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-purple)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-purple)]',
         },
         {
             label: t('admin.overview.messages'),
             value: stats.totalMessages,
             icon: FileText,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-orange)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-orange)]',
         },
         {
             label: t('admin.overview.activeUsers', '活躍使用者'),
             value: activeUsers,
             icon: Activity,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-teal)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-teal)]',
         },
         {
             label: t('admin.overview.eventsToday', '今日事件'),
             value: todayEventCount,
             loading: auditLoading,
             icon: ShieldCheck,
-            iconBg: 'bg-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]',
-            iconColor: 'text-[var(--ink-red)]',
+            // 唯一的重點卡：數字用強調色（稽核紀錄是資安的主軸）
+            emphasis: true,
         },
     ]
 
@@ -167,17 +159,17 @@ export default function OverviewSection({
                     return (
                         <Panel
                             key={item.label}
-                            className="pl-[var(--sp-20)] pr-[var(--sp-16)] py-[var(--space)]"
+                            className={`pl-[var(--sp-20)] pr-[var(--sp-16)] py-[var(--space)] ${item.emphasis ? 'kpi-emphasis' : ''}`}
                         >
                             <div className="relative flex flex-wrap items-center gap-x-[var(--space)] gap-y-[var(--sp-6)]">
-                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--r-13)] ${item.iconBg} ${item.iconColor}`}>
+                                <span className="kpi-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--r-13)]">
                                     <Icon className="h-3.5 w-3.5" />
                                 </span>
                                 <div className="flex-1 basis-[max-content]">
                                     <p className="whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                         {item.label}
                                     </p>
-                                    <p className={`text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums ${item.iconColor}`}>
+                                    <p className="kpi-value text-[length:var(--fs-18)] font-semibold leading-tight tabular-nums">
                                         {item.loading ? <SkelText>00</SkelText> : item.value.toLocaleString()}
                                     </p>
                                 </div>
@@ -196,6 +188,12 @@ export default function OverviewSection({
                 <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-7">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
+                        action={previousLogs && (
+                            <div className="chart-legend" aria-hidden>
+                                <span className="chart-legend-item"><span className="chart-legend-bar" />{t('admin.overview.legendThisWeek')}</span>
+                                <span className="chart-legend-item"><span className="chart-legend-dash" />{t('admin.overview.legendLastWeek')}</span>
+                            </div>
+                        )}
                     />
                     <div className="flex-1 min-h-0 px-[var(--space)] pb-[var(--space)]">
                         {auditLoading ? <Skel className="h-full w-full rounded-[var(--r-16)]" /> : <ActivityBarChart data={dailySeries} height="100%" />}

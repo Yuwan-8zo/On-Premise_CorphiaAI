@@ -130,14 +130,22 @@ class LLMService:
         self._total_tokens_generated: int = 0
         self._total_generations: int = 0
 
+    # 太短的生成不算速度：只產生 1 個字時，引擎回報的耗時是 0.001 毫秒，
+    # 1 ÷ 0.000001 秒就變成 1000000 字/秒。字數太少或時間太短量不準，不算進速度（次數照算）。
+    MIN_SPEED_TOKENS = 4
+    MIN_SPEED_SEC = 0.05
+
     def record_generation(self, tokens: int, elapsed_sec: float) -> None:
         """登記一次完成的生成，讓監控面板能讀到 tokens/sec。"""
-        if elapsed_sec <= 0 or tokens <= 0:
+        if tokens <= 0:
+            return
+        # 次數和總字數每次都算；只有速度要夠長才量得準
+        self._total_tokens_generated += tokens
+        self._total_generations += 1
+        if tokens < self.MIN_SPEED_TOKENS or elapsed_sec < self.MIN_SPEED_SEC:
             return
         self._recent_runs.append((tokens, elapsed_sec))
         self._last_tokens_per_sec = round(tokens / elapsed_sec, 2)
-        self._total_tokens_generated += tokens
-        self._total_generations += 1
 
     def get_throughput_stats(self) -> dict:
         """回傳 tokens/sec 統計。供 /system/health/detailed 使用。"""

@@ -219,25 +219,19 @@ export default function Chat() {
                             // 上下留白是「可縮」的：螢幕夠高＝原本的 8vh／10vh；螢幕矮（橫拿的折疊手機）時先縮留白，卡片不被輸入框蓋住
                             <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                                 <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
-                                {/* Greeting: mobile uses smaller font + 截斷超長使用者名（>16 字補 …），
-                                    避免 tour-test-1777806224995 之類的長 ID 把標題撐到 3 行 */}
-                                <h2 className="text-[length:var(--fs-18)] sm:text-[length:var(--fs-24)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight break-words">
-                                    {(() => {
-                                        const raw = mainProps.user?.name || mainProps.user?.email?.split('@')[0] || mainProps.t('common.user', 'User')
-                                        const name = raw.length > 16 ? raw.slice(0, 14) + '…' : raw
-                                        // 名字和後面的問號綁在一起不斷開：寬度不夠（例如旁邊面板打開）時整段換到下一行，不會剩一個「師？」掛在下面
-                                        const [before, after = ''] = mainProps.t('chat.emptyGreeting', { name: '[[NAME]]' }).split('[[NAME]]')
-                                        return <>{before}<span className="inline-block whitespace-nowrap">{name}{after}</span></>
-                                    })()}
+                                {/* 標題用平實的問句，不用「有什麼我可以幫忙的，某某？」這種客套招呼；
+                                    下面一句說明資料留在公司內部（系統的重點是資安） */}
+                                <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
+                                    {mainProps.t('chat.emptyGreeting')}
                                 </h2>
-                                {/* 已移除「已連線本地 …」副標題，主畫面更乾淨；模型名稱仍可在右上角下拉選單看到 */}
+                                <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">
+                                    {mainProps.t('chat.emptyNote')}
+                                </p>
                                 <div className="mb-[var(--fluid-block)]" />
 
-                                {/* Suggested Prompts —— 齊寬卡片（同最寬內容）：
-                                    父容器 w-max → 寬度 = 最寬子卡內容；
-                                    grid 1fr 讓 N 個 cell 平均分這個寬度，於是所有卡同寬 = 最寬內容；
-                                    桌機 sm:grid-cols-2 排兩欄，max-w-full 防超出視窗。 */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-[min(600px,100%)] mx-auto stagger-fade-in">
+                                {/* 建議的問題：一張實色卡片裡的清單（像 iOS 設定的分組列表），
+                                    不用四張一樣大的「圖示＋粗體標題＋一句說明」卡片（看起來像套版） */}
+                                <div className="suggest-list paper !rounded-[var(--r-25)] w-[min(560px,100%)] mx-auto stagger-fade-in">
                                     {(() => {
                                         const suggestions = (mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
                                             { title:"摘要文件", desc:"幫我整理出一份簡單的重點摘要" },
@@ -254,14 +248,14 @@ export default function Chat() {
                                         return suggestions.map((item, index) => (
                                             <button
                                                 key={index}
+                                                type="button"
                                                 onClick={() => mainProps.setInput(item.desc)}
-                                                /* 2×2 玻璃卡：圓角 25、內距 16 → 圖示方塊圓角 10（25−16=9，範本最小 10） */
-                                                className="paper !rounded-[var(--r-25)] p-[var(--fluid-pad)] w-full text-left flex flex-col gap-[var(--fluid-gap)] cursor-pointer transition-transform duration-200 active:scale-[0.97]"
+                                                className="suggest-row"
                                             >
-                                                <span className="snow-row-icon !rounded-[var(--r-10)]">{icons[index % icons.length]}</span>
-                                                <span className="min-w-0">
-                                                    <span className="block font-semibold text-[length:var(--fs-15)] text-text-primary">{item.title}</span>
-                                                    <span className="block text-[length:var(--fs-13)] leading-snug text-text-secondary mt-1">{item.desc}</span>
+                                                <span className="suggest-row-icon">{icons[index % icons.length]}</span>
+                                                <span className="suggest-row-text">
+                                                    <span className="suggest-row-title">{item.title}</span>
+                                                    <span className="suggest-row-desc">{item.desc}</span>
                                                 </span>
                                             </button>
                                         ));

@@ -87,7 +87,7 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
                     {total.toLocaleString()}
                 </p>
                 <p className="mt-[clamp(2px,2cqmin,6px)] text-[clamp(8px,4.5cqmin,11px)] text-text-secondary">
-                    Total
+                    {t('admin.overview.donutTotal')}
                 </p>
             </div>
         </div>

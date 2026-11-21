@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { useHealthDetailed } from '@/features/admin/hooks/useHealthDetailed'
 import { SkelText } from '@/components/ui/Skeleton'
+import { displayModelName } from '@/lib/modelName'
 
 export interface LLMHealthPanelProps {
     className?: string
@@ -21,15 +22,9 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
 
     const data = useHealthDetailed()
 
-    // 從 model_path 抽出檔名（去掉路徑）
-    const getModelName = (path: string | undefined): string => {
-        if (!path) return t('admin.overview.modelStandby', '未載入')
-        const parts = path.split(/[\\/]/)
-        return parts[parts.length - 1] || t('admin.overview.modelStandby', '未載入')
-    }
-
     const llm = data?.llm
-    const modelName = getModelName(llm?.model_path)
+    // 好讀的名稱（去掉路徑、.gguf、量化格式）；完整檔名放在提示裡
+    const modelName = llm?.model_path ? displayModelName(llm.model_path) : t('admin.overview.modelStandby', '未載入')
     const tokensPerSec = llm?.throughput?.last_tokens_per_sec ?? 0
     const totalGenerations = llm?.throughput?.total_generations ?? 0
 
@@ -43,8 +38,8 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                 title={t('admin.overview.llmHealth', 'LLM 即時狀態')}
                 action={aiBoot && (
                     <div className="flex gap-1.5">
-                        <span className={`tag ${llmReady ? 'tag-green' : ''}`}>LLM</span>
-                        <span className={`tag ${ragReady ? 'tag-accent' : ''}`}>RAG</span>
+                        <span className={`tag ${llmReady ? 'tag-green' : ''}`}>{t('admin.overview.tagModel')}</span>
+                        <span className={`tag ${ragReady ? 'tag-accent' : ''}`}>{t('admin.overview.tagKnowledge')}</span>
                     </div>
                 )}
             />
@@ -60,7 +55,7 @@ export default function LLMHealthPanel({ className, aiBoot }: LLMHealthPanelProp
                         <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] font-medium text-text-secondary">
                             {t('admin.overview.modelLoaded', '當前模型')}
                         </p>
-                        <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-text-primary truncate">
+                        <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-semibold text-text-primary truncate" title={llm?.model_path?.split(/[\\/]/).pop()}>
                             {data ? modelName : <SkelText>Qwen2.5-7B-Instruct</SkelText>}
                         </p>
                     </div>

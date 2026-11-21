@@ -222,3 +222,47 @@ html.dark .markdown-body .md-table strong {
 .md-table th * {
   white-space: nowrap !important;
 }
+
+/* ═══ 對話首頁的建議問題（ChatPage 空狀態）═══
+ *   一張實色卡片裡的分組清單（像 iOS 設定），每列：圖示方塊＋標題＋一句說明
+ *   列與列之間用細分隔線，從文字開頭畫起（不穿過圖示），跟 iOS 列表一樣 */
+.suggest-list {
+  --sg-pad-x: var(--sp-16);
+  --sg-pad-y: var(--sp-12);
+  --sg-icon: var(--sz-30);
+  --sg-gap: var(--sp-12);
+  display: flex; flex-direction: column;
+  padding: var(--sp-4) 0;
+  overflow: hidden;
+}
+.suggest-row {
+  position: relative;
+  display: flex; align-items: center; gap: var(--sg-gap);
+  width: 100%;
+  padding: var(--sg-pad-y) var(--sg-pad-x);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.suggest-row + .suggest-row::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  left: calc(var(--sg-pad-x) + var(--sg-icon) + var(--sg-gap));
+  height: 0.5px;
+  background: rgb(var(--border-subtle));
+}
+.suggest-row:hover { background: var(--chip); }
+.suggest-row:active { background: var(--field); }
+.suggest-row:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: -2px; border-radius: var(--r-14); }
+.suggest-row-icon {
+  flex: none;
+  display: flex; align-items: center; justify-content: center;
+  width: var(--sg-icon); height: var(--sg-icon);
+  border-radius: var(--r-10);
+  background: var(--chip);
+  color: rgb(var(--accent));
+}
+.suggest-row-icon svg { width: var(--sz-16); height: var(--sz-16); }
+.suggest-row-text { min-width: 0; display: flex; flex-direction: column; }
+.suggest-row-title { font-size: var(--fs-15); line-height: var(--lh-20); font-weight: 600; color: rgb(var(--text-primary)); }
+.suggest-row-desc { font-size: var(--fs-13); line-height: var(--lh-18); color: rgb(var(--text-secondary)); }

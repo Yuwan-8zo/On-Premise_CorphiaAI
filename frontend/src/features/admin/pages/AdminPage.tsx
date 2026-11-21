@@ -27,6 +27,7 @@ import { useAdminUsers } from '../hooks/useAdminUsers'
 import OverviewSection from '../sections/OverviewSection'
 import { useFitToHost } from '@/lib/useFitToHost'
 import { usePageDirection } from '@/lib/usePageDirection'
+import { displayModelName } from '@/lib/modelName'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
@@ -150,7 +151,7 @@ export default function Admin() {
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
                             <div className="mb-2 min-w-0">
                                 <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
-                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{models.currentModel?.name || (models.modelsLoaded ? t('admin.standby') : <SkelText>Qwen2.5-7B-Instruct</SkelText>)}</p>
+                                <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{(models.currentModel?.name && displayModelName(models.currentModel.name)) || (models.modelsLoaded ? t('admin.standby') : <SkelText>Qwen2.5-7B-Instruct</SkelText>)}</p>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
                                 <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />

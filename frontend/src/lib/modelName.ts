@@ -14,3 +14,17 @@ export function shortModelName(name: string): string {
     const size = modelSize(name)
     return size ? `${family}·${size}` : name.slice(0, 14)
 }
+
+/** 量化格式（Q5_K_M、Q4_0、IQ3_XS、F16、BF16…）只有工程師看得懂，畫面上不顯示 */
+const QUANT_SUFFIX = /[-_.](?:I?Q\d+(?:_[A-Z0-9]+)*|B?F(?:16|32))$/i
+
+/**
+ * 畫面上顯示的模型名稱：去掉路徑、.gguf 副檔名、量化格式，連字號換成空格
+ *   例：D:\models\Qwen2.5-3B-Instruct-Q5_K_M.gguf → Qwen2.5 3B Instruct
+ *   完整檔名放在 title 提示裡給要查的人看
+ */
+export function displayModelName(nameOrPath: string): string {
+    const file = nameOrPath.split(/[\\/]/).pop() ?? nameOrPath
+    const base = file.replace(/\.gguf$/i, '').replace(QUANT_SUFFIX, '')
+    return base.replace(/[-_]+/g, ' ').trim() || file
+}

@@ -24,3 +24,20 @@
 :is(.menu-item, .side-item, .dock-row, .set-row) :is(.ic-Trash2) {
   transform: scale(1.06);
 }
+
+/* ═══ 總覽的數字卡（OverviewSection）═══
+ *   一般卡：圖示方塊灰底、次要文字色；數字主要文字色 —— 六張不再各用一種顏色
+ *   重點卡（.kpi-emphasis，今日稽核事件）：圖示與數字用強調色，一眼看到 */
+.admin-overview .kpi-icon { background: var(--chip); color: rgb(var(--text-secondary)); }
+.admin-overview .kpi-value { color: rgb(var(--text-primary)); }
+.admin-overview .kpi-emphasis .kpi-icon {
+  background: color-mix(in srgb, rgb(var(--accent)) 20%, transparent);
+  color: rgb(var(--accent));
+}
+.admin-overview .kpi-emphasis .kpi-value { color: rgb(var(--accent)); }
+
+/* 趨勢圖的圖例：長條＝這 7 天、虛線＝上週同一天 */
+.chart-legend { display: flex; align-items: center; gap: var(--sp-12); font-size: var(--fs-12); line-height: var(--lh-16); color: rgb(var(--text-secondary)); white-space: nowrap; }
+.chart-legend-item { display: inline-flex; align-items: center; gap: var(--sp-6); }
+.chart-legend-bar { width: var(--sp-10); height: var(--sp-10); border-radius: var(--r-4); background: rgb(var(--accent)); }
+.chart-legend-dash { width: var(--sz-16); height: 0; border-top: 1.5px dashed rgb(var(--text-secondary)); }
