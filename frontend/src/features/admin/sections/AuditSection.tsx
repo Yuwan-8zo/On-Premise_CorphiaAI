@@ -5,7 +5,7 @@
  *   1. Filter bar — search input + action select + resource select + CSV/JSON export
  *   2. Audit log table — sticky header (title row + column row in one container,
  *      so they stay aligned during scroll); rows are clickable to open drawer
- *   3. Detail drawer — slides in from the right with full audit log details
+ *   3. Detail drawer — AuditDetailDrawer（白話欄位，見 utils/auditDetails.ts）
  *
  * Sticky header trick:
  *   The Panel has `overflow-hidden`, so the sticky `<div>` inside is clipped to
@@ -16,18 +16,14 @@
 
 import StyledSelect from '@/components/ui/StyledSelect'
 import SearchField from '@/components/ui/SearchField'
-import { useScrollFade } from '@/lib/useScrollFade'
 import { useMediaQuery, MQ_DESKTOP } from '@/lib/useMediaQuery'
 import {
     ChevronLeft,
     ChevronRight,
     Download,
     Shield,
-    X,
 } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from '@/lib/gsapMotion'
-import { spring } from '@/lib/motionPresets'
 import { SkelText } from '@/components/ui/Skeleton'
 
 import {
@@ -44,6 +40,7 @@ import {
     tableEmptyCellClass,
 } from '@/features/admin/components/AdminPrimitives'
 import AuditChainCheck from '@/features/admin/components/AuditChainCheck'
+import AuditDetailDrawer from '@/features/admin/components/AuditDetailDrawer'
 import { formatDate } from '@/features/admin/utils/formatDate'
 import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
 
@@ -115,7 +112,6 @@ export default function AuditSection({
     onExportJSON,
 }: AuditSectionProps) {
     const { t } = useTranslation()
-    const drawerScrollRef = useScrollFade()
     // 手機版：聚焦時右邊長出取消 ×（收鍵盤、清空）；桌機有滑鼠就不需要
     const desktop = useMediaQuery(MQ_DESKTOP)
 
@@ -302,84 +298,8 @@ export default function AuditSection({
                 </Panel>
             </div>
 
-            {/* Detail drawer — slides in from the right when a row is clicked */}
-            <AnimatePresence>
-                {auditDrawer && (
-                    <>
-                        <motion.div
-                            key="audit-drawer-backdrop"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/20 dark:bg-black/45 z-40"
-                            onClick={() => setAuditDrawer(null)}
-                        />
-                        <motion.aside
-                            key="audit-drawer"
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={spring}
-                            className="fixed top-0 right-0 bottom-0 w-full sm:w-[var(--sz-480)] paper paper-solid !rounded-none sm:!rounded-l-[var(--r-25)] z-50 flex flex-col overflow-hidden"
-                            role="dialog"
-                            aria-label="audit detail"
-                        >
-                            <div className="shrink-0 px-[var(--sp-26)] py-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[length:var(--fs-12)] font-bold text-accent">
-                                        {t('admin.audit.detailEyebrow', '稽核細節')}
-                                    </p>
-                                    <h3 className="mt-0.5 text-base font-semibold text-text-primary">
-                                        {auditActionLabel(t, auditDrawer.action)}
-                                    </h3>
-                                </div>
-                                <button
-                                    onClick={() => setAuditDrawer(null)}
-                                    className="btn-icon !w-10 !h-10 text-text-secondary"
-                                    aria-label={t('common.close', '關閉')}
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                            {/* 抽屜本身不捲、這層捲（玻璃光邊才不會跟著內容捲走） */}
-                            <div ref={drawerScrollRef} className="glass-scroll flex-1 min-h-0">
-                            <dl className="px-5 py-4 space-y-3 text-sm">
-                                {(
-                                    [
-                                        [t('admin.audit.table.time'), formatDate(auditDrawer.created_at)],
-                                        [t('admin.audit.table.action'), auditActionLabel(t, auditDrawer.action)],
-                                        [
-                                            t('admin.audit.table.resource'),
-                                            auditResourceLabel(t, auditDrawer.resource_type) +
-                                                (auditDrawer.resource_id ? ` · ${auditDrawer.resource_id}` : ''),
-                                        ],
-                                        [t('admin.audit.table.user'), auditDrawer.user_email || auditDrawer.user_id || '-'],
-                                        [t('admin.audit.table.ip'), auditDrawer.ip_address || '-'],
-                                        [t('admin.audit.detailDescription', '描述'), auditDrawer.description || '-'],
-                                        [t('admin.audit.detailUserAgent', 'User Agent'), auditDrawer.user_agent || '-'],
-                                    ] as Array<[string, string]>
-                                ).map(([label, value]) => (
-                                    <div key={label} className="grid grid-cols-[120px_1fr] gap-3">
-                                        <dt className="text-text-muted">{label}</dt>
-                                        <dd className="text-text-primary break-all">{value}</dd>
-                                    </div>
-                                ))}
-                            </dl>
-                            {auditDrawer.details && Object.keys(auditDrawer.details).length > 0 && (
-                                <div className="px-5 pb-6">
-                                    <p className="text-xs font-bold text-text-secondary mb-2">
-                                        {t('admin.audit.detailPayload', 'Payload')}
-                                    </p>
-                                    <pre className="p-4 rounded-[var(--r-14)] snow-well text-[length:var(--fs-12)] text-text-primary overflow-x-auto">
-                                        {JSON.stringify(auditDrawer.details, null, 2)}
-                                    </pre>
-                                </div>
-                            )}
-                            </div>
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            {/* 稽核細節：點一列從右邊滑出（手機全螢幕） */}
+            <AuditDetailDrawer log={auditDrawer} onClose={() => setAuditDrawer(null)} />
         </>
     )
 }
