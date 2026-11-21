@@ -39,6 +39,9 @@ import i18n from '@/i18n'
 import { DEFAULT_CONVERSATION_TITLE } from '@/lib/conversationTitle'
 import { isDesktop } from '@/lib/useMediaQuery'
 
+/** 刪除對話後可以「復原」的時間 */
+const UNDO_DELETE_MS = 5000
+
 type ChatMode = 'general' | 'project'
 
 export function useChatLogic() {
@@ -285,15 +288,46 @@ export function useChatLogic() {
         deleteConversation(id) // 刪的是目前這則時，store 會一併清空訊息、回到首頁
     }
 
-    const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
+    /**
+     * 刪除對話：不再跳「確定要刪除嗎」，改成先從清單拿掉、小 AI 說「已刪除・復原」，
+     * UNDO_DELETE_MS 之內按「復原」就放回原位；時間到才真的呼叫後端刪除（期間關掉網頁＝沒刪，比較安全）
+     */
+    const handleDeleteConversation = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        showConfirm(t('common.confirmDelete'), async () => {
+        const state = useChatStore.getState()
+        const index = state.conversations.findIndex((c) => c.id === id)
+        const conv = state.conversations[index]
+        if (!conv) return
+        const wasCurrent = state.currentConversation?.id === id
+        useChatStore.setState({
+            conversations: state.conversations.filter((c) => c.id !== id),
+            ...(wasCurrent ? { currentConversation: null, messages: [] } : {}),
+        })
+        let undone = false
+        const restore = () => {
+            const now = useChatStore.getState().conversations
+            if (now.some((c) => c.id === id)) return
+            const next = [...now]
+            next.splice(Math.min(index, next.length), 0, conv)
+            useChatStore.setState({ conversations: next })
+            if (wasCurrent) void selectConversation(conv)
+        }
+        const timer = window.setTimeout(async () => {
+            if (undone) return
             try {
                 await removeConversation(id)
             } catch (error) {
                 console.error('刪除對話失敗:', error)
+                restore()
+                toast.error(t('ui.chat.deleteFailed'))
             }
-        })
+        }, UNDO_DELETE_MS)
+        const title = conv.title.length > 12 ? conv.title.slice(0, 12) + '…' : conv.title
+        toast.undoable(t('ui.chat.deleted', { title }), t('common.undo'), () => {
+            undone = true
+            window.clearTimeout(timer)
+            restore()
+        }, UNDO_DELETE_MS)
     }
 
     /** 刪除資料夾：連同裡面的對話與文件一起刪 */

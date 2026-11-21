@@ -5,6 +5,7 @@
 export default {
     // 通用 (Common)
     common: {
+        undo: '元に戻す',
         copyFailed: 'コピーできませんでした。テキストを選択して Ctrl+C を押してください',
         submit: '送信',
         cancel: 'キャンセル',
@@ -513,6 +514,14 @@ export default {
 
     // 使用説明 (Guide)
     guide: {
+        hotkeys: {
+            title: 'キーボードショートカット',
+            search: '会話を検索',
+            newChat: '新しい会話',
+            sidebar: 'サイドバーの表示切替',
+            stop: '回答を停止',
+            recall: '前の質問を呼び出す（入力欄が空のとき）',
+        },
         title: '使い方',
         subtitle: '数分で Corphia を使いこなせます。会話履歴と文書は社内のサーバーに保存されます。',
         chat: {
@@ -1324,6 +1333,8 @@ export default {
         chat: {
             uploadAnalyzing: 'アップロードして文書を解析しています…',
             noDocs: 'プロジェクトフォルダー「{{folder}}」にはまだファイルがありません。\n\nプロジェクトに関する質問に答えるには参考資料が必要です。\n\n**入力欄左の「添付」ボタンから、先にファイルをアップロードしてください（PDF・DOCX・XLSX・TXT など）。**',
+            deleted: '「{{title}}」を削除しました',
+            deleteFailed: '削除できませんでした。会話は一覧に戻しました',
             createFailed: '会話を作成できませんでした。システムの起動完了を確認してから再試行してください',
             folderCreateFailed: 'フォルダーを作成できませんでした',
             folderDeleteFailed: 'フォルダーを削除できませんでした',

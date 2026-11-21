@@ -15,6 +15,10 @@ import {
 import { resetOnboarding } from '@/components/onboarding/onboardingFlag'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
+import { CHAT_HOTKEYS } from '@/features/chat/hooks/useChatHotkeys'
+
+/** 修飾鍵的寫法：Mac 是 ⌘，其他是 Ctrl */
+const MOD_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
 /** 有實體鍵盤（滑鼠等精確指標）才講 Enter／Shift＋Enter；手機上沒有這些鍵 */
 const HAS_KEYBOARD = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches
@@ -75,6 +79,23 @@ export default function GuideSection() {
                     <TipRow icon={<Cpu className={ic} />} title={t('guide.chat.modelTitle')} desc={t('guide.chat.modelDesc')} />
                 </div>
             </section>
+
+            {/* 鍵盤快捷鍵：有實體鍵盤才顯示（清單和 hooks/useChatHotkeys.ts 同一份） */}
+            {HAS_KEYBOARD && (
+                <section className="set-section">
+                    <div className="set-header">{t('guide.hotkeys.title')}</div>
+                    <div className="set-group guide-group">
+                        {CHAT_HOTKEYS.map((h) => (
+                            <div key={h.id} className="set-row">
+                                <span className="set-label">{t(`guide.hotkeys.${h.id}`)}</span>
+                                <span className="flex gap-[var(--sp-4)] shrink-0">
+                                    {h.keys.map((k) => <kbd key={k} className="kbd">{k === 'mod' ? MOD_KEY : k}</kbd>)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* 讓 AI 幫你做更多：記憶、風格、做檔案、搜尋、專案指示、桌面版 */}
             <section className="set-section">

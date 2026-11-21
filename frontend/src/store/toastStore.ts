@@ -14,6 +14,9 @@ export interface Toast {
     type: ToastType
     /** 正在消失（播放退場動畫中） */
     leaving?: boolean
+    /** 通知上的按鈕（例如「復原」）；有按鈕時顯示 durationMs 才消失 */
+    action?: { label: string; onClick: () => void }
+    durationMs?: number
 }
 
 interface ToastState {
@@ -23,6 +26,8 @@ interface ToastState {
     success: (message: string) => void
     error: (message: string) => void
     info: (message: string) => void
+    /** 可以反悔的動作：通知上有「復原」按鈕，ms 之內按得到 */
+    undoable: (message: string, label: string, onUndo: () => void, ms: number) => void
 }
 
 const SHOW_MS = 2000 // 規範：顯示 2 秒
@@ -52,4 +57,12 @@ export const useToastStore = create<ToastState>((set) => ({
     success: (message) => useToastStore.getState().add(message, 'success'),
     error: (message) => useToastStore.getState().add(message, 'error'),
     info: (message) => useToastStore.getState().add(message, 'info'),
+    undoable: (message, label, onUndo, ms) => {
+        const id = `toast-${Date.now()}-${Math.random()}`
+        window.clearTimeout(showTimer)
+        window.clearTimeout(leaveTimer)
+        const dismiss = () => set((state) => ({ toasts: state.toasts.filter((x) => x.id !== id) }))
+        set({ toasts: [{ id, message, type: 'info', durationMs: ms, action: { label, onClick: () => { onUndo(); dismiss() } } }] })
+        showTimer = window.setTimeout(dismiss, ms)
+    },
 }))

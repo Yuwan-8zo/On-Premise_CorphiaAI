@@ -5,6 +5,7 @@
 export default {
     // 通用
     common: {
+        undo: '復原',
         copyFailed: '複製失敗，請選取文字後按 Ctrl+C',
         submit: '送出',
         cancel: '取消',
@@ -513,6 +514,14 @@ export default {
 
     // 使用說明
     guide: {
+        hotkeys: {
+            title: '鍵盤快捷鍵',
+            search: '搜尋對話',
+            newChat: '開新對話',
+            sidebar: '開關側欄',
+            stop: '停止 AI 回答',
+            recall: '叫回上一則提問（輸入框是空的時候）',
+        },
         title: '使用說明',
         subtitle: '幾分鐘就能上手 Corphia。對話紀錄和文件都存在公司內部的主機。',
         chat: {
@@ -1324,6 +1333,8 @@ export default {
         chat: {
             uploadAnalyzing: '正在上傳並分析文件內容…',
             noDocs: '此專案資料夾「{{folder}}」內目前尚未上傳任何檔案。\n\nCorphia 需要您提供參考資料才能回答專案相關問題。\n\n**請點擊輸入區左側的「附件」按鈕，先上傳相關檔案（支援 PDF、DOCX、XLSX、TXT 等格式）。**',
+            deleted: '已刪除「{{title}}」',
+            deleteFailed: '刪除失敗，對話已放回清單',
             createFailed: '建立對話失敗，請確認系統已啟動完成後再試一次',
             folderCreateFailed: '建立資料夾失敗',
             folderDeleteFailed: '無法刪除資料夾',

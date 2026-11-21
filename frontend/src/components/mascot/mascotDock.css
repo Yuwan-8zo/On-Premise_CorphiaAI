@@ -69,3 +69,15 @@ body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .mascot-dock .mascot, .mascot-dock-note { transition: none; }
 }
+
+/* 通知上的按鈕（例如刪除後的「復原」）：卡片本身不擋點擊，只有按鈕可以按 */
+.mascot-dock-action {
+  pointer-events: auto;
+  margin-left: var(--sp-8);
+  padding: var(--sp-2) var(--sp-8);
+  border-radius: var(--r-8);
+  color: rgb(var(--accent));
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mascot-dock-action:hover { background: var(--chip); }
