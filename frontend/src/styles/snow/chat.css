@@ -25,6 +25,7 @@
 }
 .side-item {
   position: relative;
+  touch-action: pan-y;  /* 上下捲動交給瀏覽器，左右滑由 useSwipeReveal 接（手機左滑露出按鈕） */
   display: flex;
   align-items: center;
   gap: var(--sp-8);
@@ -310,6 +311,7 @@ html.dark .markdown-body .md-table strong {
   --sheet-r: var(--r-36);
   --sheet-grab-w: 36px;
   --sheet-grab-h: 5px;
+  --swipe-danger: #ff4245;  /* 手機對話左滑的「刪除」：Apple 系統紅（和選單的「刪除」同色） */
 }
 @media (max-width: 767.98px) {
   .side-panel.side-sheet {
@@ -343,8 +345,6 @@ html.dark .markdown-body .md-table strong {
 /* ═══ 手機對話清單：往左滑露出按鈕（lib/useSwipeReveal.ts）═══
  *   按鈕從列的右邊滑進來（位移＝ --swipe-x），標題留在原位、右邊讓出同樣的寬度（字太長就截掉）。
  *   不移動標題：側欄很窄，整列往左推會把短標題整個推出框外 */
-:root { --swipe-danger: #ff4245; }  /* Apple 系統紅（和選單的「刪除」同色） */
-.side-item { touch-action: pan-y; }
 .side-item[data-swipe] { overflow: hidden; padding-right: calc(var(--side-row-in) - var(--swipe-x, 0px)); }
 .swipe-actions {
   position: absolute; top: 0; bottom: 0; right: 0;

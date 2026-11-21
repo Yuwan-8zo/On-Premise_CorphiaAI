@@ -14,15 +14,16 @@ const PULL_STRETCH = 0.35
 
 export default function PullIndicator({ distance, state }: Readonly<{ distance: number; state: PullState }>) {
     const { t } = useTranslation()
+    const mood = { idle: 'idle', pulling: 'idle', ready: 'happy', refreshing: 'think' } as const
     const k = state === 'refreshing' ? 0 : Math.min(1, distance / PULL_TRIGGER) * PULL_STRETCH
     return (
         <div className={`pull-indicator ${state === 'idle' ? 'is-idle' : ''}`} style={{ height: distance }} aria-hidden={state === 'idle'}>
             {state !== 'idle' && (
                 <div className="pull-mascot" style={{ transform: `scale(${1 - k / 2}, ${1 + k})` }}>
-                    <Mascot mood={state === 'refreshing' ? 'think' : state === 'ready' ? 'happy' : 'idle'} label={t('ui.sidebar.refreshing')} accessory={null} />
+                    <Mascot mood={mood[state]} label={t('ui.sidebar.refreshing')} accessory={null} />
                 </div>
             )}
-            {state === 'refreshing' && <span className="sr-only" role="status">{t('ui.sidebar.refreshing')}</span>}
+            {state === 'refreshing' && <output className="sr-only">{t('ui.sidebar.refreshing')}</output>}
         </div>
     )
 }

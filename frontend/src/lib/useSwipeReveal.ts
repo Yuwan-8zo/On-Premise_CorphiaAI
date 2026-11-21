@@ -68,7 +68,7 @@ export function useSwipeReveal(enabled: boolean) {
             mode = 'none'
         }
         const move = (e: PointerEvent) => {
-            if (!start || e.pointerId !== start.id) return
+            if (start?.id !== e.pointerId) return
             const dx = e.clientX - start.x, dy = e.clientY - start.y
             if (mode === 'none') {
                 if (Math.hypot(dx, dy) < SWIPE_SLOP) return
@@ -82,7 +82,7 @@ export function useSwipeReveal(enabled: boolean) {
             set(v, false)
         }
         const up = (e: PointerEvent) => {
-            if (!start || e.pointerId !== start.id) return
+            if (start?.id !== e.pointerId) return
             start = null
             if (mode !== 'swipe') return
             mode = 'none'

@@ -135,6 +135,7 @@ export default function SidePanel() {
     const isPage = current?.kind === 'page'
     const iconBtn = 'btn-icon !w-[var(--sz-34)] !h-[var(--sz-34)] [--R:calc(var(--sz-34)/2)]'
 
+    const sheetClass = `${listMode ? 'side-sheet-fit' : ''} ${leaving ? 'side-panel-out' : 'side-panel-in'}`
     return (
         <>
         {/* 手機：面板後面的淡淡遮罩，點了關閉（電腦上面板在旁邊佔一欄，不需要） */}
@@ -145,7 +146,7 @@ export default function SidePanel() {
             aria-label={t('ui.chat.sidePanel.label')}
             className={full
                 ? 'paper side-panel side-panel-full fixed inset-0 z-[60] flex flex-col overflow-hidden !rounded-none'
-                : `paper side-panel side-sheet ${listMode ? 'side-sheet-fit' : ''} ${leaving ? 'side-panel-out' : 'side-panel-in'} fixed z-50 flex flex-col overflow-hidden md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
+                : `paper side-panel side-sheet ${sheetClass} fixed z-50 flex flex-col overflow-hidden md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
         >
             {/* 把手＋標題列：手機上按住往下拖＝關閉 */}
             <div ref={sheetHandleRef} className="side-sheet-handle shrink-0">

@@ -34,6 +34,16 @@
   --m-t-breathe: 3.4s;
   --m-t-hop: 0.62s;
   --m-t-shake: 0.5s;
+  /* 頭上的配件（MascotAccessory.tsx）：Apple 系統色（紅、靛、綠、黃）；柚子皮是黃綠 */
+  --m-acc-red: #ff4245;
+  --m-acc-white: #fff;
+  --m-acc-night: #5e5ce6;
+  --m-acc-night-trim: #d6d5ff;
+  --m-acc-pomelo: #c2d94b;
+  --m-acc-stem: #8a6d3b;
+  --m-acc-leaf: #30d158;
+  --m-acc-gold: #ffd60a;
+  --m-t-acc: 0.5s;
 
   position: relative;
   width: var(--m-size);
@@ -167,18 +177,7 @@
 .mascot.poke .m-eye { transform: scaleY(0.15); }
 
 /* 頭上的配件（MascotAccessory.tsx）：節日、深夜才戴；換上時從頭頂彈出來。
- *   顏色只在這裡定義（Apple 系統色：紅、靛、綠、黃；柚子皮是黃綠） */
-.mascot {
-  --m-acc-red: #ff4245;
-  --m-acc-white: #fff;
-  --m-acc-night: #5e5ce6;
-  --m-acc-night-trim: #d6d5ff;
-  --m-acc-pomelo: #c2d94b;
-  --m-acc-stem: #8a6d3b;
-  --m-acc-leaf: #30d158;
-  --m-acc-gold: #ffd60a;
-  --m-t-acc: 0.5s;
-}
+ *   顏色、時間在最上面 .mascot 的設定（--m-acc-*） */
 .mascot .m-acc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; transform-origin: 50% 20%; animation: mascot-acc-in var(--m-t-acc) var(--m-ease-pop) both; }
 .mascot .m-acc-char { fill: var(--m-acc-gold); font-size: 44px; font-weight: 700; }
 @keyframes mascot-acc-in { from { transform: translateY(-14%) scale(0.4); opacity: 0; } }

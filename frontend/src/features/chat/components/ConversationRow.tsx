@@ -28,7 +28,7 @@ interface ConversationRowProps {
     swipe?: { onRename: () => void; onDelete: (e: MouseEvent) => void }
 }
 
-export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = false, rowRef, pressProps, onSelect, menuButtonProps, swipe }: ConversationRowProps) {
+export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = false, rowRef, pressProps, onSelect, menuButtonProps, swipe }: Readonly<ConversationRowProps>) {
     const { t } = useTranslation()
     const swipeRef = useSwipeReveal(Boolean(swipe))
     // rowRef 每次重畫都是新的函式：存起來，ref 本身保持不變（不然滑開的狀態會在重畫時被清掉）

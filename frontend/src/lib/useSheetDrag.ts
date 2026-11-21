@@ -53,7 +53,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, { enabled,
             dragging = false
         }
         const move = (e: PointerEvent) => {
-            if (!start || e.pointerId !== start.id) return
+            if (start?.id !== e.pointerId) return
             const dy = e.clientY - start.y
             if (!dragging) {
                 if (Math.abs(dy) < SHEET_SLOP) return
@@ -66,7 +66,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, { enabled,
             setY(dy > 0 ? dy : dy * SHEET_UP_DAMP, false)
         }
         const up = (e: PointerEvent) => {
-            if (!start || e.pointerId !== start.id) return
+            if (start?.id !== e.pointerId) return
             const dy = e.clientY - start.y
             start = null
             if (!dragging) return
