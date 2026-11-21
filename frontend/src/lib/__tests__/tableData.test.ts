@@ -20,6 +20,7 @@ describe('chartPlan', () => {
         expect(plan?.labelCol).toBe(0)
         expect(plan?.valueCols).toEqual([1, 2])
         expect(plan?.data[1]).toEqual({ label: '業務', v1: 8, v2: 25 })
+        expect(plan?.numericCols).toEqual([1, 2])
     })
 
     it('treats an all-number first column (years) as labels', () => {
@@ -28,9 +29,11 @@ describe('chartPlan', () => {
         expect(plan?.valueCols).toEqual([1])
     })
 
-    it('drops a column on a very different scale', () => {
-        const plan = chartPlan({ head: ['項目', '金額', '比例'], rows: [['A', '50000', '40%'], ['B', '75000', '60%']] })
-        expect(plan?.valueCols).toEqual([1])
+    it('draws columns on a very different scale separately; focus picks which one', () => {
+        const t = { head: ['項目', '金額', '比例'], rows: [['A', '50000', '40%'], ['B', '75000', '60%']] }
+        expect(chartPlan(t)?.valueCols).toEqual([1])
+        expect(chartPlan(t)?.numericCols).toEqual([1, 2])
+        expect(chartPlan(t, 2)?.valueCols).toEqual([2])
     })
 
     it('skips text-only tables and single-row tables', () => {

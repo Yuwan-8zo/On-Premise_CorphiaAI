@@ -11,12 +11,10 @@ import MaterialIcon from '@/components/icons/MaterialIcon'
 import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
 import { downloadBlob, todayStamp } from '@/lib/download'
-import { chartPlan, readTable, toCsv, toTsv, type TableData } from '@/lib/tableData'
+import { TABLE_SETTLE_MS, chartPlan, readTable, toCsv, toTsv, type TableData } from '@/lib/tableData'
 
 const TableChart = lazy(() => import('./TableChart'))
 
-/** 表格停止變動多久才畫圖 */
-const SETTLE_MS = 600
 const ICON = 16
 
 const sameTable = (a: TableData | null, b: TableData) => a !== null && JSON.stringify(a) === JSON.stringify(b)
@@ -26,6 +24,8 @@ export default function TableBlock({ children }: Readonly<{ children: ReactNode 
     const tableRef = useRef<HTMLTableElement>(null)
     const [data, setData] = useState<TableData | null>(null)
     const [settled, setSettled] = useState<TableData | null>(null)
+    /** 使用者點了哪一個數字欄（膠囊）；沒點就畫第一個 */
+    const [focus, setFocus] = useState<number | undefined>(undefined)
 
     // 表格內容（children）變了就重讀一次（只有真的不一樣才更新）
     useLayoutEffect(() => {
@@ -37,11 +37,11 @@ export default function TableBlock({ children }: Readonly<{ children: ReactNode 
 
     useEffect(() => {
         if (!data) return
-        const id = window.setTimeout(() => setSettled(data), SETTLE_MS)
+        const id = window.setTimeout(() => setSettled(data), TABLE_SETTLE_MS)
         return () => window.clearTimeout(id)
     }, [data])
 
-    const plan = settled ? chartPlan(settled) : null
+    const plan = settled ? chartPlan(settled, focus) : null
     const ready = data !== null && data.rows.length > 0
 
     return (
@@ -70,7 +70,8 @@ export default function TableBlock({ children }: Readonly<{ children: ReactNode 
             </div>
             {plan && settled && (
                 <Suspense fallback={null}>
-                    <TableChart plan={plan} head={settled.head} />
+                    {/* 列印成 PDF 時不跑長出來的動畫（不然會印到長到一半的長條） */}
+                    <TableChart plan={plan} head={settled.head} onFocus={setFocus} animate={!tableRef.current?.closest('#print-root')} />
                 </Suspense>
             )}
         </div>

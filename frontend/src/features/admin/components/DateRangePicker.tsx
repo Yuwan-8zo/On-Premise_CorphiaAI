@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Calendar, ChevronLeft, ChevronRight } from '@/components/snow/icons'
 import { localDate } from '@/lib/dates'
 import { useDismiss } from '@/lib/useDismiss'
+import { useKeepInViewport, type ViewportAnchor } from '@/lib/useKeepInViewport'
 
 export interface DateRange {
     start?: string
@@ -54,6 +55,9 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
     const panelRef = useRef<HTMLDivElement>(null)
     const close = () => { setOpen(false); setPicking(null) }
     useDismiss(open, close, [panelRef, btnRef])
+    // 手機上面板可能超出畫面：自動挪進來（下面放不下、上面放得下就翻到按鈕上方）
+    const [anchor, setAnchor] = useState<ViewportAnchor | null>(null)
+    useKeepInViewport(panelRef, open, anchor)
 
     const fmt = useMemo(() => new Intl.DateTimeFormat(i18n.language, { month: 'numeric', day: 'numeric' }), [i18n.language])
     const monthFmt = useMemo(() => new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long' }), [i18n.language])
@@ -86,7 +90,12 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                 className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] whitespace-nowrap ${value.start ? 'btn-primary' : 'btn-secondary'}`}
                 aria-haspopup="dialog"
                 aria-expanded={open}
-                onClick={() => (open ? close() : setOpen(true))}
+                onClick={() => {
+                    if (open) { close(); return }
+                    const r = btnRef.current?.getBoundingClientRect()
+                    setAnchor(r ? { top: r.top, bottom: r.bottom } : null)
+                    setOpen(true)
+                }}
             >
                 <Calendar className="h-4 w-4" />
                 {label}

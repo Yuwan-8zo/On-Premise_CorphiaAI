@@ -1,7 +1,7 @@
 """GET /conversations/{id}/export：匯出對話（Markdown／Word／PDF 用的 Markdown）——權限、內容、稽核"""
 import io
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -17,8 +17,11 @@ async def _conv_with_messages(async_client: AsyncClient, headers: dict, db) -> s
     r = await async_client.post("/api/v1/conversations", json={"title": "預算討論"}, headers=headers)
     assert r.status_code == 201, r.text
     conv_id = r.json()["id"]
-    q = Message(id=str(uuid.uuid4()), conversation_id=conv_id, role="user", content="各部門預算多少？", tokens=0)
-    a = Message(id=str(uuid.uuid4()), conversation_id=conv_id, parent_id=q.id, role="assistant", content=TABLE_ANSWER, tokens=0)
+    # 回答比提問晚一秒：同一時間建立的話，「畫面上那一條」可能會停在提問（和真實資料不同）
+    t0 = datetime.now(timezone.utc).replace(tzinfo=None)  # 資料表存的是不帶時區的 UTC
+    q = Message(id=str(uuid.uuid4()), conversation_id=conv_id, role="user", content="各部門預算多少？", tokens=0, created_at=t0)
+    a = Message(id=str(uuid.uuid4()), conversation_id=conv_id, parent_id=q.id, role="assistant", content=TABLE_ANSWER, tokens=0,
+                created_at=t0 + timedelta(seconds=1))
     db.add_all([q, a])
     await db.flush()
     return conv_id

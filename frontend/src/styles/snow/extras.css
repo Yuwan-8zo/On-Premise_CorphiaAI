@@ -182,7 +182,13 @@
 .export-row svg { width: var(--sz-20); height: var(--sz-20); color: rgb(var(--accent)); flex-shrink: 0; }
 
 /* ---------- 列印成 PDF（features/chat/utils/printMarkdown）：只印 #print-root ---------- */
-#print-root { display: none; }
+/* 平常放在畫面外（不能 display:none：圖表量不到寬度就畫不出長條），寬度照 A4 可印範圍 */
+#print-root {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+  width: var(--print-w);
+}
 @media print {
   html.is-printing,
   html.is-printing body {
@@ -192,17 +198,20 @@
   }
   html.is-printing body > *:not(#print-root) { display: none !important; }
   html.is-printing #print-root {
-    display: block;
+    position: static;
+    width: auto;
     color: #000;
     font-size: 12pt;
   }
-  html.is-printing #print-root .md-table-tools { display: none; }
+  html.is-printing #print-root .md-table-tools,
+  html.is-printing #print-root .md-chart-key:not(.is-on) { display: none; }
   html.is-printing #print-root .md-table,
   html.is-printing #print-root .md-chart { break-inside: avoid; }
 }
 
 /* ---------- 日期區間選擇器（features/admin/components/DateRangePicker） ---------- */
-.drp {
+/* .paper 本身是 position: relative（光邊要用），這裡要蓋過它才能浮在篩選列下面 */
+.drp.paper {
   position: absolute;
   top: calc(100% + var(--sp-8));
   left: 0;
@@ -356,7 +365,8 @@
   border-radius: var(--r-21);
   object-fit: contain;
 }
-.image-viewer-close {
+/* .glass-chip 本身是 position: relative，要蓋過它才能固定在右上角 */
+.image-viewer-close.glass-chip {
   --R: calc(22 * var(--ui-unit));
   position: absolute;
   top: calc(var(--sp-16) + env(safe-area-inset-top, 0px));
@@ -374,4 +384,32 @@
 ::view-transition-group(image-morph) {
   animation-duration: var(--morph-dur);
   animation-timing-function: var(--morph-ease);
+}
+/* 長條圖上方的欄位膠囊：亮著的是現在畫的欄（兼當圖例，前面的圓點是長條的顏色），點別的換畫那一欄 */
+.md-chart-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-8);
+}
+.md-chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-4) var(--sp-12);
+  border-radius: var(--r-9999);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  white-space: nowrap;
+  color: rgb(var(--text-secondary));
+  background: var(--chip);
+}
+.md-chart-key.is-on {
+  color: rgb(var(--text-primary));
+  font-weight: 600;
+}
+.md-chart-dot {
+  width: var(--sz-8);
+  height: var(--sz-8);
+  border-radius: var(--r-9999);
 }

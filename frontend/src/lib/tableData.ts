@@ -50,6 +50,9 @@ export function parseNum(raw: string): number | null {
     return n
 }
 
+/** 表格停止變動多久才畫長條圖（AI 還在打字時表格會一直長）；列印成 PDF 也要等這麼久 */
+export const TABLE_SETTLE_MS = 600
+
 /** 一欄至少要有這個比例的儲存格是數字，才算數字欄 */
 const NUMERIC_SHARE = 0.8
 /** 列數在這個範圍內才畫（太少沒意義、太多擠成一團） */
@@ -64,11 +67,17 @@ const ID_HEAD = /^(#|no\.?|id|編號|序號|項次|年|年份|年度|year|date|�
 
 export interface ChartPlan {
     labelCol: number
+    /** 這張圖畫哪幾欄（大小相近、可以放在同一張圖的那一組） */
     valueCols: number[]
+    /** 所有可以畫的數字欄（畫面上一欄一顆膠囊，點了切換；大小差太多的欄位分開畫） */
+    numericCols: number[]
     data: Array<Record<string, string | number>>
 }
 
-export function chartPlan(t: TableData): ChartPlan | null {
+/**
+ * focus：要以哪一個數字欄為主（預設第一個數字欄）；和它大小相近的欄一起畫，最多 CHART_MAX_SERIES 組
+ */
+export function chartPlan(t: TableData, focus?: number): ChartPlan | null {
     const { head, rows } = t
     if (rows.length < CHART_MIN_ROWS || rows.length > CHART_MAX_ROWS || head.length < 2) return null
     const cols = head.map((_, c) => rows.map((r) => parseNum(r[c] ?? '')))
@@ -76,19 +85,20 @@ export function chartPlan(t: TableData): ChartPlan | null {
     // 標籤欄：第一個不是數字的欄；全部都是數字（例如第一欄是年份）就用第一欄
     const firstText = isNumeric.findIndex((n) => !n)
     const labelCol = firstText === -1 ? 0 : firstText
-    let valueCols = head.map((_, c) => c).filter((c) => c !== labelCol && isNumeric[c] && !ID_HEAD.test(head[c].trim()))
-    if (!valueCols.length) return null
     const maxOf = (c: number) => Math.max(...cols[c].map((v) => Math.abs(v ?? 0)))
-    const top = maxOf(valueCols[0])
-    valueCols = valueCols.filter((c) => {
+    const numericCols = head.map((_, c) => c).filter((c) => c !== labelCol && isNumeric[c] && !ID_HEAD.test(head[c].trim()) && maxOf(c) > 0)
+    if (!numericCols.length) return null
+    const main = focus !== undefined && numericCols.includes(focus) ? focus : numericCols[0]
+    const top = maxOf(main)
+    const valueCols = [main, ...numericCols.filter((c) => {
+        if (c === main) return false
         const m = maxOf(c)
-        return m > 0 && top > 0 && Math.max(m, top) / Math.min(m, top) <= SCALE_RATIO
-    }).slice(0, CHART_MAX_SERIES)
-    if (!valueCols.length) return null
+        return Math.max(m, top) / Math.min(m, top) <= SCALE_RATIO
+    })].slice(0, CHART_MAX_SERIES).sort((a, b) => a - b)
     const data = rows.map((r, i) => {
         const point: Record<string, string | number> = { label: r[labelCol] || String(i + 1) }
-        for (const c of valueCols) point[`v${c}`] = cols[c][i] ?? 0
+        for (const c of numericCols) point[`v${c}`] = cols[c][i] ?? 0
         return point
     })
-    return { labelCol, valueCols, data }
+    return { labelCol, valueCols, numericCols, data }
 }

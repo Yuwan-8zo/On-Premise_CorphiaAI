@@ -8,9 +8,10 @@
  */
 import { createRoot } from 'react-dom/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import { TABLE_SETTLE_MS } from '@/lib/tableData'
 
-/** 畫完之後等多久再叫出列印視窗（公式、字型要一點時間排好） */
-const SETTLE_MS = 400
+/** 畫完之後等多久再叫出列印視窗：表格的長條圖要等表格停止變動才畫，再加一點讓公式、字型、圖表程式載入排好 */
+const SETTLE_MS = TABLE_SETTLE_MS + 500
 
 export async function printMarkdown(markdown: string, title: string) {
     const host = document.createElement('div')
