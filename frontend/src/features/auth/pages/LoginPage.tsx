@@ -49,12 +49,12 @@ function lookAtCaret(input: HTMLInputElement, measure: CanvasRenderingContext2D 
     } catch {
         /* 沿用最後面 */
     }
-    let w = caret * parseFloat(cs.fontSize) * 0.55
+    let w = caret * Number.parseFloat(cs.fontSize) * 0.55
     if (measure) {
         measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
         w = measure.measureText(input.value.slice(0, caret)).width
     }
-    const inner = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+    const inner = input.clientWidth - Number.parseFloat(cs.paddingLeft) - Number.parseFloat(cs.paddingRight)
     const p = Math.min(1, w / Math.max(1, inner))
     const side = window.matchMedia?.(SIDE_BY_SIDE).matches ?? true
     // 左右排：卡片在右邊，眼睛往右下看、越打越往右；上下排：卡片在下面，眼睛往下、從左看到右
@@ -97,7 +97,7 @@ export default function Login() {
         const card = cardRef.current
         if (!card) return
         card.classList.remove('is-shake')
-        void card.offsetWidth
+        card.getBoundingClientRect() // 先讓瀏覽器排一次版，拿掉再加回去的晃動才會重播
         card.classList.add('is-shake')
     }
 
@@ -241,7 +241,7 @@ export default function Login() {
                         ref={cardRef}
                         onSubmit={(e) => {
                             setMood('think')
-                            void form.submit(e)
+                            form.submit(e)
                         }}
                         noValidate
                         className="login-card w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"

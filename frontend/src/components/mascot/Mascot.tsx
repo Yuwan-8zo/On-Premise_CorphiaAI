@@ -67,7 +67,7 @@ const LEAN_PER_PX = 80
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
 /** 把 CSS 的時間字串（"0.62s, 1.4s"）換成毫秒陣列 */
-const toMs = (v: string) => v.split(',').map((s) => (s.trim().endsWith('ms') ? parseFloat(s) : parseFloat(s) * 1000) || 0)
+const toMs = (v: string) => v.split(',').map((s) => (s.trim().endsWith('ms') ? Number.parseFloat(s) : Number.parseFloat(s) * 1000) || 0)
 
 const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
     { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, label, onPoke, className = '' },
@@ -122,7 +122,7 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
             if (!cs.animationName || cs.animationName === 'none') return 0
             const dur = toMs(cs.animationDuration)
             const delay = toMs(cs.animationDelay)
-            const count = cs.animationIterationCount.split(',').map((c) => (c.trim() === 'infinite' ? 1 : parseFloat(c) || 1))
+            const count = cs.animationIterationCount.split(',').map((c) => (c.trim() === 'infinite' ? 1 : Number.parseFloat(c) || 1))
             return Math.max(0, ...dur.map((d, i) => (delay[i] ?? 0) + d * (count[i] ?? 1)))
         },
     }), [])
@@ -153,7 +153,10 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
     useEffect(() => {
         const el = rootRef.current
         if (!el || mood === 'idle') return
-        const l = mood === 'look' && look ? look : mood === 'sad' ? { x: 0, y: 0.7 } : mood === 'cover' ? { x: 0, y: 0, lean: 2 } : { x: 0, y: 0 }
+        let l: MascotLook = { x: 0, y: 0 }
+        if (mood === 'look' && look) l = look
+        else if (mood === 'sad') l = { x: 0, y: 0.7 }
+        else if (mood === 'cover') l = { x: 0, y: 0, lean: 2 }
         el.style.setProperty('--ex', l.x.toFixed(3))
         el.style.setProperty('--ey', l.y.toFixed(3))
         el.style.setProperty('--lean', `${l.lean ?? 0}deg`)
@@ -202,9 +205,16 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
         <div
             ref={rootRef}
             className={classes}
-            role="img"
+            // 可以戳它：滑鼠點、或用鍵盤 Tab 到它按 Enter／空白鍵
+            role="button"
+            tabIndex={0}
             aria-label={label}
             onClick={poke}
+            onKeyDown={(e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return
+                e.preventDefault()
+                poke()
+            }}
             onAnimationEnd={(e) => {
                 if (e.animationName === 'mascot-poke') setPoking(false)
             }}

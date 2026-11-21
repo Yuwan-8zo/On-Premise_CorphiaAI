@@ -116,7 +116,7 @@ function SkelLogin() {
             </div>
             <div className="absolute inset-0 grid place-items-center content-center gap-[var(--sp-28)]">
                 <div className="grid justify-items-center gap-[var(--sp-6)] w-[min(440px,86vw)]">
-                    <p className="text-[length:var(--fs-20)] leading-[1.25] font-semibold"><SkelChars chars={4} /></p>
+                    <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-bold"><SkelChars chars={4} /></p>
                     <Skel className="w-full aspect-[1459/615] !rounded-[var(--r-25)]" />
                 </div>
                 <Skel className="h-[var(--btn-h-lg)] w-[var(--sz-120)] !rounded-full" />

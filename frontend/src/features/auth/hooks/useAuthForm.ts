@@ -109,12 +109,12 @@ export function useAuthForm({ onResult }: AuthFormOptions = {}) {
         if (tab === 'register' && !confirmPassword) errs.confirmPassword = t('ui.auth.required', { field: t('auth.confirmPassword') })
         if (Object.keys(errs).length) {
             setFieldErrors(errs)
-            void onResult?.(false)
+            onResult?.(false)
             return
         }
         if (tab === 'register' && password !== confirmPassword) {
             setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
-            void onResult?.(false)
+            onResult?.(false)
             return
         }
 
@@ -126,7 +126,7 @@ export function useAuthForm({ onResult }: AuthFormOptions = {}) {
                 setPasswordState('')
                 setConfirmState('')
                 setLoginFailedOnce(false)
-                void onResult?.(true)
+                onResult?.(true)
                 useToastStore.getState().success(t('auth.registerSuccessReLogin', '註冊成功，請以新帳號登入'))
                 return
             }
@@ -140,7 +140,7 @@ export function useAuthForm({ onResult }: AuthFormOptions = {}) {
         } catch (err) {
             console.error('Auth error:', err)
             handleError(err)
-            void onResult?.(false)
+            onResult?.(false)
         } finally {
             setLoading(false)
         }

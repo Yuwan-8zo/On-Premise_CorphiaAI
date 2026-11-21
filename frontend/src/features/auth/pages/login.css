@@ -22,14 +22,20 @@
 .login-start { opacity: 0; transform: translateY(8px); animation: lw-in 0.5s calc(var(--lw-star) + var(--lw-start-after)) var(--login-ease-sp) forwards; }
 .login-start.is-gone { visibility: hidden; }
 
-/* 按鈕收成的玻璃球（過場用，掛在 body 上） */
+/* 按鈕收成的玻璃球（過場用，掛在 body 上）：小 AI 是從它長出來的，顏色跟小 AI 一樣——
+   --orb-tint 由 splitTransition 依按鈕後面的背景色算（和小 AI 同一個公式，components/mascot/backdropTint） */
 .login-orb {
+  --orb-tint: var(--accent);
+  --orb-tint-a: var(--mascot-tint-a);
   position: fixed; z-index: 60; pointer-events: none; border-radius: 999px;
-  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.1) 40%, rgba(255, 255, 255, 0.05) 64%), var(--glass-ctl);
+  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.1) 40%, rgba(255, 255, 255, 0.05) 64%), rgb(var(--orb-tint) / var(--orb-tint-a));
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75), inset 0 -10px 22px rgb(var(--accent) / 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.3), 0 0 40px rgb(var(--accent) / 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75), inset 0 -10px 22px rgb(var(--orb-tint) / 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.3), 0 0 30px rgb(var(--orb-tint) / 0.25);
 }
+
+/* 淺色背景：和小 AI 一樣濃一點 */
+.login-orb.on-light { --orb-tint-a: var(--mascot-tint-a-light); }
 
 /* 登入區：桌機左小 AI、右卡片；手機上小 AI、下卡片 */
 .login-auth { gap: var(--login-gap-stack); }

@@ -6,6 +6,8 @@
  *   時間與曲線讀 login.css 在 .login-page 上的設定（--login-*），這裡不另外寫數字。
  */
 
+import { backdropColor, tintFor } from '@/components/mascot/backdropTint'
+
 export interface Orb {
     el: HTMLDivElement
     /** 球心（視窗座標） */
@@ -18,7 +20,7 @@ export interface Orb {
 const cssVar = (host: Element, name: string) => getComputedStyle(host).getPropertyValue(name).trim()
 const cssMs = (host: Element, name: string) => {
     const v = cssVar(host, name)
-    return v.endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000 || 0
+    return v.endsWith('ms') ? Number.parseFloat(v) : Number.parseFloat(v) * 1000 || 0
 }
 
 export const prefersReducedMotion = () =>
@@ -29,10 +31,14 @@ export async function shrinkToOrb(button: HTMLElement, host: HTMLElement): Promi
     const b = button.getBoundingClientRect()
     const cx = b.left + b.width / 2
     const cy = b.top + b.height / 2
-    const d = parseFloat(cssVar(host, '--login-orb')) || b.height
+    const d = Number.parseFloat(cssVar(host, '--login-orb')) || b.height
     const el = document.createElement('div')
     el.className = 'login-orb'
     Object.assign(el.style, { left: `${b.left}px`, top: `${b.top}px`, width: `${b.width}px`, height: `${b.height}px` })
+    // 球的顏色跟小 AI 一樣：照按鈕後面的背景色算（淺色背景再濃一點）
+    const { tint, light } = tintFor(backdropColor(button))
+    el.style.setProperty('--orb-tint', tint)
+    el.classList.toggle('on-light', light)
     document.body.appendChild(el)
     const anim = el.animate(
         [

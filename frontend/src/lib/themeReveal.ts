@@ -47,7 +47,7 @@ export function withThemeReveal(mutator: () => void, origin?: RevealOrigin) {
             html.animate(
                 { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
                 {
-                    duration: dur.endsWith('ms') ? parseFloat(dur) : parseFloat(dur) * 1000,
+                    duration: dur.endsWith('ms') ? Number.parseFloat(dur) : Number.parseFloat(dur) * 1000,
                     easing: cssVar('--theme-reveal-ease'),
                     pseudoElement: '::view-transition-new(root)',
                 },

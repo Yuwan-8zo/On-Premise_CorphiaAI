@@ -150,7 +150,7 @@ describe('Login 頁面', () => {
 
   it('按「開始使用」後出現小 AI 和登入表單', () => {
     renderLogin()
-    expect(screen.getByRole('img', { name: 'auth.mascotName' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'auth.mascotName' })).toBeTruthy()
     expect(document.querySelector('input[type="email"]')).toBeTruthy()
   })
 

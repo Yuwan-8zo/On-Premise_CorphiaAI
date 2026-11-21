@@ -2,6 +2,12 @@
  *   所有尺寸以 220px 的設計稿為準，乘上 --s（＝ --m-size ÷ 220）縮放。
  *   眼睛 30×42、手是身體寬 25% 的正圓；改大小只改 --m-size 和 --ms。
  *   身體顏色跟背景走（--m-tint，Mascot.tsx 量好寫進來）。 */
+/* 身體帶多少背景算出來的顏色：深色背景、淺色背景（過場的玻璃球 .login-orb 也讀這兩個） */
+:root {
+  --mascot-tint-a: 0.4;
+  --mascot-tint-a-light: 0.55;
+}
+
 .mascot {
   /* 尺寸 */
   --m-size: 150px;
@@ -14,7 +20,7 @@
   /* 材質（玻璃果凍）：身體顏色 --m-tint 由 Mascot.tsx 依後面的背景色算出來（backdropTint.ts）：
      色相照背景，深色背景往亮推、淺色背景往暗推。還沒量到之前先用主題色 */
   --m-tint: var(--accent);
-  --m-tint-a: 0.4;           /* 身體帶多少這個顏色 */
+  --m-tint-a: var(--mascot-tint-a);
   --m-glass: rgb(var(--m-tint) / var(--m-tint-a));
   --m-glow: rgb(var(--m-tint) / 0.6);
   --m-eye: #fff;
@@ -37,7 +43,7 @@
 }
 
 /* 淺色背景：顏色已經往暗推了，再濃一點，白眼睛才有對比 */
-.mascot.on-light { --m-tint-a: 0.55; }
+.mascot.on-light { --m-tint-a: var(--mascot-tint-a-light); }
 
 .mascot .m-body-wrap { position: absolute; inset: 0; transform-origin: 50% 92%; transform: rotate(var(--lean)); transition: transform 0.6s var(--m-ease-sp); }
 .mascot .m-bob { position: absolute; inset: 0; transform-origin: 50% 92%; animation: mascot-breathe var(--m-t-breathe) ease-in-out infinite; }

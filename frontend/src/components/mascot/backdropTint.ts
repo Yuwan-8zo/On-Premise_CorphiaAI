@@ -26,7 +26,7 @@ const NEUTRAL_C = 0.005
 
 function parseColor(v: string | null | undefined): RGBA | null {
     if (!v) return null
-    const m = v.match(/rgba?\(([^)]+)\)/)
+    const m = /rgba?\(([^)]+)\)/.exec(v)
     if (!m) return null
     const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number)
     if (p.length < 3 || p.some((n) => Number.isNaN(n))) return null
@@ -42,12 +42,12 @@ const over = (top: RGBA, base: RGBA): RGBA => {
 function paintOf(el: Element): RGBA | null {
     const cs = getComputedStyle(el)
     if (cs.visibility === 'hidden' || cs.display === 'none') return null
-    const opacity = parseFloat(cs.opacity) || 0
+    const opacity = Number.parseFloat(cs.opacity) || 0
     // SVG 圖形（背景波浪）：用填色；測試環境（jsdom）沒有 SVGGeometryElement
     if (typeof SVGGeometryElement !== 'undefined' && el instanceof SVGGeometryElement) {
         const fill = parseColor(cs.fill)
         if (!fill) return null
-        fill[3] *= opacity * (parseFloat(cs.fillOpacity) || 0)
+        fill[3] *= opacity * (Number.parseFloat(cs.fillOpacity) || 0)
         return fill[3] > 0 ? fill : null
     }
     const bg = parseColor(cs.backgroundColor)
@@ -114,8 +114,9 @@ export function tintFor(bg: RGBA): { tint: string; light: boolean } {
     const light = L > LIGHT_BG
     // 背景幾乎沒有顏色（純灰）時色相沒有意義：維持灰，不要硬加彩度（不然會變成隨便一個顏色）
     const neutral = C < NEUTRAL_C
+    const lightChroma = neutral ? C : Math.max(CHROMA_MIN_LIGHT, C * (CHROMA_BASE + L))
     const rgb = light
-        ? fromOklch(Math.max(DROP_MIN, L - DROP), neutral ? C : Math.max(CHROMA_MIN_LIGHT, C * (CHROMA_BASE + L)), h)
+        ? fromOklch(Math.max(DROP_MIN, L - DROP), lightChroma, h)
         : fromOklch(Math.min(LIFT_MAX, L + LIFT), C * (CHROMA_BASE - L), h)
     return { tint: rgb.join(' '), light }
 }
