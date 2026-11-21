@@ -148,6 +148,12 @@ async def lifespan(app: FastAPI):
         await llm_service.shutdown()
     except Exception as e:
         logger.warning(f"關閉推論引擎時發生錯誤: {e}")
+    # 資安專用模型（Qwen3Guard）的獨立引擎
+    try:
+        from app.services import guard_model
+        guard_model.shutdown()
+    except Exception as e:
+        logger.warning(f"關閉資安模型引擎時發生錯誤: {e}")
     
     await close_db()
     logger.info("應用程式已關閉")

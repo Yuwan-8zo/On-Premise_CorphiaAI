@@ -7,7 +7,8 @@
      2b. 索取他人個資／帳密、要求協助攻擊：規則認意圖，命中直接攔阻（sensitive_request_guard）
   3. 提示詞注入（Prompt Injection）：高風險攔阻；其他淨化後繼續
   4. 語意比對：跟攻擊範例、正常範例比「意思」，很像攻擊就攔阻（換句話說的攻擊，規則比對不到）
-  5. 模型複查：第 4 層覺得「有點可疑」時，請本機模型做是非題；判定是攻擊就攔阻
+  5. 模型複查：第 4 層覺得「有點可疑」時，先問資安專用模型（Qwen3Guard，guard_model.py），
+     它判定不安全就攔阻；否則再請本機模型做是非題，判定是攻擊就攔阻
 
 每一層命中都寫稽核紀錄，並透過 emit 把事件交給呼叫端（WebSocket 直接送給前端；一般 API 收集起來）。
 回傳：要送進模型的文字；None ＝ 已攔阻（最後一個事件的 type 是 dlp_block 或 injection_block）。
@@ -28,7 +29,8 @@ from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
 from app.services.security_gates import record_score
 from app.services.sensitive_request_guard import ATTACK, CREDENTIAL, PERSONAL, check_sensitive_request
-from app.services.semantic_guard import SECRET, llm_judge, semantic_check
+from app.services.guard_model import guard_check
+from app.services.semantic_guard import INJECTION, SECRET, llm_judge, semantic_check
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +213,15 @@ async def _semantic_gate(text: str, model_name: Optional[str]) -> Optional[tuple
     score = round(sem.score, 3)
     if sem.decision == "block":
         return sem.category, "語意比對", score
-    if sem.decision != "review" or not settings.enable_llm_judge:
+    if sem.decision != "review":
         return None
+    # 5a. 資安專用模型（Qwen3Guard）：判定不安全就攔；安全或拿不準照舊交給 5b（只會多擋、不會少擋）
+    guard = await guard_check(text)
+    if guard in (INJECTION, SECRET):
+        return guard, "資安模型複查", score
+    if not settings.enable_llm_judge:
+        return None
+    # 5b. 本機模型複查
     verdict = await llm_judge(text, model_name=model_name)
     if verdict is None:
         # 模型沒載入、逾時、回答看不懂：依設定寧可錯擋（預設）或放行
