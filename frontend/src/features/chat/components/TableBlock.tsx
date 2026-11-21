@@ -7,15 +7,13 @@
  */
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+import { Copy, Download } from '@/components/snow/icons'
 import Tooltip from '@/components/ui/Tooltip'
 import { copyText } from '@/lib/clipboard'
 import { downloadBlob, todayStamp } from '@/lib/download'
 import { TABLE_SETTLE_MS, chartPlan, readTable, toCsv, toTsv, type TableData } from '@/lib/tableData'
 
 const TableChart = lazy(() => import('./TableChart'))
-
-const ICON = 16
 
 const sameTable = (a: TableData | null, b: TableData) => a !== null && JSON.stringify(a) === JSON.stringify(b)
 
@@ -55,17 +53,17 @@ export default function TableBlock({ children }: Readonly<{ children?: ReactNode
                             aria-label={t('ui.table.csv')}
                             onClick={() => downloadBlob(new Blob([toCsv(data)], { type: 'text/csv;charset=utf-8' }), `corphia-table-${todayStamp()}.csv`)}
                         >
-                            <MaterialIcon name="download" size={ICON} aria-hidden />
+                            <Download className="md-table-tool-ic" aria-hidden />
                         </button>
                     </Tooltip>
                     <Tooltip label={t('ui.table.excel')}>
                         <button type="button" className="icon-tap" aria-label={t('ui.table.excel')} onClick={() => void copyText(toTsv(data))}>
-                            <MaterialIcon name="content_copy" size={ICON} aria-hidden />
+                            <Copy className="md-table-tool-ic" aria-hidden />
                         </button>
                     </Tooltip>
                 </div>
             )}
-            <div className="md-table glass-chip overflow-x-auto overflow-y-hidden scrollbar-none">
+            <div className="md-table paper overflow-x-auto overflow-y-hidden scrollbar-none">
                 <table ref={tableRef}>{children}</table>
             </div>
             {plan && settled && (

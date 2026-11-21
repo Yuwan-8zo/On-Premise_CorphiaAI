@@ -47,42 +47,86 @@ apiClient.interceptors.request.use(
 
 let refreshInflight: Promise<string | null> | null = null
 
+/** 續期被限流（429）時，後端說要等多久（毫秒）；沒給就等這麼久 */
+const REFRESH_LIMITED_WAIT_MS = 30_000
+let refreshRetryAfterMs = 0
+/** 上一次續期被限流時要等多久（讀一次就歸零）；開機的重試迴圈照這個等，不然會一直撞限流出不來 */
+export function takeRefreshRetryDelay(): number {
+    const ms = refreshRetryAfterMs
+    refreshRetryAfterMs = 0
+    return ms
+}
+
+/**
+ * 多個分頁共用同一張 refresh token，而後端的 refresh token 是一次性的（用過就作廢、換一張新的）。
+ * 兩個分頁同時拿同一張去換，後到的會被拒絕（401）——以前被拒絕就直接登出，再經由多分頁同步把所有分頁一起登出
+ * （實測：開著兩個分頁時，登入約 20 秒就被踢回登入頁）。所以：
+ *   1. 跨分頁鎖（Web Locks）：同一時間只有一個分頁在換；拿到鎖時再讀一次 localStorage，別的分頁剛換好就用新的
+ *   2. 被拒絕時先看 localStorage 是不是已經有別的分頁換好的新 token，有就改用它再試一次，真的沒有才登出
+ */
+const REFRESH_LOCK = 'corphia-auth-refresh'
+
+/** 目前 localStorage 裡（所有分頁共用）的 refresh token；讀不到就用這一頁記憶體裡的 */
+function sharedRefreshToken(): string | null {
+    try {
+        const raw = localStorage.getItem('auth-storage')
+        const stored = raw ? (JSON.parse(raw)?.state?.refreshToken as string | null | undefined) : undefined
+        if (stored !== undefined) return stored
+    } catch { /* 無痕模式或格式不對：用記憶體裡的 */ }
+    return useAuthStore.getState().refreshToken
+}
+
+/** 跨分頁同一時間只跑一個（瀏覽器不支援 Web Locks 就直接跑） */
+function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+    const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
+    return locks ? locks.request(REFRESH_LOCK, fn) : fn()
+}
+
+async function exchange(refreshToken: string): Promise<string> {
+    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
+    const { access_token, refresh_token } = response.data
+    // 只動 token、不動 user（state.user 在 HMR／persist 還原時可能是 null，寫進去會變成「Local User」）
+    const state = useAuthStore.getState()
+    state.setAccessToken(access_token)
+    if (refresh_token && refresh_token !== state.refreshToken) {
+        useAuthStore.setState({ refreshToken: refresh_token })
+    }
+    return access_token as string
+}
+
 export async function refreshAccessTokenOnce(): Promise<string | null> {
     if (refreshInflight) return refreshInflight
 
-    refreshInflight = (async () => {
-        const refreshToken = useAuthStore.getState().refreshToken
-        if (!refreshToken) return null
+    refreshInflight = withRefreshLock(async () => {
+        const used = sharedRefreshToken()
+        if (!used) return null
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-                refresh_token: refreshToken,
-            })
-            const { access_token, refresh_token } = response.data
-
-            // BUG FIX：原本是 `setAuth(state.user!, ...)`，但 state.user 在 HMR /
-            // persist hydration 時可能是 null，! 只是騙 TS。setAuth(null, ...) 會把
-            // user 寫成 null 並進 localStorage，之後 ChatSidebar 一路顯示「Local User」。
-            //
-            // 改成「只動 token，不動 user」—— refresh 的目的就是換 access token，
-            // user 物件本來就不該被這條路徑影響。如果 user 真的沒了，
-            // App.tsx 的 bootstrapAuth / 各頁面的 fetchUser 會去重抓。
-            const state = useAuthStore.getState()
-            state.setAccessToken(access_token)
-            // refresh token rotate 時也更新（後端會 issue 新的 refresh token）
-            if (refresh_token && refresh_token !== state.refreshToken) {
-                useAuthStore.setState({ refreshToken: refresh_token })
-            }
-            return access_token as string
+            return await exchange(used)
         } catch (err) {
-            // 只有伺服器明確拒絕（401/403：憑證失效或已用過）才登出；
-            // 連不上或伺服器錯誤（系統重啟中）保留登入狀態，讓呼叫端稍後重試
-            const status = (err as AxiosError)?.response?.status
+            const res = (err as AxiosError)?.response
+            const status = res?.status
+            if (status === 429) {
+                const sec = Number(res?.headers?.['retry-after'])
+                refreshRetryAfterMs = Number.isFinite(sec) && sec > 0 ? sec * 1000 : REFRESH_LIMITED_WAIT_MS
+            }
             if (status === 401 || status === 403) {
+                // 別的分頁剛好已經換好了（我們拿的是被它用掉的舊 token）→ 改用新的再試一次
+                const latest = sharedRefreshToken()
+                if (latest && latest !== used) {
+                    try {
+                        return await exchange(latest)
+                    } catch (retryErr) {
+                        const rs = (retryErr as AxiosError)?.response?.status
+                        if (rs !== 401 && rs !== 403) return null
+                    }
+                }
+                // 真的失效（不是被別的分頁搶先）才登出
                 useAuthStore.getState().clearAuth()
             }
+            // 連不上或伺服器錯誤（系統重啟中）保留登入狀態，讓呼叫端稍後重試
             return null
         }
-    })()
+    })
 
     try {
         return await refreshInflight

@@ -1222,7 +1222,7 @@ export default {
         export: {
             menu: 'エクスポート',
             title: '会話をエクスポート',
-            audited: 'エクスポートは監査ログに記録されます。',
+            audited: 'エクスポートは監査ログに記録されます',
             docx: 'Word',
             docxHint: '編集できる .docx',
             pdf: 'PDF',

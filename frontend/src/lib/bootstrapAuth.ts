@@ -11,10 +11,12 @@
  * 任何一步 fail 都 clearAuth + 落到登入頁。
  */
 import { useAuthStore } from '../store/authStore'
-import { refreshAccessTokenOnce } from '../api/client'
+import { refreshAccessTokenOnce, takeRefreshRetryDelay } from '../api/client'
 import { authApi } from '../api/auth'
 
 let bootstrapInflight: Promise<void> | null = null
+/** 後端還沒起來時多久重試一次 */
+const RETRY_MS = 2000
 
 const runBootstrapAuth = async () => {
     const state = useAuthStore.getState()
@@ -30,6 +32,8 @@ const runBootstrapAuth = async () => {
         // refresh token 互相把對方作廢而被登出。
         // 一鍵啟動會先開瀏覽器、後端稍後才起來：連不上時保留登入，每 2 秒重試，最多 10 分鐘；
         // 伺服器明確拒絕（憑證失效）時 refreshAccessTokenOnce 會登出並回傳 null。
+        // 被限流（429，每分鐘 20 次）時照後端說的秒數等：以前固定 2 秒一次＝每分鐘 30 次，
+        // 一旦被限流就永遠撞在上限上，畫面一直停在讀取中
         const deadline = Date.now() + 10 * 60 * 1000
         let token: string | null = null
         for (;;) {
@@ -38,7 +42,7 @@ const runBootstrapAuth = async () => {
             if (!useAuthStore.getState().refreshToken || Date.now() > deadline) {
                 throw new Error('refresh failed')
             }
-            await new Promise(r => setTimeout(r, 2000))
+            await new Promise(r => setTimeout(r, Math.max(RETRY_MS, takeRefreshRetryDelay())))
         }
 
         // 如果 store 沒有 user（被以前 bug 寫成 null 或 persist 漏存），
