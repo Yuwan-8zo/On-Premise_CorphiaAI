@@ -25,17 +25,23 @@ jobs:
         cache: "npm"
         cache-dependency-path: ./frontend/package-lock.json
 
+    # --ignore-scripts：不讓套件在安裝時執行自己的指令（供應鏈攻擊的常見入口）；前端打包不需要它們
     - name: Install dependencies
       working-directory: ./frontend
-      run: npm ci
+      run: npm ci --ignore-scripts
 
     - name: Build Frontend
       working-directory: ./frontend
       run: npm run build
 
+    # 固定版本、一樣不執行安裝指令，裝好後直接跑（不用 npx 臨時下載）
+    - name: Install Lighthouse CI
+      working-directory: ./frontend
+      run: npm install --no-save --ignore-scripts @lhci/cli@0.14.0
+
     - name: Run Lighthouse CI
       working-directory: ./frontend
-      run: npx --yes @lhci/cli@0.14.0 autorun
+      run: ./node_modules/.bin/lhci autorun
 
     - name: Upload report
       if: always()

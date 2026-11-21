@@ -56,16 +56,23 @@ export default function UXVitalsPanel({ className }: Readonly<{ className?: stri
         return v < 1000 ? t('admin.overview.ux.ms', { n: Math.round(v) }) : t('admin.overview.ux.sec', { n: (v / 1000).toFixed(1) })
     }
     const empty = data && SHOWN.every((k) => !data.metrics[k]?.count)
+    // 讀不到／還沒有資料：一句說明取代三格
+    let notice: string | null = null
+    if (error && !data) notice = t('admin.overview.ux.unavailable')
+    else if (empty) notice = t('admin.overview.ux.empty')
+    /** 一格的大數字：還沒讀到＝佔位、沒有資料＝破折號 */
+    const valueOf = (key: MetricKey, m?: MetricSummary) => {
+        if (!data) return <SkelText>000</SkelText>
+        return m?.p75 != null ? format(key, m.p75) : '—'
+    }
 
     return (
         <Panel className={`flex flex-col ${className || ''}`}>
             <SectionHeader title={t('admin.overview.ux.title')} />
             <div className="px-[var(--space)] pb-[var(--space)]">
                 <p className="mb-[var(--sp-12)] text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary">{t('admin.overview.ux.hint')}</p>
-                {error && !data ? (
-                    <p className="py-[var(--sp-12)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('admin.overview.ux.unavailable')}</p>
-                ) : empty ? (
-                    <p className="py-[var(--sp-12)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('admin.overview.ux.empty')}</p>
+                {notice ? (
+                    <p className="py-[var(--sp-12)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{notice}</p>
                 ) : (
                     <div className="grid grid-cols-1 gap-[var(--space)] sm:grid-cols-3">
                         {SHOWN.map((key) => {
@@ -75,7 +82,7 @@ export default function UXVitalsPanel({ className }: Readonly<{ className?: stri
                                 <div key={key} className="flex flex-col gap-[var(--sp-4)] px-[var(--sp-14)] py-3 rounded-[var(--admin-in)] bg-[var(--chip)]">
                                     <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] font-medium text-text-secondary">{t(`admin.overview.ux.${key}`)}</p>
                                     <p className="text-[length:var(--fs-28)] leading-none font-semibold tabular-nums text-text-primary">
-                                        {!data ? <SkelText>000</SkelText> : m?.p75 != null ? format(key, m.p75) : '—'}
+                                        {valueOf(key, m)}
                                     </p>
                                     <p className="flex items-center gap-[var(--sp-6)] text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary">
                                         {rating && <span className={`font-semibold ${TONE[rating]}`}>{t(`admin.overview.ux.rating.${rating}`)}</span>}

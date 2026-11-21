@@ -9,7 +9,7 @@
 """
 
 from datetime import timedelta
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 from pydantic import BaseModel, Field
@@ -50,34 +50,36 @@ async def report_vitals(body: VitalsBatch, current_user: CurrentUser, db: DbSess
     await db.commit()
 
 
+def _p75(value) -> float | None:
+    return round(float(value), 4) if value is not None else None
+
+
+def _empty_metric() -> dict:
+    return {"count": 0, "p75": None, "ratings": {"good": 0, "needs-improvement": 0, "poor": 0}, "devices": {}}
+
+
 @router.get("/summary")
-async def vitals_summary(current_user: AdminUser, db: DbSession, days: int = Query(7, ge=1, le=RETENTION_DAYS)) -> dict:
+async def vitals_summary(
+    current_user: AdminUser, db: DbSession, days: Annotated[int, Query(ge=1, le=RETENTION_DAYS)] = 7,
+) -> dict:
     """近 days 天：每個指標的 p75、筆數、好壞分布，以及各裝置的 p75"""
-    since = utc_now_naive() - timedelta(days=days)
-    scope = [WebVital.created_at >= since]
+    scope = [WebVital.created_at >= utc_now_naive() - timedelta(days=days)]
     if not current_user.is_engineer:
         scope.append(WebVital.tenant_id == current_user.tenant_id)
-
     p75 = func.percentile_cont(0.75).within_group(WebVital.value)
-    rows = (await db.execute(
-        select(WebVital.name, func.count(), p75).where(*scope).group_by(WebVital.name)
-    )).all()
-    ratings = (await db.execute(
-        select(WebVital.name, WebVital.rating, func.count()).where(*scope).group_by(WebVital.name, WebVital.rating)
-    )).all()
-    devices = (await db.execute(
-        select(WebVital.name, WebVital.device, func.count(), p75).where(*scope).group_by(WebVital.name, WebVital.device)
-    )).all()
 
-    metrics = {m: {"count": 0, "p75": None, "ratings": {"good": 0, "needs-improvement": 0, "poor": 0}, "devices": {}} for m in METRICS}
-    for name, count, value in rows:
+    async def grouped(by: list, *aggregates):
+        """依 by 這幾欄分組，回傳 (分組欄…, 統計值…) 的列"""
+        return (await db.execute(select(*by, *aggregates).where(*scope).group_by(*by))).all()
+
+    metrics = {m: _empty_metric() for m in METRICS}
+    for name, count, value in await grouped([WebVital.name], func.count(), p75):
         if name in metrics:
-            metrics[name]["count"] = count
-            metrics[name]["p75"] = round(float(value), 4) if value is not None else None
-    for name, rating, count in ratings:
-        if name in metrics and rating in metrics[name]["ratings"]:
+            metrics[name].update(count=count, p75=_p75(value))
+    for name, rating, count in await grouped([WebVital.name, WebVital.rating], func.count()):
+        if rating in metrics.get(name, {}).get("ratings", {}):
             metrics[name]["ratings"][rating] = count
-    for name, device, count, value in devices:
+    for name, device, count, value in await grouped([WebVital.name, WebVital.device], func.count(), p75):
         if name in metrics:
-            metrics[name]["devices"][device] = {"count": count, "p75": round(float(value), 4) if value is not None else None}
+            metrics[name]["devices"][device] = {"count": count, "p75": _p75(value)}
     return {"days": days, "metrics": metrics}
