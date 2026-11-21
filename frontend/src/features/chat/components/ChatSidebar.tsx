@@ -36,6 +36,7 @@ import { conversationsApi } from '@/api/conversations'
 const SEARCH_DEBOUNCE_MS = 250
 const SEARCH_PAGE_SIZE = 50
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
+import { OPEN_SEARCH_EVENT } from '@/features/chat/hooks/useChatHotkeys'
 
 interface ChatSidebarProps {
     /** 對話列表 */
@@ -172,6 +173,12 @@ export default function ChatSidebar({
     const [searchFailed, setSearchFailed] = useState(false)
     const searchRef = useRef<HTMLInputElement>(null)
     useEffect(() => { if (searching) searchRef.current?.focus() }, [searching])
+    // 快捷鍵 Ctrl／⌘+K（hooks/useChatHotkeys.ts）：打開搜尋欄；已經開著就把游標放回去
+    useEffect(() => {
+        const open = () => { setSearching(true); searchRef.current?.focus() }
+        window.addEventListener(OPEN_SEARCH_EVENT, open)
+        return () => window.removeEventListener(OPEN_SEARCH_EVENT, open)
+    }, [])
     useEffect(() => {
         const q = query.trim()
         if (!searching || !q) { setFound(null); setSearchFailed(false); return }

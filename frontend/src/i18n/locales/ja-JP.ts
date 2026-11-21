@@ -5,6 +5,7 @@
 export default {
     // 通用 (Common)
     common: {
+        undo: '元に戻す',
         copyFailed: 'コピーできませんでした。テキストを選択して Ctrl+C を押してください',
         submit: '送信',
         cancel: 'キャンセル',
@@ -513,6 +514,14 @@ export default {
 
     // 使用説明 (Guide)
     guide: {
+        hotkeys: {
+            title: 'キーボードショートカット',
+            search: '会話を検索',
+            newChat: '新しい会話',
+            sidebar: 'サイドバーの表示切替',
+            stop: '回答を停止',
+            recall: '前の質問を呼び出す（入力欄が空のとき）',
+        },
         title: '使い方',
         subtitle: '数分で Corphia を使いこなせます。会話履歴と文書は社内のサーバーに保存されます。',
         chat: {
@@ -873,6 +882,7 @@ export default {
                 conversation_create: '会話作成',
                 conversation_update: '会話更新',
                 conversation_delete: '会話削除',
+                document_view: '文書のプレビュー',
                 document_metadata_update: '文書設定の更新',
                 model_select: 'モデル選択',
                 model_refresh: 'モデル再読み込み',
@@ -1238,7 +1248,9 @@ export default {
             saveEdit: '変更を保存',
             tokensUsed: 'この回答で {{n}} トークン使用',
         },
-        sources: {
+        sources: {
+            viewInPdf: '原文で見る',
+            pdfFailed: '元のファイルを開けません（削除済み、または権限がありません）',
             unknownDoc: '不明な文書',
             title: '参照元：{{count}} 件の文書',
             cited: '（{{count}} 段落を引用）',
@@ -1324,6 +1336,8 @@ export default {
         chat: {
             uploadAnalyzing: 'アップロードして文書を解析しています…',
             noDocs: 'プロジェクトフォルダー「{{folder}}」にはまだファイルがありません。\n\nプロジェクトに関する質問に答えるには参考資料が必要です。\n\n**入力欄左の「添付」ボタンから、先にファイルをアップロードしてください（PDF・DOCX・XLSX・TXT など）。**',
+            deleted: '「{{title}}」を削除しました',
+            deleteFailed: '削除できませんでした。会話は一覧に戻しました',
             createFailed: '会話を作成できませんでした。システムの起動完了を確認してから再試行してください',
             folderCreateFailed: 'フォルダーを作成できませんでした',
             folderDeleteFailed: 'フォルダーを削除できませんでした',

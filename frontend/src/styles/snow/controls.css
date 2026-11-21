@@ -471,3 +471,13 @@ html.dark {
   position: relative;
   z-index: 1;
 }
+
+/* 鍵盤按鍵（使用說明的快捷鍵清單）：小方塊、底邊稍厚像實體鍵帽 */
+.kbd {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: var(--fs-12); line-height: var(--lh-16);
+  min-width: var(--sz-22); text-align: center;
+  padding: 0 var(--sp-6); border-radius: var(--r-6);
+  background: var(--chip); color: rgb(var(--text-primary));
+  border: .5px solid rgb(var(--border-subtle)); border-bottom-width: 2px;
+}

@@ -10,6 +10,7 @@ import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputAr
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import SidePanel from '@/features/chat/components/SidePanel'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
+import { useChatHotkeys } from '@/features/chat/hooks/useChatHotkeys'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
@@ -21,6 +22,17 @@ import { SkelMessages } from '@/components/ui/Skeleton'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
+    useChatHotkeys({
+        isStreaming: inputProps.isStreaming,
+        input: inputProps.input,
+        setInput: inputProps.setInput,
+        inputRef: inputProps.inputRef,
+        lastUserText: () => [...mainProps.messages].reverse().find((m) => m.role === 'user')?.content,
+        handleStop: inputProps.handleStop,
+        createNewConversation: mainProps.createNewConversation,
+        setSidebarOpen: useUIStore.getState().setSidebarOpen,
+        toggleSidebar: sidebarProps.toggleSidebar,
+    })
     // 專案模式、還沒進任何專案對話：引導選資料夾或建立新的，不顯示一般聊天的建議（翻譯、寫信…）
     const currentConversation = useChatStore((s) => s.currentConversation)
     const projectHome = sidebarProps.chatMode === 'project' && !currentConversation?.settings?.isProject

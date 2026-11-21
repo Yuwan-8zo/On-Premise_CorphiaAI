@@ -5,6 +5,7 @@
 export default {
     // Common
     common: {
+        undo: 'Undo',
         copyFailed: 'Could not copy. Select the text and press Ctrl+C.',
         submit: 'Submit',
         cancel: 'Cancel',
@@ -513,6 +514,14 @@ export default {
 
     // Guide
     guide: {
+        hotkeys: {
+            title: 'Keyboard shortcuts',
+            search: 'Search chats',
+            newChat: 'New chat',
+            sidebar: 'Show or hide the sidebar',
+            stop: 'Stop the answer',
+            recall: 'Recall your last question (when the box is empty)',
+        },
         title: 'Help',
         subtitle: 'Get started with Corphia in minutes. Chat history and documents are stored on your company’s own server.',
         chat: {
@@ -873,6 +882,7 @@ export default {
                 conversation_create: 'Create conversation',
                 conversation_update: 'Update conversation',
                 conversation_delete: 'Delete conversation',
+                document_view: 'View document',
                 document_metadata_update: 'Update document settings',
                 model_select: 'Select model',
                 model_refresh: 'Refresh models',
@@ -1246,7 +1256,9 @@ export default {
             saveEdit: 'Save changes',
             tokensUsed: 'This reply used {{n}} tokens',
         },
-        sources: {
+        sources: {
+            viewInPdf: 'View in the original',
+            pdfFailed: 'Couldn\'t open the original file (it may be deleted, or you may not have access)',
             unknownDoc: 'Unknown document',
             title: 'Sources: {{count}} documents',
             cited: '({{count}} passages cited)',
@@ -1332,6 +1344,8 @@ export default {
         chat: {
             uploadAnalyzing: 'Uploading and analysing the document…',
             noDocs: 'The project folder "{{folder}}" has no files yet.\n\nCorphia needs reference material to answer questions about this project.\n\n**Click the attachment button on the left of the input box to upload files first (PDF, DOCX, XLSX, TXT and more).**',
+            deleted: 'Deleted "{{title}}"',
+            deleteFailed: 'Couldn\'t delete; the chat is back in the list',
             createFailed: 'Could not create the chat. Make sure the system has finished starting, then try again.',
             folderCreateFailed: 'Could not create the folder',
             folderDeleteFailed: 'Could not delete the folder',

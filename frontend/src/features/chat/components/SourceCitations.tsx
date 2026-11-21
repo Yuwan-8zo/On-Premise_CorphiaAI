@@ -9,6 +9,7 @@ import { useState } from 'react'
 import type { MessageSource } from '@/types/chat'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
+import { useSidePanelStore } from '@/store/sidePanelStore'
 
 interface SourceCitationsProps {
     sources: MessageSource[]
@@ -41,6 +42,17 @@ function groupByDocument(sources: MessageSource[]): SourceGroup[] {
         map.set(key, g)
     }
     return [...map.values()].sort((a, b) => b.best - a.best)
+}
+
+/** 只有 PDF 有原檔預覽（其他格式這裡已經顯示段落全文） */
+const isPdf = (name?: string | null) => /\.pdf$/i.test(name || '')
+
+/** 在右側面板打開原文，被引用的段落標黃 */
+function openInPdf(chunk: MessageSource) {
+    const panel = useSidePanelStore.getState()
+    const id = `pdf-${chunk.chunk_id}`
+    panel.register(id, { kind: 'pdf', documentId: chunk.document_id!, title: chunk.document_name || '', quote: chunk.content || '' }, null)
+    panel.show(id)
 }
 
 export default function SourceCitations({ sources }: SourceCitationsProps) {
@@ -111,6 +123,15 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                                 {t('ui.sources.chunk', { n: i + 1, score: Math.round((chunk.score || 0) * 100) })}
                                             </p>
                                             {chunk.content}
+                                            {chunk.document_id && isPdf(chunk.document_name) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openInPdf(chunk)}
+                                                    className="mt-[var(--sp-8)] block text-[length:var(--fs-13)] font-medium text-accent"
+                                                >
+                                                    {t('ui.sources.viewInPdf')}
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

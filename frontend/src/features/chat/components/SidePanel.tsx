@@ -9,7 +9,7 @@
  *   - 開關都有動畫：電腦上從右邊展開／收起（寬度漸變，聊天區跟著平順讓位），手機上由下往上浮現
  * 內容一樣關在沙盒裡（lib/previewDoc），和程式碼區塊裡的預覽是同一套限制。
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { readMs } from '@/lib/cssVars'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Contract, Expand, FileText, X } from '@/components/snow/icons'
@@ -27,6 +27,9 @@ import { useUIStore } from '@/store/uiStore'
 import { CopyButton, PANEL_BUTTON, PANEL_ICON, SaveButton } from './CodeButtons'
 import RunResultView from './RunResultView'
 import VersionSwitcher from './VersionSwitcher'
+
+// PDF 引擎很大：只有打開引用原文時才載入
+const PdfPreview = lazy(() => import('./PdfPreview'))
 
 /** AI 還在寫的時候，畫面隔多久才重畫一次（毫秒）：每個字都重畫會一直閃 */
 const PREVIEW_DEBOUNCE_MS = 400
@@ -145,7 +148,7 @@ export default function SidePanel() {
                     </button>
                 )}
                 <h2 className="mr-auto min-w-0 truncate text-[length:var(--fs-15)] font-semibold text-text-primary">
-                    {listMode ? t('ui.chat.sidePanel.files') : current?.kind === 'page' ? pageTitle(current, items, t) : current?.kind === 'text' ? current.title : t('ui.chat.sidePanel.runTitle')}
+                    {panelTitle(listMode, current, items, t)}
                 </h2>
                 {current && <VersionSwitcher ids={versions} currentId={current.id} onSwitch={show} />}
                 {current?.kind === 'page' && (
@@ -194,6 +197,11 @@ export default function SidePanel() {
             {current?.kind === 'text' && (
                 <pre className="min-h-0 flex-1 overflow-auto p-[var(--sp-16)] text-[length:var(--fs-13)] leading-relaxed whitespace-pre-wrap break-words selectable-text">{current.text}</pre>
             )}
+            {current?.kind === 'pdf' && (
+                <Suspense fallback={<output className="block p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary">{t('common.loading')}</output>}>
+                    <PdfPreview documentId={current.documentId} quote={current.quote} />
+                </Suspense>
+            )}
             {current?.kind === 'run' && (
                 <div className="min-h-0 flex-1 overflow-auto px-[var(--sp-16)] pb-[var(--sp-16)]">
                     <RunResultView result={current.result} fill />
@@ -205,6 +213,14 @@ export default function SidePanel() {
 
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string
+
+/** 面板標題：檔案清單／網頁名稱／檔名／執行結果 */
+function panelTitle(listMode: boolean, current: SidePanelItem | null | undefined, items: Record<string, SidePanelItem>, t: TFn): string {
+    if (listMode) return t('ui.chat.sidePanel.files')
+    if (current?.kind === 'page') return pageTitle(current, items, t)
+    if (current?.kind === 'text' || current?.kind === 'pdf') return current.title
+    return t('ui.chat.sidePanel.runTitle')
+}
 
 /** 成品的名稱：附加的檔名 → 網頁自己的 <title> → 「網頁 N」 */
 function pageTitle(item: SidePanelItem, items: Record<string, SidePanelItem>, t: TFn): string {

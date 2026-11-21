@@ -25,6 +25,10 @@ interface Speech {
     id: string
     text: string
     tone: ToastType | 'hello'
+    /** 通知上的按鈕（例如「復原」） */
+    action?: { label: string; onClick: () => void }
+    /** 有按鈕的通知自己決定顯示多久（要讓使用者來得及按） */
+    ms?: number
 }
 
 const sayFor = (text: string) => Math.min(SAY_MAX_MS, SAY_MIN_MS + text.length * SAY_PER_CHAR_MS)
@@ -52,7 +56,7 @@ export default function MascotDock() {
         hideTimer.current = window.setTimeout(() => {
             setSpeech(null)
             tuckTimer.current = window.setTimeout(() => setOut(false), TUCK_DELAY_MS)
-        }, sayFor(next.text))
+        }, next.ms ?? sayFor(next.text))
     }
 
     // 新通知 → 小 AI 說
@@ -60,7 +64,7 @@ export default function MascotDock() {
         const latest = toasts.find((x) => !x.leaving)
         if (!latest || latest.id === seen.current) return
         seen.current = latest.id
-        speak({ id: latest.id, text: latest.message, tone: latest.type })
+        speak({ id: latest.id, text: latest.message, tone: latest.type, action: latest.action, ms: latest.durationMs })
     }, [toasts])
 
     useEffect(() => () => {
@@ -79,6 +83,20 @@ export default function MascotDock() {
                 aria-live="polite"
             >
                 {speech?.text}
+                {speech?.action && (
+                    <button
+                        type="button"
+                        className="mascot-dock-action"
+                        onClick={() => {
+                            speech.action?.onClick()
+                            clearTimeout(hideTimer.current)
+                            setSpeech(null)
+                            tuckTimer.current = window.setTimeout(() => setOut(false), TUCK_DELAY_MS)
+                        }}
+                    >
+                        {speech.action.label}
+                    </button>
+                )}
             </div>
             <Mascot
                 mood={mood}

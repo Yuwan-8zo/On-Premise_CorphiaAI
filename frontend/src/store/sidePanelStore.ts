@@ -15,6 +15,8 @@ export type SidePanelContent =
     | { kind: 'run'; result: PyRunResult }
     /** 附加的文字／程式碼檔（直接顯示內容） */
     | { kind: 'text'; text: string; title: string }
+    /** 引用原文預覽：PDF 原檔，被引用的段落標黃（components/PdfPreview.tsx） */
+    | { kind: 'pdf'; documentId: string; title: string; quote: string }
 
 export type SidePanelItem = SidePanelContent & {
     id: string

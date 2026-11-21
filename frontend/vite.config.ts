@@ -2,11 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import lanGate from './vite-plugins/lanGate'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
     // lanGate：區域網路開關即時生效（讀專案根目錄的 .runtime/lan.json）
-    plugins: [react(), lanGate(path.resolve(__dirname, '../.runtime'))],
+    // viteStaticCopy：PDF 引擎的中文字碼表與標準字型（引用原文預覽用），打包在系統裡，離線也能顯示中文 PDF
+    plugins: [
+        react(),
+        lanGate(path.resolve(__dirname, '../.runtime')),
+        viteStaticCopy({
+            targets: [
+                { src: 'node_modules/pdfjs-dist/cmaps/*', dest: 'pdfjs/cmaps', rename: { stripBase: true } },
+                { src: 'node_modules/pdfjs-dist/standard_fonts/*', dest: 'pdfjs/standard_fonts', rename: { stripBase: true } },
+            ],
+        }),
+    ],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),

@@ -41,6 +41,7 @@ class AuditAction:
     DOCUMENT_UPLOAD = "document_upload"
     DOCUMENT_DELETE = "document_delete"
     DOCUMENT_METADATA_UPDATE = "document_metadata_update"
+    DOCUMENT_VIEW = "document_view"
 
     # 模型管理
     MODEL_SELECT = "model_select"
