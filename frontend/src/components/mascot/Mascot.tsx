@@ -33,7 +33,7 @@ export interface MascotLook {
 }
 
 export interface MascotHandle {
-    el: HTMLDivElement | null
+    el: HTMLButtonElement | null
     /** 重新量背景色、換身體顏色（移到別的位置之後呼叫） */
     retint: () => void
     /** 目前身體上正在跑的表情動畫總長（毫秒，從樣式讀；沒有動畫回傳 0） */
@@ -73,7 +73,7 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
     { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, label, onPoke, className = '' },
     ref,
 ) {
-    const rootRef = useRef<HTMLDivElement>(null)
+    const rootRef = useRef<HTMLButtonElement>(null)
     const bobRef = useRef<HTMLDivElement>(null)
 
     // 身體顏色跟著背景：一出現、換深淺色／主題色（html 的 class、style 變了）、視窗大小變了都重量一次
@@ -202,19 +202,13 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
     ].filter(Boolean).join(' ')
 
     return (
-        <div
+        // 可以戳它：真的按鈕，滑鼠點、鍵盤 Tab 到它按 Enter／空白鍵都行
+        <button
+            type="button"
             ref={rootRef}
             className={classes}
-            // 可以戳它：滑鼠點、或用鍵盤 Tab 到它按 Enter／空白鍵
-            role="button"
-            tabIndex={0}
             aria-label={label}
             onClick={poke}
-            onKeyDown={(e) => {
-                if (e.key !== 'Enter' && e.key !== ' ') return
-                e.preventDefault()
-                poke()
-            }}
             onAnimationEnd={(e) => {
                 if (e.animationName === 'mascot-poke') setPoking(false)
             }}
@@ -235,7 +229,7 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
                 </div>
             </div>
             <div className={`m-say${say ? ' on' : ''}`} aria-live="polite">{bubble}</div>
-        </div>
+        </button>
     )
 })
 

@@ -241,7 +241,7 @@ export default function Login() {
                         ref={cardRef}
                         onSubmit={(e) => {
                             setMood('think')
-                            form.submit(e)
+                            form.submit(e).catch(() => undefined)
                         }}
                         noValidate
                         className="login-card w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"

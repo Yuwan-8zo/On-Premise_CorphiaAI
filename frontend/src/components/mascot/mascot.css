@@ -40,7 +40,10 @@
   flex: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* 它是一顆按鈕（可以戳）：拿掉瀏覽器預設的按鈕外觀 */
+  display: block; padding: 0; border: 0; background: none; color: inherit; font: inherit; appearance: none;
 }
+.mascot:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 6px; border-radius: 50%; }
 
 /* 淺色背景：顏色已經往暗推了，再濃一點，白眼睛才有對比 */
 .mascot.on-light { --m-tint-a: var(--mascot-tint-a-light); }
