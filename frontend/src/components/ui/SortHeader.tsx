@@ -1,5 +1,5 @@
 /**
- * 可以排序的表頭：整格是一顆按鈕，旁邊的小箭頭表示目前方向（沒排序時淡淡的上下箭頭）
+ * 可以排序的表頭：整格是一顆按鈕，旁邊的小箭頭表示目前方向（只有正在排序的那一欄顯示；其他欄滑過時才淡淡出現）
  *   搭配 lib/useTableSort：<SortHeader label="名稱" {...sort.headerProps('name')} />
  *   報讀軟體會唸出「遞增／遞減排序」（aria-sort 放在外面的 <th> 上，見 lib/useTableSort 的 sortAria）
  */

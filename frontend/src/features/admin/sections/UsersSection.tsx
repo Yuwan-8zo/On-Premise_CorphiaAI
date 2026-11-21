@@ -37,6 +37,7 @@ import { useKeepInViewport } from '@/lib/useKeepInViewport'
 import { useAuthStore } from '@/store/authStore'
 import SearchField from '@/components/ui/SearchField'
 import SortHeader from '@/components/ui/SortHeader'
+import GlassSegmented from '@/components/ui/GlassSegmented'
 import { sortAria, useTableSort } from '@/lib/useTableSort'
 
 const ROLE_FILTERS = ['all', 'engineer', 'admin', 'user'] as const
@@ -235,14 +236,13 @@ export default function UsersSection({
                     onClear={() => setQuery('')}
                     placeholder={t('ui.tableFilter.searchUsers')}
                 />
-                <fieldset className="table-filter-chips">
-                    <legend className="sr-only">{t('admin.users.table.role', '角色')}</legend>
-                    {ROLE_FILTERS.map((r) => (
-                        <button key={r} type="button" className={`drp-chip${roleFilter === r ? ' is-on' : ''}`} aria-pressed={roleFilter === r} onClick={() => setRoleFilter(r)}>
-                            {r === 'all' ? t('ui.tableFilter.all') : t(`admin.users.role.${r}`)}
-                        </button>
-                    ))}
-                </fieldset>
+                {/* 角色四選一：規範的分段切換器（和後台上方分頁同一個元件） */}
+                <GlassSegmented
+                    className="table-filter-seg h-[var(--sz-36)]"
+                    value={roleFilter}
+                    onChange={setRoleFilter}
+                    options={ROLE_FILTERS.map((r) => ({ value: r, label: r === 'all' ? t('ui.tableFilter.all') : t(`admin.users.role.${r}`) }))}
+                />
             </div>
             <div className="admin-fill-body overflow-x-auto pb-[var(--sp-4)]">
                 <table className="w-full sm:min-w-[var(--sz-720)]">
