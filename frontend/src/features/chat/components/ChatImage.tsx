@@ -19,7 +19,7 @@ interface ChatImageProps {
     zoomable?: boolean
 }
 
-export default function ChatImage({ conversationId, imageId, alt, className = '', zoomable = false }: ChatImageProps) {
+export default function ChatImage({ conversationId, imageId, alt, className = '', zoomable = false }: Readonly<ChatImageProps>) {
     const [url, setUrl] = useState<string | null>(null)
     const [failed, setFailed] = useState(false)
 

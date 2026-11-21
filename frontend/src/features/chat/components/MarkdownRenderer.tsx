@@ -256,7 +256,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                         },
 
                         // 表格：右上角下載 CSV／複製到 Excel，有數字欄就在下方自動畫長條圖（TableBlock）
-                        table: ({ children }) => <TableBlock>{children}</TableBlock>,
+                        table: TableBlock,
                         th: ({ children }) => <th>{withBreaks(children)}</th>,
                         td: ({ children }) => <td>{cellLines(children)}</td>,
 

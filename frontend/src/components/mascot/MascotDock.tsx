@@ -21,6 +21,8 @@ const SAY_MAX_MS = 7000
 const TUCK_DELAY_MS = 400
 
 const MOOD: Record<ToastType, MascotMood> = { success: 'happy', error: 'sad', info: 'idle' }
+/** 被抓著：嚇一跳；飛出去：開心 */
+const FLING_MOOD: Partial<Record<string, MascotMood>> = { held: 'alert', flying: 'happy' }
 
 interface Speech {
     id: string
@@ -75,9 +77,8 @@ export default function MascotDock() {
         clearTimeout(tuckTimer.current)
     }, [])
 
-    // 被抓著：嚇一跳；飛出去：開心
-    const flingMood: MascotMood | null = fling.state === 'held' ? 'alert' : fling.state === 'flying' ? 'happy' : null
-    const mood: MascotMood = flingMood ?? (speech && speech.tone !== 'hello' ? MOOD[speech.tone] : 'idle')
+    const speechMood: MascotMood = speech && speech.tone !== 'hello' ? MOOD[speech.tone] : 'idle'
+    const mood: MascotMood = FLING_MOOD[fling.state] ?? speechMood
 
     return (
         <aside className={`mascot-dock${out ? ' is-out' : ''}${fling.state !== 'idle' ? ' is-held' : ''}`} aria-label={t('auth.mascotName')}>

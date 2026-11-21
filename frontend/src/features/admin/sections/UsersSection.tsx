@@ -134,6 +134,8 @@ export default function UsersSection({
     const filtered = users.filter((u) =>
         (roleFilter === 'all' || u.role === roleFilter) &&
         (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)))
+    // 沒有資料時的說明：有使用者只是被篩掉，和真的一個都沒有，講法不同
+    const emptyText = users.length ? t('ui.tableFilter.noMatch') : t('admin.users.noUsers', '暫無使用者')
     const sort = useTableSort(filtered, {
         name: (u) => u.name,
         role: (u) => ROLE_RANK[u.role],
@@ -233,13 +235,14 @@ export default function UsersSection({
                     onClear={() => setQuery('')}
                     placeholder={t('ui.tableFilter.searchUsers')}
                 />
-                <div className="table-filter-chips" role="group" aria-label={t('admin.users.table.role', '角色')}>
+                <fieldset className="table-filter-chips">
+                    <legend className="sr-only">{t('admin.users.table.role', '角色')}</legend>
                     {ROLE_FILTERS.map((r) => (
                         <button key={r} type="button" className={`drp-chip${roleFilter === r ? ' is-on' : ''}`} aria-pressed={roleFilter === r} onClick={() => setRoleFilter(r)}>
                             {r === 'all' ? t('ui.tableFilter.all') : t(`admin.users.role.${r}`)}
                         </button>
                     ))}
-                </div>
+                </fieldset>
             </div>
             <div className="admin-fill-body overflow-x-auto pb-[var(--sp-4)]">
                 <table className="w-full sm:min-w-[var(--sz-720)]">
@@ -278,7 +281,7 @@ export default function UsersSection({
                         ) : sort.rows.length === 0 ? (
                             <tr>
                                 <td className={tableEmptyCellClass} colSpan={6}>
-                                    {users.length ? t('ui.tableFilter.noMatch') : t('admin.users.noUsers', '暫無使用者')}
+                                    {emptyText}
                                 </td>
                             </tr>
                         ) : (

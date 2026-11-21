@@ -94,5 +94,4 @@ body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
   transition: transform var(--fling-home) var(--dock-ease);
 }
 .mascot-fling .mascot { cursor: grab; touch-action: none; }
-.mascot-dock.is-held .mascot { cursor: grabbing; }
-.mascot-dock.is-held .mascot { transform: none; }
+.mascot-dock.is-held .mascot { cursor: grabbing; transform: none; }

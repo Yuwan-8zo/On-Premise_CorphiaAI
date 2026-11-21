@@ -36,7 +36,9 @@ async def test_markdown_export_and_audit(async_client: AsyncClient, db_session, 
     assert r.headers["cache-control"] == "no-store"
     body = r.text
     assert body.startswith("# 預算討論")
-    assert "## 我" in body and "## Corphia" in body and "| 研發 |" in body
+    assert "## 我" in body
+    assert "## Corphia" in body
+    assert "| 研發 |" in body
     logs = (await db_session.execute(select(AuditLog).where(AuditLog.resource_id == conv_id))).scalars().all()
     assert any(log.action == "conversation_export" for log in logs)
 

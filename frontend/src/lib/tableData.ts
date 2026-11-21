@@ -34,7 +34,7 @@ export function toTsv({ head, rows }: TableData): string {
 const MAX_AFFIX = 4
 /** 數字前面可以有的字：幣別、約略 */
 const PREFIX_OK = /^(nt\$|us\$|hk\$|rmb|\$|€|£|¥|￥|約|~|≈)?$/i
-const NUM_RE = new RegExp(`^(\\D{0,${MAX_AFFIX}}?)\\s*([-+−]?\\d[\\d,，]*(?:\\.\\d+)?)\\s*(\\D{0,${MAX_AFFIX}})$`)
+const NUM_RE = new RegExp(String.raw`^(\D{0,${MAX_AFFIX}}?)\s*([-+−]?\d[\d,，]*(?:\.\d+)?)\s*(\D{0,${MAX_AFFIX}})$`)
 
 export function parseNum(raw: string): number | null {
     const s = raw.trim()
@@ -42,11 +42,11 @@ export function parseNum(raw: string): number | null {
     const m = NUM_RE.exec(s)
     if (!m) return null
     // 前後的字不能又夾著數字（例如「2024-01」）；前面只能是幣別或「約」（「第 3 季」「abc123」不是量）
-    if (/[\d]/.test(m[1] + m[3]) || !PREFIX_OK.test(m[1].trim())) return null
+    if (/\d/.test(m[1] + m[3]) || !PREFIX_OK.test(m[1].trim())) return null
     const n = Number(m[2].replace(/[,，]/g, '').replace('−', '-'))
     if (!Number.isFinite(n)) return null
-    if (/^萬/.test(m[3])) return n * 1e4
-    if (/^億/.test(m[3])) return n * 1e8
+    if (m[3].startsWith('萬')) return n * 1e4
+    if (m[3].startsWith('億')) return n * 1e8
     return n
 }
 

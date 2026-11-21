@@ -15,12 +15,15 @@ export type SortDir = 'asc' | 'desc'
 type Value = string | number | null | undefined
 
 /** 給 <th aria-sort> 用 */
-export const sortAria = (dir: SortDir | null) => (dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none')
+const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
+export const sortAria = (dir: SortDir | null) => (dir ? ARIA_SORT[dir] : 'none')
 
 export function compareValues(a: Value, b: Value, dir: SortDir): number {
     const emptyA = a === null || a === undefined || a === ''
     const emptyB = b === null || b === undefined || b === ''
-    if (emptyA || emptyB) return emptyA === emptyB ? 0 : emptyA ? 1 : -1
+    if (emptyA && emptyB) return 0
+    if (emptyA) return 1
+    if (emptyB) return -1
     const n = typeof a === 'number' && typeof b === 'number'
         ? a - b
         : String(a).localeCompare(String(b), i18n.language, { numeric: true, sensitivity: 'base' })
@@ -43,7 +46,7 @@ export function useTableSort<Row, Key extends string>(rows: readonly Row[], gett
 
     const toggle = (key: Key) =>
         setSort((cur) => {
-            if (!cur || cur.key !== key) return { key, dir: 'asc' }
+            if (cur?.key !== key) return { key, dir: 'asc' }
             return cur.dir === 'asc' ? { key, dir: 'desc' } : null
         })
 

@@ -1245,7 +1245,7 @@ export default {
             soon: '閒置太久，{{s}} 秒後鎖定畫面',
             stay: '繼續使用',
             title: '畫面已鎖定',
-            password: '輸入密碼解鎖',
+            unlockField: '輸入密碼解鎖',
             unlock: '解鎖',
             checking: '確認中…',
             wrong: '密碼不對，再試一次',

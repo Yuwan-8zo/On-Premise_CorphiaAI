@@ -1245,7 +1245,7 @@ export default {
             soon: '操作がないため {{s}} 秒後に画面をロックします',
             stay: '使い続ける',
             title: '画面をロックしました',
-            password: 'パスワードでロック解除',
+            unlockField: 'パスワードでロック解除',
             unlock: 'ロック解除',
             checking: '確認中…',
             wrong: 'パスワードが違います',

@@ -413,3 +413,35 @@
   height: var(--sz-8);
   border-radius: var(--r-9999);
 }
+
+/* ---------- 這一批用到的 <dialog>、<fieldset>：拿掉瀏覽器預設的框線、留白、底色，外觀照上面各自的設定 ---------- */
+dialog.idle-lock,
+dialog.image-viewer,
+dialog.drp {
+  margin: 0;
+  border: 0;
+  color: inherit;
+}
+dialog.idle-lock,
+dialog.image-viewer {
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+}
+fieldset.table-filter-chips {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+/* 看大圖：整個畫面是一顆「關閉」按鈕，圖片在正中間 */
+.image-viewer-scrim {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  cursor: zoom-out;
+}

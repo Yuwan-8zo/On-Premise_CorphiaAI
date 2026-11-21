@@ -19,7 +19,7 @@ const ICON = 16
 
 const sameTable = (a: TableData | null, b: TableData) => a !== null && JSON.stringify(a) === JSON.stringify(b)
 
-export default function TableBlock({ children }: Readonly<{ children: ReactNode }>) {
+export default function TableBlock({ children }: Readonly<{ children?: ReactNode }>) {
     const { t } = useTranslation()
     const tableRef = useRef<HTMLTableElement>(null)
     const [data, setData] = useState<TableData | null>(null)

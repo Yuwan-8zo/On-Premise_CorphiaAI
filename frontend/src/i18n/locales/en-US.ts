@@ -1253,7 +1253,7 @@ export default {
             soon: 'Idle for a while. Locking in {{s}} s',
             stay: 'Keep using',
             title: 'Screen locked',
-            password: 'Password to unlock',
+            unlockField: 'Password to unlock',
             unlock: 'Unlock',
             checking: 'Checking…',
             wrong: 'Wrong password, try again',

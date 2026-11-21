@@ -37,12 +37,20 @@ function presets(today: Date): Array<{ id: string; range: DateRange }> {
     ]
 }
 
-/** 月曆一格一天：前面補上個月的空格，讓 1 號落在正確的星期 */
-function monthCells(year: number, month: number): (string | null)[] {
+/** 月曆一格一天：前面補上個月的空格（key 用「空格-第幾格」），讓 1 號落在正確的星期 */
+function monthCells(year: number, month: number): { key: string; day: string | null }[] {
     const first = new Date(year, month, 1).getDay()
     const days = new Date(year, month + 1, 0).getDate()
-    return [...Array<null>(first).fill(null), ...Array.from({ length: days }, (_, i) => localDate(new Date(year, month, i + 1)))]
+    const blanks = Array.from({ length: first }, (_, n) => ({ key: `blank-${n}`, day: null }))
+    const dates = Array.from({ length: days }, (_, n) => {
+        const day = localDate(new Date(year, month, n + 1))
+        return { key: day, day }
+    })
+    return [...blanks, ...dates]
 }
+
+/** 星期的代碼（0＝星期日）：當作 key，標示文字依語言另外產生 */
+const WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
 export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
     const { t, i18n } = useTranslation()
@@ -52,7 +60,7 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
     const todayStr = localDate(today)
     const [view, setView] = useState(() => ({ y: today.getFullYear(), m: today.getMonth() }))
     const btnRef = useRef<HTMLButtonElement>(null)
-    const panelRef = useRef<HTMLDivElement>(null)
+    const panelRef = useRef<HTMLDialogElement>(null)
     const close = () => { setOpen(false); setPicking(null) }
     useDismiss(open, close, [panelRef, btnRef])
     // 手機上面板可能超出畫面：自動挪進來（下面放不下、上面放得下就翻到按鈕上方）
@@ -63,14 +71,17 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
     const monthFmt = useMemo(() => new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long' }), [i18n.language])
     const weekdays = useMemo(() => {
         const f = new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' })
-        return Array.from({ length: 7 }, (_, i) => f.format(new Date(2024, 0, 7 + i))) // 2024/1/7 是星期日
+        return WEEK.map((id, i) => ({ id, label: f.format(new Date(2024, 0, 7 + i)) })) // 2024/1/7 是星期日
     }, [i18n.language])
     const day = (s: string) => fmt.format(new Date(`${s}T00:00`))
 
-    const label = value.start && value.end
-        ? (value.start === value.end ? day(value.start) : `${day(value.start)} – ${day(value.end)}`)
-        : t('ui.range.all')
+    const rangeText = (s: string, e: string) => (s === e ? day(s) : `${day(s)} – ${day(e)}`)
+    const label = value.start && value.end ? rangeText(value.start, value.end) : t('ui.range.all')
     const days = value.start && value.end ? Math.round((new Date(`${value.end}T00:00`).getTime() - new Date(`${value.start}T00:00`).getTime()) / DAY_MS) + 1 : 0
+
+    let hint = t('ui.range.pickStart')
+    if (picking) hint = t('ui.range.pickEnd')
+    else if (days) hint = t('ui.range.days', { n: days })
 
     const apply = (range: DateRange) => { onChange(range); close() }
     const pick = (d: string) => {
@@ -101,7 +112,7 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                 {label}
             </button>
             {open && (
-                <div ref={panelRef} className="drp paper paper-solid" role="dialog" aria-label={t('ui.range.title')}>
+                <dialog open ref={panelRef} className="drp paper paper-solid" aria-label={t('ui.range.title')}>
                     <div className="drp-presets">
                         {presets(today).map((p) => {
                             const on = (p.range.start ?? '') === (value.start ?? '') && (p.range.end ?? '') === (value.end ?? '')
@@ -118,9 +129,9 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                         <button type="button" className="icon-tap" aria-label={t('ui.range.next')} disabled={view.y === today.getFullYear() && view.m === today.getMonth()} onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></button>
                     </div>
                     <div className="drp-grid" role="grid">
-                        {weekdays.map((w, i) => <span key={`w${i}`} className="drp-wd" aria-hidden>{w}</span>)}
-                        {monthCells(view.y, view.m).map((d, i) => {
-                            if (!d) return <span key={`e${i}`} />
+                        {weekdays.map((w) => <span key={w.id} className="drp-wd" aria-hidden>{w.label}</span>)}
+                        {monthCells(view.y, view.m).map(({ key, day: d }) => {
+                            if (!d) return <span key={key} />
                             const inRange = !!start && !!end && d >= start && d <= end
                             const edge = d === start || d === end
                             return (
@@ -139,9 +150,9 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                         })}
                     </div>
                     <p className="drp-hint" aria-live="polite">
-                        {picking ? t('ui.range.pickEnd') : days ? t('ui.range.days', { n: days }) : t('ui.range.pickStart')}
+                        {hint}
                     </p>
-                </div>
+                </dialog>
             )}
         </div>
     )

@@ -13,16 +13,19 @@ import { IMAGE_MORPH, closeImage, useViewer } from './imageViewerStore'
 export default function ImageViewer() {
     const { t } = useTranslation()
     const { src, alt } = useViewer()
-    const boxRef = useRef<HTMLDivElement>(null)
+    const boxRef = useRef<HTMLDialogElement>(null)
     useDismiss(!!src, closeImage, [], { outside: false })
     if (!src) return null
     return createPortal(
-        <div ref={boxRef} className="image-viewer" role="dialog" aria-modal="true" aria-label={alt} onClick={closeImage}>
-            <img src={src} alt={alt} className="image-viewer-img" style={{ viewTransitionName: IMAGE_MORPH }} />
+        <dialog open ref={boxRef} className="image-viewer" aria-modal="true" aria-label={alt}>
+            {/* 整個畫面（含圖片）是一顆按鈕：點哪裡都關閉 */}
+            <button type="button" className="image-viewer-scrim" aria-label={t('common.close')} onClick={closeImage}>
+                <img src={src} alt={alt} className="image-viewer-img" style={{ viewTransitionName: IMAGE_MORPH }} />
+            </button>
             <button type="button" className="image-viewer-close glass-chip" aria-label={t('common.close')} onClick={closeImage}>
                 <X aria-hidden />
             </button>
-        </div>,
+        </dialog>,
         document.body,
     )
 }

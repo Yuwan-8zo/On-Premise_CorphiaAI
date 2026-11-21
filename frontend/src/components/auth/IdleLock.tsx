@@ -16,7 +16,7 @@ import { useChatStore } from '@/store/chatStore'
 import { getErrorMessage } from '@/lib/errors'
 import {
     ACTIVITY_WRITE_MS, IDLE_WARN_MS, LAST_ACTIVE_KEY, LOCKED_KEY,
-    isLocked, markActive, msUntilLock, setLocked,
+    isLocked, markActive, msUntilLock, setLocked as persistLocked,
 } from '@/lib/idleLock'
 
 const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const
@@ -26,7 +26,7 @@ const TICK_MS = 1000
 export default function IdleLock() {
     const { t } = useTranslation()
     const user = useAuthStore((s) => s.user)
-    const [locked, setLockedState] = useState(isLocked)
+    const [locked, setLocked] = useState(isLocked)
     const [left, setLeft] = useState(Infinity)
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
@@ -55,8 +55,8 @@ export default function IdleLock() {
             if (useChatStore.getState().isStreaming) { markActive(); setLeft(Infinity); return }
             const ms = msUntilLock()
             if (ms <= 0) {
+                persistLocked(true)
                 setLocked(true)
-                setLockedState(true)
                 return
             }
             setLeft(ms <= IDLE_WARN_MS ? ms : Infinity)
@@ -67,7 +67,7 @@ export default function IdleLock() {
     // 其他分頁鎖定／解鎖、或有動作 → 這一頁跟著
     useEffect(() => {
         const onStorage = (e: StorageEvent) => {
-            if (e.key === LOCKED_KEY) setLockedState(e.newValue === '1')
+            if (e.key === LOCKED_KEY) setLocked(e.newValue === '1')
             if (e.key === LAST_ACTIVE_KEY) setLeft(Infinity)
         }
         window.addEventListener('storage', onStorage)
@@ -84,8 +84,8 @@ export default function IdleLock() {
             useAuthStore.getState().setAuth(user, res.accessToken, res.refreshToken)
             setPassword('')
             markActive()
+            persistLocked(false)
             setLocked(false)
-            setLockedState(false)
             setLeft(Infinity)
         } catch (err) {
             setError(getErrorMessage(err) || t('ui.idle.wrong'))
@@ -96,7 +96,7 @@ export default function IdleLock() {
 
     const logout = async () => {
         try { await authApi.logout() } catch { /* 主機連不上也照樣清掉本機的登入 */ }
-        setLocked(false)
+        persistLocked(false)
         useAuthStore.getState().clearAuth()
         window.location.href = '/login'
     }
@@ -116,7 +116,7 @@ export default function IdleLock() {
     }
 
     return (
-        <div className="idle-lock" role="dialog" aria-modal="true" aria-labelledby="idle-lock-title">
+        <dialog open className="idle-lock" aria-modal="true" aria-labelledby="idle-lock-title">
             <form className="idle-lock-card paper paper-solid" onSubmit={unlock}>
                 <Mascot
                     mood={error ? 'sad' : 'cover'}
@@ -129,7 +129,7 @@ export default function IdleLock() {
                 <p className="idle-lock-who">{user?.name}・{user?.email}</p>
                 <FloatingInput
                     id="idle-lock-password"
-                    label={t('ui.idle.password')}
+                    label={t('ui.idle.unlockField')}
                     type="password"
                     autoComplete="current-password"
                     autoFocus
@@ -143,6 +143,6 @@ export default function IdleLock() {
                 </button>
                 <button type="button" className="idle-lock-logout" onClick={logout}>{t('ui.idle.logout')}</button>
             </form>
-        </div>
+        </dialog>
     )
 }

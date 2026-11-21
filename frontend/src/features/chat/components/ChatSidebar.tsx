@@ -152,6 +152,11 @@ export default function ChatSidebar({
     useEffect(() => { setFolderOrder(loadOrder(user?.id)) }, [user?.id])
     const [drag, setDrag] = useState<string | null>(null)
     const [drop, setDrop] = useState<{ name: string; after: boolean } | null>(null)
+    /** 要放在這個資料夾的前面或後面：畫一條線 */
+    const dropClass = (name: string) => {
+        if (drop?.name !== name || drag === name) return ''
+        return drop.after ? ' is-drop-after' : ' is-drop-before'
+    }
     const commitDrop = (list: string[]) => {
         if (!drag || !drop || drag === drop.name) return
         const from = list.indexOf(drag)
@@ -424,7 +429,7 @@ export default function ChatSidebar({
                                             return (
                                                 <div
                                                     key={folderName}
-                                                    className={`flex flex-col folder-drag${drag === folderName ? ' is-dragging' : ''}${drop?.name === folderName && drag !== folderName ? (drop.after ? ' is-drop-after' : ' is-drop-before') : ''}`}
+                                                    className={`flex flex-col folder-drag${drag === folderName ? ' is-dragging' : ''}${dropClass(folderName)}`}
                                                     draggable
                                                     onDragStart={(e) => { setDrag(folderName); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', folderName) }}
                                                     onDragOver={(e) => {

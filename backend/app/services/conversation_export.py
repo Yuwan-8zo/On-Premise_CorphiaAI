@@ -20,10 +20,11 @@ from app.services.file_builder import FONT, _clean
 ROLE_LABEL = {"user": "我", "assistant": "Corphia"}
 CODE_FONT = "Consolas"
 
-_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
-_BULLET_RE = re.compile(r"^\s*[-*+]\s+(.*)$")
-_NUMBERED_RE = re.compile(r"^\s*\d+[.)]\s+(.*)$")
-_TABLE_SEP_RE = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$")
+# 每一行先去掉頭尾空白再比對；樣式都只有一個分界（不會因為回溯而變慢）
+_HEADING_RE = re.compile(r"(#{1,6})\s(.*)")
+_BULLET_RE = re.compile(r"[-*+]\s(.*)")
+_NUMBERED_RE = re.compile(r"\d+[.)]\s(.*)")
+_SEP_CELL_RE = re.compile(r":?-{2,}:?")
 _INLINE_RE = re.compile(r"\*\*(.+?)\*\*|__(.+?)__|`([^`]+)`")
 
 
@@ -47,6 +48,11 @@ def _cells(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 
+def _is_table_sep(line: str) -> bool:
+    """表格的分隔列（| --- | :---: |）"""
+    return "-" in line and all(_SEP_CELL_RE.fullmatch(c) for c in _cells(line))
+
+
 def _add_runs(paragraph, text: str) -> None:
     """**粗體**、`程式碼` 保留樣式，其餘照原文"""
     pos = 0
@@ -64,49 +70,65 @@ def _add_runs(paragraph, text: str) -> None:
         paragraph.add_run(text[pos:])
 
 
+def _add_code(doc, lines: list[str], i: int) -> int:
+    """``` 程式碼區塊：等寬字整段放進一段；回傳下一行的位置"""
+    i += 1
+    code = []
+    while i < len(lines) and not lines[i].strip().startswith("```"):
+        code.append(lines[i])
+        i += 1
+    doc.add_paragraph().add_run("\n".join(code)).font.name = CODE_FONT
+    return i + 1
+
+
+def _add_table(doc, lines: list[str], i: int) -> int:
+    """Markdown 表格 → Word 表格（表頭粗體）；回傳下一行的位置"""
+    head = _cells(lines[i])
+    rows = []
+    i += 2
+    while i < len(lines) and "|" in lines[i] and lines[i].strip():
+        rows.append(_cells(lines[i]))
+        i += 1
+    table = doc.add_table(rows=1 + len(rows), cols=len(head))
+    table.style = "Table Grid"
+    for c, text in enumerate(head):
+        paragraph = table.cell(0, c).paragraphs[0]
+        _add_runs(paragraph, text)
+        for run in paragraph.runs:
+            run.bold = True
+    for r, row in enumerate(rows, start=1):
+        for c in range(len(head)):
+            _add_runs(table.cell(r, c).paragraphs[0], row[c] if c < len(row) else "")
+    return i
+
+
+def _add_line(doc, line: str) -> None:
+    """一般的一行：標題、條列、編號、段落"""
+    text = line.strip()
+    if not text:
+        return
+    if m := _HEADING_RE.fullmatch(text):
+        doc.add_heading(_clean(m.group(2), 300), level=min(len(m.group(1)) + 1, 4))
+    elif m := _BULLET_RE.fullmatch(text):
+        _add_runs(doc.add_paragraph(style="List Bullet"), m.group(1).strip())
+    elif m := _NUMBERED_RE.fullmatch(text):
+        _add_runs(doc.add_paragraph(style="List Number"), m.group(1).strip())
+    else:
+        _add_runs(doc.add_paragraph(), text)
+
+
 def _add_markdown(doc, content: str) -> None:
     lines = content.replace("\r\n", "\n").split("\n")
     i = 0
     while i < len(lines):
         line = lines[i]
         if line.strip().startswith("```"):
+            i = _add_code(doc, lines, i)
+        elif "|" in line and i + 1 < len(lines) and _is_table_sep(lines[i + 1]):
+            i = _add_table(doc, lines, i)
+        else:
+            _add_line(doc, line)
             i += 1
-            code = []
-            while i < len(lines) and not lines[i].strip().startswith("```"):
-                code.append(lines[i])
-                i += 1
-            p = doc.add_paragraph()
-            run = p.add_run("\n".join(code))
-            run.font.name = CODE_FONT
-            i += 1
-            continue
-        if "|" in line and i + 1 < len(lines) and _TABLE_SEP_RE.match(lines[i + 1]):
-            head = _cells(line)
-            rows = []
-            i += 2
-            while i < len(lines) and "|" in lines[i] and lines[i].strip():
-                rows.append(_cells(lines[i]))
-                i += 1
-            table = doc.add_table(rows=1 + len(rows), cols=len(head))
-            table.style = "Table Grid"
-            for c, text in enumerate(head):
-                table.cell(0, c).text = ""
-                _add_runs(table.cell(0, c).paragraphs[0], text)
-                for run in table.cell(0, c).paragraphs[0].runs:
-                    run.bold = True
-            for r, row in enumerate(rows, start=1):
-                for c in range(len(head)):
-                    _add_runs(table.cell(r, c).paragraphs[0], row[c] if c < len(row) else "")
-            continue
-        if m := _HEADING_RE.match(line):
-            doc.add_heading(_clean(m.group(2), 300), level=min(len(m.group(1)) + 1, 4))
-        elif m := _BULLET_RE.match(line):
-            _add_runs(doc.add_paragraph(style="List Bullet"), m.group(1))
-        elif m := _NUMBERED_RE.match(line):
-            _add_runs(doc.add_paragraph(style="List Number"), m.group(1))
-        elif line.strip():
-            _add_runs(doc.add_paragraph(), line.strip())
-        i += 1
 
 
 def to_docx(title: str, messages: Iterable[MessageLike], exported_at: datetime) -> bytes:
