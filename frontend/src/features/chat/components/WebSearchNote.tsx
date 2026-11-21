@@ -52,11 +52,12 @@ export default function WebSearchNote({ info, onSearchAgain }: WebSearchNoteProp
                 aria-expanded={open}
                 disabled={sources.length === 0}
                 onClick={() => setOpen((v) => !v)}
-                className={`${rowClass} text-left enabled:hover:text-text-secondary transition-colors select-none`}
+                // 不換行排（flex-wrap 會讓手機上的圖示、文字、箭頭各佔一行）：圖示和箭頭固定在文字兩側，文字自己換行
+                className="flex items-start gap-x-2 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-muted text-left enabled:hover:text-text-secondary transition-colors select-none"
             >
-                <Globe className="w-4 h-4 flex-shrink-0 text-accent" />
-                <span>{t('chat.webNote.online', { query: info.query ?? '', n: sources.length })}</span>
-                {sources.length > 0 && <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />}
+                <Globe className="w-4 h-4 mt-px flex-shrink-0 text-accent" />
+                <span className="min-w-0">{t('chat.webNote.online', { query: info.query ?? '', n: sources.length })}</span>
+                {sources.length > 0 && <ChevronDown className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />}
             </button>
             {open && (
                 <ul className="mt-1.5 pl-3 border-l-2 border-[var(--paper-line)] flex flex-col gap-1.5 text-[length:var(--fs-13)]">

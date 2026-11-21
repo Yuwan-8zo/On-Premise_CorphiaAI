@@ -57,6 +57,8 @@
 
 /* 導覽進行中：導覽有自己的小 AI，常駐的先躲起來 */
 body:has(.tour) .mascot-dock { visibility: hidden; }
+/* 有對話視窗（設定、確認框…）開著：平常躲起來，不要疊在視窗上；有通知要說時才出來（錯誤訊息還是要看得到） */
+body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .mascot-dock .mascot, .mascot-dock-note { transition: none; }

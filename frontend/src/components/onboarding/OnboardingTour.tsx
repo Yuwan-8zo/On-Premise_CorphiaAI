@@ -7,7 +7,8 @@
  *   - 說明卡一律在畫面正中間不動（使用者要求），只有照亮的框在動；小 AI 的眼睛跟著框轉
  *   - 整頁變暗，要介紹的東西挖一個洞照亮（box-shadow 9999px）；框的圓角跟著目標：
  *     膠囊（一般／專案、新對話）就是膠囊，圓角＝目標圓角＋外擴的距離（同心）
- *   - 手機：目標不在畫面上（例如收在抽屜裡的側欄）就不照亮，只講話
+ *   - 手機：側欄收在抽屜裡，側欄的目標看不到 → 改框左上角「開啟側邊欄」按鈕（fallback），卡片多一行提示
+ *     （以前直接不照亮，三個步驟等於指著空氣）
  *   - 右上 ×／Esc／點背景＝略過；← → 換步驟
  *   - 結束（看完、略過都一樣）：卡片和變暗淡掉，小 AI 從卡片上飛到右下角，變成常駐的那一隻
  *     （MascotDock；導覽開著時它躲起來，導覽一關它就出現在小 AI 降落的位置）——小 AI 橫跨整個系統
@@ -40,15 +41,17 @@ interface TourStep {
     target?: string
     /** 沒有目標時小 AI 的表情（有目標時一律看著目標） */
     mood?: MascotMood
+    /** 目標看不到時（手機側欄收起來）改框這個，並在卡片加「先打開側欄」的提示 */
+    fallback?: string
 }
 
 const STEPS: TourStep[] = [
     { id: 'welcome', mood: 'happy' },
-    { id: 'modeToggle', target: 'mode-toggle' },
-    { id: 'newChat', target: 'new-chat' },
+    { id: 'modeToggle', target: 'mode-toggle', fallback: 'sidebar-toggle' },
+    { id: 'newChat', target: 'new-chat', fallback: 'sidebar-toggle' },
     { id: 'model', target: 'model' },
     { id: 'chatInput', target: 'chat-input' },
-    { id: 'settings', target: 'settings-button' },
+    { id: 'settings', target: 'settings-button', fallback: 'sidebar-toggle' },
     { id: 'security', mood: 'alert' },
     { id: 'done', mood: 'happy' },
 ]
@@ -92,6 +95,8 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
     const userId = useAuthStore((s) => s.user?.id)
     const [step, setStep] = useState(0)
     const [target, setTarget] = useState<Rect | null>(null)
+    /** 這一步框的是「開啟側邊欄」（目標收在手機側欄裡） */
+    const [viaFallback, setViaFallback] = useState(false)
     const [cardSize, setCardSize] = useState({ w: CARD_W, h: 200 })
     const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
     const cardRef = useRef<HTMLDivElement>(null)
@@ -164,11 +169,18 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
         if (!isOpen) return
         const measure = () => {
             setViewport({ w: window.innerWidth, h: window.innerHeight })
-            const el = current.target ? document.querySelector<HTMLElement>(`[data-tour="${current.target}"]`) : null
-            const r = el?.getBoundingClientRect()
-            // 手機上不在畫面裡（收在抽屜）的目標：不照亮，改成正中間講
-            const visible = r && r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight
-            setTarget(visible && el ? { top: r.top, left: r.left, width: r.width, height: r.height, radius: radiusOf(el, r.height) } : null)
+            const onScreen = (el: HTMLElement | null) => {
+                const r = el?.getBoundingClientRect()
+                return r && r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight ? r : null
+            }
+            const find = (name?: string) => (name ? document.querySelector<HTMLElement>(`[data-tour="${name}"]`) : null)
+            let el = find(current.target)
+            let r = onScreen(el)
+            // 看不到（手機側欄收著）→ 改框「開啟側邊欄」按鈕；再看不到就只講話
+            const useFallback = !r && !!current.fallback
+            if (useFallback) { el = find(current.fallback); r = onScreen(el) }
+            setViaFallback(useFallback && !!r)
+            setTarget(r && el ? { top: r.top, left: r.left, width: r.width, height: r.height, radius: radiusOf(el, r.height) } : null)
             if (cardRef.current) setCardSize({ w: cardRef.current.offsetWidth, h: cardRef.current.offsetHeight })
         }
         measure()
@@ -259,6 +271,11 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                     <p id="tour-desc" className="mt-[var(--sp-6)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">
                         {t(`onboarding.steps.${current.id}.desc`)}
                     </p>
+                    {viaFallback && (
+                        <p className="mt-[var(--sp-6)] text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-muted">
+                            {t('onboarding.openSidebarHint')}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex items-center justify-between border-t border-[var(--paper-line)] px-4 py-2.5">

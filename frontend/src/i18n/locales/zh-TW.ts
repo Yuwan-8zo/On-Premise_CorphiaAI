@@ -40,13 +40,14 @@ export default {
 
     // 首次使用引導（spotlight tour）
     onboarding: {
-        start: '開始使用',
+        start: '開始',
+        openSidebarHint: '手機上先點左上角打開側欄，就看得到這個按鈕',
         progress: '第 {{n}} 步，共 {{total}} 步',
         goTo: '跳到第 {{n}} 步',
         steps: {
             welcome: {
                 title: '嗨，我是 Corphia 的小助手',
-                desc: '第一次見面，我帶你看一圈。你在這裡問的問題、放的文件都只存在公司自己的主機，放心問我。',
+                desc: '我帶你看一圈。你在這裡問的問題、放的文件都存在公司自己的主機，放心問我。',
             },
             modeToggle: {
                 title: '一般和專案',
@@ -58,7 +59,7 @@ export default {
             },
             model: {
                 title: '選擇 AI 模型',
-                desc: '這裡可以換模型：小的回得快，大的想得比較深。每一個都在這台主機上跑，不會連到外面。',
+                desc: '這裡可以換模型：小的回得快，大的想得比較深。每一個都在這台主機上跑。',
             },
             chatInput: {
                 title: '在這裡問我',
@@ -69,12 +70,12 @@ export default {
                 desc: '點你的名字可以換主題、語言和顏色。想再看一次導覽，也是從這裡進去。',
             },
             security: {
-                title: '你的資料不會離開這裡',
+                title: '你的資料存在公司內部',
                 desc: '有人想從我這裡套出個資或系統設定，資安閘道會先擋下來，紀錄留在後台讓管理員查。',
             },
             done: {
                 title: '準備好了',
-                desc: '有需要隨時叫我。想再看一次，到「設定 → 使用說明」按「重新觀看導覽」。',
+                desc: '有需要隨時叫我。想再看一次，到「設定」的「使用說明」按「重新觀看導覽」。',
             },
         },
     },
@@ -513,11 +514,12 @@ export default {
     // 使用說明
     guide: {
         title: '使用說明',
-        subtitle: '幾分鐘就能上手 Corphia AI。所有對話與文件都只在這台電腦上處理。',
+        subtitle: '幾分鐘就能上手 Corphia。對話紀錄和文件都存在公司內部的主機。',
         chat: {
             title: '開始對話',
             newTitle: '開始新對話',
-            newDesc: '按側欄的「新對話」，輸入問題後按 Enter 送出；Shift＋Enter 換行。',
+            newDesc: '按側欄的「新對話」，輸入問題後送出。',
+            newKeys: 'Enter 送出，Shift＋Enter 換行。',
             promptTitle: '提示詞模板',
             promptDesc: '輸入框左側的按鈕可以選擇常用的提問模板，例如摘要、翻譯、撰寫信件。',
             voiceTitle: '語音輸入',

@@ -22,6 +22,7 @@ import GuideSection from './GuideSection'
 import LanguageSection from './LanguageSection'
 import MemorySection from './MemorySection'
 import ProfileSection from './ProfileSection'
+import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 
 type SettingSection = 'profile' | 'memory' | 'appearance' | 'language' | 'guide' | 'about'
 
@@ -72,6 +73,7 @@ export default function SettingsModal() {
     const { isSettingsOpen, setSettingsOpen } = useUIStore()
     const [activeSection, setActiveSection] = useState<SettingSection>('profile')
     const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu')
+    const isWide = useMediaQuery(MQ_DESKTOP)
     // 換頁方向：分頁照選單順序；手機上返回選單＝往回（進入內容一律往後，見 motion.css .settings-content）
     const sectionDir = usePageDirection(SECTION_ORDER.indexOf(activeSection))
     const mobileDir = usePageDirection(mobileView === 'menu' ? 0 : 1)
@@ -161,6 +163,8 @@ export default function SettingsModal() {
                                 <GlassNav
                                     aria-label={t('settings.title')}
                                     value={activeSection}
+                                    // 手機的清單頁還沒點進任何一項：不預先標出「個人資料」（iPhone 設定清單也不會）
+                                    showSelection={isWide || mobileView === 'content'}
                                     onChange={(id) => {
                                         setActiveSection(id)
                                         setMobileView('content')

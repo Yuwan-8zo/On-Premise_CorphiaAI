@@ -185,7 +185,7 @@ export default function OverviewSection({
               小於 lg 時會堆疊（手機 / 窄視窗），下方加 min-height fallback
               ───────────────────────────────────────────────────────────── */}
             <section className="grid min-h-0 grid-cols-1 gap-[var(--space)] lg:grid-cols-12">
-                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-180)] lg:col-span-7">
+                <Panel className="overflow-hidden flex flex-col min-h-[var(--sz-220)] lg:min-h-[var(--sz-180)] lg:col-span-7">
                     <SectionHeader
                         title={t('admin.overview.trendTitle', '近 7 天事件趨勢')}
                         action={previousLogs && (

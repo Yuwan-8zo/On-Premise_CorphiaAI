@@ -330,15 +330,16 @@ html.dark {
 .glass-scroll::-webkit-scrollbar {
   display: none;
 }
-.glass-scroll[data-fade='top'] {
+/* .scroll-fade：整頁的捲動區（聊天訊息、後台內容）也用同一套上下淡出，捲動時邊緣不會像被一刀切掉、感覺狹窄 */
+:is(.glass-scroll, .scroll-fade)[data-fade='top'] {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
   mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
 }
-.glass-scroll[data-fade='bottom'] {
+:is(.glass-scroll, .scroll-fade)[data-fade='bottom'] {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--scroll-fade)), transparent 100%);
   mask-image: linear-gradient(to bottom, #000 calc(100% - var(--scroll-fade)), transparent 100%);
 }
-.glass-scroll[data-fade='both'] {
+:is(.glass-scroll, .scroll-fade)[data-fade='both'] {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade), #000 calc(100% - var(--scroll-fade)), transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade), #000 calc(100% - var(--scroll-fade)), transparent 100%);
 }
