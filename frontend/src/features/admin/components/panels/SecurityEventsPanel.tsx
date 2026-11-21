@@ -5,7 +5,6 @@
 import { useTranslation } from 'react-i18next'
 
 import type { SecuritySummary } from '@/api/admin'
-import { ItshoverIcon } from '@/components/icons/itshover'
 import { Panel, SectionHeader } from '@/features/admin/components/AdminPrimitives'
 import { usePolling } from '@/features/admin/hooks/usePolling'
 import { adminApi } from '@/api/admin'
@@ -48,14 +47,14 @@ export default function SecurityEventsPanel({
                                 className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--admin-in)] bg-[var(--chip)]`}
                             >
                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] bg-[var(--field)] text-text-secondary`}>
-                                    <ItshoverIcon icon={kpi.icon} size={16} />
+                                    <kpi.icon size={16} />
                                 </span>
 
                                 <p className="flex-1 basis-[max-content] whitespace-nowrap text-[length:var(--fs-12)] font-medium text-text-secondary">
                                     {t(kpi.labelKey, kpi.labelFallback)}
                                 </p>
 
-                                <p className={`ml-auto shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>
+                                <p className={`ml-auto shrink-0 text-[length:var(--fs-28)] font-semibold tabular-nums leading-none ${value > 0 ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>
                                     {/* 還沒讀到之前用佔位，不先顯示 0 再跳成真的數字 */}
                                     {data ? value : <SkelText>0</SkelText>}
                                 </p>

@@ -92,8 +92,8 @@ function formatRelativeTime(isoString?: string): string {
  */
 function LockStatusBadge({ lockoutStatus, loaded }: { lockoutStatus: UserLockoutStatus | null; loaded: boolean }) {
     // 鎖定資料還沒回來：放一樣字級的灰條（不先顯示「--」再跳成「正常」）
-    if (!loaded) return <span className="text-xs"><SkelText>{i18n.t('ui.users.normal')}</SkelText></span>
-    if (!lockoutStatus) return <span className="text-xs text-text-muted">{i18n.t('ui.users.normal')}</span>
+    if (!loaded) return <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelText>{i18n.t('ui.users.normal')}</SkelText></span>
+    if (!lockoutStatus) return <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">{i18n.t('ui.users.normal')}</span>
 
     if (lockoutStatus.is_locked) {
         return (
@@ -113,7 +113,7 @@ function LockStatusBadge({ lockoutStatus, loaded }: { lockoutStatus: UserLockout
         )
     }
 
-    return <span className="text-xs text-text-muted">{i18n.t('ui.users.normal')}</span>
+    return <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">{i18n.t('ui.users.normal')}</span>
 }
 
 export default function UsersSection({
@@ -267,14 +267,14 @@ export default function UsersSection({
                                             <Skel className="h-9 w-9 shrink-0 !rounded-full" />
                                             <div className="min-w-0">
                                                 <p className="font-semibold truncate"><SkelText>000000</SkelText></p>
-                                                <p className="text-xs truncate"><SkelText>user@example.com</SkelText></p>
+                                                <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] truncate"><SkelText>user@example.com</SkelText></p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3"><span className="tag"><SkelText>000</SkelText></span></td>
                                     <td className="hidden sm:table-cell px-4 py-3"><span className="tag"><SkelText>00</SkelText></span></td>
-                                    <td className="hidden sm:table-cell px-4 py-3"><span className="text-xs"><SkelText>00</SkelText></span></td>
-                                    <td className="hidden sm:table-cell px-4 py-3 text-sm whitespace-nowrap"><SkelText>00 000</SkelText></td>
+                                    <td className="hidden sm:table-cell px-4 py-3"><span className="text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelText>00</SkelText></span></td>
+                                    <td className="hidden sm:table-cell px-4 py-3 text-[length:var(--fs-15)] leading-[var(--lh-20)] whitespace-nowrap"><SkelText>00 000</SkelText></td>
                                     <td className="pl-4 pr-[var(--sp-16)] py-3"><div className="flex justify-end"><Skel className="h-8 w-8 !rounded-full" /></div></td>
                                 </tr>
                             ))
@@ -290,14 +290,14 @@ export default function UsersSection({
                                     <td className="pl-[var(--sp-21)] pr-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-fill text-xs font-bold  "
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-fill text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold  "
                                                 style={{ color: 'var(--text-on-accent, #fff)' }}
                                             >
                                                 {item.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-semibold text-text-primary truncate">{item.name}</p>
-                                                <p className="text-xs text-text-secondary truncate">{item.email}</p>
+                                                <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary truncate">{item.email}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -310,7 +310,7 @@ export default function UsersSection({
                                     <td className="hidden sm:table-cell px-4 py-3">
                                         <LockStatusBadge lockoutStatus={lockoutMap[item.email] || null} loaded={!!lockoutData} />
                                     </td>
-                                    <td className="hidden sm:table-cell px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
+                                    <td className="hidden sm:table-cell px-4 py-3 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary whitespace-nowrap">
                                         {formatRelativeTime(item.lastLoginAt)}
                                     </td>
                                     <td className="pl-4 pr-[var(--sp-16)] py-3">
@@ -354,7 +354,7 @@ export default function UsersSection({
                     ref={menuRef}
                     {...menuPop}
                     role="menu"
-                    className="fixed z-[1000] origin-top-right min-w-[var(--sz-168)] overflow-hidden paper paper-solid !rounded-[var(--r-20)] p-1.5"
+                    className="fixed z-[var(--z-menu)] origin-top-right min-w-[var(--sz-168)] overflow-hidden paper paper-solid !rounded-[var(--menu-r)] p-[var(--menu-pad)]"
                     style={{
                         top: menuPos.top,
                         right: menuPos.right,

@@ -97,7 +97,7 @@ export default function Chat() {
 
             {/* --- Mobile Sidebar Overlay --- */}
             <div 
-                className={`fixed inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+                className={`fixed inset-0 bg-[var(--scrim)] backdrop-blur-sm z-[var(--z-drawer)] md:hidden transition-opacity duration-300 ${
                     sidebarProps.sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                 }`}
                 onClick={sidebarProps.toggleSidebar}
@@ -119,7 +119,7 @@ export default function Chat() {
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 pb-6 md:px-10 max-w-4xl mx-auto w-full">
                         <div className="mb-8 pl-2 shrink-0">
-                            <h2 className="text-[length:var(--fs-22)] font-bold text-text-primary flex items-center gap-3">
+                            <h2 className="text-[length:var(--fs-22)] font-semibold text-text-primary flex items-center gap-3">
                                 <Folder className="w-8 h-8 text-accent" />
                                 {mainProps.selectedFolder}
                             </h2>
@@ -172,11 +172,11 @@ export default function Chat() {
                                                     <input 
                                                         type="checkbox" 
                                                         id={`checkbox-${doc.id}`}
-                                                        className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-colors before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-[var(--chip)] before:opacity-0 before:transition-opacity checked:border-accent checked:bg-accent checked:before:bg-accent"
+                                                        className="peer relative h-5 w-5 cursor-pointer appearance-none rounded-[var(--r-8)] border border-[var(--paper-line)] transition-colors checked:border-accent checked:bg-accent"
                                                         checked={Boolean(doc.doc_metadata?.isActive ?? true)}
                                                         onChange={() => mainProps.handleToggleDocActive(doc)}
                                                     />
-                                                    <div className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-text-primary opacity-0 transition-opacity peer-checked:opacity-100">
+                                                    <div className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-[var(--text-on-accent)] opacity-0 transition-opacity peer-checked:opacity-100">
                                                         <Check className="h-3.5 w-3.5" />
                                                     </div>
                                                 </label>
@@ -208,6 +208,7 @@ export default function Chat() {
                                                                 }
                                                             })
                                                         }}
+                                                        aria-label={mainProps.t('common.delete')}
                                                         className="hover-reveal p-2 text-text-muted rounded-full"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
@@ -263,7 +264,7 @@ export default function Chat() {
                                 <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                                 {/* 標題用平實的問句，不用「有什麼我可以幫忙的，某某？」這種客套招呼；
                                     下面一句說明資料留在公司內部（系統的重點是資安） */}
-                                <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
+                                <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-semibold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
                                     {mainProps.t(projectHome ? 'chat.projectEmptyTitle' : `chat.greet.${dayPart}`)}
                                 </h2>
                                 <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">
@@ -278,7 +279,7 @@ export default function Chat() {
 
                                 {/* 建議的問題：一張實色卡片裡的清單（像 iOS 設定的分組列表），
                                     不用四張一樣大的「圖示＋粗體標題＋一句說明」卡片（看起來像套版） */}
-                                <div className="suggest-list paper !rounded-[var(--r-25)] w-[min(560px,100%)] mx-auto stagger-fade-in">
+                                <div className="suggest-list paper !rounded-[var(--r-25)] w-[min(var(--sz-560),100%)] mx-auto stagger-fade-in">
                                     {(() => {
                                         const suggestions = (mainProps.t('chat.suggestions', { returnObjects: true }) as { title: string, desc: string }[]) || [
                                             { title:"摘要文件", desc:"幫我整理出一份簡單的重點摘要" },

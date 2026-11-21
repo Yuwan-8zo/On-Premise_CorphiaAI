@@ -39,7 +39,7 @@
   position: absolute;
   inset: 0;
   background: var(--lens-ink-c);
-  transition: opacity 0.1s linear;
+  transition: opacity var(--duration-instant) linear;
 }
 .lens-wall > i.l {
   clip-path: inset(0 50% 0 0);
@@ -49,7 +49,7 @@
 }
 /* 肩的一半：移到最邊的格子時淡掉，露出縮小軌道的圓頭 */
 .lens-shoulder {
-  transition: opacity 0.1s linear;
+  transition: opacity var(--duration-instant) linear;
 }
 .lens-dish {
   position: absolute;
@@ -167,7 +167,7 @@ html:not(.dark) .seg-track {
   --sw-a: 0.2;
   --lens-ink-c: var(--sw-solid);
   --lens-ink-a: var(--sw-a);
-  transition: --sw-a 0.4s linear;
+  transition: --sw-a var(--duration-tint) linear;
 }
 .glass-switch.is-on {
   --sw-solid: #30d158;
@@ -180,11 +180,11 @@ html:not(.dark) .seg-track {
   border-radius: var(--r-9999);
   background-color: var(--sw-solid);
   opacity: var(--sw-a);
-  transition: background-color 0.4s linear;
+  transition: background-color var(--duration-tint) linear;
 }
 .glass-switch .lens-bar,
 .glass-switch .lens-wall > i {
-  transition: background-color 0.4s linear, opacity 0.1s linear;
+  transition: background-color var(--duration-tint) linear, opacity var(--duration-instant) linear;
 }
 .glass-switch .lens.is-active {
   box-shadow: var(--lens-ring-knob);
@@ -227,13 +227,13 @@ html:not(.dark) .seg-track {
   height: var(--dr-knob-h);
   overflow: hidden;
   transition:
-    width 0.32s var(--ease-sp),
-    height 0.32s var(--ease-sp),
-    background-color 0.2s var(--ease-out),
-    box-shadow 0.2s var(--ease-out);
+    width var(--duration-lens-scale) var(--ease-sp),
+    height var(--duration-lens-scale) var(--ease-sp),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 .dr-knob .dr-val {
-  transition: opacity 0.12s var(--ease-out);
+  transition: opacity var(--duration-flick) var(--ease-out);
 }
 .dr-knob.is-lens {
   width: var(--dr-lens-w);
@@ -252,5 +252,5 @@ html:not(.dark) .seg-track {
   top: 50%;
   translate: -50% -50%;
   pointer-events: none;
-  animation: fadeIn 0.2s var(--ease-out);
+  animation: fadeIn var(--duration-fast) var(--ease-out);
 }

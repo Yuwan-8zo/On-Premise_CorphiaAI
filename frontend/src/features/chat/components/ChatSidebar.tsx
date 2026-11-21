@@ -26,7 +26,7 @@ import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo, CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
-import ConversationRow from './ConversationRow'
+import ConversationRow, { activateOnKey } from './ConversationRow'
 import Tooltip from '@/components/ui/Tooltip'
 
 import type { Conversation } from '@/types/chat'
@@ -289,7 +289,7 @@ export default function ChatSidebar({
                 */}
                 <div
                     className="side-morph shrink-0"
-                    style={{ width: wide ? 232 : 50, height: wide ? 44 : 110, marginLeft: wide ? 0 : -3 }}
+                    style={{ width: wide ? 'var(--side-wide-w)' : 'var(--side-rail-seg-w)', height: wide ? 'var(--side-wide-seg-h)' : 'var(--side-rail-seg-h)', marginLeft: wide ? 0 : 'var(--side-rail-seg-nudge)' }}
                 >
                     <GlassSegmented
                         vertical={!wide}
@@ -320,12 +320,12 @@ export default function ChatSidebar({
                     }}
                     aria-label={chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}
                     className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-8)] gap-3 rounded-full overflow-hidden shrink-0 bg-accent-fill text-text-on-accent"
-                    style={{ width: wide ? 232 : 44 }}
+                    style={{ width: wide ? 'var(--side-wide-w)' : 'var(--side-rail-btn)' }}
                 >
-                    <div className="w-[var(--sz-28)] h-[var(--sz-28)] rounded-full flex items-center justify-center shrink-0 bg-transparent text-[#F6F4F0]">
+                    <div className="w-[var(--sz-28)] h-[var(--sz-28)] rounded-full flex items-center justify-center shrink-0 bg-transparent">
                         <Plus className="w-[var(--sz-20)] h-[var(--sz-20)]" />
                     </div>
-                    <span className="whitespace-nowrap font-medium text-[length:var(--fs-15)] leading-none text-[#F6F4F0]">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>
+                    <span className="whitespace-nowrap font-medium text-[length:var(--fs-15)] leading-none">{chatMode === 'project' ? t('chat.newFolder') : t('chat.newChat')}</span>
                 </button>
             </div>
 
@@ -444,6 +444,9 @@ export default function ChatSidebar({
                                                 >
                                                     {/* 資料夾列（沒有展開箭頭）：點一下選取並展開；再點一次已選取的資料夾就收合 */}
                                                     <div
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onKeyDown={activateOnKey}
                                                         onClick={() => {
                                                             // 切換到資料夾管理視圖；
                                                             // 注意：不清掉 currentConversation，這樣在背景串流中的對話可以繼續，
@@ -513,9 +516,9 @@ export default function ChatSidebar({
                         onClick={() => { if (!desktop) setSidebarOpen(false); setSettingsOpen(true) }}
                         aria-label={user?.name || user?.email || t('settings.title')}
                         className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
-                        style={{ width: wide ? 232 : 44 }}
+                        style={{ width: wide ? 'var(--side-wide-w)' : 'var(--side-rail-btn)' }}
                     >
-                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[length:var(--fs-14)]">
+                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-semibold text-[length:var(--fs-14)]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {(

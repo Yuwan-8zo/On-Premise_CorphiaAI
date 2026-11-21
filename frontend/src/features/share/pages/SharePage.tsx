@@ -60,7 +60,7 @@ export default function Share() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6">
                 <div className="max-w-md w-full paper !rounded-[var(--r-32)] p-8 text-center">
-                    <h2 className="text-xl font-bold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
+                    <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold mb-4 text-text-primary">{t('share.loginRequired')}</h2>
                     <p className="text-text-secondary mb-8">
                         {t('share.loginDesc')}
                     </p>
@@ -86,7 +86,7 @@ export default function Share() {
     if (error || !conversation) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-bg-base p-6 text-center">
-                <h2 className="text-xl font-bold mb-2 text-text-primary">{t('share.loadFailed')}</h2>
+                <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold mb-2 text-text-primary">{t('share.loadFailed')}</h2>
                 <p className="text-text-secondary mb-6">{error}</p>
                 <button
                     onClick={() => navigate('/')}

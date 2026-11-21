@@ -134,10 +134,10 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
 
                 {markers.map(marker => {
                     // 顏色對應聊天角色：
-                    //  - user → accent（bronze）醒目，跟使用者氣泡呼應
+                    //  - user → 淡強調色（訊息多的時候不會變成一整排實心強調色；滑過時看提示框的色點）
                     //  - assistant → 中性灰，跟 track 對比夠但不搶
                     const colorClass = marker.role === 'user'
-                        ? 'bg-accent  '
+                        ? 'bg-[rgb(var(--accent)/0.45)]'
                         : 'bg-text-primary/50  dark:bg-text-secondary/70'
                     return (
                         <div
@@ -177,9 +177,9 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                         className="absolute z-50 pointer-events-none flex items-start gap-2 paper paper-solid !rounded-[var(--r-14)] px-3 py-2 break-words"
                         style={{
                             top: `${hoveredMarker.top + hoveredMarker.height / 2}%`,
-                            right: 'calc(100% + 8px)',
+                            right: 'calc(100% + var(--sp-8))',
                             width: 'max-content',
-                            maxWidth: 240,
+                            maxWidth: 'var(--minimap-tip-w)',
                             transform: 'translateY(-50%)',
                         }}
                     >
@@ -193,9 +193,9 @@ export default function ChatMinimap({ messages, containerRef }: ChatMinimapProps
                         />
                         <div className="min-w-0 flex-1">
                             <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none mb-1">
-                                {hoveredMarker.role === 'user' ? t('ui.minimap.you') : 'Corphia AI'}
+                                {hoveredMarker.role === 'user' ? t('ui.minimap.you') : t('ui.minimap.ai')}
                             </p>
-                            <p className="text-xs text-text-primary leading-snug">
+                            <p className="text-[length:var(--fs-12)] text-text-primary leading-snug">
                                 {previewText}
                             </p>
                         </div>

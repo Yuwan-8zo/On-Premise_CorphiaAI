@@ -165,7 +165,7 @@ export default function ChatHeader({
                                     <LensMenu className="" fitCard={false}>
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
-                                            <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
+                                            <div className="p-4 text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('ui.header.noModels')}</div>
                                         ) : (
                                             availableModels.map(model => {
                                                 const loadState = modelStates.find(m => m.name === model.name)?.state
@@ -180,7 +180,7 @@ export default function ChatHeader({
                                                         // 沒有預先載入的大模型（如 14B）切換要等很久，先用共用確認框確認，避免誤點
                                                         if (!preloaded) {
                                                             setModelDropdownOpen(false)
-                                                            showConfirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }), () => switchModel(model))
+                                                            showConfirm(t('ui.header.confirmSwitch', { name: model.name, size: model.size_gb.toFixed(1) }), () => switchModel(model), undefined, { tone: 'default' })
                                                             return
                                                         }
                                                         void switchModel(model)

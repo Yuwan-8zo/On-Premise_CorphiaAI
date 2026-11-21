@@ -4,14 +4,15 @@
  * 在訊息氣泡內顯示語音附件的播放器。
  *
  * 設計：
- *   - 圓形播放/暫停按鈕（使用 Material Symbols 圖示）
+ *   - 圓形播放/暫停按鈕（全站共用的 Ionicons 圖示）
  *   - 進度條（可拖曳跳轉）
  *   - 時長 (mm:ss)
  *   - 主題色（accent）跟隨全站品牌色
  */
 
 import { useEffect, useRef, useState } from 'react'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+import { Pause, Play } from '@/components/snow/icons'
+import { useTranslation } from 'react-i18next'
 import type { MessageAudio } from '@/types/chat'
 
 interface AudioMessageProps {
@@ -29,6 +30,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function AudioMessage({ audio, isUser = false }: AudioMessageProps) {
+    const { t } = useTranslation()
     const audioRef = useRef<HTMLAudioElement>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentSec, setCurrentSec] = useState(0)
@@ -114,9 +116,9 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                         ? 'bg-white text-accent '
                         : 'bg-accent-fill text-text-on-accent ',
                 ].join(' ')}
-                aria-label={isPlaying ? 'pause' : 'play'}
+                aria-label={isPlaying ? t('chat.voice.pause') : t('chat.voice.play')}
             >
-                <MaterialIcon name={isPlaying ? 'pause' : 'play_arrow'} size={20} filled />
+                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </button>
 
             {/* 進度條 + 時長 */}
@@ -142,7 +144,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                         value={currentSec}
                         onChange={handleSeek}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        aria-label="seek"
+                        aria-label={t('chat.voice.seek')}
                     />
                 </div>
                 <div className={[

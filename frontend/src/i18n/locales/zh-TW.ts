@@ -181,6 +181,9 @@ export default {
             generating: '生成回應中',
         },
         voice: {
+            play: '播放',
+            pause: '暫停',
+            seek: '播放位置',
             startRecording: '錄製語音訊息',
             cancel: '取消錄音',
             send: '送出語音',
@@ -1390,6 +1393,7 @@ export default {
             noEvents: '尚無事件可分析',
         },
         minimap: {
+            ai: 'Corphia AI',
             empty: '（無內容）',
             you: '您',
         },
@@ -1418,7 +1422,7 @@ export default {
             shareCopied: '已複製對話分享連結',
             shareCopyFailed: '複製失敗，請手動複製連結：{{link}}',
             verifyOk: '對話完整性驗證通過：共 {{n}} 則訊息皆未被竄改（雜湊鏈）',
-            verifyBroken: '對話紀錄遭竄改！第 {{n}} 則訊息的雜湊鏈斷裂',
+            verifyBroken: '對話紀錄遭竄改：第 {{n}} 則訊息的雜湊鏈斷裂',
             verifyFailed: '無法進行對話完整性驗證',
             connectionLost: '與系統的連線中斷，這則回答沒有完成。請確認系統仍在執行，重新整理頁面後再試一次。',
             backgroundDone: '「{{title}}」已回答完成',

@@ -138,11 +138,11 @@ export default function Admin() {
                         <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold tracking-tight text-text-primary truncate">{t('admin.title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
-                        <div className="hidden items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-xs font-semibold text-accent sm:flex">
+                        <div className="hidden items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold text-accent sm:flex">
                             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                             {t('admin.backendOnline')}
                         </div>
-                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs font-medium text-text-secondary truncate max-w-[var(--sz-100)] md:max-w-none">
+                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-[length:var(--fs-12)] md:leading-[var(--lh-16)] font-medium text-text-secondary truncate max-w-[var(--sz-100)] md:max-w-none">
                             {user?.name || t('admin.operator')}
                         </div>
                     </div>

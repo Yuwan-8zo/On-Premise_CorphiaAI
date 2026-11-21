@@ -5,7 +5,7 @@
   position: fixed;
   top: var(--sp-26);
   left: 50%;
-  z-index: 9998;
+  z-index: var(--z-banner);
   transform: translateX(-50%);
   max-width: calc(100vw - var(--sz-32));
   pointer-events: none;
@@ -59,7 +59,7 @@
 .idle-lock {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: var(--z-lock);
   display: flex;
   align-items: center;
   justify-content: center;

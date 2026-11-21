@@ -1,4 +1,5 @@
-import { Eye, FileText, Folder, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { Contract, Expand, Eye, FileText, Folder, Mic, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { readPx } from '@/lib/cssVars'
 import ChatImage from './ChatImage'
 import { useChatImages } from '../hooks/useChatImages'
 import type { VisionStatus } from '@/api/chatImages'
@@ -7,7 +8,6 @@ import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
 import { PromptMenu } from './PromptMenu'
-import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
 import { ATTACH_ACCEPT, UPLOAD_ACCEPT } from '@/lib/uploadTypes'
@@ -256,12 +256,14 @@ export default function ChatInputArea({
             setExpanded(false) // 送出、清空（含全選刪除）後自動縮回；縮回後這段會再跑一次重算高度
             return
         }
+        const maxH = readPx('--sz-160') // 和下面 class 的 max-h-[var(--sz-160)] 同一個設定
         if (!expanded) {
             // 依實際內容重算高度（放大狀態剛取消時，先前算的高度還是放大時的，要重算才會正常縮回）
             el.style.height = 'auto'
-            el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+            el.style.height = `${Math.min(el.scrollHeight, maxH)}px`
         }
-        setOverflowing(el.scrollHeight > 162)
+        // 多 2px 的容差：剛好等於上限時（四捨五入）不要出現放大鈕
+        setOverflowing(el.scrollHeight > maxH + 2)
     }, [input, expanded, inputRef])
 
     // 當進入「專案資料夾管理視圖」時，隱藏聊天輸入框，
@@ -290,7 +292,7 @@ export default function ChatInputArea({
                 className="chat-input-wrap shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
                 {!llmReady && (
-                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--ink-orange)] dark:text-[var(--ink-orange)] mb-2">
+                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-[var(--ink-orange)] dark:text-[var(--ink-orange)] mb-2">
                         {t('chat.llmWarming', 'AI 模型載入中，完成後即可對話…')}
                     </p>
                 )}
@@ -409,8 +411,8 @@ export default function ChatInputArea({
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
-                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
-                                    style={{ lineHeight: '1.4' }}
+                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,var(--input-expanded-max))] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
+                                    style={{ lineHeight: 'var(--input-lh)' }}
                                 />
 
                                 {/* 麥克風按鈕：輸入為空時才顯示，避免干擾送出按鈕 */}
@@ -418,11 +420,11 @@ export default function ChatInputArea({
                                     <button
                                         type="button"
                                         onClick={() => setIsRecording(true)}
-                                        disabled={isConnecting || isUploading}
+                                        disabled={isConnecting || isUploading || !llmReady}
                                         className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
                                         aria-label={t('chat.voice.startRecording')}
                                     >
-                                        <MaterialIcon name="mic" className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
+                                        <Mic className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
                                     </button>
                                 )}
 
@@ -436,9 +438,9 @@ export default function ChatInputArea({
                                         aria-pressed={expanded}
                                     >
                                         {expanded ? (
-                                            <svg viewBox="0 0 512 512" className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M304 416V304h112M314.2 314.23L432 432M208 96v112H96M197.8 197.77L80 80" /></svg>
+                                            <Contract className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" aria-hidden />
                                         ) : (
-                                            <svg viewBox="0 0 512 512" className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M432 320v112H320M421.8 421.77L304 304M80 192V80h112M90.2 90.23L208 208" /></svg>
+                                            <Expand className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" aria-hidden />
                                         )}
                                     </button>
                                 )}

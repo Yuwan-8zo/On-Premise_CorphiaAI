@@ -40,7 +40,7 @@
 }
 /* 放開：放大鏡留在原地淡出（規範：右下選單「放開」） */
 .menu-lens:not(.on) {
-  transition: opacity 0.3s var(--ease-out);
+  transition: opacity var(--duration-medium) var(--ease-out);
 }
 /* 放大鏡內的項目：和側欄目前項目一樣＝強調色、粗體，不畫底盤、無動畫 */
 .menu-lens .lens-ghost,
@@ -86,8 +86,8 @@
   white-space: nowrap;
   color: rgb(var(--text-primary));
   transition:
-    transform 0.17s var(--ease-out),
-    background-color 0.17s var(--ease-out);
+    transform var(--duration-press) var(--ease-out),
+    background-color var(--duration-press) var(--ease-out);
 }
 .menu-item > svg {
   width: var(--sz-18);
@@ -134,7 +134,7 @@ html.dark .menu-item.is-success {
   font-size: var(--fs-15);
   font-weight: 500;
   color: rgb(var(--text-secondary));
-  transition: transform 0.15s var(--ease-out);
+  transition: transform var(--duration-quick) var(--ease-out);
 }
 .nav-item:active {
   transform: scale(0.98);
@@ -198,9 +198,9 @@ html.dark .menu-item.is-success {
   box-shadow: var(--well-shadow);
   border-radius: var(--r-9999);
   transition:
-    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
-    width 0.35s cubic-bezier(0.23, 1, 0.32, 1),
-    height 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+    transform var(--duration-lens-move) cubic-bezier(0.23, 1, 0.32, 1),
+    width var(--duration-lens-move) cubic-bezier(0.23, 1, 0.32, 1),
+    height var(--duration-lens-move) cubic-bezier(0.23, 1, 0.32, 1);
 }
 .has-plate .is-current {
   background: transparent;

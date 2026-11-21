@@ -3,6 +3,7 @@
  */
 
 import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { readMs } from '@/lib/cssVars'
 import AIThinkingIndicator from './AIThinkingIndicator'
 import ThinkingBlock from './ThinkingBlock'
 import WebSearchNote from './WebSearchNote'
@@ -18,9 +19,8 @@ import RAGDebugPanel from './RAGDebugPanel'
 import AudioMessage from './AudioMessage'
 import type { Message } from '@/types/chat'
 import { CorphiaLogo, CorphiaThinkingIcon } from '@/components/icons/CorphiaIcons'
-import { Edit2, Check, X, RefreshCw, Layers3, Download, FileText } from '@/components/snow/icons'
+import { Check, Copy, Download, Edit2, FileText, Layers3, RefreshCw, X } from '@/components/snow/icons'
 import { saveTextFile } from '@/lib/saveTextFile'
-import { CopyIcon, ItshoverIcon } from '@/components/icons/itshover'
 import { conversationsApi } from '@/api/conversations'
 import { useChatStore } from '@/store/chatStore'
 import { motion } from '@/lib/gsapMotion'
@@ -68,7 +68,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     <div className="relative w-9 h-9 flex-shrink-0 -mt-[var(--sp-3)]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
-            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]"
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-accent"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
             <CorphiaThinkingIcon className="w-6 h-6" />
@@ -152,7 +152,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     const handleCopy = async () => {
         if (await copyText(message.content)) {
             setIsCopied(true)
-            setTimeout(() => setIsCopied(false), 2000)
+            setTimeout(() => setIsCopied(false), readMs('--copied-ms'))
         }
     }
 
@@ -197,7 +197,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
         <Tooltip placement="bottom" label={t('ui.message.copy')}><button onClick={handleCopy} aria-label={t('ui.message.copy')} className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted">
             {/* 複製圖示保持掛載（只隱藏），避免它的懸停動畫打到已移除的元素 */}
             <span className="relative inline-flex">
-                <span className={isCopied ? 'opacity-0' : ''}><ItshoverIcon icon={CopyIcon} size={14} interactive /></span>
+                <span className={isCopied ? 'opacity-0' : ''}><Copy size={14} /></span>
                 {isCopied && <Check className="absolute inset-0 m-auto w-3.5 h-3.5 text-[var(--ink-green)]" aria-hidden />}
             </span>
         </button></Tooltip>
@@ -240,13 +240,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                              *   - 有 transcript: 顯示轉錄文字氣泡（用 message.content 才能反映編輯後的最新版）
                              */}
                             {message.audio.pending && (
-                                <div className="mt-1.5 flex items-center gap-2 text-xs text-text-secondary">
+                                <div className="mt-1.5 flex items-center gap-2 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary">
                                     <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
                                     <span className="animate-pulse">{t('chat.voice.transcribing')}</span>
                                 </div>
                             )}
                             {!message.audio.pending && message.audio.error && (
-                                <div className="mt-1.5 max-w-full rounded-[var(--r-14)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-xs text-[var(--ink-red)]">
+                                <div className="mt-1.5 max-w-full rounded-[var(--r-14)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--sys-red)_5%,transparent)] px-3 py-1.5 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-[var(--ink-red)]">
                                     {t('chat.voice.transcribeFailed')}
                                 </div>
                             )}
@@ -339,12 +339,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                               無轉錄的純語音訊息沒有可送 LLM 的文字，直接隱藏此按鈕。
                             */}
                             {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
-                                <button
+                                <Tooltip placement="bottom" label={t('chat.regenerate')}><button
+                                    aria-label={t('chat.regenerate')}
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
                                     className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                 >
                                     <RefreshCw />
-                                </button>
+                                </button></Tooltip>
                             )}
                             {message.tokens > 0 && (
                                 <span

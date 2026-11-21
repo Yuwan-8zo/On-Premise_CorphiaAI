@@ -5,9 +5,8 @@
  * 最後送進 prompt 的 context 長度——口試老師會愛。
  */
 
-import { ChevronRight } from '@/components/snow/icons'
+import { Book, ChevronRight, MessageSquare, Search } from '@/components/snow/icons'
 import { useState } from 'react'
-import MaterialIcon from '@/components/icons/MaterialIcon'
 import { useTranslation } from 'react-i18next'
 
 interface RAGSource {
@@ -46,10 +45,10 @@ function scoreBg(score: number): string {
     return 'bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]'
 }
 
-/** 路由決策的中文（icon 為 Material Symbols 名稱） */
-const ROUTE_LABELS: Record<string, { label: string; icon: string }> = {
-    rag: { label: 'ui.sources.modeRag', icon: 'menu_book' },
-    chat: { label: 'ui.sources.modeChat', icon: 'chat' },
+/** 路由決策的中文與圖示（全站共用的 Ionicons） */
+const ROUTE_LABELS: Record<string, { label: string; icon: typeof Book }> = {
+    rag: { label: 'ui.sources.modeRag', icon: Book },
+    chat: { label: 'ui.sources.modeChat', icon: MessageSquare },
 }
 
 export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
@@ -65,15 +64,15 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
             {/* 收合/展開按鈕 */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 pl-3 text-xs text-text-secondary transition-colors group"
+                className="flex items-center gap-2 pl-3 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary transition-colors group"
             >
                 <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <MaterialIcon name="search" size={14} aria-hidden />
+                    <Search size={14} aria-hidden />
                     {t('ui.sources.details', { count: sources.length })}
                     {routeInfo && (
                         <span className="ml-2 inline-flex items-center gap-1">
-                            <MaterialIcon name={routeInfo.icon} size={14} aria-hidden />
+                            <routeInfo.icon size={14} aria-hidden />
                             {t(routeInfo.label)}
                         </span>
                     )}
@@ -85,7 +84,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                 <div className="mt-2 space-y-2 snow-well rounded-[var(--r-18)] p-3">
                     {/* 統計概覽 */}
                     {debug && (
-                        <div className="flex flex-wrap gap-3 text-xs tabular-nums mb-3 pb-2 border-b border-[var(--paper-line)]">
+                        <div className="flex flex-wrap gap-3 text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums mb-3 pb-2 border-b border-[var(--paper-line)]">
                             <span className="px-2 py-1 rounded-[var(--r-8)] bg-accent/15 text-accent">
                                 Route: {debug.route}
                             </span>
@@ -107,15 +106,15 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                             {/* Header: 分數 + 文件名 */}
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-text-secondary">
+                                    <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold text-text-secondary">
                                         #{index + 1}
                                     </span>
-                                    <span className="text-xs text-text-secondary truncate max-w-[var(--sz-200)]">
+                                    <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary truncate max-w-[var(--sz-200)]">
                                         {source.document_name || t('ui.sources.unknownDoc')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs tabular-nums font-bold ${scoreColor(source.score)}`}>
+                                    <span className={`text-[length:var(--fs-12)] leading-[var(--lh-16)] tabular-nums font-semibold ${scoreColor(source.score)}`}>
                                         {(source.score * 100).toFixed(1)}%
                                     </span>
                                     {source.distance !== undefined && (
@@ -127,7 +126,7 @@ export function RAGDebugPanel({ sources, debug }: RAGDebugPanelProps) {
                             </div>
 
                             {/* Content 預覽 */}
-                            <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
+                            <p className="text-[length:var(--fs-12)] text-text-secondary leading-relaxed line-clamp-3">
                                 {source.content}
                             </p>
                         </div>

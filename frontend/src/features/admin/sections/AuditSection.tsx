@@ -206,7 +206,7 @@ export default function AuditSection({
                                     >
                                         <ChevronLeft className="h-4 w-4" />
                                     </ActionButton>
-                                    <span className="text-sm text-text-secondary">
+                                    <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">
                                         {auditPage} / {auditTotalPages || 1}
                                     </span>
                                     <ActionButton
@@ -254,11 +254,11 @@ export default function AuditSection({
                                     // 和下面的資料列同一組儲存格與字級，列高一樣（操作欄是標籤膠囊）
                                     Array.from({ length: 10 }, (_, i) => (
                                         <tr key={i} aria-hidden>
-                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-sm whitespace-nowrap"><SkelText>{formatDate(new Date().toISOString())}</SkelText></td>
+                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-[length:var(--fs-15)] sm:leading-[var(--lh-20)] whitespace-nowrap"><SkelText>{formatDate(new Date().toISOString())}</SkelText></td>
                                             <td className="px-3 sm:px-5 py-2"><span className="tag"><SkelText>{i % 2 ? '0000' : '000000'}</SkelText></span></td>
-                                            <td className="hidden sm:table-cell px-5 py-2 text-sm"><SkelText>00</SkelText></td>
-                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm"><SkelText>user@example.com</SkelText></td>
-                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs"><SkelText>127.0.0.1</SkelText></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText>00</SkelText></td>
+                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelText>user@example.com</SkelText></td>
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-[length:var(--fs-12)] leading-[var(--lh-16)]"><SkelText>127.0.0.1</SkelText></td>
                                         </tr>
                                     ))
                                 ) : auditLogs.length === 0 ? (
@@ -274,7 +274,7 @@ export default function AuditSection({
                                             className={`transition cursor-pointer ${getSeverityClass(log.action)}  `}
                                             onClick={() => setAuditDrawer(log)}
                                         >
-                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-sm text-text-secondary whitespace-nowrap">
+                                            <td className="px-3 sm:px-5 py-2 text-[length:var(--fs-11)] sm:text-[length:var(--fs-15)] sm:leading-[var(--lh-20)] text-text-secondary whitespace-nowrap">
                                                 {formatDate(log.created_at)}
                                             </td>
                                             <td className="px-3 sm:px-5 py-2">
@@ -286,13 +286,13 @@ export default function AuditSection({
                                                     <span className="min-w-0 truncate">{auditActionLabel(t, log.action)}</span>
                                                 </span>
                                             </td>
-                                            <td className="hidden sm:table-cell px-5 py-2 text-sm text-text-primary">
+                                            <td className="hidden sm:table-cell px-5 py-2 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary">
                                                 {auditResourceLabel(t, log.resource_type)}
                                             </td>
-                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-sm text-text-secondary">
+                                            <td className="hidden sm:table-cell max-w-[var(--sz-180)] truncate px-5 py-2 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">
                                                 {log.user_email || log.user_id || '-'}
                                             </td>
-                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary">
+                                            <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary">
                                                 {shortIp(t, log.ip_address)}
                                             </td>
                                         </tr>

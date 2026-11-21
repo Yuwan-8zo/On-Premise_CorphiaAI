@@ -181,6 +181,9 @@ export default {
             generating: 'Generating response',
         },
         voice: {
+            play: 'Play',
+            pause: 'Pause',
+            seek: 'Playback position',
             startRecording: 'Record voice message',
             cancel: 'Cancel recording',
             send: 'Send voice',
@@ -1398,6 +1401,7 @@ export default {
             noEvents: 'No events to analyse yet',
         },
         minimap: {
+            ai: 'Corphia AI',
             empty: '(empty)',
             you: 'You',
         },

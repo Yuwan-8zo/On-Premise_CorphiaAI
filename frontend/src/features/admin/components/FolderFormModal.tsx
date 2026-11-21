@@ -24,8 +24,8 @@ function SettingRow({ label, hint, children }: { label: string; hint?: string; c
     return (
         <div className="flex items-center justify-between gap-4 px-4 py-2.5 min-h-[var(--sz-52)]">
             <span className="min-w-0">
-                <span className="block text-sm text-text-primary">{label}</span>
-                {hint && <span className="block text-xs text-text-secondary mt-0.5">{hint}</span>}
+                <span className="block text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary">{label}</span>
+                {hint && <span className="block text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary mt-0.5">{hint}</span>}
             </span>
             {children}
         </div>
@@ -65,12 +65,12 @@ function FolderBrowser({ start, onPick, onClose }: { start: string; onPick: (pat
                 >
                     <ArrowLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-0 flex-1 truncate text-xs text-text-secondary" title={data?.path || ''}>{data?.path || t('admin.folders.browseRoot')}</span>
+                <span className="min-w-0 flex-1 truncate text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary" title={data?.path || ''}>{data?.path || t('admin.folders.browseRoot')}</span>
                 {loading && <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                {error && <p className="px-3 py-2 text-xs text-[var(--danger-ink)]">{error}</p>}
-                {data?.dirs.length === 0 && !error && <p className="px-3 py-2 text-xs text-text-secondary">{t('admin.folders.browseEmpty')}</p>}
+                {error && <p className="px-3 py-2 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-[var(--danger-ink)]">{error}</p>}
+                {data?.dirs.length === 0 && !error && <p className="px-3 py-2 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary">{t('admin.folders.browseEmpty')}</p>}
                 {data?.dirs.map((d) => (
                     <button key={d.path} type="button" onClick={() => open(d.path)} className="menu-item w-full !justify-start">
                         <Folder className="h-4 w-4 shrink-0 text-accent" />
@@ -102,8 +102,8 @@ export function FolderFormModal({ folders }: { folders: ReturnType<typeof useAdm
     return (
         // 寬畫面排兩欄，整個視窗一頁放得下不用捲：左＝哪個資料夾（名稱、路徑、說明），右＝怎麼用（誰、AI 權限、設定表）
         <ModalFrame onClose={close} maxWidth="max-w-[var(--sz-800)]">
-            <h3 className="mb-1 text-xl font-semibold">{editing ? t('admin.folders.editTitle') : t('admin.folders.addTitle')}</h3>
-            <p className="mb-[var(--sp-12)] text-sm text-text-secondary">{t('admin.folders.modalDesc')}</p>
+            <h3 className="mb-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold">{editing ? t('admin.folders.editTitle') : t('admin.folders.addTitle')}</h3>
+            <p className="mb-[var(--sp-12)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('admin.folders.modalDesc')}</p>
             <form onSubmit={submit} className="flex flex-col gap-[var(--sp-16)]">
                 <div className="grid gap-[var(--sp-16)] md:grid-cols-2 md:gap-[var(--sp-24)]">
                     {/* 左欄：哪個資料夾 */}
@@ -127,7 +127,7 @@ export function FolderFormModal({ folders }: { folders: ReturnType<typeof useAdm
                                 </div>
                             </Field>
                             {/* 路徑檢查結果：檢查中／不行（原因）／可以（檔案數、大小、類型） */}
-                            <div className="mt-1.5 min-h-[var(--sz-20)] text-xs leading-[var(--lh-18)]" aria-live="polite">
+                            <div className="mt-1.5 min-h-[var(--sz-20)] text-[length:var(--fs-12)] leading-[var(--lh-18)]" aria-live="polite">
                                 {checking ? (
                                     <span className="flex items-center gap-1.5 text-text-secondary"><Loader2 className="h-3.5 w-3.5 animate-spin" />{t('admin.folders.checking')}</span>
                                 ) : check && !check.ok ? (
@@ -164,23 +164,23 @@ export function FolderFormModal({ folders }: { folders: ReturnType<typeof useAdm
                     {/* 右欄：怎麼用 */}
                     <div className="flex flex-col gap-[var(--sp-12)] min-w-0">
                         <div>
-                            <span className="mb-2 block text-xs font-semibold text-text-secondary">{t('admin.folders.whoCanUse')}</span>
+                            <span className="mb-2 block text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold text-text-secondary">{t('admin.folders.whoCanUse')}</span>
                             <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('admin.folders.whoCanUse')}>
                                 {FOLDER_ROLES.map((r) => {
                                     const on = form.allowed_roles.includes(r)
                                     return (
-                                        <button key={r} type="button" aria-pressed={on} onClick={() => toggleRole(r)} className={`btn !h-[var(--sz-36)] !px-[var(--sp-16)] !text-[length:var(--fs-14)] ${on ? 'btn-primary' : 'btn-secondary'}`}>
+                                        <button key={r} type="button" aria-pressed={on} onClick={() => toggleRole(r)} className={`btn btn-secondary !h-[var(--sz-36)] !px-[var(--sp-16)] !text-[length:var(--fs-15)]${on ? ' is-picked' : ''}`}>
                                             {on && <CheckCircle2 className="h-4 w-4" />}
                                             {roleLabel(r)}
                                         </button>
                                     )
                                 })}
-                                {form.allowed_roles.length === 0 && <span className="text-xs text-[var(--danger-ink)]">{t('admin.folders.roleRequired')}</span>}
+                                {form.allowed_roles.length === 0 && <span className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-[var(--danger-ink)]">{t('admin.folders.roleRequired')}</span>}
                             </div>
                         </div>
 
                         <div>
-                            <span className="mb-2 block text-xs font-semibold text-text-secondary">{t('admin.folders.aiAccess')}</span>
+                            <span className="mb-2 block text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold text-text-secondary">{t('admin.folders.aiAccess')}</span>
                             <GlassSegmented
                                 className="w-full h-[var(--sz-40)]"
                                 value={form.write_mode}
@@ -188,7 +188,7 @@ export function FolderFormModal({ folders }: { folders: ReturnType<typeof useAdm
                                 options={WRITE_MODES.map((m) => ({ value: m, label: writeModeLabel(m) }))}
                             />
                             {/* 說明固定兩行高：切換權限時下面的設定表不會跳動 */}
-                            <p className="mt-1.5 min-h-[calc(var(--lh-18)*2)] text-xs leading-[var(--lh-18)] text-text-secondary">{writeModeHint(form.write_mode)}</p>
+                            <p className="mt-1.5 min-h-[calc(var(--lh-18)*2)] text-[length:var(--fs-12)] leading-[var(--lh-18)] text-text-secondary">{writeModeHint(form.write_mode)}</p>
                         </div>
 
                         {/* 設定表（子資料夾、自動更新、啟用）：一組比三個分開的區塊省高度 */}

@@ -70,7 +70,7 @@ function SkelChat({ conv = false }: Readonly<{ conv?: boolean }>) {
                     <div className="w-full h-full max-w-3xl mx-auto px-4 md:px-0 flex flex-col">
                         <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                         {/* 和 ChatPage 空狀態一樣：標題＋一句說明＋一張卡片裡的建議清單 */}
-                        <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-center leading-[1.3] md:leading-tight"><SkelChars chars={8} /></h2>
+                        <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-semibold text-center leading-[1.3] md:leading-tight"><SkelChars chars={8} /></h2>
                         <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelChars chars={24} /></p>
                         <div className="mb-[var(--fluid-block)]" />
                         <div className="suggest-list paper !rounded-[var(--r-25)] w-[min(560px,100%)] mx-auto">
@@ -118,7 +118,7 @@ function SkelLogin() {
             </div>
             <div className="absolute inset-0 grid place-items-center content-center gap-[var(--sp-28)]">
                 <div className="grid justify-items-center gap-[var(--sp-6)] w-[min(440px,86vw)]">
-                    <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-bold"><SkelChars chars={4} /></p>
+                    <p className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-semibold"><SkelChars chars={4} /></p>
                     <Skel className="w-full aspect-[1459/615] !rounded-[var(--r-25)]" />
                 </div>
                 <Skel className="h-[var(--btn-h-lg)] w-[var(--sz-120)] !rounded-full" />
@@ -146,8 +146,8 @@ function SkelAdmin() {
                         <h1 className="text-[length:var(--fs-16)] md:text-[length:var(--fs-22)] font-semibold"><SkelChars chars={4} /></h1>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
-                        <div className="hidden sm:flex items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-xs font-semibold"><span className="h-1.5 w-1.5" /><SkelChars chars={5} /></div>
-                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-xs font-medium"><SkelChars chars={4} /></div>
+                        <div className="hidden sm:flex items-center gap-2 rounded-full glass-chip px-3 py-1.5 text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold"><span className="h-1.5 w-1.5" /><SkelChars chars={5} /></div>
+                        <div className="rounded-full glass-chip px-2.5 md:px-3 py-1 md:py-1.5 text-[length:var(--fs-11)] md:text-[length:var(--fs-12)] md:leading-[var(--lh-16)] font-medium"><SkelChars chars={4} /></div>
                     </div>
                 </header>
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">

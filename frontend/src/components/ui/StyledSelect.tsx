@@ -14,6 +14,7 @@ import LensMenu from '@/components/ui/LensMenu'
 import { AnimatePresence, motion } from '@/lib/gsapMotion'
 import { menuPop } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
+import { useKeepInViewport } from '@/lib/useKeepInViewport'
 import { useScrollFade } from '@/lib/useScrollFade'
 import { useMenuTrigger } from '@/lib/menuDrag'
 
@@ -67,6 +68,8 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
 
     // 點外面、按 Esc 關閉
     useDismiss(open, () => setOpen(false), [btnRef, menuRef])
+    // 選單比按鈕寬（長選項）時，靠右的按鈕會讓選單超出畫面右邊：量完自己挪進來
+    useKeepInViewport(menuRef, open && pos)
 
     return (
         <div className={`relative ${className}`}>
@@ -91,7 +94,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                     ref={menuRef}
                     {...menuPop}
                     role="listbox"
-                    className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
+                    className="fixed z-[var(--z-menu)] paper paper-solid !rounded-[var(--menu-r)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
                     style={{ left: pos.left, minWidth: pos.width, top: pos.top, bottom: pos.bottom, transformOrigin: pos.bottom !== undefined ? 'bottom left' : 'top left' }}
                 >
                     {/* 卡片不捲、裡面這層捲：光邊才不會跟著選項捲走 */}

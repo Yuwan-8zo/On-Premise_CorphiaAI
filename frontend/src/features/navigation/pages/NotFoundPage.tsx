@@ -26,10 +26,8 @@ export default function NotFound() {
                     </div>
 
                     {/* 中央拱門插畫 (0) */}
-                    <div className="w-[var(--sz-90)] h-[var(--sz-140)] md:w-[var(--sz-120)] md:h-[var(--sz-180)] rounded-t-[var(--r-900)] bg-gradient-to-b from-transparent to-transparent relative overflow-hidden flex-shrink-0 shadow-inner border-b border-[var(--paper-line)]">
+                    <div className="w-[var(--sz-90)] h-[var(--sz-140)] md:w-[var(--sz-120)] md:h-[var(--sz-180)] rounded-t-[var(--r-900)] relative overflow-hidden flex-shrink-0 shadow-inner border-b border-[var(--paper-line)]">
                         
-                        {/* 內部光暈/漸層填色 */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
                         
                         {/* 遠方山丘/地平線 */}
                         <svg className="absolute bottom-0 w-full h-[65%] text-text-muted" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -50,7 +48,7 @@ export default function NotFound() {
                         </div>
 
                         {/* 星芒 (Sparkle) */}
-                        <svg className="absolute top-[22%] right-[32%] w-2.5 h-2.5 text-accent/70 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="absolute top-[22%] right-[32%] w-2.5 h-2.5 text-accent/70" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2L14 9L21 11L14 13L12 20L10 13L3 11L10 9L12 2Z" />
                         </svg>
                     </div>
@@ -62,7 +60,7 @@ export default function NotFound() {
                 </div>
 
                 {/* 標題與內文 */}
-                <h1 className="text-xl md:text-[length:var(--fs-22)] font-bold text-text-primary mb-4">
+                <h1 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] md:text-[length:var(--fs-22)] font-semibold text-text-primary mb-4">
                     {t('ui.notFound.title')}
                 </h1>
                 <p className="text-[length:var(--fs-13)] md:text-[length:var(--fs-14)] text-text-muted text-center max-w-[var(--sz-420)] mb-10 leading-relaxed font-medium">

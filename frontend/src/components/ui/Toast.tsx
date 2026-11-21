@@ -13,7 +13,7 @@ export function ToastContainer() {
     return (
         <div className="toast-stack" aria-live="polite">
             {toasts.map((toast) => (
-                <div key={toast.id} role="status" className={`toast-pill glass-chip ${toast.leaving ? 'is-leaving' : ''}`}>
+                <div key={toast.id} role={toast.type === 'error' ? 'alert' : 'status'} className={`toast-pill glass-chip ${toast.leaving ? 'is-leaving' : ''}`}>
                     {toast.message}
                 </div>
             ))}

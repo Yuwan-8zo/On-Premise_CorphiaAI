@@ -31,7 +31,7 @@ function CustomTooltip({ active, payload, total }: DonutTooltipProps) {
     if (!item) return null
     const pct = total > 0 ? ((item.count / total) * 100).toFixed(1) : '0'
     return (
-        <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-xs">
+        <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-[length:var(--fs-12)] leading-[var(--lh-16)]">
             <p className="font-medium text-text-primary">{item.name}</p>
             <p className="mt-0.5 text-text-secondary tabular-nums">
                 {t('ui.charts.count', { n: item.count.toLocaleString() })} · {pct}%
@@ -48,7 +48,7 @@ export default function EventDonut({ data, height = 220 }: EventDonutProps) {
     if (total === 0) {
         return (
             <div
-                className="flex items-center justify-center text-sm text-text-secondary"
+                className="flex items-center justify-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary"
                 style={{ height }}
             >
                 {t('ui.charts.noEvents')}
@@ -111,7 +111,7 @@ export function EventDonutLegend({ data }: { data: ActionCount[] }) {
                 return (
                     <li
                         key={item.rawAction}
-                        className="flex items-center gap-2.5 text-xs"
+                        className="flex items-center gap-2.5 text-[length:var(--fs-12)] leading-[var(--lh-16)]"
                     >
                         <span
                             className="h-2 w-2 shrink-0 rounded-full"

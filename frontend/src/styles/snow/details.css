@@ -5,7 +5,7 @@
   position: fixed;
   top: var(--sp-26);
   left: 50%;
-  z-index: 9999;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,14 +17,15 @@
 }
 .toast-pill {
   --R: calc(22 * var(--ui-unit));
-  border-radius: var(--r-9999);
+  /* 一行時（高 44）就是膠囊；長訊息換行時是圓角方塊（以前固定全圓，換行後變成一顆很高的膠囊） */
+  border-radius: var(--r-22);
   padding: var(--sp-13) var(--sp-22);
   font-size: var(--fs-13);
   line-height: var(--lh-18);
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
   color: rgb(var(--text-primary));
-  animation: toastIn 0.23s var(--ease-out) both;
+  animation: toastIn var(--duration-toast) var(--ease-out) both;
 }
 /* 通知蓋在別的內容上（例如右上角的按鈕）：和其他浮層一樣用不透明底，後面的東西不會透上來疊在字上 */
 .toast-pill.glass-chip {
@@ -39,7 +40,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .toast-pill {
-    animation: toastFade 0.2s linear both;
+    animation: toastFade var(--duration-fast) linear both;
   }
   @keyframes toastFade {
     from {
@@ -82,7 +83,7 @@ html:not(.dark) .dock-wrap {
   /* 和選單卡片同心：卡片圓角－內距（LensMenu 掛上時算好 --card-inner-r；沒有就用 16） */
   border-radius: var(--card-inner-r, var(--r-16));
   text-align: left;
-  transition: transform 0.17s var(--ease-out);
+  transition: transform var(--duration-press) var(--ease-out);
 }
 .model-row:active {
   transform: scale(0.98);
@@ -107,7 +108,7 @@ html:not(.dark) .dock-wrap {
 
 /* 側欄收到底換成直條時淡入（規範：舊內容淡出 0.2 秒） */
 .side-rail-in {
-  animation: sideRailIn 0.2s var(--ease-out) both;
+  animation: sideRailIn var(--duration-fast) var(--ease-out) both;
 }
 @keyframes sideRailIn {
   from {
@@ -117,7 +118,7 @@ html:not(.dark) .dock-wrap {
 
 /* 通知退場：反向播放進場（淡出、往上 20px、縮到 0.96），0.23 秒 */
 .toast-pill.is-leaving {
-  animation: toastOut 0.23s var(--ease-out) both;
+  animation: toastOut var(--duration-toast) var(--ease-out) both;
 }
 @keyframes toastOut {
   to {
@@ -128,7 +129,7 @@ html:not(.dark) .dock-wrap {
 }
 @media (prefers-reduced-motion: reduce) {
   .toast-pill.is-leaving {
-    animation: toastFadeOut 0.2s linear both;
+    animation: toastFadeOut var(--duration-fast) linear both;
   }
   @keyframes toastFadeOut {
     to {
@@ -140,10 +141,10 @@ html:not(.dark) .dock-wrap {
 /* 側欄收合：展開內容淡出 0.15 秒；展開：展開內容延後 0.15 秒淡入（外框變寬時不露出被切掉的文字） */
 .side-fade-out {
   opacity: 0;
-  transition: opacity 0.15s var(--ease-out);
+  transition: opacity var(--duration-quick) var(--ease-out);
 }
 .side-wide-in {
-  animation: sideRailIn 0.2s var(--ease-out) 0.15s both;
+  animation: sideRailIn var(--duration-fast) var(--ease-out) var(--duration-quick) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .side-wide-in {
@@ -154,9 +155,9 @@ html:not(.dark) .dock-wrap {
 /* 側欄變形：寬高、位置和外框同步過渡 0.3 秒（減速），不做淡入淡出 */
 .side-morph {
   transition:
-    width 0.3s var(--ease-out),
-    height 0.3s var(--ease-out),
-    margin 0.3s var(--ease-out);
+    width var(--duration-medium) var(--ease-out),
+    height var(--duration-medium) var(--ease-out),
+    margin var(--duration-medium) var(--ease-out);
 }
 @media (prefers-reduced-motion: reduce) {
   .side-morph {
@@ -322,7 +323,7 @@ html.dark {
 @media (hover: hover) and (pointer: fine) {
   .hover-reveal {
     opacity: 0;
-    transition: opacity 0.2s var(--ease-out);
+    transition: opacity var(--duration-fast) var(--ease-out);
   }
   .group:hover .hover-reveal,
   .group:focus-within .hover-reveal,

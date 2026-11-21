@@ -36,9 +36,9 @@ html.dark {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform 0.26s var(--ease-out),
-    background-color 0.26s var(--ease-out),
-    opacity 0.26s var(--ease-out);
+    transform var(--duration-dock) var(--ease-out),
+    background-color var(--duration-dock) var(--ease-out),
+    opacity var(--duration-dock) var(--ease-out);
 }
 
 .btn:active:not(:disabled) {
@@ -124,9 +124,9 @@ html.dark .btn-danger {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform 0.26s var(--ease-out),
-    background-color 0.26s var(--ease-out),
-    color 0.26s var(--ease-out);
+    transform var(--duration-dock) var(--ease-out),
+    background-color var(--duration-dock) var(--ease-out),
+    color var(--duration-dock) var(--ease-out);
 }
 
 /* 圖示：52 的按鈕配 25（約 48%，照比例；按鈕被改小時圖示跟著縮） */
@@ -208,7 +208,7 @@ html.dark .btn-danger {
 .dialog-title {
   font-size: var(--fs-18);
   line-height: var(--lh-26);
-  font-weight: 700;
+  font-weight: 600;
   color: rgb(var(--text-primary));
   padding: 0 var(--sp-8);
 }
@@ -249,8 +249,8 @@ html.dark .btn-danger {
   border: 1px solid var(--field-line);
   padding: 0 var(--sp-16);
   transition:
-    border-color 0.2s var(--ease-out),
-    background-color 0.2s var(--ease-out);
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .snow-input:focus {
@@ -482,4 +482,10 @@ html.dark {
   padding: 0 var(--sp-8); border-radius: var(--r-6);
   background: color-mix(in srgb, rgb(var(--text-primary)) 12%, transparent); color: rgb(var(--text-primary));
   border: .5px solid rgb(var(--border-subtle)); border-bottom-width: 2px;
+}
+
+/* 多選的按鈕被選取：淡強調色底＋強調色字（實心強調色只給頁面的主要按鈕） */
+.btn.btn-secondary.is-picked {
+  background: color-mix(in srgb, rgb(var(--accent)) 16%, transparent);
+  color: rgb(var(--accent));
 }

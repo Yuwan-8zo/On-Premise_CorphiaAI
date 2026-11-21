@@ -126,12 +126,12 @@ export default function SettingsModal() {
     return (
         <>
             <div
-                className={`fixed inset-0 z-50 bg-black/20 dark:bg-black/45 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+                className={`fixed inset-0 z-[var(--z-dialog)] bg-[var(--scrim)] backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={() => setSettingsOpen(false)}
             />
             {/* 外圍間距加上狀態列、主畫面橫條的保留區：「加入主畫面」全螢幕時視窗才不會壓到狀態列底下 */}
             <div
-                className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pt-[calc(1.5rem+env(safe-area-inset-top))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pt-12 md:pb-12 pointer-events-none transition-[opacity,transform,filter] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95] [filter:blur(8px)]' : 'opacity-100 scale-100 [filter:none]'}`}
+                className={`fixed inset-0 z-[var(--z-dialog)] flex items-center justify-center p-4 sm:p-6 md:p-12 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pt-[calc(1.5rem+env(safe-area-inset-top))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pt-12 md:pb-12 pointer-events-none transition-[opacity,transform,filter] duration-normal ease-apple ${isClosing ? 'opacity-0 scale-[0.95] [filter:blur(8px)]' : 'opacity-100 scale-100 [filter:none]'}`}
             >
                     {/* Modal Content —— 玻璃感（半透明 + backdrop-blur + 白邊 + 浮起陰影） */}
                     <div
@@ -153,7 +153,7 @@ export default function SettingsModal() {
                         <MenuColumn key={`menu-${mobileView}`} dir={mobileDir} hiddenOnPhone={mobileView === 'content'}>
                             {/* 四個角都跟外框 52 同心：關閉鈕右緣對齊內容卡（離右 20），離上也是 20；標題字左緣對齊導覽圖示（36），字上緣離頂也是 36；管理後台膠囊離左、離下都是 20，底邊對齊右側內容最後一張卡（內容下內距也是 20） */}
                             <div className="pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pl-[calc((var(--sp-20)+15*var(--ui-unit))/var(--menu-fit,1))] pr-4 pt-[calc(var(--sp-26)/var(--menu-fit,1))] md:pt-[calc(var(--sp-32)/var(--menu-fit,1))] pb-2">
-                                <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary">
+                                <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold text-text-primary">
                                     {t('settings.title')}
                                 </h2>
                             </div>
