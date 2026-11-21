@@ -227,7 +227,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             )}
 
             {/* 說明卡（小 AI 站在上面） */}
-            <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={cardStyle} className="tour-card paper paper-solid !rounded-[var(--r-25)]">
+            <div ref={cardRef} style={cardStyle} className="tour-card paper paper-solid !rounded-[var(--r-25)]">
                 <div
                     className={`tour-mascot is-${mascotSide}`}
                     style={{ '--tour-m-size': `${MASCOT}px`, '--tour-ms': MASCOT / 220, '--tour-inset': `${MASCOT_INSET}px`, '--tour-rise': `${MASCOT_RISE}px` } as CSSProperties}
