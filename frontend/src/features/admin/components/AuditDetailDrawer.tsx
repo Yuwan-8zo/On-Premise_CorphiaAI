@@ -32,7 +32,7 @@ import {
 /** 「已複製」打勾維持多久（毫秒）後變回複製圖示 */
 const COPIED_MS = 1600
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+function CopyButton({ value, label }: Readonly<{ value: string; label: string }>) {
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
     useEffect(() => {
@@ -55,7 +55,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 }
 
 /** 分組清單：組名（Footnote）＋實色卡片，列之間細分隔線 */
-function Group({ title, rows }: { title: string; rows: AuditField[] }) {
+function Group({ title, rows }: Readonly<{ title: string; rows: AuditField[] }>) {
     if (rows.length === 0) return null
     return (
         <section>
@@ -85,11 +85,11 @@ export interface AuditDetailDrawerProps {
     onClose: () => void
 }
 
-export default function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
+export default function AuditDetailDrawer({ log, onClose }: Readonly<AuditDetailDrawerProps>) {
     return <AnimatePresence>{log && <DrawerBody key={log.id} log={log} onClose={onClose} />}</AnimatePresence>
 }
 
-function DrawerBody({ log, onClose }: { log: AuditLogItem; onClose: () => void }) {
+function DrawerBody({ log, onClose }: Readonly<{ log: AuditLogItem; onClose: () => void }>) {
     const { t } = useTranslation()
     const scrollRef = useScrollFade()
     const [showRaw, setShowRaw] = useState(false)

@@ -70,23 +70,28 @@ export function formatFullDate(value?: string | null): string {
 }
 
 /** 瀏覽器識別字串 → 「Chrome · Windows」；認不得就回傳空字串（畫面不顯示這一列） */
+// 依序比對，先符合的先用（Edge、Opera 的字串裡也有 Chrome，所以排在前面）
+const BROWSERS: Array<[RegExp, string]> = [
+    [/CorphiaDesktop|Electron/i, 'Corphia Desktop'],
+    [/Edg\//, 'Edge'],
+    [/OPR\//, 'Opera'],
+    [/Firefox\//, 'Firefox'],
+    [/Chrome\//, 'Chrome'],
+    [/Safari\//, 'Safari'],
+]
+const SYSTEMS: Array<[RegExp, string]> = [
+    [/iPhone|iPad|iPod/, 'iOS'],
+    [/Android/, 'Android'],
+    [/Windows/, 'Windows'],
+    [/Mac OS X|Macintosh/, 'macOS'],
+    [/Linux/, 'Linux'],
+]
+const firstMatch = (table: Array<[RegExp, string]>, s: string) => table.find(([re]) => re.test(s))?.[1] ?? ''
+
 export function describeUserAgent(ua?: string | null): string {
-    if (!ua || !ua.trim()) return ''
-    const browser =
-        /CorphiaDesktop|Electron/i.test(ua) ? 'Corphia Desktop'
-        : /Edg\//.test(ua) ? 'Edge'
-        : /OPR\//.test(ua) ? 'Opera'
-        : /Firefox\//.test(ua) ? 'Firefox'
-        : /Chrome\//.test(ua) ? 'Chrome'
-        : /Safari\//.test(ua) ? 'Safari'
-        : ''
-    const os =
-        /iPhone|iPad|iPod/.test(ua) ? 'iOS'
-        : /Android/.test(ua) ? 'Android'
-        : /Windows/.test(ua) ? 'Windows'
-        : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
-        : /Linux/.test(ua) ? 'Linux'
-        : ''
+    if (!ua?.trim()) return ''
+    const browser = firstMatch(BROWSERS, ua)
+    const os = firstMatch(SYSTEMS, ua)
     if (browser || os) return [browser, os].filter(Boolean).join(' · ')
     // 程式呼叫（例如 python-httpx/0.27）：只留名稱
     return ua.split(/[\s/]/)[0] ?? ''
@@ -110,8 +115,18 @@ const code = (t: TFunction, group: string, v: unknown) =>
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
 const list = (v: unknown): string[] | undefined =>
     Array.isArray(v) && v.every((x) => typeof x === 'string' || typeof x === 'number') ? v.map(String) : undefined
-const yesNo = (t: TFunction, v: unknown) => (typeof v === 'boolean' ? V(t, v ? 'yes' : 'no') : undefined)
+/** 布林值 → 兩個翻譯之一；不是布林值回傳 undefined */
+const pick = (t: TFunction, v: unknown, whenTrue: string, whenFalse: string) => {
+    if (typeof v !== 'boolean') return undefined
+    return V(t, v ? whenTrue : whenFalse)
+}
+const yesNo = (t: TFunction, v: unknown) => pick(t, v, 'yes', 'no')
 
+/** 布林欄位：「已鎖定／未鎖定」這類兩個值 */
+const boolField = (labelKey: string, whenTrue: string, whenFalse: string): Formatter => (v, t) => {
+    const value = pick(t, v, whenTrue, whenFalse)
+    return value === undefined ? undefined : { label: L(t, labelKey), value }
+}
 /** 純文字欄位 */
 const text = (labelKey: string): Formatter => (v, t) =>
     typeof v === 'string' || typeof v === 'number' ? { label: L(t, labelKey), value: String(v) } : undefined
@@ -130,8 +145,11 @@ const joined = (labelKey: string, group?: string): Formatter => (v, t) => {
     return { label: L(t, labelKey), value: items.map((x) => (group ? code(t, group, x) : x)).join(V(t, 'separator')) }
 }
 /** 編號欄位：只顯示短碼，可複製完整值 */
-const idField = (labelKey: string): Formatter => (v, t) =>
-    typeof v === 'string' ? { label: L(t, labelKey), value: shortId(v), copy: isLongId(v) ? v : undefined } : undefined
+const idField = (labelKey: string): Formatter => (v, t) => {
+    if (typeof v !== 'string') return undefined
+    const copy = isLongId(v) ? v : undefined
+    return { label: L(t, labelKey), value: shortId(v), copy }
+}
 
 const FILE_ACTIONS = new Set(['file_create', 'file_download', 'file_open', 'file_save'])
 
@@ -168,7 +186,7 @@ const FORMATTERS: Record<string, Formatter> = {
     // ── 登入 ──
     reason: text('reason'),
     remaining_attempts: counted('remainingAttempts', 'times'),
-    is_locked: (v, t) => (typeof v === 'boolean' ? { label: L(t, 'locked'), value: V(t, v ? 'locked' : 'notLocked') } : undefined),
+    is_locked: boolField('locked', 'locked', 'notLocked'),
     minutes_remaining: counted('unlockIn', 'minutes'),
     target_user_email: text('targetUser'),
     updated_fields: joined('updatedFields', 'field'),
@@ -193,7 +211,7 @@ const FORMATTERS: Record<string, Formatter> = {
             : undefined,
     chars: counted('length', 'chars'),
     length: counted('length', 'chars'),
-    backup: (v, t) => (typeof v === 'boolean' ? { label: L(t, 'backup'), value: V(t, v ? 'backedUp' : 'notBackedUp') } : undefined),
+    backup: boolField('backup', 'backedUp', 'notBackedUp'),
     truncated: (v, t) => {
         const yn = yesNo(t, v)
         return yn === undefined ? undefined : { label: L(t, 'truncated'), value: yn }
@@ -216,7 +234,7 @@ const FORMATTERS: Record<string, Formatter> = {
 
     // ── 記憶、模型 ──
     source: (v, t) => (typeof v === 'string' ? { label: L(t, 'memorySource'), value: code(t, 'memorySource', v) } : undefined),
-    enabled: (v, t) => (typeof v === 'boolean' ? { label: L(t, 'memory'), value: V(t, v ? 'on' : 'off') } : undefined),
+    enabled: boolField('memory', 'on', 'off'),
     style: (v, t) =>
         typeof v === 'string'
             ? { label: L(t, 'style'), value: t(`settings.memory.style.${v}`, { defaultValue: v }) }
@@ -232,9 +250,9 @@ const FORMATTERS: Record<string, Formatter> = {
 
     // ── AI 工具、對外搜尋、公開網址 ──
     tool: (v, t) => (typeof v === 'string' ? { label: L(t, 'tool'), value: code(t, 'tool', v) } : undefined),
-    ok: (v, t) => (typeof v === 'boolean' ? { label: L(t, 'result'), value: V(t, v ? 'success' : 'failure') } : undefined),
+    ok: boolField('result', 'success', 'failure'),
     query: text('query'),
-    blocked: (v, t) => (typeof v === 'boolean' ? { label: L(t, 'result'), value: V(t, v ? 'blocked' : 'allowed') } : undefined),
+    blocked: boolField('result', 'blocked', 'allowed'),
     result_count: counted('resultCount', 'results'),
     result: (v, t) => (typeof v === 'string' ? { label: L(t, 'result'), value: code(t, 'result', v) } : undefined),
     public_url: text('publicUrl'),
@@ -245,7 +263,7 @@ const FORMATTERS: Record<string, Formatter> = {
         if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined
         const parts = Object.entries(v as Record<string, unknown>).map(([k, val]) => {
             const name = t(`admin.security.gate.${k}.name`, { defaultValue: code(t, 'field', k) })
-            const shown = typeof val === 'boolean' ? V(t, val ? 'on' : 'off') : String(val)
+            const shown = pick(t, val, 'on', 'off') ?? String(val)
             return `${name}：${shown}`
         })
         return { label: L(t, 'changedItems'), value: parts.join(V(t, 'separator')) }
@@ -276,39 +294,51 @@ const rank = (key: string) => {
     return i === -1 ? ORDER.length : i
 }
 
-export function describeAuditDetails(t: TFunction, log: Pick<AuditLogItem, 'action' | 'details'>): AuditDetailView {
-    const fields: AuditField[] = []
-    const raw: Record<string, unknown> = {}
-    const seen = new Set<string>()
-    const push = (key: string, f: Formatted) => {
-        // 兩個欄位翻成同一個標籤和值（例如 chars 和 length）只留一列
-        if (!f || isEmpty(f.value) || seen.has(`${f.label}\u0000${f.value}`)) return
-        seen.add(`${f.label}\u0000${f.value}`)
-        fields.push({ key, ...f })
-    }
+/** 收集欄位：去掉重複列，認不得的放進 raw */
+class FieldCollector {
+    readonly fields: AuditField[] = []
+    readonly raw: Record<string, unknown> = {}
+    private readonly seen = new Set<string>()
 
+    push(key: string, f: Formatted) {
+        if (!f || isEmpty(f.value)) return
+        // 兩個欄位翻成同一個標籤和值（例如 chars 和 length）只留一列
+        const id = `${f.label}\u0000${f.value}`
+        if (this.seen.has(id)) return
+        this.seen.add(id)
+        this.fields.push({ key, ...f })
+    }
+}
+
+/** tool_call 的參數：查詢內容／算式翻成欄位，其他收進原始資料 */
+function collectArguments(t: TFunction, out: FieldCollector, value: unknown) {
+    const args = parseToolArguments(value)
+    if (!args) {
+        out.raw.arguments = value
+        return
+    }
+    for (const [k, v] of Object.entries(args)) {
+        if (isEmpty(v)) continue
+        const labelKey = ARGUMENT_FIELDS[k]
+        const scalar = typeof v === 'string' || typeof v === 'number'
+        if (labelKey && scalar) out.push(k, { label: L(t, labelKey), value: String(v) })
+        else out.raw[k] = v
+    }
+}
+
+export function describeAuditDetails(t: TFunction, log: Pick<AuditLogItem, 'action' | 'details'>): AuditDetailView {
+    const out = new FieldCollector()
     for (const [key, value] of Object.entries(log.details ?? {})) {
         if (isEmpty(value)) continue
         if (key === 'arguments') {
-            const args = parseToolArguments(value)
-            if (!args) {
-                raw[key] = value
-                continue
-            }
-            for (const [k, v] of Object.entries(args)) {
-                if (isEmpty(v)) continue
-                const labelKey = ARGUMENT_FIELDS[k]
-                if (labelKey && (typeof v === 'string' || typeof v === 'number')) push(k, { label: L(t, labelKey), value: String(v) })
-                else raw[k] = v
-            }
+            collectArguments(t, out, value)
             continue
         }
-        const formatter = FORMATTERS[key]
-        const formatted = formatter ? formatter(value, t, log.action) : undefined
-        if (formatted === undefined) raw[key] = value
-        else push(key, formatted)
+        const formatted = FORMATTERS[key]?.(value, t, log.action)
+        if (formatted === undefined) out.raw[key] = value
+        else out.push(key, formatted)
     }
     // sort 是穩定排序：同一級的照原本順序
-    fields.sort((a, b) => rank(a.key) - rank(b.key))
-    return { fields, raw: Object.keys(raw).length ? raw : null }
+    const fields = [...out.fields].sort((a, b) => rank(a.key) - rank(b.key))
+    return { fields, raw: Object.keys(out.raw).length ? out.raw : null }
 }
