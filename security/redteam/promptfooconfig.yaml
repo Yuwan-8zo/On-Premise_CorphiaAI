@@ -1,0 +1,25 @@
+# Corphia 紅隊測試（promptfoo，MIT 授權）
+#
+# 用一批攻擊題（提示詞注入、變形躲避、機密外洩、索取他人個資、要求協助攻擊）和正常提問，
+# 直接打系統真正的使用者訊息安全閘道（provider.py），量「攻擊被擋下的比例」和「正常提問被誤擋的比例」。
+# 全程離線：不連任何雲端，測試題寫在 cases.csv，判斷是固定規則（開頭是 [攔阻] 或 [放行]），不需要評分用的模型。
+#
+# 執行（在專案根目錄）：  python security/redteam/run.py
+#   會自動找 backend/.venv 的 Python，跑完印出各類別攔截率，報告存成 docs/report/紅隊測試結果.csv
+#   想看互動報告：npx promptfoo@0.126.0 view（本機網頁）
+description: Corphia 使用者訊息安全閘道紅隊測試
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: file://provider.py
+    label: Corphia 安全閘道
+    config:
+      pythonExecutable: ../../backend/.venv/Scripts/python.exe
+
+tests: file://cases.csv
+
+evaluateOptions:
+  maxConcurrency: 1
+  cache: false

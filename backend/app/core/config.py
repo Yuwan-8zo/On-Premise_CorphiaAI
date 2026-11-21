@@ -164,6 +164,15 @@ class Settings(BaseSettings):
     # 複查失敗（模型沒載入、逾時、回答看不懂）時：True＝攔阻（寧可錯擋），False＝放行
     llm_judge_fail_closed: bool = True
     llm_judge_max_tokens: int = 256
+    # 資安專用模型（Qwen3Guard-Gen-0.6B，阿里通義，Apache-2.0）：模型複查之前先問它。
+    # 它判定「不安全」就直接攔阻；判定安全或「有爭議」時照舊交給上面的本機模型複查——只會多擋、不會少擋。
+    # 模型檔不在時自動略過（不影響其他關卡）。獨立的小引擎（約 1 GB），不佔使用者選的模型名額
+    enable_guard_model: bool = True
+    guard_model_path: str = "ai_model/guard/Qwen3Guard-Gen-0.6B.Q8_0.gguf"
+    guard_model_timeout: float = 20.0
+    # 文件解析：有 Docling（IBM，MIT）就用它轉成 Markdown（表格、標題保留）；模型放在這個資料夾，不在就用原本的解析
+    enable_docling: bool = True
+    docling_artifacts_path: str = "ai_model/docling"
 
     # RAG 可調參數（Phase 3 預留）
     # 帶給模型的對話歷史：總字數預算、單一則最多幾個字（services/history_window.py）。

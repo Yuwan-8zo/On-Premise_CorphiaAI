@@ -1,0 +1,9 @@
+# 選用套件：沒裝也能跑（程式會自動改用原本的做法），裝了會更好
+#   .venv\Scripts\python -m pip install -r requirements-optional.txt
+#
+# Docling（IBM，MIT）：PDF／Word／PowerPoint／Excel 轉 Markdown，表格、標題保留（services/docling_extract.py）
+#   會把 torch 一起升級（2026-11-21 實測 torch 2.15，後端測試 910 個全部通過）
+#   模型要另外下載到 ai_model/docling（約 500 MB，離線使用）：
+#     .venv\Scripts\docling-tools models download layout tableformer -o D:\...\ai_model\docling
+#   （要用完整路徑：相對路徑在 Windows 上會超過路徑長度上限而下載失敗）
+docling==2.151.1

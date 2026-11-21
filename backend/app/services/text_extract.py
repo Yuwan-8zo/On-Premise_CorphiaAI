@@ -16,6 +16,8 @@ import re
 from html.parser import HTMLParser
 from pathlib import Path
 
+from app.services import docling_extract
+
 logger = logging.getLogger(__name__)
 
 # 支援的檔案類型（副檔名含點 → MIME）：唯一來源，DocumentService.SUPPORTED_TYPES 直接引用這份
@@ -51,6 +53,11 @@ async def extract_text(file_path: Path, ext: str) -> str:
     檔案格式本身不支援時（例如 .doc、.ppt 這種舊版二進位格式）函式庫會丟例外，呼叫端自己接。
     """
     ext = ext.lower()
+    # 有 Docling 就先用它轉成 Markdown（表格、標題、閱讀順序比較完整）；不能用或失敗才走下面原本的解析
+    if ext in docling_extract.DOCLING_EXTS:
+        md = await asyncio.to_thread(docling_extract.convert, file_path, ext)
+        if md:
+            return md
     if ext in TEXT_EXTS:
         return await _parse_text_file(file_path)
     if ext == "pdf":
