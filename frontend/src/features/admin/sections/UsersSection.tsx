@@ -84,7 +84,7 @@ function formatRelativeTime(isoString?: string): string {
 function LockStatusBadge({ lockoutStatus, loaded }: { lockoutStatus: UserLockoutStatus | null; loaded: boolean }) {
     // 鎖定資料還沒回來：放一樣字級的灰條（不先顯示「--」再跳成「正常」）
     if (!loaded) return <span className="text-xs"><SkelText>{i18n.t('ui.users.normal')}</SkelText></span>
-    if (!lockoutStatus) return <span className="text-xs text-text-secondary">{i18n.t('ui.users.normal')}</span>
+    if (!lockoutStatus) return <span className="text-xs text-text-muted">{i18n.t('ui.users.normal')}</span>
 
     if (lockoutStatus.is_locked) {
         return (
@@ -104,7 +104,7 @@ function LockStatusBadge({ lockoutStatus, loaded }: { lockoutStatus: UserLockout
         )
     }
 
-    return <span className="text-xs text-text-secondary">{i18n.t('ui.users.normal')}</span>
+    return <span className="text-xs text-text-muted">{i18n.t('ui.users.normal')}</span>
 }
 
 export default function UsersSection({
@@ -183,10 +183,10 @@ export default function UsersSection({
     const isHigher = (u: AdminUserRow | null) => !!u && u.role === 'engineer' && myRole !== 'engineer'
 
     return (
-        <Panel className="admin-fill">
+        <Panel className="admin-fill is-hug">
             <SectionHeader
-                title={t('admin.users.title', '使用者') + ` (${users.length})`}
-                eyebrow={isLoading && !users.length ? <SkelText>{t('admin.users.activeOperators', { active: 0 })}</SkelText> : t('admin.users.activeOperators', { active: activeUsers })}
+                title={t('admin.users.title', '使用者')}
+                eyebrow={isLoading && !users.length ? <SkelText>{t('admin.users.summary', { total: 0, active: 0 })}</SkelText> : t('admin.users.summary', { total: users.length, active: activeUsers })}
                 action={
                     <ActionButton onClick={onAddUser}>
                         <Plus className="h-4 w-4" />

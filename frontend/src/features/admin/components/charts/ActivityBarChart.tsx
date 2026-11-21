@@ -60,12 +60,26 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     )
 }
 
+/** 刻度最少到 4，幾乎沒資料時長條不會一根撐滿整張圖 */
+const MIN_Y_TOP = 4
+
+/** 往上取整到好讀的數字：1、2、5、10 的倍數（例如 37 → 50、130 → 200） */
+export function niceCeil(n: number): number {
+    if (n <= 0) return MIN_Y_TOP
+    const mag = 10 ** Math.floor(Math.log10(n))
+    const step = [1, 2, 5, 10].find((s) => s * mag >= n) ?? 10
+    return step * mag
+}
+
 export default function ActivityBarChart({
     data,
     height = 220,
 }: ActivityBarChartProps) {
     const accent = useAccentColor()
     const hasPrevious = data.some((d) => d.previous !== undefined)
+    // 刻度只看「這 7 天」：上週如果特別多（例如壓力測試），不能把整張圖拉到上週的高度，
+    // 否則這週的長條小到看不見。超出的虛線直接畫出圖外（被裁掉），實際數字在提示框裡看
+    const yTop = niceCeil(Math.max(MIN_Y_TOP, ...data.map((d) => d.count)))
 
     return (
         <ResponsiveContainer width="100%" height={height}>
@@ -96,6 +110,8 @@ export default function ActivityBarChart({
                     tick={{ fontSize: 11, fill: 'rgb(var(--text-secondary))' }}
                     width={40}
                     allowDecimals={false}
+                    domain={[0, yTop]}
+                    allowDataOverflow
                 />
                 <Tooltip
                     cursor={{ fill: accent.alpha(0.1) }}

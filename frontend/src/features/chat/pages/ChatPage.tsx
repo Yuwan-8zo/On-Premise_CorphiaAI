@@ -11,6 +11,8 @@ import SidePanel from '@/features/chat/components/SidePanel'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
+import { useChatStore } from '@/store/chatStore'
+import i18n from '@/i18n'
 import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
@@ -18,6 +20,9 @@ import { SkelMessages } from '@/components/ui/Skeleton'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
+    // 專案模式、還沒進任何專案對話：引導選資料夾或建立新的，不顯示一般聊天的建議（翻譯、寫信…）
+    const currentConversation = useChatStore((s) => s.currentConversation)
+    const projectHome = sidebarProps.chatMode === 'project' && !currentConversation?.settings?.isProject
     // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
@@ -91,7 +96,7 @@ export default function Chat() {
                         
                         {/* 整張卡片都可以把檔案拖進來；拖曳中顯示「放開即可加入」的提示 */}
                         <div
-                            className="paper !rounded-[var(--r-37)] flex flex-col flex-1 min-h-0 overflow-hidden"
+                            className="paper !rounded-[var(--r-37)] flex flex-col min-h-0 max-h-full overflow-hidden"
                             onDragEnter={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); dragDepth.current++; setDragOver(true) } }}
                             onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
                             onDragLeave={() => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (dragDepth.current === 0) setDragOver(false) }}
@@ -107,7 +112,10 @@ export default function Chat() {
                                 </div>
                             )}
                             <div className="px-[var(--sp-21)] py-[var(--sp-21)] border-b border-[var(--paper-line)] flex justify-between items-center shrink-0">
-                                <h3 className="font-semibold text-text-primary">{mainProps.t('ui.folder.sources', { count: mainProps.folderDocuments.length })}</h3>
+                                <h3 className="font-semibold text-text-primary">
+                                    {mainProps.t('ui.folder.sources')}
+                                    <span className="ml-[var(--sp-8)] font-normal text-text-secondary tabular-nums">{mainProps.folderDocuments.length}</span>
+                                </h3>
                                 <button 
                                     onClick={() => mainProps.fileInputRef.current?.click()}
                                     className="btn btn-primary !h-9 !px-4 !text-[length:var(--fs-14)] gap-1.5"
@@ -142,9 +150,10 @@ export default function Chat() {
                                                 </label>
                                                 
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="font-medium text-[length:var(--fs-15)] text-text-primary truncate">{doc.original_filename || doc.filename || "Unknown"}</span>
+                                                    <span className="font-medium text-[length:var(--fs-15)] text-text-primary truncate">{doc.original_filename || doc.filename || mainProps.t('ui.sources.unknownDoc')}</span>
                                                     <span className="text-[length:var(--fs-13)] text-text-secondary mt-0.5">
-                                                        {parseServerDate(doc.created_at).toLocaleString()} • {formatBytes(doc.file_size || 0)}
+                                                        {/* 上傳日期只到「年月日」，時分秒對選檔沒有幫助 */}
+                                                        {parseServerDate(doc.created_at).toLocaleDateString(i18n.language)} · {formatBytes(doc.file_size || 0)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -222,12 +231,17 @@ export default function Chat() {
                                 {/* 標題用平實的問句，不用「有什麼我可以幫忙的，某某？」這種客套招呼；
                                     下面一句說明資料留在公司內部（系統的重點是資安） */}
                                 <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
-                                    {mainProps.t('chat.emptyGreeting')}
+                                    {mainProps.t(projectHome ? 'chat.projectEmptyTitle' : 'chat.emptyGreeting')}
                                 </h2>
                                 <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">
-                                    {mainProps.t('chat.emptyNote')}
+                                    {mainProps.t(projectHome ? 'chat.projectEmptyNote' : 'chat.emptyNote')}
                                 </p>
                                 <div className="mb-[var(--fluid-block)]" />
+                                {projectHome ? (
+                                    <button type="button" onClick={sidebarProps.openNewFolderModal} className="btn btn-primary mx-auto gap-[var(--sp-6)]">
+                                        <PlusIcon /> {mainProps.t('chat.newFolder')}
+                                    </button>
+                                ) : (<>
 
                                 {/* 建議的問題：一張實色卡片裡的清單（像 iOS 設定的分組列表），
                                     不用四張一樣大的「圖示＋粗體標題＋一句說明」卡片（看起來像套版） */}
@@ -261,6 +275,7 @@ export default function Chat() {
                                         ));
                                     })()}
                                 </div>
+                                </>)}
                                 <div aria-hidden className="min-h-0 basis-[var(--sp-32)]" />
                             </div>
                         ) : (

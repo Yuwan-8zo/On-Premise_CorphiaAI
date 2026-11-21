@@ -8,7 +8,8 @@
  * - 路徑隱藏於 tooltip
  */
 
-import { HardDrive, RefreshCw, Copy } from '@/components/snow/icons'
+import { RefreshCw, Copy } from '@/components/snow/icons'
+import { displayModelName } from '@/lib/modelName'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import type { ModelItem } from '@/api/models'
@@ -68,7 +69,7 @@ export default function ModelsSection({
 
     return (
         <div className="h-full">
-            <Panel className="admin-fill">
+            <Panel className="admin-fill is-hug">
                 <SectionHeader
                     title={t('admin.models.title', '模型')}
                     eyebrow={`${t('admin.models.folder', '模型資料夾')}：${sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}`}
@@ -79,20 +80,18 @@ export default function ModelsSection({
                         </ActionButton>
                     }
                 />
-                <div className="admin-fill-body grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
+                {/* 一個分組清單（像 iOS 設定）：每列＝好讀的名稱＋大小・量化格式・檔案指紋，右邊「選擇」
+                    以前每個模型一張一樣大的卡片，還有一行沒算好的「Hash: --」，看起來像套版 */}
+                <div className="admin-fill-body px-[var(--space)] pb-[var(--space)]">
+                    <div className="model-list">
                     {isLoadingModels ? (
-                        // 和下面的模型卡同一個外形：名稱＋量化標籤、大小、Hash，右邊「選擇」鈕
                         [0, 1, 2].map((i) => (
-                            <div key={i} aria-hidden className="flex flex-col gap-4 rounded-[var(--admin-in)] border border-[var(--paper-line)] bg-[var(--chip)] p-5 md:flex-row md:items-center md:justify-between">
+                            <div key={i} aria-hidden className="model-list-row">
                                 <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <p className="truncate text-lg font-semibold"><SkelText>Qwen2.5-7B-Instruct-Q5_K_M</SkelText></p>
-                                        <span className="tag"><SkelText>Q5_K_M</SkelText></span>
-                                    </div>
-                                    <div className="mt-3 flex flex-wrap gap-4 text-sm"><SkelText>0000 0.00 GB</SkelText></div>
-                                    <div className="mt-3 flex flex-wrap gap-4 text-xs"><SkelText>Hash: 000000000000</SkelText></div>
+                                    <p className="model-list-name"><SkelText>Qwen2.5 7B Instruct</SkelText></p>
+                                    <p className="model-list-meta"><SkelText>0.00 GB · Q5_K_M</SkelText></p>
                                 </div>
-                                <span className="btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] shrink-0"><SkelText>{t('admin.models.select', '選擇')}</SkelText></span>
+                                <span className="btn btn-secondary !h-[var(--sz-36)] !px-[var(--sp-16)] !text-[length:var(--fs-14)] shrink-0"><SkelText>{t('admin.models.select', '選擇')}</SkelText></span>
                             </div>
                         ))
                     ) : models.length === 0 ? (
@@ -102,77 +101,42 @@ export default function ModelsSection({
                     ) : (
                         models.map((model) => {
                             const integrity = getIntegrityInfo(model.name)
-                            const sha256Short = integrity?.sha256 ? integrity.sha256.slice(0, 12) : '--'
                             const isCopied = copied === model.name
 
                             return (
-                                <div
-                                    key={model.name}
-                                    className={`flex flex-col gap-4 rounded-[var(--admin-in)] border p-5 md:flex-row md:items-center md:justify-between ${
-                                        model.is_current
-                                            ? 'border-accent/40 bg-accent/5 dark:bg-accent/10'
-                                            : 'border-[var(--paper-line)] bg-[var(--chip)]'
-                                    }`}
-                                >
+                                <div key={model.name} className={`model-list-row ${model.is_current ? 'is-current' : ''}`}>
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <p className="truncate text-lg font-semibold text-text-primary">
-                                                {model.name}
-                                            </p>
+                                        <div className="flex flex-wrap items-center gap-[var(--sp-8)]">
+                                            <p className="model-list-name" title={model.name}>{displayModelName(model.name)}</p>
                                             {model.is_current && (
-                                                <span className="tag tag-accent">
-                                                    {t('admin.models.current', '當前')}
-                                                </span>
-                                            )}
-                                            {model.quantization && (
-                                                <span className="tag tabular-nums">
-                                                    {model.quantization}
-                                                </span>
+                                                <span className="tag tag-accent">{t('admin.models.current', '當前')}</span>
                                             )}
                                         </div>
-
-                                        {/* 主要資訊列 */}
-                                        <div className="mt-3 flex flex-wrap gap-4 text-sm text-text-secondary">
-                                            <span className="inline-flex items-center gap-2">
-                                                <HardDrive className="h-4 w-4" />
-                                                {model.size_gb} GB
-                                            </span>
-                                        </div>
-
-                                        {/* Hash 和效能統計 */}
-                                        <div className="mt-3 flex flex-wrap gap-4 text-xs">
-                                            {/* SHA256 */}
-                                            <div className="flex items-center gap-2 tabular-nums">
-                                                <span className="text-text-muted">Hash:</span>
-                                                <Tooltip label={integrity?.sha256 || t('ui.models.computing')}>
-                                                    <span className="text-text-secondary">
-                                                        {sha256Short}
-                                                    </span>
-                                                </Tooltip>
-                                                {integrity?.sha256 && (
+                                        <p className="model-list-meta">
+                                            <span className="tabular-nums">{model.size_gb} GB</span>
+                                            {model.quantization && <span className="tabular-nums">{model.quantization}</span>}
+                                            {/* 檔案指紋（SHA-256）：模型完整性檢查用，算好才顯示 */}
+                                            {integrity?.sha256 && (
+                                                <span className="inline-flex items-center gap-[var(--sp-4)] tabular-nums">
+                                                    <Tooltip label={integrity.sha256}>
+                                                        <span>{t('ui.models.fingerprint', { hash: integrity.sha256.slice(0, 12) })}</span>
+                                                    </Tooltip>
                                                     <Tooltip label={isCopied ? t('ui.message.copied') : t('ui.models.copyHash')}>
                                                         <button
-                                                            onClick={() => {
-                                                                // narrow null：上面 `integrity?.sha256 &&` 已保證不為 null，
-                                                                // 但 TS 不會跨 callback 推斷，所以這裡用 non-null assertion
-                                                                void copyText(integrity.sha256!).then((ok) => { if (ok) setCopied(model.name) })
-                                                            }}
+                                                            onClick={() => { void copyText(integrity.sha256!).then((ok) => { if (ok) setCopied(model.name) }) }}
                                                             aria-label={t('ui.models.copyHash')}
                                                             className="icon-tap text-text-muted"
                                                         >
                                                             <Copy className="h-3.5 w-3.5" />
                                                         </button>
                                                     </Tooltip>
-                                                )}
-                                            </div>
-
-                                            {/* 推論統計（僅當前模型） */}
-                                            {model.is_current && integrityData?.throughput && (
-                                                <div className="text-text-muted">
-                                                    {t('ui.models.inference', { value: (integrityData.throughput.last_tokens_per_sec || 0).toFixed(1) })}
-                                                </div>
+                                                </span>
                                             )}
-                                        </div>
+                                            {/* 還沒量到速度（0）就不顯示，不放一個「每秒 0.0」 */}
+                                            {model.is_current && (integrityData?.throughput?.last_tokens_per_sec ?? 0) > 0 && (
+                                                <span>{t('ui.models.inference', { value: (integrityData?.throughput?.last_tokens_per_sec ?? 0).toFixed(1) })}</span>
+                                            )}
+                                        </p>
                                     </div>
 
                                     {!model.is_current && (
@@ -184,6 +148,7 @@ export default function ModelsSection({
                             )
                         })
                     )}
+                    </div>
                 </div>
             </Panel>
         </div>

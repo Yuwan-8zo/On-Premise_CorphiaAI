@@ -30,6 +30,11 @@
   min-height: 0;
   overflow: hidden;
 }
+/* 內容少的分頁（使用者、模型、租戶）：卡片只包住內容，不撐滿整頁留一大片空白；內容多時最高到整頁、在裡面捲動 */
+.admin-fill.is-hug {
+  height: auto;
+  max-height: 100%;
+}
 .admin-fill > :not(.admin-fill-body) {
   flex-shrink: 0;
 }

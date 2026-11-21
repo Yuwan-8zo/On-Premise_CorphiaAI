@@ -36,7 +36,7 @@ export default function SecurityEventsPanel({
     return (
         <Panel className={`flex flex-col min-h-[var(--sz-160)] ${className || ''}`}>
             <SectionHeader
-                title={t('admin.overview.securityEvents', '資安事件 (24h)')}
+                title={t('admin.overview.securityEvents')}
             />
             <div className="flex-1 px-[var(--space)] pb-[var(--space)]">
                 <div className="grid grid-cols-2 gap-[var(--space)] h-full">
@@ -45,9 +45,9 @@ export default function SecurityEventsPanel({
                         return (
                             <div
                                 key={kpi.valueKey}
-                                className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--admin-in)] bg-[var(--chip)] border transition-colors  ${value > 0 ? kpi.borderAccent : 'border-transparent'}`}
+                                className={`flex flex-wrap items-center gap-x-3 gap-y-[var(--sp-6)] px-[var(--sp-14)] py-3 rounded-[var(--admin-in)] bg-[var(--chip)]`}
                             >
-                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] ${kpi.colorClass}`}>
+                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-8)] bg-[var(--field)] text-text-secondary`}>
                                     <ItshoverIcon icon={kpi.icon} size={16} />
                                 </span>
 
@@ -55,7 +55,7 @@ export default function SecurityEventsPanel({
                                     {t(kpi.labelKey, kpi.labelFallback)}
                                 </p>
 
-                                <p className={`ml-auto shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? kpi.valueColor : 'text-text-muted'}`}>
+                                <p className={`ml-auto shrink-0 text-3xl font-semibold tabular-nums leading-none ${value > 0 ? 'text-[var(--danger-ink)]' : 'text-text-muted'}`}>
                                     {/* 還沒讀到之前用佔位，不先顯示 0 再跳成真的數字 */}
                                     {data ? value : <SkelText>0</SkelText>}
                                 </p>

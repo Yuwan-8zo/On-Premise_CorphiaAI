@@ -41,3 +41,12 @@
 .chart-legend-item { display: inline-flex; align-items: center; gap: var(--sp-6); }
 .chart-legend-bar { width: var(--sp-10); height: var(--sp-10); border-radius: var(--r-4); background: rgb(var(--accent)); }
 .chart-legend-dash { width: var(--sz-16); height: 0; border-top: 1.5px dashed rgb(var(--text-secondary)); }
+
+/* ═══ 後台・模型清單（ModelsSection）═══
+ *   一個分組清單：列與列之間細分隔線；目前使用的那列底色淡淡的強調色 */
+.model-list { display: flex; flex-direction: column; border-radius: var(--admin-in); background: var(--chip); overflow: hidden; }
+.model-list-row { display: flex; align-items: center; gap: var(--sp-12); padding: var(--sp-12) var(--sp-16); }
+.model-list-row + .model-list-row { border-top: 0.5px solid rgb(var(--border-subtle)); }
+.model-list-row.is-current { background: color-mix(in srgb, rgb(var(--accent)) 10%, transparent); }
+.model-list-name { font-size: var(--fs-15); line-height: var(--lh-20); font-weight: 600; color: rgb(var(--text-primary)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-list-meta { margin-top: var(--sp-2); display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sp-12); row-gap: var(--sp-2); font-size: var(--fs-13); line-height: var(--lh-18); color: rgb(var(--text-secondary)); }

@@ -43,6 +43,7 @@ import AuditChainCheck from '@/features/admin/components/AuditChainCheck'
 import AuditDetailDrawer from '@/features/admin/components/AuditDetailDrawer'
 import { formatDate } from '@/features/admin/utils/formatDate'
 import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
+import { shortIp } from '@/features/admin/utils/auditDetails'
 
 // 依操作代碼的動詞決定標籤顏色（收到的是代碼，不是翻譯後的文字）
 function getActionPillClass(action: string): string {
@@ -287,7 +288,7 @@ export default function AuditSection({
                                                 {log.user_email || log.user_id || '-'}
                                             </td>
                                             <td className="hidden sm:table-cell px-5 py-2 tabular-nums text-xs text-text-secondary">
-                                                {log.ip_address || '-'}
+                                                {shortIp(t, log.ip_address)}
                                             </td>
                                         </tr>
                                     ))
