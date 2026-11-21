@@ -41,7 +41,7 @@ export default {
     // 首次使用引導（spotlight tour）
     onboarding: {
         start: '開始',
-        openSidebarHint: '手機上先點左上角打開側欄，就看得到這個按鈕',
+        openSidebarHint: '點一下框起來的按鈕打開側欄，就看得到它',
         progress: '第 {{n}} 步，共 {{total}} 步',
         goTo: '跳到第 {{n}} 步',
         steps: {

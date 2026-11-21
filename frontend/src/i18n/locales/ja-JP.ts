@@ -41,7 +41,7 @@ export default {
     // 初回利用ガイド（スポットライトツアー）
     onboarding: {
         start: 'はじめる',
-        openSidebarHint: 'スマートフォンでは、左上のボタンでサイドバーを開くと表示されます',
+        openSidebarHint: '枠で囲んだボタンを押すとサイドバーが開いて表示されます',
         progress: '{{total}} ステップ中 {{n}}',
         goTo: 'ステップ {{n}} へ',
         steps: {

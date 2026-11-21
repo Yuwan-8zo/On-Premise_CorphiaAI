@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next'
 import Mascot, { type MascotLook, type MascotMood } from '@/components/mascot/Mascot'
 import Tooltip from '@/components/ui/Tooltip'
 import { useAuthStore } from '@/store/authStore'
+import { useUIStore } from '@/store/uiStore'
 
 import { markOnboardingDone } from './onboardingFlag'
 import './onboardingTour.css'
@@ -97,6 +98,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
     const [target, setTarget] = useState<Rect | null>(null)
     /** 這一步框的是「開啟側邊欄」（目標收在手機側欄裡） */
     const [viaFallback, setViaFallback] = useState(false)
+    const setSidebarOpen = useUIStore((st) => st.setSidebarOpen)
     const [cardSize, setCardSize] = useState({ w: CARD_W, h: 200 })
     const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
     const cardRef = useRef<HTMLDivElement>(null)
@@ -226,8 +228,18 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             aria-labelledby="tour-title"
             aria-describedby="tour-desc"
             onClick={(e) => {
+                if (cardRef.current?.contains(e.target as Node)) return
+                // 手機：框的是「開啟側邊欄」→ 點框裡面＝幫你打開側欄，導覽繼續（側欄裡的目標出現後框會自動移過去）
+                // 不能讓這一下落到底下的按鈕：整頁蓋著導覽層，點不到；以前會被當成「略過」直接結束導覽
+                if (viaFallback && target) {
+                    const x = e.clientX, y = e.clientY
+                    if (x >= target.left - PAD && x <= target.left + target.width + PAD && y >= target.top - PAD && y <= target.top + target.height + PAD) {
+                        setSidebarOpen(true)
+                        return
+                    }
+                }
                 // 點卡片以外（變暗的背景）＝略過
-                if (cardRef.current && !cardRef.current.contains(e.target as Node)) close()
+                close()
             }}
         >
             {/* 變暗＋照亮目標 */}

@@ -41,7 +41,7 @@ export default {
     // First-time spotlight onboarding tour
     onboarding: {
         start: 'Start',
-        openSidebarHint: 'On a phone, tap the top-left button to open the sidebar first',
+        openSidebarHint: 'Tap the highlighted button to open the sidebar and see it',
         progress: 'Step {{n}} of {{total}}',
         goTo: 'Go to step {{n}}',
         steps: {
