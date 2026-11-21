@@ -98,9 +98,18 @@ export function describeUserAgent(ua?: string | null): string {
 }
 
 /** 本機位址加註「這台主機」 */
+/** 本機自己連自己的位址（::1 是 IPv6 的寫法，一般人看不懂） */
+const LOCAL_IPS = new Set(['127.0.0.1', '::1', 'localhost'])
+
 export function describeIp(t: TFunction, ip?: string | null): string {
     if (!ip) return ''
-    return ['127.0.0.1', '::1', 'localhost'].includes(ip) ? t('admin.audit.detail.localhost', { ip }) : ip
+    return LOCAL_IPS.has(ip) ? t('admin.audit.detail.localhost', { ip }) : ip
+}
+
+/** 表格用的短寫法：本機直接寫「本機」，其他照原樣 */
+export function shortIp(t: TFunction, ip?: string | null): string {
+    if (!ip) return '-'
+    return LOCAL_IPS.has(ip) ? t('admin.audit.localhostShort') : ip
 }
 
 type Formatted = Omit<AuditField, 'key'> | null

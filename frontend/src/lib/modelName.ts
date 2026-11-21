@@ -15,8 +15,8 @@ export function shortModelName(name: string): string {
     return size ? `${family}·${size}` : name.slice(0, 14)
 }
 
-/** 量化格式（Q5_K_M、Q4_0、IQ3_XS、F16、BF16…）只有工程師看得懂，畫面上不顯示 */
-const QUANT_SUFFIX = /[-_.](?:I?Q\d+(?:_[A-Z0-9]+)*|B?F(?:16|32))$/i
+/** 量化格式（Q5_K_M、Q4_0、IQ3_XS、F16、BF16、MXFP4…）只有工程師看得懂，畫面上不顯示 */
+const QUANT_SUFFIX = /[-_.](?:I?Q\d+(?:_[A-Z0-9]+)*|B?F(?:16|32)|MXFP\d+)$/i
 
 /**
  * 畫面上顯示的模型名稱：去掉路徑、.gguf 副檔名、量化格式，連字號換成空格

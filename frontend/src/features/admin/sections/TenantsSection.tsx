@@ -6,7 +6,7 @@
  * - 30s 輪詢更新
  */
 
-import { Plus, AlertTriangle } from '@/components/snow/icons'
+import { Plus } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import type { Tenant } from '@/api/tenants'
@@ -61,7 +61,7 @@ export default function TenantsSection({
     }
 
     return (
-        <Panel className="admin-fill">
+        <Panel className="admin-fill is-hug">
             <SectionHeader
                 title={t('admin.tenants.title', '租戶')}
                 // 第一次讀到之前用同格式的佔位，不先顯示「0 個租戶」
@@ -120,11 +120,6 @@ export default function TenantsSection({
                                             <StatusPill active={item.is_active} />
                                         </div>
                                     </div>
-                                    {hasSecurityEvents && (
-                                        <div className="shrink-0 text-[var(--ink-red)]" title={t('admin.overview.securityEvents')} aria-label={t('admin.overview.securityEvents')} role="img">
-                                            <AlertTriangle className="h-4 w-4" />
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Description（如果有） */}
@@ -157,7 +152,7 @@ export default function TenantsSection({
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-secondary font-medium">
-                                            {t('admin.tenants.messages24h', '24h 訊息')}
+                                            {t('admin.tenants.messages24h')}
                                         </p>
                                         <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
                                             {usage?.messages_24h ?? '--'}
@@ -165,7 +160,7 @@ export default function TenantsSection({
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-secondary font-medium">
-                                            {t('admin.tenants.events24h', '24h 事件')}
+                                            {t('admin.tenants.events24h')}
                                         </p>
                                         <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-[var(--ink-red)]' : 'text-text-primary'}`}>
                                             {usage?.security_events_24h ?? '--'}
