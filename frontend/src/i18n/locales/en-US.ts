@@ -528,7 +528,7 @@ export default {
             newChat: 'New chat',
             sidebar: 'Show or hide the sidebar',
             stop: 'Stop the answer',
-            recall: 'Recall your last question (when the box is empty)',
+            recall: 'Recall your last question when the box is empty',
         },
         title: 'Help',
         subtitle: 'Get started with Corphia in minutes. Chat history and documents are stored on your company’s own server.',

@@ -17,8 +17,13 @@ import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { CHAT_HOTKEYS } from '@/features/chat/hooks/useChatHotkeys'
 
-/** 修飾鍵的寫法：Mac 是 ⌘，其他是 Ctrl */
-const MOD_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
+/** 按鍵的寫法：Mac 的修飾鍵一律用符號（⌘ ⇧ ⌥，和 Mac 選單一樣），其他系統用英文字（Ctrl Shift Alt） */
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const MAC_KEYS: Record<string, string> = { mod: '⌘', Shift: '⇧', Alt: '⌥' }
+export const keyLabel = (k: string, mac = IS_MAC) => {
+    if (mac) return MAC_KEYS[k] ?? k
+    return k === 'mod' ? 'Ctrl' : k
+}
 
 /** 有實體鍵盤（滑鼠等精確指標）才講 Enter／Shift＋Enter；手機上沒有這些鍵 */
 const HAS_KEYBOARD = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches
@@ -89,7 +94,7 @@ export default function GuideSection() {
                             <div key={h.id} className="set-row">
                                 <span className="set-label">{t(`guide.hotkeys.${h.id}`)}</span>
                                 <span className="flex gap-[var(--sp-4)] shrink-0">
-                                    {h.keys.map((k) => <kbd key={k} className="kbd">{k === 'mod' ? MOD_KEY : k}</kbd>)}
+                                    {h.keys.map((k) => <kbd key={k} className="kbd">{keyLabel(k)}</kbd>)}
                                 </span>
                             </div>
                         ))}

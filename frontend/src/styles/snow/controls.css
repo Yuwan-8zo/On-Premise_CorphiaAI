@@ -472,12 +472,14 @@ html.dark {
   z-index: 1;
 }
 
-/* 鍵盤按鍵（使用說明的快捷鍵清單）：小方塊、底邊稍厚像實體鍵帽 */
+/* 鍵盤按鍵（使用說明的快捷鍵清單）：小方塊、底邊稍厚像實體鍵帽
+ *   大小跟內文一樣好讀（以前 18 高、12 號字，在 44 高的列裡幾乎看不清楚） */
 .kbd {
-  font-family: ui-monospace, "SF Mono", Consolas, monospace;
-  font-size: var(--fs-12); line-height: var(--lh-16);
-  min-width: var(--sz-22); text-align: center;
-  padding: 0 var(--sp-6); border-radius: var(--r-6);
-  background: var(--chip); color: rgb(var(--text-primary));
+  display: inline-grid; place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-13); line-height: 1;
+  min-width: var(--kbd-h); height: var(--kbd-h);
+  padding: 0 var(--sp-8); border-radius: var(--r-6);
+  background: color-mix(in srgb, rgb(var(--text-primary)) 12%, transparent); color: rgb(var(--text-primary));
   border: .5px solid rgb(var(--border-subtle)); border-bottom-width: 2px;
 }

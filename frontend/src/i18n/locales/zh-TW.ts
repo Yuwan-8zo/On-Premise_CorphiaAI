@@ -528,7 +528,7 @@ export default {
             newChat: '開新對話',
             sidebar: '開關側欄',
             stop: '停止 AI 回答',
-            recall: '叫回上一則提問（輸入框是空的時候）',
+            recall: '輸入框空白時，叫回上一則提問',
         },
         title: '使用說明',
         subtitle: '幾分鐘就能上手 Corphia。對話紀錄和文件都存在公司內部的主機。',
