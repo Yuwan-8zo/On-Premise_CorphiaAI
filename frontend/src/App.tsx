@@ -37,6 +37,7 @@ import ConnectionBanner from './components/system/ConnectionBanner'
 import IdleLock from './components/auth/IdleLock'
 import ImageViewer from './components/ui/ImageViewer'
 import { SkelPage } from '@/components/ui/SkelPages'
+import { startWebVitals } from '@/lib/webVitals'
 
 // Global UI Components
 const FallbackLoader = () => <SkelPage />
@@ -51,6 +52,9 @@ export default function App() {
     const canUseAuthenticatedRedirect = isBootstrapped && isAuthenticated
     // 登入後的頁面：小 AI 常駐右下角，系統通知由它說；登入頁、分享頁照舊用頂端的通知膠囊
     const showMascotDock = canUseAuthenticatedRedirect && !isPublicRoute
+
+    // 使用者體驗量測（web-vitals）：只量數字、登入後才送回這台主機（lib/webVitals）
+    useEffect(() => { startWebVitals() }, [])
 
     // ── 啟動時的 Token 復原流程 ──────────────────────────────────
     // 頁面重新整理後 accessToken 已從記憶體消失，

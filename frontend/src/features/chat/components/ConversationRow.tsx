@@ -4,7 +4,7 @@
  *   手機：往左滑露出「重新命名」「刪除」（lib/useSwipeReveal）；電腦用「⋯」和長按
  */
 
-import { useCallback, useRef, type HTMLAttributes, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
+import { useCallback, useRef, type HTMLAttributes, type MouseEvent, type PointerEvent } from 'react'
 import { Edit2, MoreHorizontal, Trash2 } from '@/components/snow/icons'
 import { useSwipeReveal } from '@/lib/useSwipeReveal'
 import Tooltip from '@/components/ui/Tooltip'
@@ -28,13 +28,6 @@ interface ConversationRowProps {
     swipe?: { onRename: () => void; onDelete: (e: MouseEvent) => void }
 }
 
-/** 整列可點的 div：Enter／空白鍵等於點一下（只在列本身有焦點時，不攔列裡的按鈕） */
-export function activateOnKey(e: KeyboardEvent<HTMLElement>) {
-    if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return
-    e.preventDefault()
-    e.currentTarget.click()
-}
-
 export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = false, rowRef, pressProps, onSelect, menuButtonProps, swipe }: Readonly<ConversationRowProps>) {
     const { t } = useTranslation()
     const swipeRef = useSwipeReveal(Boolean(swipe))
@@ -48,16 +41,14 @@ export default function ConversationRow({ conv, isCurrent, isMenuOpen, isBusy = 
         <div
             ref={ref}
             {...pressProps}
-            onClick={onSelect}
-            // 鍵盤：Tab 走得到、Enter／空白鍵打開（列裡還有「⋯」按鈕，不能整列改成 <button>）
-            role="button"
-            tabIndex={0}
-            aria-current={isCurrent ? 'page' : undefined}
-            onKeyDown={activateOnKey}
             data-lens-row
             className={`side-item group ${isCurrent ? 'is-current' : ''}`}
         >
-            <span className="flex-1 min-w-0 truncate">{displayTitle(conv.title)}</span>
+            {/* 標題＝打開對話的按鈕，可點範圍撐滿整列（.side-item-hit::after）；鍵盤 Tab 走得到、Enter 打開。
+                整列不能本身當按鈕：裡面還有「⋯」、左滑按鈕，按鈕包按鈕讀螢幕軟體會亂 */}
+            <button type="button" className="side-item-hit" onClick={onSelect} aria-current={isCurrent ? 'page' : undefined}>
+                {displayTitle(conv.title)}
+            </button>
             {isBusy && <span className="conv-busy" role="status" aria-label={t('ui.sidebar.answering')} />}
             <div className={`side-actions hover-reveal ${isMenuOpen ? 'is-open' : ''}`}>
                 <Tooltip label={t('ui.sidebar.options')}>

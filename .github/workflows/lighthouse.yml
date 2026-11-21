@@ -1,0 +1,52 @@
+# Lighthouse CI（Google 開源）：每個 PR 打包前端，用真的 Chrome 量速度、無障礙、最佳做法的分數
+#   設定在 frontend/lighthouserc.json；目前只「警告」不擋合併，報告存成這次執行的附件（Artifacts → lighthouse-report）
+#   報告只存在 GitHub 這次執行裡，不上傳到 Google 的公開暫存空間
+#   量的是打包好的靜態頁（沒有後端），主要看首屏載入、顏色對比、無障礙標記；聊天頁的真實速度看後台「使用者體驗」
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  lighthouse:
+    name: Lighthouse (performance / a11y)
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+        cache: "npm"
+        cache-dependency-path: ./frontend/package-lock.json
+
+    # --ignore-scripts：不讓套件在安裝時執行自己的指令（供應鏈攻擊的常見入口）；前端打包不需要它們
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci --ignore-scripts
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    # 固定版本、一樣不執行安裝指令，裝好後直接跑（不用 npx 臨時下載）
+    - name: Install Lighthouse CI
+      working-directory: ./frontend
+      run: npm install --no-save --ignore-scripts @lhci/cli@0.14.0
+
+    - name: Run Lighthouse CI
+      working-directory: ./frontend
+      run: ./node_modules/.bin/lhci autorun
+
+    - name: Upload report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lighthouse-report
+        path: frontend/lhci-report
+        if-no-files-found: ignore

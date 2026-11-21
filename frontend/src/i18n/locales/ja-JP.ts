@@ -745,6 +745,7 @@ export default {
             emptyDesc: "サーバーや社内 NAS のフォルダを接続すると、同僚が AI にその内容を質問できます。例：「営業部の今年の見積書の合計を出して」",
         },
         overview: {
+            ux: { unavailable: '計測データを読み込めません', title: 'ユーザー体験（直近 7 日）', hint: '実際の利用で計測した速度です。数値は 75 パーセンタイル：利用の 4 分の 3 はこれより速い', INP: '操作への反応', LCP: '画面の読み込み', CLS: 'レイアウトの安定', ms: '{{n}} ミリ秒', sec: '{{n}} 秒', samples: '{{n}} 回の計測', empty: 'まだ計測データがありません。しばらく使うと表示されます', rating: { good: '良好', 'needs-improvement': '要改善', poor: '遅い' } },
             users: '総ユーザー数',
             usersDetail: '{{active}} 人アクティブ',
             conversations: '総会話数',

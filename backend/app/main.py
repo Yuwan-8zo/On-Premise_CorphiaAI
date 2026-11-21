@@ -41,6 +41,7 @@ from app.api import (
     browser_folder_router,
     chat_images_router,
     web_search_router,
+    vitals_router,
 )
 from app.services.llm_service import get_llm_service
 from app.core.rate_limiter import RateLimitMiddleware
@@ -305,6 +306,7 @@ app.include_router(voice_router, prefix="/api/v1")
 app.include_router(browser_folder_router, prefix="/api/v1")
 app.include_router(chat_images_router, prefix="/api/v1")
 app.include_router(web_search_router, prefix="/api/v1")
+app.include_router(vitals_router, prefix="/api/v1")
 app.include_router(websocket_router)
 
 

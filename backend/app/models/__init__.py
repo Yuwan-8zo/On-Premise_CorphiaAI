@@ -15,6 +15,7 @@ from app.models.token_blacklist import TokenBlacklist
 from app.models.connected_folder import ConnectedFolder
 from app.models.user_memory import UserMemory
 from app.models.generated_file import GeneratedFile
+from app.models.web_vital import WebVital
 
 __all__ = [
     "Tenant",
@@ -33,5 +34,6 @@ __all__ = [
     "ConnectedFolder",
     "UserMemory",
     "GeneratedFile",
+    "WebVital",
 ]
 

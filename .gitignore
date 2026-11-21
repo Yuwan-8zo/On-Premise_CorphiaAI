@@ -141,3 +141,7 @@ frontend/public/pyodide/
 
 # promptfoo 紅隊測試的原始輸出（結果整理在 docs/report/紅隊測試結果.csv）
 security/redteam/results.json
+
+# Lighthouse CI 的報告與暫存
+frontend/lhci-report/
+frontend/.lighthouseci/

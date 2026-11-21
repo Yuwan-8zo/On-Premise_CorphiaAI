@@ -47,6 +47,7 @@ import EventDonut, {
 import SecurityEventsPanel from '@/features/admin/components/panels/SecurityEventsPanel'
 import LLMHealthPanel from '@/features/admin/components/panels/LLMHealthPanel'
 import SystemResourcePanel from '@/features/admin/components/panels/SystemResourcePanel'
+import UXVitalsPanel from '@/features/admin/components/panels/UXVitalsPanel'
 import {
     aggregateByAction,
     aggregateByDay,
@@ -236,6 +237,9 @@ export default function OverviewSection({
                 />
                 <SystemResourcePanel className="lg:col-span-3" />
             </section>
+
+            {/* Row 4 · 使用者體驗（大家實際使用時量到的速度，lib/webVitals） */}
+            <UXVitalsPanel />
 
         </div>
     )

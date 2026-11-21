@@ -26,7 +26,7 @@ import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo, CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
-import ConversationRow, { activateOnKey } from './ConversationRow'
+import ConversationRow from './ConversationRow'
 import Tooltip from '@/components/ui/Tooltip'
 
 import type { Conversation } from '@/types/chat'
@@ -444,10 +444,16 @@ export default function ChatSidebar({
                                                 >
                                                     {/* 資料夾列（沒有展開箭頭）：點一下選取並展開；再點一次已選取的資料夾就收合 */}
                                                     <div
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onKeyDown={activateOnKey}
-                                                        onClick={() => {
+                                                        className={`side-item group ${selectedFolder === folderName ? 'is-current' : ''}`}
+                                                    >
+                                                        <Folder className="side-icon" />
+                                                        {/* 資料夾名稱＝按鈕（可點範圍撐滿整列）；右邊的＋、說明、刪除疊在上面 */}
+                                                        <button
+                                                            type="button"
+                                                            className="side-item-hit"
+                                                            aria-expanded={isExpanded}
+                                                            aria-current={selectedFolder === folderName ? 'true' : undefined}
+                                                            onClick={() => {
                                                             // 切換到資料夾管理視圖；
                                                             // 注意：不清掉 currentConversation，這樣在背景串流中的對話可以繼續，
                                                             // 使用者切回該對話時不會中斷 AI 思考。
@@ -461,11 +467,9 @@ export default function ChatSidebar({
                                                             setExpandedFolders(new Set([folderName]))
                                                             if (!desktop) setSidebarOpen(false)
                                                         }}
-                                                        aria-expanded={isExpanded}
-                                                        className={`side-item group ${selectedFolder === folderName ? 'is-current' : ''}`}
-                                                    >
-                                                        <Folder className="side-icon" />
-                                                        <span className="flex-1 min-w-0 truncate">{folderName}</span>
+                                                        >
+                                                            {folderName}
+                                                        </button>
                                                         <div className="side-actions hover-reveal gap-0.5">
                                                             <Tooltip label={t('ui.sidebar.newInFolder')}>
                                                                 <button onClick={(e) => createConvInFolder(folderName, e)} aria-label={t('ui.sidebar.newInFolder')} className="icon-tap text-text-secondary">
