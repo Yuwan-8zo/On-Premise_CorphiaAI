@@ -59,6 +59,10 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, { enabled,
                 if (Math.abs(dy) < SHEET_SLOP) return
                 dragging = true
                 handle.setPointerCapture(e.pointerId)
+                // 進場動畫（fill both，結尾是 transform: none）會一直蓋過下面寫的位置：開始拖就關掉它。
+                // 這個標記留到下次重新打開（resetSheet）——拖完拿掉的話，進場動畫會重播一次
+                const p = panel()
+                if (p) p.dataset.held = ''
             }
             const dt = e.timeStamp - last.t
             if (dt > 0) v = (e.clientY - last.y) / dt
@@ -98,6 +102,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, { enabled,
 export function resetSheet(panel: HTMLElement | null) {
     if (!panel) return
     delete panel.dataset.swiped
+    delete panel.dataset.held
     panel.style.transform = ''
     panel.style.transition = ''
 }

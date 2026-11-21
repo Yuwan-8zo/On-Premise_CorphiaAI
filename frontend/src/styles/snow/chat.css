@@ -326,6 +326,8 @@ html.dark .markdown-body .md-table strong {
   .side-sheet-handle { touch-action: none; }
   /* 拖下去關閉：從手指放開的位置繼續滑出，不再播一般的收起動畫 */
   .side-panel.side-sheet[data-swiped] { animation: none; }
+  /* 拖過面板之後：進場動畫的結尾值會蓋過手指拖出的位置，關掉（只關進場，收起動畫照常） */
+  .side-panel.side-sheet.side-panel-in[data-held] { animation: none; }
 }
 .side-sheet-grab {
   width: var(--sheet-grab-w); height: var(--sheet-grab-h);
