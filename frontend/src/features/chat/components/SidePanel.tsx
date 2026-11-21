@@ -2,7 +2,7 @@
  * 旁邊的顯示面板：把 AI 做的成品（HTML／SVG）或執行程式的結果放大到聊天旁邊看
  *
  *   - 電腦：在聊天右邊佔一欄（開啟時把左邊的對話清單收成窄條，關掉再放回來）
- *   - 手機：蓋滿整個畫面
+ *   - 手機：從下面升起的面板（四周留邊、上緣有把手），按住把手或標題列往下拖就關閉（lib/useSheetDrag）；點面板外面也會關
  *   - AI 改了一版：面板開著時自動換成最新的；用「‹ 2/3 ›」切回舊的
  *   - 成品可以切換看畫面／看程式碼、存成檔案、放大成全螢幕
  *   - 一個對話不只一個檔案：面板首頁是「這個對話的檔案」清單（成品、執行結果、AI 產生的檔案、你附加的檔案），點了才看那一份
@@ -16,6 +16,7 @@ import { ChevronLeft, Contract, Expand, FileText, X } from '@/components/snow/ic
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import { PREVIEW_FRAME_STYLE, PREVIEW_SANDBOX, buildPreviewDoc } from '@/lib/previewDoc'
 import { useDebounced } from '@/lib/useDebounced'
+import { resetSheet, useSheetDrag } from '@/lib/useSheetDrag'
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 import { attachedItemId, dropOtherAttachments, orderedItems, useSidePanelStore, type SidePanelItem } from '@/store/sidePanelStore'
 import { useChatStore } from '@/store/chatStore'
@@ -91,6 +92,9 @@ export default function SidePanel() {
         return () => document.removeEventListener('fullscreenchange', onChange)
     }, [])
     useEffect(() => { if (!visible) setFull(false) }, [visible])
+    // 手機：往下拖關閉；重新打開時清掉上次拖出去的位置
+    const sheetHandleRef = useSheetDrag(panelRef, { enabled: !desktop && !full, onClose: close })
+    useEffect(() => { if (visible) resetSheet(panelRef.current) }, [visible])
     const code = current?.kind === 'page' ? current.code : ''
     // 延後的是「同一個版本還在寫」的更新；換到另一個版本要馬上換，所以連編號一起記
     const live = useMemo(() => ({ id: currentId, code }), [currentId, code])
@@ -131,15 +135,22 @@ export default function SidePanel() {
     const isPage = current?.kind === 'page'
     const iconBtn = 'btn-icon !w-[var(--sz-34)] !h-[var(--sz-34)] [--R:calc(var(--sz-34)/2)]'
 
+    const sheetClass = `${listMode ? 'side-sheet-fit' : ''} ${leaving ? 'side-panel-out' : 'side-panel-in'}`
     return (
+        <>
+        {/* 手機：面板後面的淡淡遮罩，點了關閉（電腦上面板在旁邊佔一欄，不需要） */}
+        {!desktop && !full && <div aria-hidden className={`side-sheet-scrim ${leaving ? 'is-out' : ''}`} onClick={close} />}
         <aside
             ref={panelRef}
             data-testid="side-panel"
             aria-label={t('ui.chat.sidePanel.label')}
             className={full
                 ? 'paper side-panel side-panel-full fixed inset-0 z-[60] flex flex-col overflow-hidden !rounded-none'
-                : `paper side-panel ${leaving ? 'side-panel-out' : 'side-panel-in'} fixed inset-0 z-50 flex flex-col overflow-hidden !rounded-none pt-[env(safe-area-inset-top)] md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
+                : `paper side-panel side-sheet ${sheetClass} fixed z-50 flex flex-col overflow-hidden md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
         >
+            {/* 把手＋標題列：手機上按住往下拖＝關閉 */}
+            <div ref={sheetHandleRef} className="side-sheet-handle shrink-0">
+            {!desktop && !full && <div aria-hidden className="side-sheet-grab" />}
             <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--paper-line)] px-[var(--sp-16)] py-[var(--sp-12)]">
                 {!listMode && (
                     // 回到這個對話的所有檔案
@@ -173,6 +184,7 @@ export default function SidePanel() {
                     <X className="w-[var(--sz-16)] h-[var(--sz-16)]" />
                 </button>
             </header>
+            </div>
 
             {listMode && <FileList items={items} messages={messages} onOpen={show} conversationId={conversationId} />}
             {isPage && !showCode && !frameReady && (
@@ -208,6 +220,7 @@ export default function SidePanel() {
                 </div>
             )}
         </aside>
+        </>
     )
 }
 
@@ -288,7 +301,7 @@ function FileList({ items, messages, onOpen, conversationId }: {
     const row = 'flex w-full items-center gap-[var(--sp-10)] rounded-[var(--r-14)] px-[var(--sp-12)] py-[var(--sp-10)] text-left text-[length:var(--fs-14)] text-text-primary transition-colors'
     const heading = 'px-[var(--sp-12)] pb-[var(--sp-6)] text-[length:var(--fs-12)] font-semibold text-text-secondary'
     if (!pages.length && !runs.length && !made.length && !attached.length) {
-        return <div className="flex min-h-0 flex-1 items-center justify-center text-[length:var(--fs-14)] text-text-secondary">{t('ui.chat.sidePanel.empty')}</div>
+        return <div className="flex min-h-0 flex-1 items-center justify-center py-[var(--sp-32)] text-[length:var(--fs-14)] text-text-secondary">{t('ui.chat.sidePanel.empty')}</div>
     }
     return (
         <div className="min-h-0 flex-1 overflow-auto p-[var(--sp-10)] flex flex-col gap-[var(--sp-16)]">

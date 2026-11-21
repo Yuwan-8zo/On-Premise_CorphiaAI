@@ -144,6 +144,14 @@ export default {
     // 對話
     chat: {
         emptyGreeting: '今天要處理什麼？',
+        /** 首頁標題：依時段（lib/dayPart） */
+        greet: {
+            morning: '早安，今天要處理什麼？',
+            noon: '午安，今天要處理什麼？',
+            afternoon: '下午好，今天要處理什麼？',
+            evening: '晚上好，今天要處理什麼？',
+            late: '這麼晚了，還有什麼要處理？',
+        },
         emptyNote: '回答由這台主機上的模型產生，對話紀錄只存在公司內部',
         projectEmptyTitle: '選一個專案資料夾',
         projectEmptyNote: '專案對話只參考資料夾裡勾選的檔案回答，從左側選資料夾，或建立新的',
@@ -1236,6 +1244,7 @@ export default {
             newInFolder: '在此資料夾新增對話',
             deleteFolder: '刪除資料夾及內容',
             answering: '正在回答',
+            refreshing: '正在重新載入對話',
         },
         message: {
             copy: '複製',

@@ -14,7 +14,9 @@ import { beginMenuDrag, useMenuTrigger } from '@/lib/menuDrag'
 import { Folder, MessageSquare, Plus, Search, SlidersHorizontal, Trash2 } from '@/components/snow/icons'
 import ProjectInstructionsModal from './ProjectInstructionsModal'
 import GlassSegmented from '@/components/ui/GlassSegmented'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePullRefresh } from '@/lib/usePullRefresh'
+import PullIndicator from '@/components/ui/PullIndicator'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -35,6 +37,8 @@ import { conversationsApi } from '@/api/conversations'
 /** 搜尋舊對話：打字後停多久才查（毫秒）、最多列幾筆 */
 const SEARCH_DEBOUNCE_MS = 250
 const SEARCH_PAGE_SIZE = 50
+/** 下拉重新整理：小 AI 至少想這麼久（毫秒），載太快時才看得到 */
+const PULL_MIN_MS = 600
 import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 import { OPEN_SEARCH_EVENT } from '@/features/chat/hooks/useChatHotkeys'
 
@@ -57,6 +61,9 @@ interface ChatSidebarProps {
     createConvInFolder: (folderName: string, e: React.MouseEvent) => void
     handleDeleteFolder: (folderName: string, e: React.MouseEvent) => void
     handleOpenMenu: (e: React.MouseEvent, convId: string) => void
+    /** 手機往左滑出的按鈕：重新命名、刪除 */
+    handleRenameConversation: (convId: string) => void
+    handleDeleteConversation: (convId: string, e: React.MouseEvent) => void
     closeMenu: () => void
     setSelectedFolder: (folder: string | null) => void
     openNewFolderModal: () => void
@@ -78,6 +85,8 @@ export default function ChatSidebar({
     createConvInFolder,
     handleDeleteFolder,
     handleOpenMenu,
+    handleRenameConversation,
+    handleDeleteConversation,
     closeMenu,
     setSelectedFolder,
     openNewFolderModal,
@@ -160,9 +169,17 @@ export default function ChatSidebar({
             pressProps={pressHandlers(conv.id)}
             onSelect={() => { if (consumeLongPress()) return; selectConversation(conv) }}
             menuButtonProps={menuButtonProps(conv.id)}
+            swipe={desktop ? undefined : { onRename: () => handleRenameConversation(conv.id), onDelete: (e) => handleDeleteConversation(conv.id, e) }}
         />
     )
     const listScrollRef = useScrollFade()
+    // 手機：一般對話清單在最上面時往下拉＝重新載入清單（載太快時至少讓小 AI 想一下，不然一閃就沒了）
+    const pull = usePullRefresh(!desktop, () => Promise.all([
+        conversationsApi.list().then((r) => useChatStore.getState().setConversations(r.data)),
+        new Promise((done) => window.setTimeout(done, PULL_MIN_MS)),
+    ]))
+    const pullRef = pull.ref
+    const generalListRef = useCallback((el: HTMLDivElement | null) => { listScrollRef(el); pullRef(el) }, [listScrollRef, pullRef])
 
     // 搜尋舊對話：按清單標題右邊的放大鏡 → 標題那一列換成搜尋欄；打字後停一下才查（標題或訊息內容）
     const [searching, setSearching] = useState(false)
@@ -334,7 +351,8 @@ export default function ChatSidebar({
                                     </Tooltip>
                                 </div>
                             )}
-                            <div ref={listScrollRef} className="glass-scroll relative lens-list flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
+                            {!desktop && <PullIndicator distance={pull.distance} state={pull.state} />}
+                            <div ref={generalListRef} className="glass-scroll relative lens-list flex-1 min-h-0 -mx-4 px-4 pb-[var(--sp-8)] space-y-0.5">
                                 <ListLens watch={`${selectedFolder ?? ''}|${currentConversationId ?? ''}`} />
                                 {(() => {
                                     const note = (text: string) => <p className="text-text-secondary text-[length:var(--fs-13)] py-3 px-[var(--sp-10)]">{text}</p>

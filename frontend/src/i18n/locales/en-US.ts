@@ -144,6 +144,14 @@ export default {
     // Chat
     chat: {
         emptyGreeting: 'What are you working on today?',
+        /** 首頁標題：依時段（lib/dayPart） */
+        greet: {
+            morning: 'Good morning. What are you working on?',
+            noon: 'Good afternoon. What are you working on?',
+            afternoon: 'Good afternoon. What are you working on?',
+            evening: 'Good evening. What are you working on?',
+            late: 'Working late? What do you need?',
+        },
         emptyNote: 'Answers come from the model on this server. Chat history stays inside your company.',
         projectEmptyTitle: 'Pick a project folder',
         projectEmptyNote: 'Project chats answer only from the checked files in a folder. Pick one on the left or create a new one.',
@@ -1244,6 +1252,7 @@ export default {
             newInFolder: 'New conversation in this folder',
             deleteFolder: 'Delete folder and its contents',
             answering: 'Answering',
+            refreshing: 'Refreshing chats',
         },
         message: {
             copy: 'Copy',
