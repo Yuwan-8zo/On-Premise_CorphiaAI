@@ -5,7 +5,7 @@ import { MQ_DESKTOP, useMediaQuery } from '@/lib/useMediaQuery'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import GlassDock from '@/components/ui/GlassDock'
-import { Check, ChevronDown, Edit2, Folder, Lock, PanelRight, RefreshCw, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
+import { Check, ChevronDown, Edit2, Folder, Lock, PanelRight, Share, ShieldCheck, Trash2 } from '@/components/snow/icons'
 import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
 import { SidebarIcon } from './ChatIcons'
@@ -57,7 +57,7 @@ export default function ChatHeader({
     modelDropdownOpen, setModelDropdownOpen,
     isModelLoading, setIsModelLoading,
     selectedModel, setSelectedModel,
-    availableModels, setAvailableModels,
+    availableModels,
     currentConversation,
     handleShareConversation, handleUnshareConversation, handleRenameConversation,
     handleMoveToProject, handleVerifyChain, handleDeleteConversation
@@ -157,10 +157,12 @@ export default function ChatHeader({
                                 <motion.div
                                     key="model-menu"
                                     {...popIn}
-                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-2"
+                                    // 圓角和上面的模型膠囊按鈕一樣（--grp-r 是按鈕群組的圓角，選單在群組裡面直接繼承）；
+                                    // 裡面的列＝圓角－內距（同心）。不用 LensMenu 依列高自動算的大圓角
+                                    className="model-menu absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-[var(--sp-8)]"
                                     style={phoneMenuBox ?? undefined}
                                 >
-                                    <LensMenu className="">
+                                    <LensMenu className="" fitCard={false}>
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
@@ -203,27 +205,7 @@ export default function ChatHeader({
                                             })
                                         )}
                                     </div>
-                                    
-                                    <div className="mt-2 pt-2 border-t border-[var(--paper-line)]">
-                                        <button 
-                                            onClick={async () => {
-                                                if (isModelLoading) return;
-                                                try {
-                                                    setIsModelLoading(true);
-                                                    const res = await modelsApi.refreshModels();
-                                                    setAvailableModels(res.models);
-                                                } catch (err) {
-                                                    console.error('重新掃描失敗', err);
-                                                } finally {
-                                                    setIsModelLoading(false);
-                                                }
-                                            }}
-                                            className="w-full text-left px-4 py-3 rounded-full flex items-center gap-3 transition-colors  text-text-secondary group"
-                                        >
-                                            <RefreshCw className="w-5 h-5 group-active:rotate-180 transition-transform duration-300" />
-                                            <span className="font-semibold text-[length:var(--fs-14)]">{t('ui.header.scanModels')}</span>
-                                        </button>
-                                    </div>
+                                    {/* 以前最下面有「掃描最新模型庫…」：使用者要求拿掉；要重新掃描到後台「模型」頁 */}
                                     </LensMenu>
                                 </motion.div>
                         )}

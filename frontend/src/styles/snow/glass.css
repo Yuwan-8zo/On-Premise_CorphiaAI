@@ -153,6 +153,13 @@ html:not(.dark) .paper .glass-field {
   --grp-btn: var(--top-in);
   --grp-pad: var(--dock-pad);
 }
+/* 模型選單（ChatHeader）：卡片圓角＝上面膠囊按鈕的圓角；裡面的列＝卡片圓角－內距 8（同心，最小 4） */
+.btn-group .model-menu.paper {
+  border-radius: var(--grp-r) !important;
+  --card-inner-r: max(var(--r-4), calc(var(--grp-r) - var(--sp-8)));
+}
+/* 說明文字（大小・量化・載入狀態）優先在標點換行，不會剩「分鐘」兩個字掉到下一行 */
+.btn-group .model-menu .model-row-sub { word-break: keep-all; text-wrap: balance; }
 
 /* 深色模式：品牌色（古銅）直接當文字太暗，對比不到 3。只在「文字」用途提亮（混 40% 白），底色、按鈕不變 */
 html.dark .text-accent,
