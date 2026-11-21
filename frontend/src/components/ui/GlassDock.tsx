@@ -35,7 +35,7 @@ interface Props {
 }
 
 // 尺寸都在 styles/tokens.css 的 --dock-*（不寫死）；凸出量、同心圓角、外擴量由它們算
-const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h'] as const
+const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h', '--sp-16'] as const
 const LONG_PRESS_MS = LENS_CFG.pressWait
 
 export default function GlassDock({ items, className = '', 'aria-label': ariaLabelProp }: Props) {
@@ -58,12 +58,23 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     // 尺寸（窄：配合頂部列；寬：照規範）
     const px = useCssPx(DOCK_VARS)
     const SHELL_N = px['--dock-n'], BTN_N = px['--dock-btn'], GAP_N = px['--dock-gap'], PAD = px['--dock-pad']
-    const SHELL_W = px['--dock-w'], R_WIDE = px['--dock-r'], ROW_W = px['--dock-row-w'], ROW_H = px['--dock-row-h']
+    const SHELL_W = px['--dock-w'], R_WIDE = px['--dock-r'], ROW_W = px['--dock-row-w'], ROW_H_SPEC = px['--dock-row-h'], EDGE = px['--sp-16']
     // 放大鏡＝圓角方形（寬高接近 1：1，四邊留直線段）
     const LENS_W = px['--dock-lens-w'], LENS_H = px['--dock-lens-h']
     const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（四邊一樣，同心）
     const LENS_R = R_WIDE + LENS_OUT // 同心：外殼圓角＋凸出量
     const GROW_OUT = R_WIDE - SHELL_N / 2 // 同心放大：外殼往上、往右外擴，右上角圓弧和圓鈕同一個圓心
+    // 長按展開的每一列高度：規範 60；畫面矮（平板橫放、分割畫面）放不下時整列一起縮，最小＝圓鈕高，
+    // 不然最下面的「驗證」「刪除」會超出畫面底部
+    const [viewH, setViewH] = useState(() => (typeof window === 'undefined' ? 0 : window.innerHeight))
+    useEffect(() => {
+        const onResize = () => setViewH(window.innerHeight)
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
+    const dockTop = wrapRef.current?.getBoundingClientRect().top ?? 0
+    const rowsAll = items.length + 1
+    const ROW_H = Math.max(BTN_N, Math.min(ROW_H_SPEC, (viewH - dockTop + GROW_OUT - EDGE - PAD * 2) / rowsAll))
     // 肩的遮罩（長邊＝鏡片高、短邊＝鏡片寬）
     const DOCK_WALL = useMemo(() => shoulderMask(LENS_H, LENS_W, LENS_OUT, SHELL_W, true, LENS_R), [LENS_H, LENS_W, LENS_OUT, SHELL_W, LENS_R])
 
