@@ -9,6 +9,8 @@ interface FloatingInputProps extends InputHTMLAttributes<HTMLInputElement> {
     error?: string
     /** 密碼欄按了顯示／隱藏密碼（小 AI 會跟著偷看） */
     onRevealChange?: (visible: boolean) => void
+    /** 錯誤只標紅框、不在下方寫字（登入頁：錯誤原因由小 AI 的對話泡泡說明） */
+    hideErrorText?: boolean
 }
 
 export default function FloatingInput({
@@ -22,6 +24,7 @@ export default function FloatingInput({
     onFocus,
     onBlur,
     onRevealChange,
+    hideErrorText = false,
     ...props
 }: FloatingInputProps) {
     const isFilled = Boolean(value && value.toString().length > 0)
@@ -47,6 +50,7 @@ export default function FloatingInput({
                 }}
                 className={`w-full px-5 py-3.5 rounded-full bg-transparent border-0 text-text-primary text-[length:var(--fs-15)] outline-none placeholder:text-transparent ${isPasswordType && isFilled ? 'pr-12' : ''} ${className || ''}`}
                 placeholder={label}
+                aria-invalid={error ? true : undefined}
                 {...props}
             />
 
@@ -119,7 +123,7 @@ export default function FloatingInput({
                 <span className="relative z-[3]">{label}</span>
             </motion.label>
 
-            {error && (
+            {error && !hideErrorText && (
                 /* 錯誤訊息放在輸入框正下方（Footnote 13／18），不擠進框裡蓋到內容 */
                 <div className="absolute left-5 right-5 top-full mt-1.5 pointer-events-none z-10">
                     <span className="block text-[length:var(--fs-13)] leading-[var(--lh-18)] font-medium text-[var(--danger-ink)] truncate">{error}</span>

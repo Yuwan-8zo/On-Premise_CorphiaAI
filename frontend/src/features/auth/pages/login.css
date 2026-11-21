@@ -52,3 +52,14 @@
   .login-start { opacity: 1; transform: none; animation: none; }
   .login-card.is-shake { animation: none; }
 }
+
+/* 出錯時：只有大卡片的邊緣變紅（紅色光邊＋外圈紅色細框），底色不變（使用者要求）；
+   錯誤原因由小 AI 的泡泡說；改了內容錯誤消失就變回來 */
+.login-card {
+  transition: box-shadow 0.3s;
+}
+/* 紅色跟錯誤字（輸入框標籤、小 AI 的錯誤泡泡）同一個顏色 --danger-ink（使用者要求） */
+.login-card.has-error {
+  --rimC: var(--danger-ink);
+  box-shadow: var(--shadow-paper), 0 0 0 1.5px var(--danger-ink);
+}

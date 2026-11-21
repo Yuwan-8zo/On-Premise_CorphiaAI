@@ -30,7 +30,7 @@ import './login.css'
 const EXPAND = { duration: 0.32, ease: EASE_DECEL }
 
 /** 對話泡泡停多久（毫秒） */
-const SAY_MS = { hello: 1800, noPeek: 1500, peek: 1100, tickle: 1100, result: 1800, retry: 1500 }
+const SAY_MS = { hello: 1800, noPeek: 1500, peek: 1100, tickle: 1100, result: 1800 }
 /** 皺眉多久後回到待命 */
 const SAD_MS = 1500
 
@@ -107,7 +107,9 @@ export default function Login() {
             if (!ok) {
                 setMood('sad')
                 shakeCard()
-                speak(t('auth.mascotRetry'), SAY_MS.retry)
+                // 錯誤原因由小 AI 的泡泡說（下面的 errorText），先把正在講的話收掉
+                clearTimeout(sayTimer.current)
+                setSay(null)
                 sadTimer.current = window.setTimeout(() => setMood('idle'), SAD_MS)
                 return
             }
@@ -121,6 +123,9 @@ export default function Login() {
         },
     })
     const isRegister = form.tab === 'register'
+    // 目前的錯誤（欄位沒填、密碼錯、尚未註冊…）：不寫在輸入框下方，由小 AI 說；卡片邊緣同時變紅。改了內容錯誤消失就收起來
+    // 好幾欄都有錯（例如信箱、密碼都沒填）就一行一個，一起說
+    const errorText = Object.values(form.fieldErrors).filter(Boolean).join('\n') || null
 
     // ── 輸入框 → 小 AI 的表情 ──
     const onEmailFocus = (e: SyntheticEvent<HTMLInputElement>) => {
@@ -228,7 +233,8 @@ export default function Login() {
                         mood={mood}
                         peek={!!(pwField && revealed[pwField])}
                         look={look}
-                        say={say}
+                        say={say || errorText}
+                        sayTone={!say && errorText ? 'error' : 'normal'}
                         label={t('auth.mascotName')}
                         onPoke={() => speak(t('auth.mascotTickle'), SAY_MS.tickle)}
                     />
@@ -244,7 +250,7 @@ export default function Login() {
                             form.submit(e).catch(() => undefined)
                         }}
                         noValidate
-                        className="login-card w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className={`login-card${errorText ? ' has-error' : ''} w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20`}
                     >
                         <GlassSegmented
                             className="shrink-0 h-[var(--sz-52)]"
@@ -275,6 +281,7 @@ export default function Login() {
                                 required
                                 label={t('auth.account')}
                                 error={form.fieldErrors.email}
+                                hideErrorText
                             />
                         </div>
 
@@ -291,6 +298,7 @@ export default function Login() {
                                 required
                                 label={t('auth.password')}
                                 error={form.fieldErrors.password}
+                                hideErrorText
                             />
                         </div>
 
@@ -327,6 +335,7 @@ export default function Login() {
                                     label={t('auth.confirmPassword')}
                                     tabIndex={isRegister ? 0 : -1}
                                     error={form.fieldErrors.confirmPassword}
+                                    hideErrorText
                                 />
                             </div>
                         </motion.div>

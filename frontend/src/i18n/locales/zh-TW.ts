@@ -126,7 +126,6 @@ export default {
         mascotTickle: '嘿嘿，好癢',
         mascotWelcome: '歡迎回來！',
         mascotRegistered: '帳號建立好了！',
-        mascotRetry: '再試一次？',
     },
 
     // 對話

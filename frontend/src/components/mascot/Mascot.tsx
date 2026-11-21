@@ -48,6 +48,8 @@ interface MascotProps {
     coverStyle?: 'eyes' | 'hands'
     /** 對話泡泡的文字；null 或空字串＝收起來 */
     say?: string | null
+    /** 泡泡的語氣：error＝錯誤說明（紅字） */
+    sayTone?: 'normal' | 'error'
     /** 給螢幕閱讀器的名稱 */
     label: string
     /** 被戳了一下（待命時點它） */
@@ -70,7 +72,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 const toMs = (v: string) => v.split(',').map((s) => (s.trim().endsWith('ms') ? Number.parseFloat(s) : Number.parseFloat(s) * 1000) || 0)
 
 const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
-    { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, label, onPoke, className = '' },
+    { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, sayTone = 'normal', label, onPoke, className = '' },
     ref,
 ) {
     const rootRef = useRef<HTMLButtonElement>(null)
@@ -228,7 +230,7 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
                     <span className="m-hand r" />
                 </div>
             </div>
-            <div className={`m-say${say ? ' on' : ''}`} aria-live="polite">{bubble}</div>
+            <div className={`m-say${say ? ' on' : ''}${sayTone === 'error' ? ' is-error' : ''}`} aria-live="polite">{bubble}</div>
         </button>
     )
 })
