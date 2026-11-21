@@ -68,7 +68,7 @@ const AIAvatar = ({ isStreaming }: { isStreaming: boolean }) => (
     <div className="relative w-9 h-9 flex-shrink-0 -mt-[var(--sp-3)]">
         {/* 【底層】動態 Thinking Icon — streaming 時可見 */}
         <span
-            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-[rgb(var(--color-ios-accent-light))] (var(--color-ios-accent-dark))]"
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 text-accent"
             style={{ opacity: isStreaming ? 1 : 0 }}
         >
             <CorphiaThinkingIcon className="w-6 h-6" />

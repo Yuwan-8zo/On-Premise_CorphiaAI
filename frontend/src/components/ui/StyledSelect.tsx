@@ -14,6 +14,7 @@ import LensMenu from '@/components/ui/LensMenu'
 import { AnimatePresence, motion } from '@/lib/gsapMotion'
 import { menuPop } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
+import { useKeepInViewport } from '@/lib/useKeepInViewport'
 import { useScrollFade } from '@/lib/useScrollFade'
 import { useMenuTrigger } from '@/lib/menuDrag'
 
@@ -67,6 +68,8 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
 
     // 點外面、按 Esc 關閉
     useDismiss(open, () => setOpen(false), [btnRef, menuRef])
+    // 選單比按鈕寬（長選項）時，靠右的按鈕會讓選單超出畫面右邊：量完自己挪進來
+    useKeepInViewport(menuRef, open && pos)
 
     return (
         <div className={`relative ${className}`}>

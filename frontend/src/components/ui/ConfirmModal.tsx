@@ -7,6 +7,7 @@ export const ConfirmModal: React.FC = () => {
     const { t } = useTranslation()
     const { confirmConfig, closeConfirm } = useUIStore()
     const [isProcessing, setIsProcessing] = useState(false)
+    const danger = (confirmConfig?.tone ?? 'danger') === 'danger'
 
     const handleConfirm = async () => {
         if (!confirmConfig) return
@@ -31,19 +32,22 @@ export const ConfirmModal: React.FC = () => {
             {confirmConfig && (
                 <>
                     <h3 className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>
-                    <p className="dialog-body">{confirmConfig.hint ?? t('common.confirmHint', '此動作無法復原。')}</p>
+                    {/* 說明：破壞性動作沒給說明時預設「此動作無法復原」；可以重來的動作不嚇人 */}
+                    {(confirmConfig.hint ?? (danger ? t('common.confirmHint', '此動作無法復原。') : '')) && (
+                        <p className="dialog-body">{confirmConfig.hint ?? t('common.confirmHint', '此動作無法復原。')}</p>
+                    )}
                     <div className="dialog-actions">
                         <button onClick={closeConfirm} disabled={isProcessing} className="btn btn-lg btn-secondary">
                             {t('common.cancel')}
                         </button>
-                        <button onClick={handleConfirm} disabled={isProcessing} className="btn btn-lg btn-danger-solid">
+                        <button onClick={handleConfirm} disabled={isProcessing} className={`btn btn-lg ${danger ? 'btn-danger-solid' : 'btn-primary'}`}>
                             {isProcessing && (
                                 <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                 </svg>
                             )}
-                            {t('common.confirm')}
+                            {confirmConfig.confirmLabel ?? t('common.confirm')}
                         </button>
                     </div>
                 </>

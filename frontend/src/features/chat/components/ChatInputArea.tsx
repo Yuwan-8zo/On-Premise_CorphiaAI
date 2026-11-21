@@ -418,7 +418,7 @@ export default function ChatInputArea({
                                     <button
                                         type="button"
                                         onClick={() => setIsRecording(true)}
-                                        disabled={isConnecting || isUploading}
+                                        disabled={isConnecting || isUploading || !llmReady}
                                         className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
                                         aria-label={t('chat.voice.startRecording')}
                                     >

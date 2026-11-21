@@ -24,11 +24,18 @@ type ThemePreference = 'system' | 'light' | 'dark'
 export type AccentColorType = 'blue' | 'purple' | 'pink' | 'orange' | 'green'
 const ACCENT_KEYS: AccentColorType[] = ['blue', 'purple', 'pink', 'orange', 'green']
 
+/** 確認框的外觀：danger＝刪除這類回不去的動作（紅色按鈕，沒給說明時預設「此動作無法復原」）；
+ *  default＝可以重來的動作（切換模型、強制登出…）：一般按鈕、不顯示「無法復原」 */
+export type ConfirmTone = 'danger' | 'default'
+
 interface ConfirmConfig {
     message: string
     onConfirm: () => void | Promise<void>
-    /** 標題下的補充說明：不給＝預設「此動作無法復原」；可以復原的動作傳自己的說明 */
+    /** 標題下的補充說明：不給＝依 tone（danger 預設「此動作無法復原」，default 不顯示） */
     hint?: string
+    tone?: ConfirmTone
+    /** 確認鈕的文字（不給＝「確認」） */
+    confirmLabel?: string
 }
 
 interface UIState {
@@ -57,7 +64,7 @@ interface UIState {
     setSidebarOpen: (open: boolean) => void
     toggleSidebar: () => void
     setSidebarWidth: (width: number) => void
-    showConfirm: (message: string, onConfirm: () => void | Promise<void>, hint?: string) => void
+    showConfirm: (message: string, onConfirm: () => void | Promise<void>, hint?: string, opts?: { tone?: ConfirmTone; confirmLabel?: string }) => void
     closeConfirm: () => void
     isSettingsOpen: boolean
     setSettingsOpen: (open: boolean) => void
@@ -143,7 +150,7 @@ export const useUIStore = create<UIState>()(
 
             // 確認彈窗
             confirmConfig: null,
-            showConfirm: (message, onConfirm, hint) => set({ confirmConfig: { message, onConfirm, hint } }),
+            showConfirm: (message, onConfirm, hint, opts) => set({ confirmConfig: { message, onConfirm, hint, ...opts } }),
             closeConfirm: () => set({ confirmConfig: null }),
 
             // 設定彈窗

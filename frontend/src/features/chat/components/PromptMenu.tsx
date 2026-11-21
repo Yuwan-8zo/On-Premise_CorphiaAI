@@ -6,6 +6,8 @@ import Tooltip from '@/components/ui/Tooltip'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import SearchField from '@/components/ui/SearchField'
 import { useDismiss } from '@/lib/useDismiss'
+import { useKeepInViewport } from '@/lib/useKeepInViewport'
+import { readPx } from '@/lib/cssVars'
 import LensMenu from '@/components/ui/LensMenu'
 import { useMenuTrigger } from '@/lib/menuDrag'
 import { MQ_HOVER } from '@/lib/useMediaQuery'
@@ -118,6 +120,8 @@ export function PromptMenu({ onSelect, disabled, inline = false, open, onOpenCha
 
     // 點擊其他地方、按 Esc 關閉選單
     useDismiss(isOpen, () => setIsOpen(false), [menuRef, popRef])
+    // 左右挪進畫面內（按鈕靠右、或畫面很窄時面板不會超出右邊）
+    useKeepInViewport(popRef, isVisible && pos)
 
     // 開啟時算出按鈕位置（視窗縮放時重算）
     useLayoutEffect(() => {
@@ -208,12 +212,13 @@ export function PromptMenu({ onSelect, disabled, inline = false, open, onOpenCha
                     ref={popRef}
                     role="dialog"
                     aria-label={t('chat.promptTemplatesTitle')}
-                    className="prompt-panel fixed w-[min(400px,calc(100vw-24px))] paper paper-solid !rounded-[var(--r-26)] p-[var(--sp-10)] transform-gpu z-[60] origin-bottom-left flex flex-col"
+                    className="prompt-panel fixed w-[min(var(--prompt-panel-w),calc(100vw-var(--sp-24)))] paper paper-solid !rounded-[var(--r-26)] p-[var(--sp-10)] transform-gpu z-[60] origin-bottom-left flex flex-col"
                     style={{
                         left: pos.left,
                         bottom: pos.bottom,
                         // 固定高度：切換分類時清單長短不同，面板也不會縮放，工具列不會在滑鼠底下跳動
-                        height: `min(460px, ${Math.max(240, window.innerHeight - pos.bottom - 24)}px)`,
+                        // 最高 --prompt-panel-max-h，但不超過按鈕上方剩下的空間（以前最少 240：橫拿的矮螢幕會超出畫面頂端）
+                        height: `min(var(--prompt-panel-max-h), ${Math.max(0, window.innerHeight - pos.bottom - readPx('--sp-24'))}px)`,
                         // 同全站選單：打開 0.25 秒從 96% 放大＋淡入，收起 0.15 秒（design-system 的 menuIn／menuOut／menuScale）
                         opacity: isAnimating ? 1 : 0,
                         transform: `scale(${isAnimating ? 1 : MOTION.menuScale})`,

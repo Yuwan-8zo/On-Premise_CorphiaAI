@@ -324,6 +324,9 @@
   --md-chart-bar: var(--sz-28);
   /* 日期區間選擇器（features/admin/components/DateRangePicker）：面板寬、每一天的格高 */
   --drp-w: calc(300 * var(--ui-unit));
+  /* 輸入框的提示詞面板（features/chat/components/PromptMenu）：寬、最高 */
+  --prompt-panel-w: calc(400 * var(--ui-unit));
+  --prompt-panel-max-h: calc(460 * var(--ui-unit));
   /* 等寬字型（鍵帽、程式碼以外需要等寬的地方）；鍵帽的高度 */
   --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
   --kbd-h: var(--sz-20);  /* 和設定列的文字行高一樣（20），放進列裡不會把列撐高 */

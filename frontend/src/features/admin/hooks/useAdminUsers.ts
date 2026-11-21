@@ -116,7 +116,7 @@ export function useAdminUsers() {
         showConfirm(i18n.t('ui.users.confirmForceLogout', { name: item.name }), async () => {
             if (await adminApi.forceLogout(item.id)) toast.success(i18n.t('ui.users.forcedOut', { name: item.name }))
             else toast.error(i18n.t('ui.users.forceLogoutFail'))
-        })
+        }, '')
     }
 
     return {
