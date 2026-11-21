@@ -1203,6 +1203,9 @@ export default {
     },
     // 介面字串（稽核時從元件裡寫死的文字搬過來）
     ui: {
+        conn2: {
+            restored: 'Reconnected. You switched chats, so your message wasn\'t sent; it\'s back in the input box',
+        },
         image: {
             zoom: 'View larger: {{alt}}',
         },

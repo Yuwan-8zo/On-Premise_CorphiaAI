@@ -16,7 +16,7 @@ import { useChatStore } from '@/store/chatStore'
 import { getErrorMessage } from '@/lib/errors'
 import {
     ACTIVITY_WRITE_MS, IDLE_WARN_MS, LAST_ACTIVE_KEY, LOCKED_KEY,
-    isLocked, markActive, msUntilLock, setLocked as persistLocked,
+    expiredSinceLastVisit, isLocked, markActive, msUntilLock, setLocked as persistLocked,
 } from '@/lib/idleLock'
 
 const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const
@@ -26,7 +26,13 @@ const TICK_MS = 1000
 export default function IdleLock() {
     const { t } = useTranslation()
     const user = useAuthStore((s) => s.user)
-    const [locked, setLocked] = useState(isLocked)
+    // 一打開就要判斷：之前就鎖著，或上次操作到現在已經超過鎖定時間（關掉分頁再開不能跳過鎖定）
+    const [locked, setLocked] = useState(() => {
+        if (isLocked()) return true
+        if (!expiredSinceLastVisit()) return false
+        persistLocked(true)
+        return true
+    })
     const [left, setLeft] = useState(Infinity)
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)

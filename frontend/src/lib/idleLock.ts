@@ -23,7 +23,20 @@ function write(key: string, value: string | null) {
     } catch { /* 無痕模式或被封鎖：只在這一頁有效 */ }
 }
 
-let memoryLastActive = Date.now()
+/** 這一頁自己記的最後活動時間（0＝這一頁還沒記過，以 localStorage 裡上次的為準） */
+let memoryLastActive = 0
+
+/** 上次（可能是已經關掉的分頁）記下的最後活動時間；沒有紀錄回傳 null */
+export function storedLastActive(): number | null {
+    const v = Number(read(LAST_ACTIVE_KEY))
+    return read(LAST_ACTIVE_KEY) !== null && Number.isFinite(v) && v > 0 ? v : null
+}
+
+/** 打開網頁時：上次的最後活動已經超過鎖定時間（例如關掉分頁、隔天再開）→ 一進來就該鎖 */
+export function expiredSinceLastVisit(now = Date.now()): boolean {
+    const last = storedLastActive()
+    return last !== null && now - last >= IDLE_LOCK_MS
+}
 
 export function lastActive(): number {
     const v = Number(read(LAST_ACTIVE_KEY))

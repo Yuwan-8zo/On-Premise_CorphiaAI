@@ -16,7 +16,7 @@ const RECONNECTED_MS = 2400
 export default function ConnectionBanner() {
     const { t } = useTranslation()
     const offline = useSystemStore((s) => s.offline)
-    const queued = useOutboxStore((s) => s.text)
+    const queued = useOutboxStore((s) => s.entry)
     const clear = useOutboxStore((s) => s.clear)
     const [back, setBack] = useState(false)
     const wasOffline = useRef(false)

@@ -371,7 +371,8 @@ export function useChatLogic() {
         haptic()
         // 連不上主機：先存起來，恢復連線後自動送出（頂端的斷線提示會說，也可以取消）
         if (useSystemStore.getState().offline) {
-            useOutboxStore.getState().put(text)
+            const conv = useChatStore.getState().currentConversation
+            useOutboxStore.getState().put({ text, conversationId: conv?.id ?? null, mode: chatMode })
             return
         }
 
@@ -411,14 +412,26 @@ export function useChatLogic() {
         await askAI(conversationId, text, false, research)
     }
 
-    // 恢復連線 → 把斷線時存起來的提問送出去
+    // 恢復連線 → 把斷線時存起來的提問送出去。只送回原本的對話：
+    // 使用者在斷線期間換到別的對話或模式，就不自動送（會送錯地方），改放回輸入框讓他自己決定
     const sendQueued = useStableCallback(() => {
         const queued = useOutboxStore.getState().take()
-        if (queued) void handleSend(queued)
+        if (!queued) return
+        const conv = useChatStore.getState().currentConversation
+        if ((conv?.id ?? null) === queued.conversationId && chatMode === queued.mode) {
+            void handleSend(queued.text)
+            return
+        }
+        setInput(queued.text)
+        toast.info(t('ui.conn2.restored'))
     })
     useEffect(() => useSystemStore.subscribe((s, prev) => {
         if (prev.offline && !s.offline) sendQueued()
     }), [sendQueued])
+    // 在別的頁面恢復連線後才回到聊天頁：一進來就檢查有沒有還沒送的
+    useEffect(() => {
+        if (!useSystemStore.getState().offline) sendQueued()
+    }, [sendQueued])
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
     const handleResubmit = useStableCallback(async (messageId: string, editedContent: string, webSearch: boolean = false) => {
