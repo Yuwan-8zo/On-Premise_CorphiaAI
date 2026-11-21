@@ -47,9 +47,9 @@ async def run():
         guard_block = verdict in (guard_model.INJECTION, guard_model.SECRET)
         blocked_before = rule or sem.decision == "block"
         blocked_after = blocked_before or (sem.decision == "review" and guard_block)
-        rows.append(dict(類別=label, 句子=text, 規則=rule, 語意判斷=sem.decision,
-                         資安模型=verdict or "拿不準", 資安模型秒數=round(guard_s, 2),
-                         只靠資安模型=guard_block, 規則加語意=blocked_before, 規則加語意加資安模型=blocked_after))
+        rows.append({"類別": label, "句子": text, "規則": rule, "語意判斷": sem.decision,
+                     "資安模型": verdict or "拿不準", "資安模型秒數": round(guard_s, 2),
+                     "只靠資安模型": guard_block, "規則加語意": blocked_before, "規則加語意加資安模型": blocked_after})
 
     pos = [r for r in rows if r["類別"] != "正常"]
     neg = [r for r in rows if r["類別"] == "正常"]

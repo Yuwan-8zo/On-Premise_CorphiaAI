@@ -34,49 +34,62 @@ def run_promptfoo() -> None:
     subprocess.run(cmd, cwd=HERE, env=env, check=False)
 
 
+def _verdict(output: str) -> str:
+    """閘道回應的開頭 → 攔阻／放行／錯誤"""
+    if output.startswith("[攔阻]"):
+        return "攔阻"
+    if output.startswith("[放行]"):
+        return "放行"
+    return "錯誤"
+
+
+def _row(r: dict) -> dict:
+    """promptfoo 的一筆結果 → 報告的一列"""
+    case = r.get("testCase") or {}
+    meta = case.get("metadata") or r.get("metadata") or {}
+    prompt = (r.get("vars") or {}).get("prompt") or case.get("vars", {}).get("prompt", "")
+    response = r.get("response") or {}
+    output = str(response.get("output") or response.get("error") or "")
+    return {
+        "類別": meta.get("category", ""),
+        "種類": "攻擊" if meta.get("kind") == "attack" else "正常",
+        "題目": prompt,
+        "結果": _verdict(output),
+        "符合預期": bool(r.get("success")),
+        "閘道回應": output[:200],
+    }
+
+
+def _print_list(title: str, items: list[str]) -> None:
+    if items:
+        print(title)
+        for m in items:
+            print("  ", m)
+
+
+def _print_summary(rows: list[dict]) -> None:
+    atk = [r for r in rows if r["種類"] == "攻擊"]
+    nor = [r for r in rows if r["種類"] == "正常"]
+    by_cat = defaultdict(lambda: [0, 0])
+    for r in atk:
+        by_cat[r["類別"]][0] += r["結果"] == "攔阻"
+        by_cat[r["類別"]][1] += 1
+    blocked = sum(r["結果"] == "攔阻" for r in atk)
+    wrong = sum(r["結果"] != "放行" for r in nor)
+    print()
+    print(f"攻擊 {len(atk)} 題：攔下 {blocked}（{blocked / max(1, len(atk)):.1%}）")
+    for cat, (ok, n) in sorted(by_cat.items()):
+        print(f"  {cat}：{ok}/{n}")
+    print(f"正常 {len(nor)} 題：誤擋 {wrong}（{wrong / max(1, len(nor)):.1%}）")
+    _print_list("沒擋下的攻擊：", [r["題目"] for r in atk if r["結果"] != "攔阻"])
+    _print_list("被誤擋的正常提問：", [r["題目"] for r in nor if r["結果"] != "放行"])
+
+
 def summarize() -> None:
     with open(OUT_JSON, encoding="utf-8") as f:
         data = json.load(f)
-    results = data.get("results", {}).get("results", [])
-    rows = []
-    for r in results:
-        meta = (r.get("testCase") or {}).get("metadata") or r.get("metadata") or {}
-        prompt = (r.get("vars") or {}).get("prompt") or (r.get("testCase") or {}).get("vars", {}).get("prompt", "")
-        output = (r.get("response") or {}).get("output") or (r.get("response") or {}).get("error") or ""
-        rows.append({
-            "類別": meta.get("category", ""),
-            "種類": "攻擊" if meta.get("kind") == "attack" else "正常",
-            "題目": prompt,
-            "結果": "攔阻" if str(output).startswith("[攔阻]") else ("放行" if str(output).startswith("[放行]") else "錯誤"),
-            "符合預期": bool(r.get("success")),
-            "閘道回應": str(output)[:200],
-        })
-
-    by = defaultdict(lambda: [0, 0])
-    for row in rows:
-        ok = row["結果"] == "攔阻" if row["種類"] == "攻擊" else row["結果"] == "放行"
-        by[(row["種類"], row["類別"])][0] += ok
-        by[(row["種類"], row["類別"])][1] += 1
-    atk = [r for r in rows if r["種類"] == "攻擊"]
-    nor = [r for r in rows if r["種類"] == "正常"]
-    blocked = sum(r["結果"] == "攔阻" for r in atk)
-    wrong = sum(r["結果"] != "放行" for r in nor)
-    print(f"\n攻擊 {len(atk)} 題：攔下 {blocked}（{blocked / max(1, len(atk)):.1%}）")
-    for (kind, cat), (ok, n) in sorted(by.items()):
-        if kind == "攻擊":
-            print(f"  {cat}：{ok}/{n}")
-    print(f"正常 {len(nor)} 題：誤擋 {wrong}（{wrong / max(1, len(nor)):.1%}）")
-    missed = [r["題目"] for r in atk if r["結果"] != "攔阻"]
-    if missed:
-        print("沒擋下的攻擊：")
-        for m in missed:
-            print("  ", m)
-    mis_normal = [r["題目"] for r in nor if r["結果"] != "放行"]
-    if mis_normal:
-        print("被誤擋的正常提問：")
-        for m in mis_normal:
-            print("  ", m)
-
+    rows = [_row(r) for r in data.get("results", {}).get("results", [])]
+    _print_summary(rows)
     os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
     with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

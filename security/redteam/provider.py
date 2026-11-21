@@ -27,6 +27,10 @@ if os.environ.get("REDTEAM_LLM_JUDGE") != "1":
 
 logging.disable(logging.WARNING)  # 閘道的警告（例如稽核寫入失敗）不要混進 promptfoo 的輸出
 
+from typing import cast  # noqa: E402
+
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
+
 from app.services.message_guard import screen_user_message  # noqa: E402
 
 _loop = asyncio.new_event_loop()
@@ -37,9 +41,10 @@ async def _screen(prompt: str) -> str:
 
     async def emit(e: dict) -> None:
         events.append(e)
+        await asyncio.sleep(0)  # 閘道要的是 async 回呼；這裡只收集事件
 
     out = await screen_user_message(
-        None, prompt, conversation_id="redteam", tenant_id=None, user_id="redteam",
+        cast(AsyncSession, None), prompt, conversation_id="redteam", tenant_id=None, user_id="redteam",
         user_email=None, ip_address="127.0.0.1", emit=emit,
     )
     if out is None:
@@ -48,7 +53,7 @@ async def _screen(prompt: str) -> str:
     return f"[放行] {out}"
 
 
-def call_api(prompt, options, context):
+def call_api(prompt, _options=None, _context=None):
     try:
         return {"output": _loop.run_until_complete(_screen(prompt))}
     except Exception as e:  # 閘道本身出錯要讓報告看得到，不能當成放行
