@@ -22,6 +22,11 @@
   border-radius: calc(var(--field-h) / 2);
 }
 
+/* 輸入框放大時往上長、蓋在訊息上：規範「會蓋在內容上的面板用不透明的底」，後面的字才不會透出來和輸入的字疊在一起（光邊照舊） */
+.glass-field.is-overlay {
+  background: var(--paper-solid);
+}
+
 /* 分段切換軌道：玻璃膠囊（範本 .grp 同材質），高度約 46 → 圓角 23 */
 .seg-track {
   background: transparent;

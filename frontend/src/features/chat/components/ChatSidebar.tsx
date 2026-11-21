@@ -243,7 +243,7 @@ export default function ChatSidebar({
             className={`${sidebarOpen 
                 ? 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-280)] translate-x-0' 
                 : 'w-[75vw] max-w-[var(--sz-260)] md:w-[var(--sz-72)] -translate-x-full md:translate-x-0'
-                } paper ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:relative h-[calc(100%-env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] md:pb-0 chat-side md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:ml-4`}
+                } paper ${sidebarOpen ? 'md:rounded-[var(--r-36)]' : 'rail-capsule md:rounded-[var(--r-36)]'} transition-[width,transform] duration-300 ease-apple shrink-0 flex flex-col overflow-hidden z-50 absolute md:left-0 md:top-0 [contain:layout_style] h-[calc(100%-env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] md:pb-0 chat-side md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:ml-4`}
         >
                         <div className="flex flex-col h-full min-h-0 w-full shrink-0">
             {/* 側邊欄頂部 Header (Logo + 收合按鈕) */}

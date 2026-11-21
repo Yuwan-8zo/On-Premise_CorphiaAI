@@ -148,6 +148,25 @@ describe('ChatInputArea：附加圖片', () => {
     expect(screen.queryByLabelText('chat.images.remove')).not.toBeInTheDocument()
   })
 
+  it('只附圖片、沒打字也能送出（以前送出鈕是停用的）', async () => {
+    pending.mockResolvedValue(['g'.repeat(32)])
+    const onImagesSent = vi.fn()
+    const handleSend = vi.fn()
+    render(<ChatInputArea {...makeProps({ input: '', onImagesSent, handleSend })} />)
+    await screen.findByText('chat.images.chip:{"n":1}')
+    const send = screen.getByLabelText('chat.sendMessage')
+    expect(send).not.toBeDisabled()
+    await userEvent.click(send)
+    expect(onImagesSent).toHaveBeenCalledWith(['g'.repeat(32)])
+    expect(handleSend).toHaveBeenCalled()
+  })
+
+  it('沒打字也沒附東西：送出鈕維持停用', async () => {
+    pending.mockResolvedValue([])
+    render(<ChatInputArea {...makeProps({ input: '' })} />)
+    expect(screen.getByLabelText('chat.sendMessage')).toBeDisabled()
+  })
+
   it('全新對話（還沒有編號）：先建立對話再附圖', async () => {
     attach.mockResolvedValue({ images: ['f'.repeat(32)], skipped: [] })
     const ensureConversation = vi.fn().mockResolvedValue('new-conv')

@@ -317,9 +317,10 @@ export default {
         promptEmpty: '找不到符合的模板',
         promptTemplatesTitle: '提示詞模板',
         moreActions: '更多功能',
-        images: { button: '附加圖片', chip: '{{n}} 張圖片', remove: '移除附加的圖片', alt: '附加的圖片 {{n}}', tooMany: '一則訊息最多附 {{max}} 張圖片', tooBig: '圖片太大（單張上限 {{max}} MB）', skipped: '這些檔案不是可以讀取的圖片，沒有附上：{{names}}', unavailable: '這台主機現在沒有看圖片的模型，AI 看不到你附的圖片' },
+        images: { defaultPromptOne: '請說明這張圖片的內容', defaultPromptMany: '請說明這 {{n}} 張圖片的內容', button: '附加圖片', chip: '{{n}} 張圖片', remove: '移除附加的圖片', alt: '附加的圖片 {{n}}', tooMany: '一則訊息最多附 {{max}} 張圖片', tooBig: '圖片太大（單張上限 {{max}} MB）', skipped: '這些檔案不是可以讀取的圖片，沒有附上：{{names}}', unavailable: '這台主機現在沒有看圖片的模型，AI 看不到你附的圖片' },
         research: { button: '深度研究', chip: '這一題做深度研究（會多查幾輪，比較久）', remove: '這一題不做深度研究' },
         attachFiles: {
+            defaultPrompt: '請整理附加檔案的重點',
             button: '附加檔案',
             sentLabel: '這一則附的檔案',
             dropHint: '放開即可附加到這一則訊息',

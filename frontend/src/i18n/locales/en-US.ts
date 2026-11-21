@@ -317,9 +317,10 @@ export default {
         promptEmpty: 'No matching templates',
         promptTemplatesTitle: 'Prompt templates',
         moreActions: 'More actions',
-        images: { button: 'Attach images', chip: '{{n}} image(s)', remove: 'Remove attached images', alt: 'Attached image {{n}}', tooMany: 'Up to {{max}} images per message', tooBig: 'Image too large (max {{max}} MB each)', skipped: 'These files are not readable images and were not attached: {{names}}', unavailable: 'This host has no image-reading model right now, so the AI cannot see your images' },
+        images: { defaultPromptOne: 'Please describe this image', defaultPromptMany: 'Please describe these {{n}} images', button: 'Attach images', chip: '{{n}} image(s)', remove: 'Remove attached images', alt: 'Attached image {{n}}', tooMany: 'Up to {{max}} images per message', tooBig: 'Image too large (max {{max}} MB each)', skipped: 'These files are not readable images and were not attached: {{names}}', unavailable: 'This host has no image-reading model right now, so the AI cannot see your images' },
         research: { button: 'Deep research', chip: 'Deep research for this question (more lookups, takes longer)', remove: 'No deep research for this question' },
         attachFiles: {
+            defaultPrompt: 'Please summarise the attached files',
             sentLabel: 'Files attached to this message',
             dropHint: 'Drop to attach to this message',
             button: 'Attach files',

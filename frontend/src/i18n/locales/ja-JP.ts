@@ -317,9 +317,10 @@ export default {
         promptEmpty: '該当するテンプレートがありません',
         promptTemplatesTitle: 'プロンプトテンプレート',
         moreActions: 'その他の機能',
-        images: { button: '画像を添付', chip: '画像 {{n}} 枚', remove: '添付した画像を削除', alt: '添付画像 {{n}}', tooMany: '1 件のメッセージに添付できる画像は {{max}} 枚までです', tooBig: '画像が大きすぎます（1 枚 {{max}} MB まで）', skipped: '次のファイルは読み取れる画像ではないため添付されませんでした：{{names}}', unavailable: 'このホストには現在、画像を読むモデルがないため、AI は添付画像を見ることができません' },
+        images: { defaultPromptOne: 'この画像の内容を説明してください', defaultPromptMany: 'この {{n}} 枚の画像の内容を説明してください', button: '画像を添付', chip: '画像 {{n}} 枚', remove: '添付した画像を削除', alt: '添付画像 {{n}}', tooMany: '1 件のメッセージに添付できる画像は {{max}} 枚までです', tooBig: '画像が大きすぎます（1 枚 {{max}} MB まで）', skipped: '次のファイルは読み取れる画像ではないため添付されませんでした：{{names}}', unavailable: 'このホストには現在、画像を読むモデルがないため、AI は添付画像を見ることができません' },
         research: { button: 'ディープリサーチ', chip: 'この質問はディープリサーチ（複数回調査するため時間がかかります）', remove: 'この質問ではディープリサーチをしない' },
         attachFiles: {
+            defaultPrompt: '添付ファイルの要点をまとめてください',
             sentLabel: 'このメッセージに添付したファイル',
             dropHint: 'ドロップしてこのメッセージに添付',
             button: 'ファイルを添付',
