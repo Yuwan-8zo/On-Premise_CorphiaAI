@@ -115,8 +115,13 @@ function DrawerBody({ log, onClose }: Readonly<{ log: AuditLogItem; onClose: () 
             copy: id && isLongId(id) ? id : undefined,
         })
     }
+    // 有些事件（AI 產出檔案、工具呼叫、內容過濾）後端只存使用者編號、沒存信箱：改顯示短編號，可複製完整的
+    const userId = log.user_id ?? ''
+    const userRow: AuditField = log.user_email
+        ? { key: '__user', label: t('admin.audit.detail.fields.account'), value: log.user_email }
+        : { key: '__user', label: t('admin.audit.detail.fields.userId'), value: shortId(userId), copy: isLongId(userId) ? userId : undefined }
     const actorRows: AuditField[] = [
-        { key: '__user', label: t('admin.audit.detail.fields.account'), value: log.user_email || '' },
+        userRow,
         { key: '__ip', label: t('admin.audit.table.ip'), value: describeIp(t, log.ip_address) },
         { key: '__ua', label: t('admin.audit.detail.fields.device'), value: describeUserAgent(log.user_agent) },
     ].filter((r) => r.value)

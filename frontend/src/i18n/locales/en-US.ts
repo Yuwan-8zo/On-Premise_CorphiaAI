@@ -908,6 +908,7 @@ export default {
                 fields: {
                     target: 'Target',
                     account: 'Account',
+                    userId: 'User ID',
                     device: 'Device / browser',
                     item: 'Item',
                     category: 'Category',

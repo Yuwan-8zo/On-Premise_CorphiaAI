@@ -908,6 +908,7 @@ export default {
                 fields: {
                     target: '對象',
                     account: '帳號',
+                    userId: '使用者編號',
                     device: '裝置／瀏覽器',
                     item: '項目',
                     category: '類別',
