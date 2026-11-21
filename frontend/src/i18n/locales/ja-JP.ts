@@ -136,6 +136,7 @@ export default {
         mascotTickle: 'えへへ、くすぐったい',
         mascotWelcome: 'おかえりなさい！',
         mascotRegistered: 'アカウントができました！',
+        mascotDockHello: 'ここにいるよ。お知らせがあったら伝えるね',
     },
 
     // 對話 (Chat)

@@ -24,6 +24,7 @@ const ComponentsTest = lazy(() => import('@/features/devtools/pages/ComponentsTe
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import SettingsModal from './components/settings/SettingsModal'
 import { ToastContainer } from './components/ui/Toast'
+import MascotDock from './components/mascot/MascotDock'
 import DesktopUpdateNotice from './components/desktop/DesktopUpdateNotice'
 
 // Protected Route Component
@@ -44,6 +45,8 @@ export default function App() {
         location.pathname === '/login' ||
         location.pathname.startsWith('/share/')
     const canUseAuthenticatedRedirect = isBootstrapped && isAuthenticated
+    // 登入後的頁面：小 AI 常駐右下角，系統通知由它說；登入頁、分享頁照舊用頂端的通知膠囊
+    const showMascotDock = canUseAuthenticatedRedirect && !isPublicRoute
 
     // ── 啟動時的 Token 復原流程 ──────────────────────────────────
     // 頁面重新整理後 accessToken 已從記憶體消失，
@@ -267,7 +270,7 @@ export default function App() {
             {/* 全域元件 */}
             <ConfirmModal />
             <SettingsModal />
-            <ToastContainer />
+            {showMascotDock ? <MascotDock /> : <ToastContainer />}
             <DesktopUpdateNotice />
         </BackendGate>
     )

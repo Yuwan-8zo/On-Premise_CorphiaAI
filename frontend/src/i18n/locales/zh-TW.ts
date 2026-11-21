@@ -136,6 +136,7 @@ export default {
         mascotTickle: '嘿嘿，好癢',
         mascotWelcome: '歡迎回來！',
         mascotRegistered: '帳號建立好了！',
+        mascotDockHello: '我在這裡，有消息會告訴你',
     },
 
     // 對話

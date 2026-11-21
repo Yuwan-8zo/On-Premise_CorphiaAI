@@ -136,6 +136,7 @@ export default {
         mascotTickle: 'Hehe, that tickles',
         mascotWelcome: 'Welcome back!',
         mascotRegistered: 'Account created!',
+        mascotDockHello: "I'm right here. I'll tell you when something comes up",
     },
 
     // Chat
