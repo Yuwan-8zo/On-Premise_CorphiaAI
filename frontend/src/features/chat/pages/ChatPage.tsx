@@ -1,7 +1,9 @@
 import { formatBytes } from '@/lib/formatBytes'
+import { slideFromX } from '@/lib/flipMotion'
+import { MQ_DESKTOP } from '@/lib/useMediaQuery'
 import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
 import { parseServerDate } from '@/lib/utils'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react'
 import { useScrollFade } from '@/lib/useScrollFade'
 
 import OnboardingTour from '@/components/onboarding/OnboardingTour'
@@ -61,6 +63,23 @@ export default function Chat() {
     // 每個帳號第一次進聊天頁（新註冊的帳號第一次登入）由小 AI 帶導覽；看過的標記每個帳號分開記（onboardingFlag）
     // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
     const onboardingReplayToken = useUIStore((s) => s.onboardingReplayToken)
+    // 側欄開合：聊天區已經一次排到新位置，這裡讓置中的內容（訊息、輸入框）從舊位置滑過去；
+    // 右上角的按鈕靠右對齊、位置本來就不變，所以不動 header。置中內容的位移＝側欄寬度變化的一半
+    //（佔位和側欄用同一組寬度 class；位移用量到的寬度算，不另外寫數字）
+    const mainRef = useRef<HTMLElement>(null)
+    const spacerRef = useRef<HTMLDivElement>(null)
+    const spacerW = useRef<number | null>(null)
+    const sidebarOpenNow = sidebarProps.sidebarOpen
+    useLayoutEffect(() => {
+        const main = mainRef.current, spacer = spacerRef.current
+        if (!main || !spacer) return
+        const w = spacer.offsetWidth
+        const prev = spacerW.current
+        spacerW.current = w
+        if (prev === null || !window.matchMedia(MQ_DESKTOP).matches) return
+        slideFromX(Array.from(main.children).filter((el) => el.tagName !== 'HEADER'), -(w - prev) / 2)
+    }, [sidebarOpenNow])
+
     const [showOnboarding, setShowOnboarding] = useState(false)
 
     const userId = useAuthStore((s) => s.user?.id)
@@ -107,9 +126,12 @@ export default function Chat() {
             <RegionBoundary name="sidebar" compact>
                 <ChatSidebar {...sidebarProps} />
             </RegionBoundary>
+            {/* 桌機：側欄浮在版面上，這個佔位一次切到新寬度（不跟著動畫一格一格變），
+                聊天區只重排一次，再用位移滑到新位置（見下面 useLayoutEffect）——以前側欄每一格變寬，整個聊天區跟著重排，收合時會卡 */}
+            <div ref={spacerRef} aria-hidden className={`hidden md:block shrink-0 md:my-4 md:ml-4 max-w-[var(--sz-260)] ${sidebarProps.sidebarOpen ? 'md:w-[var(--sz-280)]' : 'md:w-[var(--sz-72)]'}`} />
 
             {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
-            <main className={`flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10 ${panelOpen ? 'md:px-[var(--sp-16)]' : ''}`}>
+            <main ref={mainRef} className={`flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10 ${panelOpen ? 'md:px-[var(--sp-16)]' : ''}`}>
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 

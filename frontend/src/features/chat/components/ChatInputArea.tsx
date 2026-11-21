@@ -4,6 +4,8 @@ import ChatImage from './ChatImage'
 import { useChatImages } from '../hooks/useChatImages'
 import type { VisionStatus } from '@/api/chatImages'
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { morphTiming, reduceMotion } from '@/lib/flipMotion'
 import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
@@ -252,6 +254,31 @@ export default function ChatInputArea({
     // 輸入內容超過欄位最大高度（160）時，送出鈕左邊出現「放大」鈕；放大後欄位變高，方便編輯長文
     const [overflowing, setOverflowing] = useState(false)
     const [expanded, setExpanded] = useState(false)
+    // 放大時把輸入列的高度固定在放大前的高度：輸入框往上長、蓋在訊息上，訊息列表不用跟著重排
+    const rowRef = useRef<HTMLDivElement>(null)
+    const fieldRef = useRef<HTMLDivElement>(null)
+    const [rowLock, setRowLock] = useState<number | null>(null)
+    useEffect(() => { if (!expanded) setRowLock(null) }, [expanded])
+    /** 放大／縮小：只動 clip-path（露出、收回上緣），不動高度的過渡 */
+    const toggleExpanded = () => {
+        const row = rowRef.current, field = fieldRef.current
+        const focusInput = () => setTimeout(() => inputRef.current?.focus(), 0)
+        if (!row || !field || reduceMotion() || typeof field.animate !== 'function') {
+            setExpanded((v) => !v); focusInput(); return
+        }
+        const r = getComputedStyle(field).borderTopLeftRadius
+        if (!expanded) {
+            const before = field.offsetHeight
+            flushSync(() => { setRowLock(row.offsetHeight); setExpanded(true) })
+            const grow = field.offsetHeight - before
+            field.animate([{ clipPath: `inset(${grow}px 0 0 0 round ${r})` }, { clipPath: `inset(0 0 0 0 round ${r})` }], morphTiming())
+            focusInput()
+            return
+        }
+        const shrink = field.offsetHeight - (rowLock ?? field.offsetHeight)
+        const anim = field.animate([{ clipPath: `inset(0 0 0 0 round ${r})` }, { clipPath: `inset(${Math.max(0, shrink)}px 0 0 0 round ${r})` }], { ...morphTiming(), fill: 'forwards' })
+        anim.finished.then(() => { flushSync(() => setExpanded(false)); anim.cancel(); focusInput() }, () => undefined)
+    }
     useLayoutEffect(() => {
         const el = inputRef.current
         if (!el) return
@@ -300,7 +327,7 @@ export default function ChatInputArea({
                     </p>
                 )}
                 {/* Mobile RWD: tighter horizontal padding + min-w-0 so flex-1 children shrink */}
-                <div data-tour="chat-input" className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 w-full relative flex items-end gap-1.5 sm:gap-2 min-w-0">
+                <div ref={rowRef} data-tour="chat-input" className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 w-full relative flex items-end gap-1.5 sm:gap-2 min-w-0" style={rowLock !== null ? { height: rowLock } : undefined}>
                     {isRecording ? (
                         <div className="flex-1 mb-1">
                             <VoiceRecorder
@@ -313,7 +340,7 @@ export default function ChatInputArea({
                             />
                         </div>
                     ) : (
-                        <div className="relative flex-1 min-w-0 flex flex-col glass-field" {...dropHandlers}>
+                        <div ref={fieldRef} className={`relative flex-1 min-w-0 flex flex-col glass-field${rowLock !== null ? ' is-overlay' : ''}`} {...dropHandlers}>
                             {dragOver && (
                                 <div className="drop-hint drop-hint-field absolute" aria-hidden>
                                     <FileText />
@@ -414,7 +441,7 @@ export default function ChatInputArea({
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
-                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,var(--input-expanded-max))] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
+                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${expanded ? '!h-[min(55vh,var(--input-expanded-max))] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
                                     style={{ lineHeight: 'var(--input-lh)' }}
                                 />
 
@@ -435,7 +462,7 @@ export default function ChatInputArea({
                                 {!isStreaming && (overflowing || expanded) && (
                                     <button
                                         type="button"
-                                        onClick={() => { setExpanded((v) => !v); setTimeout(() => inputRef.current?.focus(), 0) }}
+                                        onClick={toggleExpanded}
                                         className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary"
                                         aria-label={expanded ? t('chat.collapseInput', '縮小輸入欄') : t('chat.expandInput', '放大輸入欄')}
                                         aria-pressed={expanded}

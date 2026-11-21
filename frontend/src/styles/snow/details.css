@@ -152,7 +152,8 @@ html:not(.dark) .dock-wrap {
   }
 }
 
-/* 側欄變形：寬高、位置和外框同步過渡 0.3 秒（減速），不做淡入淡出 */
+/* 側欄變形：寬高、位置和外框同步過渡 0.3 秒（減速），不做淡入淡出
+ *   側欄在桌機上浮在版面上（[contain:layout_style]），這些寬高變化只重排側欄自己，不會連聊天區一起重排 */
 .side-morph {
   transition:
     width var(--duration-medium) var(--ease-out),
