@@ -296,20 +296,22 @@ export function useChatLogic() {
         e.stopPropagation()
         const state = useChatStore.getState()
         const index = state.conversations.findIndex((c) => c.id === id)
-        const conv = state.conversations[index]
-        if (!conv) return
         const wasCurrent = state.currentConversation?.id === id
-        useChatStore.setState({
-            conversations: state.conversations.filter((c) => c.id !== id),
-            ...(wasCurrent ? { currentConversation: null, messages: [] } : {}),
-        })
+        // 目前開著、但還不在側欄清單裡的對話（例如剛開的新對話）也要能刪
+        const conv = state.conversations[index] ?? (wasCurrent ? state.currentConversation : undefined)
+        if (!conv) return
+        // 刪的是目前這則：走 store 正常的「離開對話」流程——正在回答的話，訊息收進背景、串流狀態跟著那則對話走，
+        // 畫面不會卡在「回答中」；按復原時 selectConversation 會把訊息接回來
+        if (wasCurrent) state.setCurrentConversation(null)
+        useChatStore.setState({ conversations: useChatStore.getState().conversations.filter((c) => c.id !== id) })
         let undone = false
         const restore = () => {
             const now = useChatStore.getState().conversations
-            if (now.some((c) => c.id === id)) return
-            const next = [...now]
-            next.splice(Math.min(index, next.length), 0, conv)
-            useChatStore.setState({ conversations: next })
+            if (index >= 0 && !now.some((c) => c.id === id)) {
+                const next = [...now]
+                next.splice(Math.min(index, next.length), 0, conv)
+                useChatStore.setState({ conversations: next })
+            }
             if (wasCurrent) void selectConversation(conv)
         }
         const timer = window.setTimeout(async () => {

@@ -63,6 +63,15 @@ export default function PdfPreview({ documentId, quote }: Readonly<Props>) {
         return () => ro.disconnect()
     }, [])
 
+    // 換了一段引用（同一份檔案不重新下載）：允許再捲一次到新的標記
+    // 文字層已經畫好的頁面不一定會再觸發 onTextLayer，所以等新的標記畫上去之後主動捲一次
+    useEffect(() => {
+        scrolled.current = false
+        const id = requestAnimationFrame(() => requestAnimationFrame(() => onTextLayer()))
+        return () => cancelAnimationFrame(id)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [quote])
+
     // 每一頁的文字層畫好後：第一次出現標記就捲過去（只捲一次，使用者自己捲了就不再搶）
     const onTextLayer = () => {
         if (scrolled.current) return
@@ -75,7 +84,7 @@ export default function PdfPreview({ documentId, quote }: Readonly<Props>) {
     return (
         <div ref={boxRef} className="pdf-preview min-h-0 flex-1 overflow-auto">
             {error && <p className="p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary">{t('ui.sources.pdfFailed')}</p>}
-            {!error && !file && <p className="p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary" role="status">{t('common.loading')}</p>}
+            {!error && !file && <output className="block p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary">{t('common.loading')}</output>}
             {file && width > 0 && (
                 <Document
                     file={file}

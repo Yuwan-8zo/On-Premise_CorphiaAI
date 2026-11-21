@@ -148,7 +148,7 @@ export default function SidePanel() {
                     </button>
                 )}
                 <h2 className="mr-auto min-w-0 truncate text-[length:var(--fs-15)] font-semibold text-text-primary">
-                    {listMode ? t('ui.chat.sidePanel.files') : current?.kind === 'page' ? pageTitle(current, items, t) : current?.kind === 'text' || current?.kind === 'pdf' ? current.title : t('ui.chat.sidePanel.runTitle')}
+                    {panelTitle(listMode, current, items, t)}
                 </h2>
                 {current && <VersionSwitcher ids={versions} currentId={current.id} onSwitch={show} />}
                 {current?.kind === 'page' && (
@@ -198,7 +198,7 @@ export default function SidePanel() {
                 <pre className="min-h-0 flex-1 overflow-auto p-[var(--sp-16)] text-[length:var(--fs-13)] leading-relaxed whitespace-pre-wrap break-words selectable-text">{current.text}</pre>
             )}
             {current?.kind === 'pdf' && (
-                <Suspense fallback={<p className="p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary" role="status">{t('common.loading')}</p>}>
+                <Suspense fallback={<output className="block p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary">{t('common.loading')}</output>}>
                     <PdfPreview documentId={current.documentId} quote={current.quote} />
                 </Suspense>
             )}
@@ -213,6 +213,14 @@ export default function SidePanel() {
 
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string
+
+/** 面板標題：檔案清單／網頁名稱／檔名／執行結果 */
+function panelTitle(listMode: boolean, current: SidePanelItem | null | undefined, items: Record<string, SidePanelItem>, t: TFn): string {
+    if (listMode) return t('ui.chat.sidePanel.files')
+    if (current?.kind === 'page') return pageTitle(current, items, t)
+    if (current?.kind === 'text' || current?.kind === 'pdf') return current.title
+    return t('ui.chat.sidePanel.runTitle')
+}
 
 /** 成品的名稱：附加的檔名 → 網頁自己的 <title> → 「網頁 N」 */
 function pageTitle(item: SidePanelItem, items: Record<string, SidePanelItem>, t: TFn): string {
