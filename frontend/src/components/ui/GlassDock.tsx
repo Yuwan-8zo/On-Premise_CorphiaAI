@@ -113,7 +113,11 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     const yToWide = (clientY: number) => {
         const r = wrapRef.current!.getBoundingClientRect()
         const y = clientY - r.top + GROW_OUT // 換成寬版外殼的座標（外殼上緣在選單鈕上方 13）
-        return Math.max(LENS_H / 2 - LENS_OUT, Math.min(wideH - LENS_H / 2 + LENS_OUT, y))
+        // 列被壓矮時（畫面矮）放大鏡比列高很多：範圍至少要能停在第一列、最後一列的中心，
+        // 不然「關閉」「刪除」選不到（放開時會選到隔壁那一列）
+        const lo = Math.min(LENS_H / 2 - LENS_OUT, PAD + ROW_H / 2)
+        const hi = Math.max(wideH - LENS_H / 2 + LENS_OUT, wideH - PAD - ROW_H / 2)
+        return Math.max(lo, Math.min(hi, y))
     }
     const enterWide = (clientY: number) => {
         setOpen(true); setWide(true)
