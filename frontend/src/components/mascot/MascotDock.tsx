@@ -6,10 +6,11 @@
  *   點它：滑出來打招呼；再點一下會被戳。導覽進行中先躲起來（導覽有自己的小 AI，見 mascotDock.css）
  *   字多停久一點（SAY_MIN_MS ＋ 每個字 SAY_PER_CHAR_MS，最多 SAY_MAX_MS），讓人讀得完
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Mascot, { type MascotMood } from './Mascot'
 import { useToastStore, type ToastType } from '@/store/toastStore'
+import { fitTextWidth } from '@/lib/fitTextWidth'
 import './mascotDock.css'
 
 const SAY_MIN_MS = 2600
@@ -36,6 +37,12 @@ export default function MascotDock() {
     const seen = useRef<string | null>(null)
     const hideTimer = useRef(0)
     const tuckTimer = useRef(0)
+    const noteRef = useRef<HTMLDivElement>(null)
+
+    // 字換行後卡片縮到剛好包住字（兩行長度由 CSS text-wrap: balance 排平均），右邊不留空白
+    useLayoutEffect(() => {
+        fitTextWidth(noteRef.current)
+    }, [speech?.text])
 
     const speak = (next: Speech) => {
         clearTimeout(hideTimer.current)
@@ -66,6 +73,7 @@ export default function MascotDock() {
     return (
         <aside className={`mascot-dock${out ? ' is-out' : ''}`} aria-label={t('auth.mascotName')}>
             <div
+                ref={noteRef}
                 className={`mascot-dock-note paper paper-solid${speech ? ' is-on' : ''}${speech?.tone === 'error' ? ' is-error' : ''}`}
                 role="status"
                 aria-live="polite"

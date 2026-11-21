@@ -41,6 +41,11 @@
   border-radius: var(--r-20) !important;
   font-size: var(--fs-15); line-height: var(--lh-20); color: rgb(var(--text-primary));
   white-space: pre-line;
+  /* 換行時每行長度平均（不會一行很長、一行剩一兩個字）；框寬再由 fitTextWidth 縮到剛好包住字 */
+  text-wrap: balance;
+  /* 優先在標點、空格換行（不把「你要叫」拆成「你要／叫」）；真的放不下才在字中間斷 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   transform-origin: calc(100% - var(--dock-size) / 2) 100%;
   opacity: 0; transform: translateY(8px) scale(0.85);
   transition: opacity 0.25s, transform 0.45s var(--dock-ease);
