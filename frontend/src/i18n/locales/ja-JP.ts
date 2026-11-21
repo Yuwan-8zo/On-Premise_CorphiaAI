@@ -118,6 +118,15 @@ export default {
         contactAdminBody: 'パスワードのリセットは IT 管理者にお問い合わせください。データ主権と完全オフライン運用のため、本システムでは自動メール再設定を提供していません。',
         registerSuccessReLogin: '登録が完了しました。新しいアカウントでログインしてください。',
         engineSubtitle: '企業ナレッジエンジン',
+        getStarted: 'はじめる',
+        mascotName: 'Corphia のアシスタント',
+        mascotHello: 'こんにちは！ログインをお手伝いします',
+        mascotNoPeek: 'パスワードは見ないよ',
+        mascotPeek: 'ちょっとだけのぞき見',
+        mascotTickle: 'えへへ、くすぐったい',
+        mascotWelcome: 'おかえりなさい！',
+        mascotRegistered: 'アカウントができました！',
+        mascotRetry: 'もう一度やってみる？',
     },
 
     // 對話 (Chat)

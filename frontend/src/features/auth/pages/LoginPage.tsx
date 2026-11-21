@@ -1,48 +1,190 @@
 /**
  * 登入／註冊頁
- *   桌機：左半邊歡迎與特色（LoginHero）、右半邊表單；手機：上方標題＋字標、下方表單
- *   表單是正方形卡片：分段切換（登入／註冊）＋信箱、密碼（註冊時多「確認密碼」）＋送出
- *   後端連線狀態用全站共用的系統狀態（外層 BackendGate 已確認後端啟動才會進到這頁）
+ *   1. 歡迎頁：Corphia 標誌一筆一筆寫出來，「歡迎使用」在標誌上面，寫完出現「開始使用」
+ *   2. 按「開始使用」：按鈕收成玻璃球，球一分為二——小 AI 彈到左邊、登入卡片從球的位置圓形擴散在右邊
+ *      （手機：小 AI 在上、卡片在下）。過場見 utils/splitTransition。
+ *   3. 小 AI 陪著登入（沒有嘴巴，表情只靠眼睛、手、身體）：
+ *      打信箱眼睛跟著字走、打密碼雙手遮眼（按顯示密碼會偷看）、送出時思考、成功開心跳、失敗皺眉搖頭
+ *   卡片：分段切換（登入／註冊）＋信箱、密碼（註冊時多「確認密碼」）＋送出
  */
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type SyntheticEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HelpCircle } from '@/components/snow/icons'
-import { CorphiaWordmark } from '@/components/icons/CorphiaIcons'
+import Mascot, { type MascotHandle, type MascotLook, type MascotMood } from '@/components/mascot/Mascot'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useAuthStore } from '@/store/authStore'
-import { useSystemStore } from '@/store/systemStore'
 import { useUIStore } from '@/store/uiStore'
-import BackendStatusPill, { type BackendStatus } from '../components/BackendStatusPill'
 import ContactAdminDialog from '../components/ContactAdminDialog'
 import FloatingInput from '../components/FloatingInput'
-import LoginHero from '../components/LoginHero'
 import LoginToolbar from '../components/LoginToolbar'
+import LogoWrite from '../components/LogoWrite'
 import { useAuthForm } from '../hooks/useAuthForm'
+import { prefersReducedMotion, shrinkToOrb, splitOrb, type Orb } from '../utils/splitTransition'
 import { EASE_DECEL } from '@/lib/motionPresets'
+import './login.css'
 
-/** 確認密碼欄展開／收合，與上方間距同一條曲線同步 */
 /** 註冊欄位展開／收合：0.32 秒減速（規範曲線） */
 const EXPAND = { duration: 0.32, ease: EASE_DECEL }
+
+/** 對話泡泡停多久（毫秒） */
+const SAY_MS = { hello: 1800, noPeek: 1500, peek: 1100, tickle: 1100, result: 1800, retry: 1500 }
+/** 皺眉多久後回到待命 */
+const SAD_MS = 1500
+
+/** 寬畫面（lg）小 AI 在卡片左邊；窄畫面在上面 */
+const SIDE_BY_SIDE = '(min-width: 1024px)'
+
+type Stage = 'welcome' | 'leaving' | 'auth'
+
+/** 打信箱時：游標在字裡的位置（0～1）→ 小 AI 看哪裡（D1：眼睛跟著字走，看向卡片） */
+function lookAtCaret(input: HTMLInputElement, measure: CanvasRenderingContext2D | null): MascotLook {
+    const cs = getComputedStyle(input)
+    let caret = input.value.length
+    try {
+        // type="email" 拿不到游標位置（會丟錯或回傳 null）→ 當作在最後面
+        caret = input.selectionStart ?? caret
+    } catch {
+        /* 沿用最後面 */
+    }
+    let w = caret * parseFloat(cs.fontSize) * 0.55
+    if (measure) {
+        measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+        w = measure.measureText(input.value.slice(0, caret)).width
+    }
+    const inner = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+    const p = Math.min(1, w / Math.max(1, inner))
+    const side = window.matchMedia?.(SIDE_BY_SIDE).matches ?? true
+    // 左右排：卡片在右邊，眼睛往右下看、越打越往右；上下排：卡片在下面，眼睛往下、從左看到右
+    return side ? { x: 0.25 + p * 0.75, y: 0.35 + p * 0.25, lean: 2 + p * 3 } : { x: -0.7 + p * 1.4, y: 0.95, lean: 0 }
+}
+
+/** 等兩幀（新的表情樣式套上去）再讀動畫長度 */
+const nextPaint = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 export default function Login() {
     const { t } = useTranslation()
     const { isLoading } = useAuthStore()
     const isDark = useUIStore((s) => s.theme === 'dark')
-    const online = useSystemStore((s) => s.online)
-    const backendStatus: BackendStatus = online === null ? 'checking' : online ? 'online' : 'offline'
-    const form = useAuthForm()
     const [showContactAdmin, setShowContactAdmin] = useState(false)
+
+    // ── 小 AI ──
+    const mascotRef = useRef<MascotHandle>(null)
+    const [mood, setMood] = useState<MascotMood>('idle')
+    const [look, setLook] = useState<MascotLook>({ x: 0, y: 0 })
+    const [say, setSay] = useState<string | null>(null)
+    const [revealed, setRevealed] = useState<Record<string, boolean>>({})
+    const [pwField, setPwField] = useState<string | null>(null)
+    const sayTimer = useRef(0)
+    const sadTimer = useRef(0)
+    const measure = useRef<CanvasRenderingContext2D | null>(null)
+    const speak = (text: string, ms: number) => {
+        setSay(text)
+        clearTimeout(sayTimer.current)
+        sayTimer.current = window.setTimeout(() => setSay(null), ms)
+    }
+    useEffect(() => () => {
+        clearTimeout(sayTimer.current)
+        clearTimeout(sadTimer.current)
+    }, [])
+
+    // ── 卡片 ──
+    const cardRef = useRef<HTMLFormElement>(null)
+    const shakeCard = () => {
+        const card = cardRef.current
+        if (!card) return
+        card.classList.remove('is-shake')
+        void card.offsetWidth
+        card.classList.add('is-shake')
+    }
+
+    const form = useAuthForm({
+        onResult: async (ok) => {
+            clearTimeout(sadTimer.current)
+            if (!ok) {
+                setMood('sad')
+                shakeCard()
+                speak(t('auth.mascotRetry'), SAY_MS.retry)
+                sadTimer.current = window.setTimeout(() => setMood('idle'), SAD_MS)
+                return
+            }
+            setMood('happy')
+            const registering = form.tab === 'register'
+            speak(t(registering ? 'auth.mascotRegistered' : 'auth.mascotWelcome'), SAY_MS.result)
+            // 開心跳完（時間從樣式讀）
+            await nextPaint()
+            await wait(mascotRef.current?.moodDuration() ?? 0)
+            if (registering) setMood('idle')
+        },
+    })
     const isRegister = form.tab === 'register'
+
+    // ── 輸入框 → 小 AI 的表情 ──
+    const onEmailFocus = (e: SyntheticEvent<HTMLInputElement>) => {
+        measure.current ??= document.createElement('canvas').getContext('2d')
+        setMood('look')
+        setLook(lookAtCaret(e.currentTarget, measure.current))
+    }
+    const onEmailMove = (e: SyntheticEvent<HTMLInputElement>) => {
+        if (mood === 'look') setLook(lookAtCaret(e.currentTarget, measure.current))
+    }
+    const onPasswordFocus = (id: string) => {
+        setPwField(id)
+        setMood('cover')
+        if (!revealed[id]) speak(t('auth.mascotNoPeek'), SAY_MS.noPeek)
+    }
+    const onFieldBlur = () => {
+        setPwField(null)
+        setMood((m) => (m === 'look' || m === 'cover' ? 'idle' : m))
+    }
+    const onReveal = (id: string) => (visible: boolean) => {
+        setRevealed((r) => ({ ...r, [id]: visible }))
+        if (visible) speak(t('auth.mascotPeek'), SAY_MS.peek)
+    }
+
+    // ── 歡迎頁 → 登入 ──
+    const pageRef = useRef<HTMLDivElement>(null)
+    const startRef = useRef<HTMLButtonElement>(null)
+    const pendingOrb = useRef<Orb | null>(null)
+    const [stage, setStage] = useState<Stage>('welcome')
+    const start = async () => {
+        if (stage !== 'welcome') return
+        const canAnimate = typeof Element.prototype.animate === 'function' && !prefersReducedMotion()
+        if (!canAnimate || !startRef.current || !pageRef.current) {
+            setStage('auth')
+            speak(t('auth.mascotHello'), SAY_MS.hello)
+            return
+        }
+        setStage('leaving')
+        pendingOrb.current = await shrinkToOrb(startRef.current, pageRef.current)
+        setStage('auth')
+    }
+    // 登入區畫上去之後（還沒顯示前）量位置，接著分裂
+    useLayoutEffect(() => {
+        const orb = pendingOrb.current
+        const mascot = mascotRef.current?.el
+        if (stage !== 'auth' || !orb || !mascot || !cardRef.current || !pageRef.current) return
+        pendingOrb.current = null
+        const total = splitOrb(orb, pageRef.current, mascot, cardRef.current)
+        // 彈到定位後：照新位置後面的背景色重算身體顏色，再打招呼
+        const timer = window.setTimeout(() => {
+            mascotRef.current?.retint()
+            speak(t('auth.mascotHello'), SAY_MS.hello)
+        }, total)
+        return () => clearTimeout(timer)
+        // 只在進到登入區那一次
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stage])
 
     return (
         <div
-            // 多個高度單位當備援：部分內嵌瀏覽器的 dvh 算錯時版面不會上下偏移
-            // 重新整理一律回到登入分頁：停在註冊分頁時不記骨架版面（見 lib/layoutSnapshot）
-            data-skel-nosave={isRegister || undefined}
-            className="min-h-screen min-h-[100svh] min-h-[100dvh] flex bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none"
+            ref={pageRef}
+            // 重新整理一律回到歡迎頁：停在登入區時不記骨架版面（見 lib/layoutSnapshot）
+            data-skel-nosave={stage !== 'welcome' || undefined}
+            className="login-page min-h-screen min-h-[100svh] min-h-[100dvh] flex flex-col bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto select-none"
             style={{
                 // 輸入框邊線：依深淺色給不同灰
                 ['--border-subtle' as string]: isDark ? '56 56 58' : '198 198 200',
@@ -56,35 +198,53 @@ export default function Login() {
                 <WaveBackground />
             </div>
 
-            <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative z-10">
-                <BackendStatusPill status={backendStatus} />
-                <LoginHero />
+            <div className="login-head relative z-40 flex justify-end items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
+                <LoginToolbar />
             </div>
 
-            <div className="w-full lg:w-1/2 flex flex-col relative z-30">
-                <div className="login-head relative z-40 flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
-                    <div className="lg:hidden">
-                        <BackendStatusPill status={backendStatus} compact />
-                    </div>
-                    <LoginToolbar />
-                </div>
+            {/* 歡迎頁：蓋在整頁正中間 */}
+            <section
+                className={`login-welcome${stage === 'welcome' ? '' : ' is-out'}`}
+                aria-hidden={stage !== 'welcome' || undefined}
+            >
+                <LogoWrite title={t('auth.welcomeTitle')} />
+                <button
+                    ref={startRef}
+                    type="button"
+                    onClick={start}
+                    className={`login-start btn btn-lg btn-secondary${stage === 'welcome' ? '' : ' is-gone'}`}
+                >
+                    {t('auth.getStarted')}
+                </button>
+            </section>
 
-                {/* 手機版標題 */}
-                <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6 px-4">
-                    <h2 className="text-xl font-bold text-text-primary mb-3 transition-colors">{t('auth.welcomeTitle')}</h2>
-                    <CorphiaWordmark className="h-14 sm:h-16 w-auto max-w-[80%] object-contain mb-3 select-none pointer-events-none" />
-                    <p className="text-text-secondary text-sm">{t('auth.engineDesc')}</p>
-                </div>
+            {stage !== 'welcome' && (
+                <main
+                    className="login-auth relative z-30 flex-1 flex flex-col lg:flex-row items-center justify-center px-6 lg:px-8 pb-12"
+                    style={{ visibility: stage === 'auth' ? 'visible' : 'hidden' }}
+                >
+                    <Mascot
+                        ref={mascotRef}
+                        mood={mood}
+                        peek={!!(pwField && revealed[pwField])}
+                        look={look}
+                        say={say}
+                        label={t('auth.mascotName')}
+                        onPoke={() => speak(t('auth.mascotTickle'), SAY_MS.tickle)}
+                    />
 
-                <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
                     {/*
                       正方形卡片，所有間距都用 flex-1 平均分配：登入 3 段、註冊 4 段一樣寬
                       確認密碼欄：上方間距 flexGrow 0↔1、欄位本身高度 0↔auto，兩者同步動畫
                     */}
                     <form
-                        onSubmit={form.submit}
+                        ref={cardRef}
+                        onSubmit={(e) => {
+                            setMood('think')
+                            void form.submit(e)
+                        }}
                         noValidate
-                        className="w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"
+                        className="login-card w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col transition-colors aspect-square relative z-20"
                     >
                         <GlassSegmented
                             className="shrink-0 h-[var(--sz-52)]"
@@ -103,7 +263,15 @@ export default function Login() {
                                 id="email"
                                 type="email"
                                 value={form.email}
-                                onChange={(e) => form.setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    form.setEmail(e.target.value)
+                                    onEmailMove(e)
+                                }}
+                                onFocus={onEmailFocus}
+                                onBlur={onFieldBlur}
+                                onSelect={onEmailMove}
+                                onKeyUp={onEmailMove}
+                                onClick={onEmailMove}
                                 required
                                 label={t('auth.account')}
                                 error={form.fieldErrors.email}
@@ -117,6 +285,9 @@ export default function Login() {
                                 type="password"
                                 value={form.password}
                                 onChange={(e) => form.setPassword(e.target.value)}
+                                onFocus={() => onPasswordFocus('password')}
+                                onBlur={onFieldBlur}
+                                onRevealChange={onReveal('password')}
                                 required
                                 label={t('auth.password')}
                                 error={form.fieldErrors.password}
@@ -149,6 +320,9 @@ export default function Login() {
                                     type="password"
                                     value={form.confirmPassword}
                                     onChange={(e) => form.setConfirmPassword(e.target.value)}
+                                    onFocus={() => onPasswordFocus('confirm-password')}
+                                    onBlur={onFieldBlur}
+                                    onRevealChange={onReveal('confirm-password')}
                                     required={isRegister}
                                     label={t('auth.confirmPassword')}
                                     tabIndex={isRegister ? 0 : -1}
@@ -189,8 +363,8 @@ export default function Login() {
                             </AnimatePresence>
                         </div>
                     </form>
-                </div>
-            </div>
+                </main>
+            )}
 
             <ContactAdminDialog open={showContactAdmin} onClose={() => setShowContactAdmin(false)} />
         </div>

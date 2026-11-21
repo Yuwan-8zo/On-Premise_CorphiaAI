@@ -118,6 +118,15 @@ export default {
         contactAdminBody: '請聯絡您的企業 IT 管理員協助重設密碼。基於資料主權與離線部署考量，本系統不提供自助式信件重設。',
         registerSuccessReLogin: '註冊成功，請以新帳號登入',
         engineSubtitle: '企業知識引擎',
+        getStarted: '開始使用',
+        mascotName: 'Corphia 的小助手',
+        mascotHello: '嗨！我陪你登入',
+        mascotNoPeek: '我不看你的密碼',
+        mascotPeek: '偷看一下下',
+        mascotTickle: '嘿嘿，好癢',
+        mascotWelcome: '歡迎回來！',
+        mascotRegistered: '帳號建立好了！',
+        mascotRetry: '再試一次？',
     },
 
     // 對話

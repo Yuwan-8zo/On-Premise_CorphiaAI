@@ -7,6 +7,8 @@ interface FloatingInputProps extends InputHTMLAttributes<HTMLInputElement> {
     label: string
     delayClass?: string
     error?: string
+    /** 密碼欄按了顯示／隱藏密碼（小 AI 會跟著偷看） */
+    onRevealChange?: (visible: boolean) => void
 }
 
 export default function FloatingInput({
@@ -19,6 +21,7 @@ export default function FloatingInput({
     error,
     onFocus,
     onBlur,
+    onRevealChange,
     ...props
 }: FloatingInputProps) {
     const isFilled = Boolean(value && value.toString().length > 0)
@@ -132,7 +135,13 @@ export default function FloatingInput({
                             exit={{ ...iconSwap.exit, y: '-50%' }}
                             transition={iconSwap.transition}
                             type="button"
-                            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                            // 按眼睛時游標留在輸入框裡（不然按一下就失焦，還要再點回去）
+                            onPointerDown={(e: { preventDefault: () => void }) => e.preventDefault()}
+                            onClick={() => {
+                                setIsPasswordVisible(!isPasswordVisible)
+                                onRevealChange?.(!isPasswordVisible)
+                            }}
+                            aria-pressed={isPasswordVisible}
                             className="absolute right-4 top-1/2 p-2 text-text-muted  transition-colors focus:outline-none"
                             tabIndex={-1}
                         >

@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import React from 'react'
@@ -118,12 +118,19 @@ import Login from '@/features/auth/pages/LoginPage'
 
 // ── 渲染輔助 ─────────────────────────────────────────────────
 
-const renderLogin = () =>
+const renderWelcome = () =>
   render(
     <MemoryRouter initialEntries={['/login']}>
       <Login />
     </MemoryRouter>
   )
+
+/** 先出現歡迎頁；按「開始使用」才會出現登入卡片（測試環境沒有動畫，直接切過去） */
+const renderLogin = () => {
+  const view = renderWelcome()
+  fireEvent.click(screen.getByRole('button', { name: 'auth.getStarted' }))
+  return view
+}
 
 // ═══════════════════════════════════════════════════════════════
 
@@ -133,6 +140,18 @@ describe('Login 頁面', () => {
     mockLogin.mockClear()
     mockSetAuth.mockClear()
     mockSetLoading.mockClear()
+  })
+
+  it('一開始是歡迎頁：只有「開始使用」，還沒有登入表單', () => {
+    renderWelcome()
+    expect(screen.getByRole('button', { name: 'auth.getStarted' })).toBeTruthy()
+    expect(document.querySelector('input[type="email"]')).toBeNull()
+  })
+
+  it('按「開始使用」後出現小 AI 和登入表單', () => {
+    renderLogin()
+    expect(screen.getByRole('img', { name: 'auth.mascotName' })).toBeTruthy()
+    expect(document.querySelector('input[type="email"]')).toBeTruthy()
   })
 
   it('應渲染包含 email 和 password 的登入表單', async () => {

@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { useUIStore } from '@/store/uiStore'
 import { popIn } from '@/lib/motionPresets'
 import { useDismiss } from '@/lib/useDismiss'
+import { revealFrom } from '@/lib/themeReveal'
 
 /** 主題圖示：兩個疊在一起，依目前主題旋轉＋縮放交錯淡入淡出 */
 function ThemeGlyph({ show, rotate, children }: { show: boolean; rotate: number; children: React.ReactNode }) {
@@ -46,7 +47,7 @@ export default function LoginToolbar() {
     return (
         <div className="flex items-center gap-2 ml-auto">
             {/* 深色時顯示太陽（點一下切到淺色），淺色時顯示月亮 */}
-            <button onClick={toggleTheme} className="btn-icon !w-[var(--top-btn)] !h-[var(--top-btn)] text-text-secondary" aria-label={t('settings.theme')}>
+            <button onClick={(e) => toggleTheme(revealFrom(e.currentTarget))} className="btn-icon !w-[var(--top-btn)] !h-[var(--top-btn)] text-text-secondary" aria-label={t('settings.theme')}>
                 <ThemeGlyph show={theme === 'dark'} rotate={-90}><Sun className="w-5 h-5" /></ThemeGlyph>
                 <ThemeGlyph show={theme === 'light'} rotate={90}><Moon className="w-5 h-5" /></ThemeGlyph>
             </button>

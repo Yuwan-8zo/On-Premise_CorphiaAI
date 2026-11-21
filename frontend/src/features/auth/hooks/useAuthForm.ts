@@ -23,7 +23,15 @@ interface AuthErrorResponse {
     }
 }
 
-export function useAuthForm() {
+interface AuthFormOptions {
+    /**
+     * 送出的結果（小 AI 用來開心或皺眉）。登入成功時等這個 Promise 跑完才真的登入、換頁
+     * ——登入狀態一設好，路由就會立刻把登入頁換掉，開心的動畫會來不及播。
+     */
+    onResult?: (ok: boolean) => void | Promise<void>
+}
+
+export function useAuthForm({ onResult }: AuthFormOptions = {}) {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const location = useLocation()
@@ -99,8 +107,16 @@ export function useAuthForm() {
         if (!email.trim()) errs.email = t('ui.auth.required', { field: t('auth.account') })
         if (!password) errs.password = t('ui.auth.required', { field: t('auth.password') })
         if (tab === 'register' && !confirmPassword) errs.confirmPassword = t('ui.auth.required', { field: t('auth.confirmPassword') })
-        if (Object.keys(errs).length) return setFieldErrors(errs)
-        if (tab === 'register' && password !== confirmPassword) return setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
+        if (Object.keys(errs).length) {
+            setFieldErrors(errs)
+            void onResult?.(false)
+            return
+        }
+        if (tab === 'register' && password !== confirmPassword) {
+            setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
+            void onResult?.(false)
+            return
+        }
 
         setLoading(true)
         try {
@@ -110,17 +126,21 @@ export function useAuthForm() {
                 setPasswordState('')
                 setConfirmState('')
                 setLoginFailedOnce(false)
+                void onResult?.(true)
                 useToastStore.getState().success(t('auth.registerSuccessReLogin', '註冊成功，請以新帳號登入'))
                 return
             }
             const tokens = await authApi.login({ email, password })
             useAuthStore.setState({ accessToken: tokens.accessToken })
             const user = await authApi.me()
+            // 小 AI 開心跳完才設登入狀態：一設好路由就會立刻換頁
+            await onResult?.(true)
             setAuth(user, tokens.accessToken, tokens.refreshToken)
             navigate(from, { replace: true })
         } catch (err) {
             console.error('Auth error:', err)
             handleError(err)
+            void onResult?.(false)
         } finally {
             setLoading(false)
         }

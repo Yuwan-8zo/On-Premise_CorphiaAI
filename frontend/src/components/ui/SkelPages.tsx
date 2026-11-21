@@ -101,56 +101,25 @@ function SkelChat({ conv = false }: Readonly<{ conv?: boolean }>) {
     )
 }
 
-/** 登入頁：桌機左右各半（左歡迎、右正方卡片）；手機上方狀態＋標題＋字標、下方卡片 */
+/**
+ * 登入頁：重新整理一律回到歡迎頁 → 右上工具列、正中間「歡迎使用」＋標誌＋「開始使用」
+ *   排法和 LoginPage 的 .login-welcome、LogoWrite 一樣（標誌寬 min(440px, 86vw)、比例 1459:615）
+ */
 function SkelLogin() {
     return (
-        <div className="min-h-[100dvh] flex relative overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-            <div className="hidden lg:flex lg:w-1/2 flex-col p-8 relative">
-                <div className="glass-chip flex items-center gap-2 rounded-full px-3.5 py-2 w-fit text-[length:var(--fs-13)] leading-[var(--lh-18)]"><span className="w-2 h-2" /><SkelChars chars={3} /></div>
-                <div className="flex-1 flex items-center justify-center w-full pl-[4vw]">
-                    <div className="mx-auto max-w-[var(--sz-460)] w-full px-6 sm:px-10 lg:px-12 xl:px-16">
-                        <h2 className="text-[length:var(--fs-44)] xl:text-[length:var(--fs-52)] font-bold leading-tight"><SkelChars chars={4} /></h2>
-                        <div className="mt-5 -mb-6 flex h-[var(--sz-96)] items-center"><Skel className="h-[var(--sz-64)] w-[var(--sz-200)] !rounded-[var(--r-16)]" /></div>
-                        <p className="mt-2 mb-10 text-[length:var(--fs-17)] leading-[var(--lh-22)]"><SkelChars chars={11} /></p>
-                        <div className="space-y-7">
-                            {[0, 1, 2].map((i) => (
-                                <div key={i} className="flex items-center gap-4">
-                                    <div className="glass-chip h-[var(--sz-52)] w-[var(--sz-52)] shrink-0 !rounded-full" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[length:var(--fs-17)] leading-[var(--lh-22)] mb-0.5"><SkelChars chars={6} /></span>
-                                        <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)]"><SkelChars chars={10} /></span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+        <div className="min-h-[100dvh] flex flex-col relative overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="relative z-40 flex justify-end items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
+                <div className="flex items-center gap-2">
+                    <div className="glass-chip h-9 w-9 !rounded-full" />
+                    <div className="glass-chip h-9 w-9 !rounded-full" />
                 </div>
             </div>
-            <div className="w-full lg:w-1/2 flex flex-col relative">
-                <div className="flex justify-between items-center px-6 pb-6 pt-14 lg:pt-6 w-full">
-                    <div className="lg:hidden glass-chip flex items-center gap-2 rounded-full px-3 py-1.5 text-[length:var(--fs-12)] leading-[var(--lh-16)]"><span className="w-2 h-2" /><SkelChars chars={3} /></div>
-                    <div className="flex items-center gap-2 ml-auto">
-                        <div className="glass-chip h-9 w-9 !rounded-full" />
-                        <div className="glass-chip h-9 w-9 !rounded-full" />
-                    </div>
+            <div className="absolute inset-0 grid place-items-center content-center gap-[var(--sp-28)]">
+                <div className="grid justify-items-center gap-[var(--sp-6)] w-[min(440px,86vw)]">
+                    <p className="text-[length:var(--fs-20)] leading-[1.25] font-semibold"><SkelChars chars={4} /></p>
+                    <Skel className="w-full aspect-[1459/615] !rounded-[var(--r-25)]" />
                 </div>
-                {/* 手機版標題 */}
-                <div className="lg:hidden flex flex-col items-center justify-center pt-2 pb-6 px-4">
-                    <h2 className="text-xl font-bold mb-3"><SkelChars chars={4} /></h2>
-                    <Skel className="h-14 sm:h-16 w-[var(--sz-160)] mb-3 !rounded-[var(--r-14)]" />
-                    <p className="text-sm"><SkelChars chars={13} /></p>
-                </div>
-                <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pb-12">
-                    <div className="w-full max-w-[var(--sz-360)] paper !rounded-[var(--r-43d5)] p-5 flex flex-col aspect-square">
-                        <Skel className="h-[var(--sz-52)] w-full shrink-0" />
-                        <div className="flex-1" />
-                        <div className="glass-field !rounded-full flex items-center px-5 py-3.5 text-[length:var(--fs-15)]"><SkelChars chars={2} /></div>
-                        <div className="flex-1" />
-                        <div className="glass-field !rounded-full flex items-center px-5 py-3.5 text-[length:var(--fs-15)]"><SkelChars chars={2} /></div>
-                        <div className="flex-1" />
-                        <Skel className="h-[var(--btn-h-lg)] w-full shrink-0" />
-                    </div>
-                </div>
+                <Skel className="h-[var(--btn-h-lg)] w-[var(--sz-120)] !rounded-full" />
             </div>
         </div>
     )

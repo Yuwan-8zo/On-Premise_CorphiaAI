@@ -1,0 +1,175 @@
+/* ═══ 小 AI（Liquid Glass 玻璃果凍；沒有嘴巴、全部圓潤） ═══
+ *   所有尺寸以 220px 的設計稿為準，乘上 --s（＝ --m-size ÷ 220）縮放。
+ *   眼睛 30×42、手是身體寬 25% 的正圓；改大小只改 --m-size 和 --ms。
+ *   身體顏色跟背景走（--m-tint，Mascot.tsx 量好寫進來）。 */
+.mascot {
+  /* 尺寸 */
+  --m-size: 150px;
+  --ms: 0.682;               /* --m-size ÷ 220 */
+  --s: var(--ms);
+  --m-eye-w: 30px;
+  --m-eye-h: 42px;
+  --m-look-x: 16px;          /* 眼睛左右最多移動 */
+  --m-look-y: 11px;          /* 眼睛上下最多移動 */
+  /* 材質（玻璃果凍）：身體顏色 --m-tint 由 Mascot.tsx 依後面的背景色算出來（backdropTint.ts）：
+     色相照背景，深色背景往亮推、淺色背景往暗推。還沒量到之前先用主題色 */
+  --m-tint: var(--accent);
+  --m-tint-a: 0.4;           /* 身體帶多少這個顏色 */
+  --m-glass: rgb(var(--m-tint) / var(--m-tint-a));
+  --m-glow: rgb(var(--m-tint) / 0.6);
+  --m-eye: #fff;
+  /* 時間與曲線 */
+  --m-ease-sp: cubic-bezier(0.32, 0.72, 0, 1);
+  --m-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --m-t-hand: 0.5s;
+  --m-t-eye: 0.22s;
+  --m-t-look: 0.18s;
+  --m-t-breathe: 3.4s;
+  --m-t-hop: 0.62s;
+  --m-t-shake: 0.5s;
+
+  position: relative;
+  width: var(--m-size);
+  height: var(--m-size);
+  flex: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 淺色背景：顏色已經往暗推了，再濃一點，白眼睛才有對比 */
+.mascot.on-light { --m-tint-a: 0.55; }
+
+.mascot .m-body-wrap { position: absolute; inset: 0; transform-origin: 50% 92%; transform: rotate(var(--lean)); transition: transform 0.6s var(--m-ease-sp); }
+.mascot .m-bob { position: absolute; inset: 0; transform-origin: 50% 92%; animation: mascot-breathe var(--m-t-breathe) ease-in-out infinite; }
+@keyframes mascot-breathe { 50% { transform: scale(1.025, 0.985); } }
+
+.mascot .m-body {
+  position: absolute; left: 6%; top: 12%; width: 88%; height: 82%;
+  border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+  background: radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 36%, rgba(255, 255, 255, 0.03) 60%), var(--m-glass);
+  -webkit-backdrop-filter: blur(8px) saturate(1.25);
+  backdrop-filter: blur(8px) saturate(1.25);
+  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, 0.8), inset 0 -10px 22px var(--m-glow), inset 0 0 0 0.5px rgba(255, 255, 255, 0.4), 0 10px 26px rgba(0, 0, 0, 0.35), 0 0 30px rgb(var(--m-tint) / 0.25);
+  transition: background-color 0.45s, box-shadow 0.45s;
+}
+.mascot .m-shine { position: absolute; left: 22%; top: 20%; width: 26%; height: 12%; border-radius: 50%; background: rgba(255, 255, 255, 0.35); filter: blur(4px); transform: rotate(-24deg); transition: opacity 0.25s; }
+/* 遮眼時左手會擋住反光的位置，反光從圓手邊緣露出一角 → 遮眼期間淡掉 */
+.mascot.cover.cover-hands .m-shine { opacity: 0; }
+.mascot .m-shadow { position: absolute; left: 22%; bottom: 0; width: 56%; height: 7%; border-radius: 50%; background: rgba(0, 0, 0, 0.45); filter: blur(8px); }
+
+/* 眼睛：一組一起動（看哪裡）；每隻自己眨眼／變形 */
+.mascot .m-eyes {
+  position: absolute; left: 50%; top: 40%; width: 0; height: 0;
+  transform: translate(calc(var(--ex) * var(--m-look-x) * var(--s)), calc(var(--ey) * var(--m-look-y) * var(--s)));
+  transition: transform var(--m-t-look) ease-out;
+}
+.mascot .m-eye {
+  position: absolute; top: calc(var(--m-eye-h) * -0.5 * var(--s));
+  width: calc(var(--m-eye-w) * var(--s)); height: calc(var(--m-eye-h) * var(--s));
+  border-radius: 999px; background: var(--m-eye); box-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
+  transform-origin: 50% 60%;
+  transition: transform var(--m-t-eye) var(--m-ease-sp), background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+.mascot .m-eye.l { left: calc(-41px * var(--s)); }
+.mascot .m-eye.r { left: calc(11px * var(--s)); }
+.mascot.blink .m-eye { transform: scaleY(0.08); }
+
+/* 不看（打密碼）＝閉上眼睛（使用者 2026-11-21 改的，預設）：
+   白色橢圓淡掉，換成往下彎的圓頭弧線（∪），稍微往下沉；偷看時右眼睜開 */
+.mascot.cover:not(.cover-hands) .m-eye { background-color: transparent; box-shadow: none; transform: none; }
+.mascot.cover:not(.cover-hands) .m-arc { opacity: 1; transform: translate(-50%, calc(-50% + 6px * var(--s))) rotate(180deg) scale(1, 0.72); }
+.mascot.cover.peek:not(.cover-hands) .m-eye.r { background-color: var(--m-eye); box-shadow: 0 0 12px rgba(255, 255, 255, 0.65); }
+.mascot.cover.peek:not(.cover-hands) .m-eye.r .m-arc { opacity: 0; }
+
+/* 另一種不看：兩顆圓圓小手遮眼（coverStyle="hands"）。平常收在身體裡看不到，遮眼時舉到眼睛前面 */
+.mascot .m-hand {
+  position: absolute; z-index: 3; width: 25%; height: 25%; border-radius: 50%;
+  /* 霧一點的玻璃：遮眼時要看得出「遮住了」 */
+  background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.14) 45%), rgb(var(--m-tint) / 0.35);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -6px 12px var(--m-glow), 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+  top: 60%; transform: scale(0.2); opacity: 0;
+  transition: left var(--m-t-hand) var(--m-ease-pop), top var(--m-t-hand) var(--m-ease-pop), transform var(--m-t-hand) var(--m-ease-pop), opacity 0.25s;
+}
+.mascot .m-hand.l { left: 26%; }
+.mascot .m-hand.r { left: 49%; }
+.mascot.cover.cover-hands .m-hand { opacity: 1; }
+/* 眼睛中心在寬 38.2%／61.8%、高 40%；手是 25% 的正圓 → 手的中心對準眼睛中心 */
+.mascot.cover.cover-hands .m-hand.l { left: 25.7%; top: 27.5%; transform: none; }
+.mascot.cover.cover-hands .m-hand.r { left: 49.3%; top: 27.5%; transform: none; }
+/* 手後面的眼睛閉起來、變暗：發光的白眼睛會透過玻璃手，看起來像沒遮住 */
+.mascot.cover.cover-hands .m-eye { transform: scaleY(0.35); opacity: 0.15; }
+/* 偷看：右手滑到右下，那隻眼睛睜開 */
+.mascot.cover.peek.cover-hands .m-hand.r { left: 54%; top: 54%; }
+.mascot.cover.peek.cover-hands .m-eye.r { transform: none; opacity: 1; }
+
+/* 思考：眼睛往上看、左右飄，身體晃 */
+.mascot.think .m-eyes { animation: mascot-ponder 0.9s ease-in-out infinite; }
+@keyframes mascot-ponder {
+  0%, 100% { transform: translate(calc(-0.7 * var(--m-look-x) * var(--s)), calc(-0.7 * var(--m-look-y) * var(--s))); }
+  50% { transform: translate(calc(0.7 * var(--m-look-x) * var(--s)), calc(-0.8 * var(--m-look-y) * var(--s))); }
+}
+.mascot.think .m-body-wrap { animation: mascot-wobble 1.1s ease-in-out infinite; }
+@keyframes mascot-wobble { 50% { transform: rotate(4deg); } }
+
+/* 開心：白色橢圓淡掉，換成兩條分開、拱高一點的圓頭弧線（^ ^），跳兩下 */
+.mascot .m-arc { position: absolute; left: 50%; top: 50%; width: calc(46px * var(--s)); height: calc(30px * var(--s)); transform: translate(-50%, -50%); overflow: visible; opacity: 0; transition: opacity 0.18s, transform 0.3s var(--m-ease-pop); }
+.mascot .m-arc path { fill: none; stroke: var(--m-eye); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.7)); }
+.mascot.happy .m-eye { background-color: transparent; box-shadow: none; transform: none; }
+.mascot.happy .m-arc { opacity: 1; }
+.mascot.happy .m-eye.l .m-arc { transform: translate(calc(-50% - 5px * var(--s)), -50%) scale(1.1, 1.18); }
+.mascot.happy .m-eye.r .m-arc { transform: translate(calc(-50% + 5px * var(--s)), -50%) scale(1.1, 1.18); }
+.mascot.happy .m-bob { animation: mascot-hop var(--m-t-hop) var(--m-ease-sp) 2; }
+@keyframes mascot-hop {
+  0% { transform: translateY(0) scale(1.06, 0.94); }
+  35% { transform: translateY(-22%) scale(0.95, 1.06); }
+  70% { transform: translateY(0) scale(1.08, 0.92); }
+  100% { transform: none; }
+}
+
+/* 皺眉（失敗）：圓頭短眉毛內側抬高、外側壓低，弧線往眼睛那側彎；眼睛稍扁往下看；搖頭 */
+.mascot .m-brow { position: absolute; top: calc(-36px * var(--s)); width: calc(30px * var(--s)); height: calc(11px * var(--s)); overflow: visible; opacity: 0; transform: translateY(4px); transition: opacity 0.2s, transform 0.35s var(--m-ease-pop); }
+.mascot .m-brow path { fill: none; stroke: var(--m-eye); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6)); }
+.mascot .m-brow.l { left: calc(-47px * var(--s)); }
+.mascot .m-brow.r { left: calc(17px * var(--s)); }
+.mascot.sad .m-brow { opacity: 1; }
+.mascot.sad .m-brow.l { transform: translateY(calc(3px * var(--s))) rotate(-26deg); }
+.mascot.sad .m-brow.r { transform: translateY(calc(3px * var(--s))) rotate(26deg); }
+.mascot.sad .m-eye { transform: scaleY(0.82); }
+.mascot.sad .m-body-wrap { animation: mascot-shake var(--m-t-shake) ease-in-out; }
+@keyframes mascot-shake {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-9%) rotate(-5deg); }
+  45% { transform: translateX(8%) rotate(4deg); }
+  70% { transform: translateX(-5%) rotate(-3deg); }
+  88% { transform: translateX(2%); }
+}
+
+/* 嚇一跳（資安警示）：眼睛睜大（仍是圓的）、往上縮一下 */
+.mascot.alert .m-eye { transform: scale(1.25, 1.2); }
+.mascot.alert .m-bob { animation: mascot-startle 0.5s var(--m-ease-pop); }
+@keyframes mascot-startle { 30% { transform: translateY(-14%) scale(0.94, 1.08); } }
+
+/* 戳一下：壓扁再彈回、瞇眼 */
+.mascot.poke .m-bob { animation: mascot-poke 0.45s var(--m-ease-pop); }
+@keyframes mascot-poke { 0% { transform: scale(1.14, 0.82); } 100% { transform: none; } }
+.mascot.poke .m-eye { transform: scaleY(0.15); }
+
+/* 對話泡泡（玻璃膠囊，浮在頭上） */
+.mascot .m-say {
+  position: absolute; left: 50%; top: -6px; z-index: 5;
+  transform: translate(-50%, -100%) scale(0.9); opacity: 0; pointer-events: none; white-space: nowrap;
+  font-size: var(--fs-13); line-height: var(--lh-18); color: rgb(var(--text-primary));
+  padding: var(--sp-8) var(--sp-12); border-radius: 999px;
+  background: var(--glass-ctl);
+  -webkit-backdrop-filter: blur(var(--blur-12));
+  backdrop-filter: blur(var(--blur-12));
+  box-shadow: var(--rim-glass);
+  transition: opacity 0.25s, transform 0.35s var(--m-ease-pop);
+}
+.mascot .m-say.on { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot, .mascot * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

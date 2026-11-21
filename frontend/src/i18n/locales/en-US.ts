@@ -118,6 +118,15 @@ export default {
         contactAdminBody: 'Please contact your IT administrator to reset the password. For on-premise data sovereignty, this system does not offer self-service email reset.',
         registerSuccessReLogin: 'Account created. Please sign in with your new credentials.',
         engineSubtitle: 'Enterprise knowledge engine',
+        getStarted: 'Get started',
+        mascotName: 'Corphia helper',
+        mascotHello: "Hi! I'll help you sign in",
+        mascotNoPeek: "I won't look at your password",
+        mascotPeek: 'Just a tiny peek',
+        mascotTickle: 'Hehe, that tickles',
+        mascotWelcome: 'Welcome back!',
+        mascotRegistered: 'Account created!',
+        mascotRetry: 'Try again?',
     },
 
     // Chat
