@@ -1,398 +1,293 @@
 /**
- * OnboardingTour — 引導式 spotlight tooltip 巡禮
+ * 小 AI 導覽（新手導覽 v2）
  * ----------------------------------------------
- * v2 改成「spotlight + tooltip」設計：
- *   - 用 box-shadow 0 0 0 9999px 把整個視窗罩黑，再開一個與目標元素同大小的洞
- *   - 洞旁邊浮出 tooltip 卡，箭頭指向目標
- *   - 切下一步時，洞與 tooltip 平滑滑到下一個 data-tour 元素位置
+ * 小 AI 是整個系統的嚮導：導覽由它帶。每一步它站在說明卡上面，眼睛看著要介紹的東西；
+ * 卡片＝它說的話。開場、結尾開心地跳，講到資料安全時嚇一跳。
  *
- * UX：
- *   - 右上角 × / ESC / 點背景 → 略過（旗標寫入）
- *   - 上一步 / 下一步 / 完成
- *   - dots 顯示進度，可點 dot 跳轉
- *   - Welcome / Done 是 centered 卡（沒有 spotlight 目標）
+ *   - 說明卡一律在畫面正中間不動（使用者要求），只有照亮的框在動；小 AI 的眼睛跟著框轉
+ *   - 整頁變暗，要介紹的東西挖一個洞照亮（box-shadow 9999px）；框的圓角跟著目標：
+ *     膠囊（一般／專案、新對話）就是膠囊，圓角＝目標圓角＋外擴的距離（同心）
+ *   - 手機：目標不在畫面上（例如收在抽屜裡的側欄）就不照亮，只講話
+ *   - 右上 ×／Esc／點背景＝略過；← → 換步驟
+ *   - 結束（看完、略過都一樣）：卡片和變暗淡掉，小 AI 從卡片上飛到右下角，變成常駐的那一隻
+ *     （MascotDock；導覽開著時它躲起來，導覽一關它就出現在小 AI 降落的位置）——小 AI 橫跨整個系統
  *
- * 旗標：localStorage['corphia.onboarding.v1.done'] === '1'
- *   - skip / finish 都寫旗標
- *   - 設定 → 「重新觀看引導」會清旗標再開
+ * 誰會看到：每個帳號第一次進聊天頁（新註冊的帳號第一次登入）；設定 →「使用說明」→「重新觀看導覽」可以再看
+ * 標記見 onboardingFlag.ts（每個帳號分開記）
  *
- * 對應的 data-tour 標記（在 ChatPage 子元件裡）：
- *   - mode-toggle      一般 / 專案 切換膠囊
- *   - new-chat         新對話 / 新資料夾按鈕
- *   - chat-input       底部訊息輸入區
- *   - settings-button  左下使用者頭像（前往設定）
+ * 對應的 data-tour 標記：
+ *   mode-toggle      一般／專案 切換（側欄）
+ *   new-chat         新對話／新資料夾（側欄）
+ *   model            右上選模型
+ *   chat-input       底部輸入區
+ *   settings-button  左下使用者（設定）
  */
 
-import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    FileText,
-    MessageSquare,
-    Settings as SettingsIcon,
-    Sparkles,
-    X,
-} from '@/components/snow/icons'
-import type { ComponentType } from 'react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, X } from '@/components/snow/icons'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
+import Mascot, { type MascotLook, type MascotMood } from '@/components/mascot/Mascot'
 import Tooltip from '@/components/ui/Tooltip'
+import { useAuthStore } from '@/store/authStore'
 
 import { markOnboardingDone } from './onboardingFlag'
+import './onboardingTour.css'
 
 interface TourStep {
-    /** 對應 data-tour 屬性；undefined = 中央卡片（沒有 spotlight） */
+    /** i18n：onboarding.steps.<id>.title／desc */
+    id: string
+    /** 對應 data-tour；沒有＝卡片在正中間 */
     target?: string
-    /** Tooltip 顯示位置；對 spotlight step 才有意義 */
-    placement?: 'top' | 'bottom' | 'left' | 'right'
-    icon: ComponentType<{ className?: string }>
-    titleKey: string
-    titleFallback: string
-    descKey: string
-    descFallback: string
+    /** 沒有目標時小 AI 的表情（有目標時一律看著目標） */
+    mood?: MascotMood
 }
 
 const STEPS: TourStep[] = [
-    {
-        icon: Sparkles,
-        titleKey: 'onboarding.welcome.title',
-        titleFallback: '歡迎使用 Corphia AI',
-        descKey: 'onboarding.welcome.desc',
-        descFallback: '私有部署的企業知識引擎。所有對話、文件與向量索引都留在本機。我會帶你看主畫面 4 個主要功能。',
-    },
-    {
-        target: 'mode-toggle',
-        placement: 'right',
-        icon: MessageSquare,
-        titleKey: 'onboarding.tour.modeToggle.title',
-        titleFallback: '一般 vs 專案',
-        descKey: 'onboarding.tour.modeToggle.desc',
-        descFallback: '在這裡切換對話模式：一般是純聊天；專案會把資料夾內的文件當作 RAG 上下文。',
-    },
-    {
-        target: 'new-chat',
-        placement: 'right',
-        icon: Sparkles,
-        titleKey: 'onboarding.tour.newChat.title',
-        titleFallback: '開新對話',
-        descKey: 'onboarding.tour.newChat.desc',
-        descFallback: '一般模式按這裡新增對話；專案模式則會建立新資料夾。',
-    },
-    {
-        target: 'chat-input',
-        placement: 'top',
-        icon: FileText,
-        titleKey: 'onboarding.tour.chatInput.title',
-        titleFallback: '輸入訊息',
-        descKey: 'onboarding.tour.chatInput.desc',
-        descFallback: '輸入問題或拖放檔案進來，AI 會逐字串流回應；左側「提示詞範本」按鈕可選範本，右側「麥克風」可錄音。',
-    },
-    {
-        target: 'settings-button',
-        placement: 'right',
-        icon: SettingsIcon,
-        titleKey: 'onboarding.tour.settings.title',
-        titleFallback: '設定 / 管理後台',
-        descKey: 'onboarding.tour.settings.desc',
-        descFallback: '點頭像進設定：主題、語言、強調色都在這裡。管理員還能進入管理後台。',
-    },
-    {
-        icon: Check,
-        titleKey: 'onboarding.done.title',
-        titleFallback: '準備好了',
-        descKey: 'onboarding.done.desc',
-        descFallback: '可以開始第一場對話。如果想再看一次，到「設定 → 使用說明」中點「重新觀看引導」。',
-    },
+    { id: 'welcome', mood: 'happy' },
+    { id: 'modeToggle', target: 'mode-toggle' },
+    { id: 'newChat', target: 'new-chat' },
+    { id: 'model', target: 'model' },
+    { id: 'chatInput', target: 'chat-input' },
+    { id: 'settings', target: 'settings-button' },
+    { id: 'security', mood: 'alert' },
+    { id: 'done', mood: 'happy' },
 ]
+
+/** 版面數字（px）：框比目標多一圈、離螢幕邊、卡片寬 */
+const PAD = 8
+const EDGE = 16
+const CARD_W = 380
+/** 小 AI 站在卡片上緣正中間：大小、腳踩進卡片多少（設計稿 220 → 縮放 MASCOT / 220） */
+const MASCOT = 88
+const MASCOT_SINK = 12
+const MASCOT_RISE = MASCOT - MASCOT_SINK
+
+interface Rect {
+    top: number
+    left: number
+    width: number
+    height: number
+    /** 目標的圓角（px） */
+    radius: number
+}
+
+/** 目標的圓角：自己沒有圓角（例如外面包一層的容器）就看裡面第一層、第二層的元素；膠囊（9999）以半高為準 */
+function radiusOf(el: Element, height: number): number {
+    let node: Element | null = el
+    for (let depth = 0; node && depth < 3; depth += 1) {
+        const r = Number.parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0
+        if (r > 0) return Math.min(r, height / 2)
+        node = node.firstElementChild
+    }
+    return 0
+}
 
 export interface OnboardingTourProps {
     isOpen: boolean
     onClose: () => void
 }
 
-interface TargetRect {
-    top: number
-    left: number
-    width: number
-    height: number
-}
-
 export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps) {
     const { t } = useTranslation()
+    const userId = useAuthStore((s) => s.user?.id)
     const [step, setStep] = useState(0)
-    const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
-    const tooltipRef = useRef<HTMLDivElement>(null)
-
-    // 是否 mobile —— spotlight 在 mobile 上無意義（sidebar 元素預設折疊在 drawer 裡，
-    // 點亮位置會落在 viewport 外）。所以 mobile 退回 centered modal 模式。
-    const [isMobile, setIsMobile] = useState<boolean>(() =>
-        typeof window !== 'undefined' && window.innerWidth < 640,
-    )
-    useEffect(() => {
-        const onResize = () => setIsMobile(window.innerWidth < 640)
-        window.addEventListener('resize', onResize)
-        return () => window.removeEventListener('resize', onResize)
-    }, [])
+    const [target, setTarget] = useState<Rect | null>(null)
+    const [cardSize, setCardSize] = useState({ w: CARD_W, h: 200 })
+    const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
+    const cardRef = useRef<HTMLDivElement>(null)
+    const mascotRef = useRef<HTMLDivElement>(null)
+    const [leaving, setLeaving] = useState(false)
+    const nextRef = useRef<HTMLButtonElement>(null)
 
     const current = STEPS[step]
     const isFirst = step === 0
     const isLast = step === STEPS.length - 1
-    const Icon = current.icon
 
-    // ESC / arrow keys
-    useEffect(() => {
-        if (!isOpen) return
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') handleClose()
-            else if (e.key === 'ArrowRight') setStep((s) => Math.min(STEPS.length - 1, s + 1))
-            else if (e.key === 'ArrowLeft') setStep((s) => Math.max(0, s - 1))
+    const finish = () => {
+        setLeaving(false)
+        onClose()
+    }
+    /** 結束：小 AI 飛到右下角常駐的位置，飛到了才關掉導覽 */
+    const close = () => {
+        if (leaving) return
+        markOnboardingDone(userId)
+        const from = mascotRef.current
+        const dock = document.querySelector<HTMLElement>('.mascot-dock .mascot')
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        if (!from || !dock || reduce || typeof from.animate !== 'function') {
+            finish()
+            return
         }
-        window.addEventListener('keydown', onKey)
-        return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen])
+        setLeaving(true)
+        // 降落點：常駐小 AI 的中心、真正的大小（不是歪頭後的外框）、歪頭的角度，飛到了跟它完全疊在一起
+        const a = from.getBoundingClientRect()
+        const b = dock.getBoundingClientRect()
+        const m = new DOMMatrix(getComputedStyle(dock).transform)
+        const tilt = (Math.atan2(m.b, m.a) * 180) / Math.PI
+        const cs = getComputedStyle(from)
+        const fly = from.animate(
+            [
+                { transform: 'none' },
+                {
+                    transform: `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(${dock.offsetWidth / from.offsetWidth}) rotate(${tilt}deg)`,
+                },
+            ],
+            { duration: Number.parseFloat(cs.getPropertyValue('--tour-fly')) * 1000 || 700, easing: cs.getPropertyValue('--tour-fly-ease').trim() || 'ease', fill: 'forwards' },
+        )
+        fly.finished.then(finish, finish)
+    }
 
     useEffect(() => {
         if (isOpen) setStep(0)
     }, [isOpen])
 
-    // 量目標元素位置 + 監聽 resize/scroll 重算
+    // Esc 略過、← → 換步驟
+    useEffect(() => {
+        if (!isOpen) return
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') close()
+            else if (e.key === 'ArrowRight') setStep((s) => Math.min(STEPS.length - 1, s + 1))
+            else if (e.key === 'ArrowLeft') setStep((s) => Math.max(0, s - 1))
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen])
+
+    // 換步驟時焦點放在「下一步」，鍵盤可以一路按 Enter
+    useEffect(() => {
+        if (isOpen) nextRef.current?.focus({ preventScroll: true })
+    }, [isOpen, step])
+
+    // 量目標位置（側欄收合動畫、視窗大小改變時跟著重量）
     useLayoutEffect(() => {
         if (!isOpen) return
-
-        function measure() {
-            // mobile 不做 spotlight —— 一律 centered modal
-            if (isMobile || !current.target) {
-                setTargetRect(null)
-                return
-            }
-            const el = document.querySelector<HTMLElement>(`[data-tour="${current.target}"]`)
-            if (!el) {
-                setTargetRect(null)
-                return
-            }
-            const r = el.getBoundingClientRect()
-            setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height })
+        const measure = () => {
+            setViewport({ w: window.innerWidth, h: window.innerHeight })
+            const el = current.target ? document.querySelector<HTMLElement>(`[data-tour="${current.target}"]`) : null
+            const r = el?.getBoundingClientRect()
+            // 手機上不在畫面裡（收在抽屜）的目標：不照亮，改成正中間講
+            const visible = r && r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight
+            setTarget(visible && el ? { top: r.top, left: r.left, width: r.width, height: r.height, radius: radiusOf(el, r.height) } : null)
+            if (cardRef.current) setCardSize({ w: cardRef.current.offsetWidth, h: cardRef.current.offsetHeight })
         }
-
         measure()
         window.addEventListener('resize', measure)
         window.addEventListener('scroll', measure, true)
-        const id = window.setInterval(measure, 250) // 兜底：side bar 折疊動畫過程中位置會變
+        const id = window.setInterval(measure, 250)
         return () => {
             window.removeEventListener('resize', measure)
             window.removeEventListener('scroll', measure, true)
             window.clearInterval(id)
         }
-    }, [isOpen, step, current.target, isMobile])
+    }, [isOpen, step, current.target])
 
     if (!isOpen) return null
 
-    function handleClose() {
-        markOnboardingDone()
-        onClose()
+    // ── 卡片：一律在畫面正中間（上面留小 AI 的位置）──
+    const { w: vw, h: vh } = viewport
+    const width = Math.min(CARD_W, vw - EDGE * 2)
+    const h = cardSize.h
+    const left = (vw - width) / 2
+    const top = Math.max(EDGE + MASCOT_RISE, (vh - h + MASCOT_RISE) / 2)
+
+    // ── 小 AI：有框就看著框，沒有就照步驟的表情 ──
+    const mascotX = left + width / 2
+    const mascotY = top - MASCOT_RISE / 2
+    let mood: MascotMood = current.mood ?? 'idle'
+    let look: MascotLook | undefined
+    if (target) {
+        const dx = target.left + target.width / 2 - mascotX
+        const dy = target.top + target.height / 2 - mascotY
+        const d = Math.hypot(dx, dy) || 1
+        mood = 'look'
+        look = { x: dx / d, y: dy / d, lean: Math.max(-6, Math.min(6, dx / 60)) }
     }
 
-    function handleNext() {
-        if (isLast) handleClose()
-        else setStep((s) => s + 1)
-    }
-
-    function handlePrev() {
-        if (!isFirst) setStep((s) => s - 1)
-    }
-
-    // 計算 tooltip 位置 ——————————————————————————————————————
-    // spotlight step: 視 placement 排在目標旁；centered step: 螢幕中央
-    const PADDING = 8 // spotlight 比目標多漏一圈，視覺上有呼吸感
-    const TOOLTIP_GAP = 16 // tooltip 與目標距離
-    const TOOLTIP_W_BASE = 340
-    const EDGE = 16 // 卡片離螢幕邊緣至少這麼遠
-    // 手機比卡片還窄：卡片寬度跟著縮，不能超出螢幕
-    const fitWidth = (w: number) => Math.min(w, window.innerWidth - EDGE * 2)
-    const TOOLTIP_W = fitWidth(TOOLTIP_W_BASE)
-
-    let tooltipStyle: React.CSSProperties = {}
-    let arrowSide: 'top' | 'bottom' | 'left' | 'right' | null = null
-    // arrow 在 tooltip 內的偏移（垂直 left/right placement 時是 top；水平 top/bottom 是 left）
-    let arrowOffset: number | null = null
-
-    if (targetRect) {
-        const placement = current.placement ?? 'bottom'
-        const cx = targetRect.left + targetRect.width / 2
-        const cy = targetRect.top + targetRect.height / 2
-        const vw = window.innerWidth
-        const vh = window.innerHeight
-
-        // Tooltip 量測（首次 render 拿不到 ref → 用保守估值；下個 frame 會 re-render 補正）
-        const tooltipH = tooltipRef.current?.offsetHeight ?? 200
-        const tooltipW = tooltipRef.current?.offsetWidth ?? TOOLTIP_W
-
-        // Tooltip 在視窗內的位置（top-left）。用 absolute 而非 transform，方便 arrow 對齊
-        if (placement === 'right') {
-            const left = Math.min(targetRect.left + targetRect.width + PADDING + TOOLTIP_GAP, vw - EDGE - tooltipW)
-            const top = Math.max(16, Math.min(cy - tooltipH / 2, vh - 16 - tooltipH))
-            tooltipStyle = { left, top, width: TOOLTIP_W }
-            arrowSide = 'left'
-            // arrow 對齊目標中央（在 tooltip 內的 y），clamp 不超出 tooltip 邊
-            arrowOffset = Math.max(14, Math.min(cy - top, tooltipH - 14))
-        } else if (placement === 'left') {
-            const right = vw - (targetRect.left - PADDING - TOOLTIP_GAP)
-            const left = Math.max(EDGE, vw - right - tooltipW)
-            const top = Math.max(16, Math.min(cy - tooltipH / 2, vh - 16 - tooltipH))
-            tooltipStyle = { left, top, width: TOOLTIP_W }
-            arrowSide = 'right'
-            arrowOffset = Math.max(14, Math.min(cy - top, tooltipH - 14))
-        } else if (placement === 'top') {
-            const top = targetRect.top - PADDING - TOOLTIP_GAP - tooltipH
-            const left = Math.max(16, Math.min(cx - tooltipW / 2, vw - 16 - tooltipW))
-            tooltipStyle = { left, top: Math.max(16, top), width: TOOLTIP_W }
-            arrowSide = 'bottom'
-            arrowOffset = Math.max(14, Math.min(cx - left, tooltipW - 14))
-        } else {
-            const top = targetRect.top + targetRect.height + PADDING + TOOLTIP_GAP
-            const left = Math.max(16, Math.min(cx - tooltipW / 2, vw - 16 - tooltipW))
-            tooltipStyle = { left, top, width: TOOLTIP_W }
-            arrowSide = 'top'
-            arrowOffset = Math.max(14, Math.min(cx - left, tooltipW - 14))
-        }
-    } else {
-        // centered card（welcome / done）
-        tooltipStyle = {
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: fitWidth(TOOLTIP_W_BASE + 60),
-        }
-    }
+    const cardStyle: CSSProperties = { left, top, width }
 
     return (
         <div
-            className="fixed inset-0 z-[200] select-none"
+            className={`tour fixed inset-0 z-[200] select-none${leaving ? ' is-leaving' : ''}`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="onboarding-title"
+            aria-labelledby="tour-title"
+            aria-describedby="tour-desc"
             onClick={(e) => {
-                // 點 backdrop（不是 tooltip 本身）→ 略過
-                if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
-                    handleClose()
-                }
+                // 點卡片以外（變暗的背景）＝略過
+                if (cardRef.current && !cardRef.current.contains(e.target as Node)) close()
             }}
         >
-            {/* Spotlight 層：用 box-shadow 罩黑全螢幕，目標位置開洞 */}
-            {targetRect ? (
+            {/* 變暗＋照亮目標 */}
+            {target ? (
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute rounded-[var(--r-14)] transition-[top,left,width,height] duration-300 ease-out"
+                    className="tour-hole"
                     style={{
-                        top: targetRect.top - PADDING,
-                        left: targetRect.left - PADDING,
-                        width: targetRect.width + PADDING * 2,
-                        height: targetRect.height + PADDING * 2,
-                        boxShadow:
-                            '0 0 0 9999px rgba(0,0,0,0.62), 0 0 0 2px rgb(var(--accent) / 0.6), 0 0 24px 4px rgb(var(--accent) / 0.35)',
+                        top: target.top - PAD,
+                        left: target.left - PAD,
+                        width: target.width + PAD * 2,
+                        height: target.height + PAD * 2,
+                        // 同心圓角：膠囊的目標，框也是膠囊
+                        borderRadius: target.radius > 0 ? target.radius + PAD : undefined,
                     }}
                 />
             ) : (
-                <div aria-hidden className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+                <div aria-hidden className="tour-dim" />
             )}
 
-            {/* Tooltip 卡片 */}
-            <div
-                ref={tooltipRef}
-                onClick={(e) => e.stopPropagation()}
-                style={tooltipStyle}
-                className="absolute paper paper-solid !rounded-[var(--r-25)] transition-[top,left,opacity] duration-300 ease-out"
-            >
-                {/* 箭頭 —— offset 動態跟著目標走，被 clamp 過的 tooltip 也能正確指回去 */}
-                {arrowSide && arrowOffset !== null && (
-                    <span
-                        aria-hidden
-                        className={`absolute h-3 w-3 rotate-45 bg-[var(--paper-solid)] ${
-                            arrowSide === 'top'
-                                ? '-top-[var(--sp-7)] border-r-0 border-b-0'
-                                : arrowSide === 'bottom'
-                                    ? '-bottom-[var(--sp-7)] border-l-0 border-t-0'
-                                    : arrowSide === 'left'
-                                        ? '-left-[var(--sp-7)] border-t-0 border-r-0'
-                                        : '-right-[var(--sp-7)] border-b-0 border-l-0'
-                        }`}
-                        style={
-                            arrowSide === 'top' || arrowSide === 'bottom'
-                                ? { left: arrowOffset, transform: 'translateX(-50%) rotate(45deg)' }
-                                : { top: arrowOffset, transform: 'translateY(-50%) rotate(45deg)' }
-                        }
-                    />
-                )}
+            {/* 說明卡（小 AI 站在上面） */}
+            <div ref={cardRef} style={cardStyle} className="tour-card paper paper-solid !rounded-[var(--r-25)]">
+                <div
+                    ref={mascotRef}
+                    className="tour-mascot"
+                    style={{ '--tour-m-size': `${MASCOT}px`, '--tour-ms': MASCOT / 220, '--tour-rise': `${MASCOT_RISE}px` } as CSSProperties}
+                >
+                    <Mascot mood={mood} look={look} label={t('auth.mascotName')} />
+                </div>
 
-                {/* × 略過 */}
                 <Tooltip label={t('common.skip', '略過')} className="!absolute top-2.5 right-2.5 z-10">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted   transition"
-                        aria-label={t('common.skip', '略過')}
-                    >
+                    <button type="button" onClick={close} className="tour-skip" aria-label={t('common.skip', '略過')}>
                         <X className="h-3.5 w-3.5" />
                     </button>
                 </Tooltip>
 
-                {/* 內容 */}
                 <div className="px-5 pt-5 pb-4">
-                    <div className="flex items-center gap-2.5 mb-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
-                            <Icon className="h-4 w-4" />
-                        </span>
-                        <h2
-                            id="onboarding-title"
-                            className="text-[length:var(--fs-16)] font-semibold text-text-primary tracking-tight"
-                        >
-                            {t(current.titleKey, current.titleFallback)}
-                        </h2>
-                    </div>
-                    <p className="text-[length:var(--fs-13)] leading-relaxed text-text-secondary">
-                        {t(current.descKey, current.descFallback)}
+                    <h2 id="tour-title" className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary pr-6">
+                        {t(`onboarding.steps.${current.id}.title`)}
+                    </h2>
+                    <p id="tour-desc" className="mt-[var(--sp-6)] text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">
+                        {t(`onboarding.steps.${current.id}.desc`)}
                     </p>
                 </div>
 
-                {/* footer：dots + nav */}
                 <div className="flex items-center justify-between border-t border-[var(--paper-line)] px-4 py-2.5">
-                    <div className="flex items-center gap-1">
-                        {STEPS.map((_, i) => (
+                    <div className="flex items-center gap-1" aria-label={t('onboarding.progress', { n: step + 1, total: STEPS.length })}>
+                        {STEPS.map((s, i) => (
                             <button
-                                key={i}
+                                key={s.id}
                                 type="button"
                                 onClick={() => setStep(i)}
-                                aria-label={`Step ${i + 1}`}
-                                className={`h-1 rounded-full transition-[width,background-color] ${
-                                    i === step
-                                        ? 'w-4 bg-accent'
-                                        : 'w-1 bg-text-muted/40 '
-                                }`}
+                                aria-label={t('onboarding.goTo', { n: i + 1 })}
+                                aria-current={i === step ? 'step' : undefined}
+                                className={`tour-dot${i === step ? ' is-on' : ''}`}
                             />
                         ))}
                     </div>
-
                     <div className="flex items-center gap-1.5">
                         {!isFirst && (
-                            <button
-                                type="button"
-                                onClick={handlePrev}
-                                className="flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[length:var(--fs-12)] text-text-secondary   transition"
-                            >
+                            <button type="button" onClick={() => setStep((s) => s - 1)} className="tour-prev">
                                 <ChevronLeft className="h-3 w-3" />
                                 {t('common.prev', '上一步')}
                             </button>
                         )}
-
                         <button
+                            ref={nextRef}
                             type="button"
-                            onClick={handleNext}
-                            className="flex items-center gap-0.5 btn btn-primary !h-8 !px-3.5 !text-[length:var(--fs-12)]"
+                            onClick={() => (isLast ? close() : setStep((s) => s + 1))}
+                            className="flex items-center gap-0.5 btn btn-primary !h-8 !px-3.5 !text-[length:var(--fs-13)]"
                         >
-                            {isLast
-                                ? t('onboarding.start', '開始使用')
-                                : t('common.next', '下一步')}
+                            {isLast ? t('onboarding.start') : t('common.next', '下一步')}
                             {!isLast && <ChevronRight className="h-3 w-3" />}
                         </button>
                     </div>

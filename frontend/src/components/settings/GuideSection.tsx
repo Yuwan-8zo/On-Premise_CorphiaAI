@@ -14,6 +14,7 @@ import {
 
 import { resetOnboarding } from '@/components/onboarding/onboardingFlag'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 
 type Tone = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal'
 
@@ -40,10 +41,11 @@ export default function GuideSection() {
     const { t } = useTranslation()
     const triggerOnboardingReplay = useUIStore((s) => s.triggerOnboardingReplay)
     const setSettingsOpen = useUIStore((s) => s.setSettingsOpen)
+    const userId = useAuthStore((s) => s.user?.id)
 
     function handleReplayOnboarding() {
         // 清旗標＋觸發重播，並關掉設定視窗讓聊天頁看得到引導
-        resetOnboarding()
+        resetOnboarding(userId)
         setSettingsOpen(false)
         setTimeout(() => triggerOnboardingReplay(), 200)
     }
@@ -61,7 +63,7 @@ export default function GuideSection() {
                 <div className="set-group">
                     <button type="button" onClick={handleReplayOnboarding} className="set-row set-row-btn has-icon">
                         <span className="set-icon text-accent"><Play className="w-[var(--sz-16)] h-[var(--sz-16)] -translate-x-[var(--sp-0d5)]" /></span>
-                        <span className="set-label text-accent font-semibold">{t('settings.replayTour', '重新觀看引導')}</span>
+                        <span className="set-label text-accent font-semibold">{t('settings.replayTour')}</span>
                     </button>
                 </div>
             </section>

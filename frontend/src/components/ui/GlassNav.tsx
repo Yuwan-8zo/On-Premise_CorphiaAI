@@ -47,7 +47,8 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     // 拉過頭：按住拖到第一項上面／最後一項下面再往外拉，整列被拉長、放開彈回（和拉桿一樣）
     useLensPull(listRef, { axis: 'y' })
     const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
-    const [geo, setGeo] = useState<{ w: number; boxes: Box[] }>({ w: 0, boxes: [] })
+    // padL：項目的左內距（圖示／文字開頭離項目左緣多遠），鏡內放大以它為左右的基準
+    const [geo, setGeo] = useState<{ w: number; boxes: Box[]; padL: number }>({ w: 0, boxes: [], padL: 0 })
     const geoRef = useRef(geo)
     geoRef.current = geo
     const n = items.length
@@ -93,6 +94,7 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
             setGeo({
                 w: el.offsetWidth,
                 boxes: btnRefs.current.slice(0, n).map((b) => ({ top: b?.offsetTop ?? 0, h: b?.offsetHeight ?? 0 })),
+                padL: btnRefs.current[0] ? Number.parseFloat(getComputedStyle(btnRefs.current[0]).paddingLeft) || 0 : 0,
             })
         measure()
         if (typeof ResizeObserver === 'undefined') return
@@ -138,6 +140,8 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
     const lh = rowH + GROW_PX * 2 * f.grow
     const L = rowW / 2 - lw / 2
     const T = cy - lh / 2
+    // 鏡內放大的基準點（鏡子內座標）：上下＝正中間；左右＝圖示／文字的開頭——項目靠左排，從中間放大會把開頭推出鏡子切掉
+    const ox = geo.padL - L
     const active = ready && lensActive(f)
     const listH = geo.boxes.length ? geo.boxes[n - 1].top + geo.boxes[n - 1].h : 0
 
@@ -167,7 +171,7 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
                 <div aria-hidden="true" className={`lens absolute ${active ? 'is-active' : ''}`} style={{ left: L, top: T, width: lw, height: lh, borderRadius: lh / 2, zIndex: 1 }}>
                     {active && (
                         <>
-                            <div className="absolute left-0 top-0 flex flex-col pointer-events-none" style={{ width: rowW, height: listH, gap, transformOrigin: '0 0', transform: `translate(${lw / 2}px, ${lh / 2}px) scale(${1 + (LENS_MAG - 1) * f.grow}) translate(${-lw / 2}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)` }}>
+                            <div className="absolute left-0 top-0 flex flex-col pointer-events-none" style={{ width: rowW, height: listH, gap, transformOrigin: '0 0', transform: `translate(${ox}px, ${lh / 2}px) scale(${1 + (LENS_MAG - 1) * f.grow}) translate(${-ox}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)` }}>
                                 {items.map((it) => (
                                     <span key={it.id} className={`${itemClass} is-current`}>{content(it)}</span>
                                 ))}

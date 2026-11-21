@@ -121,7 +121,7 @@ export default function ChatHeader({
 
             <div className="flex items-center gap-2 min-w-0 shrink">
                 {/* 右側：GGUF 模型選擇下拉選單（自己一條膠囊：內距 2、按鈕高 46、外框圓角 25，同心） */}
-                <div ref={modelGroupRef} className="btn-group btn-group-36 relative min-w-0">
+                <div ref={modelGroupRef} data-tour="model" className="btn-group btn-group-36 relative min-w-0">
                     <button
                         onPointerDown={isModelLoading ? undefined : modelTrigger.onPointerDown}
                         onClick={modelTrigger.onClick}

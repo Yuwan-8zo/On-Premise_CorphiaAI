@@ -186,6 +186,7 @@
   --lh-24: calc(24 * var(--type-unit));
   --lh-28: calc(28 * var(--type-unit));
   --lh-30: calc(30 * var(--type-unit));
+  --lh-34: calc(34 * var(--type-unit));  /* Title 1（28／34） */
   --sp-1: calc(1 * var(--ui-unit));
   --sp-13: calc(13 * var(--ui-unit));
   --sp-52: calc(52 * var(--ui-unit));

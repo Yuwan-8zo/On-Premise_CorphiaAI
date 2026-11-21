@@ -1,0 +1,41 @@
+/* ═══ 歡迎頁：Corphia 標誌寫字 ═══
+ *   --lw-star：全部筆畫寫完、星芒閃出來的時間（最後一筆 1.843s 開始、0.457s 寫完，再停一下）
+ *   歡迎字與「開始使用」依它往後排（見 login.css 的 .login-start） */
+.login-welcome {
+  --lw-star: 2.4s;
+  --lw-title-after: 0.45s;
+  --lw-start-after: 0.9s;
+  --lw-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.logo-write { display: grid; justify-items: center; gap: var(--sp-6); width: min(440px, 86vw); color: rgb(var(--text-primary)); }
+.logo-write-svg { width: 100%; line-height: 0; }
+.logo-write-svg svg { width: 100%; height: auto; overflow: visible; }
+
+/* 一支粗筆沿每個字母的中心線寫過去，筆跡只露出 LOGO 的形狀；每一筆的時間寫在 SVG 的 --d／--t／--e */
+.logo-write .ws { fill: none; stroke: currentColor; stroke-linecap: butt; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.logo-write.go .ws { animation: lw-draw var(--t) var(--e, linear) var(--d) forwards; }
+.logo-write .sp { fill: rgb(var(--accent)); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.logo-write.go .sp { animation: lw-starpop 0.75s var(--lw-star) cubic-bezier(0.34, 1.56, 0.64, 1) forwards, lw-starglow 1.4s var(--lw-star) ease-out forwards; }
+
+/* 「歡迎使用」排在標誌上面（order -1），比「開始」按鈕的字大（Title 1 28／34，使用者要求），寫完才淡入 */
+.logo-write-title { order: -1; margin: 0; font-size: var(--fs-28); line-height: var(--lh-34); font-weight: 700; opacity: 0; transform: translateY(6px); }
+.logo-write.go .logo-write-title { animation: lw-in 0.6s calc(var(--lw-star) + var(--lw-title-after)) var(--lw-ease) forwards; }
+
+@keyframes lw-draw { to { stroke-dashoffset: 0; } }
+@keyframes lw-starpop {
+  0% { opacity: 0; transform: scale(0.1) rotate(-60deg); }
+  55% { opacity: 1; transform: scale(1.35) rotate(10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes lw-starglow {
+  0% { filter: drop-shadow(0 0 0 rgb(var(--accent) / 0)); }
+  30% { filter: drop-shadow(0 0 18px rgb(var(--accent) / 1)) brightness(1.6); }
+  100% { filter: drop-shadow(0 0 5px rgb(var(--accent) / 0.6)); }
+}
+@keyframes lw-in { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-write .ws { stroke-dashoffset: 0; animation: none !important; }
+  .logo-write .sp, .logo-write .logo-write-title { opacity: 1; transform: none; animation: none !important; }
+}

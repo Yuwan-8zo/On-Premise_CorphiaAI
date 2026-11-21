@@ -4,6 +4,7 @@
 import { useTranslation } from 'react-i18next'
 import { ACCENT_COLORS } from '@/design-system'
 import { useUIStore, type AccentColorType } from '@/store/uiStore'
+import { revealFrom } from '@/lib/themeReveal'
 
 const ACCENT_OPTIONS = Object.entries(ACCENT_COLORS) as [AccentColorType, (typeof ACCENT_COLORS)[string]][]
 const MODES = ['light', 'dark', 'system'] as const
@@ -29,7 +30,8 @@ export default function AppearanceSection() {
                                 key={mode}
                                 type="button"
                                 aria-pressed={themePreference === mode}
-                                onClick={() => setThemePreference(mode)}
+                                // 新顏色從按下的這張縮圖往外擴散
+                                onClick={(e) => setThemePreference(mode, revealFrom(e.currentTarget))}
                                 className={`set-appearance ${themePreference === mode ? 'is-current' : ''}`}
                             >
                                 <span className="set-thumb">

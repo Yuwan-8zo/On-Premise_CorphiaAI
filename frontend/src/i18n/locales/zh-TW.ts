@@ -41,31 +41,41 @@ export default {
     // 首次使用引導（spotlight tour）
     onboarding: {
         start: '開始使用',
-        welcome: {
-            title: '歡迎使用 Corphia AI',
-            desc: '私有部署的企業知識引擎。所有對話、文件與向量索引都留在本機。我會帶你看主畫面 4 個主要功能。',
-        },
-        tour: {
+        progress: '第 {{n}} 步，共 {{total}} 步',
+        goTo: '跳到第 {{n}} 步',
+        steps: {
+            welcome: {
+                title: '嗨，我是 Corphia 的小助手',
+                desc: '第一次見面，我帶你看一圈。你在這裡問的問題、放的文件都只存在公司自己的主機，放心問我。',
+            },
             modeToggle: {
-                title: '一般 vs 專案',
-                desc: '在這裡切換對話模式：一般是純聊天；專案會把資料夾內的文件當作 RAG 上下文。',
+                title: '一般和專案',
+                desc: '「一般」是直接跟我聊天；「專案」會讀你放進資料夾的文件，用你們自己的資料回答。',
             },
             newChat: {
                 title: '開新對話',
-                desc: '一般模式按這裡新增對話；專案模式則會建立新資料夾。',
+                desc: '想換個話題就按這裡；在專案裡，這顆按鈕是新增資料夾。',
+            },
+            model: {
+                title: '選擇 AI 模型',
+                desc: '這裡可以換模型：小的回得快，大的想得比較深。每一個都在這台主機上跑，不會連到外面。',
             },
             chatInput: {
-                title: '輸入訊息',
-                desc: '輸入問題或拖放檔案進來，AI 會逐字串流回應；左側「提示詞範本」按鈕可選範本，右側「麥克風」可錄音。',
+                title: '在這裡問我',
+                desc: '輸入問題就好，也可以把檔案拖進來，或按麥克風用說的。',
             },
             settings: {
-                title: '設定 / 管理後台',
-                desc: '點頭像進設定：主題、語言、強調色都在這裡。管理員還能進入管理後台。',
+                title: '你的設定',
+                desc: '點你的名字可以換主題、語言和顏色。想再看一次導覽，也是從這裡進去。',
             },
-        },
-        done: {
-            title: '準備好了',
-            desc: '可以開始第一場對話。如果想再看一次，到「設定 → 使用說明」中點「重新觀看引導」。',
+            security: {
+                title: '你的資料不會離開這裡',
+                desc: '有人想從我這裡套出個資或系統設定，資安閘道會先擋下來，紀錄留在後台讓管理員查。',
+            },
+            done: {
+                title: '準備好了',
+                desc: '有需要隨時叫我。想再看一次，到「設定 → 使用說明」按「重新觀看導覽」。',
+            },
         },
     },
 
@@ -118,6 +128,15 @@ export default {
         contactAdminBody: '請聯絡您的企業 IT 管理員協助重設密碼。基於資料主權與離線部署考量，本系統不提供自助式信件重設。',
         registerSuccessReLogin: '註冊成功，請以新帳號登入',
         engineSubtitle: '企業知識引擎',
+        getStarted: '開始',
+        mascotName: 'Corphia 的小助手',
+        mascotHello: '嗨！我陪你登入',
+        mascotNoPeek: '我不看你的密碼',
+        mascotPeek: '偷看一下下',
+        mascotTickle: '嘿嘿，好癢',
+        mascotWelcome: '歡迎回來！',
+        mascotRegistered: '帳號建立好了！',
+        mascotDockHello: '我在這裡，有消息會告訴你',
     },
 
     // 對話
@@ -398,8 +417,8 @@ export default {
         enterAdmin: '進入管理後台',
         adminLabel: '管理後台',
         showQR: '顯示 QR Code 在手機上登入',
-        replayTour: '重新觀看引導',
-        replayTourHint: '重新顯示首次使用引導',
+        replayTour: '重新觀看導覽',
+        replayTourHint: '再看一次小 AI 的新手導覽',
         pwdSubmit: '更改',
         accountSection: '帳號',
         nameLabel: '名稱',

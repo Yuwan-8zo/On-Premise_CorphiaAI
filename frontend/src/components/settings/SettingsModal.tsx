@@ -2,7 +2,7 @@
  * 設定視窗
  *   左：標題、分頁導覽、管理後台入口（管理員／工程師才有）；右：目前分頁的內容
  *   手機版一次只顯示一邊（先選分頁，再進內容，左上角返回）
- *   直版（手機）的間距：內容離外框 20（桌機 36）；外框圓角＝分組卡圓角 32＋20＝52，和卡片同心（桌機 68＝32＋36）；
+ *   間距：內容離外框 20（手機、桌機一樣；使用者 2026-11-21 覺得桌機外圓角 68 太大，內容往外擴）；外框圓角＝分組卡圓角 32＋20＝52，和卡片同心；
  *     關閉鈕、返回鈕都離頂 20、高 36，排在同一條線上；選單標題的字和導覽圖示左緣對齊、和關閉鈕上下置中
  *   各分頁內容在同一個資料夾：ProfileSection、MemorySection、AppearanceSection、LanguageSection、GuideSection、AboutSection
  */
@@ -136,28 +136,28 @@ export default function SettingsModal() {
                         role="dialog"
                         aria-modal="true"
                         aria-label={t('settings.title', '設定')}
-                        className="relative w-full max-w-[var(--sz-800)] h-full max-h-[90dvh] md:max-h-[var(--sz-750)] paper !rounded-[calc(var(--r-32)+var(--sp-20))] md:!rounded-[var(--r-68)] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
+                        className="relative w-full max-w-[var(--sz-800)] h-full max-h-[90dvh] md:max-h-[var(--sz-750)] paper !rounded-[calc(var(--r-32)+var(--sp-20))] flex flex-col md:flex-row overflow-hidden select-none pointer-events-auto"
                     >
                         {/* Close button */}
                         <button
                             onClick={() => setSettingsOpen(false)}
                             aria-label={t('common.close')}
-                            className="btn-icon !w-[var(--sz-36)] !h-[var(--sz-36)] absolute top-[var(--sp-20)] right-[var(--sp-20)] md:top-[var(--sp-36)] md:right-[var(--sp-36)] text-text-secondary z-20"
+                            className="btn-icon !w-[var(--sz-36)] !h-[var(--sz-36)] absolute top-[var(--sp-20)] right-[var(--sp-20)] text-text-secondary z-20"
                         >
                             <X className="w-5 h-5" />
                         </button>
 
                         {/* 側邊導航 —— 內層淡淡的暈染對比，跟 modal 主體有層次但仍維持玻璃透明感 */}
                         <MenuColumn key={`menu-${mobileView}`} dir={mobileDir} hiddenOnPhone={mobileView === 'content'}>
-                            {/* 四個角都跟外框 68 同心：關閉鈕右緣對齊內容卡（離右 36），離上也是 36；標題字左緣對齊導覽圖示（52），字上緣離頂也是 52；管理後台膠囊離左、離下都是 36，底邊對齊右側內容最後一張卡（內容下內距也是 36） */}
-                            <div className="pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pl-[calc(var(--sp-51)/var(--menu-fit,1))] pr-4 pt-[calc(var(--sp-26)/var(--menu-fit,1))] md:pt-[calc(var(--sp-48)/var(--menu-fit,1))] pb-2">
+                            {/* 四個角都跟外框 52 同心：關閉鈕右緣對齊內容卡（離右 20），離上也是 20；標題字左緣對齊導覽圖示（36），字上緣離頂也是 36；管理後台膠囊離左、離下都是 20，底邊對齊右側內容最後一張卡（內容下內距也是 20） */}
+                            <div className="pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pl-[calc((var(--sp-20)+15*var(--ui-unit))/var(--menu-fit,1))] pr-4 pt-[calc(var(--sp-26)/var(--menu-fit,1))] md:pt-[calc(var(--sp-32)/var(--menu-fit,1))] pb-2">
                                 <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary">
                                     {t('settings.title')}
                                 </h2>
                             </div>
               {/* 導覽項跟下方「管理後台」膠囊左右對齊：左 36、右 14 */}
               {/* 不捲動、不裁切：放不下由 MenuColumn 整欄縮小（這一塊就是被量的對象） */}
-              <nav data-fit-check="settings-menu" className="flex-1 min-h-0 px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pr-4 py-4 overflow-visible">
+              <nav data-fit-check="settings-menu" className="flex-1 min-h-0 px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-20)/var(--menu-fit,1))] md:pr-4 py-4 overflow-visible">
                                 <GlassNav
                                     aria-label={t('settings.title')}
                                     value={activeSection}
@@ -171,7 +171,7 @@ export default function SettingsModal() {
 
                             {/* 底部：管理後台入口（僅 admin / engineer 可見），清單列樣式 */}
                             {(user?.role === 'admin' || user?.role === 'engineer') && (
-                                <div className="px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pr-4 pt-2 pb-[calc(var(--sp-20)/var(--menu-fit,1))] md:pb-[calc(var(--sp-36)/var(--menu-fit,1))]">
+                                <div className="px-[calc(var(--sp-20)/var(--menu-fit,1))] md:pl-[calc(var(--sp-20)/var(--menu-fit,1))] md:pr-4 pt-2 pb-[calc(var(--sp-20)/var(--menu-fit,1))]">
                                     <div className="set-group !rounded-full">
                                         <button
                                             type="button"
@@ -190,7 +190,7 @@ export default function SettingsModal() {
                         {/* 主內容區域 */}
                         {/* 捲動區上下淡出（同聊天頁 .chat-scroll）：捲動時內容不會被外框硬切 */}
                         <div ref={scrollRef} onScroll={(e) => { const el = e.currentTarget; el.classList.toggle('is-scrolled', el.scrollTop > 4) }} className={`chat-scroll settings-scroll flex-1 overflow-y-auto scrollbar-none min-h-0 bg-transparent relative ${mobileView === 'menu' ? 'hidden md:block' : 'block'}`}>
-                            <div className="p-[var(--sp-20)] md:pl-10 md:pr-[var(--sp-36)] md:pt-14 md:pb-[var(--sp-36)] min-h-full">
+                            <div className="p-[var(--sp-20)] md:pl-10 md:pt-[calc(var(--sp-20)*2)] min-h-full">
                                 {/* 手機版返回上一層（iOS：箭頭＋上一頁的標題） */}
                                 <button
                                     className="md:hidden mb-[var(--sp-8)] -ml-1 flex items-center h-[var(--sz-36)] pr-[var(--sp-12)] text-accent text-[length:var(--fs-15)] font-medium"

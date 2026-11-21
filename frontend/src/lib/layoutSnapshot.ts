@@ -51,7 +51,8 @@ const MAX_AGE = 30 * 24 * 3600 * 1000
 
 /** 依網址分「頁」：每個對話、每個分享連結各記一份（不同對話的訊息長短不同，共用會畫成別的對話） */
 export function pageKind(pathname: string): string {
-    if (pathname.startsWith('/login')) return 'login'
+    // 登入頁 2026-11 改成歡迎頁（標誌寫字）：換新名字，舊版面的快照就不會被拿來畫骨架
+    if (pathname.startsWith('/login')) return 'login-welcome'
     if (pathname.startsWith('/admin')) return 'admin'
     if (pathname.startsWith('/share/')) return `share:${pathname.slice('/share/'.length)}`
     if (pathname.startsWith('/chat/')) return `chat-conv:${pathname.slice('/chat/'.length)}`

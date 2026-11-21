@@ -3,6 +3,7 @@
  *
  *   平常：放大鏡停在目前那一列，只顯示凹陷底盤（.seg-veil）
  *   滑鼠按下一列：放大鏡在目前那一列原地長大（四邊多 --lens-over，鏡內放大 LENS_MAG、字用強調色）
+ *     放大的基準點：上下置中、左右對齊文字的開頭（列的左內距）——列裡的字靠左，從中間放大會把開頭推出鏡子切掉
  *   按住拖曳：按下 LENS_CFG.hold 後放大鏡跟著游標上下滑（每幀追 30%）；放開＝吸到最近的一列並選取它
  *   點一下：放大鏡從目前那一列滑到點的那一列（glideTo 的時間表），中途縮回成底盤
  *   手指（觸控）：按下、放開都不動放大鏡，等對話真的換了（watch 變）才滑過去。
@@ -20,14 +21,16 @@ import { readPx } from '@/lib/cssVars'
 import { useLensPull } from './useLensPull'
 import { swallowNextClick } from '@/lib/swallowClick'
 
-type Box = { cy: number; h: number; left: number; w: number }
+/** padL：列的左內距（文字開頭離列左緣多遠），放大以它為左右的基準 */
+type Box = { cy: number; h: number; left: number; w: number; padL: number }
 
 /** 列在捲動區內容座標裡的位置（用 offset 量：不受「按下縮小」影響；捲動時跟著內容走） */
 function rowBox(host: HTMLElement, row: HTMLElement): Box | null {
     let top = 0, left = 0, el: HTMLElement | null = row
     while (el && el !== host) { top += el.offsetTop; left += el.offsetLeft; el = el.offsetParent as HTMLElement | null }
     if (el !== host) return null
-    return { cy: top + row.offsetHeight / 2, h: row.offsetHeight, left, w: row.offsetWidth }
+    const padL = Number.parseFloat(getComputedStyle(row).paddingLeft) || 0
+    return { cy: top + row.offsetHeight / 2, h: row.offsetHeight, left, w: row.offsetWidth, padL }
 }
 
 export default function ListLens({ watch }: { watch: unknown }) {
@@ -215,6 +218,8 @@ export default function ListLens({ watch }: { watch: unknown }) {
     const L = box ? box.left - over : 0
     const T = f.pos - lh / 2
     const mag = 1 + (LENS_MAG - 1) * f.grow
+    // 放大的基準點（鏡子內座標）：左右＝文字開頭（外擴的距離＋列的左內距），上下＝正中間
+    const ox = box ? over + box.padL : 0
 
     // 放大鏡作用中：真正的那一列先變回一般樣子（強調色只在鏡子裡），和 GlassNav 的「on && !active 才算目前」一樣
     useEffect(() => {
@@ -235,7 +240,7 @@ export default function ListLens({ watch }: { watch: unknown }) {
                     style={{
                         visibility: active ? 'visible' : 'hidden',
                         transformOrigin: '0 0',
-                        transform: `translate(${lw / 2}px, ${lh / 2}px) scale(${mag}) translate(${-lw / 2}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)`,
+                        transform: `translate(${ox}px, ${lh / 2}px) scale(${mag}) translate(${-ox}px, ${-lh / 2}px) translate(${-L}px, ${-T}px)`,
                     }}
                 />
                 {active && <span className="lens-dish" />}
