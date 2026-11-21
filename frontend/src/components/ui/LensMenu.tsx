@@ -37,6 +37,17 @@ type Props = {
     fitCard?: boolean
 } & Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className'>
 
+/**
+ * 直排選單鏡內放大的左右基準點（鏡子內座標）：選項內容靠左排 → 圖示／文字開頭（外擴距離＋選項左內距）；
+ * 內容置中 → 鏡子正中間
+ */
+function startOffset(item: HTMLElement | null | undefined, over: number, lw: number): number {
+    if (!item) return lw / 2
+    const cs = getComputedStyle(item)
+    const centered = cs.justifyContent === 'center' || cs.textAlign === 'center'
+    return centered ? lw / 2 : over + (Number.parseFloat(cs.paddingLeft) || 0)
+}
+
 export default function LensMenu({ children, className = '', plate = false, fitCard = true, ...rest }: Props) {
     const wrapRef = useRef<HTMLDivElement | null>(null)
     const listRef = useRef<HTMLDivElement | null>(null)
@@ -173,12 +184,15 @@ export default function LensMenu({ children, className = '', plate = false, fitC
         const y = top - W.top
         const rad = Math.min(lh, lw) / 2
         Object.assign(lens.style, { left: `${x}px`, top: `${y}px`, width: `${lw}px`, height: `${lh}px`, borderRadius: `${rad}px` })
-        // 放大鏡內的複本：和側欄一樣以放大鏡中心放大（倍率跟著長大），反向位移與真選單對齊
+        // 放大鏡內的複本：倍率跟著長大，反向位移與真選單對齊。
+        //   放大的基準點：上下＝正中間；左右＝直排選單裡靠左排的選項以「圖示／文字開頭」為準（從中間放大會把開頭推出鏡子切掉），
+        //   橫排或置中的選項仍以中間為準
         if (s.ghost) {
             const mag = 1 + (LENS_MAG - 1) * g
+            const ox = vert ? startOffset(s.hov, over, lw) : lw / 2
             s.ghost.style.width = `${L.width}px`
             s.ghost.style.transform =
-                `translate(${lw / 2}px, ${lh / 2}px) scale(${mag}) translate(${-lw / 2}px, ${-lh / 2}px) ` +
+                `translate(${ox}px, ${lh / 2}px) scale(${mag}) translate(${-ox}px, ${-lh / 2}px) ` +
                 `translate(${L.left - W.left - x}px, ${L.top - W.top - y + shiftY}px)`
         }
         // 真選單挖一個一樣的膠囊洞（不重影）
