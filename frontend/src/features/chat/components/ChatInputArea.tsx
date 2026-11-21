@@ -238,9 +238,12 @@ export default function ChatInputArea({
         if (attachedFolder?.names?.length) onFilesSent?.(attachedFolder.names)
         setAttachedFolder(null)
     }
+    /** 可以送出：有打字，或附了圖片（已處理好）／檔案 */
+    const hasAttachment = (chatImages.images.length > 0 && !chatImages.busy) || Boolean(attachedFolder?.names?.length)
+    const canSend = Boolean(input.trim()) || hasAttachment
     const sendAndClearFolder = () => { releaseFiles(); releaseImages(); handleSend() }
     const onKeyDownClearFolder = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey && input.trim() && !isStreaming) {
+        if (e.key === 'Enter' && !e.shiftKey && canSend && !isStreaming) {
             releaseFiles()
             releaseImages()
         }
@@ -453,11 +456,11 @@ export default function ChatInputArea({
                                     ) : (
                                         <button
                                             onClick={sendAndClearFolder}
-                                            disabled={!input.trim() || isConnecting || !llmReady}
+                                            disabled={!canSend || isConnecting || !llmReady}
                                             aria-label={t('chat.sendMessage')}
                                             className="flex transition-transform active:scale-95"
                                         >
-                                            <SendDotBtn disabled={!input.trim() || isConnecting || !llmReady} />
+                                            <SendDotBtn disabled={!canSend || isConnecting || !llmReady} />
                                         </button>
                                     )}
                                 </div>

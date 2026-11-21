@@ -365,7 +365,12 @@ export function useChatLogic() {
     }
 
     const handleSend = async (overrideValue?: string) => {
-        const text = (overrideValue ?? input).trim()
+        const typed = (overrideValue ?? input).trim()
+        // 只附圖片／檔案、沒打字：用預設的提問（以前直接不送，按了沒反應）
+        let fallback = ''
+        if (!typed && sentImagesRef.current.length) fallback = (sentImagesRef.current.length > 1 ? t('chat.images.defaultPromptMany', { n: sentImagesRef.current.length }) : t('chat.images.defaultPromptOne'))
+        else if (!typed && sentFilesRef.current.length) fallback = t('chat.attachFiles.defaultPrompt')
+        const text = typed || fallback
         if (!text || isStreaming || socket.isConnecting) return
         if (!overrideValue) setInput('')
         haptic()
