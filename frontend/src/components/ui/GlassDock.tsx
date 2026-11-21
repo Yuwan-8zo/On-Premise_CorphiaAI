@@ -9,6 +9,9 @@
  *   放大鏡 93×88、圓角 40，跟著手指（每幀追 30%），中心不超過第一列與最後一列；
  *   鏡內圖示與文字放大 LENS_MAG（1.17）倍並變強調色，鏡片底下原本的項目隱藏（不重影）
  * 放開：在項目上就執行該項目；在 × 上只關閉；選單立刻收合，放大鏡留在原地 0.3 秒淡出並縮到 0.95
+ * 靠近螢幕邊（手機上選單鈕離右邊只有 12）：同心外擴會讓寬版和放大鏡超出畫面（實測右邊超出 4、上緣貼齊 0），
+ *   展開時整組往內挪到放大鏡離邊 --sp-4；空間夠的時候不挪（維持同心）
+ * disabled：還沒有對話時（新對話首頁）選單裡的動作都沒有對象，鈕變淡、按不開
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCssPx } from '@/lib/cssVars'
@@ -32,19 +35,23 @@ interface Props {
     items: DockItem[]
     'aria-label'?: string
     className?: string
+    /** 沒有可以操作的對象（例如還沒有對話）：鈕變淡、按不開 */
+    disabled?: boolean
 }
 
 // 尺寸都在 styles/tokens.css 的 --dock-*（不寫死）；凸出量、同心圓角、外擴量由它們算
-const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h', '--sp-16'] as const
+const DOCK_VARS = ['--dock-n', '--dock-btn', '--dock-gap', '--dock-pad', '--dock-w', '--dock-r', '--dock-row-w', '--dock-row-h', '--dock-lens-w', '--dock-lens-h', '--sp-16', '--sp-4'] as const
 const LONG_PRESS_MS = LENS_CFG.pressWait
 
-export default function GlassDock({ items, className = '', 'aria-label': ariaLabelProp }: Props) {
+export default function GlassDock({ items, className = '', 'aria-label': ariaLabelProp, disabled = false }: Readonly<Props>) {
     const { t } = useTranslation()
     const ariaLabel = ariaLabelProp ?? t('ui.dock.menu')
     const [open, setOpen] = useState(false)
     const [wide, setWide] = useState(false)
     const [lensY, setLensY] = useState<number | null>(null) // 放大鏡中心（相對外殼頂端）
     const [leaving, setLeaving] = useState<{ y: number } | null>(null)
+    /** 寬版靠近螢幕邊時往內挪的量（展開那一刻算） */
+    const [nudge, setNudge] = useState({ x: 0, y: 0 })
     const wrapRef = useRef<HTMLDivElement>(null)
     const shellRef = useRef<HTMLDivElement>(null)
     // 拉過頭：放大鏡拖到第一列上面／最後一列下面再往外拉，整個選單被拉長、放開彈回（和拉桿一樣）；端點看展開的外殼
@@ -58,7 +65,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     // 尺寸（窄：配合頂部列；寬：照規範）
     const px = useCssPx(DOCK_VARS)
     const SHELL_N = px['--dock-n'], BTN_N = px['--dock-btn'], GAP_N = px['--dock-gap'], PAD = px['--dock-pad']
-    const SHELL_W = px['--dock-w'], R_WIDE = px['--dock-r'], ROW_W = px['--dock-row-w'], ROW_H_SPEC = px['--dock-row-h'], EDGE = px['--sp-16']
+    const SHELL_W = px['--dock-w'], R_WIDE = px['--dock-r'], ROW_W = px['--dock-row-w'], ROW_H_SPEC = px['--dock-row-h'], EDGE = px['--sp-16'], SCREEN_GAP = px['--sp-4']
     // 放大鏡＝圓角方形（寬高接近 1：1，四邊留直線段）
     const LENS_W = px['--dock-lens-w'], LENS_H = px['--dock-lens-h']
     const LENS_OUT = (LENS_W - SHELL_W) / 2 // 放大鏡凸出外殼的量（四邊一樣，同心）
@@ -108,11 +115,20 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     }
     // 放大鏡中心的範圍：四邊凸出外殼都是 LENS_OUT（和左右一樣），不會頂到螢幕上緣
     const wideH = PAD * 2 + rows * ROW_H
-    const shellX = wide ? SHELL_N + GROW_OUT - SHELL_W : 0 // 外殼左緣（相對選單鈕）
-    const shellY = wide ? -GROW_OUT : 0 // 外殼上緣（相對選單鈕）
-    const yToWide = (clientY: number) => {
+    const shellX = wide ? SHELL_N + GROW_OUT - SHELL_W + nudge.x : 0 // 外殼左緣（相對選單鈕）
+    const shellY = wide ? -GROW_OUT + nudge.y : 0 // 外殼上緣（相對選單鈕）
+    /** 寬版（含放大鏡凸出的量）會不會超出螢幕：超出就往內挪，離邊留 SCREEN_GAP */
+    const nudgeFor = () => {
         const r = wrapRef.current!.getBoundingClientRect()
-        const y = clientY - r.top + GROW_OUT // 換成寬版外殼的座標（外殼上緣在選單鈕上方 13）
+        const right = r.left + SHELL_N + GROW_OUT // 寬版右緣
+        const top = r.top - GROW_OUT // 寬版上緣
+        // 放大鏡凸出外殼的量：左右是 LENS_OUT；上方在列被壓矮時（畫面矮）會更多（停在第一列中心時鏡片比列高）
+        const outTop = Math.max(LENS_OUT, LENS_H / 2 - PAD - ROW_H / 2)
+        return { x: Math.min(0, window.innerWidth - LENS_OUT - SCREEN_GAP - right), y: Math.max(0, outTop + SCREEN_GAP - top) }
+    }
+    const yToWide = (clientY: number, dy = nudge.y) => {
+        const r = wrapRef.current!.getBoundingClientRect()
+        const y = clientY - r.top + GROW_OUT - dy // 換成寬版外殼的座標（外殼上緣在選單鈕上方 13，靠邊時再往下挪 dy）
         // 列被壓矮時（畫面矮）放大鏡比列高很多：範圍至少要能停在第一列、最後一列的中心，
         // 不然「關閉」「刪除」選不到（放開時會選到隔壁那一列）
         const lo = Math.min(LENS_H / 2 - LENS_OUT, PAD + ROW_H / 2)
@@ -120,14 +136,16 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
         return Math.max(lo, Math.min(hi, y))
     }
     const enterWide = (clientY: number) => {
+        const n = nudgeFor()
+        setNudge(n)
         setOpen(true); setWide(true)
-        const y = yToWide(clientY)
+        const y = yToWide(clientY, n.y)
         cur.current = y; target.current = y
         setLensY(y)
     }
 
     const onPointerDown = (e: React.PointerEvent) => {
-        if (e.button > 0) return
+        if (e.button > 0 || disabled) return
         const startedOpen = open
         const timer = window.setTimeout(() => {
             if (press.current) { press.current.wideNow = true; enterWide(press.current.y0) }
@@ -154,7 +172,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
             const y = cur.current
             const idx = Math.round((y - PAD - ROW_H / 2) / ROW_H)
             // 放大鏡留在原地 0.3 秒淡出並縮到 0.95，選單立刻收合
-            setLeaving({ y })
+            setLeaving({ y: y + nudge.y })
             window.setTimeout(() => setLeaving(null), LENS_CFG.leave)
             close()
             if (commit && idx >= 1 && idx <= items.length) { items[idx - 1].onSelect(); swallowNextClick() }
@@ -206,7 +224,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     return (
         <div
             ref={wrapRef}
-            className={`dock-wrap ${className}`}
+            className={`dock-wrap ${className}${disabled ? ' is-disabled' : ''}`}
             style={{ width: SHELL_N, height: SHELL_N }}
         >
             <div
@@ -241,8 +259,10 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                                     role={isBtn ? undefined : 'menuitem'}
                                     aria-label={isBtn ? (open ? t('ui.dock.closeMenu') : ariaLabel) : items[i - 1].label}
                                     aria-expanded={isBtn ? open : undefined}
+                                    disabled={isBtn && disabled}
                                     onKeyDown={(e) => {
                                         if (e.key !== 'Enter' && e.key !== ' ') return
+                                        if (disabled) return
                                         e.preventDefault()
                                         if (isBtn) setOpen((o) => !o)
                                         else { close(); items[i - 1].onSelect() }
@@ -300,7 +320,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
                 <div
                     aria-hidden
                     className="lens is-active is-v dock-lens is-leaving"
-                    style={{ left: SHELL_N + GROW_OUT - SHELL_W / 2 - LENS_W / 2, top: -GROW_OUT + leaving.y - LENS_H / 2, width: LENS_W, height: LENS_H, borderRadius: LENS_R }}
+                    style={{ left: SHELL_N + GROW_OUT - SHELL_W / 2 - LENS_W / 2 + nudge.x, top: -GROW_OUT + leaving.y - LENS_H / 2, width: LENS_W, height: LENS_H, borderRadius: LENS_R }}
                 />
             )}
         </div>

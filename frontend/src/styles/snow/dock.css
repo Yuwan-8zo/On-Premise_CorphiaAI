@@ -142,3 +142,7 @@ html:not(.dark) .menu-item.is-danger {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* 沒有可以操作的對象（新對話首頁還沒有對話）：選單鈕變淡、按不開 */
+.dock-wrap.is-disabled { opacity: 0.4; }
+.dock-wrap.is-disabled .dock-shell { pointer-events: none; }
