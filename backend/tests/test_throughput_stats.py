@@ -36,3 +36,14 @@ def test_short_burst_does_not_override_last_real_speed():
     svc.record_generation(200, 10.0)
     svc.record_generation(1, 0.000001)
     assert svc.get_throughput_stats()["last_tokens_per_sec"] == 20.0
+
+
+def test_short_generation_still_counts_in_totals():
+    svc = _init(_svc())
+    svc.record_generation(200, 10.0)
+    svc.record_generation(3, 0.01)
+    stats = svc.get_throughput_stats()
+    assert stats["total_generations"] == 2
+    assert stats["total_tokens_generated"] == 203
+    assert stats["sample_size"] == 1
+    assert stats["last_tokens_per_sec"] == 20.0
