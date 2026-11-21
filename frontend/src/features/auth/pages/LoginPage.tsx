@@ -33,10 +33,22 @@ const EXPAND = { duration: 0.32, ease: EASE_DECEL }
 
 type Stage = 'welcome' | 'leaving' | 'auth'
 
+/** 輸入框邊線：深淺色各一組灰（RGB） */
+const FIELD_BORDERS = {
+    dark: { subtle: '56 56 58', strong: '72 72 74' },
+    light: { subtle: '198 198 200', strong: '174 174 178' },
+}
+
+/** 送出按鈕的字：送出中／註冊／登入 */
+function submitLabelKey(loading: boolean, registering: boolean) {
+    if (loading) return 'common.loading'
+    return registering ? 'auth.register' : 'auth.login'
+}
+
 export default function Login() {
     const { t } = useTranslation()
     const { isLoading } = useAuthStore()
-    const isDark = useUIStore((s) => s.theme === 'dark')
+    const borders = useUIStore((s) => FIELD_BORDERS[s.theme === 'dark' ? 'dark' : 'light'])
     const [showContactAdmin, setShowContactAdmin] = useState(false)
 
     // ── 小 AI（表情、看哪裡、泡泡：hooks/useLoginMascot）──
@@ -106,8 +118,8 @@ export default function Login() {
             className="login-page min-h-screen min-h-[100svh] min-h-[100dvh] flex flex-col bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto select-none"
             style={{
                 // 輸入框邊線：依深淺色給不同灰
-                ['--border-subtle' as string]: isDark ? '56 56 58' : '198 198 200',
-                ['--border-strong' as string]: isDark ? '72 72 74' : '174 174 178',
+                ['--border-subtle' as string]: borders.subtle,
+                ['--border-strong' as string]: borders.strong,
                 // iOS 瀏海／底部橫條不要蓋到內容
                 paddingTop: 'env(safe-area-inset-top)',
                 paddingBottom: 'env(safe-area-inset-bottom)',
@@ -263,7 +275,7 @@ export default function Login() {
                                 disabled={isLoading}
                                 className="btn btn-lg btn-primary flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                             >
-                                {isLoading ? t('common.loading') : isRegister ? t('auth.register') : t('auth.login')}
+                                {t(submitLabelKey(isLoading, isRegister))}
                             </button>
 
                             <AnimatePresence>
