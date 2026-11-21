@@ -5,6 +5,8 @@
   --tour-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --tour-dim: rgba(0, 0, 0, 0.62);
   --tour-mascot-tint-a: 0.78;
+  --tour-fly: 0.7s;                                     /* 結束：小 AI 飛到右下角 */
+  --tour-fly-ease: cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
 /* 變暗＋照亮目標：一個跟目標同大小的洞，外面用超大陰影蓋暗；一圈主題色細線標出範圍（規範：不加外光暈） */
@@ -36,6 +38,15 @@
 /* 進度點：現在這一步拉長、主題色 */
 .tour-dot { height: 4px; width: 4px; border-radius: 999px; background: rgb(var(--text-muted) / 0.4); transition: width 0.25s var(--tour-ease), background-color 0.25s; }
 .tour-dot.is-on { width: 16px; background: rgb(var(--accent)); }
+
+/* 結束：變暗、框、卡片的內容淡掉，小 AI 留著飛走（它是卡片的子元素，卡片本身不能淡；淡卡片的底和內容） */
+.tour-hole, .tour-dim { transition-property: top, left, width, height, border-radius, opacity; }
+.tour.is-leaving { pointer-events: none; }
+.tour.is-leaving .tour-hole, .tour.is-leaving .tour-dim { opacity: 0; transition: opacity 0.35s; }
+.tour-card > :not(.tour-mascot) { transition: opacity 0.25s; }
+.tour.is-leaving .tour-card > :not(.tour-mascot) { opacity: 0; }
+.tour.is-leaving .tour-card { background: transparent; box-shadow: none; transition: background-color 0.25s, box-shadow 0.25s; }
+.tour.is-leaving .tour-card::before, .tour.is-leaving .tour-card::after { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .tour-hole, .tour-card, .tour-mascot { transition: none; }

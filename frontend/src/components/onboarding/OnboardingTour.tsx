@@ -9,6 +9,8 @@
  *     膠囊（一般／專案、新對話）就是膠囊，圓角＝目標圓角＋外擴的距離（同心）
  *   - 手機：目標不在畫面上（例如收在抽屜裡的側欄）就不照亮，只講話
  *   - 右上 ×／Esc／點背景＝略過；← → 換步驟
+ *   - 結束（看完、略過都一樣）：卡片和變暗淡掉，小 AI 從卡片上飛到右下角，變成常駐的那一隻
+ *     （MascotDock；導覽開著時它躲起來，導覽一關它就出現在小 AI 降落的位置）——小 AI 橫跨整個系統
  *
  * 誰會看到：每個帳號第一次進聊天頁（新註冊的帳號第一次登入）；設定 →「使用說明」→「重新觀看導覽」可以再看
  * 標記見 onboardingFlag.ts（每個帳號分開記）
@@ -93,15 +95,46 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
     const [cardSize, setCardSize] = useState({ w: CARD_W, h: 200 })
     const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
     const cardRef = useRef<HTMLDivElement>(null)
+    const mascotRef = useRef<HTMLDivElement>(null)
+    const [leaving, setLeaving] = useState(false)
     const nextRef = useRef<HTMLButtonElement>(null)
 
     const current = STEPS[step]
     const isFirst = step === 0
     const isLast = step === STEPS.length - 1
 
-    const close = () => {
-        markOnboardingDone(userId)
+    const finish = () => {
+        setLeaving(false)
         onClose()
+    }
+    /** 結束：小 AI 飛到右下角常駐的位置，飛到了才關掉導覽 */
+    const close = () => {
+        if (leaving) return
+        markOnboardingDone(userId)
+        const from = mascotRef.current
+        const dock = document.querySelector<HTMLElement>('.mascot-dock .mascot')
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        if (!from || !dock || reduce || typeof from.animate !== 'function') {
+            finish()
+            return
+        }
+        setLeaving(true)
+        // 降落點：常駐小 AI 的中心、真正的大小（不是歪頭後的外框）、歪頭的角度，飛到了跟它完全疊在一起
+        const a = from.getBoundingClientRect()
+        const b = dock.getBoundingClientRect()
+        const m = new DOMMatrix(getComputedStyle(dock).transform)
+        const tilt = (Math.atan2(m.b, m.a) * 180) / Math.PI
+        const cs = getComputedStyle(from)
+        const fly = from.animate(
+            [
+                { transform: 'none' },
+                {
+                    transform: `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(${dock.offsetWidth / from.offsetWidth}) rotate(${tilt}deg)`,
+                },
+            ],
+            { duration: Number.parseFloat(cs.getPropertyValue('--tour-fly')) * 1000 || 700, easing: cs.getPropertyValue('--tour-fly-ease').trim() || 'ease', fill: 'forwards' },
+        )
+        fly.finished.then(finish, finish)
     }
 
     useEffect(() => {
@@ -175,7 +208,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
 
     return (
         <div
-            className="tour fixed inset-0 z-[200] select-none"
+            className={`tour fixed inset-0 z-[200] select-none${leaving ? ' is-leaving' : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="tour-title"
@@ -206,6 +239,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             {/* 說明卡（小 AI 站在上面） */}
             <div ref={cardRef} style={cardStyle} className="tour-card paper paper-solid !rounded-[var(--r-25)]">
                 <div
+                    ref={mascotRef}
                     className="tour-mascot"
                     style={{ '--tour-m-size': `${MASCOT}px`, '--tour-ms': MASCOT / 220, '--tour-rise': `${MASCOT_RISE}px` } as CSSProperties}
                 >
