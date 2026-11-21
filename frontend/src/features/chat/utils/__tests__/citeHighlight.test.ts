@@ -14,6 +14,10 @@ describe('引用原文標記', () => {
         expect(isQuoted('3', quote)).toBe(false)
         expect(isQuoted('第三', quote)).toBe(false)
     })
+    it('別頁剛好也有的短詞不標（例如「一小時內」）', () => {
+        expect(isQuoted('一小時內', quote)).toBe(false)
+        expect(isQuoted('資訊安全事件', quote)).toBe(false)
+    })
     it('Markdown 表格符號不影響比對', () => {
         const q = normalizeForMatch('| 一級 | 1 小時 | 資訊部 |')
         expect(isQuoted('一級 1 小時 資訊部', q)).toBe(true)

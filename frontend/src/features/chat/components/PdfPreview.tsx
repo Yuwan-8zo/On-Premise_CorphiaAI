@@ -23,6 +23,8 @@ const PDF_OPTIONS = {
 }
 /** 太長的檔案只畫前面這幾頁（預覽用，不是閱讀器） */
 const MAX_PAGES = 60
+/** 文字層停止更新多久之後才捲到標記（各頁畫好的順序不固定） */
+const SETTLE_MS = 200
 
 interface Props {
     documentId: string
@@ -37,6 +39,7 @@ export default function PdfPreview({ documentId, quote }: Readonly<Props>) {
     const [width, setWidth] = useState(0)
     const boxRef = useRef<HTMLDivElement>(null)
     const scrolled = useRef(false)
+    const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
     const quoteNorm = useMemo(() => normalizeForMatch(quote), [quote])
 
     useEffect(() => {
@@ -64,21 +67,27 @@ export default function PdfPreview({ documentId, quote }: Readonly<Props>) {
     }, [])
 
     // 換了一段引用（同一份檔案不重新下載）：允許再捲一次到新的標記
-    // 文字層已經畫好的頁面不一定會再觸發 onTextLayer，所以等新的標記畫上去之後主動捲一次
+    // 文字層已經畫好的頁面不一定會再觸發 onTextLayer，所以主動排一次
     useEffect(() => {
         scrolled.current = false
-        const id = requestAnimationFrame(() => requestAnimationFrame(() => onTextLayer()))
-        return () => cancelAnimationFrame(id)
+        onTextLayer()
+        return () => clearTimeout(settle.current)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quote])
 
-    // 每一頁的文字層畫好後：第一次出現標記就捲過去（只捲一次，使用者自己捲了就不再搶）
+    // 每一頁的文字層畫好後排一次捲動：各頁畫好的順序不固定（實測第 4 頁比第 1 頁先好），
+    // 所以等文字層停止更新 SETTLE_MS 之後才捲，而且捲到「最長的」標記——最長的那行最能代表被引用的段落。
+    // 只捲一次，之後使用者自己捲就不再搶。
     const onTextLayer = () => {
         if (scrolled.current) return
-        const mark = boxRef.current?.querySelector('mark.cite-hl')
-        if (!mark) return
-        scrolled.current = true
-        mark.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        clearTimeout(settle.current)
+        settle.current = setTimeout(() => {
+            const marks = Array.from(boxRef.current?.querySelectorAll('mark.cite-hl') ?? [])
+            if (!marks.length) return
+            const best = marks.reduce((a, b) => ((b.textContent?.length ?? 0) > (a.textContent?.length ?? 0) ? b : a), marks[0])
+            scrolled.current = true
+            best.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }, SETTLE_MS)
     }
 
     return (
