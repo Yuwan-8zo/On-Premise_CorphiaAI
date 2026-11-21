@@ -314,6 +314,7 @@ html.dark .markdown-body .md-table strong {
   --sheet-grab-w: var(--sz-36);
   --sheet-grab-h: calc(5 * var(--ui-unit));
   --swipe-danger: var(--sys-red);  /* 手機對話左滑的「刪除」：系統紅（和選單的「刪除」同一個設定） */
+  --sheet-scrim: rgb(0 0 0 / 0.3);  /* 手機底部面板後面的遮罩 */
 }
 @media (max-width: 767.98px) {
   .side-panel.side-sheet {
@@ -338,7 +339,7 @@ html.dark .markdown-body .md-table strong {
 }
 .side-sheet-scrim {
   position: fixed; inset: 0; z-index: 49;
-  background: rgb(0 0 0 / 0.3);
+  background: var(--sheet-scrim);
   animation: sheet-scrim-in var(--duration-panel) var(--ease-out) both;
 }
 .side-sheet-scrim.is-out { animation-name: sheet-scrim-out; pointer-events: none; }
@@ -359,15 +360,16 @@ html.dark .markdown-body .md-table strong {
 .side-item[data-swipe] .swipe-actions { visibility: visible; }
 .side-item[data-swipe-anim] { transition: padding-right var(--duration-panel) var(--ease-sp); }
 .side-item[data-swipe-anim] .swipe-actions { transition: transform var(--duration-panel) var(--ease-sp); }
-/* 兩顆圓鈕（只放圖示，文字給螢幕閱讀器）：側欄很窄，用文字膠囊會把標題整個擠掉 */
+/* 兩顆圓鈕（只放圖示，文字給螢幕閱讀器）：側欄很窄，用文字膠囊會把標題整個擠掉
+ *   跟 iOS 一樣：次要動作（重新命名）是中性灰，只有刪除是紅色 */
 .swipe-btn {
   height: 100%; aspect-ratio: 1; display: inline-grid; place-items: center;
   border-radius: var(--r-9999);
-  color: #fff; background: rgb(var(--accent));
+  color: rgb(var(--text-primary)); background: var(--chip);
 }
 /* 滑開時「⋯」收起來（動作已經露出來了） */
 .side-item[data-swipe] .side-actions { opacity: 0; pointer-events: none; }
-.swipe-btn.is-danger { background: var(--swipe-danger); }
+.swipe-btn.is-danger { background: var(--swipe-danger); color: var(--text-on-accent); }
 .swipe-btn svg { width: var(--sz-16); height: var(--sz-16); }
 
 /* ═══ 下拉重新整理（lib/usePullRefresh.ts、components/ui/PullIndicator.tsx）═══

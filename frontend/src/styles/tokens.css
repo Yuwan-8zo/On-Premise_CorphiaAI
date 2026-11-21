@@ -316,6 +316,11 @@
   --lock-mascot: var(--sz-120);
   /* AI 回答裡表格自動畫的長條圖（features/chat/components/TableChart）：圖高、每一根長條最粗 */
   --md-chart-h: var(--sz-220);
+  /* 手機清單下拉重新整理（lib/usePullRefresh）：拉多遠放開才算、最多拉多遠、載入中停的高度、手指移動換算成拉出距離的比例（阻力） */
+  --pull-trigger: var(--sz-64);
+  --pull-max: var(--sz-96);
+  --pull-hold: calc(56 * var(--ui-unit));
+  --pull-damp: 0.5;
   --md-chart-bar: var(--sz-28);
   /* 日期區間選擇器（features/admin/components/DateRangePicker）：面板寬、每一天的格高 */
   --drp-w: calc(300 * var(--ui-unit));
