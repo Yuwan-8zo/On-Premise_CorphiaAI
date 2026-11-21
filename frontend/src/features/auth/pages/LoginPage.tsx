@@ -4,13 +4,14 @@
  *   2. 按「開始使用」：按鈕收成玻璃球，球一分為二——小 AI 彈到左邊、登入卡片從球的位置圓形擴散在右邊
  *      （手機：小 AI 在上、卡片在下）。過場見 utils/splitTransition。
  *   3. 小 AI 陪著登入（沒有嘴巴，表情只靠眼睛、手、身體）：
- *      打信箱眼睛跟著字走、打密碼雙手遮眼（按顯示密碼會偷看）、送出時思考、成功開心跳、失敗皺眉搖頭
+ *      打信箱眼睛跟著字走、打密碼閉眼（按顯示密碼會偷看）、送出時思考、成功開心跳、失敗皺眉搖頭（hooks/useLoginMascot）
+ *      出錯時錯誤原因由小 AI 的泡泡說，卡片邊緣變紅
  *   卡片：分段切換（登入／註冊）＋信箱、密碼（註冊時多「確認密碼」）＋送出
  */
-import { useEffect, useLayoutEffect, useRef, useState, type SyntheticEvent } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HelpCircle } from '@/components/snow/icons'
-import Mascot, { type MascotHandle, type MascotLook, type MascotMood } from '@/components/mascot/Mascot'
+import Mascot from '@/components/mascot/Mascot'
 import GlassSegmented from '@/components/ui/GlassSegmented'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
@@ -22,6 +23,7 @@ import FloatingInput from '../components/FloatingInput'
 import LoginToolbar from '../components/LoginToolbar'
 import LogoWrite from '../components/LogoWrite'
 import { useAuthForm } from '../hooks/useAuthForm'
+import { SAY_MS, useLoginMascot } from '../hooks/useLoginMascot'
 import { prefersReducedMotion, shrinkToOrb, splitOrb, type Orb } from '../utils/splitTransition'
 import { EASE_DECEL } from '@/lib/motionPresets'
 import './login.css'
@@ -29,41 +31,7 @@ import './login.css'
 /** 註冊欄位展開／收合：0.32 秒減速（規範曲線） */
 const EXPAND = { duration: 0.32, ease: EASE_DECEL }
 
-/** 對話泡泡停多久（毫秒） */
-const SAY_MS = { hello: 1800, noPeek: 1500, peek: 1100, tickle: 1100, result: 1800 }
-/** 皺眉多久後回到待命 */
-const SAD_MS = 1500
-
-/** 寬畫面（lg）小 AI 在卡片左邊；窄畫面在上面 */
-const SIDE_BY_SIDE = '(min-width: 1024px)'
-
 type Stage = 'welcome' | 'leaving' | 'auth'
-
-/** 打信箱時：游標在字裡的位置（0～1）→ 小 AI 看哪裡（D1：眼睛跟著字走，看向卡片） */
-function lookAtCaret(input: HTMLInputElement, measure: CanvasRenderingContext2D | null): MascotLook {
-    const cs = getComputedStyle(input)
-    let caret = input.value.length
-    try {
-        // type="email" 拿不到游標位置（會丟錯或回傳 null）→ 當作在最後面
-        caret = input.selectionStart ?? caret
-    } catch {
-        /* 沿用最後面 */
-    }
-    let w = caret * Number.parseFloat(cs.fontSize) * 0.55
-    if (measure) {
-        measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
-        w = measure.measureText(input.value.slice(0, caret)).width
-    }
-    const inner = input.clientWidth - Number.parseFloat(cs.paddingLeft) - Number.parseFloat(cs.paddingRight)
-    const p = Math.min(1, w / Math.max(1, inner))
-    const side = window.matchMedia?.(SIDE_BY_SIDE).matches ?? true
-    // 左右排：卡片在右邊，眼睛往右下看、越打越往右；上下排：卡片在下面，眼睛往下、從左看到右
-    return side ? { x: 0.25 + p * 0.75, y: 0.35 + p * 0.25, lean: 2 + p * 3 } : { x: -0.7 + p * 1.4, y: 0.95, lean: 0 }
-}
-
-/** 等兩幀（新的表情樣式套上去）再讀動畫長度 */
-const nextPaint = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
-const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 export default function Login() {
     const { t } = useTranslation()
@@ -71,25 +39,8 @@ export default function Login() {
     const isDark = useUIStore((s) => s.theme === 'dark')
     const [showContactAdmin, setShowContactAdmin] = useState(false)
 
-    // ── 小 AI ──
-    const mascotRef = useRef<MascotHandle>(null)
-    const [mood, setMood] = useState<MascotMood>('idle')
-    const [look, setLook] = useState<MascotLook>({ x: 0, y: 0 })
-    const [say, setSay] = useState<string | null>(null)
-    const [revealed, setRevealed] = useState<Record<string, boolean>>({})
-    const [pwField, setPwField] = useState<string | null>(null)
-    const sayTimer = useRef(0)
-    const sadTimer = useRef(0)
-    const measure = useRef<CanvasRenderingContext2D | null>(null)
-    const speak = (text: string, ms: number) => {
-        setSay(text)
-        clearTimeout(sayTimer.current)
-        sayTimer.current = window.setTimeout(() => setSay(null), ms)
-    }
-    useEffect(() => () => {
-        clearTimeout(sayTimer.current)
-        clearTimeout(sadTimer.current)
-    }, [])
+    // ── 小 AI（表情、看哪裡、泡泡：hooks/useLoginMascot）──
+    const mascot = useLoginMascot()
 
     // ── 卡片 ──
     const cardRef = useRef<HTMLFormElement>(null)
@@ -102,53 +53,16 @@ export default function Login() {
     }
 
     const form = useAuthForm({
-        onResult: async (ok) => {
-            clearTimeout(sadTimer.current)
-            if (!ok) {
-                setMood('sad')
-                shakeCard()
-                // 錯誤原因由小 AI 的泡泡說（下面的 errorText），先把正在講的話收掉
-                clearTimeout(sayTimer.current)
-                setSay(null)
-                sadTimer.current = window.setTimeout(() => setMood('idle'), SAD_MS)
-                return
-            }
-            setMood('happy')
-            const registering = form.tab === 'register'
-            speak(t(registering ? 'auth.mascotRegistered' : 'auth.mascotWelcome'), SAY_MS.result)
-            // 開心跳完（時間從樣式讀）
-            await nextPaint()
-            await wait(mascotRef.current?.moodDuration() ?? 0)
-            if (registering) setMood('idle')
+        onResult: (ok) => {
+            if (!ok) shakeCard()
+            // 成功時等小 AI 開心跳完（登入才換頁）
+            return mascot.react(ok, form.tab === 'register')
         },
     })
     const isRegister = form.tab === 'register'
     // 目前的錯誤（欄位沒填、密碼錯、尚未註冊…）：不寫在輸入框下方，由小 AI 說；卡片邊緣同時變紅。改了內容錯誤消失就收起來
     // 好幾欄都有錯（例如信箱、密碼都沒填）就一行一個，一起說
     const errorText = Object.values(form.fieldErrors).filter(Boolean).join('\n') || null
-
-    // ── 輸入框 → 小 AI 的表情 ──
-    const onEmailFocus = (e: SyntheticEvent<HTMLInputElement>) => {
-        measure.current ??= document.createElement('canvas').getContext('2d')
-        setMood('look')
-        setLook(lookAtCaret(e.currentTarget, measure.current))
-    }
-    const onEmailMove = (e: SyntheticEvent<HTMLInputElement>) => {
-        if (mood === 'look') setLook(lookAtCaret(e.currentTarget, measure.current))
-    }
-    const onPasswordFocus = (id: string) => {
-        setPwField(id)
-        setMood('cover')
-        if (!revealed[id]) speak(t('auth.mascotNoPeek'), SAY_MS.noPeek)
-    }
-    const onFieldBlur = () => {
-        setPwField(null)
-        setMood((m) => (m === 'look' || m === 'cover' ? 'idle' : m))
-    }
-    const onReveal = (id: string) => (visible: boolean) => {
-        setRevealed((r) => ({ ...r, [id]: visible }))
-        if (visible) speak(t('auth.mascotPeek'), SAY_MS.peek)
-    }
 
     // ── 歡迎頁 → 登入 ──
     const pageRef = useRef<HTMLDivElement>(null)
@@ -160,7 +74,7 @@ export default function Login() {
         const canAnimate = typeof Element.prototype.animate === 'function' && !prefersReducedMotion()
         if (!canAnimate || !startRef.current || !pageRef.current) {
             setStage('auth')
-            speak(t('auth.mascotHello'), SAY_MS.hello)
+            mascot.speak(t('auth.mascotHello'), SAY_MS.hello)
             return
         }
         setStage('leaving')
@@ -170,14 +84,14 @@ export default function Login() {
     // 登入區畫上去之後（還沒顯示前）量位置，接著分裂
     useLayoutEffect(() => {
         const orb = pendingOrb.current
-        const mascot = mascotRef.current?.el
-        if (stage !== 'auth' || !orb || !mascot || !cardRef.current || !pageRef.current) return
+        const mascotEl = mascot.ref.current?.el
+        if (stage !== 'auth' || !orb || !mascotEl || !cardRef.current || !pageRef.current) return
         pendingOrb.current = null
-        const total = splitOrb(orb, pageRef.current, mascot, cardRef.current)
+        const total = splitOrb(orb, pageRef.current, mascotEl, cardRef.current)
         // 彈到定位後：照新位置後面的背景色重算身體顏色，再打招呼
         const timer = window.setTimeout(() => {
-            mascotRef.current?.retint()
-            speak(t('auth.mascotHello'), SAY_MS.hello)
+            mascot.ref.current?.retint()
+            mascot.speak(t('auth.mascotHello'), SAY_MS.hello)
         }, total)
         return () => clearTimeout(timer)
         // 只在進到登入區那一次
@@ -229,14 +143,14 @@ export default function Login() {
                     style={{ visibility: stage === 'auth' ? 'visible' : 'hidden' }}
                 >
                     <Mascot
-                        ref={mascotRef}
-                        mood={mood}
-                        peek={!!(pwField && revealed[pwField])}
-                        look={look}
-                        say={say || errorText}
-                        sayTone={!say && errorText ? 'error' : 'normal'}
+                        ref={mascot.ref}
+                        mood={mascot.mood}
+                        peek={mascot.peek}
+                        look={mascot.look}
+                        say={mascot.say || errorText}
+                        sayTone={!mascot.say && errorText ? 'error' : 'normal'}
                         label={t('auth.mascotName')}
-                        onPoke={() => speak(t('auth.mascotTickle'), SAY_MS.tickle)}
+                        onPoke={() => mascot.speak(t('auth.mascotTickle'), SAY_MS.tickle)}
                     />
 
                     {/*
@@ -246,7 +160,7 @@ export default function Login() {
                     <form
                         ref={cardRef}
                         onSubmit={(e) => {
-                            setMood('think')
+                            mascot.setMood('think')
                             form.submit(e).catch(() => undefined)
                         }}
                         noValidate
@@ -271,13 +185,13 @@ export default function Login() {
                                 value={form.email}
                                 onChange={(e) => {
                                     form.setEmail(e.target.value)
-                                    onEmailMove(e)
+                                    mascot.onEmailMove(e)
                                 }}
-                                onFocus={onEmailFocus}
-                                onBlur={onFieldBlur}
-                                onSelect={onEmailMove}
-                                onKeyUp={onEmailMove}
-                                onClick={onEmailMove}
+                                onFocus={mascot.onEmailFocus}
+                                onBlur={mascot.onFieldBlur}
+                                onSelect={mascot.onEmailMove}
+                                onKeyUp={mascot.onEmailMove}
+                                onClick={mascot.onEmailMove}
                                 required
                                 label={t('auth.account')}
                                 error={form.fieldErrors.email}
@@ -292,9 +206,9 @@ export default function Login() {
                                 type="password"
                                 value={form.password}
                                 onChange={(e) => form.setPassword(e.target.value)}
-                                onFocus={() => onPasswordFocus('password')}
-                                onBlur={onFieldBlur}
-                                onRevealChange={onReveal('password')}
+                                onFocus={() => mascot.onPasswordFocus('password')}
+                                onBlur={mascot.onFieldBlur}
+                                onRevealChange={mascot.onReveal('password')}
                                 required
                                 label={t('auth.password')}
                                 error={form.fieldErrors.password}
@@ -328,9 +242,9 @@ export default function Login() {
                                     type="password"
                                     value={form.confirmPassword}
                                     onChange={(e) => form.setConfirmPassword(e.target.value)}
-                                    onFocus={() => onPasswordFocus('confirm-password')}
-                                    onBlur={onFieldBlur}
-                                    onRevealChange={onReveal('confirm-password')}
+                                    onFocus={() => mascot.onPasswordFocus('confirm-password')}
+                                    onBlur={mascot.onFieldBlur}
+                                    onRevealChange={mascot.onReveal('confirm-password')}
                                     required={isRegister}
                                     label={t('auth.confirmPassword')}
                                     tabIndex={isRegister ? 0 : -1}

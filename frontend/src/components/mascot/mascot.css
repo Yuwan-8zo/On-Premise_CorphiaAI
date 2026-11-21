@@ -17,6 +17,7 @@
   --m-eye-h: 42px;
   --m-look-x: 16px;          /* 眼睛左右最多移動 */
   --m-look-y: 11px;          /* 眼睛上下最多移動 */
+  --m-say-max: min(18em, 72vw); /* 對話泡泡最寬（錯誤說明比較長時自動換行） */
   /* 材質（玻璃果凍）：身體顏色 --m-tint 由 Mascot.tsx 依後面的背景色算出來（backdropTint.ts）：
      色相照背景，深色背景往亮推、淺色背景往暗推。還沒量到之前先用主題色 */
   --m-tint: var(--accent);
@@ -166,9 +167,6 @@
 .mascot.poke .m-eye { transform: scaleY(0.15); }
 
 /* 對話泡泡（玻璃，浮在頭上）：一行時是膠囊（圓角＝高度一半）；錯誤說明比較長時最多 --m-say-max 寬、自動換行 */
-.mascot {
-  --m-say-max: min(18em, 72vw);
-}
 .mascot .m-say {
   position: absolute; left: 50%; top: -6px; z-index: 5;
   transform: translate(-50%, -100%) scale(0.9); opacity: 0; pointer-events: none;
