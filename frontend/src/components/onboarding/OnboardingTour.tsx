@@ -4,10 +4,10 @@
  * 小 AI 是整個系統的嚮導：導覽由它帶。每一步它站在說明卡上面，眼睛看著要介紹的東西；
  * 卡片＝它說的話。開場、結尾開心地跳，講到資料安全時嚇一跳。
  *
- *   - 整頁變暗，要介紹的東西挖一個洞照亮（box-shadow 9999px）；卡片的小箭頭指著它
- *   - 下一步時洞、卡片、小 AI 一起滑過去（left／top 過場）
- *   - 沒有目標的步驟（開場、資料安全、結尾）：卡片在畫面正中間
- *   - 手機：目標不在畫面上（例如收在抽屜裡的側欄）就改成正中間講
+ *   - 說明卡一律在畫面正中間不動（使用者要求），只有照亮的框在動；小 AI 的眼睛跟著框轉
+ *   - 整頁變暗，要介紹的東西挖一個洞照亮（box-shadow 9999px）；框的圓角跟著目標：
+ *     膠囊（一般／專案、新對話）就是膠囊，圓角＝目標圓角＋外擴的距離（同心）
+ *   - 手機：目標不在畫面上（例如收在抽屜裡的側欄）就不照亮，只講話
  *   - 右上 ×／Esc／點背景＝略過；← → 換步驟
  *
  * 誰會看到：每個帳號第一次進聊天頁（新註冊的帳號第一次登入）；設定 →「使用說明」→「重新觀看導覽」可以再看
@@ -31,48 +31,53 @@ import { useAuthStore } from '@/store/authStore'
 import { markOnboardingDone } from './onboardingFlag'
 import './onboardingTour.css'
 
-type Placement = 'top' | 'bottom' | 'left' | 'right'
-
 interface TourStep {
     /** i18n：onboarding.steps.<id>.title／desc */
     id: string
     /** 對應 data-tour；沒有＝卡片在正中間 */
     target?: string
-    placement?: Placement
     /** 沒有目標時小 AI 的表情（有目標時一律看著目標） */
     mood?: MascotMood
 }
 
 const STEPS: TourStep[] = [
     { id: 'welcome', mood: 'happy' },
-    { id: 'modeToggle', target: 'mode-toggle', placement: 'right' },
-    { id: 'newChat', target: 'new-chat', placement: 'right' },
-    { id: 'model', target: 'model', placement: 'bottom' },
-    { id: 'chatInput', target: 'chat-input', placement: 'top' },
-    { id: 'settings', target: 'settings-button', placement: 'right' },
+    { id: 'modeToggle', target: 'mode-toggle' },
+    { id: 'newChat', target: 'new-chat' },
+    { id: 'model', target: 'model' },
+    { id: 'chatInput', target: 'chat-input' },
+    { id: 'settings', target: 'settings-button' },
     { id: 'security', mood: 'alert' },
     { id: 'done', mood: 'happy' },
 ]
 
-/** 版面數字（px）：洞比目標多一圈、卡片離目標、離螢幕邊、卡片寬、小 AI 站在卡片上方露出多少 */
+/** 版面數字（px）：框比目標多一圈、離螢幕邊、卡片寬 */
 const PAD = 8
-const GAP = 18
 const EDGE = 16
-const CARD_W = 340
-const CARD_W_CENTER = 380
-/** 小 AI 站在卡片上面：大小、離卡片左右邊多遠、腳踩進卡片多少（設計稿 220 → 縮放 MASCOT / 220） */
+const CARD_W = 380
+/** 小 AI 站在卡片上緣正中間：大小、腳踩進卡片多少（設計稿 220 → 縮放 MASCOT / 220） */
 const MASCOT = 88
-const MASCOT_INSET = 18
 const MASCOT_SINK = 12
 const MASCOT_RISE = MASCOT - MASCOT_SINK
-/** 手機寬度以下：側欄收在抽屜裡 */
-const MOBILE = 640
 
 interface Rect {
     top: number
     left: number
     width: number
     height: number
+    /** 目標的圓角（px） */
+    radius: number
+}
+
+/** 目標的圓角：自己沒有圓角（例如外面包一層的容器）就看裡面第一層、第二層的元素；膠囊（9999）以半高為準 */
+function radiusOf(el: Element, height: number): number {
+    let node: Element | null = el
+    for (let depth = 0; node && depth < 3; depth += 1) {
+        const r = Number.parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0
+        if (r > 0) return Math.min(r, height / 2)
+        node = node.firstElementChild
+    }
+    return 0
 }
 
 export interface OnboardingTourProps {
@@ -130,7 +135,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             const r = el?.getBoundingClientRect()
             // 手機上不在畫面裡（收在抽屜）的目標：不照亮，改成正中間講
             const visible = r && r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight
-            setTarget(visible ? { top: r.top, left: r.left, width: r.width, height: r.height } : null)
+            setTarget(visible && el ? { top: r.top, left: r.left, width: r.width, height: r.height, radius: radiusOf(el, r.height) } : null)
             if (cardRef.current) setCardSize({ w: cardRef.current.offsetWidth, h: cardRef.current.offsetHeight })
         }
         measure()
@@ -146,50 +151,15 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
 
     if (!isOpen) return null
 
-    // ── 卡片位置（一律用數字的 left／top，換步驟時才能平滑滑過去）──
+    // ── 卡片：一律在畫面正中間（上面留小 AI 的位置）──
     const { w: vw, h: vh } = viewport
-    const mobile = vw < MOBILE
-    const width = Math.min(target ? CARD_W : CARD_W_CENTER, vw - EDGE * 2)
+    const width = Math.min(CARD_W, vw - EDGE * 2)
     const h = cardSize.h
-    // 卡片上面要留小 AI 的位置
-    const minTop = EDGE + MASCOT_RISE
-    const clampLeft = (x: number) => Math.max(EDGE, Math.min(x, vw - EDGE - width))
-    const clampTop = (y: number) => Math.max(minTop, Math.min(y, vh - EDGE - h))
-    let left = (vw - width) / 2
-    let top = clampTop((vh - h) / 2 + MASCOT_RISE / 2)
-    let arrow: { side: Placement; offset: number } | null = null
-    // 小 AI 站在卡片哪一邊：靠近目標的那邊
-    let mascotSide: 'start' | 'end' = 'start'
-    if (target) {
-        const cx = target.left + target.width / 2
-        const cy = target.top + target.height / 2
-        const placement = mobile && (current.placement === 'right' || current.placement === 'left') ? 'bottom' : (current.placement ?? 'bottom')
-        if (placement === 'right') {
-            left = clampLeft(target.left + target.width + PAD + GAP)
-            top = clampTop(cy - h / 2)
-            arrow = { side: 'left', offset: Math.max(18, Math.min(cy - top, h - 18)) }
-        } else if (placement === 'left') {
-            left = clampLeft(target.left - PAD - GAP - width)
-            top = clampTop(cy - h / 2)
-            arrow = { side: 'right', offset: Math.max(18, Math.min(cy - top, h - 18)) }
-            mascotSide = 'end'
-        } else if (placement === 'top') {
-            left = clampLeft(cx - width / 2)
-            top = clampTop(target.top - PAD - GAP - h)
-            arrow = { side: 'bottom', offset: Math.max(18, Math.min(cx - left, width - 18)) }
-            mascotSide = cx > left + width / 2 ? 'end' : 'start'
-        } else {
-            left = clampLeft(cx - width / 2)
-            top = clampTop(target.top + target.height + PAD + GAP + MASCOT_RISE)
-            arrow = { side: 'top', offset: Math.max(18, Math.min(cx - left, width - 18)) }
-            mascotSide = cx > left + width / 2 ? 'end' : 'start'
-        }
-        // 箭頭在上面時小 AI 不能站在箭頭上：站另一邊
-        if (arrow.side === 'top') mascotSide = arrow.offset < width / 2 ? 'end' : 'start'
-    }
+    const left = (vw - width) / 2
+    const top = Math.max(EDGE + MASCOT_RISE, (vh - h + MASCOT_RISE) / 2)
 
-    // ── 小 AI：有目標就看著目標，沒有就照步驟的表情 ──
-    const mascotX = mascotSide === 'start' ? left + MASCOT_INSET + MASCOT / 2 : left + width - MASCOT_INSET - MASCOT / 2
+    // ── 小 AI：有框就看著框，沒有就照步驟的表情 ──
+    const mascotX = left + width / 2
     const mascotY = top - MASCOT_RISE / 2
     let mood: MascotMood = current.mood ?? 'idle'
     let look: MascotLook | undefined
@@ -220,7 +190,14 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
                 <div
                     aria-hidden
                     className="tour-hole"
-                    style={{ top: target.top - PAD, left: target.left - PAD, width: target.width + PAD * 2, height: target.height + PAD * 2 }}
+                    style={{
+                        top: target.top - PAD,
+                        left: target.left - PAD,
+                        width: target.width + PAD * 2,
+                        height: target.height + PAD * 2,
+                        // 同心圓角：膠囊的目標，框也是膠囊
+                        borderRadius: target.radius > 0 ? target.radius + PAD : undefined,
+                    }}
                 />
             ) : (
                 <div aria-hidden className="tour-dim" />
@@ -229,19 +206,11 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
             {/* 說明卡（小 AI 站在上面） */}
             <div ref={cardRef} style={cardStyle} className="tour-card paper paper-solid !rounded-[var(--r-25)]">
                 <div
-                    className={`tour-mascot is-${mascotSide}`}
-                    style={{ '--tour-m-size': `${MASCOT}px`, '--tour-ms': MASCOT / 220, '--tour-inset': `${MASCOT_INSET}px`, '--tour-rise': `${MASCOT_RISE}px` } as CSSProperties}
+                    className="tour-mascot"
+                    style={{ '--tour-m-size': `${MASCOT}px`, '--tour-ms': MASCOT / 220, '--tour-rise': `${MASCOT_RISE}px` } as CSSProperties}
                 >
                     <Mascot mood={mood} look={look} label={t('auth.mascotName')} />
                 </div>
-
-                {arrow && (
-                    <span
-                        aria-hidden
-                        className={`tour-arrow is-${arrow.side}`}
-                        style={arrow.side === 'top' || arrow.side === 'bottom' ? { left: arrow.offset } : { top: arrow.offset }}
-                    />
-                )}
 
                 <Tooltip label={t('common.skip', '略過')} className="!absolute top-2.5 right-2.5 z-10">
                     <button type="button" onClick={close} className="tour-skip" aria-label={t('common.skip', '略過')}>
