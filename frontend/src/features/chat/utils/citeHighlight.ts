@@ -3,9 +3,7 @@
  *
  * 檢索到的段落文字（可能是 Docling 轉的 Markdown）和 PDF 一行一行的文字不會一模一樣：
  * 空白、換行、Markdown 符號（| # * -）都不同。所以兩邊都先「正規化」（只留文字和數字），
- * 再看 PDF 這一行是不是出現在引用段落裡。太短的行很容易誤中，不標：
- *   頁碼、單一個字，或是別頁剛好也有的短詞（例如「置中對齊」出現在好幾頁），
- *   所以至少要 MIN_MATCH_LEN 個字（實測：4 個字時，引用在第 1 頁，第 4 頁的「置中對齊」也被標黃）
+ * 再看 PDF 這一行是不是出現在引用段落裡。太短的行（例如頁碼、單一個字）很容易誤中，不標。
  */
 
 /** 只留下文字和數字（去掉空白、標點、Markdown 符號），英文轉小寫 */
@@ -13,11 +11,8 @@ export function normalizeForMatch(text: string): string {
     return (text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
 }
 
-/** 一行至少要這麼多字（正規化後）才會被標記 */
-export const MIN_MATCH_LEN = 8
-
 /** PDF 這一行算不算在引用段落裡（quoteNorm 是 normalizeForMatch 過的引用段落） */
-export function isQuoted(line: string, quoteNorm: string, minLen = MIN_MATCH_LEN): boolean {
+export function isQuoted(line: string, quoteNorm: string, minLen = 4): boolean {
     const n = normalizeForMatch(line)
     return n.length >= minLen && quoteNorm.includes(n)
 }
