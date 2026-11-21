@@ -1230,7 +1230,7 @@ export default {
         export: {
             menu: 'Export',
             title: 'Export conversation',
-            audited: 'Exports are recorded in the audit log.',
+            audited: 'Exports are recorded in the audit log',
             docx: 'Word',
             docxHint: 'Editable .docx',
             pdf: 'PDF',

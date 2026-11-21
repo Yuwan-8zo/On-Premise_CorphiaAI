@@ -1222,7 +1222,7 @@ export default {
         export: {
             menu: '匯出',
             title: '匯出對話',
-            audited: '匯出會留下稽核紀錄。',
+            audited: '匯出會留下稽核紀錄',
             docx: 'Word',
             docxHint: '可以直接編輯的 .docx',
             pdf: 'PDF',

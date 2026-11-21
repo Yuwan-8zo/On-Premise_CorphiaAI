@@ -125,10 +125,9 @@
 }
 
 /* ---------- 對話裡的表格（Apple 分組清單樣式）----------
- *   跟訊息氣泡同材質（玻璃＋模糊＋光邊、圓角 22）；表頭＝13／18 半粗次要字、不填底
+ *   內容用實色卡片（.paper，和下面自動畫的長條圖同材質；玻璃只給控制元件）、圓角 22；表頭＝13／18 半粗次要字、不填底
  *   列與列之間 0.5px 分隔線；第一欄是項目名稱（主要字、半粗、不換行）；其他欄 15／22 主要字
  *   表格裡的粗體不加螢光底（螢光底只給內文） */
-/* 材質跟使用者訊息氣泡一樣（.glass-chip：玻璃底＋模糊 12＋光邊），圓角 22 */
 /* 回答裡的外部連結：字後面的小標籤，寫出實際會連到的網站（比內文小一級、次要文字色，不搶連結本身） */
 .md-link-host {
   display: inline-block;
@@ -291,9 +290,12 @@ html.dark .markdown-body .md-table strong {
 /* ═══ 長對話的閱讀進度（hooks/useReadProgress.ts）═══
  *   聊天區頂端、和訊息同寬的一條細線；捲動時浮現、停下後淡掉（像 iOS 捲軸）。
  *   外層高 0，不佔版面；線本身用 scaleX 變長，不觸發重排 */
-.read-progress-host { position: relative; height: 0; width: 100%; max-width: 48rem; /* 和訊息欄（max-w-3xl）同寬 */ margin: 0 auto; z-index: 5; }
+.read-progress-host {
+  --read-max-w: 48rem;  /* 和訊息欄同寬（Tailwind 的 max-w-3xl 就是 48rem） */
+  position: relative; height: 0; width: 100%; max-width: var(--read-max-w); margin: 0 auto; z-index: 5;
+}
 .read-progress {
-  --read-h: 3px;
+  --read-h: var(--sz-3);
   position: absolute; left: var(--sp-16); right: var(--sp-16); top: 0; height: var(--read-h);
   border-radius: var(--r-9999); background: rgb(var(--accent));
   transform-origin: left center; transform: scaleX(var(--read, 0));
@@ -309,9 +311,9 @@ html.dark .markdown-body .md-table strong {
   --sheet-gap: var(--sp-8);
   --sheet-top: var(--sz-44);
   --sheet-r: var(--r-36);
-  --sheet-grab-w: 36px;
-  --sheet-grab-h: 5px;
-  --swipe-danger: #ff4245;  /* 手機對話左滑的「刪除」：Apple 系統紅（和選單的「刪除」同色） */
+  --sheet-grab-w: var(--sz-36);
+  --sheet-grab-h: calc(5 * var(--ui-unit));
+  --swipe-danger: var(--sys-red);  /* 手機對話左滑的「刪除」：系統紅（和選單的「刪除」同一個設定） */
 }
 @media (max-width: 767.98px) {
   .side-panel.side-sheet {

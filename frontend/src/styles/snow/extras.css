@@ -23,7 +23,7 @@
   color: rgb(var(--text-primary));
   font-size: var(--fs-13);
   line-height: var(--lh-18);
-  font-weight: 700;
+  font-weight: 500;
   animation: toastIn 0.23s var(--ease-out) both;
 }
 .conn-dot {
@@ -38,7 +38,6 @@
   animation: none;
 }
 .conn-sub {
-  font-weight: 500;
   color: rgb(var(--text-secondary));
 }
 .conn-cancel {
@@ -87,7 +86,7 @@
 .idle-lock-title {
   font-size: var(--fs-22);
   line-height: var(--lh-28);
-  font-weight: 700;
+  font-weight: 600;
   color: rgb(var(--text-primary));
 }
 .idle-lock-who {
@@ -126,7 +125,7 @@
 .region-error-title {
   font-size: var(--fs-17);
   line-height: var(--lh-22);
-  font-weight: 700;
+  font-weight: 600;
   color: rgb(var(--text-primary));
 }
 .region-error-body {
@@ -154,6 +153,8 @@
   margin-bottom: var(--sp-4);
   color: rgb(var(--text-secondary));
 }
+/* 工具列圖示：和全站一樣是 Ionicons，大小同內文圖示 */
+.md-table-tool-ic { width: var(--sz-16); height: var(--sz-16); }
 .md-chart {
   margin-top: var(--sp-8);
   padding: var(--sp-12) var(--sp-12) var(--sp-8);
@@ -179,7 +180,7 @@
 .export-row + .export-row { border-top: 0.5px solid var(--paper-line); }
 .export-row:hover:not(:disabled) { background: var(--chip); }
 .export-row:disabled { opacity: 0.6; }
-.export-row svg { width: var(--sz-20); height: var(--sz-20); color: rgb(var(--accent)); flex-shrink: 0; }
+.export-row svg { width: var(--sz-20); height: var(--sz-20); color: rgb(var(--text-secondary)); flex-shrink: 0; }
 
 /* ---------- 列印成 PDF（features/chat/utils/printMarkdown）：只印 #print-root ---------- */
 /* 平常放在畫面外（不能 display:none：圖表量不到寬度就畫不出長條），寬度照 A4 可印範圍 */
@@ -272,7 +273,7 @@
 }
 .drp-day:hover:not(:disabled) { background: var(--chip); }
 .drp-day:disabled { color: rgb(var(--text-disabled)); }
-.drp-day.is-today { font-weight: 700; color: rgb(var(--accent)); }
+.drp-day.is-today { font-weight: 600; color: rgb(var(--accent)); }
 /* 區間內：淡淡的強調色連成一條；起訖兩天是實心圓 */
 .drp-day.is-in {
   border-radius: 0;
