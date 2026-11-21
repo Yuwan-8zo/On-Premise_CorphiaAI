@@ -37,6 +37,10 @@ export const LENS_CFG = {
     lead: 30, // --glide-lead 滑行的時間從按下之前多久算起
     pressWait: 320, // --lens-press-wait 定點按住多久算長按
     slop: 6, // 手指移動超過這個（px）才算滑動、不是定點按住
+    // 拉過頭（規範「拉桿」：拉到端點再往外拉，越拉越拉不動、放開彈回；所有放大鏡共用，見 useLensPull）
+    pullMax: 30, // --sl-pull-max 最多被拉多遠（px）
+    pullShare: 0.36, // --sl-pull-share 整列跟著往手指那邊移的比例（其餘是靠手指那端被拉長）
+    pullBack: 450, // --sl-pull-back 放開後彈回的時間
     leave: 300, // 放開後放大鏡原地淡出
     dragSlop: 8, // 從觸發鈕拖進選單：手指在選單外這麼近（px）也算進入、放開也算選取（邊緣的項目好選）
 } as const

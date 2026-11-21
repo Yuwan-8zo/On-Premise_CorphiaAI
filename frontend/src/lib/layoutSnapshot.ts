@@ -8,6 +8,8 @@
  *   對不上（第一次、換了視窗大小）才用 Skeleton.tsx 裡手刻的版本。
  *
  *   不要量的區塊（對話框、提示、背景波浪）加 data-skel-skip。
+ *   頁面停在「重新整理後不會回到的狀態」（後台的非總覽分頁、登入頁的註冊分頁、專案模式）時，
+ *   在畫面上任一元素加 data-skel-nosave：這時不記，免得下次載入時畫成別的畫面。
  */
 
 /** 一塊：s＝面板、b＝小方塊、t＝一行文字 */
@@ -35,7 +37,7 @@ interface Snapshot {
 // v2：量的時候開始考慮捲動區的裁切；v1 的快照可能有蓋到別處的大塊，一律作廢
 const STORE_KEY = 'corphia.layoutSnapshot.v2'
 /** 最多記幾種「頁面 × 視窗大小 × 深淺色」 */
-const MAX_SNAPSHOTS = 12
+const MAX_SNAPSHOTS = 24
 /** 一頁最多記幾塊（太多代表畫面很長，超出部分不需要） */
 const MAX_ITEMS = 900
 /** 面板的門檻：比這大、而且裡面還有東西的有底色區塊，算「面板」（裡面的東西也要畫） */
@@ -47,13 +49,13 @@ const IMAGE_R = 12
 /** 骨架快照放多久還算數（毫秒）：太舊的版面可能已經改過 */
 const MAX_AGE = 30 * 24 * 3600 * 1000
 
-/** 依網址分「頁」：同一頁不同對話共用一份 */
+/** 依網址分「頁」：每個對話、每個分享連結各記一份（不同對話的訊息長短不同，共用會畫成別的對話） */
 export function pageKind(pathname: string): string {
     if (pathname.startsWith('/login')) return 'login'
     if (pathname.startsWith('/admin')) return 'admin'
-    if (pathname.startsWith('/share')) return 'share'
-    if (pathname.startsWith('/chat/')) return 'chat-conv'
-    if (pathname === '/' || pathname.startsWith('/chat')) return 'chat'
+    if (pathname.startsWith('/share/')) return `share:${pathname.slice('/share/'.length)}`
+    if (pathname.startsWith('/chat/')) return `chat-conv:${pathname.slice('/chat/'.length)}`
+    if (pathname === '/' || pathname === '/chat') return 'chat'
     return ''
 }
 
@@ -193,6 +195,8 @@ export function saveLayoutSnapshot(pathname: string) {
     if (!kind) return
     // 正在載入（畫面上還有骨架）、開著對話框時不記
     if (document.querySelector('.skel, .skel-text, [role="dialog"], .skel-fade-out')) return
+    // 頁面停在重新整理後不會回到的狀態（例如後台的其他分頁）：不記
+    if (document.querySelector('[data-skel-nosave]')) return
     // 旁邊面板開著時不記：重新整理後面板不會自己打開，照這時的版面畫骨架會多一塊、聊天區也變窄（沿用上一次記的）
     if (document.querySelector('[data-testid="side-panel"]')) return
     const root = document.getElementById('root')

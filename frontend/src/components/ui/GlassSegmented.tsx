@@ -15,6 +15,7 @@ import Tooltip from './Tooltip'
 import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 import { LENS_CFG, LENS_MAG, LENS_SX, capsuleHole, lensActive, lensCrossScale, shoulderMask, useLensMotion } from './lensKit'
 import { swallowNextClick } from '@/lib/swallowClick'
+import { useLensPull } from './useLensPull'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -53,6 +54,8 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
     const px = useCssPx(sizeIn.filter((v): v is `--${string}` => typeof v === 'string'))
     const [pad, growLongSet, growCrossSet, gap] = sizeIn.map((v) => (typeof v === 'string' ? px[v] : v))
     const trackRef = useRef<HTMLDivElement | null>(null)
+    // 拉過頭：按住拖到端點再往外拉，整條軌道被拉長、放開彈回（和拉桿一樣）
+    useLensPull(trackRef, { axis: vertical ? 'y' : 'x' })
     const [size, setSize] = useState({ w: 0, h: 0 })
     const n = options.length
     const index = Math.max(0, options.findIndex((o) => o.value === value))

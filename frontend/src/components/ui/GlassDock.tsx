@@ -18,6 +18,7 @@ import { LENS_CFG, LENS_MAG, LENS_SX, lensCrossScale, reduceMotion, roundRectHol
 import { swallowNextClick } from '@/lib/swallowClick'
 import { useTranslation } from 'react-i18next'
 import { useDismiss } from '@/lib/useDismiss'
+import { useLensPull } from './useLensPull'
 
 export interface DockItem {
     id: string
@@ -45,6 +46,10 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     const [lensY, setLensY] = useState<number | null>(null) // 放大鏡中心（相對外殼頂端）
     const [leaving, setLeaving] = useState<{ y: number } | null>(null)
     const wrapRef = useRef<HTMLDivElement>(null)
+    const shellRef = useRef<HTMLDivElement>(null)
+    // 拉過頭：放大鏡拖到第一列上面／最後一列下面再往外拉，整個選單被拉長、放開彈回（和拉桿一樣）；端點看展開的外殼
+    const lensLive = useRef(false)
+    useLensPull(wrapRef, { axis: 'y', bounds: () => shellRef.current, active: () => lensLive.current })
     const press = useRef<{ id: number; y0: number; timer: number; wideNow: boolean; startedOpen: boolean } | null>(null)
     const target = useRef(0)
     const cur = useRef(0)
@@ -154,6 +159,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
     const lensT = lensY !== null ? lensY - LENS_H / 2 : 0
     // 規範：選單的玻璃（模糊、底色、光邊）和鏡片底下的項目，在鏡片位置整個挖掉，改由鏡片自己做一整片模糊
     const lensOn = wide && lensY !== null
+    lensLive.current = lensOn
     const hole = lensOn ? roundRectHole(lensL, lensT, LENS_W, LENS_H, LENS_R) : undefined
     // 肩：鏡內縮小的選單（縱向 0.93）在那一側延伸到鏡片外才接上；移到最上／最下一格時那一側淡掉，底面順著選單的圓頭彎過去
     const lensCY = lensT + LENS_H / 2
@@ -189,6 +195,7 @@ export default function GlassDock({ items, className = '', 'aria-label': ariaLab
             style={{ width: SHELL_N, height: SHELL_N }}
         >
             <div
+                ref={shellRef}
                 role="menu"
                 aria-label={ariaLabel}
                 className={`dock-shell glass-chip ${open ? 'is-open' : ''}`}

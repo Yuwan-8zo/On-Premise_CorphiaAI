@@ -19,6 +19,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import { capsuleHole, LENS_CFG, LENS_MAG } from './lensKit'
+import { unpullRect, useLensPull } from './useLensPull'
 import { readPx } from '@/lib/cssVars'
 import { swallowNextClick } from '@/lib/swallowClick'
 import { returnMenuDrag, takeMenuDrag } from '@/lib/menuDrag'
@@ -41,6 +42,10 @@ export default function LensMenu({ children, className = '', plate = false, fitC
     const listRef = useRef<HTMLDivElement | null>(null)
     const lensRef = useRef<HTMLDivElement | null>(null)
     const plateRef = useRef<HTMLDivElement | null>(null)
+    // 拉過頭：放大鏡拖過第一項／最後一項再往外拉，整張選單卡片被拉長、放開彈回（和拉桿一樣）
+    const pullRef = useRef<HTMLElement | null>(null)
+    useLayoutEffect(() => { pullRef.current = wrapRef.current?.closest<HTMLElement>('.paper') ?? wrapRef.current }, [])
+    useLensPull(pullRef, { axis: () => st.current.axis, active: () => st.current.active })
 
     // 選取底盤：移到目前項目（.is-current）的位置；第一次定位不播動畫
     const placePlate = () => {
@@ -125,9 +130,11 @@ export default function LensMenu({ children, className = '', plate = false, fitC
         const wrap = wrapRef.current, list = listRef.current, lens = lensRef.current
         const its = items()
         if (!wrap || !list || !lens || !its.length) return
-        const W = wrap.getBoundingClientRect()
-        const L = list.getBoundingClientRect()
-        const rs = its.map((el) => el.getBoundingClientRect())
+        // 拉過頭時卡片被縮放：量到的位置先換回沒被拉長時的樣子（見 unpullRect）
+        const un = (r: DOMRect) => unpullRect(pullRef.current, r)
+        const W = un(wrap.getBoundingClientRect())
+        const L = un(list.getBoundingClientRect())
+        const rs = its.map((el) => un(el.getBoundingClientRect()))
         const vert = s.axis === 'y'
         const centers = rs.map((r) => (vert ? r.top + r.height / 2 : r.left + r.width / 2))
         const lo = Math.min(...centers), hi = Math.max(...centers)
@@ -147,7 +154,7 @@ export default function LensMenu({ children, className = '', plate = false, fitC
         // 尺寸（和設定頁側欄的放大鏡同一套）：選項四邊各多 over，按下後 0.12 秒從選項大小長大；一律膠囊
         const g = growEase(Math.min(1, (performance.now() - s.t0) / LENS_CFG.grow))
         const card = wrap.closest<HTMLElement>('.paper')
-        const C = card?.getBoundingClientRect()
+        const C = card ? un(card.getBoundingClientRect()) : undefined
         // 選單卡片：放大鏡不能超出卡片（多出去的距離不超過選項離卡片的距離）
         const inset = C ? Math.max(0, vert ? r.left - C.left : r.top - C.top) : s.over
         const over = Math.min(s.over, inset) * g
