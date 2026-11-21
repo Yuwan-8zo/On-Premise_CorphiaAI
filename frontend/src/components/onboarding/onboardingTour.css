@@ -1,0 +1,51 @@
+/* ═══ 小 AI 導覽（OnboardingTour.tsx）═══
+ *   版面數字（卡片寬、小 AI 大小、離邊距離）寫在 OnboardingTour.tsx 的常數，這裡只有樣子與過場 */
+.tour {
+  --tour-move: 0.45s;                                   /* 換步驟：洞、卡片、小 AI 滑過去 */
+  --tour-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --tour-dim: rgba(0, 0, 0, 0.62);
+  --tour-mascot-tint-a: 0.78;
+}
+
+/* 變暗＋照亮目標：一個跟目標同大小的洞，外面用超大陰影蓋暗；一圈主題色細線標出範圍（規範：不加外光暈） */
+.tour-hole {
+  position: absolute; pointer-events: none; border-radius: var(--r-14);
+  box-shadow: 0 0 0 9999px var(--tour-dim), 0 0 0 2px rgb(var(--accent) / 0.7);
+  transition: top var(--tour-move) var(--tour-ease), left var(--tour-move) var(--tour-ease), width var(--tour-move) var(--tour-ease), height var(--tour-move) var(--tour-ease);
+}
+.tour-dim { position: absolute; inset: 0; background: var(--tour-dim); }
+
+/* 說明卡＝小 AI 說的話 */
+.tour-card {
+  position: absolute;
+  transition: left var(--tour-move) var(--tour-ease), top var(--tour-move) var(--tour-ease), width var(--tour-move) var(--tour-ease);
+}
+
+/* 小 AI 站在卡片上緣（腳踩進卡片一點），靠近目標的那一邊 */
+.tour-mascot { position: absolute; bottom: calc(100% - var(--tour-m-size) + var(--tour-rise)); z-index: 4; transition: left var(--tour-move) var(--tour-ease), right var(--tour-move) var(--tour-ease); }
+.tour-mascot.is-start { left: var(--tour-inset); }
+.tour-mascot.is-end { left: calc(100% - var(--tour-inset) - var(--tour-m-size)); }
+/* 小 AI 自己預設 150：在導覽裡縮小（數字由 OnboardingTour.tsx 給） */
+.tour-mascot .mascot {
+  --m-size: var(--tour-m-size); --ms: var(--tour-ms);
+  /* 背景變暗後玻璃身體會透出後面的東西、看起來灰灰的：導覽時身體的顏色濃一點 */
+  --m-tint-a: var(--tour-mascot-tint-a);
+}
+
+/* 卡片的小箭頭指著目標 */
+.tour-arrow { position: absolute; width: 12px; height: 12px; background: var(--paper-solid); }
+.tour-arrow.is-top { top: -6px; transform: translateX(-50%) rotate(45deg); }
+.tour-arrow.is-bottom { bottom: -6px; transform: translateX(-50%) rotate(45deg); }
+.tour-arrow.is-left { left: -6px; transform: translateY(-50%) rotate(45deg); }
+.tour-arrow.is-right { right: -6px; transform: translateY(-50%) rotate(45deg); }
+
+.tour-skip { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 999px; color: rgb(var(--text-muted)); }
+.tour-prev { display: flex; align-items: center; gap: 2px; border-radius: 999px; padding: 4px 10px; font-size: var(--fs-13); color: rgb(var(--text-secondary)); }
+
+/* 進度點：現在這一步拉長、主題色 */
+.tour-dot { height: 4px; width: 4px; border-radius: 999px; background: rgb(var(--text-muted) / 0.4); transition: width 0.25s var(--tour-ease), background-color 0.25s; }
+.tour-dot.is-on { width: 16px; background: rgb(var(--accent)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole, .tour-card, .tour-mascot { transition: none; }
+}

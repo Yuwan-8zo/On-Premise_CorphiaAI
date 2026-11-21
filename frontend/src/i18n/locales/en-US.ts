@@ -40,32 +40,42 @@ export default {
 
     // First-time spotlight onboarding tour
     onboarding: {
-        start: 'Get started',
-        welcome: {
-            title: 'Welcome to Corphia AI',
-            desc: 'A self-hosted enterprise knowledge engine. Everything stays on your machine. I\'ll walk you through 4 key parts of the interface.',
-        },
-        tour: {
+        start: 'Start',
+        progress: 'Step {{n}} of {{total}}',
+        goTo: 'Go to step {{n}}',
+        steps: {
+            welcome: {
+                title: "Hi, I'm Corphia's helper",
+                desc: "Since this is your first time, let me show you around. Everything you ask and every file you add stays on your company's own server.",
+            },
             modeToggle: {
-                title: 'General vs Project',
-                desc: 'Switch chat mode here: General is plain chat; Project uses the folder contents as RAG context.',
+                title: 'Chat and projects',
+                desc: '"Chat" is a plain conversation with me. "Project" reads the files in a folder so I answer from your own documents.',
             },
             newChat: {
-                title: 'Start something new',
-                desc: 'Creates a new conversation in General mode, or a new folder in Project mode.',
+                title: 'New chat',
+                desc: 'Start a new topic here. Inside a project this button adds a folder.',
+            },
+            model: {
+                title: 'Choose a model',
+                desc: 'Switch models here: small ones answer fast, large ones think deeper. All of them run on this server.',
             },
             chatInput: {
-                title: 'Type or drop',
-                desc: 'Type a message or drop files in. The left button opens the prompt-template menu; the mic button on the right records voice.',
+                title: 'Ask me here',
+                desc: 'Type a question, drop a file in, or tap the microphone and speak.',
             },
             settings: {
-                title: 'Settings & admin',
-                desc: 'Click your avatar to open Settings — theme, language, accent. Admins can also reach the admin console from here.',
+                title: 'Your settings',
+                desc: 'Click your name to change theme, language and colour. You can replay this tour from there too.',
             },
-        },
-        done: {
-            title: 'You\'re all set',
-            desc: 'Start your first conversation. To see this guide again, open Settings → Guide and click "Replay tour".',
+            security: {
+                title: 'Your data stays here',
+                desc: 'If someone tries to get personal data or system settings out of me, the security gateway blocks it and logs it for the admin.',
+            },
+            done: {
+                title: "You're all set",
+                desc: 'Call me any time. To see this again, go to Settings → Guide and choose "Replay tour".',
+            },
         },
     },
 
@@ -407,7 +417,7 @@ export default {
         adminLabel: 'Admin Dashboard',
         showQR: 'Show QR Code for mobile login',
         replayTour: 'Replay tour',
-        replayTourHint: 'Show the first-time onboarding tour again',
+        replayTourHint: "See the helper's first-time tour again",
         pwdSubmit: 'Change',
         accountSection: 'Account',
         nameLabel: 'Name',

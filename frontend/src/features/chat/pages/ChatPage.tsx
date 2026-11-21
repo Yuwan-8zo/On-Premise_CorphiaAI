@@ -10,6 +10,7 @@ import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import SidePanel from '@/features/chat/components/SidePanel'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
@@ -23,17 +24,18 @@ export default function Chat() {
     // 旁邊的顯示面板開著時聊天欄變窄：整欄（訊息、輸入框）左右留邊，不然會貼到側欄和面板
     const panelOpen = useSidePanelStore((s) => s.open)
 
-    // 第一次進入 chat 觸發引導；旗標寫在 localStorage，已看過就不再顯示
+    // 每個帳號第一次進聊天頁（新註冊的帳號第一次登入）由小 AI 帶導覽；看過的標記每個帳號分開記（onboardingFlag）
     // useUIStore 的 onboardingReplayToken 在「重看引導」按下時會 +1，這裡訂這個值來重新打開
     const onboardingReplayToken = useUIStore((s) => s.onboardingReplayToken)
     const [showOnboarding, setShowOnboarding] = useState(false)
 
+    const userId = useAuthStore((s) => s.user?.id)
     useEffect(() => {
-        // 初次進入：沒看過才開
-        if (!isOnboardingDone()) {
+        // 這個帳號還沒看過才開（等登入資料載好、知道是哪個帳號再判斷）
+        if (userId && !isOnboardingDone(userId)) {
             setShowOnboarding(true)
         }
-    }, [])
+    }, [userId])
 
     // 只有「這次停留期間」重看次數又增加才打開。
     // 以前用 token > 0 判斷：按過一次重看後，從管理後台等頁面回來（頁面重新掛載）就會一直再跳出引導
