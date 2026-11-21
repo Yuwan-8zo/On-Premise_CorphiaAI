@@ -7,7 +7,7 @@
  */
 import { useTranslation } from 'react-i18next'
 import Mascot from '@/components/mascot/Mascot'
-import { PULL_TRIGGER, type PullState } from '@/lib/usePullRefresh'
+import { pullConfig, type PullState } from '@/lib/usePullRefresh'
 
 /** 拉到門檻時，小 AI 被拉長多少（高 1＋這個值、寬 1－這個值的一半） */
 const PULL_STRETCH = 0.35
@@ -15,7 +15,8 @@ const PULL_STRETCH = 0.35
 export default function PullIndicator({ distance, state }: Readonly<{ distance: number; state: PullState }>) {
     const { t } = useTranslation()
     const mood = { idle: 'idle', pulling: 'idle', ready: 'happy', refreshing: 'think' } as const
-    const k = state === 'refreshing' ? 0 : Math.min(1, distance / PULL_TRIGGER) * PULL_STRETCH
+    const trigger = state === 'idle' ? 1 : pullConfig().trigger || 1
+    const k = state === 'refreshing' ? 0 : Math.min(1, distance / trigger) * PULL_STRETCH
     return (
         <div className={`pull-indicator ${state === 'idle' ? 'is-idle' : ''}`} style={{ height: distance }} aria-hidden={state === 'idle'}>
             {state !== 'idle' && (
