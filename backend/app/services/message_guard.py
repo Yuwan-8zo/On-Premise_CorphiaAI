@@ -4,6 +4,7 @@
 依序五層（全部在送進模型回答之前）：
   1. 個資遮罩（PII）：命中就改用遮罩後的文字，後面的檢查、模型、資料庫都不接觸原值
   2. 違禁詞（DLP）：命中直接攔阻，不送模型
+     2b. 索取他人個資／帳密、要求協助攻擊：規則認意圖，命中直接攔阻（sensitive_request_guard）
   3. 提示詞注入（Prompt Injection）：高風險攔阻；其他淨化後繼續
   4. 語意比對：跟攻擊範例、正常範例比「意思」，很像攻擊就攔阻（換句話說的攻擊，規則比對不到）
   5. 模型複查：第 4 層覺得「有點可疑」時，請本機模型做是非題；判定是攻擊就攔阻
@@ -26,6 +27,7 @@ from app.services.doc_intents import strip_all_documents_request, wants_all_docu
 from app.services.pii_masking_service import mask_pii
 from app.services.prompt_guard_service import check_prompt_injection
 from app.services.security_gates import record_score
+from app.services.sensitive_request_guard import ATTACK, CREDENTIAL, PERSONAL, check_sensitive_request
 from app.services.semantic_guard import SECRET, llm_judge, semantic_check
 
 logger = logging.getLogger(__name__)
@@ -121,6 +123,25 @@ async def screen_user_message(
         await emit({"type": "dlp_block", "message": dlp_result["reason"], "matched_terms_count": count})
         await audit(AuditAction.DLP_HIT, f"DLP 偵測到 {count} 個違禁詞並已攔阻", {"matched_terms_count": count})
         return None
+
+    # 2b. 指名索取他人個資、帳密金鑰，或要求協助攻擊（services/sensitive_request_guard.py）
+    #     個資遮罩只認格式、違禁詞只認列管字詞，「我要王曉明的身分證」兩關都比對不到；這裡認「意圖」。
+    #     個資、帳密算 DLP 那一關（跟著 DLP 開關）；協助攻擊算提示詞注入那一關。
+    #     稽核只記類別，不記原文（原文裡就有被索取的人名）。
+    hit = check_sensitive_request(processed)
+    if hit is not None:
+        if hit.category in (PERSONAL, CREDENTIAL) and settings.enable_dlp:
+            what = "他人個資" if hit.category == PERSONAL else "登入憑證"
+            await emit({"type": "dlp_block", "message": hit.message, "matched_terms_count": 0})
+            await audit(AuditAction.DLP_HIT, f"偵測到索取{what}（{hit.kind}）並已攔阻",
+                        {"rule": "sensitive_request", "category": hit.category, "kind": hit.kind})
+            return None
+        if hit.category == ATTACK and settings.enable_prompt_injection_guard:
+            await emit({"type": "injection_block", "message": hit.message, "risk_level": "high"})
+            await audit(AuditAction.PROMPT_INJECTION_BLOCKED, f"偵測到要求協助攻擊（{hit.kind}）並已攔阻",
+                        {"rule": "sensitive_request", "category": hit.category, "kind": hit.kind,
+                         "risk_level": "high"})
+            return None
 
     # 3. 提示詞注入：高風險攔阻，其他淨化後繼續
     if settings.enable_prompt_injection_guard:
