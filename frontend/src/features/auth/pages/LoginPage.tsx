@@ -115,7 +115,7 @@ export default function Login() {
             ref={pageRef}
             // 重新整理一律回到歡迎頁：停在登入區時不記骨架版面（見 lib/layoutSnapshot）
             data-skel-nosave={stage !== 'welcome' || undefined}
-            className="login-page min-h-screen min-h-[100svh] min-h-[100dvh] flex flex-col bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto select-none"
+            className="login-page h-screen h-[100svh] h-[100dvh] flex flex-col bg-bg-base transition-colors duration-300 relative overflow-x-hidden overflow-y-auto select-none"
             style={{
                 // 輸入框邊線：依深淺色給不同灰
                 ['--border-subtle' as string]: borders.subtle,
@@ -151,7 +151,7 @@ export default function Login() {
 
             {stage !== 'welcome' && (
                 <main
-                    className="login-auth relative z-30 flex-1 flex flex-col lg:flex-row items-center justify-center px-6 lg:px-8 pb-12"
+                    className="login-auth relative z-30 flex-1 flex flex-col lg:flex-row items-center justify-center px-6 lg:px-8"
                     style={{ visibility: stage === 'auth' ? 'visible' : 'hidden' }}
                 >
                     <Mascot
@@ -299,6 +299,13 @@ export default function Login() {
                         </div>
                     </form>
                 </main>
+            )}
+            {/* 和上方工具列一樣高的隱形墊片：登入區上下各扣掉同樣的高度，小 AI＋卡片才會在整個畫面正中間
+                （以前只有上面那排，整組往下偏了半排；iPad 實測偏 30px）。畫面太矮時墊片先縮（min-h-0），不擠登入區 */}
+            {stage !== 'welcome' && (
+                <div aria-hidden className="login-head-balance pointer-events-none min-h-0 overflow-hidden px-6 pb-6 pt-14 lg:pt-6">
+                    <div className="h-[var(--top-btn)]" />
+                </div>
             )}
 
             <ContactAdminDialog open={showContactAdmin} onClose={() => setShowContactAdmin(false)} />
