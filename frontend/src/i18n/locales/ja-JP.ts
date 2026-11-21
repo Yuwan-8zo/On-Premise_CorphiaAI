@@ -1393,6 +1393,7 @@ export default {
             noEvents: '分析できるイベントはまだありません',
         },
         minimap: {
+            ai: 'Corphia AI',
             empty: '（内容なし）',
             you: 'あなた',
         },

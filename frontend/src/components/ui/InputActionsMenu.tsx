@@ -105,7 +105,7 @@ export default function InputActionsMenu({ label, items, disabled }: InputAction
                             {...menuPop}
                             role="menu"
                             aria-label={label}
-                            className="fixed z-[1100] paper paper-solid overflow-hidden p-[var(--sp-6)] min-w-[var(--sz-200)]"
+                            className="fixed z-[1100] paper paper-solid !rounded-[var(--menu-r)] overflow-hidden p-[var(--menu-pad)] min-w-[var(--sz-200)]"
                             style={{ left: pos.left, bottom: pos.bottom, transformOrigin: 'bottom left' }}
                         >
                             <LensMenu className="flex flex-col gap-0.5">

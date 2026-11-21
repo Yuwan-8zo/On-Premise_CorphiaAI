@@ -83,7 +83,7 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full flex items-center justify-between px-3 py-2"
             >
-                <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <div className="flex items-center gap-2 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">
                     <DocumentIcon />
                     <span>
                         {t('ui.sources.title', { count: groups.length })}
@@ -103,12 +103,12 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                                 onClick={() => toggleItem(group.key)}
                                 className="w-full flex items-center justify-between px-3 py-2"
                             >
-                                <div className="flex min-w-0 items-center gap-2 text-sm">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-[var(--accent-ink-small)] rounded-[var(--r-6)] text-xs font-medium">
+                                <div className="flex min-w-0 items-center gap-2 text-[length:var(--fs-15)] leading-[var(--lh-20)]">
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-accent/15 text-[var(--accent-ink-small)] rounded-[var(--r-6)] text-[length:var(--fs-12)] leading-[var(--lh-16)] font-medium">
                                         {index + 1}
                                     </span>
                                     <span className="text-text-secondary truncate">{group.name}</span>
-                                    <span className="flex-shrink-0 text-xs text-text-muted">
+                                    <span className="flex-shrink-0 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">
                                         {t('ui.sources.group', { count: group.chunks.length, best: Math.round(group.best * 100) })}
                                     </span>
                                 </div>
@@ -118,8 +118,8 @@ export default function SourceCitations({ sources }: SourceCitationsProps) {
                             {expandedItems.has(group.key) && (
                                 <div className="space-y-2 px-3 pb-3">
                                     {group.chunks.map((chunk, i) => (
-                                        <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[var(--r-12)] text-sm text-text-secondary leading-relaxed">
-                                            <p className="mb-1 text-xs text-text-muted">
+                                        <div key={chunk.chunk_id} className="p-3 bg-[var(--chip)] rounded-[var(--r-12)] text-[length:var(--fs-15)] text-text-secondary leading-relaxed">
+                                            <p className="mb-1 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-muted">
                                                 {t('ui.sources.chunk', { n: i + 1, score: Math.round((chunk.score || 0) * 100) })}
                                             </p>
                                             {chunk.content}

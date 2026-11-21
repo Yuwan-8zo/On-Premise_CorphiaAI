@@ -186,7 +186,7 @@ export function Field({
 }) {
     return (
         <label className="block">
-            <span className="mb-2 block text-xs font-semibold text-text-secondary">
+            <span className="mb-2 block text-[length:var(--fs-12)] leading-[var(--lh-16)] font-semibold text-text-secondary">
                 {label}
             </span>
             {children}
@@ -201,7 +201,7 @@ export function Field({
 // ---------------------------------------------------------------------------
 
 export const inputClass =
-    'w-full rounded-[var(--r-10)] snow-field px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
+    'w-full rounded-[var(--r-10)] snow-field px-4 py-3 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary outline-none transition focus:border-accent focus:bg-[var(--chip)] focus:ring-2 focus:ring-accent/15 placeholder:text-text-secondary'
 
 
 // ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ export const inputClass =
 // ---------------------------------------------------------------------------
 
 export const tableHeadRowClass =
-    'border-b border-[var(--paper-line)] bg-[var(--chip)] text-left text-xs text-text-secondary'
+    'border-b border-[var(--paper-line)] bg-[var(--chip)] text-left text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary'
 
 export const tableBodyClass = 'divide-y divide-border-subtle'
 

@@ -12,8 +12,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { readMs } from '@/lib/cssVars'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, Contract, Expand, FileText, X } from '@/components/snow/icons'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+import { ChevronLeft, Code, Contract, Expand, Eye, FileText, Play, X } from '@/components/snow/icons'
 import { PREVIEW_FRAME_STYLE, PREVIEW_SANDBOX, buildPreviewDoc } from '@/lib/previewDoc'
 import { useDebounced } from '@/lib/useDebounced'
 import { resetSheet, useSheetDrag } from '@/lib/useSheetDrag'
@@ -166,7 +165,7 @@ export default function SidePanel() {
                     // 手機放不下一排：這組按鈕自己換到第二排，關閉鈕留在右上角
                     <div className="order-last flex basis-full flex-wrap items-center gap-2 md:order-none md:basis-auto">
                         <button type="button" aria-pressed={showCode} onClick={() => setShowCode((v) => !v)} className={PANEL_BUTTON}>
-                            <MaterialIcon name={showCode ? 'visibility' : 'code'} size={PANEL_ICON} aria-hidden />
+                            {showCode ? <Eye size={PANEL_ICON} aria-hidden /> : <Code size={PANEL_ICON} aria-hidden />}
                             {t(showCode ? 'ui.chat.codeFile.preview' : 'ui.chat.codeFile.showCode')}
                         </button>
                         <SaveButton code={current.code} language={current.language} className={PANEL_BUTTON} iconSize={PANEL_ICON} />
@@ -310,7 +309,7 @@ function FileList({ items, messages, onOpen, conversationId }: {
                     <h3 className={heading}>{t('ui.chat.sidePanel.previews')}</h3>
                     {pages.map((p) => (
                         <button key={p.id} type="button" className={`${row} hover:bg-[var(--chip)]`} onClick={() => onOpen(p.id)}>
-                            <MaterialIcon name="code" size={18} aria-hidden />
+                            <Code size={18} aria-hidden />
                             <span className="min-w-0 flex-1 truncate">{pageTitle(p, items, t)}</span>
                         </button>
                     ))}
@@ -321,7 +320,7 @@ function FileList({ items, messages, onOpen, conversationId }: {
                     <h3 className={heading}>{t('ui.chat.sidePanel.runs')}</h3>
                     {runs.map((r, i) => (
                         <button key={r.id} type="button" className={`${row} hover:bg-[var(--chip)]`} onClick={() => onOpen(r.id)}>
-                            <MaterialIcon name="play_arrow" size={18} aria-hidden />
+                            <Play size={18} aria-hidden />
                             <span className="min-w-0 flex-1 truncate">{t('ui.chat.sidePanel.runN', { n: i + 1 })}</span>
                         </button>
                     ))}

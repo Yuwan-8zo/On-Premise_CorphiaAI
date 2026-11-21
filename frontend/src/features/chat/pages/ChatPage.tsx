@@ -119,7 +119,7 @@ export default function Chat() {
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 pb-6 md:px-10 max-w-4xl mx-auto w-full">
                         <div className="mb-8 pl-2 shrink-0">
-                            <h2 className="text-[length:var(--fs-22)] font-bold text-text-primary flex items-center gap-3">
+                            <h2 className="text-[length:var(--fs-22)] font-semibold text-text-primary flex items-center gap-3">
                                 <Folder className="w-8 h-8 text-accent" />
                                 {mainProps.selectedFolder}
                             </h2>
@@ -264,7 +264,7 @@ export default function Chat() {
                                 <div aria-hidden className="min-h-0 basis-[8vh] md:basis-[10vh]" />
                                 {/* 標題用平實的問句，不用「有什麼我可以幫忙的，某某？」這種客套招呼；
                                     下面一句說明資料留在公司內部（系統的重點是資安） */}
-                                <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
+                                <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-semibold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
                                     {mainProps.t(projectHome ? 'chat.projectEmptyTitle' : `chat.greet.${dayPart}`)}
                                 </h2>
                                 <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">

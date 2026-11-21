@@ -83,7 +83,7 @@ export default function FoldersSection({ folders, loaded, loadError, onRetry, on
                     <div className="admin-fill-body admin-quads grid content-start gap-[var(--space)] px-[var(--space)] pb-[var(--space)]">
                         {[0, 1].map((i) => (
                             <div key={i} aria-hidden className={cardClass}>
-                                <p className="text-lg font-semibold"><SkelText>000000 0000</SkelText></p>
+                                <p className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold"><SkelText>000000 0000</SkelText></p>
                                 <p className={noteClass}><SkelText>D:\00000\00000000</SkelText></p>
                                 <div className={statsClass}>
                                     {[0, 1, 2, 3].map((j) => <Stat key={j} label="0000" value={<SkelText>0000</SkelText>} />)}
@@ -118,7 +118,7 @@ export default function FoldersSection({ folders, loaded, loadError, onRetry, on
                                     {/* 上：名稱＋狀態，右邊編輯、取消連接 */}
                                     <div className="flex items-center gap-2 min-w-0">
                                         <Folder className="h-4 w-4 shrink-0 text-accent" />
-                                        <p className="truncate text-lg font-semibold text-text-primary" title={f.description || f.name}>{f.name}</p>
+                                        <p className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary" title={f.description || f.name}>{f.name}</p>
                                         <span className={`tag shrink-0 ${f.is_enabled ? STATUS_TAG[indexing ? 'scanning' : f.status] : ''}`}>
                                             {!f.is_enabled
                                                 ? t('common.disabled')

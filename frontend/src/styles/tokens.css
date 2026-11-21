@@ -293,6 +293,9 @@
   --search-move: 0.32s;            /* 取消 × 長出來的時間 */
   --scroll-fade: var(--sp-24);     /* 捲動區上下邊緣淡出的長度（.glass-scroll） */
   --menu-max-h: calc(280 * var(--ui-unit)); /* 下拉選單最高，超過在裡面捲動 */
+  /* 所有浮動選單（對話選單、使用者選單、下拉選單、輸入框的＋選單…）同一個圓角和內距 */
+  --menu-r: var(--r-20);
+  --menu-pad: var(--sp-6);
   /* 後台「資安閘道」門檻規劃器（features/admin/components/DualRange.tsx） */
   --dr-track-h: var(--sz-10);      /* 拉桿軌道高 */
   --dr-knob-w: var(--sz-44);       /* 把手（白色膠囊，上面寫門檻值） */
@@ -326,6 +329,8 @@
   --drp-w: calc(300 * var(--ui-unit));
   /* 輸入框的提示詞面板（features/chat/components/PromptMenu）：寬、最高 */
   --prompt-panel-w: calc(400 * var(--ui-unit));
+  /* 對話小地圖滑過時的預覽框最寬 */
+  --minimap-tip-w: calc(240 * var(--ui-unit));
   --prompt-panel-max-h: calc(460 * var(--ui-unit));
   /* 等寬字型（鍵帽、程式碼以外需要等寬的地方）；鍵帽的高度 */
   --font-mono: ui-monospace, "SF Mono", Consolas, monospace;

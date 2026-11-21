@@ -79,16 +79,16 @@ export default function TenantsSection({
                     // 和下面的租戶卡同一個外形：名稱＋狀態、分隔線、四個數字、右下按鈕
                     <div aria-hidden className="snow-well rounded-[var(--admin-in)] p-5 flex flex-col">
                         <div className="flex items-center gap-2 mb-3">
-                            <p className="truncate text-lg font-semibold"><SkelText>{t('admin.tenants.title')}0000</SkelText></p>
+                            <p className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold"><SkelText>{t('admin.tenants.title')}0000</SkelText></p>
                             <span className="tag"><SkelText>{t('admin.tenants.enable', '啟用')}</SkelText></span>
                         </div>
-                        <p className="text-xs truncate mb-3"><SkelText>0000000000</SkelText></p>
+                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] truncate mb-3"><SkelText>0000000000</SkelText></p>
                         <div className="border-t border-[var(--paper-line)] my-3" />
                         <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(var(--stat-min),1fr))] gap-3">
                             {[0, 1, 2, 3].map((i) => (
                                 <div key={i}>
-                                    <p className="text-xs font-medium"><SkelText>0000</SkelText></p>
-                                    <p className="mt-1 text-xl font-bold tabular-nums"><SkelText>00</SkelText></p>
+                                    <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] font-medium"><SkelText>0000</SkelText></p>
+                                    <p className="mt-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold tabular-nums"><SkelText>00</SkelText></p>
                                 </div>
                             ))}
                         </div>
@@ -114,7 +114,7 @@ export default function TenantsSection({
                                 <div className="flex items-start justify-between gap-3 mb-3">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
-                                            <p className="truncate text-lg font-semibold text-text-primary">
+                                            <p className="truncate text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                                                 {item.name}
                                             </p>
                                             <StatusPill active={item.is_active} />
@@ -124,7 +124,7 @@ export default function TenantsSection({
 
                                 {/* Description（如果有） */}
                                 {item.description && (
-                                    <p className="text-xs text-text-secondary truncate mb-3">
+                                    <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary truncate mb-3">
                                         {item.description}
                                     </p>
                                 )}
@@ -135,34 +135,34 @@ export default function TenantsSection({
                                 {/* 用量：四個數字排成一列（卡片窄時自動換成兩列），省下高度，按鈕才收得進四分之一大小的卡片 */}
                                 <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(var(--stat-min),1fr))] gap-3">
                                     <div>
-                                        <p className="text-xs text-text-secondary font-medium">
+                                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary font-medium">
                                             {t('admin.tenants.users', '使用者')}
                                         </p>
-                                        <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
+                                        <p className="mt-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold tabular-nums text-text-primary">
                                             {usage?.users_count ?? '--'}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-secondary font-medium">
+                                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary font-medium">
                                             {t('admin.tenants.documents', '文件')}
                                         </p>
-                                        <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
+                                        <p className="mt-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold tabular-nums text-text-primary">
                                             {usage?.documents_count ?? '--'}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-secondary font-medium">
+                                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary font-medium">
                                             {t('admin.tenants.messages24h')}
                                         </p>
-                                        <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
+                                        <p className="mt-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold tabular-nums text-text-primary">
                                             {usage?.messages_24h ?? '--'}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-text-secondary font-medium">
+                                        <p className="text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary font-medium">
                                             {t('admin.tenants.events24h')}
                                         </p>
-                                        <p className={`mt-1 text-xl font-bold tabular-nums ${hasSecurityEvents ? 'text-[var(--ink-red)]' : 'text-text-primary'}`}>
+                                        <p className={`mt-1 text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold tabular-nums ${hasSecurityEvents ? 'text-[var(--ink-red)]' : 'text-text-primary'}`}>
                                             {usage?.security_events_24h ?? '--'}
                                         </p>
                                     </div>

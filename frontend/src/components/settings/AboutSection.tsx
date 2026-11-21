@@ -55,7 +55,7 @@ export default function AboutSection() {
                     <CorphiaLogoSymbol className="w-12 h-12 text-text-primary" color="currentColor" />
                 </div>
                 {/* 名稱下面放名稱由來（Corpus 語料庫＋Sophia 智慧）：只有 Corphia 會有的一行 */}
-                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">Corphia</h2>
+                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-semibold text-text-primary">Corphia</h2>
                 <p className="text-[length:var(--fs-15)] text-text-secondary">{t('about.nameOrigin')}</p>
                 <p className="text-[length:var(--fs-13)] text-text-muted tabular-nums">{t('about.version')} 2.3.0</p>
             </div>

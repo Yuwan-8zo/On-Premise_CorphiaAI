@@ -7,11 +7,10 @@
  * 切換立即生效（前端伺服器的 lanGate 每個請求都讀設定），不用重啟。
  */
 
-import { Info, QrCode as QrIcon } from '@/components/snow/icons'
+import { Globe, Info, Lock, QrCode as QrIcon } from '@/components/snow/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { GlobeIcon, ItshoverIcon, LockIcon } from '@/components/icons/itshover'
 import SidebarIconBadge from './SidebarIconBadge'
 import GlassSwitch from '@/components/ui/GlassSwitch'
 import { Skel, SkelText } from '@/components/ui/Skeleton'
@@ -42,7 +41,7 @@ export default function LanSidebarWidget({ enabled, isLoading, lanIps, link, onT
             <div className="rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--sp-9d5)] shrink-0">
                 <div className="flex items-start gap-1.5">
                     <SidebarIconBadge>
-                        <ItshoverIcon icon={enabled ? GlobeIcon : LockIcon} size={12} />
+                        {enabled ? <Globe size={12} /> : <Lock size={12} />}
                     </SidebarIconBadge>
                     <div className="min-w-0 flex-1">
                         <p className="text-[length:var(--fs-12)] font-medium text-text-secondary leading-none">

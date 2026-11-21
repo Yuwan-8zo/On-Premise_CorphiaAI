@@ -8,8 +8,7 @@
  */
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X } from '@/components/snow/icons'
-import MaterialIcon from '@/components/icons/MaterialIcon'
+import { ArrowUp, Paperclip, Play, X } from '@/components/snow/icons'
 import { appendToChatInput } from '@/lib/chatInputBus'
 import { useSidePanelItem } from '@/features/chat/hooks/useSidePanelItem'
 import { CODE_BUTTON as BUTTON, OpenInPanelButton } from './CodeButtons'
@@ -82,11 +81,11 @@ export default function CodeRunPanel({ code }: { code: string }) {
         <div ref={ref} className="mt-2" data-testid="code-run-panel">
             <div className="flex flex-wrap items-center gap-1.5">
                 <button type="button" onClick={() => void run()} disabled={running} className={`${BUTTON} !text-accent font-semibold`}>
-                    <MaterialIcon name="play_arrow" size={14} aria-hidden />
+                    <Play size={14} aria-hidden />
                     {t(running ? 'ui.chat.run.running' : result || failure ? 'ui.chat.run.again' : 'ui.chat.run.run')}
                 </button>
                 <button type="button" onClick={() => fileInput.current?.click()} disabled={running} className={BUTTON}>
-                    <MaterialIcon name="attach_file" size={14} aria-hidden />
+                    <Paperclip size={14} aria-hidden />
                     {t('ui.chat.run.addFile')}
                 </button>
                 <input ref={fileInput} type="file" multiple className="hidden" data-testid="run-file-input" tabIndex={-1}
@@ -106,7 +105,7 @@ export default function CodeRunPanel({ code }: { code: string }) {
                             ran: t('ui.chat.run.forAI.ran'), error: t('ui.chat.run.forAI.error'), timedOut: t('ui.chat.run.timedOut', { s: PY_RUN_TIMEOUT_MS / 1000 }),
                             images: t('ui.chat.run.forAI.images'), nothing: t('ui.chat.run.noOutput'),
                         }))}>
-                        <MaterialIcon name="send" size={14} aria-hidden />
+                        <ArrowUp size={14} aria-hidden />
                         {t('ui.chat.run.sendToAI')}
                     </button>
                 )}

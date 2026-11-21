@@ -3,14 +3,13 @@
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import MaterialIcon from '@/components/icons/MaterialIcon'
-import { PanelLeft } from '@/components/snow/icons'
+import { Check, Copy, Download, PanelLeft } from '@/components/snow/icons'
 import { copyText } from '@/lib/clipboard'
 import { useDesktop } from '@/lib/desktop'
 import { saveTextFile, suggestFilename } from '@/lib/saveTextFile'
 
 /** 程式碼區塊上的小按鈕（疊在深色程式碼上，刻意做小） */
-export const CODE_BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded transition-colors disabled:opacity-50'
+export const CODE_BUTTON = 'inline-flex items-center gap-1 px-2 py-1 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary bg-[var(--chip)] rounded transition-colors disabled:opacity-50'
 
 /** 面板標題列的按鈕：照《Liquid Glass 元件規範》的小型次要按鈕（膠囊、玻璃材質） */
 export const PANEL_BUTTON = 'btn btn-sm btn-secondary'
@@ -40,7 +39,7 @@ export const CopyButton = ({ code, className = CODE_BUTTON, iconSize = ICON_SM }
 
     return (
         <button type="button" onClick={handleCopy} className={className}>
-            <MaterialIcon name={copied ? 'check' : 'content_copy'} size={iconSize} aria-hidden />
+            {copied ? <Check size={iconSize} aria-hidden /> : <Copy size={iconSize} aria-hidden />}
             {copied ? t('ui.message.copied') : t('ui.message.copy')}
         </button>
     )
@@ -52,7 +51,7 @@ export const SaveButton = ({ code, language, className = CODE_BUTTON, iconSize =
     const isDesktop = useDesktop()
     return (
         <button type="button" onClick={() => void saveTextFile(suggestFilename(language), code, isDesktop)} className={className}>
-            <MaterialIcon name="download" size={iconSize} aria-hidden />
+            <Download size={iconSize} aria-hidden />
             {t(isDesktop ? 'ui.chat.codeFile.save' : 'ui.chat.codeFile.download')}
         </button>
     )

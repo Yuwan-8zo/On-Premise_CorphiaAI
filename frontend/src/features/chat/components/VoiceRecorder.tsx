@@ -17,8 +17,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUp, X } from '@/components/snow/icons'
 import { useTranslation } from 'react-i18next'
-import MaterialIcon from '@/components/icons/MaterialIcon'
 import Tooltip from '@/components/ui/Tooltip'
 import { createAudioContext } from '@/lib/audioContext'
 
@@ -253,7 +253,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     className="btn-icon btn-icon-plain !w-10 !h-10 text-text-secondary"
                     aria-label={t('chat.voice.cancel')}
                 >
-                    <MaterialIcon name="close" size={22} />
+                    <X size={22} />
                 </button>
             </Tooltip>
 
@@ -284,7 +284,7 @@ export default function VoiceRecorder({ onCancel, onSend, onError }: VoiceRecord
                     className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent-fill text-text-on-accent  active:bg-accent-active disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,background-color,opacity] active:scale-95 active:duration-[var(--duration-press-in)]"
                     aria-label={t('chat.voice.send')}
                 >
-                    <MaterialIcon name="send" size={18} filled />
+                    <ArrowUp size={18} />
                 </button>
             </Tooltip>
         </div>

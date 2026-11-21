@@ -165,7 +165,7 @@ export default function ChatHeader({
                                     <LensMenu className="" fitCard={false}>
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
-                                            <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
+                                            <div className="p-4 text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary">{t('ui.header.noModels')}</div>
                                         ) : (
                                             availableModels.map(model => {
                                                 const loadState = modelStates.find(m => m.name === model.name)?.state

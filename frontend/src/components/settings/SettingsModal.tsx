@@ -153,7 +153,7 @@ export default function SettingsModal() {
                         <MenuColumn key={`menu-${mobileView}`} dir={mobileDir} hiddenOnPhone={mobileView === 'content'}>
                             {/* 四個角都跟外框 52 同心：關閉鈕右緣對齊內容卡（離右 20），離上也是 20；標題字左緣對齊導覽圖示（36），字上緣離頂也是 36；管理後台膠囊離左、離下都是 20，底邊對齊右側內容最後一張卡（內容下內距也是 20） */}
                             <div className="pl-[calc(var(--sp-36)/var(--menu-fit,1))] md:pl-[calc((var(--sp-20)+15*var(--ui-unit))/var(--menu-fit,1))] pr-4 pt-[calc(var(--sp-26)/var(--menu-fit,1))] md:pt-[calc(var(--sp-32)/var(--menu-fit,1))] pb-2">
-                                <h2 className="text-xl leading-[var(--lh-24)] font-bold text-text-primary">
+                                <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold text-text-primary">
                                     {t('settings.title')}
                                 </h2>
                             </div>

@@ -518,7 +518,7 @@ export default function ChatSidebar({
                         className="side-morph relative flex items-center h-[var(--sz-44)] pl-[var(--sp-6)] gap-3 rounded-full overflow-hidden shrink-0 text-left bg-transparent"
                         style={{ width: wide ? 232 : 44 }}
                     >
-                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-bold text-[length:var(--fs-14)]">
+                    <div className="w-[var(--sz-32)] h-[var(--sz-32)] rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center shrink-0 font-semibold text-[length:var(--fs-14)]">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {(

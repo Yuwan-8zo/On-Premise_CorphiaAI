@@ -94,7 +94,7 @@ export default function StyledSelect({ value, options, onChange, placeholder, di
                     ref={menuRef}
                     {...menuPop}
                     role="listbox"
-                    className="fixed z-[1100] paper paper-solid !rounded-[var(--r-22)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
+                    className="fixed z-[1100] paper paper-solid !rounded-[var(--menu-r)] overflow-hidden flex flex-col max-h-[var(--menu-max-h)] max-w-[var(--sz-360)]"
                     style={{ left: pos.left, minWidth: pos.width, top: pos.top, bottom: pos.bottom, transformOrigin: pos.bottom !== undefined ? 'bottom left' : 'top left' }}
                 >
                     {/* 卡片不捲、裡面這層捲：光邊才不會跟著選項捲走 */}

@@ -69,7 +69,7 @@
 .lan-qr-title {
   font-size: var(--fs-22);
   line-height: var(--lh-28);
-  font-weight: 700;
+  font-weight: 600;
 }
 .lan-qr-sub {
   font-size: var(--fs-15);

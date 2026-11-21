@@ -337,7 +337,7 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
                 <div className="mb-[var(--sp-12)] flex items-center gap-4 px-[var(--sp-12)]">
                     <CorphiaLogo className="h-[var(--sz-44)] w-[var(--sz-44)] shrink-0 select-none text-text-primary" />
                     <div className="min-w-0 flex-1">
-                        <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary [text-wrap:balance]">{i18n.t('ui.boot.title')}</h1>
+                        <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-semibold text-text-primary [text-wrap:balance]">{i18n.t('ui.boot.title')}</h1>
                         <p className="mt-0.5 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary tabular-nums">
                             {allReady ? i18n.t('ui.boot.allReady') : i18n.t('ui.boot.progress', { done: doneCount, total: counted.length, time: fmtDuration(totalSec) })}
                         </p>

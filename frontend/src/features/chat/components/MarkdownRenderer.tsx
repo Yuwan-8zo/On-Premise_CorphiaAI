@@ -125,8 +125,8 @@ class MarkdownErrorBoundary extends React.Component<
         if (this.state.hasError) {
             return (
                 <div className="text-[var(--ink-red)] p-4 bg-[color-mix(in_srgb,var(--sys-red)_10%,transparent)] rounded-[var(--r-10)] border border-[color-mix(in_srgb,var(--sys-red)_20%,transparent)]">
-                    <p className="font-bold mb-2">{i18n.t('ui.misc.parseError')}</p>
-                    <div className="text-sm font-mono whitespace-pre-wrap text-text-primary">
+                    <p className="font-semibold mb-2">{i18n.t('ui.misc.parseError')}</p>
+                    <div className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-mono whitespace-pre-wrap text-text-primary">
                         {String(this.props.fallbackContent || '')}
                     </div>
                 </div>
@@ -161,7 +161,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             if (isInline) {
                                 return (
                                     <code
-                                        className="px-1.5 py-0.5 bg-[var(--chip)] text-accent rounded text-sm font-mono"
+                                        className="px-1.5 py-0.5 bg-[var(--chip)] text-accent rounded text-[length:var(--fs-15)] leading-[var(--lh-20)] font-mono"
                                         {...props}
                                     >
                                         {children}
@@ -172,7 +172,7 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             return (
                                 <Suspense
                                     fallback={
-                                        <pre className="my-4 p-4 rounded-[var(--r-14)] bg-[var(--chip)] text-sm overflow-x-auto">
+                                        <pre className="my-4 p-4 rounded-[var(--r-14)] bg-[var(--chip)] text-[length:var(--fs-15)] leading-[var(--lh-20)] overflow-x-auto">
                                             {String(children).replace(/\n$/, '')}
                                         </pre>
                                     }
@@ -186,17 +186,17 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
 
                         // 標題
                         h1: ({ children }) => (
-                            <h1 className="text-2xl font-bold text-text-primary mt-6 mb-4 border-b border-[var(--paper-line)] pb-2">
+                            <h1 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-semibold text-text-primary mt-6 mb-4 border-b border-[var(--paper-line)] pb-2">
                                 {children}
                             </h1>
                         ),
                         h2: ({ children }) => (
-                            <h2 className="text-xl font-bold text-text-primary mt-5 mb-3">
+                            <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold text-text-primary mt-5 mb-3">
                                 {children}
                             </h2>
                         ),
                         h3: ({ children }) => (
-                            <h3 className="text-lg font-semibold text-text-primary mt-4 mb-2">
+                            <h3 className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary mt-4 mb-2">
                                 {children}
                             </h3>
                         ),

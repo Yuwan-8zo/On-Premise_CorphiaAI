@@ -17,10 +17,10 @@ export default function ContactAdminDialog({ open, onClose }: { open: boolean; o
                 <div className="w-12 h-12 rounded-full bg-accent/10 text-accent flex items-center justify-center">
                     <HelpCircle className="w-6 h-6" />
                 </div>
-                <h3 id="reset-modal-title" className="text-lg font-semibold text-text-primary">
+                <h3 id="reset-modal-title" className="text-[length:var(--fs-17)] leading-[var(--lh-22)] font-semibold text-text-primary">
                     {t('auth.contactAdminTitle', '無法登入？')}
                 </h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
+                <p className="text-[length:var(--fs-15)] text-text-secondary leading-relaxed">
                     {t('auth.contactAdminBody', '請聯絡您的企業 IT 管理員協助重設密碼。基於資料主權與離線部署考量，本系統不提供自助式信件重設。')}
                 </p>
             </div>

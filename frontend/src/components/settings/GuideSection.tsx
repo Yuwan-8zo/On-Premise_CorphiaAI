@@ -121,7 +121,7 @@ export default function GuideSection() {
                 <div className="set-group guide-group">
                     {steps.map((step, i) => (
                         <div key={i} className="set-row has-icon !pl-[var(--sp-16)] !py-[var(--sp-16)]">
-                            <span className="set-icon !rounded-full bg-[var(--chip)] text-accent text-[length:var(--fs-13)] font-bold tabular-nums">
+                            <span className="set-icon !rounded-full bg-[var(--chip)] text-accent text-[length:var(--fs-13)] font-semibold tabular-nums">
                                 {i + 1}
                             </span>
                             <span className="set-label text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-primary">{step}</span>

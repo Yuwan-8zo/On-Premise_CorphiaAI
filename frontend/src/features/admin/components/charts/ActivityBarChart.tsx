@@ -43,12 +43,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     const item = payload[0]?.payload
     if (!item) return null
     return (
-        <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-xs">
+        <div className="paper !rounded-[var(--r-14)] px-3 py-2 text-[length:var(--fs-12)] leading-[var(--lh-16)]">
             <p className=" font-medium text-text-primary tabular-nums">
                 {item.date}
             </p>
             <p className="text-text-secondary">{item.weekday}</p>
-            <p className="mt-1 text-sm text-accent tabular-nums">
+            <p className="mt-1 text-[length:var(--fs-15)] leading-[var(--lh-20)] text-accent tabular-nums">
                 {t('ui.charts.count', { n: item.count.toLocaleString() })}
             </p>
             {item.previous !== undefined && (

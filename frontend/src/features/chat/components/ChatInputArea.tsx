@@ -1,4 +1,4 @@
-import { Eye, FileText, Folder, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { Contract, Expand, Eye, FileText, Folder, Mic, Paperclip, Reader, Search, X } from '@/components/snow/icons'
 import ChatImage from './ChatImage'
 import { useChatImages } from '../hooks/useChatImages'
 import type { VisionStatus } from '@/api/chatImages'
@@ -7,7 +7,6 @@ import { motion } from '@/lib/gsapMotion'
 import { useTranslation } from 'react-i18next'
 import { SendDotBtn, StopIcon } from './ChatIcons'
 import { PromptMenu } from './PromptMenu'
-import MaterialIcon from '@/components/icons/MaterialIcon'
 import VoiceRecorder from './VoiceRecorder'
 import { useToastStore } from '@/store/toastStore'
 import { ATTACH_ACCEPT, UPLOAD_ACCEPT } from '@/lib/uploadTypes'
@@ -290,7 +289,7 @@ export default function ChatInputArea({
                 className="chat-input-wrap shrink-0 pt-2 pb-4 md:pb-8 w-full z-20"
             >
                 {!llmReady && (
-                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-xs text-[var(--ink-orange)] dark:text-[var(--ink-orange)] mb-2">
+                    <p className="max-w-3xl mx-auto px-3 sm:px-4 md:px-0 text-center text-[length:var(--fs-12)] leading-[var(--lh-16)] text-[var(--ink-orange)] dark:text-[var(--ink-orange)] mb-2">
                         {t('chat.llmWarming', 'AI 模型載入中，完成後即可對話…')}
                     </p>
                 )}
@@ -422,7 +421,7 @@ export default function ChatInputArea({
                                         className="btn-icon btn-icon-plain !w-[var(--field-btn)] !h-[var(--field-btn)] text-text-secondary disabled:opacity-50"
                                         aria-label={t('chat.voice.startRecording')}
                                     >
-                                        <MaterialIcon name="mic" className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
+                                        <Mic className="w-[calc(var(--sz-22)*var(--field-bk,1))] h-[calc(var(--sz-22)*var(--field-bk,1))]" />
                                     </button>
                                 )}
 
@@ -436,9 +435,9 @@ export default function ChatInputArea({
                                         aria-pressed={expanded}
                                     >
                                         {expanded ? (
-                                            <svg viewBox="0 0 512 512" className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M304 416V304h112M314.2 314.23L432 432M208 96v112H96M197.8 197.77L80 80" /></svg>
+                                            <Contract className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" aria-hidden />
                                         ) : (
-                                            <svg viewBox="0 0 512 512" className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" fill="none" stroke="currentColor" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M432 320v112H320M421.8 421.77L304 304M80 192V80h112M90.2 90.23L208 208" /></svg>
+                                            <Expand className="w-[calc(var(--sz-20)*var(--field-bk,1))] h-[calc(var(--sz-20)*var(--field-bk,1))]" aria-hidden />
                                         )}
                                     </button>
                                 )}

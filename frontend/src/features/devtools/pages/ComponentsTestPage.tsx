@@ -30,13 +30,13 @@ export default function ComponentsTest() {
             {/* Left Panel: Controls */}
             <div className="flex-1 space-y-12 overflow-y-auto pr-4">
                 <div className="mb-8 border-b border-border-subtle pb-4">
-                    <h1 className="text-3xl font-bold mb-2">Corphia Component Sandbox</h1>
+                    <h1 className="text-[length:var(--fs-28)] leading-[var(--lh-34)] font-semibold mb-2">Corphia Component Sandbox</h1>
                     <p className="text-text-secondary">Interactive testing environment for UI components.</p>
                 </div>
 
                 {/* 1. Toasts */}
                 <section>
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold mb-4 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-accent" />
                         Toast Notifications
                     </h2>
@@ -49,7 +49,7 @@ export default function ComponentsTest() {
 
                 {/* 2. Modals */}
                 <section>
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold mb-4 flex items-center gap-2">
                         <PanelLeftClose className="w-5 h-5 text-accent" />
                         Modals & Dialogs
                     </h2>
@@ -72,13 +72,13 @@ export default function ComponentsTest() {
 
                 {/* 3. Message Bubble */}
                 <section>
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <h2 className="text-[length:var(--fs-20)] leading-[var(--lh-24)] font-semibold mb-4 flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-accent" />
                         Message Bubble
                     </h2>
                     <div className="space-y-4 mb-6">
                         <div className="flex items-center gap-4">
-                            <label className="text-sm font-medium">Content:</label>
+                            <label className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-medium">Content:</label>
                             <input 
                                 type="text" 
                                 value={bubbleContent}
@@ -94,7 +94,7 @@ export default function ComponentsTest() {
                                     onChange={(e) => setIsStreaming(e.target.checked)}
                                     className="rounded border-border-subtle"
                                 />
-                                <span className="text-sm font-medium">Is Streaming</span>
+                                <span className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-medium">Is Streaming</span>
                             </label>
                         </div>
                     </div>
@@ -122,14 +122,14 @@ export default function ComponentsTest() {
                 <div className="flex-1 overflow-y-auto space-y-2">
                     <AnimatePresence>
                         {events.length === 0 ? (
-                            <p className="text-sm text-text-tertiary italic text-center mt-4">No events recorded yet.</p>
+                            <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-tertiary italic text-center mt-4">No events recorded yet.</p>
                         ) : (
                             events.map((event, i) => (
                                 <motion.div
                                     key={`${i}-${event}`}
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    className="text-xs font-mono p-2 bg-bg-base rounded border border-border-subtle/50 text-text-secondary"
+                                    className="text-[length:var(--fs-12)] leading-[var(--lh-16)] font-mono p-2 bg-bg-base rounded border border-border-subtle/50 text-text-secondary"
                                 >
                                     {event}
                                 </motion.div>
@@ -157,7 +157,7 @@ export default function ComponentsTest() {
                         >
                             {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 shrink-0" />}
                             {toast.type === 'error' && <AlertCircle className="w-5 h-5 shrink-0" />}
-                            <p className="text-sm font-medium">{toast.message}</p>
+                            <p className="text-[length:var(--fs-15)] leading-[var(--lh-20)] font-medium">{toast.message}</p>
                         </motion.div>
                     ))}
                 </AnimatePresence>

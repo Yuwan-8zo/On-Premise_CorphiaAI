@@ -63,10 +63,10 @@ export default function ProfileSection() {
     return (
         <>
             <div className="set-section set-hero">
-                <div className="w-20 h-20 rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center text-[length:var(--fs-32)] font-bold mb-2">
+                <div className="w-20 h-20 rounded-full bg-accent-fill text-text-on-accent flex items-center justify-center text-[length:var(--fs-32)] font-semibold mb-2">
                     {user?.name?.charAt(0).toUpperCase() ?? 'U'}
                 </div>
-                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-bold text-text-primary">{user?.name}</h2>
+                <h2 className="text-[length:var(--fs-22)] leading-[var(--lh-28)] font-semibold text-text-primary">{user?.name}</h2>
                 <p className="text-[length:var(--fs-15)] text-text-secondary">{user?.email}</p>
             </div>
 

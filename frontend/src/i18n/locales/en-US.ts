@@ -1401,6 +1401,7 @@ export default {
             noEvents: 'No events to analyse yet',
         },
         minimap: {
+            ai: 'Corphia AI',
             empty: '(empty)',
             you: 'You',
         },

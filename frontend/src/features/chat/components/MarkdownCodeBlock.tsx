@@ -2,6 +2,7 @@
  * 程式碼高亮 — 僅註冊常用語言，縮小 markdown chunk。
  */
 import { memo, useMemo, useState } from 'react'
+import { Code, Eye } from '@/components/snow/icons'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx'
@@ -12,7 +13,6 @@ import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash'
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
-import MaterialIcon from '@/components/icons/MaterialIcon'
 import { PREVIEW_FRAME_STYLE, PREVIEW_SANDBOX, buildPreviewDoc, isPreviewable } from '@/lib/previewDoc'
 import { isRunnable } from '@/lib/pyRunner'
 import { useSidePanelItem } from '@/features/chat/hooks/useSidePanelItem'
@@ -46,14 +46,14 @@ const MarkdownCodeBlock = memo(({
     return (
     <div ref={ref} className="relative group my-4">
         {language && (
-            <div className="absolute top-0 left-0 px-2 py-1 text-xs text-text-secondary bg-[var(--chip)] rounded-tl rounded-br">
+            <div className="absolute top-0 left-0 px-2 py-1 text-[length:var(--fs-12)] leading-[var(--lh-16)] text-text-secondary bg-[var(--chip)] rounded-tl rounded-br">
                 {language}
             </div>
         )}
         <div className="absolute top-2 right-2 flex items-center gap-1.5">
             {canPreview && (
                 <button type="button" aria-pressed={preview} onClick={() => setPreview((v) => !v)} className={CODE_BUTTON}>
-                    <MaterialIcon name={preview ? 'code' : 'visibility'} size={14} aria-hidden />
+                    {preview ? <Code size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
                     {t(preview ? 'ui.chat.codeFile.showCode' : 'ui.chat.codeFile.preview')}
                 </button>
             )}
