@@ -144,6 +144,14 @@ export default {
     // 對話 (Chat)
     chat: {
         emptyGreeting: '今日は何をしますか？',
+        /** 首頁標題：依時段（lib/dayPart） */
+        greet: {
+            morning: 'おはようございます。今日は何をしますか？',
+            noon: 'こんにちは。今日は何をしますか？',
+            afternoon: 'こんにちは。今日は何をしますか？',
+            evening: 'こんばんは。今日は何をしますか？',
+            late: '遅くまでお疲れさまです。何をしますか？',
+        },
         emptyNote: '回答はこのサーバー上のモデルが生成し、会話履歴は社内にのみ保存されます',
         projectEmptyTitle: 'プロジェクトフォルダーを選択',
         projectEmptyNote: 'プロジェクトの会話はフォルダー内のチェックしたファイルだけを参照します。左から選ぶか、新しく作成してください',
@@ -1236,6 +1244,7 @@ export default {
             newInFolder: 'このフォルダーで新しい会話',
             deleteFolder: 'フォルダーと内容を削除',
             answering: '回答中',
+            refreshing: '会話を再読み込みしています',
         },
         message: {
             copy: 'コピー',

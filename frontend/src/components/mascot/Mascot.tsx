@@ -18,6 +18,8 @@
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type CSSProperties } from 'react'
 import { backdropColor, tintFor } from './backdropTint'
+import MascotAccessory from './MascotAccessory'
+import { accessoryOf, useNow, type MascotAccessory as AccessoryKind } from '@/lib/dayPart'
 import './mascot.css'
 
 /** 換主題後背景波浪顏色有轉場，等它轉完再量背景色（毫秒） */
@@ -54,6 +56,8 @@ interface MascotProps {
     label: string
     /** 被戳了一下（待命時點它） */
     onPoke?: () => void
+    /** 頭上的配件：auto＝依時段、節日自動戴（lib/dayPart）；null＝不戴 */
+    accessory?: AccessoryKind | 'auto' | null
     className?: string
 }
 
@@ -72,10 +76,12 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 const toMs = (v: string) => v.split(',').map((s) => (s.trim().endsWith('ms') ? Number.parseFloat(s) : Number.parseFloat(s) * 1000) || 0)
 
 const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
-    { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, sayTone = 'normal', label, onPoke, className = '' },
+    { mood = 'idle', peek = false, look, coverStyle = 'eyes', say, sayTone = 'normal', label, onPoke, accessory = 'auto', className = '' },
     ref,
 ) {
     const rootRef = useRef<HTMLButtonElement>(null)
+    const now = useNow()
+    const wear = accessory === 'auto' ? accessoryOf(now) : accessory
     const bobRef = useRef<HTMLDivElement>(null)
 
     // 身體顏色跟著背景：一出現、換深淺色／主題色（html 的 class、style 變了）、視窗大小變了都重量一次
@@ -226,6 +232,7 @@ const Mascot = forwardRef<MascotHandle, MascotProps>(function Mascot(
                         <span className="m-eye l"><svg className="m-arc" viewBox="0 0 24 16" aria-hidden><path d="M3.5 12.5 Q12 1 20.5 12.5" /></svg></span>
                         <span className="m-eye r"><svg className="m-arc" viewBox="0 0 24 16" aria-hidden><path d="M3.5 12.5 Q12 1 20.5 12.5" /></svg></span>
                     </div>
+                    {wear && <MascotAccessory key={wear} kind={wear} />}
                     <span className="m-hand l" />
                     <span className="m-hand r" />
                 </div>

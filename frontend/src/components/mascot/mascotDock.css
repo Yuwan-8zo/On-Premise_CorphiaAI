@@ -65,6 +65,10 @@ body:has(.tour) .mascot-dock { visibility: hidden; }
 body:has(.dock-shell.is-open) .mascot-dock:not(.is-out) { visibility: hidden; }
 /* 有對話視窗（設定、確認框…）開著：平常躲起來，不要疊在視窗上；有通知要說時才出來（錯誤訊息還是要看得到） */
 body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
+/* 手機的底部面板（引用來源、檔案、預覽）開著：小 AI 會疊在面板上，先躲起來 */
+@media (max-width: 767.98px) {
+  body:has(.side-sheet) .mascot-dock:not(.is-out) { visibility: hidden; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mascot-dock .mascot, .mascot-dock-note { transition: none; }

@@ -225,16 +225,25 @@ html.dark {
   height: var(--sz-20);
 }
 
-/* 骨架畫面（讀取中）：灰色預留方塊緩慢呼吸；「減少動態效果」時靜止（元件見 components/ui/Skeleton.tsx） */
+/* 骨架畫面（讀取中）：灰色預留方塊上有一道光由左往右掃過；「減少動態效果」時靜止（元件見 components/ui/Skeleton.tsx）
+ *   光＝灰底混一點白（--skel-shine）；用 background-attachment: fixed，整頁的骨架共用同一道光、同步掃過，
+ *   不會每塊各閃各的 */
+:root {
+  --skel-shine: color-mix(in srgb, var(--chip), #fff 22%);
+  --dur-skel: 1.4s;
+}
 .skel {
   display: block;
   border-radius: var(--r-9999);
   background: var(--chip);
-  animation: skelBreath 0.9s var(--ease-out) infinite alternate;
+  background-image: linear-gradient(100deg, transparent 30%, var(--skel-shine) 50%, transparent 70%);
+  background-size: 200vw 100%;
+  background-attachment: fixed;
+  animation: skelShimmer var(--dur-skel) linear infinite;
 }
-@keyframes skelBreath {
-  from { opacity: 1; }
-  to { opacity: 0.45; }
+@keyframes skelShimmer {
+  from { background-position: 100vw 0; }
+  to { background-position: -100vw 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skel, .skel-text { animation: none; }
@@ -248,7 +257,10 @@ html.dark {
   background: var(--chip);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  animation: skelBreath 0.9s var(--ease-out) infinite alternate;
+  background-image: linear-gradient(100deg, transparent 30%, var(--skel-shine) 50%, transparent 70%);
+  background-size: 200vw 100%;
+  background-attachment: fixed;
+  animation: skelShimmer var(--dur-skel) linear infinite;
 }
 .skel-text * {
   color: transparent !important;

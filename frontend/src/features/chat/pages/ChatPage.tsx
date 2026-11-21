@@ -11,6 +11,7 @@ import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import SidePanel from '@/features/chat/components/SidePanel'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useChatHotkeys } from '@/features/chat/hooks/useChatHotkeys'
+import { useReadProgress } from '@/features/chat/hooks/useReadProgress'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
@@ -19,6 +20,7 @@ import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { SkelMessages } from '@/components/ui/Skeleton'
+import { dayPartOf, useNow } from '@/lib/dayPart'
 
 export default function Chat() {
     const { sidebarProps, headerProps, inputProps, modalProps, mainProps } = useChatLogic()
@@ -36,13 +38,18 @@ export default function Chat() {
     // 專案模式、還沒進任何專案對話：引導選資料夾或建立新的，不顯示一般聊天的建議（翻譯、寫信…）
     const currentConversation = useChatStore((s) => s.currentConversation)
     const projectHome = sidebarProps.chatMode === 'project' && !currentConversation?.settings?.isProject
+    // 首頁標題跟著時段換問候（早安／午安…）；仍是平實的問句，不加客套和名字
+    const dayPart = dayPartOf(useNow())
     // 訊息列表：捲動時上下邊緣淡出；同一個元素也要給捲動邏輯用（scrollContainerRef）
     const fadeRef = useScrollFade()
+    // 長對話：頂端一條閱讀進度（捲動時浮現）
+    const { scrollRef: readRef, barRef: readBarRef } = useReadProgress()
     const { scrollContainerRef } = mainProps
     const chatScrollRef = useCallback((el: HTMLDivElement | null) => {
         ;(scrollContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el
         fadeRef(el)
-    }, [scrollContainerRef, fadeRef])
+        readRef(el)
+    }, [scrollContainerRef, fadeRef, readRef])
     // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
@@ -237,6 +244,7 @@ export default function Chat() {
                       右側已有 ChatMinimap（縮圖式導覽）+ ScrollToBottomButton 處理視覺指引，
                       傳統 scrollbar 在這裡是噪音不是訊號。
                     */}
+                    <div className="read-progress-host"><div ref={readBarRef} className="read-progress" aria-hidden /></div>
                     <div ref={chatScrollRef} className="scroll-fade chat-scroll flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px -mb-px opacity-0" />
@@ -251,7 +259,7 @@ export default function Chat() {
                                 {/* 標題用平實的問句，不用「有什麼我可以幫忙的，某某？」這種客套招呼；
                                     下面一句說明資料留在公司內部（系統的重點是資安） */}
                                 <h2 className="text-[length:var(--fs-22)] md:text-[length:var(--fs-34)] font-bold text-text-primary tracking-[-0.02em] text-center leading-[1.3] md:leading-tight text-balance">
-                                    {mainProps.t(projectHome ? 'chat.projectEmptyTitle' : 'chat.emptyGreeting')}
+                                    {mainProps.t(projectHome ? 'chat.projectEmptyTitle' : `chat.greet.${dayPart}`)}
                                 </h2>
                                 <p className="mt-[var(--sp-8)] text-center text-[length:var(--fs-15)] leading-[var(--lh-20)] text-text-secondary text-balance [word-break:keep-all]">
                                     {mainProps.t(projectHome ? 'chat.projectEmptyNote' : 'chat.emptyNote')}
