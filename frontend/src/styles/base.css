@@ -151,8 +151,9 @@ code * {
 /* 按按鈕換深淺色：新顏色從按鈕圓形擴散（lib/themeReveal 用 clip-path 的圓蓋上去）。
  * 這時關掉上面的淡入淡出：舊畫面整張留著不動，新畫面在圓裡、不透明，邊緣才俐落 */
 :root {
-  --theme-reveal-dur: 0.6s;
-  --theme-reveal-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* 使用者覺得 0.6 秒太快：放慢到 1 秒，前後都緩（不要一開始就衝出去） */
+  --theme-reveal-dur: 1s;
+  --theme-reveal-ease: cubic-bezier(0.45, 0, 0.25, 1);
 }
 html.theme-reveal::view-transition-old(root),
 html.theme-reveal::view-transition-new(root) {
