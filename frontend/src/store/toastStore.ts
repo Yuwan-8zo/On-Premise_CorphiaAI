@@ -34,12 +34,17 @@ const SHOW_MS = 2000 // 規範：顯示 2 秒
 const LEAVE_MS = 230 // 規範：退場 0.23 秒
 let showTimer = 0
 let leaveTimer = 0
+/** 「復原」通知正在顯示：這段時間其他通知排隊，不蓋掉它 */
+let undoActive = false
+const queued: { message: string; type: ToastType }[] = []
 
 export const useToastStore = create<ToastState>((set) => ({
     toasts: [],
 
     // duration 參數保留相容，一律照規範顯示 2 秒
     add: (message, type = 'info') => {
+        // 正在顯示「復原」通知時不能蓋掉它（蓋掉之後使用者就按不到復原，時間到還是會真的刪）：先排隊，它結束再說
+        if (undoActive) { queued.push({ message, type }); return }
         const id = `toast-${Date.now()}-${Math.random()}`
         window.clearTimeout(showTimer)
         window.clearTimeout(leaveTimer)
@@ -61,7 +66,14 @@ export const useToastStore = create<ToastState>((set) => ({
         const id = `toast-${Date.now()}-${Math.random()}`
         window.clearTimeout(showTimer)
         window.clearTimeout(leaveTimer)
-        const dismiss = () => set((state) => ({ toasts: state.toasts.filter((x) => x.id !== id) }))
+        undoActive = true
+        const dismiss = () => {
+            window.clearTimeout(showTimer)
+            set((state) => ({ toasts: state.toasts.filter((x) => x.id !== id) }))
+            undoActive = false
+            const next = queued.shift()
+            if (next) useToastStore.getState().add(next.message, next.type)
+        }
         set({ toasts: [{ id, message, type: 'info', durationMs: ms, action: { label, onClick: () => { onUndo(); dismiss() } } }] })
         showTimer = window.setTimeout(dismiss, ms)
     },
