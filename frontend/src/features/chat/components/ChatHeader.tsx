@@ -20,7 +20,7 @@ import { getErrorMessage } from '@/lib/errors'
 import { useScrollFade } from '@/lib/useScrollFade'
 import { useUIStore } from '@/store/uiStore'
 import { useToastStore } from '@/store/toastStore'
-import { shortModelName } from '@/lib/modelName'
+import { displayModelName, shortModelName } from '@/lib/modelName'
 
 interface ChatHeaderProps {
     sidebarOpen: boolean
@@ -143,7 +143,7 @@ export default function ChatHeader({
                                     <span className="md:hidden truncate max-w-[var(--sz-110)]">
                                         {shortModelName(selectedModel.name)}
                                     </span>
-                                    <span className="hidden md:inline truncate">{selectedModel.name}</span>
+                                    <span className="hidden md:inline truncate" title={selectedModel.name}>{displayModelName(selectedModel.name)}</span>
                                 </>
                             ) : <span aria-label={t('common.loading')} className="skel align-middle h-[0.78em] w-[12em]" style={{ display: 'inline-block' }} />}
                         </span>
@@ -185,7 +185,7 @@ export default function ChatHeader({
                                                     className={`model-row ${selectedModel?.name === model.name ? 'is-current' : ''}`}
                                                 >
                                                     <div className="flex flex-col min-w-0 pr-3">
-                                                        <span className="model-row-title">{model.name}</span>
+                                                        <span className="model-row-title" title={model.name}>{displayModelName(model.name)}</span>
                                                         <span className="model-row-sub">
                                                             {[
                                                                 `${model.size_gb.toFixed(1)} GB`,
