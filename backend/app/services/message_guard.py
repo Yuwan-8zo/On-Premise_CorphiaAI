@@ -128,15 +128,18 @@ async def screen_user_message(
     #     個資遮罩只認格式、違禁詞只認列管字詞，「我要王曉明的身分證」兩關都比對不到；這裡認「意圖」。
     #     個資、帳密算 DLP 那一關（跟著 DLP 開關）；協助攻擊算提示詞注入那一關。
     #     稽核只記類別，不記原文（原文裡就有被索取的人名）。
-    hit = check_sensitive_request(processed)
+    #     關掉的那一類不比對（不然先命中關掉的類別，會把還開著的另一類蓋掉）
+    hit = check_sensitive_request(
+        processed, data=settings.enable_dlp, attack=settings.enable_prompt_injection_guard
+    )
     if hit is not None:
-        if hit.category in (PERSONAL, CREDENTIAL) and settings.enable_dlp:
+        if hit.category in (PERSONAL, CREDENTIAL):
             what = "他人個資" if hit.category == PERSONAL else "登入憑證"
             await emit({"type": "dlp_block", "message": hit.message, "matched_terms_count": 0})
             await audit(AuditAction.DLP_HIT, f"偵測到索取{what}（{hit.kind}）並已攔阻",
                         {"rule": "sensitive_request", "category": hit.category, "kind": hit.kind})
             return None
-        if hit.category == ATTACK and settings.enable_prompt_injection_guard:
+        if hit.category == ATTACK:
             await emit({"type": "injection_block", "message": hit.message, "risk_level": "high"})
             await audit(AuditAction.PROMPT_INJECTION_BLOCKED, f"偵測到要求協助攻擊（{hit.kind}）並已攔阻",
                         {"rule": "sensitive_request", "category": hit.category, "kind": hit.kind,

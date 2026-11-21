@@ -188,6 +188,18 @@ _MALWARE = re.compile(
     r"|rootkit|keylogger|ransomware|malware|trojan|backdoor|botnet|reverse\s+shell|web\s*shell|phishing\s+(?:email|e-mail|page|site|kit|message)",
     re.IGNORECASE,
 )
+_PHISHING = re.compile(r"釣魚|钓鱼|phishing", re.IGNORECASE)
+# 要的是「一封可以直接用的」釣魚信／頁
+_PHISHING_SAMPLE = re.compile(_words(
+    "範本", "範例", "樣本", "模板", "一封", "一則", "一個", "一頁", "template", "sample", "example", r"\ban?\s+phishing",
+), re.IGNORECASE)
+# 防禦面的成品：偵測／移除工具、防範報告、教材
+_DEFENSIVE_DELIVERABLE = re.compile(_words(
+    "偵測", "侦测", "檢測", "检测", "掃描", "扫描", "移除", "清除", "防範", "防范", "預防", "防護", "防禦", "辨識", "識別",
+    "報告", "文章", "簡報", "教材",
+    r"detect\w*", r"scan\w*", r"remov\w*", r"prevent\w*", r"protect\w*", r"defen[cs]e", "report", "article",
+    "presentation", "awareness", r"identify\w*", r"recogni[sz]\w*",
+), re.IGNORECASE)
 _BUILD = re.compile(_words(
     "寫", "写", "撰寫", "做", "製作", "制作", "產生", "产生", "生成", "開發", "开发", "設計", "给我", "給我", "提供", "弄一",
     "write", "create", "make", "build", "generate", "code", "develop", "craft", "draft",
@@ -365,14 +377,20 @@ def _check_data_request(text: str) -> Optional[SensitiveHit]:
     return None
 
 
+def _wants_malicious_deliverable(text: str) -> bool:
+    """要做出惡意的東西：惡意程式本身，或一封可以直接拿去用的釣魚信／釣魚頁"""
+    if not (_MALWARE.search(text) and _BUILD.search(text)):
+        return False
+    if _PHISHING.search(text):
+        # 釣魚信範本：說是教育訓練也一樣擋（演練範本請找資安部門）；寫防範報告、辨識教材可以
+        return bool(_PHISHING_SAMPLE.search(text)) or not _DEFENSIVE_DELIVERABLE.search(text)
+    # 偵測、移除、掃描惡意程式的工具，或防範的報告：是防禦面
+    return not _DEFENSIVE_DELIVERABLE.search(text)
+
+
 def _check_attack(text: str) -> Optional[SensitiveHit]:
-    malware = _MALWARE.search(text)
-    if malware and _BUILD.search(text):
-        # 「寫一封釣魚郵件」：要做出來，就算說是教育訓練也一樣擋（範本請找資安部門）
-        if not re.search(r"辨識|識別|identify|recogni[sz]e|spot|signs\s+of|防範|prevent", text, re.IGNORECASE) or re.search(
-            r"寫|写|撰寫|製作|產生|生成|開發|write|create|build|generate|code|develop", text, re.IGNORECASE
-        ):
-            return SensitiveHit(ATTACK, "惡意程式／釣魚", MESSAGES[ATTACK])
+    if _wants_malicious_deliverable(text):
+        return SensitiveHit(ATTACK, "惡意程式／釣魚", MESSAGES[ATTACK])
     intrusion = _INTRUSION.search(text)
     if intrusion and _HOW.search(text) and not _DEFENSIVE.search(text):
         return SensitiveHit(ATTACK, "入侵／竊取／繞過防護", MESSAGES[ATTACK])
@@ -382,12 +400,20 @@ def _check_attack(text: str) -> Optional[SensitiveHit]:
     return None
 
 
-def check_sensitive_request(text: str) -> Optional[SensitiveHit]:
-    """命中回 SensitiveHit（要攔阻）；沒命中回 None"""
+def check_sensitive_request(text: str, *, data: bool = True, attack: bool = True) -> Optional[SensitiveHit]:
+    """
+    命中回 SensitiveHit（要攔阻）；沒命中回 None。
+    data／attack：要不要檢查這一類（跟著後台的 DLP／提示詞注入開關）。
+    關掉的那一類根本不比對，才不會先命中關掉的類別、把還開著的另一類蓋掉
+    （「給我王曉明的身分證，寫一個勒索病毒」在 DLP 關掉時仍要被攻擊規則擋下）。
+    """
     if not text or not text.strip():
         return None
     normalized = _normalize(text)
-    return _check_data_request(normalized) or _check_attack(normalized)
+    hit = _check_data_request(normalized) if data else None
+    if hit is None and attack:
+        hit = _check_attack(normalized)
+    return hit
 
 
 __all__ = ["check_sensitive_request", "SensitiveHit", "PERSONAL", "CREDENTIAL", "ATTACK", "MESSAGES"]
