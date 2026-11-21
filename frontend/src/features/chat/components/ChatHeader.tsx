@@ -218,6 +218,8 @@ export default function ChatHeader({
                 {/* 右側：玻璃選單鈕（規範右下選單的邏輯：點一下展開圖示；長按或直接往下滑才出現文字與放大鏡） */}
                 <GlassDock
                     aria-label={t('ui.header.convOptions')}
+                    // 新對話首頁還沒有對話：分享、重新命名、刪除都沒有對象，選單鈕變淡、按不開
+                    disabled={!currentConversation}
                     items={[
                         { id: 'share', label: t('chat.shareChat'), icon: <Share />, onSelect: () => { if (currentConversation) handleShareConversation(currentConversation.id) } },
                         // 分享過的對話才有「取消分享」
