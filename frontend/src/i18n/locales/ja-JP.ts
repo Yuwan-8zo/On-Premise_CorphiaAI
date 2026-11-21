@@ -882,6 +882,7 @@ export default {
                 conversation_create: '会話作成',
                 conversation_update: '会話更新',
                 conversation_delete: '会話削除',
+                document_view: '文書のプレビュー',
                 document_metadata_update: '文書設定の更新',
                 model_select: 'モデル選択',
                 model_refresh: 'モデル再読み込み',
@@ -1247,7 +1248,9 @@ export default {
             saveEdit: '変更を保存',
             tokensUsed: 'この回答で {{n}} トークン使用',
         },
-        sources: {
+        sources: {
+            viewInPdf: '原文で見る',
+            pdfFailed: '元のファイルを開けません（削除済み、または権限がありません）',
             unknownDoc: '不明な文書',
             title: '参照元：{{count}} 件の文書',
             cited: '（{{count}} 段落を引用）',

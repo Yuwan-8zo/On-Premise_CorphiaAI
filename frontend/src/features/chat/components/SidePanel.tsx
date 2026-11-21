@@ -9,7 +9,7 @@
  *   - 開關都有動畫：電腦上從右邊展開／收起（寬度漸變，聊天區跟著平順讓位），手機上由下往上浮現
  * 內容一樣關在沙盒裡（lib/previewDoc），和程式碼區塊裡的預覽是同一套限制。
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { readMs } from '@/lib/cssVars'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Contract, Expand, FileText, X } from '@/components/snow/icons'
@@ -27,6 +27,9 @@ import { useUIStore } from '@/store/uiStore'
 import { CopyButton, PANEL_BUTTON, PANEL_ICON, SaveButton } from './CodeButtons'
 import RunResultView from './RunResultView'
 import VersionSwitcher from './VersionSwitcher'
+
+// PDF 引擎很大：只有打開引用原文時才載入
+const PdfPreview = lazy(() => import('./PdfPreview'))
 
 /** AI 還在寫的時候，畫面隔多久才重畫一次（毫秒）：每個字都重畫會一直閃 */
 const PREVIEW_DEBOUNCE_MS = 400
@@ -145,7 +148,7 @@ export default function SidePanel() {
                     </button>
                 )}
                 <h2 className="mr-auto min-w-0 truncate text-[length:var(--fs-15)] font-semibold text-text-primary">
-                    {listMode ? t('ui.chat.sidePanel.files') : current?.kind === 'page' ? pageTitle(current, items, t) : current?.kind === 'text' ? current.title : t('ui.chat.sidePanel.runTitle')}
+                    {listMode ? t('ui.chat.sidePanel.files') : current?.kind === 'page' ? pageTitle(current, items, t) : current?.kind === 'text' || current?.kind === 'pdf' ? current.title : t('ui.chat.sidePanel.runTitle')}
                 </h2>
                 {current && <VersionSwitcher ids={versions} currentId={current.id} onSwitch={show} />}
                 {current?.kind === 'page' && (
@@ -193,6 +196,11 @@ export default function SidePanel() {
             )}
             {current?.kind === 'text' && (
                 <pre className="min-h-0 flex-1 overflow-auto p-[var(--sp-16)] text-[length:var(--fs-13)] leading-relaxed whitespace-pre-wrap break-words selectable-text">{current.text}</pre>
+            )}
+            {current?.kind === 'pdf' && (
+                <Suspense fallback={<p className="p-[var(--sp-16)] text-[length:var(--fs-14)] text-text-secondary" role="status">{t('common.loading')}</p>}>
+                    <PdfPreview documentId={current.documentId} quote={current.quote} />
+                </Suspense>
             )}
             {current?.kind === 'run' && (
                 <div className="min-h-0 flex-1 overflow-auto px-[var(--sp-16)] pb-[var(--sp-16)]">

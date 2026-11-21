@@ -3,9 +3,11 @@
 """
 
 import logging
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status, UploadFile, File, BackgroundTasks, Form, Request
+from fastapi.responses import FileResponse
 
 from sqlalchemy import or_, select, func
 
@@ -191,6 +193,44 @@ async def get_document(
     document = await get_tenant_document(db, document_id, current_user)
     
     return DocumentResponse.model_validate(document)
+
+
+@router.get("/{document_id}/file")
+async def get_document_file(
+    document_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    http_request: Request,
+):
+    """
+    原始 PDF（引用原文預覽用：聊天裡點引用，在旁邊打開那一頁並標出被引用的段落）
+
+    權限和「取得文件詳情」完全一樣（get_tenant_document）：別人的專案文件、沒權限的連接資料夾都當作不存在。
+    只給 PDF：其他格式的預覽直接顯示檢索到的段落文字，不需要把原檔送出去（少一個外流的口）。
+    每次打開都寫稽核紀錄（誰在什麼時候看了哪份文件）。
+    """
+    document = await get_tenant_document(db, document_id, current_user)
+    if (document.file_type or "").lower() != "pdf":
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="只有 PDF 可以預覽原文")
+    path = Path(document.file_path or "")
+    if not path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="原始檔案已不存在")
+
+    await write_audit_log(
+        db=db,
+        action=AuditAction.DOCUMENT_VIEW,
+        resource_type=AuditResource.DOCUMENT,
+        resource_id=document_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=current_user.effective_tenant_id,
+        description=f"預覽文件原文: {document.original_filename}",
+        ip_address=get_client_ip(http_request),
+        user_agent=get_user_agent(http_request),
+    )
+    # inline：在頁面裡顯示，不觸發下載；不快取（權限改了之後不能從快取拿到）
+    return FileResponse(path, media_type="application/pdf", headers={"Cache-Control": "no-store"},
+                        content_disposition_type="inline", filename=document.original_filename or "document.pdf")
 
 
 @router.patch("/{document_id}/metadata", response_model=DocumentResponse)

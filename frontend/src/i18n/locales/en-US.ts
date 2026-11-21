@@ -882,6 +882,7 @@ export default {
                 conversation_create: 'Create conversation',
                 conversation_update: 'Update conversation',
                 conversation_delete: 'Delete conversation',
+                document_view: 'View document',
                 document_metadata_update: 'Update document settings',
                 model_select: 'Select model',
                 model_refresh: 'Refresh models',
@@ -1255,7 +1256,9 @@ export default {
             saveEdit: 'Save changes',
             tokensUsed: 'This reply used {{n}} tokens',
         },
-        sources: {
+        sources: {
+            viewInPdf: 'View in the original',
+            pdfFailed: 'Couldn\'t open the original file (it may be deleted, or you may not have access)',
             unknownDoc: 'Unknown document',
             title: 'Sources: {{count}} documents',
             cited: '({{count}} passages cited)',

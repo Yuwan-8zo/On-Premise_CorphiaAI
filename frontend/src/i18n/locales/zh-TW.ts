@@ -882,6 +882,7 @@ export default {
                 conversation_create: '建立對話',
                 conversation_update: '更新對話',
                 conversation_delete: '刪除對話',
+                document_view: '預覽文件原文',
                 document_metadata_update: '更新文件設定',
                 model_select: '選擇模型',
                 model_refresh: '刷新模型',
@@ -1247,7 +1248,9 @@ export default {
             saveEdit: '儲存修改',
             tokensUsed: '本則回覆消耗 {{n}} tokens',
         },
-        sources: {
+        sources: {
+            viewInPdf: '在原文中查看',
+            pdfFailed: '無法打開原始檔案（可能已刪除，或你沒有權限）',
             unknownDoc: '未知文件',
             title: '參考來源：{{count}} 份文件',
             cited: '（共引用 {{count}} 個段落）',
