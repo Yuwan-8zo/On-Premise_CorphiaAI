@@ -235,7 +235,7 @@ _EVADE_GATE = re.compile(
 
 _CJK_SPACE = re.compile(r"(?<=[一-鿿])\s+(?=[一-鿿])")
 _PUNCT_SPLIT = re.compile(r"[，。！？、；：,.!?;:\n「」『』（）()\[\]【】]")
-_FILLERS = re.compile(r"please|number|no\.|[\s的之字號碼码請麻煩一下拜託謝謝\-:：，。！？?!、]", re.IGNORECASE)
+_FILLERS = re.compile(r"please|number|no\.|[\s的之字號碼码請麻煩一下拜託謝\-:：，。！？?!、]", re.IGNORECASE)
 
 
 def _normalize(text: str) -> str:
@@ -362,18 +362,24 @@ def _owner_is_sensitive(owner: str, category: str, kind: str) -> bool:
     return False  # self、none
 
 
+def _is_request_for(text: str, m: re.Match, category: str, kind: str, wants: bool) -> bool:
+    """這一處個資字詞是不是在索取別人／系統的資料"""
+    if not _owner_is_sensitive(_owner_of(text, m, category), category, kind):
+        return False
+    return wants or _remainder_is_short(text, m.start(), m.end())
+
+
 def _check_data_request(text: str) -> Optional[SensitiveHit]:
+    reverse_lookup = bool(_REVERSE_LOOKUP.search(text))  # 「A123456789 這個身分證是誰的」
     benign_only = bool(_BENIGN.search(text)) and not _VALUE_REQUEST.search(text)
     wants = bool(_VALUE_REQUEST.search(text) or _ACQUIRE_EXTRA.search(text))
     for category, kind, regex in _KIND_RES:
-        for m in regex.finditer(text):
-            # 反查：「A123456789 這個身分證是誰的」
-            if category == PERSONAL and _REVERSE_LOOKUP.search(text):
-                return SensitiveHit(category, kind, MESSAGES[category])
-            if benign_only or not _owner_is_sensitive(_owner_of(text, m, category), category, kind):
-                continue
-            if wants or _remainder_is_short(text, m.start(), m.end()):
-                return SensitiveHit(category, kind, MESSAGES[category])
+        if reverse_lookup and category == PERSONAL and regex.search(text):
+            return SensitiveHit(category, kind, MESSAGES[category])
+        if benign_only:
+            continue
+        if any(_is_request_for(text, m, category, kind, wants) for m in regex.finditer(text)):
+            return SensitiveHit(category, kind, MESSAGES[category])
     return None
 
 
