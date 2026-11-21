@@ -5,6 +5,7 @@
  * 資料與動作都在 features/admin/hooks（每個分頁一個），這裡只負責版面與把資料接到各分頁
  */
 import { lazy, Suspense, useEffect, useState } from 'react'
+import RegionBoundary from '@/components/ui/RegionBoundary'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Building2, Cpu, FileText, Folder, Gauge, ShieldCheck, Users } from '@/components/snow/icons'
@@ -198,6 +199,7 @@ export default function Admin() {
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} previousLogs={audit.auditPrevious} />
                         )}
 
+                        <RegionBoundary name={`admin-${activeSection}`} resetKeys={[activeSection]}>
                         <Suspense fallback={SectionSkeleton}>
                             {activeSection === 'users' && (
                                 <UsersSection
@@ -247,6 +249,7 @@ export default function Admin() {
                                 />
                             )}
                         </Suspense>
+                        </RegionBoundary>
                     </div>
                     </div>
                 </main>

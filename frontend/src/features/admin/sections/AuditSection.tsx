@@ -41,6 +41,7 @@ import {
 } from '@/features/admin/components/AdminPrimitives'
 import AuditChainCheck from '@/features/admin/components/AuditChainCheck'
 import AuditDetailDrawer from '@/features/admin/components/AuditDetailDrawer'
+import DateRangePicker, { type DateRange } from '@/features/admin/components/DateRangePicker'
 import { formatDate } from '@/features/admin/utils/formatDate'
 import { auditActionLabel, auditResourceLabel } from '@/features/admin/utils/auditLabels'
 import { shortIp } from '@/features/admin/utils/auditDetails'
@@ -90,6 +91,8 @@ export interface AuditSectionProps {
     onClearSearch: () => void
     onFilterChange: (key: 'action' | 'resource_type', value: string) => void
     onPageChange: (page: number) => void
+    /** 日期區間（本地日期 YYYY-MM-DD；都沒有＝全部時間） */
+    onRangeChange: (range: DateRange) => void
     onExportCSV: () => void
     onExportJSON: () => void
 }
@@ -109,6 +112,7 @@ export default function AuditSection({
     onClearSearch,
     onFilterChange,
     onPageChange,
+    onRangeChange,
     onExportCSV,
     onExportJSON,
 }: AuditSectionProps) {
@@ -155,7 +159,8 @@ export default function AuditSection({
                                 ]}
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                            <DateRangePicker value={{ start: auditFilter.start_date, end: auditFilter.end_date }} onChange={onRangeChange} />
                             {/* 資安事件篩選：和匯出鈕同尺寸的膠囊，選取時改紅色 */}
                             <button
                                 type="button"

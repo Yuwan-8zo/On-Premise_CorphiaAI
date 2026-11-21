@@ -19,6 +19,15 @@ import { browserFolderApi } from '@/api/browserFolder'
 import { bundleHtml } from '@/lib/htmlBundle'
 import { saveAttachments } from '@/lib/attachmentCache'
 import { attachedItemId, useSidePanelStore } from '@/store/sidePanelStore'
+import i18n from '@/i18n'
+
+/** 剪貼簿裡的截圖一律叫 image.png：改成「截圖-時分秒.png」，附了好幾張也分得出來 */
+const namePastedShot = (f: File) => {
+    if (!/^image\.\w+$/i.test(f.name)) return f
+    const d = new Date()
+    const stamp = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join('')
+    return new File([f], `${i18n.t('ui.paste.shot')}-${stamp}.${f.name.split('.').pop()}`, { type: f.type })
+}
 
 interface ChatInputAreaProps {
     selectedFolder: string | null
@@ -184,7 +193,16 @@ export default function ChatInputArea({
         }
     }
 
-    /** 把檔案拖到輸入框：圖片（主機能看圖時）附成圖片，其他附成這一則的檔案；拖曳中顯示「放開即可附加」 */
+    /** 拖進來或貼上的檔案：圖片（主機能看圖、一般模式）附成圖片，其他（含專案模式的圖片）附成這一則的檔案 */
+    const routeFiles = (files: File[]) => {
+        const useImages = chatImages.enabled && chatMode === 'general'
+        const images = useImages ? files.filter((f) => f.type.startsWith('image/')) : []
+        const others = files.filter((f) => !images.includes(f))
+        if (images.length) void chatImages.attach(images)
+        if (others.length) void attachFileList(others)
+    }
+
+    /** 把檔案拖到輸入框（分法見 routeFiles）；拖曳中顯示「放開即可附加」 */
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
     const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes('Files')
@@ -197,12 +215,7 @@ export default function ChatInputArea({
             e.preventDefault()
             dragDepth.current = 0
             setDragOver(false)
-            const dropped = Array.from(e.dataTransfer.files)
-            const useImages = chatImages.enabled && chatMode === 'general'
-            const images = useImages ? dropped.filter((f) => f.type.startsWith('image/')) : []
-            const others = dropped.filter((f) => !images.includes(f))
-            if (images.length) void chatImages.attach(images)
-            if (others.length) void attachFileList(others)
+            routeFiles(Array.from(e.dataTransfer.files))
         },
     }
 
@@ -389,9 +402,9 @@ export default function ChatInputArea({
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={onKeyDownClearFolder}
                                     onPaste={(e) => {
-                                        // 直接貼上截圖：剪貼簿裡有圖片就附上去（文字照常貼進輸入框）
-                                        const files = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
-                                        if (files.length && chatImages.enabled && chatMode === 'general') { e.preventDefault(); void chatImages.attach(files) }
+                                        // 直接貼上截圖或複製的檔案：和拖進來一樣附上去（文字照常貼進輸入框）
+                                        const files = Array.from(e.clipboardData?.files ?? []).map(namePastedShot)
+                                        if (files.length) { e.preventDefault(); routeFiles(files) }
                                     }}
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}

@@ -3,7 +3,7 @@
  *   小 AI 是整個系統的嚮導：平常從畫面右邊探出半個頭、眼睛看著畫面，不擋內容；
  *   系統有通知（toastStore）時滑出來，用對話卡片說出內容，表情跟著通知種類：
  *     success 開心跳、error 皺眉、info 一般說話
- *   點它：滑出來打招呼；再點一下會被戳。導覽進行中先躲起來（導覽有自己的小 AI，見 mascotDock.css）
+ *   點它：滑出來打招呼；再點一下會被戳。按住可以拖、甩出去會撞牆反彈再回來（useFling）。導覽進行中先躲起來（導覽有自己的小 AI，見 mascotDock.css）
  *   字多停久一點（SAY_MIN_MS ＋ 每個字 SAY_PER_CHAR_MS，最多 SAY_MAX_MS），讓人讀得完
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import Mascot, { type MascotMood } from './Mascot'
 import { useToastStore, type ToastType } from '@/store/toastStore'
 import { fitTextWidth } from '@/lib/fitTextWidth'
+import { useFling } from './useFling'
 import './mascotDock.css'
 
 const SAY_MIN_MS = 2600
@@ -42,6 +43,8 @@ export default function MascotDock() {
     const hideTimer = useRef(0)
     const tuckTimer = useRef(0)
     const noteRef = useRef<HTMLDivElement>(null)
+    const flingRef = useRef<HTMLDivElement>(null)
+    const fling = useFling(flingRef)
 
     // 字換行後卡片縮到剛好包住字（兩行長度由 CSS text-wrap: balance 排平均），右邊不留空白
     useLayoutEffect(() => {
@@ -72,10 +75,12 @@ export default function MascotDock() {
         clearTimeout(tuckTimer.current)
     }, [])
 
-    const mood: MascotMood = speech && speech.tone !== 'hello' ? MOOD[speech.tone] : 'idle'
+    // 被抓著：嚇一跳；飛出去：開心
+    const flingMood: MascotMood | null = fling.state === 'held' ? 'alert' : fling.state === 'flying' ? 'happy' : null
+    const mood: MascotMood = flingMood ?? (speech && speech.tone !== 'hello' ? MOOD[speech.tone] : 'idle')
 
     return (
-        <aside className={`mascot-dock${out ? ' is-out' : ''}`} aria-label={t('auth.mascotName')}>
+        <aside className={`mascot-dock${out ? ' is-out' : ''}${fling.state !== 'idle' ? ' is-held' : ''}`} aria-label={t('auth.mascotName')}>
             <div
                 ref={noteRef}
                 className={`mascot-dock-note paper paper-solid${speech ? ' is-on' : ''}${speech?.tone === 'error' ? ' is-error' : ''}`}
@@ -98,6 +103,7 @@ export default function MascotDock() {
                     </button>
                 )}
             </div>
+            <div ref={flingRef} className="mascot-fling">
             <Mascot
                 mood={mood}
                 label={t('auth.mascotName')}
@@ -106,6 +112,7 @@ export default function MascotDock() {
                     if (!out) speak({ id: `hello-${Date.now()}`, text: t('auth.mascotDockHello'), tone: 'hello' })
                 }}
             />
+            </div>
         </aside>
     )
 }

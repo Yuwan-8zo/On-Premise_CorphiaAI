@@ -22,8 +22,10 @@ import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSystemStore, selectLlmReady } from '@/store/systemStore'
 import { useToastStore } from '@/store/toastStore'
+import { useOutboxStore } from '@/store/outboxStore'
 import { getErrorMessage } from '@/lib/errors'
 import { useStableCallback } from '@/lib/useStableCallback'
+import { haptic } from '@/lib/haptics'
 import { useUIStore } from '@/store/uiStore'
 import type { Conversation } from '@/types/chat'
 import {
@@ -297,6 +299,7 @@ export function useChatLogic() {
         const state = useChatStore.getState()
         const index = state.conversations.findIndex((c) => c.id === id)
         const wasCurrent = state.currentConversation?.id === id
+        haptic('warn')
         // 目前開著、但還不在側欄清單裡的對話（例如剛開的新對話）也要能刪
         const conv = state.conversations[index] ?? (wasCurrent ? state.currentConversation : undefined)
         if (!conv) return
@@ -365,6 +368,12 @@ export function useChatLogic() {
         const text = (overrideValue ?? input).trim()
         if (!text || isStreaming || socket.isConnecting) return
         if (!overrideValue) setInput('')
+        haptic()
+        // 連不上主機：先存起來，恢復連線後自動送出（頂端的斷線提示會說，也可以取消）
+        if (useSystemStore.getState().offline) {
+            useOutboxStore.getState().put(text)
+            return
+        }
 
         const conversationId = await ensureConversation(text.slice(0, 50))
         void autoTitle(conversationId, text)
@@ -401,6 +410,15 @@ export function useChatLogic() {
         setResearchOn(false)
         await askAI(conversationId, text, false, research)
     }
+
+    // 恢復連線 → 把斷線時存起來的提問送出去
+    const sendQueued = useStableCallback(() => {
+        const queued = useOutboxStore.getState().take()
+        if (queued) void handleSend(queued)
+    })
+    useEffect(() => useSystemStore.subscribe((s, prev) => {
+        if (prev.offline && !s.offline) sendQueued()
+    }), [sendQueued])
 
     /** 修改某則使用者訊息後重新生成：截掉它之後的對話，再請 AI 重答（固定同一個函式，訊息泡泡才不會每次都重畫） */
     const handleResubmit = useStableCallback(async (messageId: string, editedContent: string, webSearch: boolean = false) => {

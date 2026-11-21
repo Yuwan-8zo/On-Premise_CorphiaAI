@@ -20,6 +20,14 @@ export interface SendMessageRequest {
 
 export const conversationsApi = {
     /**
+     * 匯出對話（後端每次都寫稽核）：Word 回傳檔案；Markdown 與 PDF 回傳 Markdown 文字（PDF 由前端排版後列印）
+     */
+    export: async (id: string, format: 'markdown' | 'docx' | 'pdf'): Promise<Blob> => {
+        const response = await apiClient.get(`/conversations/${id}/export`, { params: { format }, responseType: 'blob' })
+        return response.data as Blob
+    },
+
+    /**
      * 取得對話列表
      */
     list: async (page = 1, pageSize = 20, search?: string): Promise<{ data: Conversation[]; total: number }> => {

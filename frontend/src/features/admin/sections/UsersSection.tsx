@@ -35,6 +35,14 @@ import i18n from '@/i18n'
 import { useDismiss } from '@/lib/useDismiss'
 import { useKeepInViewport } from '@/lib/useKeepInViewport'
 import { useAuthStore } from '@/store/authStore'
+import SearchField from '@/components/ui/SearchField'
+import SortHeader from '@/components/ui/SortHeader'
+import { sortAria, useTableSort } from '@/lib/useTableSort'
+
+const ROLE_FILTERS = ['all', 'engineer', 'admin', 'user'] as const
+type RoleFilter = (typeof ROLE_FILTERS)[number]
+/** 角色排序：權限大的在前 */
+const ROLE_RANK: Record<AdminUserRole, number> = { engineer: 0, admin: 1, user: 2 }
 
 export interface AdminUserRow {
     id: string
@@ -119,6 +127,19 @@ export default function UsersSection({
 }: UsersSectionProps) {
     const { t } = useTranslation()
     const [lockoutMap, setLockoutMap] = useState<Record<string, UserLockoutStatus>>({})
+    // 篩選（名稱或信箱、角色）＋排序：都在畫面上做，使用者清單本來就整份載入
+    const [query, setQuery] = useState('')
+    const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
+    const q = query.trim().toLowerCase()
+    const filtered = users.filter((u) =>
+        (roleFilter === 'all' || u.role === roleFilter) &&
+        (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)))
+    const sort = useTableSort(filtered, {
+        name: (u) => u.name,
+        role: (u) => ROLE_RANK[u.role],
+        status: (u) => (u.isActive ? 0 : 1),
+        lastLogin: (u) => (u.lastLoginAt ? -parseServerDate(u.lastLoginAt).getTime() : null),
+    })
 
     // 每 5s 輪詢一次鎖定狀態
     const { data: lockoutData } = usePolling(adminApi.getUserLockoutSummary, 5000)
@@ -203,15 +224,33 @@ export default function UsersSection({
               這樣整列寬度從 ~960px 降到 ~720px，1080p 視窗也能完整顯示。
               仍保留 overflow-x-auto 給更窄的螢幕。
             */}
+            {/* 篩選列：搜尋名稱或信箱＋角色膠囊 */}
+            <div className="table-filter">
+                <SearchField
+                    className="flex-1 min-w-[var(--sz-200)] [--search-h:var(--sz-36)]"
+                    value={query}
+                    onChange={setQuery}
+                    onClear={() => setQuery('')}
+                    placeholder={t('ui.tableFilter.searchUsers')}
+                />
+                <div className="table-filter-chips" role="group" aria-label={t('admin.users.table.role', '角色')}>
+                    {ROLE_FILTERS.map((r) => (
+                        <button key={r} type="button" className={`drp-chip${roleFilter === r ? ' is-on' : ''}`} aria-pressed={roleFilter === r} onClick={() => setRoleFilter(r)}>
+                            {r === 'all' ? t('ui.tableFilter.all') : t(`admin.users.role.${r}`)}
+                        </button>
+                    ))}
+                </div>
+            </div>
             <div className="admin-fill-body overflow-x-auto pb-[var(--sp-4)]">
                 <table className="w-full sm:min-w-[var(--sz-720)]">
                     <thead className={tableHeadRowClass}>
                         <tr>
-                            <th className="pl-[var(--sp-21)] pr-4 py-3">{t('admin.users.table.user', '使用者')}</th>
-                            <th className="px-4 py-3">{t('admin.users.table.role', '角色')}</th>
-                            <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.status', '狀態')}</th>
+                            <th className="pl-[var(--sp-21)] pr-4 py-3" aria-sort={sortAria(sort.headerProps('name').dir)}><SortHeader label={t('admin.users.table.user', '使用者')} {...sort.headerProps('name')} /></th>
+                            <th className="px-4 py-3" aria-sort={sortAria(sort.headerProps('role').dir)}><SortHeader label={t('admin.users.table.role', '角色')} {...sort.headerProps('role')} /></th>
+                            <th className="hidden sm:table-cell px-4 py-3" aria-sort={sortAria(sort.headerProps('status').dir)}><SortHeader label={t('admin.users.table.status', '狀態')} {...sort.headerProps('status')} /></th>
                             <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.lockStatus', '鎖定狀態')}</th>
-                            <th className="hidden sm:table-cell px-4 py-3">{t('admin.users.table.lastLogin', '最後登入')}</th>
+                            {/* 最後登入：「升冪」＝最近登入的在前（比較常用） */}
+                            <th className="hidden sm:table-cell px-4 py-3" aria-sort={sortAria(sort.headerProps('lastLogin').dir)}><SortHeader label={t('admin.users.table.lastLogin', '最後登入')} {...sort.headerProps('lastLogin')} /></th>
                             <th className="pl-4 pr-[var(--sp-16)] py-3 text-right">{t('admin.users.table.action', '操作')}</th>
                         </tr>
                     </thead>
@@ -236,14 +275,14 @@ export default function UsersSection({
                                     <td className="pl-4 pr-[var(--sp-16)] py-3"><div className="flex justify-end"><Skel className="h-8 w-8 !rounded-full" /></div></td>
                                 </tr>
                             ))
-                        ) : users.length === 0 ? (
+                        ) : sort.rows.length === 0 ? (
                             <tr>
                                 <td className={tableEmptyCellClass} colSpan={6}>
-                                    {t('admin.users.noUsers', '暫無使用者')}
+                                    {users.length ? t('ui.tableFilter.noMatch') : t('admin.users.noUsers', '暫無使用者')}
                                 </td>
                             </tr>
                         ) : (
-                            users.map((item) => (
+                            sort.rows.map((item) => (
                                 <tr key={item.id} className="transition  ">
                                     <td className="pl-[var(--sp-21)] pr-4 py-3">
                                         <div className="flex items-center gap-3">

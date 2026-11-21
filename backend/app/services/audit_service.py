@@ -36,6 +36,7 @@ class AuditAction:
     CONVERSATION_CREATE = "conversation_create"
     CONVERSATION_UPDATE = "conversation_update"
     CONVERSATION_DELETE = "conversation_delete"
+    CONVERSATION_EXPORT = "conversation_export"
 
     # 文件管理
     DOCUMENT_UPLOAD = "document_upload"

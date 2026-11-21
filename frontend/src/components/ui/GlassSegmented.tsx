@@ -16,6 +16,7 @@ import { useCssPx, type PxOrVar } from '@/lib/cssVars'
 import { LENS_CFG, LENS_MAG, LENS_SX, capsuleHole, lensActive, lensCrossScale, shoulderMask, useLensMotion } from './lensKit'
 import { swallowNextClick } from '@/lib/swallowClick'
 import { useLensPull } from './useLensPull'
+import { haptic } from '@/lib/haptics'
 
 export interface SegmentOption<T extends string> {
     value: T
@@ -125,6 +126,7 @@ export default function GlassSegmented<T extends string>({ options, value, onCha
         lens.glideTo(next)
         const val = options[next]?.value
         if (commit && val !== undefined && val !== value) {
+            haptic()
             onChange(val)
             swallowNextClick() // 換分頁後同一下的 click 不落到新內容上
         }

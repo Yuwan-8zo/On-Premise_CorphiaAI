@@ -1,0 +1,377 @@
+/* 斷線提示、閒置鎖定、區塊錯誤卡、表格工具與自動長條圖（第 15 項功能那一批新增；載入順序見 snow.css） */
+
+/* ---------- 斷線提示／即將鎖定（頂端置中玻璃膠囊；和通知同位置，通知用的 .toast-stack 在它下面） ---------- */
+.conn-banner-wrap {
+  position: fixed;
+  top: var(--sp-26);
+  left: 50%;
+  z-index: 9998;
+  transform: translateX(-50%);
+  max-width: calc(100vw - var(--sz-32));
+  pointer-events: none;
+}
+.conn-banner {
+  --R: calc(22 * var(--ui-unit));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4) var(--sp-8);
+  border-radius: var(--r-9999);
+  padding: var(--sp-10) var(--sp-20);
+  background: var(--paper-solid);
+  color: rgb(var(--text-primary));
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  font-weight: 700;
+  animation: toastIn 0.23s var(--ease-out) both;
+}
+.conn-dot {
+  width: var(--sz-8);
+  height: var(--sz-8);
+  border-radius: var(--r-9999);
+  background: var(--sys-orange);
+  animation: connPulse 1.2s ease-in-out infinite;
+}
+.conn-dot.is-ok {
+  background: var(--sys-green);
+  animation: none;
+}
+.conn-sub {
+  font-weight: 500;
+  color: rgb(var(--text-secondary));
+}
+.conn-cancel {
+  pointer-events: auto;
+  padding: var(--sp-2) var(--sp-8);
+  border-radius: var(--r-8);
+  color: rgb(var(--accent));
+  white-space: nowrap;
+}
+.conn-cancel:hover { background: var(--chip); }
+@keyframes connPulse {
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conn-dot { animation: none; }
+}
+
+/* ---------- 閒置鎖定：整片不透明蓋住內容（旁人看不到對話），中間一張卡 ---------- */
+.idle-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-16);
+  background: rgb(var(--bg-base));
+  animation: lockFade 0.3s linear both;
+}
+@keyframes lockFade {
+  from { opacity: 0; }
+}
+.idle-lock-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-12);
+  width: min(var(--lock-card-w), 100%);
+  padding: var(--sp-26) var(--sp-20) var(--sp-20);
+  border-radius: var(--r-32);
+}
+.idle-lock-mascot {
+  width: var(--lock-mascot);
+  height: var(--lock-mascot);
+}
+.idle-lock-title {
+  font-size: var(--fs-22);
+  line-height: var(--lh-28);
+  font-weight: 700;
+  color: rgb(var(--text-primary));
+}
+.idle-lock-who {
+  margin-top: calc(var(--sp-8) * -1);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  color: rgb(var(--text-secondary));
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.idle-lock-logout {
+  padding: var(--sp-4) var(--sp-12);
+  border-radius: var(--r-9999);
+  font-size: var(--fs-15);
+  color: rgb(var(--accent));
+}
+.idle-lock-logout:hover { background: var(--chip); }
+
+/* ---------- 區塊錯誤卡（components/ui/RegionBoundary） ---------- */
+.region-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  margin: var(--sp-16);
+  padding: var(--sp-20);
+  border-radius: var(--r-25);
+  text-align: center;
+}
+.region-error.is-compact {
+  margin: var(--sp-8);
+  padding: var(--sp-12);
+  border-radius: var(--r-21);
+}
+.region-error-title {
+  font-size: var(--fs-17);
+  line-height: var(--lh-22);
+  font-weight: 700;
+  color: rgb(var(--text-primary));
+}
+.region-error-body {
+  font-size: var(--fs-15);
+  line-height: var(--lh-20);
+  color: rgb(var(--text-secondary));
+}
+.region-error-retry {
+  padding: var(--sp-6) var(--sp-16);
+  border-radius: var(--r-9999);
+  background: var(--chip);
+  color: rgb(var(--accent));
+  font-size: var(--fs-15);
+  font-weight: 600;
+}
+
+/* ---------- AI 回答裡的表格：右上角工具列（下載 CSV、複製到 Excel）＋下方自動長條圖 ---------- */
+.md-table-block > .md-table {
+  margin: 0;
+}
+.md-table-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  color: rgb(var(--text-secondary));
+}
+.md-chart {
+  margin-top: var(--sp-8);
+  padding: var(--sp-12) var(--sp-12) var(--sp-8);
+  border-radius: var(--r-22);
+}
+
+/* ---------- 匯出對話（ExportDialog）：三個格式一張實色卡片裡的清單 ---------- */
+.export-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-21);
+  overflow: hidden;
+}
+.export-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  padding: var(--sp-12) var(--sp-16);
+  font-size: var(--fs-15);
+  line-height: var(--lh-20);
+  color: rgb(var(--text-primary));
+}
+.export-row + .export-row { border-top: 0.5px solid var(--paper-line); }
+.export-row:hover:not(:disabled) { background: var(--chip); }
+.export-row:disabled { opacity: 0.6; }
+.export-row svg { width: var(--sz-20); height: var(--sz-20); color: rgb(var(--accent)); flex-shrink: 0; }
+
+/* ---------- 列印成 PDF（features/chat/utils/printMarkdown）：只印 #print-root ---------- */
+#print-root { display: none; }
+@media print {
+  html.is-printing,
+  html.is-printing body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  html.is-printing body > *:not(#print-root) { display: none !important; }
+  html.is-printing #print-root {
+    display: block;
+    color: #000;
+    font-size: 12pt;
+  }
+  html.is-printing #print-root .md-table-tools { display: none; }
+  html.is-printing #print-root .md-table,
+  html.is-printing #print-root .md-chart { break-inside: avoid; }
+}
+
+/* ---------- 日期區間選擇器（features/admin/components/DateRangePicker） ---------- */
+.drp {
+  position: absolute;
+  top: calc(100% + var(--sp-8));
+  left: 0;
+  z-index: 60;
+  width: var(--drp-w);
+  max-width: calc(100vw - var(--sz-32));
+  padding: var(--sp-12);
+  border-radius: var(--r-25);
+}
+.drp-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+  padding-bottom: var(--sp-12);
+  border-bottom: 0.5px solid var(--paper-line);
+}
+.drp-chip {
+  padding: var(--sp-4) var(--sp-12);
+  border-radius: var(--r-9999);
+  background: var(--chip);
+  font-size: var(--fs-13);
+  line-height: var(--lh-18);
+  white-space: nowrap;
+  color: rgb(var(--text-primary));
+}
+.drp-chip.is-on {
+  background: rgb(var(--accent));
+  color: var(--text-on-accent);
+}
+.drp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-8) 0 var(--sp-4);
+}
+.drp-month {
+  font-size: var(--fs-15);
+  font-weight: 600;
+  color: rgb(var(--text-primary));
+}
+.drp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: var(--sp-2);
+}
+.drp-wd {
+  padding: var(--sp-4) 0;
+  text-align: center;
+  font-size: var(--fs-11);
+  color: rgb(var(--text-secondary));
+}
+.drp-day {
+  height: var(--drp-cell);
+  font-size: var(--fs-13);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--text-primary));
+  border-radius: var(--r-9999);
+}
+.drp-day:hover:not(:disabled) { background: var(--chip); }
+.drp-day:disabled { color: rgb(var(--text-disabled)); }
+.drp-day.is-today { font-weight: 700; color: rgb(var(--accent)); }
+/* 區間內：淡淡的強調色連成一條；起訖兩天是實心圓 */
+.drp-day.is-in {
+  border-radius: 0;
+  background: color-mix(in srgb, rgb(var(--accent)) 14%, transparent);
+}
+.drp-day.is-edge {
+  border-radius: var(--r-9999);
+  background: rgb(var(--accent));
+  color: var(--text-on-accent);
+}
+.drp-hint {
+  padding-top: var(--sp-8);
+  font-size: var(--fs-12);
+  line-height: var(--lh-16);
+  color: rgb(var(--text-secondary));
+  text-align: center;
+}
+
+/* ---------- 後台資料表：可排序的表頭（components/ui/SortHeader）＋篩選列 ---------- */
+.sort-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-6) * -1);
+  padding: var(--sp-4) var(--sp-6);
+  border-radius: var(--r-8);
+  font: inherit;
+  color: inherit;
+  white-space: nowrap;
+}
+.sort-head:hover { background: var(--chip); }
+.sort-head.is-on { color: rgb(var(--text-primary)); }
+.sort-head-arrow {
+  display: inline-flex;
+  opacity: 0.35;
+}
+.sort-head-arrow svg { width: var(--sz-12); height: var(--sz-12); }
+.sort-head.is-on .sort-head-arrow { opacity: 1; color: rgb(var(--accent)); }
+.table-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+  padding: 0 var(--space) var(--sp-12);
+}
+.table-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+}
+
+/* ---------- 專案資料夾拖曳排序（ChatSidebar）：拖著的那一個變淡，要放的位置畫一條強調色的線 ---------- */
+.folder-drag { position: relative; }
+.folder-drag.is-dragging { opacity: 0.4; }
+.folder-drag.is-drop-before::before,
+.folder-drag.is-drop-after::after {
+  content: '';
+  position: absolute;
+  left: var(--sp-10);
+  right: var(--sp-10);
+  height: var(--sp-2);
+  border-radius: var(--r-9999);
+  background: rgb(var(--accent));
+  pointer-events: none;
+}
+.folder-drag.is-drop-before::before { top: calc(var(--sp-2) * -1); }
+.folder-drag.is-drop-after::after { bottom: calc(var(--sp-2) * -1); }
+
+/* ---------- 看大圖（components/ui/ImageViewer）：縮圖用畫面轉場變形放大 ---------- */
+.chat-image-zoom {
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  cursor: zoom-in;
+}
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-16);
+  background: rgb(var(--bg-base) / 0.94);
+  cursor: zoom-out;
+}
+.image-viewer-img {
+  max-width: min(100%, var(--viewer-max-w));
+  max-height: 100%;
+  border-radius: var(--r-21);
+  object-fit: contain;
+}
+.image-viewer-close {
+  --R: calc(22 * var(--ui-unit));
+  position: absolute;
+  top: calc(var(--sp-16) + env(safe-area-inset-top, 0px));
+  right: var(--sp-16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sz-44);
+  height: var(--sz-44);
+  border-radius: var(--r-9999);
+  color: rgb(var(--text-primary));
+}
+.image-viewer-close svg { width: var(--sz-20); height: var(--sz-20); }
+/* 變形的時間與曲線（View Transition 的群組動畫） */
+::view-transition-group(image-morph) {
+  animation-duration: var(--morph-dur);
+  animation-timing-function: var(--morph-ease);
+}

@@ -98,6 +98,7 @@ export const AUDIT_ACTIONS = [
     'conversation_create',
     'conversation_update',
     'conversation_delete',
+    'conversation_export',
     'document_upload',
     'document_delete',
     'document_metadata_update',

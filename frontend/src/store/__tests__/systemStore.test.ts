@@ -26,3 +26,21 @@ describe('system readiness helpers', () => {
         expect(isLlmReady(health)).toBe(true)
     })
 })
+
+describe('offline detection', () => {
+    it('needs OFFLINE_AFTER failures in a row, and one success clears it', async () => {
+        const { useSystemStore, OFFLINE_AFTER } = await import('@/store/systemStore')
+        const health = await import('@/api/health')
+        const { vi } = await import('vitest')
+        const spy = vi.spyOn(health, 'fetchHealth').mockRejectedValue(new Error('down'))
+        useSystemStore.setState({ failStreak: 0, offline: false })
+        for (let i = 1; i < OFFLINE_AFTER; i += 1) await useSystemStore.getState().refreshHealth()
+        expect(useSystemStore.getState().offline).toBe(false)
+        await useSystemStore.getState().refreshHealth()
+        expect(useSystemStore.getState().offline).toBe(true)
+        spy.mockResolvedValue({ status: 'ok', version: '', database: '', llm: 'ready', rag: 'ready' })
+        await useSystemStore.getState().refreshHealth()
+        expect(useSystemStore.getState().offline).toBe(false)
+        spy.mockRestore()
+    })
+})

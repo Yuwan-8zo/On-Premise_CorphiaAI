@@ -56,6 +56,7 @@ function urlTransform(url: string, key: string): string {
 }
 import i18n from '@/i18n'
 import { normalizeMath } from '@/lib/normalizeMath'
+import TableBlock from './TableBlock'
 
 const MarkdownCodeBlock = lazy(() => import('./MarkdownCodeBlock'))
 
@@ -254,12 +255,8 @@ const MarkdownRenderer = memo(({ content, className = '' }: MarkdownRendererProp
                             )
                         },
 
-                        // 表格
-                        table: ({ children }) => (
-                            <div className="md-table glass-chip my-4 overflow-x-auto overflow-y-hidden scrollbar-none">
-                                <table>{children}</table>
-                            </div>
-                        ),
+                        // 表格：右上角下載 CSV／複製到 Excel，有數字欄就在下方自動畫長條圖（TableBlock）
+                        table: ({ children }) => <TableBlock>{children}</TableBlock>,
                         th: ({ children }) => <th>{withBreaks(children)}</th>,
                         td: ({ children }) => <td>{cellLines(children)}</td>,
 

@@ -9,6 +9,7 @@ import { isOnboardingDone } from '@/components/onboarding/onboardingFlag'
 import { ChatMinimap, ScrollToBottomButton, ChatSidebar, ChatHeader, ChatInputArea, ConversationContextMenu, RenameModal, MoveToProjectModal, NewFolderModal, MessageBubble } from '@/features/chat/components'
 import { PlusIcon } from '@/features/chat/components/ChatIcons'
 import SidePanel from '@/features/chat/components/SidePanel'
+import ExportDialog from '@/features/chat/components/ExportDialog'
 import { useChatLogic } from '@/features/chat/hooks/useChatLogic'
 import { useChatHotkeys } from '@/features/chat/hooks/useChatHotkeys'
 import { useReadProgress } from '@/features/chat/hooks/useReadProgress'
@@ -18,6 +19,7 @@ import { useChatStore } from '@/store/chatStore'
 import i18n from '@/i18n'
 import { useSidePanelStore } from '@/store/sidePanelStore'
 import Tooltip from '@/components/ui/Tooltip'
+import RegionBoundary from '@/components/ui/RegionBoundary'
 import WaveBackground from '@/components/ui/WaveBackground'
 import { SkelMessages } from '@/components/ui/Skeleton'
 import { dayPartOf, useNow } from '@/lib/dayPart'
@@ -102,14 +104,17 @@ export default function Chat() {
             />
 
             {/* 左側邊欄 Sidebar */}
-            <ChatSidebar {...sidebarProps} />
+            <RegionBoundary name="sidebar" compact>
+                <ChatSidebar {...sidebarProps} />
+            </RegionBoundary>
 
             {/* --- 右側主聊天視窗 Main Section （透明，讓背景弧線 SVG 透出來）--- */}
             <main className={`flex-1 flex flex-col min-w-0 h-full relative bg-transparent z-10 ${panelOpen ? 'md:px-[var(--sp-16)]' : ''}`}>
                 {/* 固定的頂部 Header (Top Bar) */}
                 <ChatHeader {...headerProps} />
 
-                {/* 內容區：滑動區域（根據空狀態或聊天動態渲染） */}
+                {/* 內容區：滑動區域（根據空狀態或聊天動態渲染）；出錯時只有這一塊換成提示卡，換對話自動重試 */}
+                <RegionBoundary name="content" resetKeys={[currentConversation?.id, mainProps.selectedFolder]}>
                 {mainProps.selectedFolder ? (
                     // 專案管理頁面 Folder View
                     <div className="flex-1 overflow-hidden flex flex-col px-6 pt-6 pb-6 md:px-10 max-w-4xl mx-auto w-full">
@@ -333,13 +338,18 @@ export default function Chat() {
                     </div>
                 </div>
                 )}
+                </RegionBoundary>
 
                 {/* 底部輸入區 Chat Input Area */}
-                <ChatInputArea {...inputProps} />
+                <RegionBoundary name="input" compact>
+                    <ChatInputArea {...inputProps} />
+                </RegionBoundary>
             </main>
 
             {/* 旁邊的顯示面板：AI 做的成品、執行程式的結果（沒有開啟時不佔位置） */}
-            <SidePanel />
+            <RegionBoundary name="side-panel" compact>
+                <SidePanel />
+            </RegionBoundary>
 
             {/* --- 彈出視窗 Modals --- */}
             <ConversationContextMenu
@@ -353,6 +363,8 @@ export default function Chat() {
                 onDelete={modalProps.handleDeleteConversation}
                 onClose={modalProps.closeMenu}
             />
+
+            <ExportDialog />
 
             <RenameModal
                 renameModal={modalProps.renameModal}

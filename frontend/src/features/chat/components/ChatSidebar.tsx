@@ -19,6 +19,8 @@ import { usePullRefresh } from '@/lib/usePullRefresh'
 import PullIndicator from '@/components/ui/PullIndicator'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
+import { applyOrder, loadOrder, moveName, saveOrder } from '@/lib/folderOrder'
+import { haptic } from '@/lib/haptics'
 import { useUIStore } from '@/store/uiStore'
 import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -145,6 +147,21 @@ export default function ChatSidebar({
     // 收合／展開＝變形（不是淡入淡出）：外框寬度、切換軌道（橫↔直）、新對話鈕（膠囊↔圓鈕）、頭像列同時過渡 0.3 秒
     //   每個元件都固定在左邊同一個位置，只有寬高在變；文字被收進去
     const desktop = useMediaQuery(MQ_DESKTOP)
+    // 專案資料夾可以拖曳排序（lib/folderOrder，記在這台裝置）；drag＝正在拖哪一個、drop＝會放到哪一個的前面／後面
+    const [folderOrder, setFolderOrder] = useState<string[]>(() => loadOrder(user?.id))
+    useEffect(() => { setFolderOrder(loadOrder(user?.id)) }, [user?.id])
+    const [drag, setDrag] = useState<string | null>(null)
+    const [drop, setDrop] = useState<{ name: string; after: boolean } | null>(null)
+    const commitDrop = (list: string[]) => {
+        if (!drag || !drop || drag === drop.name) return
+        const from = list.indexOf(drag)
+        let to = list.indexOf(drop.name) + (drop.after ? 1 : 0)
+        if (from < to) to -= 1
+        const next = moveName(list, from, to)
+        setFolderOrder(next)
+        saveOrder(user?.id, next)
+        haptic()
+    }
     // 視窗從電腦寬度縮成手機寬度（縮小桌面版視窗、摺疊手機闔上）：原本展開的側欄會變成蓋住整個畫面的抽屜，
     // 而且開關按鈕在抽屜開著時是隱藏的——使用者會卡住。變窄的那一刻自動收起來
     const wasDesktop = useRef(desktop)
@@ -383,7 +400,7 @@ export default function ChatSidebar({
                                 const convFolders = conversations
                                     .filter(c => Boolean(c.settings?.isProject))
                                     .map(c => (c.settings?.folderName as string) || DEFAULT_FOLDER)
-                                const allFolders = Array.from(new Set([...savedFolders, ...convFolders]))
+                                const allFolders = applyOrder(Array.from(new Set([...savedFolders, ...convFolders])), folderOrder)
 
                                 if (allFolders.length === 0) {
                                     return (
@@ -405,7 +422,21 @@ export default function ChatSidebar({
                                         {allFolders.map((folderName) => {
                                             const isExpanded = expandedFolders.has(folderName)
                                             return (
-                                                <div key={folderName} className="flex flex-col">
+                                                <div
+                                                    key={folderName}
+                                                    className={`flex flex-col folder-drag${drag === folderName ? ' is-dragging' : ''}${drop?.name === folderName && drag !== folderName ? (drop.after ? ' is-drop-after' : ' is-drop-before') : ''}`}
+                                                    draggable
+                                                    onDragStart={(e) => { setDrag(folderName); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', folderName) }}
+                                                    onDragOver={(e) => {
+                                                        if (!drag) return
+                                                        e.preventDefault()
+                                                        const r = e.currentTarget.getBoundingClientRect()
+                                                        const after = e.clientY > r.top + r.height / 2
+                                                        if (drop?.name !== folderName || drop.after !== after) setDrop({ name: folderName, after })
+                                                    }}
+                                                    onDrop={(e) => { e.preventDefault(); commitDrop(allFolders) }}
+                                                    onDragEnd={() => { setDrag(null); setDrop(null) }}
+                                                >
                                                     {/* 資料夾列（沒有展開箭頭）：點一下選取並展開；再點一次已選取的資料夾就收合 */}
                                                     <div
                                                         onClick={() => {
