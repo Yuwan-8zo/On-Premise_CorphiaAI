@@ -311,6 +311,21 @@
   --spark-w: var(--sz-64);         /* 閘道列的近 7 天小長條圖 */
   --gate-tag-w: calc(var(--fs-12) * 8 + var(--sp-10) * 2); /* 閘道列的動作標籤欄：放得下最長的標籤（日文 8 個字），各列對齊 */
   --spark-h: var(--sz-22);
+  /* 閒置鎖定畫面（components/auth/IdleLock）：卡片寬、小 AI 大小 */
+  --lock-card-w: var(--sz-360);
+  --lock-mascot: var(--sz-120);
+  /* AI 回答裡表格自動畫的長條圖（features/chat/components/TableChart）：圖高、每一根長條最粗 */
+  --md-chart-h: var(--sz-220);
+  --md-chart-bar: var(--sz-28);
+  /* 日期區間選擇器（features/admin/components/DateRangePicker）：面板寬、每一天的格高 */
+  --drp-w: calc(300 * var(--ui-unit));
+  --drp-cell: var(--sz-36);
+  /* 看大圖（components/ui/ImageViewer）：圖最寬多少；縮圖變形放大的時間與曲線 */
+  --viewer-max-w: calc(1100 * var(--ui-unit));
+  --morph-dur: 0.42s;
+  --morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* 列印成 PDF（features/chat/utils/printMarkdown）：排版寬度＝A4 扣掉預設邊界的可印範圍 */
+  --print-w: 170mm;
 }
 /* 手指操作的裝置：小圖示按鈕放大到 36，按得到、不誤觸 */
 @media (pointer: coarse) {

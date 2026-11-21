@@ -300,6 +300,70 @@ async def list_messages(
     return _with_versions(messages, everything)
 
 
+EXPORT_FORMATS = ("markdown", "docx", "pdf")
+EXPORT_MIME = {
+    "markdown": "text/markdown; charset=utf-8",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    # PDF 由前端拿這份 Markdown 排版後交給瀏覽器「列印成 PDF」
+    "pdf": "text/markdown; charset=utf-8",
+}
+
+
+@router.get("/{conversation_id}/export")
+async def export_conversation(
+    conversation_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    http_request: Request,
+    format: str = Query("markdown", pattern="^(markdown|docx|pdf)$"),
+):
+    """
+    匯出對話（Word／PDF／Markdown）
+
+    只匯出自己的對話、畫面上那一條（改過的舊版本不匯出）。
+    匯出等於把內容帶離系統，所以每次都寫稽核紀錄（誰、什麼時候、哪一則、什麼格式）。
+    """
+    from datetime import datetime
+    from urllib.parse import quote
+
+    from fastapi import Response
+
+    from app.services import conversation_export
+    from app.services.file_builder import safe_filename
+
+    conversation = await get_own_conversation(db, conversation_id, current_user)
+    path, _ = await message_tree.current_path(db, conversation_id)
+    now = datetime.now().astimezone()
+    if format == "docx":
+        body: bytes = conversation_export.to_docx(conversation.title, path, now)
+        filename = safe_filename(conversation.title, "docx")
+    else:
+        body = conversation_export.to_markdown(conversation.title, path, now).encode("utf-8")
+        filename = safe_filename(conversation.title, "md")
+
+    await write_audit_log(
+        db=db,
+        action=AuditAction.CONVERSATION_EXPORT,
+        resource_type=AuditResource.CONVERSATION,
+        resource_id=conversation_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        tenant_id=conversation.tenant_id,
+        description=f"匯出對話（{format}）: {conversation.title}",
+        details={"format": format, "messages": len(path)},
+        ip_address=get_client_ip(http_request),
+        user_agent=get_user_agent(http_request),
+    )
+    return Response(
+        content=body,
+        media_type=EXPORT_MIME[format],
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 def _with_versions(messages: list[Message], everything: list[Message]) -> List[MessageResponse]:
     """每則訊息附上同一個位置的所有版本（只有一版就不附，前端不顯示切換鈕）"""
     siblings = message_tree.versions(everything)

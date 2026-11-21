@@ -297,7 +297,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                 {message.images && conversationId && (
                                     <div className="mb-[var(--sp-8)] flex flex-wrap justify-end gap-[var(--sp-8)]">
                                         {message.images.map((id, i) => (
-                                            <ChatImage key={id} conversationId={conversationId} imageId={id} alt={t('chat.images.alt', { n: i + 1 })}
+                                            <ChatImage key={id} conversationId={conversationId} imageId={id} alt={t('chat.images.alt', { n: i + 1 })} zoomable
                                                 className="h-[var(--sz-120)] w-[var(--sz-120)] rounded-[var(--r-16)]" />
                                         ))}
                                     </div>

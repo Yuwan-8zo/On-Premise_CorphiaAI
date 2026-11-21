@@ -233,13 +233,13 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
     const launcherFresh = launcher && launcher.overall !== 'stopped'
     if (launcherFresh) {
         for (const s of launcher.steps) {
-            // 後端已經回應，就算狀態檔慢一步也直接視為完成
-            const state: StepState = apiUp && s.state !== 'error' && s.state !== 'skipped' ? 'done' : s.state
+            // 後端已經回應，就算狀態檔慢一步（或是上一次啟動留下的「失敗」，例如手動重開後端）也直接視為完成
+            const state: StepState = apiUp && s.state !== 'skipped' ? 'done' : s.state
             // 名稱與說明依代碼顯示目前語言；啟動程式沒給代碼的（例如網址、錯誤原因）照原樣
             const label = i18n.t(`ui.boot.step.${s.key}`, { defaultValue: s.label })
             let detail = s.code ? i18n.t(`ui.boot.detail.${s.code}`, { defaultValue: s.detail }) : s.detail
             // 後端已經回應、但狀態檔還寫著「啟動中」：說明也改成已連線，不要「完成」配「啟動中…」
-            if (s.key === 'backend' && state === 'done' && s.state !== 'done') detail = i18n.t('ui.boot.detail.connected')
+            if (state === 'done' && s.state !== 'done') detail = i18n.t(s.key === 'backend' ? 'ui.boot.detail.connected' : 'ui.boot.detail.ready')
             rows.push({ key: s.key, label, state, detail, started: s.started_at, finished: state === 'done' ? (s.finished_at ?? s.started_at) : s.finished_at })
         }
     } else {
@@ -290,7 +290,8 @@ export default function BackendBootSplash({ onReady }: BackendBootSplashProps) {
 
     const totalStart = launcherFresh ? launcher.started_at : firstSeen.current
     const totalSec = Math.max(0, Math.round(now - totalStart))
-    const launcherError = launcherFresh && launcher.overall === 'error'
+    // 後端有回應就不是「啟動失敗」：那是上一次啟動留下的舊紀錄
+    const launcherError = launcherFresh && launcher.overall === 'error' && !apiUp
     const launcherStale =
         launcherFresh && launcher.overall === 'starting' && !apiUp && now - launcher.updated_at > STALE_SEC
     const stopped = launcher?.overall === 'stopped' && !apiUp

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
+import { markActive } from '@/lib/idleLock'
 
 export type AuthTab = 'login' | 'register'
 type FieldErrors = Partial<Record<'email' | 'password' | 'confirmPassword', string>>
@@ -139,6 +140,7 @@ export function useAuthForm({ onResult }: AuthFormOptions = {}) {
             const user = await authApi.me()
             // 小 AI 開心跳完才設登入狀態：一設好路由就會立刻換頁
             await onResult?.(true)
+            markActive() // 剛登入＝剛操作過（不然上一次留下的舊時間會讓人一登入就被鎖）
             setAuth(user, tokens.accessToken, tokens.refreshToken)
             navigate(from, { replace: true })
         } catch (err) {

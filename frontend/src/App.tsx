@@ -32,6 +32,10 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Desktop sidecar boot gate — 在桌面 app 啟動時等待後端 ready 才放行
 import BackendGate from './components/boot/BackendGate'
+import RegionBoundary from './components/ui/RegionBoundary'
+import ConnectionBanner from './components/system/ConnectionBanner'
+import IdleLock from './components/auth/IdleLock'
+import ImageViewer from './components/ui/ImageViewer'
 import { SkelPage } from '@/components/ui/SkelPages'
 
 // Global UI Components
@@ -202,6 +206,7 @@ export default function App() {
                 key={location.pathname.split('/')[1] === 'chat' ? '' : location.pathname.split('/')[1]}
                 className="page-transition h-full overflow-hidden"
             >
+                <RegionBoundary name="page" resetKeys={[location.pathname]}>
                 <Suspense fallback={<FallbackLoader />}>
                     <Routes location={location}>
                         {/* 公開路由 */}
@@ -265,6 +270,7 @@ export default function App() {
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Suspense>
+                </RegionBoundary>
             </div>
             
             {/* 全域元件 */}
@@ -272,6 +278,9 @@ export default function App() {
             <SettingsModal />
             {showMascotDock ? <MascotDock /> : <ToastContainer />}
             <DesktopUpdateNotice />
+            {showMascotDock && <ConnectionBanner />}
+            {showMascotDock && <IdleLock />}
+            <ImageViewer />
         </BackendGate>
     )
 }

@@ -89,6 +89,8 @@ export function useAdminAudit() {
     }
     const onFilterChange = (key: keyof AuditLogQuery, value: string) => applyFilter({ ...auditFilter, [key]: value || undefined, page: 1 })
     const onPageChange = (page: number) => applyFilter({ ...auditFilter, page })
+    /** 日期區間：起訖一起改、只查一次 */
+    const onRangeChange = (range: { start?: string; end?: string }) => applyFilter({ ...auditFilter, start_date: range.start, end_date: range.end, page: 1 })
 
     // 匯出和畫面上的清單同一組條件（含搜尋、操作者）
     const exportQuery = () => ({
@@ -110,7 +112,7 @@ export function useAdminAudit() {
             auditSearchInput, setAuditSearchInput,
             auditFilter, auditLogs, auditTotal, auditPage, auditTotalPages, isLoadingAudit,
             auditDrawer, setAuditDrawer,
-            onSearch, onClearSearch, onFilterChange, onPageChange, onExportCSV, onExportJSON,
+            onSearch, onClearSearch, onFilterChange, onPageChange, onRangeChange, onExportCSV, onExportJSON,
         },
     }
 }

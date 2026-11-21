@@ -10,7 +10,8 @@
 
 import StyledSelect from '@/components/ui/StyledSelect'
 import LensMenu from '@/components/ui/LensMenu'
-import { ChevronRight, Edit2, Folder, Lock, Share, Trash2 } from '@/components/snow/icons'
+import { ChevronRight, Download, Edit2, Folder, Lock, Share, Trash2 } from '@/components/snow/icons'
+import { openExportDialog } from '../hooks/exportDialogStore'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
@@ -75,6 +76,11 @@ export function ConversationContextMenu({
                         <Folder />
                         <span className="flex-1">{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
                         <ChevronRight className="set-chevron !w-[var(--sz-14)] !h-[var(--sz-14)] -mr-1" />
+                    </button>
+                    <button className="menu-item"
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => openExportDialog(id), 50) }}>
+                        <Download />
+                        {t('ui.export.menu')}
                     </button>
                     <div className="menu-sep" />
                     <button 

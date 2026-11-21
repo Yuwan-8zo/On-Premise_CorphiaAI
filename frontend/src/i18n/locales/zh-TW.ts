@@ -890,6 +890,7 @@ export default {
                 conversation_create: '建立對話',
                 conversation_update: '更新對話',
                 conversation_delete: '刪除對話',
+                conversation_export: '匯出對話',
                 document_view: '預覽文件原文',
                 document_metadata_update: '更新文件設定',
                 model_select: '選擇模型',
@@ -1194,6 +1195,70 @@ export default {
     },
     // 介面字串（稽核時從元件裡寫死的文字搬過來）
     ui: {
+        conn2: {
+            restored: '已恢復連線。你剛才換了對話，所以提問沒有自動送出，已放回輸入框',
+        },
+        image: {
+            zoom: '看大圖：{{alt}}',
+        },
+        range: {
+            title: '選擇日期區間',
+            all: '全部時間',
+            today: '今天',
+            last7: '近 7 天',
+            last30: '近 30 天',
+            thisMonth: '本月',
+            prev: '上個月',
+            next: '下個月',
+            pickStart: '點一下起始日',
+            pickEnd: '再點結束日',
+            days: '共 {{n}} 天',
+        },
+        tableFilter: {
+            all: '全部',
+            searchUsers: '搜尋名稱或信箱',
+            noMatch: '沒有符合條件的資料',
+        },
+        export: {
+            menu: '匯出',
+            title: '匯出對話',
+            audited: '匯出會留下稽核紀錄。',
+            docx: 'Word',
+            docxHint: '可以直接編輯的 .docx',
+            pdf: 'PDF',
+            pdfHint: '打開列印視窗，選「另存為 PDF」',
+            markdown: 'Markdown',
+            markdownHint: '純文字 .md，筆記軟體都能開',
+            done: '已匯出',
+            failed: '匯出失敗，請稍後再試',
+        },
+        table: {
+            csv: '下載 CSV',
+            excel: '複製到 Excel',
+        },
+        paste: {
+            shot: '截圖',
+        },
+        conn: {
+            lost: '連不上主機，正在重新連線…',
+            queued: '你的提問會在恢復後自動送出',
+            back: '已重新連線',
+        },
+        idle: {
+            soon: '閒置太久，{{s}} 秒後鎖定畫面',
+            stay: '繼續使用',
+            title: '畫面已鎖定',
+            unlockField: '輸入密碼解鎖',
+            unlock: '解鎖',
+            checking: '確認中…',
+            wrong: '密碼不對，再試一次',
+            logout: '改用別的帳號（登出）',
+        },
+        boundary: {
+            title: '這一塊暫時打不開',
+            body: '其他地方都還能正常使用，對話也沒有遺失。',
+            retry: '重新載入這一塊',
+        },
         folder: {
             intro: '勾選的檔案會當作 Corphia 回答的參考資料',
             dropHint: '放開即可加入來源',

@@ -15,6 +15,7 @@ import { readNum, useCssPx } from '@/lib/cssVars'
 import { Loader2 } from '@/components/snow/icons'
 import { LENS_SX, LENS_SY, capsuleHole, lensActive, shoulderMask, useLensMotion } from './lensKit'
 import { useLensPull } from './useLensPull'
+import { haptic } from '@/lib/haptics'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -76,7 +77,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
         // 點一下＝切換；拖曳＝拖過中線才切換
         const next = !commit ? cur : d.moved ? (lens.current.current.pos >= 0.5 ? 1 : 0) : 1 - cur
         lens.glideTo(next)
-        if (next !== cur) onChange()
+        if (next !== cur) { haptic(); onChange() }
     }
 
     // ── 幾何 ──
@@ -109,7 +110,7 @@ export default function GlassSwitch({ checked, onChange, loading = false, disabl
             onClick={() => {
                 // 指標操作已在放開時處理；鍵盤（空白鍵／Enter）與外層 label 的點擊在這裡切換
                 if (skipClick.current) { skipClick.current = false; return }
-                if (!isDisabled) onChange()
+                if (!isDisabled) { haptic(); onChange() }
             }}
             className={`glass-switch ${checked ? 'is-on' : ''} relative shrink-0 rounded-full touch-none disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
             style={{ width: W, height: H }}

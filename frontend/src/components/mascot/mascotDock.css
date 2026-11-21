@@ -85,3 +85,13 @@ body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
   white-space: nowrap;
 }
 .mascot-dock-action:hover { background: var(--chip); }
+
+/* 抓起來甩（useFling）：外面這一層跟著手走；被抓著或飛行中就整顆露出來（不探頭） */
+.mascot-fling {
+  --fling-home: 0.6s;
+  pointer-events: none;             /* 自己不擋點擊（探頭時左半邊是空的）；按在小 AI 身上的事件照樣會傳上來 */
+  touch-action: none;
+  transition: transform var(--fling-home) var(--dock-ease);
+}
+.mascot-fling .mascot { cursor: grab; touch-action: none; }
+.mascot-dock.is-held .mascot { cursor: grabbing; transform: none; }

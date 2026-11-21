@@ -6,13 +6,15 @@
  */
 import i18n from '@/i18n'
 import { useToastStore } from '@/store/toastStore'
+import { haptic } from './haptics'
 
 /** 剪貼簿 API 最多等多久（毫秒）；要短到備援還在「使用者剛按下」的有效時間內 */
 const CLIPBOARD_WAIT_MS = 800
 
 export async function copyText(text: string): Promise<boolean> {
     const ok = await tryCopy(text)
-    if (!ok) useToastStore.getState().add(i18n.t('common.copyFailed'), 'error')
+    if (ok) haptic('success')
+    else useToastStore.getState().add(i18n.t('common.copyFailed'), 'error')
     return ok
 }
 
