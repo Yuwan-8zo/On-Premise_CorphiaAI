@@ -157,10 +157,12 @@ export default function ChatHeader({
                                 <motion.div
                                     key="model-menu"
                                     {...popIn}
-                                    className="absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-2"
+                                    // 圓角和上面的模型膠囊按鈕一樣（--grp-r 是按鈕群組的圓角，選單在群組裡面直接繼承）；
+                                    // 裡面的列＝圓角－內距（同心）。不用 LensMenu 依列高自動算的大圓角
+                                    className="model-menu absolute right-0 top-full mt-2 origin-top-right w-[var(--sz-340)] paper paper-solid overflow-hidden z-50 p-[var(--sp-8)]"
                                     style={phoneMenuBox ?? undefined}
                                 >
-                                    <LensMenu className="">
+                                    <LensMenu className="" fitCard={false}>
                                     <div ref={modelScrollRef} className="glass-scroll max-h-[var(--sz-300)]">
                                         {availableModels.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-text-secondary">{t('ui.header.noModels')}</div>
