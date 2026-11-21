@@ -212,7 +212,7 @@ export function PromptMenu({ onSelect, disabled, inline = false, open, onOpenCha
                     ref={popRef}
                     role="dialog"
                     aria-label={t('chat.promptTemplatesTitle')}
-                    className="prompt-panel fixed w-[min(var(--prompt-panel-w),calc(100vw-var(--sp-24)))] paper paper-solid !rounded-[var(--r-26)] p-[var(--sp-10)] transform-gpu z-[60] origin-bottom-left flex flex-col"
+                    className="prompt-panel fixed w-[min(var(--prompt-panel-w),calc(100vw-var(--sp-24)))] paper paper-solid !rounded-[var(--r-26)] p-[var(--sp-10)] transform-gpu z-[var(--z-panel)] origin-bottom-left flex flex-col"
                     style={{
                         left: pos.left,
                         bottom: pos.bottom,

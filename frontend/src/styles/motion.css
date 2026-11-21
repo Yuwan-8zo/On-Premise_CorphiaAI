@@ -12,6 +12,16 @@
   --duration-medium: 300ms;
   --duration-slow: 600ms;
   --duration-panel: 420ms; /* 旁邊面板展開／收起（寬度變化，太快會像瞬間出現） */
+  /* 以下是各元件原本寫死在樣式檔裡的時間，集中在這裡（數值不變） */
+  --duration-instant: 100ms; /* 一閃而過的淡入淡出（放大鏡底下的字） */
+  --duration-flick: 120ms; /* 很短的淡出 */
+  --duration-quick: 150ms; /* 側欄收合時文字先淡掉 */
+  --duration-toast: 230ms; /* 通知膠囊進場／離場 */
+  --duration-dock: 260ms; /* 右上角選單、膠囊按鈕展開 */
+  --duration-lens-scale: 320ms; /* 放大鏡長大／縮小 */
+  --duration-lens-move: 350ms; /* 放大鏡移到新位置 */
+  --duration-tint: 400ms; /* 開關、拉桿的顏色漸變 */
+  --copied-ms: 2000ms; /* 按「複製」後顯示打勾多久 */
 }
 
 @keyframes spin {

@@ -3,6 +3,7 @@
  */
 
 import { memo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { readMs } from '@/lib/cssVars'
 import AIThinkingIndicator from './AIThinkingIndicator'
 import ThinkingBlock from './ThinkingBlock'
 import WebSearchNote from './WebSearchNote'
@@ -151,7 +152,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
     const handleCopy = async () => {
         if (await copyText(message.content)) {
             setIsCopied(true)
-            setTimeout(() => setIsCopied(false), 2000)
+            setTimeout(() => setIsCopied(false), readMs('--copied-ms'))
         }
     }
 

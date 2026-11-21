@@ -144,7 +144,7 @@ export default function SidePanel() {
             data-testid="side-panel"
             aria-label={t('ui.chat.sidePanel.label')}
             className={full
-                ? 'paper side-panel side-panel-full fixed inset-0 z-[60] flex flex-col overflow-hidden !rounded-none'
+                ? 'paper side-panel side-panel-full fixed inset-0 z-[var(--z-panel)] flex flex-col overflow-hidden !rounded-none'
                 : `paper side-panel side-sheet ${sheetClass} fixed z-50 flex flex-col overflow-hidden md:relative md:inset-auto md:z-10 md:shrink-0 md:pt-0 md:w-[var(--side-panel-w)] md:h-[calc(100%-2*var(--sp-16))] md:my-4 md:mr-4 md:!rounded-[var(--r-36)]`}
         >
             {/* 把手＋標題列：手機上按住往下拖＝關閉 */}

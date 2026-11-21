@@ -51,12 +51,12 @@ export default function QrCode({ value, size = '100%', className = '' }: QrCodeP
             width={size}
             height={size}
             className={className}
-            style={{ color: '#111114' }}
+            style={{ color: 'var(--qr-ink)' }}
             role="img"
             aria-label={`QR code：${value}`}
             fill="currentColor"
         >
-            <rect width={full} height={full} rx={CARD_R} fill="#fff" />
+            <rect width={full} height={full} rx={CARD_R} fill="var(--qr-paper)" />
             {dots}
             {finder(0, 0)}
             {finder(0, n - FINDER)}

@@ -254,7 +254,7 @@ export default function OnboardingTour({ isOpen, onClose }: OnboardingTourProps)
 
     return (
         <div
-            className={`tour fixed inset-0 z-[200] select-none${leaving ? ' is-leaving' : ''}`}
+            className={`tour fixed inset-0 z-[var(--z-dialog-top)] select-none${leaving ? ' is-leaving' : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="tour-title"

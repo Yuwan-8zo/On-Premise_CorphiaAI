@@ -133,7 +133,7 @@ function DrawerBody({ log, onClose }: Readonly<{ log: AuditLogItem; onClose: () 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/20 dark:bg-black/45 z-40"
+                className="fixed inset-0 bg-[var(--scrim)] z-[var(--z-drawer)]"
                 onClick={onClose}
             />
             <motion.aside

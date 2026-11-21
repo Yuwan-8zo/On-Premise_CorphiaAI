@@ -27,6 +27,7 @@ export const ConfirmModal: React.FC = () => {
             onClose={closeConfirm}
             dismissible={!isProcessing}
             role="alertdialog"
+            layer="z-[var(--z-confirm)]"
             labelledBy="confirm-title"
             className="w-full max-w-[var(--sz-360)]"
         >

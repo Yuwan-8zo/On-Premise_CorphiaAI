@@ -50,7 +50,7 @@ export default function ExportDialog() {
     }
 
     return (
-        <DialogShell open={!!id} onClose={close} layer="z-[200]" className={SHEET_W} labelledBy="export-title">
+        <DialogShell open={!!id} onClose={close} layer="z-[var(--z-dialog-top)]" className={SHEET_W} labelledBy="export-title">
             <div className="px-2">
                 <h3 id="export-title" className="dialog-title !px-0 mb-1">{t('ui.export.title')}</h3>
                 <p className="mb-4 text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{t('ui.export.audited')}</p>

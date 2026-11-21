@@ -43,8 +43,8 @@ function measure(v: string): Strength {
     return { score, level, failed: RULES.filter(([, ok]) => !ok(v)).map(([key]) => key) }
 }
 
-const DANGER = 'text-[var(--danger-ink,#ff4245)]'
-const SUCCESS = 'text-[#30d158]'
+const DANGER = 'text-[var(--danger-ink)]'
+const SUCCESS = 'text-[var(--ink-green)]'
 
 export default function PasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
     const { t } = useTranslation()
@@ -103,7 +103,7 @@ export default function PasswordDialog({ open, onClose }: { open: boolean; onClo
 
     // 外殼共用 DialogShell（會放到 body，不受設定內容區的進場動畫影響）；疊在設定視窗上面，所以層級較高
     return (
-        <DialogShell open={open} onClose={resetAndClose} layer="z-[60]" className="w-full max-w-[var(--sz-460)] flex flex-col">
+        <DialogShell open={open} onClose={resetAndClose} layer="z-[var(--z-panel)]" className="w-full max-w-[var(--sz-460)] flex flex-col">
             <button onClick={resetAndClose} aria-label={t('common.close', '關閉')} className="btn-icon dialog-close absolute text-text-secondary">
                 <X className="w-5 h-5" />
             </button>

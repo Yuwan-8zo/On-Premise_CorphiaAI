@@ -1,4 +1,5 @@
 import { Contract, Expand, Eye, FileText, Folder, Mic, Paperclip, Reader, Search, X } from '@/components/snow/icons'
+import { readPx } from '@/lib/cssVars'
 import ChatImage from './ChatImage'
 import { useChatImages } from '../hooks/useChatImages'
 import type { VisionStatus } from '@/api/chatImages'
@@ -255,12 +256,14 @@ export default function ChatInputArea({
             setExpanded(false) // 送出、清空（含全選刪除）後自動縮回；縮回後這段會再跑一次重算高度
             return
         }
+        const maxH = readPx('--sz-160') // 和下面 class 的 max-h-[var(--sz-160)] 同一個設定
         if (!expanded) {
             // 依實際內容重算高度（放大狀態剛取消時，先前算的高度還是放大時的，要重算才會正常縮回）
             el.style.height = 'auto'
-            el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+            el.style.height = `${Math.min(el.scrollHeight, maxH)}px`
         }
-        setOverflowing(el.scrollHeight > 162)
+        // 多 2px 的容差：剛好等於上限時（四捨五入）不要出現放大鈕
+        setOverflowing(el.scrollHeight > maxH + 2)
     }, [input, expanded, inputRef])
 
     // 當進入「專案資料夾管理視圖」時，隱藏聊天輸入框，
@@ -408,8 +411,8 @@ export default function ChatInputArea({
                                     placeholder={chatMode === 'project' ? t('chat.projectInputPlaceholder') : t('chat.inputPlaceholder')}
                                     rows={1}
                                     disabled={isConnecting || !llmReady}
-                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,480px)] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
-                                    style={{ lineHeight: '1.4' }}
+                                    className={`flex-1 min-w-0 resize-none bg-transparent text-text-primary placeholder:text-text-muted dark:placeholder:text-text-muted outline-none px-1.5 sm:px-2 py-[calc((var(--field-btn)-var(--sz-38))/2+var(--sp-8))] min-h-[var(--field-btn)] disabled:opacity-50 text-[length:var(--fs-15)] sm:text-[length:var(--fs-16)] border-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-apple ${expanded ? '!h-[min(55vh,var(--input-expanded-max))] !max-h-none' : 'max-h-[var(--sz-160)]'}`}
+                                    style={{ lineHeight: 'var(--input-lh)' }}
                                 />
 
                                 {/* 麥克風按鈕：輸入為空時才顯示，避免干擾送出按鈕 */}

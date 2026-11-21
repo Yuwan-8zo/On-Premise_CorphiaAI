@@ -61,7 +61,7 @@ export default function ProjectInstructionsModal({ folder, onClose }: Props) {
     }
 
     return (
-        <DialogShell open={!!folder} onClose={onClose} layer="z-[200]" className="w-[var(--sz-420)] max-w-[calc(100vw-32px)]">
+        <DialogShell open={!!folder} onClose={onClose} layer="z-[var(--z-dialog-top)]" className="w-[var(--sz-420)] max-w-[calc(100vw-32px)]">
             <div className="px-2">
                 <h3 className="dialog-title !px-0 mb-1">{t('chat.instructionsTitle')}</h3>
                 <p className="mb-3 truncate text-[length:var(--fs-13)] leading-[var(--lh-18)] text-text-secondary">{folder}</p>

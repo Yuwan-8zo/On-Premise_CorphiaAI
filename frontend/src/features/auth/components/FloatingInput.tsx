@@ -37,7 +37,7 @@ export default function FloatingInput({
     const inputType = isPasswordType ? (isPasswordVisible ? 'text' : 'password') : type
 
     return (
-        <div className={`glass-field !rounded-full [--R:26px] w-full shrink-0 ${error ? '[--rimC:rgb(239_68_68)]' : isFocused ? '[--rimC:rgb(var(--accent))]' : ''} ${delayClass || ''}`}>
+        <div className={`glass-field !rounded-full [--R:var(--r-26)] w-full shrink-0 ${error ? '[--rimC:var(--danger-ink)]' : isFocused ? '[--rimC:rgb(var(--accent))]' : ''} ${delayClass || ''}`}>
             <input
                 id={id}
                 type={inputType}

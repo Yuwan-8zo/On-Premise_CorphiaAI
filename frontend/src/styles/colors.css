@@ -1,4 +1,13 @@
 :root {
+  /* 不跟著主題變的固定顏色：設定「外觀」的預覽縮圖（同時畫淺色和深色）、QR 碼（一律黑白才掃得到） */
+  --preview-light-page: #F2F2F7;
+  --preview-light-card: #FFFFFF;
+  --preview-dark-page: #000000;
+  --preview-dark-card: #1C1C1E;
+  --qr-ink: #111114;
+  --qr-paper: #FFFFFF;
+  /* 對話框、抽屜、手機側欄後面的遮罩 */
+  --scrim: rgb(0 0 0 / 0.2);
   /* 淺色外觀：Apple 系統色（對應《Liquid Glass 元件規範》深色角色的淺色版）
    *   頁面 #F2F2F7（systemGroupedBackground）→ 卡片 #FFFFFF → 卡片內區塊 #F2F2F7
    *   文字 #000000／#6C6C70（次要，調深以達 4.5:1）／#8E8E93（第三層） */
@@ -53,6 +62,7 @@
 
 
 html.dark {
+  --scrim: rgb(0 0 0 / 0.45);
   color-scheme: only dark;
 
   /* 深色外觀：Apple 系統色（《Liquid Glass 元件規範》CSS 29–30）

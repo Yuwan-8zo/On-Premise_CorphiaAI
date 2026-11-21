@@ -19,10 +19,10 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   transition:
-    width 0.26s var(--ease-out),
-    height 0.3s var(--ease-out),
-    border-radius 0.26s var(--ease-out),
-    transform 0.26s var(--ease-out);
+    width var(--duration-dock) var(--ease-out),
+    height var(--duration-medium) var(--ease-out),
+    border-radius var(--duration-dock) var(--ease-out),
+    transform var(--duration-dock) var(--ease-out);
 }
 .dock-rows {
   display: flex;
@@ -32,7 +32,7 @@
 .dock-btn {
   display: block;
   border-radius: var(--r-9999);
-  transition: transform 0.17s var(--ease-out);
+  transition: transform var(--duration-press) var(--ease-out);
 }
 .dock-btn:active {
   transform: scale(0.92);
@@ -74,7 +74,7 @@
   pointer-events: none;
 }
 .dock-lens.is-leaving {
-  animation: dockLensOut 0.3s var(--ease-out) forwards;
+  animation: dockLensOut var(--duration-medium) var(--ease-out) forwards;
 }
 @keyframes dockLensOut {
   to {
@@ -94,8 +94,8 @@
   grid-template-rows: 0fr;
   opacity: 0;
   transition:
-    grid-template-rows 0.3s var(--ease-out),
-    opacity 0.2s var(--ease-out);
+    grid-template-rows var(--duration-medium) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
 }
 .side-collapse.is-open {
   grid-template-rows: 1fr;
@@ -110,7 +110,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .side-collapse {
-    transition: opacity 0.2s linear;
+    transition: opacity var(--duration-fast) linear;
   }
 }
 

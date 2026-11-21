@@ -22,6 +22,9 @@ import { useKeepInViewport } from '@/lib/useKeepInViewport'
 import { DEFAULT_FOLDER } from '../hooks/chatHelpers'
 import type { ConvMenuState } from '../hooks/useConversationDialogs'
 
+/** 先關選單、下一拍才開對話框（不然對話框會被同一下點擊關掉）；只定義一次 */
+const MENU_HANDOFF_MS = 50
+
 /* ── Context Menu ── */
 
 interface ContextMenuProps {
@@ -49,41 +52,41 @@ export function ConversationContextMenu({
                 <motion.div 
                     ref={menuRef}
                     {...menuPop}
-                    className="fixed z-[100] origin-top-left w-max min-w-[var(--sz-190)] paper paper-solid !rounded-[var(--menu-r)] overflow-hidden p-[var(--menu-pad)] text-text-primary"
+                    className="fixed z-[var(--z-menu)] origin-top-left w-max min-w-[var(--sz-190)] paper paper-solid !rounded-[var(--menu-r)] overflow-hidden p-[var(--menu-pad)] text-text-primary"
                     style={{ left: activeMenu.x, top: activeMenu.y }}
                 >
                     <LensMenu className="">
                     <button className="menu-item"
-                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onShare(id), 50) }}>
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onShare(id), MENU_HANDOFF_MS) }}>
                         <Share />
                         {t('chat.shareChat', '分享')}
                     </button>
                     {/* 分享過的對話才有「取消分享」 */}
                     {Boolean(conversations.find((c) => c.id === activeMenu.convId)?.settings?.shared) && (
                         <button className="menu-item"
-                            onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onUnshare(id), 50) }}>
+                            onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onUnshare(id), MENU_HANDOFF_MS) }}>
                             <Lock />
                             {t('ui.chat.unshare')}
                         </button>
                     )}
                     <button className="menu-item"
-                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), 50) }}>
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onRename(id), MENU_HANDOFF_MS) }}>
                         <Edit2 />
                         {t('chat.renameChat', '重新命名')}
                     </button>
                     <button className="menu-item"
-                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), 50) }}>
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onMove(id), MENU_HANDOFF_MS) }}>
                         <Folder />
                         <span className="flex-1">{conversations.find(c => c.id === activeMenu.convId)?.settings?.isProject ? t('chat.moveToGeneralChat') : t('chat.moveToProject')}</span>
                     </button>
                     <button className="menu-item"
-                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => openExportDialog(id), 50) }}>
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => openExportDialog(id), MENU_HANDOFF_MS) }}>
                         <Download />
                         {t('ui.export.menu')}
                     </button>
                     <div className="menu-sep" />
                     <button 
-                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onDelete(id, e as unknown as React.MouseEvent), 50) }}
+                        onClick={(e) => { e.stopPropagation(); const id = activeMenu.convId; onClose(); setTimeout(() => onDelete(id, e as unknown as React.MouseEvent), MENU_HANDOFF_MS) }}
                         className="menu-item is-danger">
                         <Trash2 />
                         {t('common.delete', '刪除')}
@@ -124,7 +127,7 @@ interface RenameModalProps {
 export function RenameModal({ renameModal, renameInput, renameInputRef, setRenameInput, submitRename, onClose }: RenameModalProps) {
     const { t } = useTranslation()
     return (
-        <DialogShell open={!!renameModal} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="rename-title">
+        <DialogShell open={!!renameModal} onClose={onClose} layer="z-[var(--z-dialog-top)]" className={SHEET_W} labelledBy="rename-title">
             <div className="px-2">
                 <h3 id="rename-title" className="dialog-title !px-0 mb-4">{t('chat.renameChat', '重新命名')}</h3>
                 <input ref={renameInputRef} type="text" value={renameInput}
@@ -158,7 +161,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
     ]))
 
     return (
-        <DialogShell open={!!moveModal} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="move-title">
+        <DialogShell open={!!moveModal} onClose={onClose} layer="z-[var(--z-dialog-top)]" className={SHEET_W} labelledBy="move-title">
             {moveModal?.isProject ? (
                 <>
                     <div className="px-2">
@@ -209,7 +212,7 @@ interface NewFolderModalProps {
 export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onClose }: NewFolderModalProps) {
     const { t } = useTranslation()
     return (
-        <DialogShell open={show} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="new-folder-title">
+        <DialogShell open={show} onClose={onClose} layer="z-[var(--z-dialog-top)]" className={SHEET_W} labelledBy="new-folder-title">
             <div className="px-2">
                 <h3 id="new-folder-title" className="dialog-title !px-0 mb-1">{t('chat.newFolder', '新資料夾')}</h3>
                 <p className="text-[length:var(--fs-13)] text-text-secondary mb-4">{t('chat.newFolderHint', '建立資料夾並自動加入一筆新對話')}</p>

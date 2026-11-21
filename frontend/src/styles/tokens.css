@@ -295,6 +295,27 @@
   --menu-max-h: calc(280 * var(--ui-unit)); /* 下拉選單最高，超過在裡面捲動 */
   /* 所有浮動選單（對話選單、使用者選單、下拉選單、輸入框的＋選單…）同一個圓角和內距 */
   --menu-r: var(--r-20);
+  /* 側欄（ChatSidebar）：展開時按鈕寬、收合成直條時按鈕寬／一般／專案切換的大小與位置微調 */
+  --side-wide-w: 232px;
+  --side-rail-btn: 44px;
+  --side-rail-seg-w: 50px;
+  --side-wide-seg-h: 44px;
+  --side-rail-seg-h: 110px;
+  --side-rail-seg-nudge: -3px;
+  /* 輸入框放大時最高（也不超過畫面 55%）；輸入框行高 */
+  --input-expanded-max: 480px;
+  --input-lh: 1.4;
+  /* 疊放順序（z-index）：一律用這幾層，不各自寫數字 */
+  --z-drawer: 40;        /* 手機側欄、稽核細節抽屜 */
+  --z-dialog: 50;        /* 一般對話框、設定 */
+  --z-panel: 60;         /* 浮在對話框上的面板（設定裡的改密碼、全螢幕側邊面板、提示詞面板） */
+  --z-dialog-top: 200;   /* 聊天相關對話框（重新命名、移動、匯出…）、新手導覽 */
+  --z-confirm: 300;      /* 確認框：一定在所有對話框之上（從對話框裡叫出來也不會被蓋住） */
+  --z-menu: 1100;        /* 浮動選單、下拉選單 */
+  --z-banner: 9998;      /* 斷線提示、即將鎖定 */
+  --z-toast: 9999;       /* 通知 */
+  --z-tooltip: 9999;     /* 滑鼠提示 */
+  --z-lock: 10000;       /* 閒置鎖定（蓋住一切） */
   --menu-pad: var(--sp-6);
   /* 後台「資安閘道」門檻規劃器（features/admin/components/DualRange.tsx） */
   --dr-track-h: var(--sz-10);      /* 拉桿軌道高 */

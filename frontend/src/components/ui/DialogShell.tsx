@@ -35,7 +35,7 @@ export default function DialogShell({
     children,
     className = '',
     sheet = true,
-    layer = 'z-50',
+    layer = 'z-[var(--z-dialog)]',
     role = 'dialog',
     labelledBy,
     dismissible = true,
@@ -49,7 +49,7 @@ export default function DialogShell({
                 <motion.div
                     key="dialog-backdrop"
                     {...dialogBackdrop}
-                    className={`fixed inset-0 ${layer} bg-black/20 dark:bg-black/45 backdrop-blur-md`}
+                    className={`fixed inset-0 ${layer} bg-[var(--scrim)] backdrop-blur-md`}
                     onClick={dismissible ? onClose : undefined}
                 />
             )}

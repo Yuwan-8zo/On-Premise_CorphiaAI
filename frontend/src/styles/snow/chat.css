@@ -314,7 +314,7 @@ html.dark .markdown-body .md-table strong {
   --sheet-grab-w: var(--sz-36);
   --sheet-grab-h: calc(5 * var(--ui-unit));
   --swipe-danger: var(--sys-red);  /* 手機對話左滑的「刪除」：系統紅（和選單的「刪除」同一個設定） */
-  --sheet-scrim: rgb(0 0 0 / 0.3);  /* 手機底部面板後面的遮罩 */
+  --sheet-scrim: var(--scrim);  /* 手機底部面板後面的遮罩：和對話框同一個 */
 }
 @media (max-width: 767.98px) {
   .side-panel.side-sheet {

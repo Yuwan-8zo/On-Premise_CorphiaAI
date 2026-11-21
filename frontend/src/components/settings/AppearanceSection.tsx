@@ -73,8 +73,8 @@ export default function AppearanceSection() {
 /** 外觀預覽圖（Apple 系統設定的迷你視窗）：淺色、深色、自動（左右各半） */
 function AppearancePreview({ mode }: { mode: Mode }) {
     const win = (dark: boolean) => {
-        const page = dark ? '#000000' : '#F2F2F7'
-        const card = dark ? '#1C1C1E' : '#FFFFFF'
+        const page = dark ? 'var(--preview-dark-page)' : 'var(--preview-light-page)'
+        const card = dark ? 'var(--preview-dark-card)' : 'var(--preview-light-card)'
         return (
             <span className="absolute inset-0 block" style={{ background: page }}>
                 {/* 側欄 */}
