@@ -33,12 +33,14 @@ interface Props<T extends string> {
     size?: 'md' | 'sm'
     className?: string
     'aria-label'?: string
+    /** false＝不標出目前項目（手機設定的清單頁：還沒點進去，不該像 iPhone 以外的平板版那樣預選一項）；按住時放大鏡照常出現 */
+    showSelection?: boolean
 }
 
 
 type Box = { top: number; h: number }
 
-export default function GlassNav<T extends string>({ items, value, onChange, gap: gapIn = '--nav-gap', size = 'md', className = '', 'aria-label': ariaLabel }: Props<T>) {
+export default function GlassNav<T extends string>({ items, value, onChange, gap: gapIn = '--nav-gap', size = 'md', className = '', 'aria-label': ariaLabel, showSelection = true }: Readonly<Props<T>>) {
     // 尺寸讀設定：項目間距、放大鏡比列多出去的量（--lens-over）
     const px = useCssPx(typeof gapIn === 'string' ? [gapIn, '--lens-over'] : ['--lens-over'])
     const gap = typeof gapIn === 'string' ? px[gapIn] : gapIn
@@ -107,6 +109,9 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
         if (e.button > 0) return
         drag.current = { id: e.pointerId, sy: e.clientY, moved: false }
         try { listRef.current?.setPointerCapture(e.pointerId) } catch { /* 部分瀏覽器不支援 */ }
+        // 沒有標出目前項目（手機設定清單）：放大鏡直接在按下的那一項長出來，不從上一次選的位置滑過來——
+        // 點下去就換頁了，滑行過程根本看不到
+        if (!showSelection) lens.jump(Math.round(posFromY(e.clientY)))
         lens.press()
     }
     const onPointerMove = (e: React.PointerEvent) => {
@@ -167,7 +172,7 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
             onLostPointerCapture={(e) => finish(e, false)}
         >
             {/* 放大鏡（平常＝凹陷底盤）：橫膠囊直向滑動，列沒有軌道，所以鏡內不畫縮小的底，只有鏡片玻璃＋強調色文字 */}
-            {ready && (
+            {ready && (showSelection || active) && (
                 <div aria-hidden="true" className={`lens absolute ${active ? 'is-active' : ''}`} style={{ left: L, top: T, width: lw, height: lh, borderRadius: lh / 2, zIndex: 1 }}>
                     {active && (
                         <>
@@ -186,7 +191,7 @@ export default function GlassNav<T extends string>({ items, value, onChange, gap
             {/* 真正的項目（鏡片位置挖洞） */}
             <div className="relative z-[2] flex flex-col" style={{ gap, ...(active ? capsuleHole(L, T, lw, lh) : {}) }}>
                 {items.map((it, i) => {
-                    const on = i === index
+                    const on = showSelection && i === index
                     return (
                         <button
                             key={it.id}

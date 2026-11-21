@@ -41,12 +41,13 @@ export default {
     // First-time spotlight onboarding tour
     onboarding: {
         start: 'Start',
+        openSidebarHint: 'Tap the highlighted button to open the sidebar and see it',
         progress: 'Step {{n}} of {{total}}',
         goTo: 'Go to step {{n}}',
         steps: {
             welcome: {
                 title: "Hi, I'm Corphia's helper",
-                desc: "Since this is your first time, let me show you around. Everything you ask and every file you add stays on your company's own server.",
+                desc: "Let me show you around. Everything you ask and every file you add is stored on your company's own server.",
             },
             modeToggle: {
                 title: 'Chat and projects',
@@ -69,12 +70,12 @@ export default {
                 desc: 'Click your name to change theme, language and colour. You can replay this tour from there too.',
             },
             security: {
-                title: 'Your data stays here',
+                title: 'Your data is stored in-house',
                 desc: 'If someone tries to get personal data or system settings out of me, the security gateway blocks it and logs it for the admin.',
             },
             done: {
                 title: "You're all set",
-                desc: 'Call me any time. To see this again, go to Settings → Guide and choose "Replay tour".',
+                desc: 'Call me any time. To see this again, open Guide in Settings and choose "Replay tour".',
             },
         },
     },
@@ -513,11 +514,12 @@ export default {
     // Guide
     guide: {
         title: 'Help',
-        subtitle: 'Get started with Corphia AI in minutes. Every conversation and document stays on this computer.',
+        subtitle: 'Get started with Corphia in minutes. Chat history and documents are stored on your company’s own server.',
         chat: {
             title: 'Start a conversation',
             newTitle: 'New conversation',
-            newDesc: 'Click "New chat" in the sidebar, type your question and press Enter. Shift+Enter adds a new line.',
+            newDesc: 'Tap "New chat" in the sidebar, type your question and send it.',
+            newKeys: ' Enter sends, Shift+Enter adds a new line.',
             promptTitle: 'Prompt templates',
             promptDesc: 'Use the button on the left of the input to pick a common prompt, such as summarize, translate or draft an email.',
             voiceTitle: 'Voice input',

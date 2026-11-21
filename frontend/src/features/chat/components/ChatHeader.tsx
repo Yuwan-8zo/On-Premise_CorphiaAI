@@ -109,6 +109,7 @@ export default function ChatHeader({
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <button
                     onClick={toggleSidebar}
+                    data-tour="sidebar-toggle"
                     aria-label={t('ui.sidebar.expand')}
                     className={`p-2 -ml-1 rounded-full  transition-colors md:hidden shrink-0 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'text-text-secondary'}`}
                 >

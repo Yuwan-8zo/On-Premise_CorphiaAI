@@ -28,6 +28,7 @@ import OverviewSection from '../sections/OverviewSection'
 import { useFitToHost } from '@/lib/useFitToHost'
 import { usePageDirection } from '@/lib/usePageDirection'
 import { displayModelName } from '@/lib/modelName'
+import { useScrollFade } from '@/lib/useScrollFade'
 
 const AuditSection = lazy(() => import('../sections/AuditSection'))
 const UsersSection = lazy(() => import('../sections/UsersSection'))
@@ -67,6 +68,8 @@ export default function Admin() {
     // 兩層縮放：整頁（標題列＋左側欄）只看左側欄放不放得下，切分頁時不會變；內容區依各分頁自己的內容另外縮放
     const fitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="page"]' })
     const contentFitRef = useFitToHost<HTMLDivElement>({ checks: '[data-fit-check="content"]', varName: '--fit-content' })
+    // 內容區捲動時上下邊緣淡出（不像被切掉）
+    const contentFadeRef = useScrollFade()
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const demoMode = useUIStore((s) => s.demoMode)
@@ -146,15 +149,14 @@ export default function Admin() {
 
                 {/* 手機：上下排（導覽在上、內容吃剩下的高度）；桌機（lg）：左側欄 180＋右內容 */}
                 <main className="flex flex-col flex-1 min-h-0 gap-[var(--space)] lg:grid lg:grid-cols-[180px_minmax(0,1fr)]">
-                    <aside data-fit-check="page" className="flex h-auto lg:h-full flex-col overflow-hidden lg:overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
+                    {/* 不裁切、疊在內容上面（relative z-10）：手機上方的分段切換長按時放大鏡會長大超出這一條，以前 overflow-hidden 把上下切掉 */}
+                    <aside data-fit-check="page" className="relative z-10 flex h-auto lg:h-full flex-col overflow-visible paper paper-lg lg:!rounded-[var(--admin-r)] lg:p-[var(--space)]">
                         {/* 目前模型（只在桌機顯示） */}
                         <div className="hidden lg:block mb-[var(--space)] rounded-[var(--admin-in)] border border-transparent bg-[var(--chip)] p-[var(--space)]">
-                            <div className="mb-2 min-w-0">
+                            {/* 以前下面有一條固定 72%、會發光的進度條：不代表任何資料，拿掉 */}
+                            <div className="min-w-0">
                                 <p className="text-[length:var(--fs-12)] text-text-secondary">{t('admin.currentModel')}</p>
                                 <p className="mt-0.5 truncate text-[length:var(--fs-12)] font-semibold text-text-primary">{(models.currentModel?.name && displayModelName(models.currentModel.name)) || (models.modelsLoaded ? t('admin.standby') : <SkelText>Qwen2.5-7B-Instruct</SkelText>)}</p>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--chip)]">
-                                <div className="h-full w-[72%] rounded-full bg-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]" />
                             </div>
                         </div>
 
@@ -190,7 +192,7 @@ export default function Admin() {
 
                     {/* 內容區：總覽是不捲動的滿版儀表板，其他分頁靠這層捲動 */}
                     <div ref={contentFitRef} className="admin-content-fit flex flex-col flex-1 min-h-0 min-w-0 lg:h-full lg:flex-none">
-                    <div key={activeSection} data-fit-check="content" data-dir={pageDir} className="admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none">
+                    <div key={activeSection} ref={contentFadeRef} data-fit-check="content" data-dir={pageDir} className="scroll-fade admin-page-enter page-in flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y scrollbar-none">
                         {activeSection === 'overview' && (
                             // 圖表用近 7 天的完整紀錄，不是稽核分頁那 15 筆
                             <OverviewSection stats={stats} activeUsers={users.activeUsers} auditLogs={audit.auditSummary} previousLogs={audit.auditPrevious} />

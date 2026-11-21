@@ -319,9 +319,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             </>
                         )
                     )}
-                    {!isEditing && versionSwitcher && <div className="mt-1 mr-2">{versionSwitcher}</div>}
+                    {/* 版本切換（‹ 2/3 ›）和按鈕放同一行：以前各佔一行，中間空一大塊 */}
+                    {!isEditing && versionSwitcher && hideActions && <div className="mt-1 mr-2">{versionSwitcher}</div>}
                     {!isEditing && !hideActions && (
-                        <div className="hover-reveal flex items-center gap-1.5 mt-1 text-text-muted mr-2">
+                        <div className="flex items-center gap-1.5 mt-1 mr-2">
+                        {/* 版本切換一直顯示；按鈕在滑鼠裝置移入才浮現（.hover-reveal） */}
+                        {versionSwitcher}
+                        <div className="hover-reveal flex items-center gap-1.5 text-text-muted">
                             {copyButton}
                             {/* 編輯：只對「文字訊息」或「有 transcript 的語音訊息」開放 */}
                             {!message.blocked && (!message.audio || message.audio.transcript) && (
@@ -349,6 +353,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                     {message.tokens.toLocaleString()} tok
                                 </span>
                             )}
+                        </div>
                         </div>
                     )}
                 </div>
@@ -419,11 +424,14 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                             />
                         )}
 
-                        {!isStreaming && versionSwitcher && <div className="mt-2 -ml-1.5">{versionSwitcher}</div>}
+                        {/* 版本切換和工具列同一行（以前各佔一行）；沒有工具列時才自己一行 */}
+                        {!isStreaming && versionSwitcher && !(message.content && !hideActions) && <div className="mt-2 -ml-1.5">{versionSwitcher}</div>}
 
                         {/* 工具列：滑鼠裝置移入才浮現，手機一直顯示（.hover-reveal） */}
                         {message.content && !isStreaming && !hideActions && (
-                            <div className="hover-reveal flex items-center gap-1.5 mt-2 text-text-muted">
+                            <div className="flex items-center gap-1.5 mt-2">
+                            {versionSwitcher && <div className="-ml-1.5">{versionSwitcher}</div>}
+                            <div className="hover-reveal flex items-center gap-1.5 text-text-muted">
                                 {copyButton}
                                 {onRegenerate && !message.blocked && (
                                     <Tooltip placement="bottom" label={t('chat.regenerate')}>
@@ -467,6 +475,7 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                                         </span>
                                     </Tooltip>
                                 )}
+                            </div>
                             </div>
                         )}
                     </div>

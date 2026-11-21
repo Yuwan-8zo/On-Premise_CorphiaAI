@@ -175,6 +175,10 @@
   font-weight: 600;
   white-space: nowrap;
 }
+/* 手機上欄位多時不要把每欄擠到兩三個字一行：每欄至少約 9 個字寬，放不下就整張表左右滑（外層 overflow-x: auto） */
+.md-table td:not(:first-child) {
+  min-width: 9em;
+}
 .markdown-body .md-table strong,
 html.dark .markdown-body .md-table strong {
   background: none;

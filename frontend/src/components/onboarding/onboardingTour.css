@@ -3,7 +3,7 @@
 .tour {
   --tour-move: 0.45s;                                   /* 換步驟：洞、卡片、小 AI 滑過去 */
   --tour-ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --tour-dim: rgba(0, 0, 0, 0.62);
+  --tour-dim: rgba(0, 0, 0, 0.8);                       /* 0.62 時後面的聊天文字還讀得清楚，跟卡片搶視線 */
   --tour-mascot-tint-a: 0.78;
   --tour-fly: 0.7s;                                     /* 結束：小 AI 飛到右下角 */
   --tour-fly-ease: cubic-bezier(0.34, 1.2, 0.64, 1);

@@ -1,7 +1,8 @@
 import { formatBytes } from '@/lib/formatBytes'
 import { Check, Code, Copy, FileText, Folder, Languages, Mail, Trash2 } from '@/components/snow/icons'
 import { parseServerDate } from '@/lib/utils'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useScrollFade } from '@/lib/useScrollFade'
 
 import OnboardingTour from '@/components/onboarding/OnboardingTour'
 import { isOnboardingDone } from '@/components/onboarding/onboardingFlag'
@@ -23,6 +24,13 @@ export default function Chat() {
     // 專案模式、還沒進任何專案對話：引導選資料夾或建立新的，不顯示一般聊天的建議（翻譯、寫信…）
     const currentConversation = useChatStore((s) => s.currentConversation)
     const projectHome = sidebarProps.chatMode === 'project' && !currentConversation?.settings?.isProject
+    // 訊息列表：捲動時上下邊緣淡出；同一個元素也要給捲動邏輯用（scrollContainerRef）
+    const fadeRef = useScrollFade()
+    const { scrollContainerRef } = mainProps
+    const chatScrollRef = useCallback((el: HTMLDivElement | null) => {
+        ;(scrollContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el
+        fadeRef(el)
+    }, [scrollContainerRef, fadeRef])
     // 來源文件卡片的拖曳放入狀態（dragDepth：子元素進出也會觸發 enter/leave，用計數判斷真的離開）
     const [dragOver, setDragOver] = useState(false)
     const dragDepth = useRef(0)
@@ -217,7 +225,7 @@ export default function Chat() {
                       右側已有 ChatMinimap（縮圖式導覽）+ ScrollToBottomButton 處理視覺指引，
                       傳統 scrollbar 在這裡是噪音不是訊號。
                     */}
-                    <div ref={mainProps.scrollContainerRef} className="chat-scroll flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
+                    <div ref={chatScrollRef} className="scroll-fade chat-scroll flex-1 overflow-y-auto w-full scrollbar-none pt-6 pb-4 relative">
                         {/* 頂部感應器：無限捲動 */}
                         <div ref={mainProps.topObserverRef} className="w-full h-px -mb-px opacity-0" />
                         {mainProps.isLoadingMore && (

@@ -73,8 +73,10 @@ export default function ModelsSection({
                 <SectionHeader
                     title={t('admin.models.title', '模型')}
                     eyebrow={`${t('admin.models.folder', '模型資料夾')}：${sanitizePath(modelsDir)?.split('\\').pop() || 'ai_model'}`}
+                    // 「重新掃描」不是這頁的主角：手機上和標題同一列、用次要樣式（以前整排寬的藍色大按鈕比清單還搶眼）
+                    inlineAction
                     action={
-                        <ActionButton onClick={onRefreshModels} disabled={isLoadingModels}>
+                        <ActionButton variant="secondary" onClick={onRefreshModels} disabled={isLoadingModels}>
                             <RefreshCw className="h-4 w-4" />
                             {t('admin.models.rescan', '重新掃描')}
                         </ActionButton>
