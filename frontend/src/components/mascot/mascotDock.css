@@ -18,6 +18,10 @@
   display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-8);
   pointer-events: none;             /* 只有小 AI 本身能點，卡片不擋下面的東西 */
 }
+/* 平板、窄的桌面（側欄＋聊天區不到 1200 寬）：輸入框會一路延伸到右邊，小 AI 待在輸入框上方，不蓋住送出鍵 */
+@media (max-width: 1199.98px) {
+  .mascot-dock { --dock-bottom: calc(96 * var(--ui-unit)); }
+}
 @media (max-width: 767.98px) {
   /* 手機：聊天輸入框在最下面，待在它上方 */
   .mascot-dock { --dock-size: 56px; --dock-ms: 0.255; --dock-bottom: calc(96 * var(--ui-unit)); --dock-edge: var(--sp-12); }
@@ -57,6 +61,8 @@
 
 /* 導覽進行中：導覽有自己的小 AI，常駐的先躲起來 */
 body:has(.tour) .mascot-dock { visibility: hidden; }
+/* 右上「⋯」選單展開時（長按會變很長）：小 AI 先躲起來，不要蓋住最下面的「刪除」 */
+body:has(.dock-shell.is-open) .mascot-dock:not(.is-out) { visibility: hidden; }
 /* 有對話視窗（設定、確認框…）開著：平常躲起來，不要疊在視窗上；有通知要說時才出來（錯誤訊息還是要看得到） */
 body:has([aria-modal="true"]) .mascot-dock:not(.is-out) { visibility: hidden; }
 
