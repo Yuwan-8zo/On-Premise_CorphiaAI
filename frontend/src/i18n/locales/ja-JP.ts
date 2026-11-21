@@ -528,7 +528,7 @@ export default {
             newChat: '新しい会話',
             sidebar: 'サイドバーの表示切替',
             stop: '回答を停止',
-            recall: '前の質問を呼び出す（入力欄が空のとき）',
+            recall: '入力欄が空のとき、前の質問を呼び出す',
         },
         title: '使い方',
         subtitle: '数分で Corphia を使いこなせます。会話履歴と文書は社内のサーバーに保存されます。',
