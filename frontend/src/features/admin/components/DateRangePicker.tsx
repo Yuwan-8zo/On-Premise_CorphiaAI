@@ -5,6 +5,8 @@
  *     下面是月曆：先點起日、再點迄日（點到比起日早的日子就重新從那天開始），點完立刻套用。
  *   日期一律是本地日期 YYYY-MM-DD（lib/dates）；不能選未來的日子。
  *   鍵盤：Tab 走到每一天、Enter 選；Esc 關閉（useDismiss）
+ *   外觀：選了區間時按鈕不塗滿強調色（只有文字、圖示變強調色）——滿版強調色留給頁面的主要按鈕；
+ *     區間是一條淡淡的帶子，在每一行的頭尾收成圓角、延伸到起訖兩天的圓圈後面（像 iPhone 行事曆）
  */
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -74,6 +76,8 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
         return WEEK.map((id, i) => ({ id, label: f.format(new Date(2024, 0, 7 + i)) })) // 2024/1/7 是星期日
     }, [i18n.language])
     const day = (s: string) => fmt.format(new Date(`${s}T00:00`))
+    // 報讀軟體唸完整日期（「2026年11月22日 星期日」），不是 2026-11-22
+    const fullFmt = useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' }), [i18n.language])
 
     const rangeText = (s: string, e: string) => (s === e ? day(s) : `${day(s)} – ${day(e)}`)
     const label = value.start && value.end ? rangeText(value.start, value.end) : t('ui.range.all')
@@ -98,7 +102,7 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
             <button
                 ref={btnRef}
                 type="button"
-                className={`btn !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] whitespace-nowrap ${value.start ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn btn-secondary !h-[var(--sz-40)] !px-[var(--sp-18)] !text-[length:var(--fs-14)] whitespace-nowrap${value.start ? ' drp-trigger-on' : ''}`}
                 aria-haspopup="dialog"
                 aria-expanded={open}
                 onClick={() => {
@@ -130,21 +134,34 @@ export default function DateRangePicker({ value, onChange }: Readonly<Props>) {
                     </div>
                     <div className="drp-grid" role="grid">
                         {weekdays.map((w) => <span key={w.id} className="drp-wd" aria-hidden>{w.label}</span>)}
-                        {monthCells(view.y, view.m).map(({ key, day: d }) => {
+                        {monthCells(view.y, view.m).map(({ key, day: d }, i) => {
                             if (!d) return <span key={key} />
                             const inRange = !!start && !!end && d >= start && d <= end
                             const edge = d === start || d === end
+                            // 區間帶子：這一天是不是一行的頭／尾（收圓角）、是不是區間的起／訖（帶子只畫半格，接到圓圈後面）
+                            const col = i % 7
+                            const span = !!start && !!end && start !== end
+                            const cls = [
+                                'drp-day',
+                                inRange && 'is-in',
+                                edge && 'is-edge',
+                                span && d === start && 'is-start',
+                                span && d === end && 'is-end',
+                                col === 0 && 'is-row-start',
+                                col === 6 && 'is-row-end',
+                                d === todayStr && 'is-today',
+                            ].filter(Boolean).join(' ')
                             return (
                                 <button
                                     key={d}
                                     type="button"
                                     disabled={d > todayStr}
-                                    className={`drp-day${inRange ? ' is-in' : ''}${edge ? ' is-edge' : ''}${d === todayStr ? ' is-today' : ''}`}
+                                    className={cls}
                                     aria-pressed={edge}
-                                    aria-label={d}
+                                    aria-label={fullFmt.format(new Date(`${d}T00:00`))}
                                     onClick={() => pick(d)}
                                 >
-                                    {Number(d.slice(8))}
+                                    <span className="drp-num">{Number(d.slice(8))}</span>
                                 </button>
                             )
                         })}

@@ -224,13 +224,13 @@
 }
 .drp-presets {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-6);
+  justify-content: space-between;
+  gap: var(--sp-4);
   padding-bottom: var(--sp-12);
   border-bottom: 0.5px solid var(--paper-line);
 }
 .drp-chip {
-  padding: var(--sp-4) var(--sp-12);
+  padding: var(--sp-4) var(--sp-10);
   border-radius: var(--r-9999);
   background: var(--chip);
   font-size: var(--fs-13);
@@ -238,10 +238,14 @@
   white-space: nowrap;
   color: rgb(var(--text-primary));
 }
+/* 選中的篩選：淡強調色底＋強調色字（不塗滿：滿版強調色只給頁面的主要按鈕） */
 .drp-chip.is-on {
-  background: rgb(var(--accent));
-  color: var(--text-on-accent);
+  background: color-mix(in srgb, rgb(var(--accent)) 16%, transparent);
+  color: rgb(var(--accent));
+  font-weight: 600;
 }
+/* 日期區間按鈕：選了區間時文字和圖示變強調色，底色維持一般按鈕 */
+.drp-trigger-on { color: rgb(var(--accent)) !important; }
 .drp-head {
   display: flex;
   align-items: center;
@@ -265,22 +269,37 @@
   color: rgb(var(--text-secondary));
 }
 .drp-day {
+  --drp-band: color-mix(in srgb, rgb(var(--accent)) 14%, transparent);
+  display: grid;
+  place-items: center;
   height: var(--drp-cell);
+  padding: 0;
   font-size: var(--fs-13);
   font-variant-numeric: tabular-nums;
   color: rgb(var(--text-primary));
+}
+/* 數字在一顆圓裡（滑過、起訖、今天都畫在這顆圓上）；格子本身只畫區間的帶子 */
+.drp-num {
+  display: grid;
+  place-items: center;
+  width: var(--drp-cell);
+  height: var(--drp-cell);
   border-radius: var(--r-9999);
 }
-.drp-day:hover:not(:disabled) { background: var(--chip); }
+.drp-day:hover:not(:disabled) .drp-num { background: var(--chip); }
 .drp-day:disabled { color: rgb(var(--text-disabled)); }
-.drp-day.is-today { font-weight: 600; color: rgb(var(--accent)); }
-/* 區間內：淡淡的強調色連成一條；起訖兩天是實心圓 */
-.drp-day.is-in {
-  border-radius: 0;
-  background: color-mix(in srgb, rgb(var(--accent)) 14%, transparent);
-}
-.drp-day.is-edge {
-  border-radius: var(--r-9999);
+.drp-day.is-today .drp-num { font-weight: 600; color: rgb(var(--accent)); }
+/* 區間：一條淡淡的強調色帶子；每一行的頭尾收成圓角 */
+.drp-day.is-in { background: var(--drp-band); }
+.drp-day.is-in.is-row-start { border-top-left-radius: var(--r-9999); border-bottom-left-radius: var(--r-9999); }
+.drp-day.is-in.is-row-end { border-top-right-radius: var(--r-9999); border-bottom-right-radius: var(--r-9999); }
+/* 起訖兩天：帶子只畫靠區間那半格，接到圓圈後面；圓圈是實心強調色 */
+.drp-day.is-start { background: linear-gradient(90deg, transparent 50%, var(--drp-band) 50%); }
+.drp-day.is-end { background: linear-gradient(90deg, var(--drp-band) 50%, transparent 50%); }
+.drp-day.is-start.is-row-end,
+.drp-day.is-end.is-row-start,
+.drp-day.is-edge:not(.is-start):not(.is-end) { background: none; }
+.drp-day.is-edge .drp-num {
   background: rgb(var(--accent));
   color: var(--text-on-accent);
 }
@@ -306,10 +325,14 @@
 }
 .sort-head:hover { background: var(--chip); }
 .sort-head.is-on { color: rgb(var(--text-primary)); }
+/* 箭頭只出現在正在排序的那一欄；其他欄滑過或用鍵盤移到時才淡淡出現（位置一直保留，不會跳動） */
 .sort-head-arrow {
   display: inline-flex;
-  opacity: 0.35;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
 }
+.sort-head:hover .sort-head-arrow,
+.sort-head:focus-visible .sort-head-arrow { opacity: 0.35; }
 .sort-head-arrow svg { width: var(--sz-12); height: var(--sz-12); }
 .sort-head.is-on .sort-head-arrow { opacity: 1; color: rgb(var(--accent)); }
 .table-filter {
@@ -319,11 +342,9 @@
   gap: var(--sp-8) var(--sp-12);
   padding: 0 var(--space) var(--sp-12);
 }
-.table-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-6);
-}
+/* 角色分段切換器：電腦固定寬度放在搜尋框右邊；手機（搜尋框換到上一行）撐滿整行 */
+.table-filter-seg { width: 100%; }
+@media (min-width: 640px) { .table-filter-seg { width: var(--role-seg-w); flex-shrink: 0; } }
 
 /* ---------- 專案資料夾拖曳排序（ChatSidebar）：拖著的那一個變淡，要放的位置畫一條強調色的線 ---------- */
 .folder-drag { position: relative; }
@@ -429,12 +450,6 @@ dialog.image-viewer {
   height: auto;
   max-width: none;
   max-height: none;
-}
-fieldset.table-filter-chips {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-width: 0;
 }
 /* 看大圖：整個畫面是一顆「關閉」按鈕，圖片在正中間 */
 .image-viewer-scrim {
