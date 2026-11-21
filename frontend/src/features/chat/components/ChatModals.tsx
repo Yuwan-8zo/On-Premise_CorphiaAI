@@ -125,9 +125,9 @@ interface RenameModalProps {
 export function RenameModal({ renameModal, renameInput, renameInputRef, setRenameInput, submitRename, onClose }: RenameModalProps) {
     const { t } = useTranslation()
     return (
-        <DialogShell open={!!renameModal} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+        <DialogShell open={!!renameModal} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="rename-title">
             <div className="px-2">
-                <h3 className="dialog-title !px-0 mb-4">{t('chat.renameChat', '重新命名')}</h3>
+                <h3 id="rename-title" className="dialog-title !px-0 mb-4">{t('chat.renameChat', '重新命名')}</h3>
                 <input ref={renameInputRef} type="text" value={renameInput}
                     onChange={e => setRenameInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') submitRename() }}
@@ -159,11 +159,11 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
     ]))
 
     return (
-        <DialogShell open={!!moveModal} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+        <DialogShell open={!!moveModal} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="move-title">
             {moveModal?.isProject ? (
                 <>
                     <div className="px-2">
-                        <h3 className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
+                        <h3 id="move-title" className="dialog-title !px-0 mb-2">{t('chat.moveToGeneralChat')}</h3>
                         <p className="text-[length:var(--fs-14)] text-text-secondary">{t('chat.confirmMoveToGeneral', { folder: moveModal.folderName })}</p>
                     </div>
                     <DialogActions onCancel={onClose} onOk={() => submitMove()} />
@@ -171,7 +171,7 @@ export function MoveToProjectModal({ moveModal, moveInput, setMoveInput, savedFo
             ) : (
                 <>
                     <div className="px-2">
-                        <h3 className="dialog-title !px-0 mb-4">{t('chat.moveToProject', '移至專案')}</h3>
+                        <h3 id="move-title" className="dialog-title !px-0 mb-4">{t('chat.moveToProject', '移至專案')}</h3>
                         {allFolders.length > 0 && (
                             <div className="mb-4">
                                 <p className="text-[length:var(--fs-13)] text-text-secondary mb-2">{t('chat.chooseProject', '選擇現有專案：')}</p>
@@ -210,9 +210,9 @@ interface NewFolderModalProps {
 export function NewFolderModal({ show, input, inputRef, setInput, onSubmit, onClose }: NewFolderModalProps) {
     const { t } = useTranslation()
     return (
-        <DialogShell open={show} onClose={onClose} layer="z-[200]" className={SHEET_W}>
+        <DialogShell open={show} onClose={onClose} layer="z-[200]" className={SHEET_W} labelledBy="new-folder-title">
             <div className="px-2">
-                <h3 className="dialog-title !px-0 mb-1">{t('chat.newFolder', '新資料夾')}</h3>
+                <h3 id="new-folder-title" className="dialog-title !px-0 mb-1">{t('chat.newFolder', '新資料夾')}</h3>
                 <p className="text-[length:var(--fs-13)] text-text-secondary mb-4">{t('chat.newFolderHint', '建立資料夾並自動加入一筆新對話')}</p>
                 <input ref={inputRef} type="text" value={input}
                     onChange={e => setInput(e.target.value)}

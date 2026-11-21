@@ -339,12 +339,13 @@ const MessageBubble = memo(({ message, isStreaming = false, onResubmit, onRegene
                               無轉錄的純語音訊息沒有可送 LLM 的文字，直接隱藏此按鈕。
                             */}
                             {onResubmit && !message.blocked && !message.id.startsWith('temp-') && (!message.audio || message.audio.transcript) && (
-                                <button
+                                <Tooltip placement="bottom" label={t('chat.regenerate')}><button
+                                    aria-label={t('chat.regenerate')}
                                     onClick={() => onResubmit(message.id, message.audio?.transcript || message.content)}
                                     className="btn-icon btn-icon-plain msg-act !w-[var(--tap-msg)] !h-[var(--tap-msg)] text-text-muted"
                                 >
                                     <RefreshCw />
-                                </button>
+                                </button></Tooltip>
                             )}
                             {message.tokens > 0 && (
                                 <span

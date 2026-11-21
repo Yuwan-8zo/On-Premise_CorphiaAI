@@ -26,7 +26,7 @@ import { useChatStore } from '@/store/chatStore'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { CorphiaLogo, CorphiaWordmark } from '@/components/icons/CorphiaIcons'
 import { SidebarIcon } from './ChatIcons'
-import ConversationRow from './ConversationRow'
+import ConversationRow, { activateOnKey } from './ConversationRow'
 import Tooltip from '@/components/ui/Tooltip'
 
 import type { Conversation } from '@/types/chat'
@@ -444,6 +444,9 @@ export default function ChatSidebar({
                                                 >
                                                     {/* 資料夾列（沒有展開箭頭）：點一下選取並展開；再點一次已選取的資料夾就收合 */}
                                                     <div
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onKeyDown={activateOnKey}
                                                         onClick={() => {
                                                             // 切換到資料夾管理視圖；
                                                             // 注意：不清掉 currentConversation，這樣在背景串流中的對話可以繼續，

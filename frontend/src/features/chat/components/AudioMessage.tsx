@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import MaterialIcon from '@/components/icons/MaterialIcon'
 import type { MessageAudio } from '@/types/chat'
 
@@ -29,6 +30,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function AudioMessage({ audio, isUser = false }: AudioMessageProps) {
+    const { t } = useTranslation()
     const audioRef = useRef<HTMLAudioElement>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentSec, setCurrentSec] = useState(0)
@@ -114,7 +116,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                         ? 'bg-white text-accent '
                         : 'bg-accent-fill text-text-on-accent ',
                 ].join(' ')}
-                aria-label={isPlaying ? 'pause' : 'play'}
+                aria-label={isPlaying ? t('chat.voice.pause') : t('chat.voice.play')}
             >
                 <MaterialIcon name={isPlaying ? 'pause' : 'play_arrow'} size={20} filled />
             </button>
@@ -142,7 +144,7 @@ export default function AudioMessage({ audio, isUser = false }: AudioMessageProp
                         value={currentSec}
                         onChange={handleSeek}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        aria-label="seek"
+                        aria-label={t('chat.voice.seek')}
                     />
                 </div>
                 <div className={[

@@ -181,6 +181,9 @@ export default {
             generating: '回答生成中',
         },
         voice: {
+            play: '再生',
+            pause: '一時停止',
+            seek: '再生位置',
             startRecording: '音声メッセージを録音',
             cancel: '録音をキャンセル',
             send: '音声を送信',

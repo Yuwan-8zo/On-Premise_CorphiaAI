@@ -181,6 +181,9 @@ export default {
             generating: 'Generating response',
         },
         voice: {
+            play: 'Play',
+            pause: 'Pause',
+            seek: 'Playback position',
             startRecording: 'Record voice message',
             cancel: 'Cancel recording',
             send: 'Send voice',

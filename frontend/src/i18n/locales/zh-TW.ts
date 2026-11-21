@@ -181,6 +181,9 @@ export default {
             generating: '生成回應中',
         },
         voice: {
+            play: '播放',
+            pause: '暫停',
+            seek: '播放位置',
             startRecording: '錄製語音訊息',
             cancel: '取消錄音',
             send: '送出語音',

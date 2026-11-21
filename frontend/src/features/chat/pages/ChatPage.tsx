@@ -208,6 +208,7 @@ export default function Chat() {
                                                                 }
                                                             })
                                                         }}
+                                                        aria-label={mainProps.t('common.delete')}
                                                         className="hover-reveal p-2 text-text-muted rounded-full"
                                                     >
                                                         <Trash2 className="w-5 h-5" />

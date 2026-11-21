@@ -1,4 +1,5 @@
 import { Eye, EyeOff } from '@/components/snow/icons'
+import { useTranslation } from 'react-i18next'
 import { InputHTMLAttributes, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/gsapMotion'
 import { EASE_DECEL, iconSwap } from '@/lib/motionPresets'
@@ -27,6 +28,7 @@ export default function FloatingInput({
     hideErrorText = false,
     ...props
 }: FloatingInputProps) {
+    const { t } = useTranslation()
     const isFilled = Boolean(value && value.toString().length > 0)
     const [isPasswordVisible, setIsPasswordVisible] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
@@ -146,8 +148,8 @@ export default function FloatingInput({
                                 onRevealChange?.(!isPasswordVisible)
                             }}
                             aria-pressed={isPasswordVisible}
-                            className="absolute right-4 top-1/2 p-2 text-text-muted  transition-colors focus:outline-none"
-                            tabIndex={-1}
+                            aria-label={t(isPasswordVisible ? 'common.hidePassword' : 'common.showPassword')}
+                            className="absolute right-4 top-1/2 p-2 text-text-muted transition-colors focus:outline-none focus-visible:text-accent"
                         >
                             <AnimatePresence mode="wait" initial={false}>
                                 <motion.div

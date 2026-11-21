@@ -27,11 +27,12 @@ export const ConfirmModal: React.FC = () => {
             onClose={closeConfirm}
             dismissible={!isProcessing}
             role="alertdialog"
+            labelledBy="confirm-title"
             className="w-full max-w-[var(--sz-360)]"
         >
             {confirmConfig && (
                 <>
-                    <h3 className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>
+                    <h3 id="confirm-title" className="dialog-title whitespace-pre-wrap">{confirmConfig.message}</h3>
                     {/* 說明：破壞性動作沒給說明時預設「此動作無法復原」；可以重來的動作不嚇人 */}
                     {(confirmConfig.hint ?? (danger ? t('common.confirmHint', '此動作無法復原。') : '')) && (
                         <p className="dialog-body">{confirmConfig.hint ?? t('common.confirmHint', '此動作無法復原。')}</p>
