@@ -20,7 +20,7 @@ import { useAuthStore } from '@/store/authStore'
 const HAS_KEYBOARD = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches
 
 /** 一列：圖示＋標題＋說明。圖示一律灰底、強調色（以前每列一種彩色實心圓，藍橘紅紫綠像彩虹，沒有一個是重點） */
-function TipRow({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
+function TipRow({ icon, title, desc }: Readonly<{ icon: ReactNode; title: string; desc: string }>) {
     return (
         <div className="set-row has-icon !pl-[var(--sp-16)]">
             <span className="set-icon !rounded-full bg-[var(--chip)] text-accent" aria-hidden>

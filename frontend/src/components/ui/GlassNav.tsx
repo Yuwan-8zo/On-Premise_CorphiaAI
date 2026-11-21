@@ -40,7 +40,7 @@ interface Props<T extends string> {
 
 type Box = { top: number; h: number }
 
-export default function GlassNav<T extends string>({ items, value, onChange, gap: gapIn = '--nav-gap', size = 'md', className = '', 'aria-label': ariaLabel, showSelection = true }: Props<T>) {
+export default function GlassNav<T extends string>({ items, value, onChange, gap: gapIn = '--nav-gap', size = 'md', className = '', 'aria-label': ariaLabel, showSelection = true }: Readonly<Props<T>>) {
     // 尺寸讀設定：項目間距、放大鏡比列多出去的量（--lens-over）
     const px = useCssPx(typeof gapIn === 'string' ? [gapIn, '--lens-over'] : ['--lens-over'])
     const gap = typeof gapIn === 'string' ? px[gapIn] : gapIn
